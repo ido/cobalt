@@ -1,19 +1,17 @@
 '''Cobalt component base classes'''
 __revision__ = '$Revision: 1.4 $'
 
-from M2Crypto import SSL
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCDispatcher
-
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
-import Cobalt.Proxy
+import Cobalt.Proxy, M2Crypto.SSL, SimpleXMLRPCServer
 
 log = logging.getLogger('Component')
 
-class CobaltXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
     def finish(self):
         '''Finish HTTPS connections properly'''
-        self.request.set_shutdown(SSL.SSL_RECEIVED_SHUTDOWN | SSL.SSL_SENT_SHUTDOWN)
+        self.request.set_shutdown(M2Crypto.SSL.SSL_RECEIVED_SHUTDOWN | \
+                                  M2Crypto.SSL.SSL_SENT_SHUTDOWN)
         self.request.close()
 
     def do_POST(self):
@@ -39,8 +37,8 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             self.wfile.flush()
             self.connection.shutdown(1)
 
-class Component(SSL.SSLServer,
-                SimpleXMLRPCDispatcher):
+class Component(M2Crypto.SSL.SSLServer,
+                SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """Cobalt component providing XML-RPC access"""
     __name__ = 'Component'
     __implementation__ = 'Generic'
@@ -76,7 +74,7 @@ class Component(SSL.SSLServer,
             location = (socket.gethostname(), 0)
 
         self.password = self.cfile.get('communication', 'password')
-        sslctx = SSL.Context('sslv23')
+        sslctx = M2Crypto.SSL.Context('sslv23')
         try:
             keyfile = self.cfile.get('communication', 'key')
         except ConfigParser.NoOptionError:
@@ -85,20 +83,20 @@ class Component(SSL.SSLServer,
         sslctx.load_cert_chain(keyfile)
         #sslctx.load_verify_locations('ca.pem')
         #sslctx.set_client_CA_list_from_file('ca.pem')    
-        sslctx.set_verify(SSL.verify_none, 15)
+        sslctx.set_verify(M2Crypto.SSL.verify_none, 15)
         #sslctx.set_allow_unknown_ca(1)
         sslctx.set_session_id_ctx(self.__name__)
         sslctx.set_info_callback(self.handle_sslinfo)
         #sslctx.set_tmp_dh('dh1024.pem')
         self.logRequests = 0
         # setup unhandled request syslog handling
-        SimpleXMLRPCDispatcher.__init__(self)
-        SSL.SSLServer.__init__(self, location, CobaltXMLRPCRequestHandler, sslctx)
+        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+        M2Crypto.SSL.SSLServer.__init__(self, location, CobaltXMLRPCRequestHandler, sslctx)
         self.port = self.socket.socket.getsockname()[1]
         self.url = "https://%s:%s" % (socket.gethostname(), self.port)
         self.logger.info("Bound to port %s" % self.port)
         self.funcs.update({'HandleEvents':self.HandleEvents,
-                           'system.listMethods':self.system_listMethods})
+                           'system.listMethods':self.addr_system_listMethods})
         self.atime = 0
         self.assert_location()
         atexit.register(self.deassert_location)
@@ -135,10 +133,10 @@ class Component(SSL.SSLServer,
             response = xmlrpclib.dumps(response, methodresponse=1)
         except xmlrpclib.Fault, fault:
             response = xmlrpclib.dumps(fault)
-        except TypeError, t:
+        except TypeError, terror:
             self.logger.error("Client %s called function %s with wrong argument count" %
                            (address[0], method), exc_info=1)
-            response = xmlrpclib.dumps(xmlrpclib.Fault(4, t.args[0]))
+            response = xmlrpclib.dumps(xmlrpclib.Fault(4, terror.args[0]))
         except:
             self.logger.error("Unexpected handler failure", exc_info=1)
             # report exception back to server
@@ -174,19 +172,22 @@ class Component(SSL.SSLServer,
             for field in self.__statefields__:
                 setattr(self, field, loaddata[self.__statefields__.index(field)])
                 
-    def system_listMethods(self, address):
+    def addr_system_listMethods(self, address):
         """get rid of the address argument and call the underlying dispatcher method"""
-        return SimpleXMLRPCDispatcher.system_listMethods(self)
+        return SimpleXMLRPCServer.SimpleXMLRPCDispatcher.system_listMethods(self)
 
     def get_request(self):
         '''We need to do work between requests, so select with timeout instead of blocking in accept'''
         rsockinfo = []
         while self.socket not in rsockinfo:
             if self.shut:
-                raise SSL.SSLError
+                raise M2Crypto.SSL.SSLError
             for funcname in self.async_funcs:
-                func = getattr(self, funcname)
-                func()
+                func = getattr(self, funcname, False)
+                if callable(func):
+                    func()
+                else:
+                    self.logger.error("Cannot call uncallable method %s" % (funcname))
             try:
                 rsockinfo = select.select([self.socket], [], [], 10)[0]
             except select.error:
