@@ -1,0 +1,1 @@
+dist_sbin_SCRIPTS = bgpm.py bgsched.py cqm.py
