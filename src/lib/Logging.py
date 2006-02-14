@@ -1,5 +1,5 @@
 '''Bcfg2 logging support'''
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 import copy, fcntl, logging, logging.handlers, lxml.etree, math, struct, sys, termios, types
 

@@ -1,3 +1,3 @@
 '''Cobalt Libraries'''
-__revision__ = '$Revision: 1.1 $'
-__all__ = ['CobaltProxy', 'Component', 'Data', 'Util']
+__revision__ = '$Revision$'
+__all__ = ['Component', 'Data', 'Logging', 'Proxy', 'Util']

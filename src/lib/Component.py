@@ -1,5 +1,5 @@
 '''Cobalt component base classes'''
-__revision__ = '$Revision: 1.4 $'
+__revision__ = '$Revision$'
 
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
 import Cobalt.Proxy, M2Crypto.SSL, SimpleXMLRPCServer

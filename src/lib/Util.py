@@ -1,5 +1,5 @@
 '''Utility funtions for Cobalt programs'''
-__revision__ = '$Revision: 1.3 $'
+__revision__ = '$Revision$'
 
 from getopt import getopt, GetoptError
 

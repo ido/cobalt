@@ -1,1 +1,1 @@
-pkgpython_PYTHON = __init__.py CobaltProxy.py  Component.py  Data.py Util.py 
+pkgpython_PYTHON = __init__.py Component.py  Data.py Logging.py Proxy.py Util.py 
