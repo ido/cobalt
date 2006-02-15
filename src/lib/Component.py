@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
-import Cobalt.Proxy, M2Crypto.SSL, SimpleXMLRPCServer
+import BaseHTTPServer, Cobalt.Proxy, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
 
 log = logging.getLogger('Component')
 
@@ -10,8 +10,8 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
     def finish(self):
         '''Finish HTTPS connections properly'''
-        self.request.set_shutdown(M2Crypto.SSL.SSL_RECEIVED_SHUTDOWN | \
-                                  M2Crypto.SSL.SSL_SENT_SHUTDOWN)
+        #self.request.set_shutdown(M2Crypto.SSL.SSL_RECEIVED_SHUTDOWN | \
+        #                          M2Crypto.SSL.SSL_SENT_SHUTDOWN)
         self.request.close()
 
     def do_POST(self):
@@ -35,9 +35,26 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
             # shut down the connection
             self.wfile.flush()
-            self.connection.shutdown(1)
+            self.connection.shutdown()
 
-class Component(M2Crypto.SSL.SSLServer,
+    def setup(self):
+        self.connection = self.request
+        self.rfile = socket._fileobject(self.request, "rb", self.rbufsize)
+        self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
+
+class SSLServer(BaseHTTPServer.HTTPServer):
+    '''This class encapsulates all of the ssl server stuff'''
+    def __init__(self, address, keyfile, handler):
+        SocketServer.BaseServer.__init__(self, address, handler)
+        ctxt = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
+        ctxt.use_privatekey_file (keyfile)
+        ctxt.use_certificate_file(keyfile)
+        self.socket = OpenSSL.SSL.Connection(ctxt,
+                                             socket.socket(self.address_family, self.socket_type))
+        self.server_bind()
+        self.server_activate()
+
+class Component(SSLServer,
                 SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """Cobalt component providing XML-RPC access"""
     __name__ = 'Component'
@@ -65,34 +82,24 @@ class Component(M2Crypto.SSL.SSLServer,
         if not self.cfile.has_section('components'):
             print "Configfile missing components section"
             raise SystemExit, 1
-        
         if self.cfile._sections['components'].has_key(self.__name__):
             self.static = True
             location = urlparse.urlparse(self.cfile.get('components', self.__name__))[1].split(':')
             location = (location[0], int(location[1]))
         else:
             location = (socket.gethostname(), 0)
-
-        self.password = self.cfile.get('communication', 'password')
-        sslctx = M2Crypto.SSL.Context('sslv23')
         try:
             keyfile = self.cfile.get('communication', 'key')
         except ConfigParser.NoOptionError:
             print "No key specified in cobalt.conf"
             raise SystemExit, 1
-        sslctx.load_cert_chain(keyfile)
-        #sslctx.load_verify_locations('ca.pem')
-        #sslctx.set_client_CA_list_from_file('ca.pem')    
-        sslctx.set_verify(M2Crypto.SSL.verify_none, 15)
-        #sslctx.set_allow_unknown_ca(1)
-        sslctx.set_session_id_ctx(self.__name__)
-        sslctx.set_info_callback(self.handle_sslinfo)
-        #sslctx.set_tmp_dh('dh1024.pem')
-        self.logRequests = 0
-        # setup unhandled request syslog handling
+
+        self.password = self.cfile.get('communication', 'password')
+
+        SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-        M2Crypto.SSL.SSLServer.__init__(self, location, CobaltXMLRPCRequestHandler, sslctx)
-        self.port = self.socket.socket.getsockname()[1]
+        self.logRequests = 0
+        self.port = self.socket.getsockname()[1]
         self.url = "https://%s:%s" % (socket.gethostname(), self.port)
         self.logger.info("Bound to port %s" % self.port)
         self.funcs.update({'HandleEvents':self.HandleEvents,
@@ -181,7 +188,7 @@ class Component(M2Crypto.SSL.SSLServer,
         rsockinfo = []
         while self.socket not in rsockinfo:
             if self.shut:
-                raise M2Crypto.SSL.SSLError
+                raise socket.error
             for funcname in self.async_funcs:
                 func = getattr(self, funcname, False)
                 if callable(func):
@@ -194,12 +201,12 @@ class Component(M2Crypto.SSL.SSLServer,
                 continue
             if self.socket in rsockinfo:
                 # workaround for m2crypto 0.15 bug
-                self.socket.postConnectionCheck = None
+                # self.socket.postConnectionCheck = None
                 return self.socket.accept()
 
     def assert_location(self):
         '''Assert component location with slp'''
-        if self.__name__ == 'service-location':
+        if self.__name__ == 'service-location' or self.static:
             return
         if (time.time() - self.atime) > 240:
             slp = Cobalt.Proxy.service_location()
@@ -208,7 +215,7 @@ class Component(M2Crypto.SSL.SSLServer,
 
     def deassert_location(self):
         '''remove registration from slp'''
-        if self.__name__ == 'service-location':
+        if self.__name__ == 'service-location' or self.static:
             return
         slp = Cobalt.Proxy.service_location()
         try:
@@ -226,6 +233,3 @@ class Component(M2Crypto.SSL.SSLServer,
         '''Shutdown on unexpected signals'''
         self.shut = True
 
-    def handle_error(self):
-        '''Catch error path for clean exit'''
-        return False

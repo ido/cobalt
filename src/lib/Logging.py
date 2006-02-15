@@ -126,4 +126,3 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='lo
         logging.root.addHandler(syslog)
     logging.root.setLevel(level)
     logging.already_setup = True
-
