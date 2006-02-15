@@ -558,6 +558,12 @@ class BGJob(Job):
         else:
             self.pgid['user'] = pgroup[0]['pgid']
         self.SetPassive()
+
+class JobSet(Cobalt.Data.DataSet):
+    '''Set of currently queued jobs'''
+    __object__ = BGJob
+    __id__ = Cobalt.Data.IncrID()
+    
         
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
@@ -567,7 +573,7 @@ class CQM(Cobalt.Component.Component):
 
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
-        self.Jobs = Cobalt.Data.DataSet("jobs", "job", BGJob, Cobalt.Data.IncrID(), False)
+        self.Jobs = JobSet()
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
         self.register_function(lambda  address, data:self.Jobs.Get(data), "GetJobs")
@@ -668,5 +674,5 @@ if __name__ == '__main__':
     if daemon:
         from sss.daemonize import daemonize
         daemonize(daemon[0])
-    server = CQM(debug=debug)
-    server.ServeForever()
+    server = CQM({'configfile':'/etc/cobalt.conf'})
+    server.serve_forever()
