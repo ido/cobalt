@@ -4,7 +4,7 @@
 __revision__ = '$Revision$'
 
 import getopt, math, sys, time
-import Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 if __name__ == '__main__':
     try:
@@ -13,10 +13,14 @@ if __name__ == '__main__':
         print "Usage: cqstat [--version] [-d] [-f jobid]"
         print msg
         raise SystemExit, 1
+    level = 30
+    if '-d' in sys.argv:
+        level=10
 
     if '--version' in sys.argv:
         print "cqstat %s" % __revision__
         raise SystemExit, 0
+    Cobalt.Logging.setup_logging('cqstat', to_syslog=False, level=level)
 
     jobid = None
 
