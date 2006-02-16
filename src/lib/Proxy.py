@@ -1,5 +1,5 @@
 '''Cobalt proxy provides client access to cobalt components'''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
 import logging, socket, time, xmlrpclib, ConfigParser
 
@@ -104,4 +104,4 @@ class process_manager(ComponentProxy):
 class queue_manager(ComponentProxy):
     '''queue manager proxy'''
     name = 'queue-manager'
-    methods = ['AddJob', 'GetJobs', 'KillJobs']
+    methods = ['AddJob', 'GetJobs', 'DelJobs']

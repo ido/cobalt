@@ -33,16 +33,14 @@ if __name__ == '__main__':
         jobid_tosend = "*"
 
     cqm = Cobalt.Proxy.queue_manager()
-    query = [{'tag':'job', 'user':'*', 'walltime':'*'}]
+    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':'*'}]
     if '-f' in sys.argv:
-        query[0].update({'nodes':'*', 'state':'*', 'jobid':'%s', "location":'*'})
+        query[0].update({"location":'*'})
     jobs = cqm.GetJobs(query)
 
+    header = [('JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location')]
     if '-f' in sys.argv:
-        header = [('JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue', 'StartTime')]
-    else:
-        header = [('JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location')]
-        
+        header[0] += ('Mode', 'Procs', 'Queue', 'StartTime')
     output = [[job.get(x) for x in [y.lower() for y in header[0]]] for job in jobs]
 
     if output:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt qsub command'''
-__revision__ = '$Revision: 1.13 $'
+__revision__ = '$Revision$'
 
 import os, sys, pwd
 import Cobalt.Proxy, Cobalt.Util
@@ -79,9 +79,9 @@ if __name__ == '__main__':
         if opts['project']:
             jobspec['project'] = opts['project']
 
-    jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
+    jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'], 'jobid':'*',
                     'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'), 'kernel':opts['kernel'],
-                    'queue':opts['queue'], 'procs':opts.get('proccount')})
+                    'queue':opts['queue'], 'procs':opts.get('proccount'), 'nodes':opts.get('nodecount')})
     if opts['outputprefix']:
         if opts['outputprefix'][0] == '/':
             jobspec.update({'outputpath':"%s.output" % (opts['outputprefix']),
@@ -100,4 +100,4 @@ if __name__ == '__main__':
     except:
         print "Error submitting job"
         raise SystemExit, 1
-    print job['jobid']
+    print job[0]['jobid']

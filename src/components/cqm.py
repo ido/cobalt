@@ -7,7 +7,7 @@ __revision__ = '$Revision: 1.35 $'
 from logging import getLogger, FileHandler, Formatter, INFO
 
 import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser
-import Cobalt.Component, Cobalt.Data, Cobalt.Proxy
+import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
 
 logger = logging.getLogger('cqm')
 
@@ -98,10 +98,10 @@ class CommDict:
 class Job(Cobalt.Data.Data):
     '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
 
-    zcctlog = Logger()
+    acctlog = Logger()
 
     def __init__(self, data, jobid):
-        Cobalt.Data.Data.__init__(self, data, jobid)
+        Cobalt.Data.Data.__init__(self, data)
         self.comms = CommDict()
         self.set('jobid', str(jobid))
         self.set('state', 'queued')
@@ -125,7 +125,7 @@ class Job(Cobalt.Data.Data):
         #self.steps=['StageInit','FinishStage','RunPrologue','RunUserJob','RunEpilogue','FinalizeStage','Finish']
         self.stageid = None
         self.reservation = False
-        if not self.get('type', None):
+        if not self.get('type', False):
             self.set('type', 'mpish')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
         self.SetActive()
@@ -601,8 +601,8 @@ class CQM(Cobalt.Component.Component):
         ret = []
         for spec in data:
             for job in [job for job in self.Jobs if job.match(spec)]:
-                ret.append(job.to_rx())
-                if job.get(state) in ['queued', 'ready'] or force:
+                ret.append(job.to_rx(spec))
+                if job.get('state') in ['queued', 'ready'] or force:
                     self.Jobs.remove(job)
                 else:
                     job.Kill("Job %s killed based on user request")
@@ -670,7 +670,10 @@ if __name__ == '__main__':
         print "%s\nUsage:\ncqm.py [-d] [-C <configfile>] [--daemon <pidfile>]" % (msg)
         raise SystemExit, 1
     daemon = [x[1] for x in opts if x[0] == '--daemon']
-    debug = len([x for x in opts if x[0] == '-d'])
+    level = 10
+    if len([x for x in opts if x[0] == '-d']):
+        level = 0
+    Cobalt.Logging.setup_logging('cqm', level=10)
     if daemon:
         from sss.daemonize import daemonize
         daemonize(daemon[0])
