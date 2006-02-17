@@ -44,9 +44,9 @@ if __name__ == '__main__':
     cqm = Cobalt.Proxy.queue_manager()
     for cmd in [item for item in ['--kill', '--delete'] if item in sys.argv]:
         if cmd == '--delete':
-            cqm.DelJobs(spec, force=True)
+            response = cqm.DelJobs(spec, force=True)
         else:
-            cqm.DelJobs(spec)
+            response = cqm.DelJobs(spec)
     else:
         updates = {}
         if ('--hold', '') in opts:
@@ -56,6 +56,6 @@ if __name__ == '__main__':
         if '--queue' in [opt[0] for opt in opts]:
             [queue] = [opt[1] for opt in opts if '--queue' == opt[0]]
             updates['queue'] = queue
-        cqm.SetJobs(spec, updates)
+        response = cqm.SetJobs(spec, updates)
     print response
     
