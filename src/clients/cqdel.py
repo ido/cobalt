@@ -22,11 +22,10 @@ if __name__ == '__main__':
     jobs = cqm.DelJobs(spec)
     time.sleep(1)
     print jobs
-    if resp.findall('.//job'):
-        data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in resp.findall('.//job')] + [(job.get('jobid'), job.get('user')) for job in resp_forced.findall('.//job')]
-
+    if jobs:
+        data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in jobs]
         print "      Deleted Jobs"
         Cobalt.Util.print_tabular(data)
     else:
-        print "cqdel: Job %s not found" % argv[-1]
+        print "cqdel: Job %s not found" % sys.argv[-1]
 

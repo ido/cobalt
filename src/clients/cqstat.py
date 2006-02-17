@@ -15,7 +15,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
     level = 30
     if '-d' in sys.argv:
-        level=10
+        level = 10
 
     if '--version' in sys.argv:
         print "cqstat %s" % __revision__

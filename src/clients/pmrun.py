@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+'''This command runs through a basic sequence of pm ops'''
+__revision__ = '$Revision$'
+
 import sys, time, Cobalt.Proxy, Cobalt.Logging
 
 if __name__ == '__main__':
