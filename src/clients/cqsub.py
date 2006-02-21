@@ -4,7 +4,7 @@
 __revision__ = '$Revision$'
 
 import os, sys, pwd
-import Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
           + "<working directory> -e envvar1=value1:envvar2=value2" \
@@ -20,6 +20,10 @@ if __name__ == '__main__':
                 'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix'}
     (opts, command) = Cobalt.Util.dgetopt(sys.argv[1:], options, doptions, helpmsg)
     # need to filter here for all args
+    level = 30
+    if '-d' in sys.argv:
+        level = 10
+        
     failed = False
     needed = ['time', 'nodecount'] #, 'project']
     if [field for (field, value) in opts.iteritems() if not value and field in needed] or not command:
@@ -94,6 +98,9 @@ if __name__ == '__main__':
         [jobspec['envs'].update({key:value}) for key, value
          in [item.split('=') for item in opts['env'].split(':')]]
     jobspec.update({'command':command[0], 'args':command[1:]})
+
+    Cobalt.Logging.setup_logging('cqsub', to_syslog=False, level=level)
+    
     try:
         cqm = Cobalt.Proxy.queue_manager()
         job = cqm.AddJob(jobspec)
