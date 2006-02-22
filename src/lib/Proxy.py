@@ -105,3 +105,8 @@ class queue_manager(ComponentProxy):
     '''queue manager proxy'''
     name = 'queue-manager'
     methods = ['AddJob', 'GetJobs', 'DelJobs']
+
+class scheduler(ComponentProxy):
+    '''scheduler proxy'''
+    name = 'scheduler'
+    methods = ['AddReservation', 'DelReservation', 'GetPartition', 'AddPartition', 'DelPartition']
