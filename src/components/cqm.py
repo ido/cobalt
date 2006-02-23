@@ -111,9 +111,9 @@ class Job(Cobalt.Data.Data):
         self.timers = {}
         self.timers['queue'] = Timer()
         self.timers['queue'].Start()
-        self.timers['/usr/sbin/prologue'] = Timer()
+        #self.timers['/usr/sbin/prologue'] = Timer()
         self.timers['user'] = Timer()
-        self.timers['/usr/sbin/epilogue'] = Timer()
+        #self.timers['/usr/sbin/epilogue'] = Timer()
         self.pgid = {}
         self.spgid = {}
         self.steps = ['StageInit', 'FinishStage', 'RunPrologue',
@@ -225,8 +225,7 @@ class Job(Cobalt.Data.Data):
         if len(self.steps) > 1:
             self.steps = self.steps[1:]
         else:
-            logger.error("No more job steps for job %s" % (self.get('jobid')))
-            self.set('state', 'error')
+            self.set('state', 'done')
             
     def Run(self, nodelist):
         '''Run a job'''
@@ -482,6 +481,7 @@ class Job(Cobalt.Data.Data):
         '''Get job execution statistics from timers'''
         result = ''
         for (name, timer) in self.timers.iteritems():
+            print name
             result += "%s:%.02fs " % (name, timer.Check())
         return result
 

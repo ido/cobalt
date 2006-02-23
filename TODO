@@ -1,12 +1,15 @@
+XMLRPC Rewrite
+ - infrastructure (slp) (done)
+ - bgpm (done)
+ - cqm
+ - bgsched
+ - cam
+
 bgsched
- - Add dependency checking
  - Handle qm failures more gracefully
- - config file
 
 cqm
- - config file
  - integrate qm2 code
- - allocation manager integration
  - selective file staging
 
 cam
