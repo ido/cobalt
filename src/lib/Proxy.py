@@ -99,12 +99,12 @@ class file_stager(ComponentProxy):
 class process_manager(ComponentProxy):
     '''process manager specific component proxy'''
     name = 'process-manager'
-    methods = ['CreateProcessGroup', 'GetProcessGroup']
+    methods = ['CreateProcessGroup', 'GetProcessGroup', 'KillProcessGroup', 'WaitProcessGroup']
 
 class queue_manager(ComponentProxy):
     '''queue manager proxy'''
     name = 'queue-manager'
-    methods = ['AddJob', 'GetJobs', 'DelJobs']
+    methods = ['AddJob', 'GetJobs', 'DelJobs', 'RunJobs']
 
 class scheduler(ComponentProxy):
     '''scheduler proxy'''

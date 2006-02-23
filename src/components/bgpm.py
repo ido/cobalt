@@ -158,6 +158,7 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
         self.register_function(self.create_processgroup, "CreateProcessGroup")
         self.register_function(self.get_processgroup, "GetProcessGroup")
         self.register_function(self.signal_processgroup, "SignalProcessGroup")
+        self.register_function(self.wait_processgroup, "WaitProcessGroup")
 
     def manage_children(self):
         if (time.time() - self.lastwait) > 6:
@@ -184,6 +185,10 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     def get_processgroup(self, address, data):
         '''query existing process group'''
         return self.Get(data)
+
+    def wait_processgroup(self, address, data):
+        '''Remove completed process group'''
+        return self.Del(data)
 
     def signal_processgroup(self, address, data, sig):
         '''signal existing process group with specified signal'''

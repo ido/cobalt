@@ -6,11 +6,12 @@ __revision__ = '$Revision$'
 import getopt, sys
 import Cobalt.Logging, Cobalt.Proxy
 
-helpmsg = 'Usage: cqadm [-d] [--hold] [--release] [--kill] [--delete] [--queue=queuename] <jobid> <jobid>'
+helpmsg = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
+          '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>'
 
 if __name__ == '__main__':
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'd', ['hold', 'release', 'kill', 'delete', 'queue='])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'd', ['hold', 'release', 'kill', 'delete', 'queue=', 'run='])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -42,11 +43,16 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('cqadm', to_syslog=False, level=level)
     spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
     cqm = Cobalt.Proxy.queue_manager()
-    for cmd in [item for item in ['--kill', '--delete'] if item in sys.argv]:
-        if cmd == '--delete':
-            response = cqm.DelJobs(spec, force=True)
-        else:
-            response = cqm.DelJobs(spec)
+    kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
+    if kdata:
+        for cmd in kdata:
+            if cmd == '--delete':
+                response = cqm.DelJobs(spec, force=True)
+            else:
+                response = cqm.DelJobs(spec)
+    elif '--run' in [opt for (opt, arg) in opts]:
+        [location] = [arg for (opt, arg) in opts if opt == '--run']
+        response = cqm.RunJobs(spec, location.split(':'))
     else:
         updates = {}
         if ('--hold', '') in opts:

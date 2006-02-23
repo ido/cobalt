@@ -82,18 +82,14 @@ class Logger(object):
         self.logger.info(message)
 
 
-class CommDict:
+class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
-    commnames = {'pm':'process-manager', 'fs':'file-stager', 'am':'allocation-manager'}
-
-    def __init__(self):
-        self.data = {}
+    commnames = {'pm':'process_manager', 'fs':'file_stager', 'am':'allocation_manager'}
 
     def __getitem__(self, name):
-        if self.data.has_key(name):
-            return self.data[name]
-        else:
-            self.data[name] = getattr(Cobalt.Proxy, self.commnames[name])()
+        if not self.has_key(name):
+            self.__setitem__(name, getattr(Cobalt.Proxy, self.commnames[name])())
+        return dict.__getitem__(self, name)
 
 class Job(Cobalt.Data.Data):
     '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
@@ -218,14 +214,19 @@ class Job(Cobalt.Data.Data):
             self.SetPassive()
             return
         logger.info("Job %s/%s: running step %s" % (self.get('jobid'), self.get('user'), self.steps[0]))
-        getattr(self, self.steps[0])()
         try:
+            getattr(self, self.steps[0])()
+        except:
+            logger.error("Unexpected failure jobid:%s step:%s" % (self.get('jobid'), self.steps[0]),
+                         exc_info=1)
+            self.SetPassive()
+            return
+
+        if len(self.steps) > 1:
             self.steps = self.steps[1:]
-        except IndexError:
+        else:
             logger.error("No more job steps for job %s" % (self.get('jobid')))
             self.set('state', 'error')
-        except:
-            logger.error("Unexpected failure jobid:%s step:%s" % (self.get('jobid'), self.steps[0]), exc_info=1)
             
     def Run(self, nodelist):
         '''Run a job'''
@@ -233,17 +234,17 @@ class Job(Cobalt.Data.Data):
             logger.info("Got multiple run commands for job %s" % self.get('jobid'))
             return
         self.timers['queue'].Stop()
+        #if self.get('reservation', False):
+        #    self.acctlog.LogMessage('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
+        #else:
+            #self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
+            #    self.get('jobid'), self.get('user'), self.get('name'), self.get('size'), self.get('nodes'),
+            #    self.get('procs'), self.get('mode'), self.get('walltime')))
+        self.set('location', ":".join(nodelist))
+        self.set('starttime', str(time.time()))
+        self.SetActive()
         logger.info("Job %s/%s: Running job on %s" % (self.get('jobid'),
                                                            self.get('user'), ":".join(nodelist)))
-        if self.get('reservation'):
-            self.acctlog.LogMessage('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
-        else:
-            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
-                self.get('jobid'), self.get('user'), self.get('name'), self.get('size'), self.get('nodes'),
-                self.get('procs'), self.get('mode'), self.get('walltime')))
-        self.set('location', ":".join(nodelist))
-        self.set('starttime', str(time()))
-        self.SetActive()
 
     def FinishStage(self):
         '''Complete a stage'''
@@ -261,9 +262,9 @@ class Job(Cobalt.Data.Data):
         self.timers['user'].Stop()
         if self.spgid.has_key('user'):
             try:
-                pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user']}])
-                self.output = pgroups[0].output
-                self.error = pgroups[0].error
+                pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
+                #self.output = pgroups[0]['output']
+                #self.error = pgroups[0]['error']
             except xmlrpclib.Fault, fault:
                 logger.error("Error contacting process manager for finalize, requeueing")
                 self.steps = ['FinalizeStage'] + self.steps
@@ -549,8 +550,10 @@ class BGJob(Job):
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'outputfile':self.get('outputpath'),
                  'errorfile':self.get('errorpath'), 'path':self.get('path'), 'size':self.get('procs'),
                  'mode':self.get('mode', 'co'), 'cwd':self.get('outputdir'), 'executable':self.get('command'),
-                 'args':self.get('args'), 'envs':self.get('envs'), 'location':self.get('location')})
+                 'args':self.get('args'), 'envs':self.get('envs', {}), 'location':self.get('location')})
         except xmlrpclib.Fault, fault:
+            raise ProcessManagerError
+        except Cobalt.Proxy.CobaltComponentError:
             raise ProcessManagerError
         if not pgroup[0].has_key('pgid'):
             logger.error("Process Group creation failed for Job %s" % self.get('jobid'))
@@ -570,6 +573,7 @@ class CQM(Cobalt.Component.Component):
     __implementation__ = 'cqm'
     __name__ = 'queue-manager'
     __statefields__ = ['Jobs']
+    async_funcs = ['assert_location', 'progress', 'pm_sync']
 
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
@@ -586,14 +590,15 @@ class CQM(Cobalt.Component.Component):
                                self.Jobs.Get(data, lambda job, newattr:job.update(newattr), (updates,)),
                                'SetJobs')
 
-    def __progress__(self):
+    def progress(self):
+        '''Process asynchronous job work'''
         [j.Progress() for j in self.Jobs if j.active]
         [j.Kill("Job %s Overtime, Killing") for j in self.Jobs if j.over_time()]
-        [j.LogFinish() for j in self.Jobs if j.attr['state'] == 'done']
-        [self.Jobs.remove(j) for j in self.Jobs if j.attr['state'] == 'done']
+        [j.LogFinish() for j in self.Jobs if j.get('state') == 'done']
+        [self.Jobs.remove(j) for j in self.Jobs if j.get('state') == 'done']
         newdate = time.strftime("%m-%d-%y", time.localtime())
         # [Job.log.ChangeLog() for j in self.Jobs if newdate != self.prevdate]
-        Job.log.ChangeLog()
+        #Job.acctlog.ChangeLog()
         return 1
 
     def handle_job_del(self, address, data, force=False):
@@ -653,14 +658,16 @@ class CQM(Cobalt.Component.Component):
                                                                       [j.element.get('jobid') for j in jlist]))
                 [j.CompletePG(d) for j in jlist]
 
-    def PMResync(self):
+    def pm_sync(self):
         '''Resynchronize with the process manager'''
-        pgids = [item['pgid'] for item in self.comms['pm'].GetProcessGroup([{'pgid':'*', 'state':'running'}])]
+        live = [item['pgid'] for item in self.comms['pm'].GetProcessGroup([ \
+            {'tag':'process-group', 'pgid':'*', 'state':'running'}])]
         for job in self.Jobs:
-            for item in job.pgid:
-                if item[1] not in pgids:
-                    self.logger.info("Found dead pg for job %s" % (job.attr['jobid']))
-                    job.CompletePG(item[1])
+            for pgtype in job.pgid.keys():
+                pgid = job.pgid[pgtype]
+                if pgid not in live:
+                    self.logger.info("Found dead pg for job %s" % (job.get('jobid')))
+                    job.CompletePG(pgid)
             
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
