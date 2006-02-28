@@ -3,16 +3,15 @@
 '''Super-Simple Scheduler for BG/L'''
 __revision__ = '$Revision'
 
-import copy, sys, time
+import copy, logging, sys, time, xmlrpclib
 import Cobalt.Component, Cobalt.Data, Cobalt.Proxy
 import DB2
 
-from elementtree.ElementTree import XML
-from syslog import syslog, LOG_INFO, LOG_ERR
 from ConfigParser import ConfigParser
 
-sys.path.append('/soft/apps/rm-0.90/lib/python')
-import DB2
+logger = logging.getLogger('bgsched')
+
+comm = Cobalt.Proxy.CommDict()
 
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
@@ -24,13 +23,13 @@ class FailureMode(object):
     def Pass(self):
         '''Check if status was previously failure and report OK status if needed'''
         if not self.status:
-            syslog(LOG_ERR, "Failure %s cleared" % (self.name))
+            logger.error("Failure %s cleared" % (self.name))
             self.status = True
 
     def Fail(self):
         '''Check if status was previously success and report failed status if needed'''
         if self.status:
-            syslog(LOG_ERR, "Failure %s occured" % (self.name))
+            logger.error("Failure %s occured" % (self.name))
             self.status = False
 
 class Partition(Cobalt.Data.Data):
@@ -65,7 +64,7 @@ class Partition(Cobalt.Data.Data):
         jdur = 60 * wall
         # all times are in seconds
         current = time.time()
-        for reserv in self.findall('Reservation'):
+        for reserv in self.get('reservations'):
             if job.element.get('user') in reserv.get('user', '').split(':'):
                 continue
             start = float(reserv.get('start'))
@@ -84,7 +83,7 @@ class Partition(Cobalt.Data.Data):
 
     def PlaceJob(self, job):
         '''Allocate this partition for Job'''
-        syslog(LOG_INFO, "Job %s/%s: Scheduling job %s on partition %s" % (
+        logger.info("Job %s/%s: Scheduling job %s on partition %s" % (
             job.element.get('jobid'), job.element.get('user'), job.element.get('jobid'),
             self.get('name')))
         self.job = job.element.get('jobid')
@@ -92,7 +91,7 @@ class Partition(Cobalt.Data.Data):
 
     def Free(self):
         '''DeAllocate partition for current job'''
-        syslog(LOG_INFO, "Job %s: Freeing partition %s" % (self.job, self.get('name')))
+        logger.info("Job %s: Freeing partition %s" % (self.job, self.get('name')))
         self.job = 'none'
         self.set('state', 'idle')
 
@@ -112,7 +111,7 @@ class Job(Cobalt.Data.Data):
     def __init__(self, element):
         Cobalt.Data.Data.__init__(self, element)
         self.partition = 'none'
-        syslog(LOG_INFO, "Job %s/%s: Found new job" % (self.get('jobid'),
+        logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
                                                        self.get('user')))
 
     def Place(self, partition):
@@ -177,7 +176,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             except:
                 continue
             if ((currjob.element.get('queue') != queue) or (currjob.element.get('state') != state)):
-                syslog(LOG_ERR, "Detected local state inconsistency for job %s. Fixing." % jobid)
+                logger.error("Detected local state inconsistency for job %s. Fixing." % jobid)
                 currjob.element.set('state', state)
                 currjob.element.set('queue', queue)
         # free partitions with nonexistant jobs
@@ -203,9 +202,9 @@ class PartitionSet(Cobalt.Data.DataSet):
                 if foundlocation:
                     part.job = foundlocation[0].get('jobid')
                     part.element.set('state', 'busy')
-                    syslog(LOG_ERR, "Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.element.get('name')))
+                    logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.element.get('name')))
                 else:
-                    syslog(LOG_ERR, 'Partition %s in inconsistent state' % (part.element.get('name')))
+                    logger.error('Partition %s in inconsistent state' % (part.element.get('name')))
                 candidates.remove(part)
             #print "after db2 check"
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
@@ -332,42 +331,40 @@ class BGSched(Cobalt.Component.Component):
         self.lastrun = 0
 
     def __progress__(self):
-        since = time.time() - self.lastrun
-        if since > self.__schedcycle__:
-            self.RunQueue()
-            self.lastrun = time.time()
+        self.RunQueue()
         return 0
             
     def RunQueue(self):
+        since = time.time() - self.lastrun
+        if since < self.__schedcycle__:
+            return
         try:
-            handle = self.comm.ClientInit('queue-manager')
-        except:
+            jobs = comm['qm'].GetJob({'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
+                                      'walltime':'*', 'queue':'*'})
+        except xmlrpclib.Fault:
             self.qmconnect.Fail()
             return 0
+        except:
+            self.logger.error("Unexpected fault during queue fetch", exc_info=1)
+            return 0
         self.qmconnect.Pass()
-        self.comm.SendMessage(handle,
-                              "<get-job><job nodes='*' location='*' user='*' jobid='*' state='*' walltime='*' queue='*'/></get-job>")
-        jobs = self.comm.RecvMessage(handle)
-        xjobs = XML(jobs)
-        active = [job.get('jobid') for job in xjobs.findall(".//job")]
+        active = [job.get('jobid') for job in jobs]
         for job in [j for j in self.jobs if j.get('jobid') not in active]:
-            syslog(LOG_INFO, "Job %s/%s: gone from qm" % (job.get('jobid'),
-                                                          job.get('user')))
+            logger.info("Job %s/%s: gone from qm" % (job.get('jobid'), job.get('user')))
             self.jobs.remove(job)
         # known is jobs that are already registered
         known = [job.get('jobid') for job in self.jobs]
         [partition.Free() for partition in self.partitions if partition.job not in known + ['none']]
-        newjobs = [job for job in xjobs.findall('.//job') if job.get('jobid') not in known]
+        newjobs = [job for job in jobs if job.get('jobid') not in known]
         self.jobs.extend([Job(job) for job in newjobs])
-        placements = self.partitions.Schedule(xjobs.findall(".//job"))
+        placements = self.partitions.Schedule(jobs)
         #print placements
         for (jobid, part) in placements:
-            self.comm.SendMessage(handle,
-                                  "<run-job nodelist='%s'><job jobid='%s'/></run-job>" %
-                                  (part, jobid))
-            self.comm.RecvMessage(handle)
-        self.comm.ClientClose(handle)
-        return 0
+            try:
+                comm['qm'].RunJobs({'tag':'job', 'jobid':jobid}, [part])
+            except:
+                logger.error("failed to connect to the queue manager to run job %s" % (jobid))
+        self.lastrun = time.time()
 
     def AddRes(self, xml, portinfo):
         '''Handler for addition of reservations'''

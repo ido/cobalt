@@ -1,19 +1,7 @@
 XMLRPC Rewrite
  - infrastructure (slp) (done)
  - bgpm (done)
- - cqm
+ - cqm (done)
  - bgsched
  - cam
-
-bgsched
- - Handle qm failures more gracefully
-
-cqm
- - integrate qm2 code
- - selective file staging
-
-cam
- - test
- - document
- - add reports
- - resource limits
+ - implement data persistence

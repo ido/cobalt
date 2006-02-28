@@ -110,3 +110,13 @@ class scheduler(ComponentProxy):
     '''scheduler proxy'''
     name = 'scheduler'
     methods = ['AddReservation', 'DelReservation', 'GetPartition', 'AddPartition', 'DelPartition']
+
+class CommDict(dict):
+    '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
+    commnames = {'pm':process_manager, 'fs':file_stager, 'am':allocation_manager,
+                 'sched':scheduler}
+
+    def __getitem__(self, name):
+        if not self.has_key(name):
+            self.__setitem__(name, self.commnames[name]())
+        return dict.__getitem__(self, name)
