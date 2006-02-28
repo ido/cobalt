@@ -1,7 +1,7 @@
 '''Bcfg2 logging support'''
 __revision__ = '$Revision$'
 
-import copy, fcntl, logging, logging.handlers, lxml.etree, math, struct, sys, termios, types
+import copy, fcntl, logging, logging.handlers, lxml.etree, math, socket, struct, sys, termios, types
 
 def print_attributes(attrib):
     ''' Add the attributes for an element'''
@@ -46,7 +46,7 @@ class TermiosFormatter(logging.Formatter):
                 self.width = 80
         else:
             # output to a pipe
-            self.width = sys.maxint
+            self.width = 32768
 
     def format(self, record):
         '''format a record for display'''
@@ -74,7 +74,6 @@ class TermiosFormatter(logging.Formatter):
         elif type(record.msg) == lxml.etree._Element:
             returns.append(str(xml_print(record.msg)))
         else:
-            returns.append("Got unsupported type %s" % (str(type(record.msg))))
             returns.append(record.name + ':' + str(record.msg))
         if record.exc_info:
             returns.append(self.formatException(record.exc_info))
@@ -91,38 +90,43 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         '''chunk and deliver records'''
         record.name = self.procname
         if str(record.msg) > 250:
-            start = 0
-            error = None
-            if record.exc_info:
-                error = record.exc_info
-                record.exc_info = None
-            msgdata = str(record.msg)
-            while start < len(msgdata):
+            msgs = []
+            error = record.exc_info
+            msgdata = record.msg
+            while msgdata:
                 newrec = copy.deepcopy(record)
-                newrec.msg = msgdata[start:start+250]
-                newrec.exc_info = error
-                logging.handlers.SysLogHandler.emit(self, newrec)
-                # only send the traceback once
-                error = None
-                start += 250
+                newrec.msg = msgdata[:250]
+                msgs.append(newrec)
+                msgdata = msgdata[250:]
+            msgs[0].exc_info = error
         else:
-            logging.handlers.SysLogHandler.emit(self, newrec)
-    
+            msgs = [record]
+        while msgs:
+            newrec = msgs.pop()
+            try:
+                self.socket.send(self.format(newrec))
+            except socket.error:
+                self.socket.connect(self.address)
+                self.socket.send(self.format(newrec))
+
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
         return 
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    # tell the handler to use this format
-    console.setFormatter(TermiosFormatter())
-    syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
-    syslog.setLevel(logging.DEBUG)
-    syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
     # add the handler to the root logger
     if to_console:
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG)
+        # tell the handler to use this format
+        console.setFormatter(TermiosFormatter())
         logging.root.addHandler(console)
     if to_syslog:
-        logging.root.addHandler(syslog)
+        try:
+            syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
+            syslog.setLevel(logging.DEBUG)
+            syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
+            logging.root.addHandler(syslog)
+        except socket.error:
+            logging.root.error("failed to activate syslogging")
     logging.root.setLevel(level)
     logging.already_setup = True
