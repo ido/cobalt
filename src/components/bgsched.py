@@ -3,29 +3,16 @@
 '''Super-Simple Scheduler for BG/L'''
 __revision__ = '$Revision'
 
-from copy import deepcopy
-from sss.server import Server
-from sss.restriction import Data, DataSet
-from elementtree.ElementTree import XML, Element
+import copy, sys, time
+import Cobalt.Component, Cobalt.Data, Cobalt.Proxy
+import DB2
+
+from elementtree.ElementTree import XML
 from syslog import syslog, LOG_INFO, LOG_ERR
-from time import time
-from sys import argv
 from ConfigParser import ConfigParser
-import sys
 
 sys.path.append('/soft/apps/rm-0.90/lib/python')
 import DB2
-
-class DataSet2(DataSet):
-    '''DataSet2 is DataSet with class parameters'''
-    rname = None
-    ename = None
-    obj = None
-    idalloc = None
-    log = False
-    
-    def __init__(self):
-        self.data = []
 
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
@@ -46,26 +33,27 @@ class FailureMode(object):
             syslog(LOG_ERR, "Failure %s occured" % (self.name))
             self.status = False
 
-class Partition(Data):
+class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
     def __init__(self, element):
-        Data.__init__(self, element)
-        self.element.set('state', 'idle')
+        Cobalt.Data.Data.__init__(self, element)
+        self.set('state', 'idle')
+        self.set('reservations', [])
         self.job = 'none'
         self.rcounter = 1
 
     #def __cmp__(self, other):
-    #    return int(self.element.get('size')).__cmp__(int(other.element.get('size')))
+    #    return int(self.get('size')).__cmp__(int(other.element.get('size')))
 
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
-        if self.element.get('admin') != 'online':
+        if self.get('admin') != 'online':
             return False
-        if job.element.get('queue') not in self.element.get('queue').split(':') + ['BUG']:
+        if job.element.get('queue') not in self.get('queue').split(':') + ['BUG']:
             #print "job", job.element.get('jobid'), 'queue'
             return False
         jobsize = int(job.element.get('nodes'))
-        partsize = int(self.element.get('size'))
+        partsize = int(self.get('size'))
         if jobsize > partsize:
             #print "job", job.element.get('jobid'), 'size'
             return False
@@ -76,8 +64,8 @@ class Partition(Data):
         wall = float(job.element.get('walltime')) + 5.0
         jdur = 60 * wall
         # all times are in seconds
-        current = time()
-        for reserv in self.element.findall('Reservation'):
+        current = time.time()
+        for reserv in self.findall('Reservation'):
             if job.element.get('user') in reserv.get('user', '').split(':'):
                 continue
             start = float(reserv.get('start'))
@@ -98,51 +86,48 @@ class Partition(Data):
         '''Allocate this partition for Job'''
         syslog(LOG_INFO, "Job %s/%s: Scheduling job %s on partition %s" % (
             job.element.get('jobid'), job.element.get('user'), job.element.get('jobid'),
-            self.element.get('name')))
+            self.get('name')))
         self.job = job.element.get('jobid')
-        self.element.set('state', 'busy')
+        self.set('state', 'busy')
 
     def Free(self):
         '''DeAllocate partition for current job'''
-        syslog(LOG_INFO, "Job %s: Freeing partition %s" % (self.job, self.element.get('name')))
+        syslog(LOG_INFO, "Job %s: Freeing partition %s" % (self.job, self.get('name')))
         self.job = 'none'
-        self.element.set('state', 'idle')
+        self.set('state', 'idle')
 
     def AddReservation(self, args):
         '''Add a reservation for this partition'''
-        reservation = Element('Reservation')
-        reservation.attrib.update(args)
+        reservation = Cobalt.Data.Data(args)
         if not args.has_key('name'):
-            reservation.set('name', "%s.%s" % (self.element.get('name'), self.rcounter))
+            reservation.set('name', "%s.%s" % (self.get('name'), self.rcounter))
             self.rcounter += 1
-        self.element.append(reservation)
+        self._attrib['reservations'].append(reservation)
 
     def DelReservation(self, name):
-        [self.element.remove(reservation) for reservation in self.element.findall('Reservation') if reservation.get('name') == name]
+        [self._attrib['reservations'].remove(reservation) for reservation in self._attrib['reservations'] if reservation.get('name') == name]
 
-class Job(Data):
+class Job(Cobalt.Data.Data):
     '''This class is represents User Jobs'''
     def __init__(self, element):
-        Data.__init__(self, element)
+        Cobalt.Data.Data.__init__(self, element)
         self.partition = 'none'
-        syslog(LOG_INFO, "Job %s/%s: Found new job" % (self.element.get('jobid'),
-                                                       self.element.get('user')))
+        syslog(LOG_INFO, "Job %s/%s: Found new job" % (self.get('jobid'),
+                                                       self.get('user')))
 
     def Place(self, partition):
         '''Build linkage to execution partition'''
         self.partition = partition.element.get('name')
-        self.element.set('state', 'running')
+        self.set('state', 'running')
         
 
-class PartitionSet(DataSet2):
-    rname = 'Partitions'
-    ename = 'Partition'
-    obj = Partition
+class PartitionSet(Cobalt.Data.DataSet):
+    __object__ = Partition
 
     _configfields = ['db2uid', 'db2dsn', 'db2pwd']
     _config = ConfigParser()
-    if '-C' in argv:
-        _config.read(argv[argv.index('-C') + 1])
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
         _config.read('/etc/cobalt.conf')
     if not _config._sections.has_key('bgsched'):
@@ -160,14 +145,14 @@ class PartitionSet(DataSet2):
     qpolicy = {'default':'PlaceFIFO', 'short':'PlaceShort', 'scavenger':'PlaceScavenger'}
 
     def __init__(self):
-        DataSet2.__init__(self)
+        Cobalt.Data.DataSet.__init__(self)
         self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
                                dsn=self.config.get('db2dsn')).cursor()
         self.jobs = []
         self.qmconnect = FailureMode("QM Connection")
 
     def __getstate__(self):
-        return {'data':deepcopy(self.data), 'jobs':deepcopy(self.jobs)}
+        return {'data':copy.deepcopy(self.data), 'jobs':copy.deepcopy(self.jobs)}
 
     def __setstate__(self, state):
         self.__dict__.update(state)
@@ -236,7 +221,7 @@ class PartitionSet(DataSet2):
             [pdeps[key].remove('') for key in pdeps.keys() if '' in pdeps[key]]
             for part in pdeps.keys():
                 traversed = []
-                left = deepcopy(pdeps[part])
+                left = copy.deepcopy(pdeps[part])
                 while left:
                     current = left.pop()
                     traversed.append(current)
@@ -317,18 +302,18 @@ class PartitionSet(DataSet2):
         '''Policy for short queue. Limited to jobs 30 mins or less'''
         potential = qpotential[queue]
         for job in potential.keys():
-            if float(job.element.get('walltime')) > 30:
+            if float(job.get('walltime')) > 30:
                 del potential[job]
         return self.PlaceFIFO(potential, deps)
 
     def PlaceScavenger(self, qpotential, queue, deps):
         '''A really stupid priority queueing mechanism that starves lo queue jobs if the high-queue has idle jobs'''
-        live = [job.element.get('queue') for job in self.jobs if job.element.get('state') == 'queued']
+        live = [job.get('queue') for job in self.jobs if job.get('state') == 'queued']
         if live.count(queue) != len(live):
             return []
         return self.PlaceFIFO(qpotential[queue], deps)
                 
-class BGSched(Server):
+class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'BGSched'
     __component__ = 'scheduler'
@@ -347,10 +332,10 @@ class BGSched(Server):
         self.lastrun = 0
 
     def __progress__(self):
-        since = time() - self.lastrun
+        since = time.time() - self.lastrun
         if since > self.__schedcycle__:
             self.RunQueue()
-            self.lastrun = time()
+            self.lastrun = time.time()
         return 0
             
     def RunQueue(self):
@@ -365,12 +350,12 @@ class BGSched(Server):
         jobs = self.comm.RecvMessage(handle)
         xjobs = XML(jobs)
         active = [job.get('jobid') for job in xjobs.findall(".//job")]
-        for job in [j for j in self.jobs if j.element.get('jobid') not in active]:
-            syslog(LOG_INFO, "Job %s/%s: gone from qm" % (job.element.get('jobid'),
-                                                          job.element.get('user')))
+        for job in [j for j in self.jobs if j.get('jobid') not in active]:
+            syslog(LOG_INFO, "Job %s/%s: gone from qm" % (job.get('jobid'),
+                                                          job.get('user')))
             self.jobs.remove(job)
         # known is jobs that are already registered
-        known = [job.element.get('jobid') for job in self.jobs]
+        known = [job.get('jobid') for job in self.jobs]
         [partition.Free() for partition in self.partitions if partition.job not in known + ['none']]
         newjobs = [job for job in xjobs.findall('.//job') if job.get('jobid') not in known]
         self.jobs.extend([Job(job) for job in newjobs])
