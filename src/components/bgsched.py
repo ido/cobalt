@@ -48,10 +48,10 @@ class Partition(Cobalt.Data.Data):
         '''Check that job can run on partition with reservation constraints'''
         if self.get('admin') != 'online':
             return False
-        if job.element.get('queue') not in self.get('queue').split(':') + ['BUG']:
+        if job.get('queue') not in self.get('queue').split(':') + ['BUG']:
             #print "job", job.element.get('jobid'), 'queue'
             return False
-        jobsize = int(job.element.get('nodes'))
+        jobsize = int(job.get('nodes'))
         partsize = int(self.get('size'))
         if jobsize > partsize:
             #print "job", job.element.get('jobid'), 'size'
@@ -60,12 +60,12 @@ class Partition(Cobalt.Data.Data):
             # job should be run on a smaller partition
             return False
         # add a little slack for job cleanup with reservation calculations
-        wall = float(job.element.get('walltime')) + 5.0
+        wall = float(job.get('walltime')) + 5.0
         jdur = 60 * wall
         # all times are in seconds
         current = time.time()
         for reserv in self.get('reservations'):
-            if job.element.get('user') in reserv.get('user', '').split(':'):
+            if job.get('user') in reserv.get('user', '').split(':'):
                 continue
             start = float(reserv.get('start'))
             rdur = int(reserv.get('duration'))
@@ -84,9 +84,9 @@ class Partition(Cobalt.Data.Data):
     def PlaceJob(self, job):
         '''Allocate this partition for Job'''
         logger.info("Job %s/%s: Scheduling job %s on partition %s" % (
-            job.element.get('jobid'), job.element.get('user'), job.element.get('jobid'),
+            job.get('jobid'), job.get('user'), job.get('jobid'),
             self.get('name')))
-        self.job = job.element.get('jobid')
+        self.job = job.get('jobid')
         self.set('state', 'busy')
 
     def Free(self):
@@ -116,7 +116,7 @@ class Job(Cobalt.Data.Data):
 
     def Place(self, partition):
         '''Build linkage to execution partition'''
-        self.partition = partition.element.get('name')
+        self.partition = partition.get('name')
         self.set('state', 'running')
         
 
@@ -162,31 +162,31 @@ class PartitionSet(Cobalt.Data.DataSet):
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
         #print "scheduling"
-        knownjobs = [job.element.get('jobid') for job in self.jobs]
+        knownjobs = [job.get('jobid') for job in self.jobs]
         activejobs = [job.get('jobid') for job in jobs]
         finished = [jobid for jobid in knownjobs if jobid not in activejobs]
         #print "known", knownjobs, "active", activejobs, "finished", finished
         # add new jobs
         [self.jobs.append(Job(jobdata)) for jobdata in jobs if jobdata.get('jobid') not in knownjobs]
         # delete finished jobs
-        [self.jobs.remove(job) for job in self.jobs if job.element.get('jobid') in finished]
+        [self.jobs.remove(job) for job in self.jobs if job.get('jobid') in finished]
         for (jobid, state, queue) in [(job.get('jobid'), job.get('state'), job.get('queue')) for job in jobs]:
             try:
-                [currjob] = [job for job in self.jobs if job.element.get('jobid') == jobid]
+                [currjob] = [job for job in self.jobs if job.get('jobid') == jobid]
             except:
                 continue
-            if ((currjob.element.get('queue') != queue) or (currjob.element.get('state') != state)):
+            if ((currjob.get('queue') != queue) or (currjob.get('state') != state)):
                 logger.error("Detected local state inconsistency for job %s. Fixing." % jobid)
-                currjob.element.set('state', state)
-                currjob.element.set('queue', queue)
+                currjob.set('state', state)
+                currjob.set('queue', queue)
         # free partitions with nonexistant jobs
         [partition.Free() for partition in self.data if partition.job not in activejobs + ['none']]
         # find idle partitions for new jobs
-        candidates = [part for part in self.data if part.element.get('state') == 'idle' and
-                      part.element.get('admin') == 'online']
+        candidates = [part for part in self.data if part.get('state') == 'idle' and
+                      part.get('admin') == 'online']
         #print "initial candidates: ", [cand.element.get('name') for cand in candidates]
         # find idle jobs
-        idlejobs = [job for job in self.jobs if job.element.get('state') == 'queued']
+        idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         #print "jobs:", self.jobs
         #print "idle jobs:", [idlej.element.get('jobid') for idlej in idlejobs]
         #print "not idle:", [(nidlej.element.get('jobid'), nidlej.element.get('state')) for nidlej in self.jobs if nidlej not in idlejobs]
@@ -197,14 +197,14 @@ class PartitionSet(Cobalt.Data.DataSet):
             db2data = {}
             [db2data.update({block.strip():status}) for (block, status) in results]
             #print "db2data:", db2data
-            for part in [part for part in candidates if db2data[part.element.get('name')] != 'F']:
-                foundlocation = [job for job in jobs if job.get('location') == part.element.get('name')]
+            for part in [part for part in candidates if db2data[part.get('name')] != 'F']:
+                foundlocation = [job for job in jobs if job.get('location') == part.get('name')]
                 if foundlocation:
                     part.job = foundlocation[0].get('jobid')
-                    part.element.set('state', 'busy')
-                    logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.element.get('name')))
+                    part.set('state', 'busy')
+                    logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.get('name')))
                 else:
-                    logger.error('Partition %s in inconsistent state' % (part.element.get('name')))
+                    logger.error('Partition %s in inconsistent state' % (part.get('name')))
                 candidates.remove(part)
             #print "after db2 check"
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
@@ -216,7 +216,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             pdeps = {}
             for part in self.data:
                 #print "Dep line", part.element.get('name'), part.element.get('deps')
-                pdeps[part] = part.element.get('deps', '').split(':')
+                pdeps[part] = part.get('deps', '').split(':')
             [pdeps[key].remove('') for key in pdeps.keys() if '' in pdeps[key]]
             for part in pdeps.keys():
                 traversed = []
@@ -225,7 +225,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                     current = left.pop()
                     traversed.append(current)
                     [left.append(item) for item in pdeps[partbyname[current]] if item not in traversed]
-                deps[part] = [partition for partition in self.data if partition.element.get('name') in traversed]
+                deps[part] = [partition for partition in self.data if partition.get('name') in traversed]
             # now we have deps for all partitions
             #print "After dep check"
             #print "Deps:"
@@ -241,7 +241,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             # need to filter out dependency-used partitions
             candidates = [part for part in candidates if not [item for item in deps[part] if item not in candidates]]
             # need to filter out contained partitions
-            candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.element.get('name'), 'F') != 'F']]
+            candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F']]
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
             potential = {}
@@ -258,10 +258,10 @@ class PartitionSet(Cobalt.Data.DataSet):
         qpotential = {}
         placements = []
         for job in potential.keys():
-            if qpotential.has_key(job.element.get('queue')):
-                qpotential[job.element.get('queue')][job] = potential[job]
+            if qpotential.has_key(job.get('queue')):
+                qpotential[job.get('queue')][job] = potential[job]
             else:
-                qpotential[job.element.get('queue')] = {job:potential[job]}
+                qpotential[job.get('queue')] = {job:potential[job]}
         for queue in qpotential.keys():
             qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
             placements += qfunc(qpotential, queue, deps)
@@ -275,14 +275,14 @@ class PartitionSet(Cobalt.Data.DataSet):
             #print "potential"
             #for key, value in potential.iteritems():
             #    print key.element.get('jobid'), [part.element.get('name') for part in value]
-            potentialjobs = [int(key.element.get('jobid')) for key in potential.keys()]
+            potentialjobs = [int(key.get('jobid')) for key in potential.keys()]
             potentialjobs.sort()
             newjobid = str(potentialjobs[0])
-            [newjob] = [job for job in potential.keys() if job.element.get('jobid') == newjobid]
+            [newjob] = [job for job in potential.keys() if job.get('jobid') == newjobid]
             location = potential[newjob][0]
             location.PlaceJob(newjob)
             newjob.Place(location)
-            placements.append((newjob.element.get('jobid'), location.element.get('name')))
+            placements.append((newjob.get('jobid'), location.get('name')))
             del potential[newjob]
             # now we need to remove location (and all partitions containing it) from potential lists
             #print "removing locations:", [x.element.get('name') for x in [location] + deps[location]]
@@ -384,7 +384,7 @@ class BGSched(Cobalt.Component.Component):
 
     def Partition_Set_cb(self, partition, args):
         '''Set partition fields callback'''
-        partition.element.attrib.update(args)
+        partition.attrib.update(args)
 
     def Partition_Set(self, xml, portinfo):
         '''Set Partition Field'''
