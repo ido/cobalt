@@ -46,7 +46,7 @@ class Slp(Component, DataSet):
         # first try to assert existing services
         retval = self.Get([data], lambda service, args:service.renew())
         if not retval:
-            self.logger.info("Adding new service %s" % (data['name']))
+            self.logger.info("Adding new service %s at %s" % (data['name'], data['url']))
             retval = self.Add([data])
         return retval
 
@@ -59,7 +59,7 @@ class Slp(Component, DataSet):
 
     def deassert_service(self, address, spec):
         '''Remove service registration'''
-        retval = self.Del(spec, lambda item,dummy:self.logger.info("Removed service %s:%s" %
+        retval = self.Del(spec, lambda item,dummy:self.logger.info("Removed service %s at %s" %
                                                                    (item.get('name'), item.get('url'))))
         if not retval:
             raise Fault(11, "No Matching Service")

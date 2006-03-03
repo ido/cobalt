@@ -314,8 +314,8 @@ class PartitionSet(Cobalt.Data.DataSet):
                 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
-    __implementation__ = 'BGSched'
-    __component__ = 'scheduler'
+    __implementation__ = 'bgsched'
+    __name__ = 'scheduler'
     __dispatch__ = {'events':'HandleEvent',
                     'GetPartition':'partitions.Get', 'AddPartition':'partitions.Add',
                     'DelPartition':'partitions.Del', 'AddReservation':'AddRes',
@@ -402,7 +402,7 @@ if __name__ == '__main__':
     if daemon:
         from sss.daemonize import daemonize
         daemonize(daemon[0])
-    server = BGSched(debug=debug)
-    server.ServeForever()
+    server = BGSched({'configfile':'/etc/cobalt.conf'})
+    server.serve_forever()
     
 
