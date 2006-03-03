@@ -3,8 +3,8 @@
 '''Process manager for Blue Gene/L systems'''
 __revision__ = '$Revision: 1.21 $'
 
-import atexit, logging, os, pwd, select, signal, sys, tempfile, time
-import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging, M2Crypto.SSL
+import atexit, logging, os, pwd, signal, sys, tempfile, time
+import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
 
 '''bgpm api:
 CreateProcessGroup({user: 'user', executable:'executable', args:['arg1', 'arg2'], location:['location'],

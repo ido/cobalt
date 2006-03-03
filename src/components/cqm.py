@@ -545,12 +545,13 @@ class BGJob(Job):
             self.set('outputpath', "%s/%s.output" % (self.get('outputdir'), self.get('jobid')))
         if not self.get('errorpath', False):
             self.set('errorpath', "%s/%s.error" % (self.get('outputdir'), self.get('jobid')))
+
         try:
             pgroup = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'outputfile':self.get('outputpath'),
                  'errorfile':self.get('errorpath'), 'path':self.get('path'), 'size':self.get('procs'),
                  'mode':self.get('mode', 'co'), 'cwd':self.get('outputdir'), 'executable':self.get('command'),
-                 'args':self.get('args'), 'envs':self.get('envs', {}), 'location':self.get('location')})
+                 'args':self.get('args'), 'envs':self.get('envs', {}), 'location':[self.get('location')]})
         except xmlrpclib.Fault, fault:
             raise ProcessManagerError
         except Cobalt.Proxy.CobaltComponentError:
@@ -660,6 +661,11 @@ class CQM(Cobalt.Component.Component):
 
     def pm_sync(self):
         '''Resynchronize with the process manager'''
+        try:
+            pgs = self.comms['pm'].GetProcessGroup([{'tag':'process-group', 'pgid':'*', 'state':'running'}])
+        except Cobalt.Proxy.CobaltComponentError:
+            self.logger.error("Failed to connect to the process manager")
+            return
         live = [item['pgid'] for item in self.comms['pm'].GetProcessGroup([ \
             {'tag':'process-group', 'pgid':'*', 'state':'running'}])]
         for job in self.Jobs:
