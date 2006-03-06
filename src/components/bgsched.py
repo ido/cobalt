@@ -316,24 +316,26 @@ class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched'
     __name__ = 'scheduler'
-    __dispatch__ = {'events':'HandleEvent',
-                    'GetPartition':'partitions.Get', 'AddPartition':'partitions.Add',
-                    'DelPartition':'partitions.Del', 'AddReservation':'AddRes',
+    __dispatch__ = {
+                    'AddReservation':'AddRes',
                     'DelReservation':'DelRes', 'Set':'Partition_Set'}
     __statefields__ = ['partitions']
     __schedcycle__ = 10
-    __validate__ = False
+    async_funcs = ['assert_location', 'RunQueue']
 
-    def __setup__(self):
+    def __init__(self, setup):
+        Cobalt.Component.Component.__init__(self, setup)
         self.partitions = PartitionSet()
         self.jobs = []
         self.qmconnect = FailureMode("QM Connection")
         self.lastrun = 0
+        self.register_function(lambda  address, data:self.partitions.Get(data), "GetPartition")
+        self.register_function(lambda  address, data:self.partitions.Add(data), "AddPartition")
+        self.register_function(lambda  address, data:self.partitions.Del(data), "DelPartition")
+        self.register_function(lambda address, data, updates:
+                               self.partitions.Get(data, lambda part, newattr:part.update(newattr), (updates,)),
+                               'Set')  
 
-    def __progress__(self):
-        self.RunQueue()
-        return 0
-            
     def RunQueue(self):
         since = time.time() - self.lastrun
         if since < self.__schedcycle__:
@@ -365,30 +367,6 @@ class BGSched(Cobalt.Component.Component):
             except:
                 logger.error("failed to connect to the queue manager to run job %s" % (jobid))
         self.lastrun = time.time()
-
-    def AddRes(self, xml, portinfo):
-        '''Handler for addition of reservations'''
-        return self.partitions.Get(xml, portinfo, self.AddRes_cb)
-
-    def AddRes_cb(self, partition, args):
-        '''Callback for reservation addition'''
-        partition.AddReservation(args)
-    
-    def DelRes(self, xml, portinfo):
-        '''Handler for reservation deletion'''
-        return self.partitions.Get(xml, portinfo, self.DelRes_cb)
-
-    def DelRes_cb(self, partition, args):
-        '''Callback for reservation deletion'''
-        partition.DelReservation(args['name'])
-
-    def Partition_Set_cb(self, partition, args):
-        '''Set partition fields callback'''
-        partition.attrib.update(args)
-
-    def Partition_Set(self, xml, portinfo):
-        '''Set Partition Field'''
-        return self.partitions.Get(xml, portinfo, self.Partition_Set_cb)
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
