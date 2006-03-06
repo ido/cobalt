@@ -3,11 +3,9 @@
 '''Super-Simple Scheduler for BG/L'''
 __revision__ = '$Revision'
 
-import copy, logging, sys, time, xmlrpclib
+import copy, logging, sys, time, xmlrpclib, ConfigParser
 import Cobalt.Component, Cobalt.Data, Cobalt.Proxy
 import DB2
-
-from ConfigParser import ConfigParser
 
 logger = logging.getLogger('bgsched')
 
@@ -46,17 +44,16 @@ class Partition(Cobalt.Data.Data):
 
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
-        if self.get('admin') != 'online':
+        if not self.get("usable"):
             return False
-        if job.get('queue') not in self.get('queue').split(':') + ['BUG']:
+        if job.get('queue') not in self.get('queue'):
             #print "job", job.element.get('jobid'), 'queue'
             return False
         jobsize = int(job.get('nodes'))
-        partsize = int(self.get('size'))
-        if jobsize > partsize:
+        if jobsize > self.get('size'):
             #print "job", job.element.get('jobid'), 'size'
             return False
-        if (((jobsize * 2) <= partsize) and (partsize != 32)):
+        if (((jobsize * 2) <= self.get('size')) and (self.get('size') != 32)):
             # job should be run on a smaller partition
             return False
         # add a little slack for job cleanup with reservation calculations
@@ -118,13 +115,12 @@ class Job(Cobalt.Data.Data):
         '''Build linkage to execution partition'''
         self.partition = partition.get('name')
         self.set('state', 'running')
-        
 
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
 
     _configfields = ['db2uid', 'db2dsn', 'db2pwd']
-    _config = ConfigParser()
+    _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
@@ -216,7 +212,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             pdeps = {}
             for part in self.data:
                 #print "Dep line", part.element.get('name'), part.element.get('deps')
-                pdeps[part] = part.get('deps', '').split(':')
+                pdeps[part] = part.get('deps')
             [pdeps[key].remove('') for key in pdeps.keys() if '' in pdeps[key]]
             for part in pdeps.keys():
                 traversed = []
