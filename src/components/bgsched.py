@@ -244,7 +244,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 potential[job] = [part for part in candidates if part.CanRun(job)]
                 if not potential[job]:
                     del potential[job]
-            print potential, deps
+            print "Potential", potential, deps
             return self.ImplementPolicy(potential, deps)
         else:
             return []
@@ -339,7 +339,6 @@ class BGSched(Cobalt.Component.Component):
         try:
             jobs = comm['qm'].GetJobs([{'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
                                       'walltime':'*', 'queue':'*', 'user':'*'}])
-            print jobs
         except xmlrpclib.Fault:
             self.qmconnect.Fail()
             return 0

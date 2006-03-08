@@ -11,8 +11,8 @@ def getElapsedTime(start, end):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
     """
-    difference = datetime.fromtimestamp( time() ) - \
-                 datetime.fromtimestamp( float(output[i][9]) )
+    runtime = datetime.fromtimestamp( end ) - \
+                 datetime.fromtimestamp( start )
     minutes, seconds = divmod(runtime.seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
@@ -44,9 +44,9 @@ if __name__ == '__main__':
         jobid_tosend = "*"
 
     cqm = Cobalt.Proxy.queue_manager()
-    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':'*'}]
+    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':'*', 'location':'*'}]
     if '-f' in sys.argv:
-        query[0].update({"location":'*'})
+        query[0].update({"mode":'*', 'procs':'*', 'queue':'*', 'starttime':'*'})
     jobs = cqm.GetJobs(query)
 
     header = [['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
@@ -73,9 +73,9 @@ if __name__ == '__main__':
                 output[i][9] = 'N/A'   # StartTime
                 output[i].insert( header[0].index('RunTime'), 'N/A' )  # RunTime
             else:
-                output[i][9] = time.strftime("%m/%d/%y %T", time.localtime(float(output[i][9])))
                 output[i].insert( header[0].index('RunTime'),
                                   getElapsedTime( time.time(), float(output[i][9]) ) )
+                output[i][10] = time.strftime("%m/%d/%y %T", time.localtime(float(output[i][10])))
 
     output.sort()
     Cobalt.Util.print_tabular([tuple(x) for x in header + output])
