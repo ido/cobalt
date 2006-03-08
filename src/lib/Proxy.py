@@ -109,12 +109,12 @@ class queue_manager(ComponentProxy):
 class scheduler(ComponentProxy):
     '''scheduler proxy'''
     name = 'scheduler'
-    methods = ['AddReservation', 'DelReservation', 'GetPartition', 'AddPartition', 'DelPartition']
+    methods = ['AddReservation', 'DelReservation', 'GetPartition', 'AddPartition', 'DelPartition', 'Set']
 
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
     commnames = {'pm':process_manager, 'fs':file_stager, 'am':allocation_manager,
-                 'sched':scheduler}
+                 'sched':scheduler, 'qm':queue_manager}
 
     def __getitem__(self, name):
         if not self.has_key(name):

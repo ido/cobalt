@@ -1,7 +1,7 @@
 '''Bcfg2 logging support'''
 __revision__ = '$Revision$'
 
-import copy, fcntl, logging, logging.handlers, lxml.etree, math, socket, struct, sys, termios, types
+import copy, fcntl, logging, logging.handlers, math, socket, struct, sys, termios, types
 
 def print_attributes(attrib):
     ''' Add the attributes for an element'''

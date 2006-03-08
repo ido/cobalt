@@ -157,12 +157,13 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
-        #print "scheduling"
+        print "scheduling"
         knownjobs = [job.get('jobid') for job in self.jobs]
         activejobs = [job.get('jobid') for job in jobs]
         finished = [jobid for jobid in knownjobs if jobid not in activejobs]
-        #print "known", knownjobs, "active", activejobs, "finished", finished
+        print "known", knownjobs, "active", activejobs, "finished", finished
         # add new jobs
+        print jobs
         [self.jobs.append(Job(jobdata)) for jobdata in jobs if jobdata.get('jobid') not in knownjobs]
         # delete finished jobs
         [self.jobs.remove(job) for job in self.jobs if job.get('jobid') in finished]
@@ -179,20 +180,20 @@ class PartitionSet(Cobalt.Data.DataSet):
         [partition.Free() for partition in self.data if partition.job not in activejobs + ['none']]
         # find idle partitions for new jobs
         candidates = [part for part in self.data if part.get('state') == 'idle' and
-                      part.get('admin') == 'online']
-        #print "initial candidates: ", [cand.element.get('name') for cand in candidates]
+                      part.get('usable')]
+        print "initial candidates: ", [cand.get('name') for cand in candidates]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         #print "jobs:", self.jobs
-        #print "idle jobs:", [idlej.element.get('jobid') for idlej in idlejobs]
-        #print "not idle:", [(nidlej.element.get('jobid'), nidlej.element.get('state')) for nidlej in self.jobs if nidlej not in idlejobs]
+        print "idle jobs:", [idlej.get('jobid') for idlej in idlejobs]
+        print "not idle:", [(nidlej.get('jobid'), nidlej.get('state')) for nidlej in self.jobs if nidlej not in idlejobs]
         if candidates and idlejobs:
             #print "Actively checking"
             self.db2.execute("select blockid, status from bglblock;")
             results = self.db2.fetchall()
             db2data = {}
             [db2data.update({block.strip():status}) for (block, status) in results]
-            #print "db2data:", db2data
+            print "db2data:", db2data
             for part in [part for part in candidates if db2data[part.get('name')] != 'F']:
                 foundlocation = [job for job in jobs if job.get('location') == part.get('name')]
                 if foundlocation:
@@ -203,15 +204,15 @@ class PartitionSet(Cobalt.Data.DataSet):
                     logger.error('Partition %s in inconsistent state' % (part.get('name')))
                 candidates.remove(part)
             #print "after db2 check"
-            #print "candidates: ", [cand.element.get('name') for cand in candidates]
+            print "candidates: ", [cand.get('name') for cand in candidates]
             partbyname = {}
             for part in self.data:
-                partbyname[part.element.get('name')] = part
+                partbyname[part.get('name')] = part
             # deps is recursive dep list / pdeps is single ref 
             deps = {}
             pdeps = {}
             for part in self.data:
-                #print "Dep line", part.element.get('name'), part.element.get('deps')
+                #print "Dep line", part.get('name'), part.get('deps')
                 pdeps[part] = part.get('deps')
             [pdeps[key].remove('') for key in pdeps.keys() if '' in pdeps[key]]
             for part in pdeps.keys():
@@ -245,6 +246,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 potential[job] = [part for part in candidates if part.CanRun(job)]
                 if not potential[job]:
                     del potential[job]
+            print potential, deps
             return self.ImplementPolicy(potential, deps)
         else:
             return []
@@ -329,7 +331,7 @@ class BGSched(Cobalt.Component.Component):
         self.register_function(lambda  address, data:self.partitions.Add(data), "AddPartition")
         self.register_function(lambda  address, data:self.partitions.Del(data), "DelPartition")
         self.register_function(lambda address, data, updates:
-                               self.partitions.Get(data, lambda part, newattr:part.update(newattr), (updates,)),
+                               self.partitions.Get(data, lambda part, newattr:part.update(newattr), updates),
                                'Set')  
 
     def RunQueue(self):
@@ -337,8 +339,9 @@ class BGSched(Cobalt.Component.Component):
         if since < self.__schedcycle__:
             return
         try:
-            jobs = comm['qm'].GetJob({'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
-                                      'walltime':'*', 'queue':'*'})
+            jobs = comm['qm'].GetJobs([{'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
+                                      'walltime':'*', 'queue':'*', 'user':'*'}])
+            print jobs
         except xmlrpclib.Fault:
             self.qmconnect.Fail()
             return 0
@@ -359,7 +362,7 @@ class BGSched(Cobalt.Component.Component):
         #print placements
         for (jobid, part) in placements:
             try:
-                comm['qm'].RunJobs({'tag':'job', 'jobid':jobid}, [part])
+                comm['qm'].RunJobs([{'tag':'job', 'jobid':jobid}], [part])
             except:
                 logger.error("failed to connect to the queue manager to run job %s" % (jobid))
         self.lastrun = time.time()

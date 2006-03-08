@@ -1,5 +1,5 @@
 '''Data builds up datatype definitions on top of XML-RPC serializable python types'''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
 import time, types, xmlrpclib, random
 
@@ -37,8 +37,9 @@ class Data(object):
     required_fields = []
 
     def __init__(self, info):
-        self.tag = info['tag']
-        del info['tag']
+        if info.has_key('tag'):
+            self.tag = info['tag']
+            del info['tag']
         missing = [field for field in self.required_fields if not info.has_key(field)]
         if missing:
             raise DataCreationError, missing

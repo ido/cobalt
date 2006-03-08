@@ -31,7 +31,7 @@ if __name__ == '__main__':
         except:
             print "Must supply partition size with -s"
             raise SystemExit, 1
-        args = ([{'tag':'partition', 'name':partname, 'size':size, 'functional':True, 'usable':True,
+        args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False, 'usable':False,
                   'queue':'default', 'deps':[]} for partname in args], )
     elif '-d' in sys.argv:
         func = sched.DelPartition
