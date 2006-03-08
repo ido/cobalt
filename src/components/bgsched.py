@@ -44,7 +44,7 @@ class Partition(Cobalt.Data.Data):
 
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
-        if not self.get("usable"):
+        if not self.get("scheduled") or not self.get('functional'):
             return False
         if job.get('queue') not in self.get('queue'):
             #print "job", job.element.get('jobid'), 'queue'
@@ -157,13 +157,13 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
-        print "scheduling"
+        logger.debug("Scheduling")
         knownjobs = [job.get('jobid') for job in self.jobs]
         activejobs = [job.get('jobid') for job in jobs]
         finished = [jobid for jobid in knownjobs if jobid not in activejobs]
-        print "known", knownjobs, "active", activejobs, "finished", finished
+        #print "known", knownjobs, "active", activejobs, "finished", finished
         # add new jobs
-        print jobs
+        #print jobs
         [self.jobs.append(Job(jobdata)) for jobdata in jobs if jobdata.get('jobid') not in knownjobs]
         # delete finished jobs
         [self.jobs.remove(job) for job in self.jobs if job.get('jobid') in finished]
@@ -180,13 +180,11 @@ class PartitionSet(Cobalt.Data.DataSet):
         [partition.Free() for partition in self.data if partition.job not in activejobs + ['none']]
         # find idle partitions for new jobs
         candidates = [part for part in self.data if part.get('state') == 'idle' and
-                      part.get('usable')]
+                      part.get('functional') and part.get('scheduled')]
         print "initial candidates: ", [cand.get('name') for cand in candidates]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         #print "jobs:", self.jobs
-        print "idle jobs:", [idlej.get('jobid') for idlej in idlejobs]
-        print "not idle:", [(nidlej.get('jobid'), nidlej.get('state')) for nidlej in self.jobs if nidlej not in idlejobs]
         if candidates and idlejobs:
             #print "Actively checking"
             self.db2.execute("select blockid, status from bglblock;")
@@ -238,7 +236,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             # need to filter out dependency-used partitions
             candidates = [part for part in candidates if not [item for item in deps[part] if item not in candidates]]
             # need to filter out contained partitions
-            candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F']]
+            candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional')]]
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
             potential = {}

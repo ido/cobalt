@@ -7,7 +7,8 @@ import sys, getopt, xmlrpclib
 import Cobalt.Proxy
 
 helpmsg = '''Usage: partadm.py [-a] [-d] [-s size] part1 part2 (add or del)
-Usage: partadm.py [-start|-stop] part1 part2 (online or offline)
+Usage: partadm.py [-enable|-disable] part1 part2 (online or offline)
+Usage: partadm.py [-activate|-deactivate] part1 part2 (on or off)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
 Usage: partadm.py --deps=dep1:dep2 part1 part2
 Usage: partadm.py --free part1 part2
@@ -18,7 +19,8 @@ Must supply one of -a or -d -start or -stop or --queue'''
 if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adls:',
-                                     ['dump', 'free', 'load=', '-start', '-stop', 'queue=', 'deps='])
+                                     ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
+                                      'queue=', 'deps='])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -31,20 +33,26 @@ if __name__ == '__main__':
         except:
             print "Must supply partition size with -s"
             raise SystemExit, 1
-        args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False, 'usable':False,
+        args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False, 'scheduled':False,
                   'queue':'default', 'deps':[]} for partname in args], )
     elif '-d' in sys.argv:
         func = sched.DelPartition
         args = ([{'tag':'partition', 'name':partname} for partname in args], )
-    elif '-start' in sys.argv:
+    elif '--enable' in sys.argv:
         func = sched.Set
-        args = ([{'tag':'partition', 'name':partname} for partname in args], {'usable':True})
-    elif '-stop' in sys.argv:
+        args = ([{'tag':'partition', 'name':partname} for partname in args], {'scheduled':True})
+    elif '--disable' in sys.argv:
         func = sched.Set
-        args = ([{'tag':'partition', 'name':partname} for partname in args], {'usable':False})
+        args = ([{'tag':'partition', 'name':partname} for partname in args], {'scheduled':False})
+    elif '--activate' in sys.argv:
+        func = sched.Set
+        args = ([{'tag':'partition', 'name':partname} for partname in args], {'functional':True})
+    elif '--deactivate' in sys.argv:
+        func = sched.Set
+        args = ([{'tag':'partition', 'name':partname} for partname in args], {'functional':False})
     elif '-l' in sys.argv:
         func = sched.GetPartition
-        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'usable':'*', 'functional':'*', 'queue':'*',
+        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*', 'queue':'*',
                   'deps':'*'}], )
     elif '--queue' in [opt for (opt, arg)  in opts]:
         queue = [arg for (opt, arg) in opts if opt == '--queue'][0]
