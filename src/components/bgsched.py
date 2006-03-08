@@ -4,7 +4,7 @@
 __revision__ = '$Revision'
 
 import copy, logging, sys, time, xmlrpclib, ConfigParser
-import Cobalt.Component, Cobalt.Data, Cobalt.Proxy
+import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
 import DB2
 
 logger = logging.getLogger('bgsched')
@@ -373,6 +373,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
     daemon = [x[1] for x in opts if x[0] == '--daemon']
     debug = len([x for x in opts if x[0] == '-d'])
+    Cobalt.Logging.setup_logging('cqm', level=10)
     if daemon:
         from sss.daemonize import daemonize
         daemonize(daemon[0])
