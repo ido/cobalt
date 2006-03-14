@@ -1,0 +1,28 @@
+.TH "cqadm" 8
+.SH "NAME"
+cqadm \- queue manager administration tool
+.SH "SYNOPSIS"
+.B cqadmin [-d] [--hold] [--release] [--queue=newqueue] jobid
+.SH "DESCRIPTION"
+.TP
+.B \-d
+Enable communication debugging
+.TP
+.B \-\-hold
+Set job state to hold, preventing execution
+.TP
+.B \-\-release
+Set job state to ready, allowing execution
+.TP
+.B \-\-queue
+Change job queue to specified one
+.TP
+.B \-\-kill
+Kill job(s) using normal mechanism
+.TP
+.B \-\-delete
+Kill job(s) using forceable deletion. Job state will be deleted. This
+may leave processes dangling on computation resources. 
+.SH "SEE ALSO"
+.BR cqm(8)
+.SH "BUGS"

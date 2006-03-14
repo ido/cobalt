@@ -37,5 +37,6 @@ AC_CONFIG_FILES(Makefile
 	src/Makefile
 	src/components/Makefile
 	src/clients/Makefile
-	src/lib/Makefile)
+	src/lib/Makefile
+	misc/cobalt)
 AC_OUTPUT()

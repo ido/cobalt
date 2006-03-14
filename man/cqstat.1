@@ -1,0 +1,26 @@
+.TH "cqstat" 1
+.SH NAME
+cqstat \- query the queue manager for jobs
+.SH SYNOPSIS
+.B cqstat
+.I [-d] [-f jobid]
+.SH DESCRIPTION
+.PP
+.B cqstat
+query the queue manager for all queued and active jobs. 
+.SH OPTIONS
+.TP
+.B \-d
+Turn on communication debugging
+.TP
+.B \-f
+Query a particular jobid. 
+.TP
+.B \-\-version
+Print out version string
+.SH "SEE ALSO"
+.BR cqdel(1),
+.BR cqsub(1),
+.BR cqm(1)
+.SH BUGS
+None are currently known.

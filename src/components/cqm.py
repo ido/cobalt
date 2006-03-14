@@ -670,8 +670,7 @@ class CQM(Cobalt.Component.Component):
         except Cobalt.Proxy.CobaltComponentError:
             self.logger.error("Failed to connect to the process manager")
             return
-        live = [item['pgid'] for item in self.comms['pm'].GetProcessGroup([ \
-            {'tag':'process-group', 'pgid':'*', 'state':'running'}])]
+        live = [item['pgid'] for item in pgs]
         for job in self.Jobs:
             for pgtype in job.pgid.keys():
                 pgid = job.pgid[pgtype]

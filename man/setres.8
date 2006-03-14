@@ -1,0 +1,27 @@
+.TH "setres" 8
+.SH "NAME"
+setres \- Create a new cobalt scheduler reservation
+.SH "SYNOPSIS"
+.B setres [-p partition] [-s starttime] [-d duration] [-u user] [-n name]
+.SH "DESCRIPTION"
+.TP
+This program creates new scheduler reservations.
+.TP
+.B \-p
+.I Set use partition (or quoted "*" as a wildcard)
+.TP
+.B \-n
+.I Set reservation name
+.TP
+.B \-s
+.I Set start time (in format YYYY_MM_DD-HH:MM)
+.TP
+.B \-d
+.I Set duration (in minutes or DD:HH:MM)
+.TP
+.B \-u
+.I Set user for reservation
+.SH "SEE ALSO"
+.BR showres(1)
+.BR releaseres(8)
+.SH "BUGS"

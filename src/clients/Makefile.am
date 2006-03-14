@@ -1,5 +1,5 @@
-dist_sbin_SCRIPTS = cqadm.py partadm.py releaseres.py setres.py 
-dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py cqwait.py partlist.py showres.py
+dist_sbin_SCRIPTS = cqadm.py partadm.py 
+dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py partlist.py 
 
 bin_PROGRAMS = wrapper
 wrapper_SOURCES = wrapper.c
@@ -14,4 +14,3 @@ installlinks: install-binPROGRAMS
 	ln -sf ./wrapper $(bindir)/partlist
 	ln -sf ./wrapper $(bindir)/cqdel
 	ln -sf ./wrapper $(bindir)/showres
-	ln -sf ./wrapper $(bindir)/cqwait

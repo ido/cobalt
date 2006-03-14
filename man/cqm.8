@@ -1,0 +1,34 @@
+.TH "cqm" 8
+.SH NAME
+cqm \- Cobalt Queue Manager
+.SH SYNOPSIS
+.B cqm 
+.I [-d] [-C <configfile>] [--daemon=<pidfile>]
+.SH "DESCRIPTION"
+.PP
+.B cqm 
+Cobalt Queue Manager
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-C <configfile>
+Specify path to cobalt.conf.
+.TP
+.B \-\-daemon=<pidfile>
+Daemonize, and write pid to pidfile.
+.SH "CONFIGURATION FILE PARAMETERS"
+.TP
+.B bgkernel=(true|false)
+Perform per-job kernel updates for Blue Gene/L jobs.
+.TP
+.B partitionboot=path
+Set the path to the directory location of partition boot links
+.TP
+.B bootprofiles=path
+Set the path to the directory containing BG/L kernel profiles
+.SH "SEE ALSO"
+.BR cqsub(1),
+.BR cqstat(1),
+.BR cqmadm(8)
