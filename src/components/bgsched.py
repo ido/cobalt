@@ -5,7 +5,9 @@ __revision__ = '$Revision'
 
 import copy, logging, sys, time, xmlrpclib, ConfigParser
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
-import DB2
+
+if '-d' not in sys.argv:
+    import DB2
 
 logger = logging.getLogger('bgsched')
 

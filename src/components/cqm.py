@@ -130,7 +130,7 @@ class Job(Cobalt.Data.Data):
     def __getstate__(self):
         data = {}
         for key, value in self.__dict__.iteritems():
-            if key not in ['log', 'comms']:
+            if key not in ['log', 'comms', 'acctlog']:
                 data[key] = value
         return data
 
@@ -566,8 +566,10 @@ class BGJob(Job):
 class JobSet(Cobalt.Data.DataSet):
     '''Set of currently queued jobs'''
     __object__ = BGJob
-    __id__ = Cobalt.Data.IncrID()
-    
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+        self.__id__ = Cobalt.Data.IncrID()
         
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
@@ -577,8 +579,10 @@ class CQM(Cobalt.Component.Component):
     async_funcs = ['assert_location', 'progress', 'pm_sync']
 
     def __init__(self, setup):
-        Cobalt.Component.Component.__init__(self, setup)
         self.Jobs = JobSet()
+
+        Cobalt.Component.Component.__init__(self, setup)
+
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
         self.register_function(lambda  address, data:self.Jobs.Get(data), "GetJobs")

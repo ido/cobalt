@@ -95,7 +95,7 @@ class Component(SSLServer,
             raise SystemExit, 1
 
         self.password = self.cfile.get('communication', 'password')
-
+            
         SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
         self.logRequests = 0
@@ -107,6 +107,9 @@ class Component(SSLServer,
         self.atime = 0
         self.assert_location()
         atexit.register(self.deassert_location)
+
+        if self.__statefields__:
+            self.load_state()
 
     def HandleEvents(self, address, event_list):
         '''Default event handler'''
@@ -159,22 +162,31 @@ class Component(SSLServer,
     def save_state(self):
         '''Save fields defined in __statefields__ in /var/spool/cobalt/__implementation__'''
         if self.__statefields__:
+            self.logger.debug("saving state for %s" % self.__statefields__)
             savedata = tuple([getattr(self, field) for field in self.__statefields__])
         try:
             statefile = open("/var/spool/cobalt/%s" % self.__implementation__, 'w')
             # need to flock here
-            statefile.write(cPickle.dumps(savedata))
+            #print cPickle.dumps(savedata)
+            #statefile.write(cPickle.dumps(savedata))
+            cPickle.dump( savedata, statefile )
+            statefile.close()
         except:
-            self.logger.info("Statefile save failed; data persistence disabled")
+            self.logger.info("Statefile save failed; data persistence disabled: %s" % sys.exc_info()[1])
             self.__statefields__ = []
 
     def load_state(self):
         '''Load fields defined in __statefields__ from /var/spool/cobalt/__implementation__'''
         if self.__statefields__:
+            self.logger.debug("loading state for %s" % self.__statefields__)
             try:
-                loaddata = cPickle.loads(open("/var/spool/cobalt/%s" % self.__implementation__).read())
+                #statefile = open("/var/spool/cobalt/%s" % self.__implementation__, 'r')
+                #loaddata = cPickle.loads(statefile.read())
+                statefile = "/var/spool/cobalt/%s" % self.__implementation__
+                loaddata = cPickle.load( file(statefile) )
+                #statefile.close()
             except:
-                self.logger.info("Statefile load failed")
+                self.logger.info("Statefile load failed %s" % sys.exc_info()[1])
                 return
             for field in self.__statefields__:
                 setattr(self, field, loaddata[self.__statefields__.index(field)])
@@ -229,7 +241,13 @@ class Component(SSLServer,
         while not self.shut:
             self.handle_request()
 
+            if self.__statefields__:
+                self.save_state()
+
     def start_shutdown(self, signum, frame):
         '''Shutdown on unexpected signals'''
         self.shut = True
+
+        if self.__statefields__:
+            self.save_state()
 
