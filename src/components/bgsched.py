@@ -63,11 +63,9 @@ class Partition(Cobalt.Data.Data):
         jdur = 60 * wall
         # all times are in seconds
         current = time.time()
-        for reserv in self.get('reservations'):
-            if job.get('user') in reserv.get('user', '').split(':'):
+        for (rname, user, start, rdur) in self.get('reservations'):
+            if job.get('user') in user:
                 continue
-            start = float(reserv.get('start'))
-            rdur = int(reserv.get('duration'))
             if current < start:
                 # reservation has not started
                 if start < (current + jdur):
@@ -93,17 +91,6 @@ class Partition(Cobalt.Data.Data):
         logger.info("Job %s: Freeing partition %s" % (self.job, self.get('name')))
         self.job = 'none'
         self.set('state', 'idle')
-
-    def AddReservation(self, args):
-        '''Add a reservation for this partition'''
-        reservation = Cobalt.Data.Data(args)
-        if not args.has_key('name'):
-            reservation.set('name', "%s.%s" % (self.get('name'), self.rcounter))
-            self.rcounter += 1
-        self._attrib['reservations'].append(reservation)
-
-    def DelReservation(self, name):
-        [self._attrib['reservations'].remove(reservation) for reservation in self._attrib['reservations'] if reservation.get('name') == name]
 
 class Job(Cobalt.Data.Data):
     '''This class is represents User Jobs'''
@@ -314,9 +301,6 @@ class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched'
     __name__ = 'scheduler'
-    __dispatch__ = {
-                    'AddReservation':'AddRes',
-                    'DelReservation':'DelRes', 'Set':'Partition_Set'}
     __statefields__ = ['partitions']
     __schedcycle__ = 10
     async_funcs = ['assert_location', 'RunQueue']
@@ -333,6 +317,16 @@ class BGSched(Cobalt.Component.Component):
         self.register_function(lambda address, data, updates:
                                self.partitions.Get(data, lambda part, newattr:part.update(newattr), updates),
                                'Set')  
+
+    def AddReservation(self, address, spec, name, user, start, duration):
+        '''Add a reservation to matching partitions'''
+        reservation = (name, user, start, duration)
+        return self.partitions.Get(spec, lambda x:x.get('reservations').append(reservation))
+
+    def ReleaseReservation(self, address, spec, name):
+        '''Release specified reservation'''
+        return self.partitions.Get(spec, lambda x:[x.get('reservations').remove(rsv)
+                                                   for rsv in x.get('reservations') if rsv[0] == name])
 
     def RunQueue(self):
         since = time.time() - self.lastrun
