@@ -7,8 +7,8 @@ import sys, getopt, xmlrpclib
 import Cobalt.Proxy
 
 helpmsg = '''Usage: partadm.py [-a] [-d] [-s size] part1 part2 (add or del)
-Usage: partadm.py [-enable|-disable] part1 part2 (online or offline)
-Usage: partadm.py [-activate|-deactivate] part1 part2 (on or off)
+Usage: partadm.py [--enable|--disable] part1 part2 (online or offline)
+Usage: partadm.py [--activate|--deactivate] part1 part2 (on or off)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
 Usage: partadm.py --deps=dep1:dep2 part1 part2
 Usage: partadm.py --free part1 part2
@@ -33,8 +33,8 @@ if __name__ == '__main__':
         except:
             print "Must supply partition size with -s"
             raise SystemExit, 1
-        args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False, 'scheduled':False,
-                  'queue':'default', 'deps':[]} for partname in args], )
+        args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False,
+                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in args], )
     elif '-d' in sys.argv:
         func = sched.DelPartition
         args = ([{'tag':'partition', 'name':partname} for partname in args], )
@@ -67,8 +67,8 @@ if __name__ == '__main__':
         args = ([{'tag':'partition', 'name':partname} for partname in args], {'state':'idle'})
     elif '--dump' in [opt for (opt, arg) in opts]:
         func = sched.GetPartition
-        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'usable':'*', 'functional':'*', 'queue':'*',
-                  'deps':'*'}], )
+        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
+                  'scheduled':False, 'queue':'*', 'deps':'*'}], )
     else:
         print helpmsg
         raise SystemExit, 1
