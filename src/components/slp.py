@@ -6,6 +6,8 @@ __revision__ = '$Revision:$'
 from select import select, error as selecterror
 from time import time
 from xmlrpclib import Fault
+import getopt
+import sys
 
 from Cobalt.Data import Data, DataSet
 from Cobalt.Component import Component
@@ -72,7 +74,20 @@ class Slp(Component, DataSet):
             self.data.remove(srv)
 
 if __name__ == '__main__':
-    ssetup = {'debug':False, 'configfile':'/etc/cobalt.conf'}
+    try:
+        (opts, arg) = getopt.getopt(sys.argv[1:], 'C:')
+    except getopt.GetoptError, msg:
+        print "%s\nUsage:\nslp.py [-C config file]" % (msg)
+        raise SystemExit, 1
+
+    configfile = ""
+    for item in opts:
+        if item[0] == '-C':
+            configfile = item[1]
+    if not configfile:
+        configfile = '/etc/cobalt.conf'
+
+    ssetup = {'debug':False, 'configfile':configfile}
     server = Slp(ssetup)
     Cobalt.Logging.setup_logging('slp', level=0)
     server.serve_forever()
