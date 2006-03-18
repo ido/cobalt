@@ -6,7 +6,7 @@ __revision__ = '$Revision'
 import copy, logging, sys, time, xmlrpclib, ConfigParser
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
 
-if '-d' not in sys.argv:
+if '--notbgl' not in sys.argv:
     import DB2
 
 logger = logging.getLogger('bgsched')
@@ -130,8 +130,9 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
-        self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
-                               dsn=self.config.get('db2dsn')).cursor()
+        if '--notbgl' not in sys.argv:
+            self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
+                                   dsn=self.config.get('db2dsn')).cursor()
         self.jobs = []
         self.qmconnect = FailureMode("QM Connection")
 
@@ -141,8 +142,9 @@ class PartitionSet(Cobalt.Data.DataSet):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.qmconnect = FailureMode("QM Connection")
-        self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
-                               dsn=self.config.get('db2dsn')).cursor()
+        if '--notbgl' not in sys.argv:
+            self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
+                                   dsn=self.config.get('db2dsn')).cursor()
 
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
@@ -176,19 +178,20 @@ class PartitionSet(Cobalt.Data.DataSet):
         #print "jobs:", self.jobs
         if candidates and idlejobs:
             #print "Actively checking"
-            self.db2.execute("select blockid, status from bglblock;")
-            results = self.db2.fetchall()
-            db2data = {}
-            [db2data.update({block.strip():status}) for (block, status) in results]
-            print "db2data:", db2data
-            for part in [part for part in candidates if db2data[part.get('name')] != 'F']:
-                foundlocation = [job for job in jobs if job.get('location') == part.get('name')]
-                if foundlocation:
-                    part.job = foundlocation[0].get('jobid')
-                    part.set('state', 'busy')
-                    logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.get('name')))
-                else:
-                    logger.error('Partition %s in inconsistent state' % (part.get('name')))
+            if '--notbgl' not in sys.argv:
+                self.db2.execute("select blockid, status from bglblock;")
+                results = self.db2.fetchall()
+                db2data = {}
+                [db2data.update({block.strip():status}) for (block, status) in results]
+                print "db2data:", db2data
+                for part in [part for part in candidates if db2data[part.get('name')] != 'F']:
+                    foundlocation = [job for job in jobs if job.get('location') == part.get('name')]
+                    if foundlocation:
+                        part.job = foundlocation[0].get('jobid')
+                        part.set('state', 'busy')
+                        logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.get('name')))
+                    else:
+                        logger.error('Partition %s in inconsistent state' % (part.get('name')))
                 candidates.remove(part)
             #print "after db2 check"
             print "candidates: ", [cand.get('name') for cand in candidates]
@@ -225,7 +228,8 @@ class PartitionSet(Cobalt.Data.DataSet):
             # need to filter out dependency-used partitions
             candidates = [part for part in candidates if not [item for item in deps[part] if item not in candidates]]
             # need to filter out contained partitions
-            candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional')]]
+            if '--notbgl' not in sys.argv:
+                candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional')]]
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
             potential = {}
@@ -363,9 +367,9 @@ class BGSched(Cobalt.Component.Component):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arguments) = getopt(sys.argv[1:], 'C:d', ['daemon='])
+        (opts, arguments) = getopt(sys.argv[1:], 'C:d', ['daemon=', 'notbgl'])
     except GetoptError, msg:
-        print "%s\nUsage:\nbgsched.py [-C configfile] [-d] [--daemon <pidfile>]" % (msg)
+        print "%s\nUsage:\nbgsched.py [-C configfile] [-d] [--daemon <pidfile>] [--notbgl]" % (msg)
         raise SystemExit, 1
     daemon = [x[1] for x in opts if x[0] == '--daemon']
     debug = len([x for x in opts if x[0] == '-d'])

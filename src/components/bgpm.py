@@ -95,6 +95,10 @@ class ProcessGroup(Cobalt.Data.Data):
                 cmd = cmd + ('-env',  envs)
             if mapfile != '':
                 cmd = cmd + ('-mapfile', mapfile)
+
+            if '--notbgl' in sys.argv:
+                cmd = (program, os.path.basename(program), args)
+
             self.log.error("User %s: Running %s" % (self.get('user'), " ".join(cmd)))
             try:
                 err = open(self.errlog, 'w')
@@ -159,6 +163,7 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
         self.register_function(self.get_processgroup, "GetProcessGroup")
         self.register_function(self.signal_processgroup, "SignalProcessGroup")
         self.register_function(self.wait_processgroup, "WaitProcessGroup")
+        self.register_function(self.kill_processgroup, "KillProcessGroup")
 
     def manage_children(self):
         if (time.time() - self.lastwait) > 6:
@@ -205,9 +210,9 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arg) = getopt(sys.argv[1:], 'dC:', ['daemon='])
+        (opts, arg) = getopt(sys.argv[1:], 'dC:', ['daemon=', 'notbgl'])
     except GetoptError,msg:
-        print "%s\nUsage:\nbgpm.py [-d] [-C config file] [--daemon <pidfile>]" % (msg)
+        print "%s\nUsage:\nbgpm.py [-d] [-C config file] [--daemon <pidfile>] [--notbgl]" % (msg)
         raise SystemExit, 1
     Cobalt.Logging.setup_logging('bgpm', level=0)
     daemon = [item for item in opts if item[0] == '--daemon']
