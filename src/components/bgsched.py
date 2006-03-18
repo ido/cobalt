@@ -310,8 +310,8 @@ class BGSched(Cobalt.Component.Component):
     async_funcs = ['assert_location', 'RunQueue']
 
     def __init__(self, setup):
-        Cobalt.Component.Component.__init__(self, setup)
         self.partitions = PartitionSet()
+        Cobalt.Component.Component.__init__(self, setup)
         self.jobs = []
         self.qmconnect = FailureMode("QM Connection")
         self.lastrun = 0
