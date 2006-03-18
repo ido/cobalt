@@ -74,7 +74,7 @@ if __name__ == '__main__':
                 output[i].insert( header[0].index('RunTime'), 'N/A' )  # RunTime
             else:
                 output[i].insert( header[0].index('RunTime'),
-                                  getElapsedTime( time.time(), float(output[i][9]) ) )
+                                  getElapsedTime( float(output[i][9]), time.time()) )
                 output[i][10] = time.strftime("%m/%d/%y %T", time.localtime(float(output[i][10])))
 
     output.sort()
