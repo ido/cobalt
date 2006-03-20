@@ -85,9 +85,9 @@ class Component(SSLServer,
         if self.cfile._sections['components'].has_key(self.__name__):
             self.static = True
             location = urlparse.urlparse(self.cfile.get('components', self.__name__))[1].split(':')
-            location = (location[0], int(location[1]))
+            location = ('', int(location[1]))
         else:
-            location = (socket.gethostname(), 0)
+            location = ('', 0)
         try:
             keyfile = self.cfile.get('communication', 'key')
         except ConfigParser.NoOptionError:
