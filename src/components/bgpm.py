@@ -139,6 +139,7 @@ class ProcessGroup(Cobalt.Data.Data):
             os.kill(self.pid, getattr(signal, signame))
         except OSError, error:
             self.log.error("Signal failure for pgid %s:%s" % (self.get('pgid'), error.strerror))
+        return 0
 
     def Kill(self):
         '''Kill Blue Gene job. This method is more vicious; it is processed through the bridge API
@@ -197,11 +198,15 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
 
     def signal_processgroup(self, address, data, sig):
         '''signal existing process group with specified signal'''
-        pass
-                    
+        for pg in self.data:
+            if pg.get('pgid') == data['pgid']:
+                return pg.Signal(sig)
+        # could not find pg, so return None
+        return None
+
     def kill_processgroup(self, address, data):
         '''kill existing process group'''
-        pass
+        return self.signal_processgroup(address, data, 'SIGINT')
     
     def SigChildHand(self, sig, frame):
         '''Dont Handle SIGCHLDs'''
