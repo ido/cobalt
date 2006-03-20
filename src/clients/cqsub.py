@@ -3,7 +3,7 @@
 '''Cobalt qsub command'''
 __revision__ = '$Revision$'
 
-import os, sys, pwd
+import os, sys, pwd, os.path
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
@@ -69,6 +69,10 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
     if command[0][0] != '/':
         command[0] = opts['cwd'] + '/' + command[0]
+
+    if not os.path.isfile( command[0] ):
+        print "Warning: command", command[0], "not found, or is not a file"
+
     if not opts['mode']:
         opts['mode'] = 'co'
     for field in ['kernel', 'queue']:
