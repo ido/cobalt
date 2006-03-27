@@ -1,0 +1,62 @@
+.TH "cqsub" 1
+.SH "NAME"
+cqsub \- submit jobs to the queue manager for execution
+.SH "SYNOPSIS"
+.B cqsub 
+.I [-d] [-q queue] [-p project] [-t time] [-n number of nodes] [-m mode] [-c process count] <executable> <options>
+.SH "DESCRIPTION"
+.PP
+.B cqsub
+submits a job to the queue manager for execution. 
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-\-version
+Print out version string
+.TP
+.B \-I
+Run an interactive command. During job execution, the current tty will
+be connected with the running job. 
+.TP
+.B \-k "kernel profile"
+Run the job with the specified kernel profile.
+.TP 
+.B \-q "queue"
+Submit the job to the specified queue.
+.TP
+.B \-e "environmentvar=value:var=value2"
+Set environment variables for the job.
+.TP
+.B \-m "mode"
+Either co (for coprocessor mode) or vn (for virtual node mode)
+.TP
+.B \-n "node count"
+Specifies the node count for a job
+.TP
+.B \-c "process count"
+Specify the number of processes to start
+.TP
+.B \-p "project"
+Associate the job with the allocation for project project. This is
+used to properly account for machine usage. 
+.TP
+.B \-q "queue"
+Submit the job to specified queue.
+.TP
+.B \-t "wall clock time" 
+Specify the runtime for a job. The time specified is the full amount in minutes
+allotted to the job for execution. If the job runs over this limit, it
+will be killed. If colon-delimited time is specified, the format is HH:MM:SS. 
+.TP
+.B \-C "working directory"
+Use specified working directory for job.
+.TP 
+.B \-O "output prefix"
+Use specified prefix for .output and .error files.
+.SH "SEE ALSO"
+.BR cqstat(1),
+.BR cqdel(1),
+.BR cqm(1)
+.SH "BUGS"

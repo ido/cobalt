@@ -1,0 +1,40 @@
+.TH "partadm" 8
+.SH "NAME"
+partadm \- partition administration tool
+.SH "SYNOPSIS"
+.B partadm [-a|-d] [-s size] part1 part2
+.TP
+.B partadm [--start|--stop] part1 part2
+.TP
+.B partadm [--deps=dep1:dep2] part1 part2
+.TP
+.B partadm --free part1 part2
+.SH "DESCRIPTION"
+.TP
+.B \-a
+Add new partitions (of specified size) into the scheduler
+.TP
+.B \-d 
+Delete partitions from the scheduler
+.TP
+.B \-\-start
+Set partition(s) state to online
+.TP
+.B \-\-stop
+Set partition(s) state to offline
+.TP
+.B \-\-deps
+Set partition(s) dependencies
+.TP
+.B \-\-free
+Forceably free partition (set state to idle)
+.TP
+.B \-\-dump
+Dump partition state
+.TP
+.B \-\-load <filename>
+Load partition state from file. Note that this is not exclusive;
+existing partitions will continue to exist.
+.SH "SEE ALSO"
+.BR partlist(1)
+.SH "BUGS"
