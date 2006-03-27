@@ -1,7 +1,7 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
 Version: 0.95pre2
-Release: 1
+Release: 2
 License: GPL
 Group: System Software
 URL: http://www.mcs.anl.gov/cobalt
@@ -43,17 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/man/man8/*.8*
 
 %files -n cobalt-clients
-/usr/bin/wrapper
-/usr/bin/cqstat.py
-/usr/bin/cqstat
-/usr/bin/cqsub.py
-/usr/bin/cqsub
-/usr/bin/cqdel.py
-/usr/bin/cqdel
-/usr/bin/showres.py
-/usr/bin/showres
-/usr/bin/partlist.py
-/usr/bin/partlist
+/usr/bin/*
 /usr/lib/python2.3/site-packages/Cobalt/*
 /usr/man/man1/*.1*
 
