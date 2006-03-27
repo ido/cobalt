@@ -594,6 +594,8 @@ class CQM(Cobalt.Component.Component):
         self.register_function(lambda address, data, updates:
                                self.Jobs.Get(data, lambda job, newattr:job.update(newattr), (updates,)),
                                'SetJobs')
+        self.register_function(lambda address, jobid:setattr(self.Jobs.__id__, 'idnum', jobid-1),
+                               'SetJobID')
 
     def progress(self):
         '''Process asynchronous job work'''
@@ -681,17 +683,17 @@ class CQM(Cobalt.Component.Component):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        opts = getopt(sys.argv[1:], 'dC:', ['daemon='])[0]
+        opts = getopt(sys.argv[1:], 'dC:D:', [])[0]
     except GetoptError, msg:
-        print "%s\nUsage:\ncqm.py [-d] [-C <configfile>] [--daemon <pidfile>]" % (msg)
+        print "%s\nUsage:\ncqm.py [-d] [-C <configfile>] [-D <pidfile>]" % (msg)
         raise SystemExit, 1
-    daemon = [x[1] for x in opts if x[0] == '--daemon']
+    try:
+        daemon = [x[1] for x in opts if x[0] == '-D'][0]
+    except:
+        daemon = False
     level = 10
     if len([x for x in opts if x[0] == '-d']):
         level = 0
     Cobalt.Logging.setup_logging('cqm', level=10)
-    if daemon:
-        from sss.daemonize import daemonize
-        daemonize(daemon[0])
-    server = CQM({'configfile':'/etc/cobalt.conf'})
+    server = CQM({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()

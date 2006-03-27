@@ -11,7 +11,7 @@ helpmsg = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
 
 if __name__ == '__main__':
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'd', ['hold', 'release', 'kill', 'delete', 'queue=', 'run='])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'dj', ['hold', 'release', 'kill', 'delete', 'queue=', 'run='])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -44,7 +44,9 @@ if __name__ == '__main__':
     spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
     cqm = Cobalt.Proxy.queue_manager()
     kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
-    if kdata:
+    if '-j' in sys.argv:
+        response = cqm.SetJobID(int(args[0]))
+    elif kdata:
         for cmd in kdata:
             if cmd == '--delete':
                 response = cqm.DelJobs(spec, force=True)

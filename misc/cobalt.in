@@ -18,40 +18,24 @@ PIDPATH=@PATH_TO_PIDFILE@
 
 case "$1" in
   start)
-    echo -n "Starting Process Management: "
-    "${DAEMONDIR}"/bgpm.py -C "${CONFIGFILE}" --daemon "${PIDPATH}"/bgpm.pid
-    echo "bgpm.py"
-    echo -n "Starting Queue Manager: "
-    "${DAEMONDIR}"/cqm.py -C "${CONFIGFILE}" --daemon "${PIDPATH}"/cqm.pid
-    echo "cqm.py"
-    echo -n "Starting Scheduler: "
-    "${DAEMONDIR}"/bgsched.py -C "${CONFIGFILE}" --daemon "${PIDPATH}"/bgsched.pid
-    echo "bgsched.py"
+    for component in slp bgpm cqm bgsched; do
+	echo -n "Starting ${component}: "
+	"${DAEMONDIR}/${component}.py" -C "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
+	echo "done"
+    done
     touch /var/lock/subsys/cobalt
     ;;
   stop)
-    if [ -f "${PIDPATH}/bgsched.pid" ] ; then
-	echo -n "Stopping Scheduler: "
-	kill -INT `cat "${PIDPATH}"/bgsched.pid`
-	echo done
-    else
-	echo "Scheduler not running"
-    fi
-    if [ -f "${PIDPATH}/cqm.pid" ] ; then
-	echo -n "Stopping Queue Manager: "
-	kill -INT `cat "${PIDPATH}"/cqm.pid`
-	echo done
-    else
-	echo "Cobalt Queue Manager not running"
-    fi
-    if [ -f "${PIDPATH}/bgpm.pid" ] ; then
-	echo -n "Stopping Process Management: "
-	kill -INT `cat "${PIDPATH}"/bgpm.pid`
-	echo done
-    else
-	echo "Cobalt Blue Gene Process Manager not running"
-    fi
-    rm -f "${PIDPATH}"/bgsched.pid "${PIDPATH}"/cqm.pid "${PIDPATH}"/bgpm.pid
+    for component in bgsched cqm bgpm slp; do
+	if [ -f "${PIDPATH}/${component}.pid" ] ; then
+	    echo -n "Stopping ${component}: "
+	    kill -INT `cat ${PIDPATH}/${component}.pid`
+	    echo "done"
+                      rm -f "${PIDPATH}/${component}.pid"
+	else
+	    echo "${component} not running"
+	fi
+    done
     rm -f /var/lock/subsys/cobalt
     ;;
   restart)

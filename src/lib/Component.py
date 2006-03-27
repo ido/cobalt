@@ -1,10 +1,31 @@
 '''Cobalt component base classes'''
 __revision__ = '$Revision$'
 
-import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
+import atexit, logging, os, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
 import BaseHTTPServer, Cobalt.Proxy, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
 
 log = logging.getLogger('Component')
+
+def daemonize(filename):
+    '''Do the double fork/setsession dance'''
+    # Fork once
+    if os.fork() != 0:      
+        os._exit(0)         
+    os.setsid()                     # Create new session
+    pid = os.fork()
+    if pid != 0:
+        pidfile = open(filename, "w")
+        pidfile.write("%i" % pid)
+        pidfile.close()
+        os._exit(0)     
+    os.chdir("/")         
+    os.umask(0)
+
+    null = open("/dev/null", "w+")
+
+    os.dup2(null.fileno(), sys.__stdin__.fileno())
+    os.dup2(null.fileno(), sys.__stdout__.fileno())
+    os.dup2(null.fileno(), sys.__stderr__.fileno())
 
 class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
@@ -99,6 +120,8 @@ class Component(SSLServer,
         SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
         self.logRequests = 0
+        if self.setup['daemon']:
+            daemonize(self.setup['daemon'])
         self.port = self.socket.getsockname()[1]
         self.url = "https://%s:%s" % (socket.gethostname(), self.port)
         self.logger.info("Bound to port %s" % self.port)

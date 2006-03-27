@@ -77,17 +77,20 @@ if __name__ == '__main__':
     try:
         (opts, arg) = getopt.getopt(sys.argv[1:], 'C:')
     except getopt.GetoptError, msg:
-        print "%s\nUsage:\nslp.py [-C config file]" % (msg)
+        print "%s\nUsage:\nslp.py [-D pidfile] [-C config file]" % (msg)
         raise SystemExit, 1
 
     configfile = ""
+    daemon = False
     for item in opts:
         if item[0] == '-C':
             configfile = item[1]
+        elif item[0] == '-D':
+            daemon = item[1]
     if not configfile:
         configfile = '/etc/cobalt.conf'
 
-    ssetup = {'debug':False, 'configfile':configfile}
+    ssetup = {'debug':False, 'configfile':configfile, 'daemon':daemon}
     server = Slp(ssetup)
     Cobalt.Logging.setup_logging('slp', level=0)
     server.serve_forever()

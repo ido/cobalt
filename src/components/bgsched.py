@@ -367,17 +367,17 @@ class BGSched(Cobalt.Component.Component):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arguments) = getopt(sys.argv[1:], 'C:d', ['daemon=', 'notbgl'])
+        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:', ['notbgl'])
     except GetoptError, msg:
-        print "%s\nUsage:\nbgsched.py [-C configfile] [-d] [--daemon <pidfile>] [--notbgl]" % (msg)
+        print "%s\nUsage:\nbgsched.py [-C configfile] [-d] [-D <pidfile>] [--notbgl]" % (msg)
         raise SystemExit, 1
-    daemon = [x[1] for x in opts if x[0] == '--daemon']
+    try:
+        daemon = [x[1] for x in opts if x[0] == '-D'][0]
+    except:
+        daemon = False
     debug = len([x for x in opts if x[0] == '-d'])
     Cobalt.Logging.setup_logging('cqm', level=10)
-    if daemon:
-        from sss.daemonize import daemonize
-        daemonize(daemon[0])
-    server = BGSched({'configfile':'/etc/cobalt.conf'})
+    server = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()
     
 

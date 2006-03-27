@@ -215,15 +215,15 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arg) = getopt(sys.argv[1:], 'dC:', ['daemon=', 'notbgl'])
+        (opts, arg) = getopt(sys.argv[1:], 'dC:D:', ['notbgl'])
     except GetoptError,msg:
-        print "%s\nUsage:\nbgpm.py [-d] [-C config file] [--daemon <pidfile>] [--notbgl]" % (msg)
+        print "%s\nUsage:\nbgpm.py [-d] [-C config file] [-D <pidfile>] [--notbgl]" % (msg)
         raise SystemExit, 1
     Cobalt.Logging.setup_logging('bgpm', level=0)
-    daemon = [item for item in opts if item[0] == '--daemon']
+    try:
+        daemon = [item[1] for item in opts if item[0] == '-D'][0]
+    except:
+        daemon = False
     ldebug = len([item for item in opts if item[0] == '-d'])
-    if daemon:
-        from sss.daemonize import daemonize
-        daemonize(daemon[0][1])
-    s = BGProcessManager({'configfile':'/etc/cobalt.conf'})
+    s = BGProcessManager({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     s.serve_forever()
