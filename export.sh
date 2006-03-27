@@ -18,5 +18,5 @@ cd /tmp
 
 tar czf "${tarname}" "${name}-${version}"
 gpg --armor --output "${tarname}".gpg --detach-sig "${tarname}"
-scp "${tarname}"* terra.mcs.anl.gov:/nfs/ftp/pub/"${name}
+scp "${tarname}"* terra.mcs.anl.gov:/nfs/ftp/pub/"${name}"
 
