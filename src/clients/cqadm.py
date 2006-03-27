@@ -49,7 +49,7 @@ if __name__ == '__main__':
     elif kdata:
         for cmd in kdata:
             if cmd == '--delete':
-                response = cqm.DelJobs(spec, force=True)
+                response = cqm.DelJobs(spec, True)
             else:
                 response = cqm.DelJobs(spec)
     elif '--run' in [opt for (opt, arg) in opts]:

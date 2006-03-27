@@ -59,17 +59,19 @@ class TermiosFormatter(logging.Formatter):
                 else:
                     inner_lines = int(math.floor(float(len(line)) / line_len))+1
                     for i in xrange(inner_lines):
-                        returns.append("%s: %s" % (record.name, line[i*line_len:(i+1)*line_len]))
+                        returns.append("%s" % (line[i*line_len:(i+1)*line_len]))
         elif type(record.msg) == types.ListType:
+            if not record.msg:
+                return ''
             record.msg.sort()
-            msgwidth = self.width - len(record.name) - 2
+            msgwidth = self.width
             columnWidth = max([len(item) for item in record.msg])
             columns = int(math.floor(float(msgwidth) / (columnWidth+2)))
             lines = int(math.ceil(float(len(record.msg)) / columns))
             for lineNumber in xrange(lines):
                 indices = [idx for idx in [(colNum * lines) + lineNumber
                                            for colNum in range(columns)] if idx < len(record.msg)]
-                format = record.name + ':' + (len(indices) * (" %%-%ds " % columnWidth))
+                format = (len(indices) * (" %%-%ds " % columnWidth))
                 returns.append(format % tuple([record.msg[idx] for idx in indices]))
         elif type(record.msg) == lxml.etree._Element:
             returns.append(str(xml_print(record.msg)))
@@ -92,7 +94,6 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         if str(record.msg) > 250:
             msgs = []
             error = record.exc_info
-            record.exc_info = None
             msgdata = record.msg
             while msgdata:
                 newrec = copy.deepcopy(record)
@@ -104,11 +105,13 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             msgs = [record]
         while msgs:
             newrec = msgs.pop()
+            msg = self.log_format_string % (self.encodePriority(self.facility,
+                                                                newrec.levelname.lower()), self.format(newrec))
             try:
-                self.socket.send(self.format(newrec))
+                self.socket.send(msg)
             except socket.error:
                 self.socket.connect(self.address)
-                self.socket.send(self.format(newrec))
+                self.socket.send(msg)
 
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
     '''setup logging for bcfg2 software'''

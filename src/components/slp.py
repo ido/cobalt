@@ -75,7 +75,7 @@ class Slp(Component, DataSet):
 
 if __name__ == '__main__':
     try:
-        (opts, arg) = getopt.getopt(sys.argv[1:], 'C:')
+        (opts, arg) = getopt.getopt(sys.argv[1:], 'C:D:')
     except getopt.GetoptError, msg:
         print "%s\nUsage:\nslp.py [-D pidfile] [-C config file]" % (msg)
         raise SystemExit, 1

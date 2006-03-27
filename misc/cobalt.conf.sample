@@ -1,5 +1,5 @@
 [bgpm]
-bridge_config: /software/common/etc/bridge.config
+bridge_config: //bgl/BlueLight/ppcfloor/bglsys/bin/bridge.config
 db2_connect: /software/common/bin/db2connect
 db2_instance: db2instance
 db2_properties: /bgl/BlueLight/ppcfloor/bglsys/bin/db.properties
@@ -21,3 +21,10 @@ short: short
 
 [anl-sched]
 scheduler_file: /etc/scheduler-file
+
+[components]
+service-location=https://servicenode:8256
+
+[communication]
+key=/etc/cobalt.key
+password=password

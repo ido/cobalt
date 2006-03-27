@@ -3,12 +3,36 @@
 '''Partadm sets partition attributes in the scheduler'''
 __revision__ = '$Revision$'
 
-import sys, getopt, xmlrpclib
+import sys, getopt, types, xmlrpclib
 import Cobalt.Proxy
 
+def print_tabular(rows, centered = []):
+    '''print data in tabular format'''
+    for row in rows:
+        for index in xrange(len(row)):
+            if isinstance(row[index], types.BooleanType):
+                if row[index]:
+                    row[index] = 'X'
+                else:
+                    row[index] = ''
+    total = 0
+    for column in xrange(len(rows[0])):
+        width = max([len(str(row[column])) for row in rows])
+        for row in rows:
+            if column in centered:
+                row[column] = row[column].center(width)
+            else:
+                row[column] = str(row[column]).ljust(width)
+        total += width + 2
+    print '  '.join(rows[0])
+    print total * '='
+    for row in rows[1:]:
+        print '  '.join(row)
+
+
 helpmsg = '''Usage: partadm.py [-a] [-d] [-s size] part1 part2 (add or del)
-Usage: partadm.py [--enable|--disable] part1 part2 (online or offline)
-Usage: partadm.py [--activate|--deactivate] part1 part2 (on or off)
+Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
+Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
 Usage: partadm.py --deps=dep1:dep2 part1 part2
 Usage: partadm.py --free part1 part2
@@ -81,8 +105,9 @@ if __name__ == '__main__':
         print "strange failure"
 
     if '-l' in sys.argv:
-        for part in parts:
-            print part
+        data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+        data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'], part['state'], ','.join(part['deps'])] for part in parts]
+        print_tabular(data, centered=[3,4])
     else:
         print parts
             

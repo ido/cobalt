@@ -37,9 +37,9 @@ if __name__ == '__main__':
             print "time too large"
             raise SystemExit, 1
         dsec = sum([mults[index] * float(units[index]) for index in range(len(units))])
-    (day, time) = start.split('-')
+    (day, rtime) = start.split('-')
     (syear, smonth, sday) = [int(field) for field in day.split('_')]
-    (shour, smin) = [int(field) for field in time.split(':')]
+    (shour, smin) = [int(field) for field in rtime.split(':')]
     starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
     print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
     if '-u' in sys.argv[1:]:

@@ -11,8 +11,9 @@ print "cqadm.py -j %s" % (int(queue.idalloc.id) + 1)
 
 for job in queue:
     je = job.element
-    cmd = '''env PATH=%s su %s "cqsub -q %s -n %s -m %s -k %s -t %s -O %s ''' % \
-          (je.get('path'), je.get('user'), je.get('queue'), je.get('nodes'), je.get('mode'), je.get('kernel'), je.get('walltime'),
+    cmd = '''cd %s; env PATH=%s su %s -c "cqsub -q %s -n %s -m %s -k %s -t %s -O %s ''' % \
+          (je.get('outputdir'), je.get('path'), je.get('user'), je.get('queue'),
+           je.get('nodes'), je.get('mode'), je.get('kernel'), je.get('walltime'),
            je.get('outputdir'))
     if je.get('count') != None:
         cmd += " -c %s" % (je.get('count'))

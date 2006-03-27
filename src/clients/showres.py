@@ -9,12 +9,12 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('showres', to_syslog=False)
     scheduler = Cobalt.Proxy.scheduler()
     reservations = {}
-    for partition in scheduler.GetPartitions([{'tag':'partition', 'name':'*', 'reservations':'*'}]):
+    for partition in scheduler.GetPartition([{'tag':'partition', 'name':'*', 'reservations':'*'}]):
         for reservation in partition['reservations']:
-            if reservations.has_key(reservation):
-                reservations[reservation].append(partition['name'])
+            if reservations.has_key(tuple(reservation)):
+                reservations[tuple(reservation)].append(partition['name'])
             else:
-                reservations[reservation] = [partition['name']]
+                reservations[tuple(reservation)] = [partition['name']]
 
     output = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
     for ((name, user, start, duration), partitions) in reservations.iteritems():

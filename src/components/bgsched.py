@@ -148,7 +148,6 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
-        logger.debug("Scheduling")
         knownjobs = [job.get('jobid') for job in self.jobs]
         activejobs = [job.get('jobid') for job in jobs]
         finished = [jobid for jobid in knownjobs if jobid not in activejobs]
@@ -192,7 +191,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                         logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.get('name')))
                     else:
                         logger.error('Partition %s in inconsistent state' % (part.get('name')))
-                candidates.remove(part)
+                    candidates.remove(part)
             #print "after db2 check"
             print "candidates: ", [cand.get('name') for cand in candidates]
             partbyname = {}
@@ -222,14 +221,15 @@ class PartitionSet(Cobalt.Data.DataSet):
             contained = {}
             for part in candidates:
                 contained[part] = [key for key, value in deps.iteritems() if part in value and key != part]
-            #print "Contained:"
-            #for part in contained.keys():
-            #    print part.element.get('name'), [cpart.element.get('name') for cpart in contained[part]]
-            # need to filter out dependency-used partitions
-            candidates = [part for part in candidates if not [item for item in deps[part] if item not in candidates]]
+            deactivate = []
+            # kill for deps already in use
+            candidates = [part for part in candidates
+                          if not [item for item in deps[part] if item.get('state') != 'idle']]
+            print "cand1", candidates
             # need to filter out contained partitions
             if '--notbgl' not in sys.argv:
                 candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional')]]
+                print "cand2", candidates
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
             potential = {}
@@ -288,11 +288,11 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def PlaceShort(self, qpotential, queue, deps):
         '''Policy for short queue. Limited to jobs 30 mins or less'''
-        potential = qpotential[queue]
-        for job in potential.keys():
+        potential = qpotential
+        for job in potential[queue].keys():
             if float(job.get('walltime')) > 30:
-                del potential[job]
-        return self.PlaceFIFO(potential, deps)
+                del potential[queue][job]
+        return self.PlaceFIFO(potential, queue, deps)
 
     def PlaceScavenger(self, qpotential, queue, deps):
         '''A really stupid priority queueing mechanism that starves lo queue jobs if the high-queue has idle jobs'''
@@ -321,16 +321,18 @@ class BGSched(Cobalt.Component.Component):
         self.register_function(lambda address, data, updates:
                                self.partitions.Get(data, lambda part, newattr:part.update(newattr), updates),
                                'Set')  
+        self.register_function(self.AddReservation, "AddReservation")
+        self.register_function(self.ReleaseReservation, "DelReservation")
 
     def AddReservation(self, address, spec, name, user, start, duration):
         '''Add a reservation to matching partitions'''
         reservation = (name, user, start, duration)
-        return self.partitions.Get(spec, lambda x:x.get('reservations').append(reservation))
+        return self.partitions.Get(spec, callback=lambda x, y:x.get('reservations').append(reservation))
 
     def ReleaseReservation(self, address, spec, name):
         '''Release specified reservation'''
-        return self.partitions.Get(spec, lambda x:[x.get('reservations').remove(rsv)
-                                                   for rsv in x.get('reservations') if rsv[0] == name])
+        return self.partitions.Get(spec, callback=lambda x, y:[x.get('reservations').remove(rsv)
+                                                              for rsv in x.get('reservations') if rsv[0] == name])
 
     def RunQueue(self):
         since = time.time() - self.lastrun
@@ -376,7 +378,7 @@ if __name__ == '__main__':
     except:
         daemon = False
     debug = len([x for x in opts if x[0] == '-d'])
-    Cobalt.Logging.setup_logging('cqm', level=10)
+    Cobalt.Logging.setup_logging('bgsched', level=20)
     server = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()
     

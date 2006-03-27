@@ -592,7 +592,7 @@ class CQM(Cobalt.Component.Component):
                                self.Jobs.Get(data, lambda job, nodes:job.Run(nodes), nodelist),
                                'RunJobs')
         self.register_function(lambda address, data, updates:
-                               self.Jobs.Get(data, lambda job, newattr:job.update(newattr), (updates,)),
+                               self.Jobs.Get(data, lambda job, newattr:job.update(newattr), updates),
                                'SetJobs')
         self.register_function(lambda address, jobid:setattr(self.Jobs.__id__, 'idnum', jobid-1),
                                'SetJobID')
@@ -694,6 +694,6 @@ if __name__ == '__main__':
     level = 10
     if len([x for x in opts if x[0] == '-d']):
         level = 0
-    Cobalt.Logging.setup_logging('cqm', level=10)
+    Cobalt.Logging.setup_logging('cqm', level=20)
     server = CQM({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()
