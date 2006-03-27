@@ -1,7 +1,7 @@
 #!/bin/sh
 
 autoheader
-aclocal
-automake -a -c
+aclocal-1.8
+automake-1.8 -a -c
 autoconf
 touch config.h.in
