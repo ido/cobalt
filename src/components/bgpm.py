@@ -70,7 +70,7 @@ class ProcessGroup(Cobalt.Data.Data):
             if self.get('env', {}).has_key('BGLMPI_MAPPING'):
                 mapfile = self.get('env')['BGLMPI_MAPPING']
                 del self.get('env')['BGLMPI_MAPPING']
-            envs = " ".join(["%s=%s" % envdata for envdata in self.get('env', {}).iteritems()])
+            envs = " ".join(["%s=%s" % envdata for envdata in self.get('envs', {}).iteritems()])
             atexit._atexit = []
             try:
                 os.setgid(groupid)
