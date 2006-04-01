@@ -4,16 +4,14 @@
 __revision__ = '$Revision$'
 
 import getopt, math, sys, time
-from datetime import datetime
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-def getElapsedTime(start, end):
+def getElapsedTime(starttime, endtime):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
     """
-    runtime = datetime.fromtimestamp( end ) - \
-                 datetime.fromtimestamp( start )
-    minutes, seconds = divmod(runtime.seconds, 60)
+    runtime = endtime - starttime
+    minutes, seconds = divmod(runtime, 60)
     hours, minutes = divmod(minutes, 60)
     return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
 

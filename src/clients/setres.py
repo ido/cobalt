@@ -24,7 +24,7 @@ if __name__ == '__main__':
         [duration] = [opt[1] for opt in opts if opt[0] == '-d']
     except:
         print "Must supply -s, -d, and -p options with values"
-        print help
+        print helpmsg
         raise SystemExit, 1
     if duration.count(':') == 0:
         dsec = int(duration) * 60
