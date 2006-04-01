@@ -3,7 +3,7 @@
 import sys
 import cPickle
 sys.path.append('/usr/sbin')
-import oldcqm as cqm
+from oldcqm import BGJob, Timer
 
 queue = cPickle.loads(open('/var/spool/sss/cqm').read())[0]
 
