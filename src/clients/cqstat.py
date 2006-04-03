@@ -3,7 +3,7 @@
 '''Cobalt Queue Status'''
 __revision__ = '$Revision$'
 
-import getopt, math, sys, time
+import getopt, math, sys, time, os
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 def getElapsedTime(starttime, endtime):
@@ -42,38 +42,45 @@ if __name__ == '__main__':
         jobid_tosend = "*"
 
     cqm = Cobalt.Proxy.queue_manager()
-    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*'}]
+    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*', 'outputpath':'*'}]
     if '-f' in sys.argv:
         query[0].update({"mode":'*', 'procs':'*', 'queue':'*', 'starttime':'*'})
     jobs = cqm.GetJobs(query)
 
-    header = [['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
+    header = [['JobID', 'OutputPath', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
     if '-f' in sys.argv:
-        header[0] += ['Mode', 'Procs', 'Queue', 'StartTime']
-
+        header = [['JobID', 'OutputPath', 'User', 'WallTime', 'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue', 'StartTime']]
+        
     output = [[job.get(x) for x in [y.lower() for y in header[0]]] for job in jobs]
-    # add headers not used in query
-    if '-f' in sys.argv:
-        header[0].insert( header[0].index('WallTime') + 1, 'RunTime' )
 
     if output:
         maxjoblen = max([len(item[0]) for item in output])
         jobidfmt = "%%%ss" % maxjoblen
     # next we cook walltime
     for i in xrange(len(output)):
-        t = int(output[i][2].split('.')[0])
+        t = int(output[i][ header[0].index('WallTime') ].split('.')[0])
         h = int(math.floor(t/60))
         t -= (h * 60)
-        output[i][2] = "%02d:%02d:00" % (h, t)
-        output[i][0] = jobidfmt % output[i][0]
+        output[i][ header[0].index('WallTime') ] = "%02d:%02d:00" % (h, t)
+        output[i][ header[0].index('JobID') ] = jobidfmt % output[i][ header[0].index('JobID') ]
         if '-f' in sys.argv:
-            if output[i][9] == '-1' or output[i][9] == 'BUG' or output[i][9] == None:
-                output[i][9] = 'N/A'   # StartTime
-                output[i].insert( header[0].index('RunTime'), 'N/A' )  # RunTime
+            if output[i][ header[0].index('StartTime') ] in ('-1', 'BUG', None):
+                output[i][ header[0].index('StartTime') ] = 'N/A'   # StartTime
+                output[i][ header[0].index('RunTime') ] = 'N/A'     # RunTime
             else:
-                output[i].insert( header[0].index('RunTime'),
-                                  getElapsedTime( float(output[i][9]), time.time()) )
-                output[i][10] = time.strftime("%m/%d/%y %T", time.localtime(float(output[i][10])))
+                output[i][ header[0].index('RunTime') ] = \
+                                  getElapsedTime( float(output[i][ header[0].index('StartTime') ]), time.time())
+                output[i][ header[0].index('StartTime') ] = time.strftime("%m/%d/%y %T", \
+                                                                          time.localtime(float(output[i][ header[0].index('StartTime') ])))
+        outputpath = output[i][ header[0].index('OutputPath') ]
+        print outputpath, output[i][ header[0].index('JobID') ]
+        if outputpath != output[i][ header[0].index('JobID') ] and outputpath != None:
+            output[i][ header[0].index('OutputPath') ] = os.path.basename(outputpath).split('.output')[0]
+        if outputpath == None:
+            output[i][ header[0].index('OutputPath') ] = ""
+
+    # change column names
+    header[0][ header[0].index('OutputPath') ] = "JobName"
 
     output.sort()
     Cobalt.Util.print_tabular([tuple(x) for x in header + output])
