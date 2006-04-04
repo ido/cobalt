@@ -73,12 +73,17 @@ if __name__ == '__main__':
                 output[i][ header[0].index('StartTime') ] = time.strftime("%m/%d/%y %T", \
                                                                           time.localtime(float(output[i][ header[0].index('StartTime') ])))
         outputpath = output[i][ header[0].index('OutputPath') ]
-        print outputpath, output[i][ header[0].index('JobID') ]
-        if outputpath != output[i][ header[0].index('JobID') ] and outputpath != None:
-            output[i][ header[0].index('OutputPath') ] = os.path.basename(outputpath).split('.output')[0]
+
         if outputpath == None:
             output[i][ header[0].index('OutputPath') ] = ""
+        else:
+            jobname = os.path.basename(outputpath).split('.output')[0]
 
+            if jobname != output[i][ header[0].index('JobID') ]:
+                output[i][ header[0].index('OutputPath') ] = jobname
+            else:
+                output[i][ header[0].index('OutputPath') ] = ""
+                
     # change column names
     header[0][ header[0].index('OutputPath') ] = "JobName"
 
