@@ -228,7 +228,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             print "cand1", candidates
             # need to filter out contained partitions
             if '--notbgl' not in sys.argv:
-                candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional')]]
+                candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional') and block.get('state') == 'idle']]
                 print "cand2", candidates
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
