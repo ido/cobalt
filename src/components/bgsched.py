@@ -131,8 +131,13 @@ class PartitionSet(Cobalt.Data.DataSet):
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
         if '--notbgl' not in sys.argv:
-            self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
-                                   dsn=self.config.get('db2dsn')).cursor()
+            try:
+                conn = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
+                                   dsn=self.config.get('db2dsn'))
+                self.db2 = conn.cursor()
+            except:
+                print "Failed to connect to DB2"
+                raise SystemExit, 1
         self.jobs = []
         self.qmconnect = FailureMode("QM Connection")
 
@@ -223,12 +228,17 @@ class PartitionSet(Cobalt.Data.DataSet):
                 contained[part] = [key for key, value in deps.iteritems() if part in value and key != part]
             deactivate = []
             # kill for deps already in use
+            # deps must be idle, db2free and functional
             candidates = [part for part in candidates
-                          if not [item for item in deps[part] if item.get('state') != 'idle']]
+                          if not [item for item in deps[part] if item.get('state') != 'idle'
+                                  or db2data.get(item.get('name'), 'XX') != 'F' or not item.get('functional')]]
             print "cand1", candidates
             # need to filter out contained partitions
             if '--notbgl' not in sys.argv:
-                candidates = [part for part in candidates if not [block for block in contained[part] if db2data.get(block.get('name'), 'F') != 'F' and block.get('functional') and block.get('state') == 'idle']]
+                # contained must be idle, db2free
+                candidates = [part for part in candidates
+                              if not [block for block in contained[part]
+                                      if db2data.get(block.get('name'), 'XX') != 'F' or block.get('state') != 'idle']]
                 print "cand2", candidates
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
@@ -237,7 +247,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 potential[job] = [part for part in candidates if part.CanRun(job)]
                 if not potential[job]:
                     del potential[job]
-            print "Potential", potential, deps
+            #print "Potential", potential, deps
             return self.ImplementPolicy(potential, deps)
         else:
             return []
@@ -358,20 +368,23 @@ class BGSched(Cobalt.Component.Component):
         newjobs = [job for job in jobs if job.get('jobid') not in known]
         self.jobs.extend([Job(job) for job in newjobs])
         placements = self.partitions.Schedule(jobs)
-        #print placements
-        for (jobid, part) in placements:
-            try:
-                comm['qm'].RunJobs([{'tag':'job', 'jobid':jobid}], [part])
-            except:
-                logger.error("failed to connect to the queue manager to run job %s" % (jobid))
+        if '-t' not in sys.argv:
+            for (jobid, part) in placements:
+                try:
+                    comm['qm'].RunJobs([{'tag':'job', 'jobid':jobid}], [part])
+                    pass
+                except:
+                    logger.error("failed to connect to the queue manager to run job %s" % (jobid))
+        else:
+            print "Jobs would be placed on:", placements
         self.lastrun = time.time()
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:', ['notbgl'])
+        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:t', ['notbgl'])
     except GetoptError, msg:
-        print "%s\nUsage:\nbgsched.py [-C configfile] [-d] [-D <pidfile>] [--notbgl]" % (msg)
+        print "%s\nUsage:\nbgsched.py [-t] [-C configfile] [-d] [-D <pidfile>] [--notbgl]" % (msg)
         raise SystemExit, 1
     try:
         daemon = [x[1] for x in opts if x[0] == '-D'][0]
