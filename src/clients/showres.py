@@ -2,11 +2,11 @@
 '''Display reservations'''
 __revision__ = '$Revision$'
 
-import time
+import sys, time
 import Cobalt.Proxy, Cobalt.Logging, Cobalt.Util
 
 if __name__ == '__main__':
-    Cobalt.Logging.setup_logging('showres', to_syslog=False)
+    Cobalt.Logging.setup_logging('showres', to_syslog=False, level=20)
     scheduler = Cobalt.Proxy.scheduler()
     reservations = {}
     for partition in scheduler.GetPartition([{'tag':'partition', 'name':'*', 'reservations':'*'}]):
@@ -16,8 +16,21 @@ if __name__ == '__main__':
             else:
                 reservations[tuple(reservation)] = [partition['name']]
 
-    output = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
-    for ((name, user, start, duration), partitions) in reservations.iteritems():
-        output.append((name, user, time.strftime("%c", time.localtime(start)), duration, str(partitions)))
+    if '-s' in sys.argv:
+        output = [('Reservation', 'User', 'Start', 'Duration')]
+        for ((name, user, start, duration), partitions) in reservations.iteritems():
+            dmin = duration/60.0
+            dhour = dmin/60
+            dmin = dmin - (dhour * 60)
+            output.append((name, user, time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin)))
+    else:
+        output = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
+        for ((name, user, start, duration), partitions) in reservations.iteritems():
+            dmin = duration/60.0
+            dhour = dmin/60
+            dmin = dmin - (dhour * 60)
+            output.append((name, user, time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin), str(partitions)))
     Cobalt.Util.print_tabular(output)
                      
