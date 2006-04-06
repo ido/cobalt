@@ -233,12 +233,12 @@ class Job(Cobalt.Data.Data):
             logger.info("Got multiple run commands for job %s" % self.get('jobid'))
             return
         self.timers['queue'].Stop()
-        #if self.get('reservation', False):
-        #    self.acctlog.LogMessage('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
-        #else:
-            #self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
-            #    self.get('jobid'), self.get('user'), self.get('name'), self.get('size'), self.get('nodes'),
-            #    self.get('procs'), self.get('mode'), self.get('walltime')))
+        if self.get('reservation', False):
+            self.acctlog.LogMessage('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
+        else:
+            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
+                self.get('jobid'), self.get('user'), self.get('name', '???'), self.get('size'), self.get('nodes'),
+                self.get('procs'), self.get('mode'), self.get('walltime')))
         self.set('location', ":".join(nodelist))
         self.set('starttime', str(time.time()))
         self.SetActive()
