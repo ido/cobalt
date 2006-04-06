@@ -243,11 +243,11 @@ class Job(Cobalt.Data.Data):
         self.set('starttime', str(time.time()))
         self.SetActive()
         if self.get('project', 'XX') != 'XX':
-            logger.info("Job %s/%s/%s: Running job on %s" % (self.get('jobid'), self.get('user'),
-                                                             self.get('project'), ":".join(nodelist)))
+            logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.get('jobid'), self.get('user'),
+                                                             self.get('project'), self.get('queue')":".join(nodelist)))
         else:
-            logger.info("Job %s/%s: Running job on %s" % (self.get('jobid'),
-                                                          self.get('user'), ":".join(nodelist)))
+            logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.get('jobid'),
+                                                          self.get('user'), self.get('queue'), ":".join(nodelist)))
 
     def FinishStage(self):
         '''Complete a stage'''
