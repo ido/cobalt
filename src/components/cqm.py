@@ -527,7 +527,8 @@ class BGJob(Job):
         if self.config.get('bgkernel', 'false') == 'true':
             self.steps = ['SetBGKernel', 'RunBGUserJob', 'FinishUserPgrp', 'Finish']            
         self.SetPassive()
-
+        self.acctlog.LogMessage('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
+        
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
         current = os.readlink('/%s/%s' % (self.config.get('partitionboot'), self.get('location')))

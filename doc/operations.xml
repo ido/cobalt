@@ -1,0 +1,191 @@
+<chapter>
+  <title>Component Operations</title>
+  
+  <para>
+    During normal operations, a variety of messages are produced. This
+    allows for most state to be tracked through logs. All messages are
+    logged to syslog facility LOG_LOCAL0, so ensure that these
+    messages are captured. 
+  </para>
+
+  <section>
+    <title>Job Execution</title>
+
+    <para>
+      Job execution is the most common operation in cobalt. It is a
+      procedure that requires several components to work in
+      concert. All jobs go through the same based steps:
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>Initial Job Queueing</term>
+	<listitem>
+	  <para>
+	    A request is sent to the queue manager describing a
+	    new job. Aspects of this request are checked both on the
+	    server side, and in <filename>cqsub</filename>, for better
+	    user error messages. Whenever a job is created or changes
+	    state, appropriate events are emitted. These events can be
+	    seen using the <filename>eminfo.py</filename> command. Any
+	    client that has subscribed to this sort of event will
+	    receive a copy.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Scheduling</term>
+	<listitem>
+	  <para>
+	    The scheduler periodically pools the queue manager for new
+	    jobs, and can also receive events as an asynchronous
+	    notification of queue activity. At these times, it
+	    connects to the queue manager and fetches information
+	    about current jobs. This process results in a set of idle
+	    partitions and idle jobs. If both sets are non-empty, then
+	    the scheduler attempts to place idle jobs on idle
+	    partitions. This cycle culmunates in the execution of
+	    suitable jobs, if they can be scheduled.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Execution</term>
+	<listitem>
+	  <para>
+	    Once the queue manager gets a job-run command from the
+	    queue manager, it can start the job on those specified
+	    resources. At this point, the job state machine is
+	    activated. This state machine can contain different steps
+	    depending on the underlying architecture and which queue
+	    manager features are enabled. For example, enabling
+	    allocation management functionality causes jobs to run
+	    several extra job steps before completion. These extra
+	    steps will not be discussed here; our main focus is
+	    generic job execution.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>Process Group Execution</term>
+	<listitem>
+	  <para>
+	    The queueing system spawns some number of parallel
+	    processes for each job. The execution, management, and
+	    cleanup of these processes is handled by the process
+	    manager. It, like the queue manager, emits a number
+	    of events as process groups execute.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Process Group Cleanup</term>
+	<listitem>
+	  <para>
+	    Parallel process management semantics are not unlike unix
+	    process semantics. Processes can be started, signalled,
+	    killed, and can exit of their own accord. Similar to unix
+	    processes, process groups must be reaped once they have
+	    finished execution. At reap time, stdio and return codes
+	    are available to the "parent" component.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Step Execution</term>
+	<listitem>
+	  <para>
+	    As the job executes, some number of process groups will be
+	    executed. These will result in a number of cycles of the
+	    previous two steps. Note that process groups can be serial
+	    as well, so steps like job prologue and epilogue are
+	    executed in an identical fashion.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Completion</term>
+	<listitem>
+	  <para>
+	    Once all steps have completed, the job is
+	    finished. Cleanup consists of logging a usage summary, job
+	    deletion from the queue, and event emission. At this
+	    point, the job no longer exists.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Scheduler Cleanup</term>
+	<listitem>
+	  <para>
+	    When the job no longer exists in the queue manager, the
+	    scheduler flags it as exited and frees its execution
+	    location. It then attempts to schedule idle jobs in this
+	    location. 
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </section>
+
+  <section>
+    <title>Job Log Trace</title>
+    
+    <para>
+      The following is a set of example logs pertaining to a single
+      job.
+    </para>
+
+    <programlisting>
+Jun 29 20:27:14 sn1 BGSched: Found new job 4719
+Jun 29 20:27:14 sn1 BGSched: Scheduling job 4719 on partition R000_J108-32
+Jun 29 20:27:14 sn1 cqm: Running job 4719 on R000_J108-32
+Jun 29 20:27:14 sn1 cqm: running step SetBGKernel for job 4719
+Jun 29 20:27:14 sn1 cqm: running step RunBGUserJob for job 4719
+Jun 29 20:27:14 sn1 bgpm: ProcessGroup 84 Started on partition R000_J108-32. pid: 29368
+Jun 29 20:27:16 sn1 bgpm: Running /bgl/BlueLight/ppcfloor/bglsys/bin/mpirun mpirun 
+  -np 32 -partition R000_J108-32 -mode co 
+  -cwd /bgl/home1/adiga/alumina/surface/slab_30/1x1/300K/zerok 
+  -exe /home/adiga/alumina/surface/slab_30/1x1/300K/zerok/DLPOLY.X
+Jun 29 21:05:28 sn1 bgpm: ProcessGroup 84 Finshed. pid 29368
+Jun 29 21:05:28 sn1 cqm: user completed for job 4719
+Jun 29 21:05:28 sn1 cqm: running step FinishUserPgrp for job 4719
+Jun 29 21:05:29 sn1 bgpm: Got wait-process-group from 10.0.0.1
+Jun 29 21:05:29 sn1 cqm: running step Finish for job 4719
+Jun 29 21:05:29 sn1 cqm: Job 4719/adiga on 32 nodes done. queue:9.18s user:2294.08s 
+Jun 29 21:05:35 sn1 BGSched: Job 4719 gone from qm
+Jun 29 21:05:35 sn1 BGSched: Freeing partition R000_J108-32
+Jun 29 21:28:37 sn1 BGSched: Found new job 4720
+    </programlisting>
+    
+    <para>
+      In the event that this job ran out of time or was cqdelled,
+      additional log messages would appear to that effect. 
+    </para>
+</section>
+
+<section>
+    <title>Data Persistence</title>
+    
+    <para>
+      Each of these components must store persistent data, for obvious
+      reasons. Each of the components present in cobalt store data
+      using a common mechanism. These functions are implemented in
+      common code. Each component has some data that needs to be
+      persistent. Periodically, each component marshalls this data
+      down to a text stream (using Python's cPickle module), and saves
+      this data in a file in the directory
+      <filename>/var/spool/sss</filename>. The filenames in this
+      directory correspond to the component implementation name. This
+      is the name that appears in syslog log messages (ie cqm, bgpm,
+      BGSched). 
+    </para>
+
+    <para>
+      This data can be manipulated from a python interpreter using the
+      <filename>cddbg.py</filename>. This should not be attempted
+      unless you really know what you are doing.
+    </para>
+</section>
+</chapter>
