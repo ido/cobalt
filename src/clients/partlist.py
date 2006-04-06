@@ -34,17 +34,34 @@ if __name__ == '__main__':
     sched = Cobalt.Proxy.scheduler()
     parts = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
                                  'scheduled':True, 'functional':True, 'deps':'*'}])
+    named = {}
+    for part in parts:
+        named[part['name']] = part
     busy = [part['name'] for part in parts if part['state'] == 'busy']
-    forcebusy = []
-    for part in parts:
-        for bpart in busy:
-            if bpart in part['deps']:
+    while busy:
+        next = busy.pop()
+        children = named[next]['deps']
+        parents = [part['name'] for part in parts if next in part['deps']]
+        seen = children + parents + [next]
+        while children or parents:
+            if children:
+                child = children.pop()
+                for gchild in [gchild for gchild in named.get(child, {'deps':[]})['deps'] \
+                                   if gchild not in seen]:
+                    children.append(gchild)
+                    seen.append(gchild)
+            if parents:
+                parent = parents.pop()
+                for gparent in [gparent['name'] for gparent in parts if gparent['name'] not in seen and \
+                                parent in gparent['deps']]:
+                    parents.append(gparent)
+                    seen.append(gparent)
+        if next in seen:
+            seen.remove(next)
+        for part in parts:
+            if part['name'] in seen:
                 part['state'] = 'busy*'
-        if part['name'] in busy:
-            [forcebusy.append(item) for item in part['deps']]
-    for part in parts:
-        if part['name'] in forcebusy:
-            part['state'] = 'busy*'
+        
     header = [['Name', 'Queue', 'State']]
     output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts]
     print_tabular(header + output)
