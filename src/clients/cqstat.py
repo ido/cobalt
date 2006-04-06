@@ -79,7 +79,7 @@ if __name__ == '__main__':
         else:
             jobname = os.path.basename(outputpath).split('.output')[0]
 
-            if jobname != output[i][ header[0].index('JobID') ]:
+            if jobname != output[i][ header[0].index('JobID') ].split()[0]:
                 output[i][ header[0].index('OutputPath') ] = jobname
             else:
                 output[i][ header[0].index('OutputPath') ] = ""

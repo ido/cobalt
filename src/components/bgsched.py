@@ -229,9 +229,15 @@ class PartitionSet(Cobalt.Data.DataSet):
             deactivate = []
             # kill for deps already in use
             # deps must be idle, db2free and functional
-            candidates = [part for part in candidates
-                          if not [item for item in deps[part] if item.get('state') != 'idle'
-                                  or db2data.get(item.get('name'), 'XX') != 'F' or not item.get('functional')]]
+            if '--notbgl' not in sys.argv:
+                candidates = [part for part in candidates
+                              if not [item for item in deps[part] if item.get('state') != 'idle'
+                                      or db2data.get(item.get('name'), 'XX') != 'F' or not item.get('functional')]]
+            else:
+                candidates = [part for part in candidates
+                              if not [item for item in deps[part] if item.get('state') != 'idle'
+                                      or not item.get('functional')]]
+                
             print "cand1", candidates
             # need to filter out contained partitions
             if '--notbgl' not in sys.argv:
@@ -239,7 +245,12 @@ class PartitionSet(Cobalt.Data.DataSet):
                 candidates = [part for part in candidates
                               if not [block for block in contained[part]
                                       if db2data.get(block.get('name'), 'XX') != 'F' or block.get('state') != 'idle']]
-                print "cand2", candidates
+            else:
+                candidates = [part for part in candidates
+                              if not [block for block in contained[part]
+                                      if block.get('state') != 'idle']]
+                
+            print "cand2", candidates
             # now candidates are only completely free blocks
             #print "candidates: ", [cand.element.get('name') for cand in candidates]
             potential = {}
