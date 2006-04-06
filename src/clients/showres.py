@@ -17,13 +17,13 @@ if __name__ == '__main__':
                 reservations[tuple(reservation)] = [partition['name']]
 
     if '-s' in sys.argv:
-        output = [('Reservation', 'User', 'Start', 'Duration')]
+        output = [('Reservation', 'User', 'Start', 'Duration', 'End Time')]
         for ((name, user, start, duration), partitions) in reservations.iteritems():
             dmin = duration/60.0
             dhour = dmin/60
             dmin = dmin - (dhour * 60)
             output.append((name, user, time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin)))
+                           "%02d:%02d" % (dhour, dmin), time.strftime("%c", time.localtime(start + duration))))
     else:
         output = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
         for ((name, user, start, duration), partitions) in reservations.iteritems():
