@@ -242,8 +242,12 @@ class Job(Cobalt.Data.Data):
         self.set('location', ":".join(nodelist))
         self.set('starttime', str(time.time()))
         self.SetActive()
-        logger.info("Job %s/%s: Running job on %s" % (self.get('jobid'),
-                                                           self.get('user'), ":".join(nodelist)))
+        if self.get('project', 'XX') != 'XX':
+            logger.info("Job %s/%s/%s: Running job on %s" % (self.get('jobid'), self.get('user'),
+                                                             self.get('project'), ":".join(nodelist)))
+        else:
+            logger.info("Job %s/%s: Running job on %s" % (self.get('jobid'),
+                                                          self.get('user'), ":".join(nodelist)))
 
     def FinishStage(self):
         '''Complete a stage'''
@@ -580,14 +584,16 @@ class CQM(Cobalt.Component.Component):
 
     def __init__(self, setup):
         self.Jobs = JobSet()
-
         Cobalt.Component.Component.__init__(self, setup)
+        self.drain = False
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
         self.register_function(lambda  address, data:self.Jobs.Get(data), "GetJobs")
         self.register_function(lambda  address, data:self.Jobs.Add(data), "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
+        self.register_function(self.drain_func, "Drain")
+        self.register_function(self.resume_func, "Resume")
         self.register_function(lambda address, data, nodelist:
                                self.Jobs.Get(data, lambda job, nodes:job.Run(nodes), nodelist),
                                'RunJobs')
@@ -607,6 +613,21 @@ class CQM(Cobalt.Component.Component):
         # [Job.log.ChangeLog() for j in self.Jobs if newdate != self.prevdate]
         #Job.acctlog.ChangeLog()
         return 1
+
+    def drain_func(self, address):
+        '''Stop accepting new jobs'''
+        self.drain = True
+
+    def resume_func(self, address):
+        '''Resume accepting new jobs'''
+        self.drain = False
+
+    def addjob(self, address, spec):
+        '''Add new job (respecting self.drain)'''
+        if not self.drain:
+            self.Jobs.Add(address, spec)
+        else:
+            return xmlrpclib.Fault(31, 'System Draining')
 
     def handle_job_del(self, address, data, force=False):
         '''Delete a job'''

@@ -3,12 +3,12 @@
 '''Cobalt qsub command'''
 __revision__ = '$Revision$'
 
-import os, sys, pwd, os.path
+import os, sys, pwd, os.path, xmlrpclib
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
           + "<working directory> -e envvar1=value1:envvar2=value2" \
-          + " -k <kernel profile> -O <outputprefix> -t time <in minutes>" \
+          + " -k <kernel profile> -O <outputprefix> -t time <in minutes> -p project" \
           + " -n <number of nodes> -c <processor count> -m <mode co/vn> <command> <args>"
 
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
     options = {'v':'verbose', 'd':'debug'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
-                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix'}
+                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project'}
     (opts, command) = Cobalt.Util.dgetopt(sys.argv[1:], options, doptions, helpmsg)
     # need to filter here for all args
     level = 30
@@ -108,6 +108,10 @@ if __name__ == '__main__':
     try:
         cqm = Cobalt.Proxy.queue_manager()
         job = cqm.AddJob(jobspec)
+    except xmlrpclib.Fault, flt:
+        if flt.code == 31:
+            print "System draining. Try again later"
+            raise SystemExit, 1
     except:
         print "Error submitting job"
         raise SystemExit, 1

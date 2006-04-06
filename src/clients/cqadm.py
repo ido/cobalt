@@ -6,12 +6,13 @@ __revision__ = '$Revision$'
 import getopt, sys
 import Cobalt.Logging, Cobalt.Proxy
 
-helpmsg = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
+helpmsg = 'Usage: cqadm [-d] [--drain] [--resume] [--hold] [--release] [--run=<location>] ' + \
           '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>'
 
 if __name__ == '__main__':
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'dj', ['hold', 'release', 'kill', 'delete', 'queue=', 'run='])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'dj', ['drain', 'hold', 'release',
+                                                          'kill', 'delete', 'queue=', 'resume', 'run='])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -55,6 +56,10 @@ if __name__ == '__main__':
     elif '--run' in [opt for (opt, arg) in opts]:
         [location] = [arg for (opt, arg) in opts if opt == '--run']
         response = cqm.RunJobs(spec, location.split(':'))
+    elif '--drain' in sys.argv:
+        cqm.Drain()
+    elif '--resume' in sys.argv:
+        cqm.Resume()
     else:
         updates = {}
         if ('--hold', '') in opts:
