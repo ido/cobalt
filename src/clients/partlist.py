@@ -33,7 +33,18 @@ helpmsg = '''Usage: partlist'''
 if __name__ == '__main__':
     sched = Cobalt.Proxy.scheduler()
     parts = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
-                                 'scheduled':True, 'functional':True}])
+                                 'scheduled':True, 'functional':True, 'deps':'*'}])
+    busy = [part['name'] for part in parts if part['state'] == 'busy']
+    forcebusy = []
+    for part in parts:
+        for bpart in busy:
+            if bpart in part['deps']:
+                part['state'] = 'busy*'
+        if part['name'] in busy:
+            [forcebusy.append(item) for item in part['deps']]
+    for part in parts:
+        if part['name'] in forcebusy:
+            part['state'] = 'busy*'
     header = [['Name', 'Queue', 'State']]
     output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts]
     print_tabular(header + output)
