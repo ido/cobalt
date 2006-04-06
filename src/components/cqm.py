@@ -244,7 +244,7 @@ class Job(Cobalt.Data.Data):
         self.SetActive()
         if self.get('project', 'XX') != 'XX':
             logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.get('jobid'), self.get('user'),
-                                                             self.get('project'), self.get('queue')":".join(nodelist)))
+                                                             self.get('project'), self.get('queue'), ":".join(nodelist)))
         else:
             logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.get('jobid'),
                                                           self.get('user'), self.get('queue'), ":".join(nodelist)))
