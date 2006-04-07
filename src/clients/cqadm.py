@@ -64,7 +64,7 @@ if __name__ == '__main__':
         updates = {}
         if ('--hold', '') in opts:
             updates['state'] = 'hold'
-        elif ('--release', ) in opts:
+        elif ('--release', '') in opts:
             updates['state'] = 'queued'
         if '--queue' in [opt[0] for opt in opts]:
             [queue] = [opt[1] for opt in opts if '--queue' == opt[0]]
