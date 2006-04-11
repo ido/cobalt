@@ -75,7 +75,7 @@ if __name__ == '__main__':
         outputpath = output[i][ header[0].index('OutputPath') ]
 
         if outputpath == None:
-            output[i][ header[0].index('OutputPath') ] = ""
+            output[i][ header[0].index('OutputPath') ] = "-"
         else:
             jobname = os.path.basename(outputpath).split('.output')[0]
 

@@ -14,7 +14,7 @@ tagstr=`echo ${version} | sed -e 's/\./_/g'`
 svn copy "${repo}/trunk" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} release"
 svn export . "${expath}"
 svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
-cd /tmp
+cd "${expath}" ; ./autogen.sh
 
 tar czf "${tarname}" "${name}-${version}"
 gpg --armor --output "${tarname}".gpg --detach-sig "${tarname}"
