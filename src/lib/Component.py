@@ -227,7 +227,10 @@ class Component(SSLServer,
             for funcname in self.async_funcs:
                 func = getattr(self, funcname, False)
                 if callable(func):
-                    func()
+                    try:
+                        func()
+                    except:
+                        self.logger.error("Failure during async function", exc_info=1)
                 else:
                     self.logger.error("Cannot call uncallable method %s" % (funcname))
             try:
