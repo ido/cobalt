@@ -1,215 +1,230 @@
 #!/usr/bin/env python
 
-from os import unlink, dup2, execl, stat, waitpid, WNOHANG
-from popen2 import Popen4
-from select import error as selecterror
-from signal import signal, SIGCHLD, SIG_DFL
-import sys
-from sys import exit
-from string import split, strip
-from syslog import syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0, openlog
-from tempfile import mktemp
-from time import time, sleep
-from select import select
-from base64 import encodestring
+import logging, os, sys, tempfile, time, xml.dom.minidom
+import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
 
-from elementtree.ElementTree import Element, XML, tostring
+'''mpdpm api:
+CreateProcessGroup({user: 'user', executable:'executable', args:['arg1', 'arg2'], location:['location'],
+                     env = {'key':'val'}, errfile:'/errfile', outfile:'/outfile', mode:'co|vn', size:'count', cwd:'cwd'})
+                     '''
 
-from sss.restriction import Data, DataSet, ID
-from sss.server import Server, AddEvent
-from sss.ssslib import ConnectError
+class ProcessGroupCreationError(Exception):
+    '''ProcessGroupCreation Error is used when not enough information is specified'''
+    pass
 
-mpdpath='/usr/mpi/bin'
-outputspool='/tmp'
-
-class ProcessGroup(Data):
+class ProcessGroup(Cobalt.Data.Data):
     '''ProcessGroup is a subclassed sss.restriction.Data object that implements mpd process groups'''
-    def __init__(self,element, pgid):
-        Data.__init__(self,element)
-        self.element.tag = "process-group"
-        self.element.attrib['pgid'] = pgid
-        self.element.attrib['state'] = 'running'
+    required_fields = ['pgid', 'state']
+    _configfields = ['mpdpath', 'outputspool']
+    _config = ConfigParser.ConfigParser()
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
+    else:
+        _config.read('/etc/cobalt.conf')
+    if not _config._sections.has_key('bgpm'):
+        print '''"bgpm" section missing from cobalt config file'''
+        raise SystemExit, 1
+    config = _config._sections['bgpm']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
+        raise SystemExit, 1
+
+    def __init__(self, data, pgid):
+        data['tag'] = 'process-group'
+        Cobalt.Data.Data.__init__(self, data)
+        self.log = logging.getLogger('pg')
+        self.set('pgid', pgid)
+        self.set('state', 'initializing')
         self.mpdpid = None
-        for attr in ['outfile','errfile','mpdfile','exitfile']:
-            setattr(self,attr,mktemp())
-        self.MPIStart()
-    
-    def MPIStart(self):
-        '''MPIStart starts the execution of the process group'''
-        self.element.attrib['state'] = 'running'
-        syslog(LOG_INFO,"PGid %s Started"%(self.element.attrib['pgid']))
-        try:
-            AddEvent('process-manager','process_start',self.element.attrib['pgid'])
-        except:
-            syslog(LOG_ERR, "Error sending process_start for pgid %s"%(self.element.attrib['pgid']))
-        # Dump out xml file
-        self.element.tag = "create-process-group"
-        self.element.attrib['exit_codes_filename'] = self.exitfile
-        # add check='yes' to hs
-        for node in self.element.findall('host-spec'):
-            node.attrib['check'] = 'yes'
-        open(self.mpdfile,'w').write(tostring(self.Fetch()))
-        # Then fix all values
-        self.element.tag = "process-group"
-        for node in self.element.findall('host-spec'):
-            del node.attrib['check']
-        syslog(LOG_INFO, "running :%s:"%("%s/mpdrun.py -f %s "%(mpdpath,self.mpdfile)))
-        pid=fork()
-        if pid:
-            syslog(LOG_INFO, "Got pid %s for pgid %s"%(pid, self.attr['pgid']))
-            self.mpdpid=pid
+        self.mpdxml = xml.dom.minidom.Element('create-process-group')
+        if self.get('outputfile', False):
+            self.outlog = self.get('outputfile')
         else:
-            null=open('/dev/null','r')
-            out=open(self.outfile,'w')
-            err=open(self.errfile,'w')
-            dup2(null.fileno(),sys.__stdin__.fileno())
-            dup2(out.fileno(),sys.__stdout__.fileno())
-            dup2(err.fileno(),sys.__stderr__.fileno())
-            execl("%s/mpdrun.py"%(mpdpath), 'mpdrun','-f', self.mpdfile)
+            self.outlog = tempfile.mktemp()            
+        if self.get('errorfile', False):
+            self.errlog = self.get('errorfile')
+        else:
+            self.errlog = tempfile.mktemp()            
+        if self.get('mpdfile', False):
+            self.mpdlog = self.get('mpdfile')
+        else:
+            self.mpdlog = tempfile.mktemp()            
+        if self.get('exitfile', False):
+            self.exitlog = self.get('exitfile')
+        else:
+            self.exitlog = tempfile.mktemp()            
+        self.ProcessStart()
+    
+    def ProcessStart(self):
+        '''ProcessStart starts the execution of the process group'''
+        self.set('state', 'running')
+        self.log.info("PGid %s Started"%(self.get('pgid')))
+        self.createMPDfile()
+        self.log.info("running :%s:"%("%s/mpdrun.py -f %s "%(mpdpath, self.mpdlog)))
+        pid = os.fork()
+        if pid:
+            self.log.info("Got pid %s for pgid %s"%(pid, self.get('pgid')))
+            self.mpdpid = pid
+        else:
+            null = open('/dev/null', 'r')
+            out = open(self.outlog, 'w')
+            err = open(self.errlog, 'w')
+            os.dup2(null.fileno(), sys.__stdin__.fileno())
+            os.dup2(out.fileno(), sys.__stdout__.fileno())
+            os.dup2(err.fileno(), sys.__stderr__.fileno())
+            os.execl("%s/mpdrun.py"%(mpdpath), 'mpdrun', '-f', self.mpdlog)
 
-    def MPIFinish(self):
-        '''MPIFinish cleans up after the execution of mpdrun has completed'''
-        output = Element("output")
-        err = Element("error")
-        output.text = encodestring(open(self.outfile).read())
-        err.text = encodestring(open(self.errfile).read())
-        self.element.attrib['encoding'] = 'base64'
-        es = Element("exit-status")
+    def createMPDfile(self):
+        '''This functions pull the information out of the process object and creates
+        an xml document that can be used by the mpdrun command'''
+        self.mpdxml.setAttribute('exit_codes_filename', self.exitlog )
+        self.mpdxml.setAttribute('output', "merged" )
+        self.mpdxml.setAttribute('pgid', self.get('pgid') )
+        self.mpdxml.setAttribute('state', self.get('state') )
+        self.mpdxml.setAttribute('submitter', self.get('user') )
+        self.mpdxml.setAttribute('totalprocs', self.get('size') )
+        counter = 1
+        for mpdarg in self.get('args'):
+            tempxml = xml.dom.minidom.Element( 'arg' )
+            tempxml.setAttribute( 'idx', counter )
+            tempxml.setAttribute( 'value', mpdarg )
+            self.mpdxml.appendChild(tempxml)
+            counter += 1
+        for key, val in self.get('env'):
+            tempxml = xml.dom.minidom.Element('env')
+            tempxml.setAttribute( 'name', key )
+            tempxml.setAttribute( 'value', val )
+            self.mpdxml.appendChild(tempxml)
+        tempxml = xml.dom.minidom.Element('host-spec')
+        tempxml.setAttribute('check', 'yes')
+        tempdoc = xml.dom.minidom.Document()
+        tempxml.appendChild(tempdoc.createTextNode("\n".join( self.get('location'))))
+        self.mpdxml.appendChild(tempxml)
+        open(self.mpdlog, 'w').write(self.mpdxml.toxml())
+
+    def FinishProcess(self):
+        '''FinishProcess cleans up after the execution of mpdrun has completed'''
+        if not self.get('outputfile', False ):
+            self.set('output', open(self.outlog).read())
+        if not self.get('errorfile', False ):
+            self.set('err', open(self.errlog).read())
+        errorstates = {}
         try:
-            map(lambda x:es.append(x), XML(open(self.exitfile).read()).findall('exit-code'))
+            for x in  xml.dom.minidom.parseString(open("/tmp/tmp123").read()).getElementsByTagName('exit-code'):
+                errorstates[x.getAttribute('rank')] = x.getAttribute('status')
         except IOError:
-            syslog(LOG_ERR, "Failed to read exit status file for pgid %s"%(self.element.attrib['pgid']))
+            self.log.info("Failed to read exit status file for pgid %s"%(self.get('pgid')))
         except:
-            syslog(LOG_ERR, "Exit Status exit parse failure for pgid %s"%(self.element.attrib['pgid']))
-        self.element.append(output)
-        self.element.append(err)
-        self.element.append(es)
-        for file in ['outfile','errfile','mpdfile','exitfile']:
-            try:
-                unlink(getattr(self,file))
-            except:
-                syslog(LOG_ERR, "Failed to unlink %s: %s"%(file,getattr(self,file)))
-        syslog(LOG_INFO,"PGid %s Exited"%(self.element.attrib['pgid']))
-        try:
-            AddEvent('process-manager','process_end',self.element.attrib['pgid'])
-        except:
-            syslog(LOG_ERR, "Error sending process_end for pgid %s"%(self.element.attrib['pgid']))
-        # Send out completion
-        self.element.attrib['state'] = "finished"
+            self.log.info("Exit Status exit parse failure for pgid %s"%(self.get('pgid')))
 
+        self.set('exit-status', errorstates )
+        self.log.info("PGid %s Exited"%(self.get('pgid')))
+        self.set('state', "finished")
         
     def Signal(self, signal, scope):
-        pid = fork()
+        '''Signal used to signal the job process'''
+        pid = os.fork()
         if pid:
             return pid
-        syslog(LOG_INFO,"PGid %s signaled with %s"%(self.element.attrib['pgid'],signal))
-        if scope == 'single':
-            s = '-s'
+        self.log.info("PGid %s signaled with %s"%(self.get('pgid'), signal))
+        if signal == 'SIGINT':
+            self.log.info("PGid %s killed"%(self.get('pgid')))
+            os.execl("%s/mpdkilljob.py"%(mpdpath), "mpdkilljob", '-a', self.get('pgid'))            
         else:
-            s = '-g'
-        execl("%s/mpdsigjob.py"%(mpdpath), "mpdsigjob", signal, '-a', self.element.attrib['pgid'], s)
+            if scope == 'single':
+                sopt = '-s'
+            else:
+                sopt = '-g'
+            os.execl("%s/mpdsigjob.py"%(mpdpath), "mpdsigjob", signal, '-a', self.get('pgid'), sopt)
 
-    def MPDKill(self):
-        pid = fork()
-        if pid:
-            return pid
-        syslog(LOG_INFO,"PGid %s killed"%(self.element.attrib['pgid']))
-        execl("%s/mpdkilljob.py"%(mpdpath), "mpdkilljob", '-a', self.element.attrib['pgid'])
 
-    def Fetch(self,spec=None):
-        data = Data.Fetch(self,spec)
-        if self.element.attrib['state'] == 'running':
-            if self.element.findall('process'):
-                old = signal(SIGCHLD, SIG_DFL)
-                mp=Popen4("%s/mpdlistjobs -a %s -sss"%(mpdpath,self.pgid))
-                mp.wait()
-                out=mp.fromchild.readlines()
-                for (host,pid,session) in map(split,map(strip,out)):
-                    data.append(Element("process", host=host, pid=pid, session=session))
-                signal(SIGCHLD, old)
-        return data
-
-class mpd(Server):
+class MPDProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
+    '''The MPD Process Manager Object'''
     __implementation__ = 'mpdpm'
     __component__ = 'process-manager'
-    __timeout__ = 0.5
-    __statefields__ = ['pg']
-    __dispatch__ = {'kill-process-group':'XKillPG',
-                    'wait-process-group':'pg.Del',
-                    'create-process-group':'AddPG',
-                    'signal-process-group':'XSigPG',
-                    'get-process-group-info':'pg.Get'}
+    __object__ = ProcessGroup
+    __id__ = Cobalt.Data.IncrID()
+    async_funcs = ['assert_location', 'manage_children']
     
-    def __setup__(self):
-        self.pg = DataSet("process-groups", "process-group", ProcessGroup, ID(), True)
-        self.returns = []
+    def __init__(self, setup):
+        Cobalt.Component.Component.__init__(self, setup)
+        Cobalt.Data.DataSet.__init__(self)
         self.ignore = []
-        try:
-            stat("%s/mpdrun.py"%(mpdpath))
-        except OSError:
-            openlog('mpdpm',0,LOG_LOCAL0)
-            syslog(LOG_ERR, "Error finding mpd. exiting")
-            exit(1)
+        self.returns = []
+        self.lastwait = 0
+        # need to add handlers here
+        self.register_function(self.create_processgroup, "CreateProcessGroup")
+        self.register_function(self.get_processgroup, "GetProcessGroup")
+        self.register_function(self.signal_processgroup, "SignalProcessGroup")
+        self.register_function(self.wait_processgroup, "WaitProcessGroup")
+        self.register_function(self.kill_processgroup, "KillProcessGroup")
 
-    def AddPG(self, xml, (peer, port)):
-        '''This is needed since the pm syntax isnt quite restriction-like'''
-        pg = ProcessGroup(xml, str(self.pg.idalloc.get()))
-        self.pg.data.append(pg)
-        return pg.Fetch(xml)
+    def manage_children(self):
+        '''manage_children insures that all of the spawned processes are maintained and collected'''
+        if (time.time() - self.lastwait) > 6:
+            while True:
+                try:
+                    self.lastwait = time.time()
+                    (pid, stat) = os.waitpid(-1, os.WNOHANG)
+                except OSError:
+                    break
+                if pid == 0:
+                    break
+                pgrps = [pgrp for pgrp in self.data if pgrp.pid == pid]
+                if len(pgrps) == 0:
+                    self.logger.error("Failed to locate process group for pid %s" % (pid))
+                elif len(pgrps) == 1:
+                    pgrps[0].FinishProcess(stat)
+                else:
+                    self.logger.error("Got more than one match for pid %s" % (pid))
 
-    def XSigPG(self, xml, (peer,port)):
-        return self.pg.Get(xml, (peer,port), self.SigPG)
+    def create_processgroup(self, address, data):
+        '''Create new process group element'''
+        return self.Add(data)
 
-    def SigPG(self, pg, args):
-        self.ignore.append(pg.Signal(args['signal'], args.get('scope', 'single')))
+    def get_processgroup(self, address, data):
+        '''query existing process group'''
+        return self.Get(data)
 
-    def XKillPG(self, xml, (peer,port)):
-        return self.pg.Get(xml, (peer,port), self.KillPG)
+    def wait_processgroup(self, address, data):
+        '''Remove completed process group'''
+        return self.Del(data)
 
-    def KillPG(self,pg, args):
-        self.ignore.append(pg.MPDKill())
+    def signal_processgroup(self, address, data, sig):
+        '''signal existing process group with specified signal'''
+        for pgroup in self.data:
+            if pgroup.get('pgid') == data['pgid']:
+                return pgroup.Signal(sig)
+        # could not find pg, so return None
+        return None
 
-    def __progress__(self):
-        num = 0
-        try:
-            (pid,stat) = waitpid(-1,WNOHANG)
-            if pid != 0:
-                self.returns.append((pid,stat))
-        except OSError, e:
-            if e.errno != 10:
-                syslog(LOG_ERR, "Waitpid failed with %s"%(e))
-        while self.returns:
-            (pid,stat) = self.returns.pop()
-            if pid in self.ignore:
-                self.ignore.remove(pid)
-                continue
-            pg = [ x for x in self.pg if x.mpdpid == pid ]
-            if len(pg) == 1:
-                pg[0].MPIFinish()
-                num += 1
-            elif len(pg) == 0:
-                syslog(LOG_ERR, "Got sigchld for unknown pid %s"%(pid))
-        return num
+    def kill_processgroup(self, address, data):
+        '''kill existing process group'''
+        return self.signal_processgroup(address, data, 'SIGINT')
+    
+    def SigChildHand(self, sig, frame):
+        '''Dont Handle SIGCHLDs'''
+        pass
 
-    def SigChildHand(self,sig,frame):
-            pass
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
-    from os import fork
-    from sys import argv,exit
     try:
-        (opts,args)=getopt(argv[1:],'dm:',['daemon='])
-    except GetoptError,msg:
-        print "%s\nUsage:\nmpdpm.py [-d] [-m <path to mpd> ] [--daemon <pidfile>]"%(msg)
-        exit(1)
-    daemon=filter(lambda x:(x[0] == '--daemon'),opts)
-    mpath=filter(lambda x:(x[0] == '-m'),opts)
-    ldebug=len(filter(lambda x:(x[0] == '-d'),opts))
-    if mpath:
-        mpdpath=mpath[0][1]
-    if daemon:
-        from sss.daemonize import daemonize
-        daemonize(daemon[0][1])
-    s=mpd(debug=ldebug)
-    s.ServeForever()
+        (opts, arg) = getopt(sys.argv[1:], 'dC:D:m:')
+    except GetoptError, msg:
+        print "%s\nUsage:\nmpdpm.py [-d] [-C config file] [-D <pidfile>] [-m </path/to/mpd> ]" % (msg)
+        raise SystemExit, 1
+    Cobalt.Logging.setup_logging('mpdpm', level = 0)
+    try:
+        daemon = [item[1] for item in opts if item[0] == '-D'][0]
+    except:
+        daemon = False
+    try:
+        mdppath = [item[1] for item in opts if item[0] == '-m'][0]
+    except:
+        mpdpath = False
+    ldebug = len([item for item in opts if item[0] == '-d'])
+    s = MPDProcessManager({'configfile':'/etc/cobalt.conf', 'daemon':daemon, 'mpdpath':mpdpath})
+    s.serve_forever()
+    
