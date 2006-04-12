@@ -15,6 +15,7 @@ svn copy "${repo}/trunk" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} r
 svn export . "${expath}"
 svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
 cd "${expath}" ; ./autogen.sh
+cd /tmp
 
 tar czf "${tarname}" "${name}-${version}"
 gpg --armor --output "${tarname}".gpg --detach-sig "${tarname}"

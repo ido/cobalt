@@ -42,12 +42,12 @@ if __name__ == '__main__':
         jobid_tosend = "*"
 
     cqm = Cobalt.Proxy.queue_manager()
-    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*', 'outputpath':'*'}]
+    query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*'}]
     if '-f' in sys.argv:
-        query[0].update({"mode":'*', 'procs':'*', 'queue':'*', 'starttime':'*'})
+        query[0].update({"mode":'*', 'procs':'*', 'queue':'*', 'starttime':'*', 'outputpath':'*'})
     jobs = cqm.GetJobs(query)
 
-    header = [['JobID', 'OutputPath', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
+    header = [['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
     if '-f' in sys.argv:
         header = [['JobID', 'OutputPath', 'User', 'WallTime', 'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue', 'StartTime']]
         
@@ -72,20 +72,22 @@ if __name__ == '__main__':
                                   getElapsedTime( float(output[i][ header[0].index('StartTime') ]), time.time())
                 output[i][ header[0].index('StartTime') ] = time.strftime("%m/%d/%y %T", \
                                                                           time.localtime(float(output[i][ header[0].index('StartTime') ])))
-        outputpath = output[i][ header[0].index('OutputPath') ]
-
-        if outputpath == None:
-            output[i][ header[0].index('OutputPath') ] = "-"
-        else:
-            jobname = os.path.basename(outputpath).split('.output')[0]
-
-            if jobname != output[i][ header[0].index('JobID') ].split()[0]:
-                output[i][ header[0].index('OutputPath') ] = jobname
+        if '-f' in sys.argv:
+            outputpath = output[i][ header[0].index('OutputPath') ]
+            
+            if outputpath == None:
+                output[i][ header[0].index('OutputPath') ] = "-"
             else:
-                output[i][ header[0].index('OutputPath') ] = ""
+                jobname = os.path.basename(outputpath).split('.output')[0]
+            
+                if jobname != output[i][ header[0].index('JobID') ].split()[0]:
+                    output[i][ header[0].index('OutputPath') ] = jobname
+                else:
+                    output[i][ header[0].index('OutputPath') ] = "-"
                 
-    # change column names
-    header[0][ header[0].index('OutputPath') ] = "JobName"
+    if '-f' in sys.argv:
+        # change column names
+        header[0][ header[0].index('OutputPath') ] = "JobName"
 
     output.sort()
     Cobalt.Util.print_tabular([tuple(x) for x in header + output])
