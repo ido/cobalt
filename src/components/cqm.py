@@ -601,8 +601,12 @@ class CQM(Cobalt.Component.Component):
         self.register_function(lambda address, data, updates:
                                self.Jobs.Get(data, lambda job, newattr:job.update(newattr), updates),
                                'SetJobs')
-        self.register_function(lambda address, jobid:setattr(self.Jobs.__id__, 'idnum', jobid-1),
-                               'SetJobID')
+        self.register_function(self.set_jobid, 'SetJobID')
+
+    def set_jobid(self, _, jobid):
+        '''Set next jobid for new job'''
+        self.Jobs.__id__.idnum = jobid-1
+        return True
 
     def progress(self):
         '''Process asynchronous job work'''
@@ -615,11 +619,11 @@ class CQM(Cobalt.Component.Component):
         #Job.acctlog.ChangeLog()
         return 1
 
-    def drain_func(self, address):
+    def drain_func(self, _):
         '''Stop accepting new jobs'''
         self.drain = True
 
-    def resume_func(self, address):
+    def resume_func(self, _):
         '''Resume accepting new jobs'''
         self.drain = False
 
@@ -630,7 +634,7 @@ class CQM(Cobalt.Component.Component):
         else:
             return xmlrpclib.Fault(31, 'System Draining')
 
-    def handle_job_del(self, address, data, force=False):
+    def handle_job_del(self, _, data, force=False):
         '''Delete a job'''
         ret = []
         for spec in data:
