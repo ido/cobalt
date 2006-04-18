@@ -3,14 +3,23 @@
 '''Cobalt queue delete'''
 __revision__ = '$Revision$'
 
-import os, pwd, sys, time
+import getopt, os, pwd, sys, time
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+
+usehelp = "Usage:\ncqdel [-f] <jobid> <jobid>"
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
         print "cqdel %s" % __revision__
-    if len(sys.argv) < 2:
-        print "Usage: cqdel -f <jobid>"
+        raise SystemExit, 0
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'f')
+    except getopt.GetoptError, gerr:
+        print gerr
+        print usehelp
+        raise SystemExit, 1
+    if len(args) < 1:
+        print usehelp
         raise SystemExit, 1
     level = 30
     if '-d' in sys.argv:
@@ -18,7 +27,7 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('cqdel', to_syslog=False, level=level)
     cqm = Cobalt.Proxy.queue_manager()
-    spec = [{'tag':'job', 'user':user, 'jobid':sys.argv[-1]}]
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     jobs = cqm.DelJobs(spec)
     time.sleep(1)
     print jobs
