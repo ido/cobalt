@@ -84,8 +84,14 @@ if __name__ == '__main__':
             opts['proccount'] = str(2 * int(opts['nodecount']))
         else:
             opts['proccount'] = opts['nodecount']
-        if opts['project']:
-            jobspec['project'] = opts['project']
+    else:
+        try:
+            int(opts['proccount'])
+        except:
+            print "non-integer node count specified"
+            raise SystemExit, 1
+    if opts['project']:
+        jobspec['project'] = opts['project']
 
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'], 'jobid':'*',
                     'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'), 'kernel':opts['kernel'],
