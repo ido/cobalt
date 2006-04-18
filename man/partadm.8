@@ -4,7 +4,9 @@ partadm \- partition administration tool
 .SH "SYNOPSIS"
 .B partadm [-a|-d] [-s size] part1 part2
 .TP
-.B partadm [--start|--stop] part1 part2
+.B partadm [--activate|--deactivate] part1 part2
+.TP
+.B partadm [--enable|--disable] part1 part2
 .TP
 .B partadm [--deps=dep1:dep2] part1 part2
 .TP
@@ -17,11 +19,19 @@ Add new partitions (of specified size) into the scheduler
 .B \-d 
 Delete partitions from the scheduler
 .TP
-.B \-\-start
-Set partition(s) state to online
+.B \-\-activate
+Set the partition as functional.
 .TP
-.B \-\-stop
-Set partition(s) state to offline
+.B \-\-deactivate
+Se the partition as non-functional. (Jobs will not be run on
+non-functional partitions, or any overlapping partitions)
+.TP
+.B \-\-enable
+Allow partition(s) to have jobs scheduled on them
+.TP
+.B \-\-disable
+Do not run jobs on this partition(s). (Jobs can run on larger or
+smaller overlapping partitions)
 .TP
 .B \-\-deps
 Set partition(s) dependencies
