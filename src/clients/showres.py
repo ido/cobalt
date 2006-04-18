@@ -16,7 +16,7 @@ if __name__ == '__main__':
             else:
                 reservations[tuple(reservation)] = [partition['name']]
 
-    if '-s' in sys.argv:
+    if '-l' not in sys.argv:
         output = [('Reservation', 'User', 'Start', 'Duration', 'End Time')]
         for ((name, user, start, duration), partitions) in reservations.iteritems():
             dmin = duration/60.0
