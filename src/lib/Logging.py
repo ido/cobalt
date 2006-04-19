@@ -1,6 +1,7 @@
 '''Bcfg2 logging support'''
 __revision__ = '$Revision$'
 
+# import lxml.etree
 import copy, fcntl, logging, logging.handlers, math, socket, struct, sys, termios, types
 
 def print_attributes(attrib):
@@ -73,10 +74,10 @@ class TermiosFormatter(logging.Formatter):
                                            for colNum in range(columns)] if idx < len(record.msg)]
                 format = (len(indices) * (" %%-%ds " % columnWidth))
                 returns.append(format % tuple([record.msg[idx] for idx in indices]))
-        elif type(record.msg) == lxml.etree._Element:
-            returns.append(str(xml_print(record.msg)))
+        #elif type(record.msg) == lxml.etree._Element:
+        #    returns.append(str(xml_print(record.msg)))
         else:
-            returns.append(record.name + ':' + str(record.msg))
+            returns.append(str(record.msg))
         if record.exc_info:
             returns.append(self.formatException(record.exc_info))
         return '\n'.join(returns)

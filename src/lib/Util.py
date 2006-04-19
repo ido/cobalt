@@ -1,6 +1,7 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
+import types
 from getopt import getopt, GetoptError
 
 def dgetopt(arglist, opt, vopt, msg):
@@ -32,6 +33,29 @@ def print_tabular(rows):
     for row in rows[1:]:
         print fstring % row
 
+def printTabular(rows, centered = []):
+    '''print data in tabular format'''
+    for row in rows:
+        for index in xrange(len(row)):
+            if isinstance(row[index], types.BooleanType):
+                if row[index]:
+                    row[index] = 'X'
+                else:
+                    row[index] = ''
+    total = 0
+    for column in xrange(len(rows[0])):
+        width = max([len(str(row[column])) for row in rows])
+        for row in rows:
+            if column in centered:
+                row[column] = row[column].center(width)
+            else:
+                row[column] = str(row[column]).ljust(width)
+        total += width + 2
+    print '  '.join(rows[0])
+    print total * '='
+    for row in rows[1:]:
+        print '  '.join(row)
+
 def print_dtab(dtab, fields = []):
     '''print dictionary data in tabular format'''
     if not fields:
@@ -45,3 +69,24 @@ def print_dtab(dtab, fields = []):
     print (sum([value for key, value in fieldlen]) + (2 * len(fieldlen))) * '='
     for drow in dtab:
         print fstring % drow
+
+def buildRackTopology(partlist):
+    '''Build a dict of partition -> (parents, children)'''
+    partinfo = {}
+    partport = {}
+    for part in partlist:
+        partport[part['name']] = part
+        partinfo[part['name']] = ([], [])
+    for part in partlist:
+        parents = [ppart['name'] for ppart in partlist if part['name'] in ppart['deps']]
+        while parents:
+            next = parents.pop()
+            partinfo[part['name']][0].append(next)
+            ndp = [ppart['name'] for ppart in partlist if next in ppart['deps']]
+            parents += ndp
+        children = part['children']
+        while children:
+            next = children.pop()
+            partinfo[part['name']][1].append(next)
+            children += partport[next]['deps']
+    return partinfo
