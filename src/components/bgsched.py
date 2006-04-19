@@ -63,7 +63,7 @@ class Partition(Cobalt.Data.Data):
         jdur = 60 * wall
         # all times are in seconds
         current = time.time()
-        for (rname, user, start, rdur) in self.get('reservations'):
+        for (_, user, start, rdur) in self.get('reservations'):
             if job.get('user') in user:
                 continue
             if current < start:
@@ -193,7 +193,8 @@ class PartitionSet(Cobalt.Data.DataSet):
                     if foundlocation:
                         part.job = foundlocation[0].get('jobid')
                         part.set('state', 'busy')
-                        logger.error("Found job %s on Partition %s. Manually setting state." % (foundlocation[0].get('jobid'), part.get('name')))
+                        logger.error("Found job %s on Partition %s. Manually setting state." % \
+                                     (foundlocation[0].get('jobid'), part.get('name')))
                     else:
                         logger.error('Partition %s in inconsistent state' % (part.get('name')))
                     candidates.remove(part)
@@ -226,7 +227,6 @@ class PartitionSet(Cobalt.Data.DataSet):
             contained = {}
             for part in candidates:
                 contained[part] = [key for key, value in deps.iteritems() if part in value and key != part]
-            deactivate = []
             # kill for deps already in use
             # deps must be idle, db2free and functional
             if '--notbgl' not in sys.argv:
@@ -345,17 +345,18 @@ class BGSched(Cobalt.Component.Component):
         self.register_function(self.AddReservation, "AddReservation")
         self.register_function(self.ReleaseReservation, "DelReservation")
 
-    def AddReservation(self, address, spec, name, user, start, duration):
+    def AddReservation(self, _, spec, name, user, start, duration):
         '''Add a reservation to matching partitions'''
         reservation = (name, user, start, duration)
         return self.partitions.Get(spec, callback=lambda x, y:x.get('reservations').append(reservation))
 
-    def ReleaseReservation(self, address, spec, name):
+    def ReleaseReservation(self, _, spec, name):
         '''Release specified reservation'''
         return self.partitions.Get(spec, callback=lambda x, y:[x.get('reservations').remove(rsv)
                                                               for rsv in x.get('reservations') if rsv[0] == name])
 
     def RunQueue(self):
+        '''Process changes to the cqm queue'''
         since = time.time() - self.lastrun
         if since < self.__schedcycle__:
             return
