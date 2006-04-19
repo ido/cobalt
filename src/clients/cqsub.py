@@ -8,7 +8,7 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
           + "<working directory> -e envvar1=value1:envvar2=value2" \
-          + " -k <kernel profile> -O <outputprefix> -t time <in minutes> -p project" \
+          + " -k <kernel profile> -O <outputprefix> -t time <in minutes>" \
           + " -n <number of nodes> -c <processor count> -m <mode co/vn> <command> <args>"
 
 if __name__ == '__main__':
