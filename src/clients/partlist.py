@@ -3,66 +3,23 @@
 '''Partlist displays online partitions for users'''
 __revision__ = '$Revision$'
 
-import Cobalt.Proxy, types
-
-def print_tabular(rows, centered = []):
-    '''print data in tabular format'''
-    for row in rows:
-        for index in xrange(len(row)):
-            if isinstance(row[index], types.BooleanType):
-                if row[index]:
-                    row[index] = 'X'
-                else:
-                    row[index] = ''
-    total = 0
-    for column in xrange(len(rows[0])):
-        width = max([len(str(row[column])) for row in rows])
-        for row in rows:
-            if column in centered:
-                row[column] = row[column].center(width)
-            else:
-                row[column] = str(row[column]).ljust(width)
-        total += width + 2
-    print '  '.join(rows[0])
-    print total * '='
-    for row in rows[1:]:
-        print '  '.join(row)
+import Cobalt.Proxy, Cobalt.Util
 
 helpmsg = '''Usage: partlist'''
 
 if __name__ == '__main__':
     sched = Cobalt.Proxy.scheduler()
     parts = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
-                                 'scheduled':True, 'functional':True, 'deps':'*'}])
-    named = {}
-    for part in parts:
-        named[part['name']] = part
+                                 'scheduled':True, 'functional':'*', 'deps':'*'}])
+    partinfo = Cobalt.Util.buildRackTopology(parts)
+    # need to cascade up busy
     busy = [part['name'] for part in parts if part['state'] == 'busy']
-    while busy:
-        next = busy.pop()
-        children = named[next]['deps']
-        parents = [part['name'] for part in parts if next in part['deps']]
-        seen = children + parents + [next]
-        while children or parents:
-            if children:
-                child = children.pop()
-                for gchild in [gchild for gchild in named.get(child, {'deps':[]})['deps'] \
-                                   if gchild not in seen]:
-                    children.append(gchild)
-                    seen.append(gchild)
-            if parents:
-                parent = parents.pop()
-                for gparent in [gparent['name'] for gparent in parts if gparent['name'] not in seen and \
-                                parent in gparent['deps']]:
-                    parents.append(gparent)
-                    seen.append(gparent)
-        if next in seen:
-            seen.remove(next)
-        for part in parts:
-            if part['name'] in seen:
-                part['state'] = 'busy*'
-        
+    [part.__setitem__('state', 'busy*') for part in parts for pname in busy if pname in part['deps']]
+    # need to cascade up non-functional
+    offline = [part['name'] for part in parts if not part['functional']]
+    [part.__setitem__('functional', False) for part in parts for pname in offline if pname in part['deps']]
+    online = [part for part in parts if part['functional']]
     header = [['Name', 'Queue', 'State']]
-    output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts]
-    print_tabular(header + output)
+    output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in online]
+    Cobalt.Util.printTabular(header + output)
 

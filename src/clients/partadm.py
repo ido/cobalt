@@ -3,34 +3,11 @@
 '''Partadm sets partition attributes in the scheduler'''
 __revision__ = '$Revision$'
 
-import sys, getopt, types, xmlrpclib
-import Cobalt.Proxy
-
-def print_tabular(rows, centered = []):
-    '''print data in tabular format'''
-    for row in rows:
-        for index in xrange(len(row)):
-            if isinstance(row[index], types.BooleanType):
-                if row[index]:
-                    row[index] = 'X'
-                else:
-                    row[index] = ''
-    total = 0
-    for column in xrange(len(rows[0])):
-        width = max([len(str(row[column])) for row in rows])
-        for row in rows:
-            if column in centered:
-                row[column] = row[column].center(width)
-            else:
-                row[column] = str(row[column]).ljust(width)
-        total += width + 2
-    print '  '.join(rows[0])
-    print total * '='
-    for row in rows[1:]:
-        print '  '.join(row)
-
+import sys, getopt, xmlrpclib
+import Cobalt.Proxy, Cobalt.Util
 
 helpmsg = '''Usage: partadm.py [-a] [-d] [-s size] part1 part2 (add or del)
+Usage: partadm.py [-l]
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
@@ -38,7 +15,7 @@ Usage: partadm.py --deps=dep1:dep2 part1 part2
 Usage: partadm.py --free part1 part2
 Usage: partadm.py --dump
 Usage: partadm.py --load <filename>
-Must supply one of -a or -d -start or -stop or --queue'''
+Must supply one of -a or -d or -l or -start or -stop or --queue'''
 
 if __name__ == '__main__':
     try:
@@ -76,8 +53,8 @@ if __name__ == '__main__':
         args = ([{'tag':'partition', 'name':partname} for partname in args], {'functional':False})
     elif '-l' in sys.argv:
         func = sched.GetPartition
-        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*', 'queue':'*',
-                  'deps':'*'}], )
+        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
+                  'queue':'*', 'deps':'*'}], )
     elif '--queue' in [opt for (opt, arg)  in opts]:
         queue = [arg for (opt, arg) in opts if opt == '--queue'][0]
         func = sched.Set
@@ -92,7 +69,7 @@ if __name__ == '__main__':
     elif '--dump' in [opt for (opt, arg) in opts]:
         func = sched.GetPartition
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
-                  'scheduled':False, 'queue':'*', 'deps':'*'}], )
+                  'scheduled':'*', 'queue':'*', 'deps':'*'}], )
     else:
         print helpmsg
         raise SystemExit, 1
@@ -105,9 +82,16 @@ if __name__ == '__main__':
         print "strange failure"
 
     if '-l' in sys.argv:
+        # need to cascade up busy and non-functional flags
+        partinfo = Cobalt.Util.buildRackTopology(parts)
+        busy = [part['name'] for part in parts if part['state'] == 'busy']
+        [part.__setitem__('state', 'busy*') for part in parts for pname in busy if pname in part['deps']]
+        offline = [part['name'] for part in parts if not part['functional']]
+        [part.__setitem__('functional', '-') for part in parts for pname in offline if pname in part['deps']]
         data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
-        data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'], part['state'], ','.join(part['deps'])] for part in parts]
-        print_tabular(data, centered=[3,4])
+        data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
+                  part['state'], ','.join(part['deps'])] for part in parts]
+        Cobalt.Util.printTabular(data, centered=[3, 4])
     else:
         print parts
             

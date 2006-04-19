@@ -1,4 +1,4 @@
-dist_sbin_SCRIPTS = cqadm.py partadm.py setres.py releaseres.py
+dist_sbin_SCRIPTS = cqadm.py partadm.py setres.py releaseres.py slpstat.py
 dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py partlist.py showres.py
 
 bin_PROGRAMS = wrapper
