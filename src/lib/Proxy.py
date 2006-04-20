@@ -11,8 +11,16 @@ class SafeProxy:
     '''Wrapper for proxy'''
     _cfile = ConfigParser.ConfigParser()
     _cfile.read(['/etc/cobalt.conf'])
-    _components = _cfile._sections['components']
-    _authinfo = ('root', _cfile.get('communication', 'password'))
+    try:
+        _components = _cfile._sections['components']
+    except KeyError:
+        print "cobalt.conf doesn't contain a valid components section"
+        raise SystemExit, 1
+    try:
+        _authinfo = ('root', _cfile.get('communication', 'password'))
+    except KeyError:
+        print "cobalt.conf doesn't contain a valid communication setup"
+        raise SystemExit, 1
     _retries = 4
 
     def __init__(self, component, url=None):
@@ -30,29 +38,29 @@ class SafeProxy:
         except:
             self.log.error("Failed to initialize xml-rpc", exc_info=1)
 
-    def run_method(self, method_name, method_args):
+    def run_method(self, methodName, methodArgs):
         ''' Perform an XMLRPC invocation against the server'''
-        method = getattr(self.proxy, method_name)
+        method = getattr(self.proxy, methodName)
         for irs in range(self._retries):
             try:
-                ret = apply(method, self._authinfo + method_args)
+                ret = apply(method, self._authinfo + methodArgs)
                 if irs > 0:
                     self.log.warning("Required %d attempts to contact %s for operation %s" %
-                                     (irs, self.component, method_name))
-                self.log.debug("%s completed successfully" % (method_name))
+                                     (irs, self.component, methodName))
+                self.log.debug("%s completed successfully" % (methodName))
                 return ret
             except xmlrpclib.ProtocolError:
                 self.log.error("Server failure: Protocol Error")
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault:
-                self.log.debug("Operation %s completed with fault" % (method_name))
+                self.log.debug("Operation %s completed with fault" % (methodName))
                 raise
             except socket.error:
-                self.log.debug("Attempting %s (%d of %d) failed" % (method_name, (irs+1), self._retries))
+                self.log.debug("Attempting %s (%d of %d) failed" % (methodName, (irs+1), self._retries))
                 time.sleep(0.5)                
             except:
                 break
-        self.log.error("%s failed:\nCould not connect to %s" % (method_name, self.component))
+        self.log.error("%s failed:\nCould not connect to %s" % (methodName, self.component))
         raise xmlrpclib.Fault(20, "Server Failure")
         
     def __get_location(self, name):
@@ -69,6 +77,10 @@ class SafeProxy:
             curl = sdata[0]['url']
             self._components[name] = curl
             return curl
+
+    def dummy(self):
+        '''dummy method for pylint'''
+        return True
             
 class ComponentProxy(SafeProxy):
     '''Component Proxy instantiates a SafeProxy to a component and registers local functions
