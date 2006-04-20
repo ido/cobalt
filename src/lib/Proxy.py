@@ -10,7 +10,8 @@ class CobaltComponentError(Exception):
 class SafeProxy:
     '''Wrapper for proxy'''
     _cfile = ConfigParser.ConfigParser()
-    _cfile.read(['/etc/cobalt.conf'])
+    _cfpath = '/etc/cobalt.conf'
+    _cfile.read([_cfpath])
     try:
         _components = _cfile._sections['components']
     except KeyError:
@@ -60,6 +61,7 @@ class SafeProxy:
                                                                                self._retries, serr))
                 time.sleep(0.5)                
             except:
+                self.log.error("Unknown failure", exc_info=1)
                 break
         self.log.error("%s failed:\nCould not connect to %s" % (methodName, self.component))
         raise xmlrpclib.Fault(20, "Server Failure")
