@@ -55,8 +55,9 @@ class SafeProxy:
             except xmlrpclib.Fault:
                 self.log.debug("Operation %s completed with fault" % (methodName))
                 raise
-            except socket.error:
-                self.log.debug("Attempting %s (%d of %d) failed" % (methodName, (irs+1), self._retries))
+            except socket.error, serr:
+                self.log.debug("Attempting %s (%d of %d) failed because %s" % (methodName, (irs+1),
+                                                                               self._retries, serr))
                 time.sleep(0.5)                
             except:
                 break
@@ -123,6 +124,11 @@ class scheduler(ComponentProxy):
     '''scheduler proxy'''
     name = 'scheduler'
     methods = ['AddReservation', 'DelReservation', 'GetPartition', 'AddPartition', 'DelPartition', 'Set']
+
+class bcfg2(ComponentProxy):
+    '''bcfg2 client code'''
+    name = 'bcfg2'
+    methods = ['AssertProfile', 'GetConfig', 'GetProbes', 'RecvProbeData', 'RecvStats']
 
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
