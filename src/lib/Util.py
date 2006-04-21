@@ -84,7 +84,9 @@ def buildRackTopology(partlist):
             partinfo[part['name']][0].append(next)
             ndp = [ppart['name'] for ppart in partlist if next in ppart['deps']]
             parents += ndp
-        children = part['children']
+        children = part['deps'][:]  # copy because popping this below would
+                                    # clear the deps list, and all children
+                                    # are not added properly
         while children:
             next = children.pop()
             partinfo[part['name']][1].append(next)

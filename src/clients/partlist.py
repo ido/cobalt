@@ -14,7 +14,11 @@ if __name__ == '__main__':
     partinfo = Cobalt.Util.buildRackTopology(parts)
     # need to cascade up busy
     busy = [part['name'] for part in parts if part['state'] == 'busy']
-    [part.__setitem__('state', 'busy*') for part in parts for pname in busy if pname in part['deps']]
+    for part in parts:
+        for pname in busy:
+            if pname in partinfo[part['name']][0] + partinfo[part['name']][1] and pname != part['name']:
+                part.__setitem__('state', 'busy*')
+
     # need to cascade up non-functional
     offline = [part['name'] for part in parts if not part['functional']]
     [part.__setitem__('functional', False) for part in parts for pname in offline if pname in part['deps']]
