@@ -101,13 +101,13 @@ class ProcessGroup(Cobalt.Data.Data):
 
             self.log.error("User %s: Running %s" % (self.get('user'), " ".join(cmd)))
             try:
-                err = open(self.errlog, 'w')
+                err = open(self.errlog, 'a')
                 os.chmod(self.errlog, 0600)
                 os.dup2(err.fileno(), sys.__stderr__.fileno())
             except IOError:
                 self.log.error("Failed to open stderr file %s. Stderr will be lost" % (self.errlog))
             try:
-                out = open(self.outlog, 'w')
+                out = open(self.outlog, 'a')
                 os.chmod(self.outlog, 0600)
                 os.dup2(out.fileno(), sys.__stdout__.fileno())
             except IOError:
