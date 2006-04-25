@@ -31,6 +31,8 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 make install prefix=${RPM_BUILD_ROOT}/usr sssinitdir=${RPM_BUILD_ROOT}/etc/init.d sysconfdir=${RPM_BUILD_ROOT}/etc
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/cobalt
+chmod 700 ${RPM_BUILD_ROOT}/var/spool/cobalt
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -41,6 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) /etc/init.d/cobalt
 /usr/man/man5/*
 /usr/man/man8/*.8*
+/var/spool/cobalt
 
 %files -n cobalt-clients
 /usr/bin/*
