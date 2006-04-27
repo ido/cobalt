@@ -2,13 +2,13 @@
 .SH "NAME"
 setres \- Create a new cobalt scheduler reservation
 .SH "SYNOPSIS"
-.B setres [-p partition] [-s starttime] [-d duration] [-u user] [-n name]
+.B setres [-a] [-p partition] [-s starttime] [-d duration] [-u user] [-n name] [partion1 partion2 ... partitionN]
 .SH "DESCRIPTION"
 .TP
 This program creates new scheduler reservations.
 .TP
 .B \-p
-.I Set use partition (or quoted "*" as a wildcard)
+.I Set use partition (or quoted "*" as a wildcard). Now optional
 .TP
 .B \-n
 .I Set reservation name
@@ -21,6 +21,8 @@ This program creates new scheduler reservations.
 .TP
 .B \-u
 .I Set user for reservation
+.E \-a 
+.I Enable auto dependancy generation for listed partition(s)
 .SH "SEE ALSO"
 .BR showres(1)
 .BR releaseres(8)
