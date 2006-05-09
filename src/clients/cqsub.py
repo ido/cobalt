@@ -106,7 +106,7 @@ if __name__ == '__main__':
     if opts['env']:
         jobspec['envs'] = {}
         [jobspec['envs'].update({key:value}) for key, value
-         in [item.split('=') for item in opts['env'].split(':')]]
+         in [item.split('=', 1) for item in opts['env'].split(':')]]
     jobspec.update({'command':command[0], 'args':command[1:]})
 
     Cobalt.Logging.setup_logging('cqsub', to_syslog=False, level=level)
