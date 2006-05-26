@@ -13,6 +13,7 @@ user and name are optional
 -a automatically find all dependancies of the partion(s) listed'''
 
 if __name__ == '__main__':
+    scheduler = Cobalt.Proxy.scheduler()
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 's:d:n:p:u:a', [])
     except getopt.GetoptError, msg:
@@ -20,7 +21,7 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     try:
-        [partition] = [opt[1] for opt in opts if opt[0] == '-p']
+        partition = [opt[1] for opt in opts if opt[0] == '-p']
     except:
         if args:
             partition = args
@@ -61,26 +62,26 @@ if __name__ == '__main__':
         nameinfo = 'system'
     if '-a' in sys.argv[1:]:
         allparts = []
-        scheduler = Cobalt.Proxy.scheduler()
+        spec = []
         parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
                                      'scheduled':'*', 'functional':'*', 'deps':'*'}])
         partinfo = Cobalt.Util.buildRackTopology(parts)
         try:
             for part in partition:
                 allparts.append(part)
+                spec.append({'tag':'partition', 'name':part}]
                 for relative in partinfo[part][0] + partinfo[part][1]:
                     if relative not in allparts:
+                        spec.append({'tag':'partition', 'name':relative}]
                         allparts.append(relative)
-            spec = [{'tag':'partition', 'name':allparts}]
         except:
             print "Invalid partition(s)"
             print helpmsg
             raise SystemExit, 1 
     else:
-        spec = [{'tag':'partition', 'name':partition}]
+        spec = [{'tag':'partition', 'name':partition[0]}]
     try:
         print scheduler.AddReservation(spec, nameinfo, user, starttime, dsec)
     except:
-        scheduler = Cobalt.Proxy.scheduler()
-        print scheduler.AddReservation(spec, nameinfo, user, starttime, dsec)
+        print "Couldn't contact the scheduler"
         
