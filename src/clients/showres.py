@@ -25,7 +25,8 @@ if __name__ == '__main__':
         for ((name, user, start, duration), partitions) in reservations.iteritems():
             dmin = duration/60.0
             dhour = dmin/60
-            dmin = dmin - (dhour * 60)
+            if dhour >= 1:
+                dmin = dmin - (dhour * 60)
             output.append((name, user, time.strftime("%c", time.localtime(start)),
                            "%02d:%02d" % (dhour, dmin), time.strftime("%c", time.localtime(start + duration))))
     else:
@@ -37,7 +38,8 @@ if __name__ == '__main__':
                 partitions = toppart + '*'
             dmin = duration/60.0
             dhour = dmin/60
-            dmin = dmin - (dhour * 60)
+            if dhour >= 1:
+                dmin = dmin - (dhour * 60)
             output.append((name, user, time.strftime("%c", time.localtime(start)),
                            "%02d:%02d" % (dhour, dmin), str(partitions)))
     Cobalt.Util.print_tabular(output)
