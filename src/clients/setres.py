@@ -70,7 +70,7 @@ if __name__ == '__main__':
             for part in partition:
                 allparts.append(part)
                 spec.append({'tag':'partition', 'name':part}]
-                for relative in partinfo[part][0] + partinfo[part][1]:
+                for relative in partinfo[part][1]:
                     if relative not in allparts:
                         spec.append({'tag':'partition', 'name':relative}]
                         allparts.append(relative)
