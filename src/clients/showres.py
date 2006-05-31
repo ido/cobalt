@@ -20,27 +20,15 @@ if __name__ == '__main__':
             else:
                 reservations[tuple(reservation)] = [partition['name']]
 
-    if '-l' not in sys.argv:
-        output = [('Reservation', 'User', 'Start', 'Duration', 'End Time')]
-        for ((name, user, start, duration), partitions) in reservations.iteritems():
-            dmin = duration/60.0
-            dhour = dmin/60
-            if dhour >= 1:
-                dmin = dmin - (dhour * 60)
-            output.append((name, user, time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin), time.strftime("%c", time.localtime(start + duration))))
-    else:
-        output = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
-        for ((name, user, start, duration), partitions) in reservations.iteritems():
-            maxsize = max([npart[part].get('size') for part in partitions])
-            toppart = [npart[part] for part in partitions if npart[part].get('size') == maxsize][0].get('name')
-            if len([part for part in partitions if part in depinfo[toppart][1]]) == len(depinfo[toppart][1]):
-                partitions = toppart + '*'
-            dmin = duration/60.0
-            dhour = dmin/60
-            if dhour >= 1:
-                dmin = dmin - (dhour * 60)
-            output.append((name, user, time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin), str(partitions)))
+    output = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
+    for ((name, user, start, duration), partitions) in reservations.iteritems():
+        maxsize = max([npart[part].get('size') for part in partitions])
+        toppart = [npart[part] for part in partitions if npart[part].get('size') == maxsize][0].get('name')
+        if len([part for part in partitions if part in depinfo[toppart][1]]) == len(depinfo[toppart][1]):
+            partitions = toppart + '*'
+        dmin = (duration/60)%60
+        dhour = duration/3600
+        output.append((name, user, time.strftime("%c", time.localtime(start)),
+                       "%02d:%02d" % (dhour, dmin), str(partitions)))
     Cobalt.Util.print_tabular(output)
                      
