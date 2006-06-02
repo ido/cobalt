@@ -115,7 +115,7 @@ if __name__ == '__main__':
         cqm = Cobalt.Proxy.queue_manager()
         job = cqm.AddJob(jobspec)
     except xmlrpclib.Fault, flt:
-        if flt.code == 31:
+        if flt.faultCode == 31:
             print "System draining. Try again later"
             raise SystemExit, 1
     except:
