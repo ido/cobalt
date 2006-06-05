@@ -615,8 +615,8 @@ class CQM(Cobalt.Component.Component):
         [j.LogFinish() for j in self.Jobs if j.get('state') == 'done']
         [self.Jobs.remove(j) for j in self.Jobs if j.get('state') == 'done']
         newdate = time.strftime("%m-%d-%y", time.localtime())
-        # [Job.log.ChangeLog() for j in self.Jobs if newdate != self.prevdate]
-        #Job.acctlog.ChangeLog()
+        [j.acctlog.ChangeLog() for j in self.Jobs if newdate != self.prevdate]
+        Job.acctlog.ChangeLog()
         return 1
 
     def drain_func(self, _):
