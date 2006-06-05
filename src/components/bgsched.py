@@ -4,9 +4,9 @@
 __revision__ = '$Revision'
 
 import copy, logging, sys, time, xmlrpclib, ConfigParser
-import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
+import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-if '--notbgl' not in sys.argv:
+if '--nodb2' not in sys.argv:
     import DB2
 
 logger = logging.getLogger('bgsched')
@@ -40,23 +40,23 @@ class Partition(Cobalt.Data.Data):
         self.set('reservations', [])
         self.job = 'none'
         self.rcounter = 1
+        self.set('db2', 'XX')
 
-    #def __cmp__(self, other):
-    #    return int(self.get('size')).__cmp__(int(other.element.get('size')))
+    def isIdle(self):
+        '''Return True if partition is idle'''
+        if '--nodb2' not in sys.argv:
+            return self.get('state') == 'idle' and self.get('db2') == 'F'
+        else:
+            return self.get('state') == 'idle'
 
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
-        if not self.get("scheduled") or not self.get('functional'):
-            return False
-        if job.get('queue') not in self.get('queue'):
-            #print "job", job.element.get('jobid'), 'queue'
-            return False
-        jobsize = int(job.get('nodes'))
-        if jobsize > self.get('size'):
-            #print "job", job.element.get('jobid'), 'size'
-            return False
-        if (((jobsize * 2) <= self.get('size')) and (self.get('size') != 32)):
-            # job should be run on a smaller partition
+        basic = self.get('scheduled') and self.get('functional')
+        queue = job.get('queue') in self.get('queue')
+        jsize = int(job.get('nodes')) # should this be 'size' instead?
+        psize = int(self.get('size'))
+        size = ((psize >= jsize) and ((psize == 32) or (jsize > psize/2)))
+        if not (basic and queue and size):
             return False
         # add a little slack for job cleanup with reservation calculations
         wall = float(job.get('walltime')) + 5.0
@@ -130,8 +130,9 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
-        if '--notbgl' not in sys.argv:
+        if '--nodb2' not in sys.argv:
             try:
+                import DB2
                 conn = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
                                    dsn=self.config.get('db2dsn'))
                 self.db2 = conn.cursor()
@@ -147,7 +148,8 @@ class PartitionSet(Cobalt.Data.DataSet):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.qmconnect = FailureMode("QM Connection")
-        if '--notbgl' not in sys.argv:
+        if '--nodb2' not in sys.argv:
+            import DB2
             self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
                                    dsn=self.config.get('db2dsn')).cursor()
 
@@ -173,22 +175,23 @@ class PartitionSet(Cobalt.Data.DataSet):
                 currjob.set('queue', queue)
         # free partitions with nonexistant jobs
         [partition.Free() for partition in self.data if partition.job not in activejobs + ['none']]
-        # find idle partitions for new jobs
+        # find idle partitions for new jobs (idle, functional, and scheduled)
         candidates = [part for part in self.data if part.get('state') == 'idle' and
                       part.get('functional') and part.get('scheduled')]
-        print "initial candidates: ", [cand.get('name') for cand in candidates]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         #print "jobs:", self.jobs
         if candidates and idlejobs:
+            print "initial candidates: ", [cand.get('name') for cand in candidates]
             #print "Actively checking"
-            if '--notbgl' not in sys.argv:
+            if '--nodb2' not in sys.argv:
                 self.db2.execute("select blockid, status from bglblock;")
                 results = self.db2.fetchall()
-                db2data = {}
-                [db2data.update({block.strip():status}) for (block, status) in results]
-                print "db2data:", db2data
-                for part in [part for part in candidates if db2data[part.get('name')] != 'F']:
+                [partition.set('db2', state) for (pname, state) in results
+                 for partition in self.data if partition.get('name') == pname]
+
+                # check for discrepancies between candidates and db2
+                for part in [part for part in candidates if part.get('db2') != 'F']:
                     foundlocation = [job for job in jobs if job.get('location') == part.get('name')]
                     if foundlocation:
                         part.job = foundlocation[0].get('jobid')
@@ -199,71 +202,38 @@ class PartitionSet(Cobalt.Data.DataSet):
                         logger.error('Partition %s in inconsistent state' % (part.get('name')))
                     candidates.remove(part)
             #print "after db2 check"
-            print "candidates: ", [cand.get('name') for cand in candidates]
-            partbyname = {}
-            for part in self.data:
-                partbyname[part.get('name')] = part
-            # deps is recursive dep list / pdeps is single ref 
-            deps = {}
-            pdeps = {}
-            for part in self.data:
-                #print "Dep line", part.get('name'), part.get('deps')
-                pdeps[part] = part.get('deps')
-            [pdeps[key].remove('') for key in pdeps.keys() if '' in pdeps[key]]
-            for part in pdeps.keys():
-                traversed = []
-                left = copy.deepcopy(pdeps[part])
-                while left:
-                    current = left.pop()
-                    traversed.append(current)
-                    [left.append(item) for item in pdeps[partbyname[current]] if item not in traversed]
-                deps[part] = [partition for partition in self.data if partition.get('name') in traversed]
-            # now we have deps for all partitions
-            #print "After dep check"
-            #print "Deps:"
-            #for key in deps.keys():
-            #    if deps[key]:
-            #        print key.element.get('name'), [partdep.element.get('name') for partdep in deps[key]]
-            contained = {}
-            for part in candidates:
-                contained[part] = [key for key, value in deps.iteritems() if part in value and key != part]
+
+            # now we get dependency info
+            depsrc = [part.to_rx({'tag':'partition', 'name':'*', 'deps':'*'}) for part in self.data]
+            depinfo = Cobalt.Util.buildRackTopology(depsrc)
+
             # kill for deps already in use
-            # deps must be idle, db2free and functional
-            if '--notbgl' not in sys.argv:
-                candidates = [part for part in candidates
-                              if not [item for item in deps[part] if item.get('state') != 'idle'
-                                      or db2data.get(item.get('name'), 'XX') != 'F' or not item.get('functional')]]
-            else:
-                candidates = [part for part in candidates
-                              if not [item for item in deps[part] if item.get('state') != 'idle'
-                                      or not item.get('functional')]]
-                
-            print "cand1", candidates
+            # deps must be idle, and functional
+
+            # first, get busy partition names
+            busy_part_names = [part.get('name') for part in self.data if not part.isIdle() and
+                               part.get('functional')]
+            candidates = [part for part in candidates
+                          if not [item for item in depinfo[part.get('name')][1] if item in busy_part_names]]
+
+            print "cand1", [part.get('name') for part in candidates]
             # need to filter out contained partitions
-            if '--notbgl' not in sys.argv:
-                # contained must be idle, db2free
-                candidates = [part for part in candidates
-                              if not [block for block in contained[part]
-                                      if db2data.get(block.get('name'), 'XX') != 'F' or block.get('state') != 'idle']]
-            else:
-                candidates = [part for part in candidates
-                              if not [block for block in contained[part]
-                                      if block.get('state') != 'idle']]
-                
-            print "cand2", candidates
+            candidates = [part for part in candidates
+                          if not [block for block in depinfo[part.get('name')][0]
+                                  if block in busy_part_names]]
+
+            print "cand2", [part.get('name') for part in candidates]
             # now candidates are only completely free blocks
-            #print "candidates: ", [cand.element.get('name') for cand in candidates]
             potential = {}
             for job in idlejobs:
                 potential[job] = [part for part in candidates if part.CanRun(job)]
                 if not potential[job]:
                     del potential[job]
-            #print "Potential", potential, deps
-            return self.ImplementPolicy(potential, deps)
+            return self.ImplementPolicy(potential, depinfo)
         else:
             return []
 
-    def ImplementPolicy(self, potential, deps):
+    def ImplementPolicy(self, potential, depinfo):
         '''Switch between queue policies'''
         qpotential = {}
         placements = []
@@ -274,17 +244,16 @@ class PartitionSet(Cobalt.Data.DataSet):
                 qpotential[job.get('queue')] = {job:potential[job]}
         for queue in qpotential.keys():
             qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
-            placements += qfunc(qpotential, queue, deps)
+            placements += qfunc(qpotential, queue, depinfo)
         return placements
 
-    def PlaceFIFO(self, qpotential, queue, deps):
+    def PlaceFIFO(self, qpotential, queue, depinfo):
         '''Return a set of placements that patch a basic FIFO+backfill policy'''
         placements = []
         potential = qpotential[queue]
         while potential:
-            #print "potential"
-            #for key, value in potential.iteritems():
-            #    print key.element.get('jobid'), [part.element.get('name') for part in value]
+
+            # get lowest jobid and place on first available partition
             potentialjobs = [int(key.get('jobid')) for key in potential.keys()]
             potentialjobs.sort()
             newjobid = str(potentialjobs[0])
@@ -294,33 +263,36 @@ class PartitionSet(Cobalt.Data.DataSet):
             newjob.Place(location)
             placements.append((newjob.get('jobid'), location.get('name')))
             del potential[newjob]
-            # now we need to remove location (and all partitions containing it) from potential lists
-            #print "removing locations:", [x.element.get('name') for x in [location] + deps[location]]
-            # remove entries in potential for all contained partitions
-            for block in [location] + deps[location]:
-                [potential[job].remove(block) for job, places in potential.iteritems() if block in places]
-            # remove entries in potential for all partitions containing location
-            for block in [block for block, bdeps in deps.iteritems() if location in bdeps]:
-                [potential[job].remove(block) for job, places in potential.iteritems() if block in places]
+
+            # now we need to remove location (and dependencies and all
+            # partitions containing it) from potential lists
+
+            # remove entries in potential for all related partitions
+            related = [part for part in depinfo[location.get('name')][0] + depinfo[location.get('name')][1]]
+            for block in [location.get('name')] + related:
+                for job, places in potential.iteritems():
+                    if block in [p.get('name') for p in places]:
+                        potential[job].remove([b for b in potential[job] if b.get('name')==block][0])
+
             for job in potential.keys():
                 if not potential[job]:
                     del potential[job]
         return placements
 
-    def PlaceShort(self, qpotential, queue, deps):
+    def PlaceShort(self, qpotential, queue, depinfo):
         '''Policy for short queue. Limited to jobs 30 mins or less'''
         potential = qpotential
         for job in potential[queue].keys():
             if float(job.get('walltime')) > 30:
                 del potential[queue][job]
-        return self.PlaceFIFO(potential, queue, deps)
+        return self.PlaceFIFO(potential, queue, depinfo)
 
-    def PlaceScavenger(self, qpotential, queue, deps):
+    def PlaceScavenger(self, qpotential, queue, depinfo):
         '''A really stupid priority queueing mechanism that starves lo queue jobs if the high-queue has idle jobs'''
         live = [job.get('queue') for job in self.jobs if job.get('state') == 'queued']
         if live.count(queue) != len(live):
             return []
-        return self.PlaceFIFO(qpotential[queue], deps)
+        return self.PlaceFIFO(qpotential[queue], depinfo)
                 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
@@ -394,9 +366,9 @@ class BGSched(Cobalt.Component.Component):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:t', ['notbgl'])
+        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:t', ['nodb2'])
     except GetoptError, msg:
-        print "%s\nUsage:\nbgsched.py [-t] [-C configfile] [-d] [-D <pidfile>] [--notbgl]" % (msg)
+        print "%s\nUsage:\nbgsched.py [-t] [-C configfile] [-d] [-D <pidfile>] [--nodb2]" % (msg)
         raise SystemExit, 1
     try:
         daemon = [x[1] for x in opts if x[0] == '-D'][0]
