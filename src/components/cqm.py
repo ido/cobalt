@@ -575,16 +575,42 @@ class JobSet(Cobalt.Data.DataSet):
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
         self.__id__ = Cobalt.Data.IncrID()
-        
+
+class Queue(Cobalt.Data.Data):
+    '''queue objects, with separate limits, etc'''
+
+    def __init__(self, info):
+        Cobalt.Data.Data.__init__(self, info)
+
+    def CanRun(self, job):
+        '''Check that job meets criteria of this queue'''
+        pass
+
+class QueueSet(Cobalt.Data.DataSet):
+    '''Set of queues, may or may not be assigned to partitions?
+    self.data is the list of queues known'''
+    __object__ = Queue
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+        #self.queues = []
+
+    def __getstate__(self):
+        pass
+
+    def __setstate__(self):
+        pass
+    
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
     __implementation__ = 'cqm'
     __name__ = 'queue-manager'
-    __statefields__ = ['Jobs']
+    __statefields__ = ['Jobs']  #should include Queues here
     async_funcs = ['assert_location', 'progress', 'pm_sync']
 
     def __init__(self, setup):
         self.Jobs = JobSet()
+        self.Queues = QueueSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.drain = False
 
@@ -593,6 +619,9 @@ class CQM(Cobalt.Component.Component):
         self.register_function(lambda  address, data:self.Jobs.Get(data), "GetJobs")
         self.register_function(lambda  address, data:self.Jobs.Add(data), "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
+        self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
+        self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
+        self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
         self.register_function(self.drain_func, "Drain")
         self.register_function(self.resume_func, "Resume")
         self.register_function(lambda address, data, nodelist:
