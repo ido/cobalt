@@ -582,10 +582,6 @@ class Queue(Cobalt.Data.Data):
     def __init__(self, info):
         Cobalt.Data.Data.__init__(self, info)
 
-    def CanRun(self, job):
-        '''Check that job meets criteria of this queue'''
-        pass
-
 class QueueSet(Cobalt.Data.DataSet):
     '''Set of queues, may or may not be assigned to partitions?
     self.data is the list of queues known'''
@@ -601,6 +597,14 @@ class QueueSet(Cobalt.Data.DataSet):
     def __setstate__(self, state):
         self.__dict__.update(state)
     
+    def CanRun(self, _, job):
+        '''Check that job meets criteria of the specified queue'''
+
+        # see if queue specified for job actually exists
+        if job.get('queue') not in [q.get('qname') for q in self.data]:
+            return 'queue \'' + job.get('queue') + '\' does not exist in queue_manager'
+        return 'True'
+
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
     __implementation__ = 'cqm'
@@ -622,6 +626,7 @@ class CQM(Cobalt.Component.Component):
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
+        self.register_function(self.Queues.CanRun, "CanRun")
         self.register_function(self.drain_func, "Drain")
         self.register_function(self.resume_func, "Resume")
         self.register_function(lambda address, data, nodelist:

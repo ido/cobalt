@@ -91,18 +91,6 @@ if __name__ == '__main__':
             print "non-integer node count specified"
             raise SystemExit, 1
 
-    # check if queue specified exists in cqm
-    queuespec = [{'tag':'queue', 'qname':opts['queue']}]
-    try:
-        cqm = Cobalt.Proxy.queue_manager()
-        queuelist = cqm.GetQueues(queuespec)
-    except:
-        print "Error getting queues from cqm"
-        raise SystemExit, 1
-    if not queuelist:
-        print 'Error: the \'' + opts['queue'] + '\' queue does not exist'
-        raise SystemExit, 1
-
     if opts['project']:
         jobspec['project'] = opts['project']
 
@@ -126,7 +114,19 @@ if __name__ == '__main__':
     
     try:
         cqm = Cobalt.Proxy.queue_manager()
+
+        # check if job can run in queue as specified
+        response = cqm.CanRun(jobspec)
+        if response != 'True':
+            print 'Problem: ' + response
+            raise SystemExit, 1
+
+        # try adding job to queue_manager
         job = cqm.AddJob(jobspec)
+        
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Can't talk to cqm"
+        raise SystemExit, 1
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 31:
             print "System draining. Try again later"
