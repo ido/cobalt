@@ -90,6 +90,19 @@ if __name__ == '__main__':
         except:
             print "non-integer node count specified"
             raise SystemExit, 1
+
+    # check if queue specified exists in cqm
+    queuespec = [{'tag':'queue', 'qname':opts['queue']}]
+    try:
+        cqm = Cobalt.Proxy.queue_manager()
+        queuelist = cqm.GetQueues(queuespec)
+    except:
+        print "Error getting queues from cqm"
+        raise SystemExit, 1
+    if not queuelist:
+        print 'Error: the \'' + opts['queue'] + '\' queue does not exist'
+        raise SystemExit, 1
+
     if opts['project']:
         jobspec['project'] = opts['project']
 

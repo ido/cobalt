@@ -6,7 +6,7 @@ __revision__ = '$Revision: 1.35 $'
 
 from logging import getLogger, FileHandler, Formatter, INFO
 
-import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser
+import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
 
 logger = logging.getLogger('cqm')
@@ -527,7 +527,7 @@ class BGJob(Job):
         if self.config.get('bgkernel', 'false') == 'true':
             self.steps = ['SetBGKernel', 'RunBGUserJob', 'FinishUserPgrp', 'Finish']            
         self.SetPassive()
-        self.acctlog.LogMessage('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
+#         self.acctlog.LogMessage('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
         
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
@@ -596,16 +596,16 @@ class QueueSet(Cobalt.Data.DataSet):
         #self.queues = []
 
     def __getstate__(self):
-        pass
+        return {'data':copy.deepcopy(self.data)}
 
-    def __setstate__(self):
-        pass
+    def __setstate__(self, state):
+        self.__dict__.update(state)
     
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
     __implementation__ = 'cqm'
     __name__ = 'queue-manager'
-    __statefields__ = ['Jobs']  #should include Queues here
+    __statefields__ = ['Jobs', 'Queues']
     async_funcs = ['assert_location', 'progress', 'pm_sync']
 
     def __init__(self, setup):

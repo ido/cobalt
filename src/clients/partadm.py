@@ -56,7 +56,15 @@ if __name__ == '__main__':
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
                   'queue':'*', 'deps':'*'}], )
     elif '--queue' in [opt for (opt, arg)  in opts]:
+        try:
+            cqm = Cobalt.Proxy.queue_manager()
+            existing_queues = [q.get('qname') for q in cqm.GetQueues([{'tag':'queue','qname':'*'}])]
+        except:
+            print "Error getting queues from queue_manager"
         queue = [arg for (opt, arg) in opts if opt == '--queue'][0]
+        if queue.split(':') != [q for q in queue.split(':') if q in existing_queues]:
+            print '\'' + queue + '\' is not an existing queue'
+            raise SystemExit, 1
         func = sched.Set
         args = ([{'tag':'partition', 'name':partname} for partname in args], {'queue':queue})
     elif '--deps' in [opt for (opt, arg) in opts]:
