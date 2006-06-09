@@ -69,10 +69,10 @@ if __name__ == '__main__':
         try:
             for part in partition:
                 allparts.append(part)
-                spec.append({'tag':'partition', 'name':part}]
+                spec.append({'tag':'partition', 'name':part})
                 for relative in partinfo[part][1]:
                     if relative not in allparts:
-                        spec.append({'tag':'partition', 'name':relative}]
+                        spec.append({'tag':'partition', 'name':relative})
                         allparts.append(relative)
         except:
             print "Invalid partition(s)"
