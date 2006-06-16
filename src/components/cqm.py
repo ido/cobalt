@@ -6,7 +6,7 @@ __revision__ = '$Revision: 1.35 $'
 
 from logging import getLogger, FileHandler, Formatter, INFO
 
-import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy
+import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
 
 logger = logging.getLogger('cqm')
@@ -574,66 +574,121 @@ class JobSet(Cobalt.Data.DataSet):
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
-        self.__id__ = Cobalt.Data.IncrID()
+        #self.__id__ = Cobalt.Data.IncrID()
 
-class Queue(Cobalt.Data.Data):
-    '''queue objects, with separate limits, etc'''
+class Queue(Cobalt.Data.Data, JobSet):
+    '''queue object, subs JobSet and Data, which gives us:
+       self is a Queue object (with restrictions and stuff)
+       self.data is a list of BGJob objects'''
 
-    def __init__(self, info):
+    def __init__(self, info, id=None):
         Cobalt.Data.Data.__init__(self, info)
+        JobSet.__init__(self)
 
 class QueueSet(Cobalt.Data.DataSet):
-    '''Set of queues, may or may not be assigned to partitions?
+    '''Set of queues
     self.data is the list of queues known'''
     __object__ = Queue
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
-        #self.queues = []
+        self.__id__ = Cobalt.Data.IncrID()
 
-    def __getstate__(self):
-        return {'data':copy.deepcopy(self.data)}
+    def Add(self, cdata, callback=None, cargs=()):
+        '''Add new Queue to QueueSet
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-    
+        overloaded from DataSet.Add() for adding queues, specifically
+        for passing along an IncrID object instead of a number, so that each
+        JobSet has the same __id__ ref
+        '''
+        retval = []
+        if type(cdata) != types.ListType:
+            cdata = [cdata]
+        for item in cdata:
+            try:
+                if self.__id__:
+                    iobj = self.__object__(item)
+                    iobj.__id__ = self.__id__
+                else:
+                    iobj = self.__object__(item)
+            except DataCreationError, missing:
+                print "returning fault"
+                raise xmlrpclib.Fault(8, str(missing))
+            #return xmlrpclib.dumps(xmlrpclib.Fault(8, str(missing)))
+            # uniqueness test goes here
+            self.data.append(iobj)
+            if callback:
+                apply(callback, (iobj, ) + cargs)
+            retval.append(iobj.to_rx(item))
+        return retval
+
+    def GetJobs(self, data, callback=None, cargs={}):
+        '''Uses the Data.Get method to retrieve Jobs from Queues'''
+        joblist = [Q.Get(data, callback, cargs) for Q in self.data]
+        for j in joblist[1:]:
+            joblist[0].extend(j)
+        if joblist:
+            return joblist[0]
+        else:
+            return []
+
+    def DelJobs(self, data):
+        for Q in self.data:
+            Q.Del([data])
+            
     def CanRun(self, _, job):
         '''Check that job meets criteria of the specified queue'''
 
         # see if queue specified for job actually exists
-        if job.get('queue') not in [q.get('qname') for q in self.data]:
+#         rlist = [ lambda job, self.data: job.get('queue') in [q.get('qname') for q in self.data] ] # queue exists
+                  #lambda   ]
+
+#         for qfunc in rlist:
+#             print qfunc, 'is'
+             
+        if not (lambda j, queuelist: j.get('queue') in [q.get('qname') for q in queuelist])(job, self.data):
+               #job.get('queue') not in [q.get('qname') for q in self.data]:
             return 'queue \'' + job.get('queue') + '\' does not exist in queue_manager'
+
+        # TODO: check job against restrictions
+        """
+        (lambda job, self.data: job.get('qname') in [q.get('qname') for q in self.data])
+        (lambda jspec, rlist: jspec.get('user') in rlist.get('users'))(jobspec, {'users':['voran', 'vinnie']})
+        (lambda x: x in people)(120)
+        (lambda x, name, y: x[name] < y)(jobspec,'time', 9000)
+        """
+
         return 'True'
 
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
     __implementation__ = 'cqm'
     __name__ = 'queue-manager'
-    __statefields__ = ['Jobs', 'Queues']
+    __statefields__ = ['Queues']
     async_funcs = ['assert_location', 'progress', 'pm_sync']
 
     def __init__(self, setup):
-        self.Jobs = JobSet()
         self.Queues = QueueSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.drain = False
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
-        self.register_function(lambda  address, data:self.Jobs.Get(data), "GetJobs")
-        self.register_function(lambda  address, data:self.Jobs.Add(data), "AddJob")
+        self.register_function(lambda  address, data:self.Queues.GetJobs(data), "GetJobs")
+        self.register_function(lambda  address, data:[Q for Q in self.Queues if Q.get('qname') == data.get('queue')][0].Add(data), "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
+#         self.register_function(self.handle_get_queue, "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
         self.register_function(self.Queues.CanRun, "CanRun")
         self.register_function(self.drain_func, "Drain")
         self.register_function(self.resume_func, "Resume")
         self.register_function(lambda address, data, nodelist:
-                               self.Jobs.Get(data, lambda job, nodes:job.Run(nodes), nodelist),
+                               self.Queues.GetJobs(data, lambda job, nodes:job.Run(nodes), nodelist),
                                'RunJobs')
         self.register_function(lambda address, data, updates:
-                               self.Jobs.Get(data, lambda job, newattr:job.update(newattr), updates),
+                               self.Queues.GetJobs(data, lambda job, newattr:job.update(newattr), updates),
                                'SetJobs')
         self.register_function(self.set_jobid, 'SetJobID')
 
@@ -644,12 +699,12 @@ class CQM(Cobalt.Component.Component):
 
     def progress(self):
         '''Process asynchronous job work'''
-        [j.Progress() for j in self.Jobs if j.active]
-        [j.Kill("Job %s Overtime, Killing") for j in self.Jobs if j.over_time()]
-        [j.LogFinish() for j in self.Jobs if j.get('state') == 'done']
-        [self.Jobs.remove(j) for j in self.Jobs if j.get('state') == 'done']
+        [j.Progress() for j in [j for queue in self.Queues for j in queue] if j.active]
+        [j.Kill("Job %s Overtime, Killing") for j in [j for queue in self.Queues for j in queue] if j.over_time()]
+        [j.LogFinish() for j in [j for queue in self.Queues for j in queue] if j.get('state') == 'done']
+        [queue.remove(j) for (j,queue) in [(j,queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']
         newdate = time.strftime("%m-%d-%y", time.localtime())
-        [j.acctlog.ChangeLog() for j in self.Jobs if newdate != self.prevdate]
+        [j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
         Job.acctlog.ChangeLog()
         return 1
 
@@ -668,14 +723,23 @@ class CQM(Cobalt.Component.Component):
         else:
             return xmlrpclib.Fault(31, 'System Draining')
 
+    def handle_get_queue(self, _, data):
+
+        print data
+        print self.Queues.__object__, self.Queues.data
+        #print self.Queues.Get(data)
+        return []
+
     def handle_job_del(self, _, data, force=False):
         '''Delete a job'''
         ret = []
         for spec in data:
-            for job in [job for job in self.Jobs if job.match(spec)]:
+            for job,q in [(job,queue) for queue in self.Queues for job in queue if job.match(spec)]:
+                print job.get('jobid'),q.get('qname')
                 ret.append(job.to_rx(spec))
                 if job.get('state') in ['queued', 'ready'] or force:
-                    self.Jobs.remove(job)
+                    #q.remove(job)
+                    q.Del(spec)
                 else:
                     job.Kill("Job %s killed based on user request")
         return ret
@@ -733,7 +797,7 @@ class CQM(Cobalt.Component.Component):
             self.logger.error("Failed to connect to the process manager")
             return
         live = [item['pgid'] for item in pgs]
-        for job in self.Jobs:
+        for job in [j for queue in self.Queues for j in queue]:
             for pgtype in job.pgid.keys():
                 pgid = job.pgid[pgtype]
                 if pgid not in live:
