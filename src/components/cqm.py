@@ -136,7 +136,7 @@ class Job(Cobalt.Data.Data):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.acctlog = Logger()
+        #self.acctlog = Logger()
         self.comms = CommDict()
 
     def fail_job(self, state):
@@ -735,7 +735,6 @@ class CQM(Cobalt.Component.Component):
         ret = []
         for spec in data:
             for job,q in [(job,queue) for queue in self.Queues for job in queue if job.match(spec)]:
-                print job.get('jobid'),q.get('qname')
                 ret.append(job.to_rx(spec))
                 if job.get('state') in ['queued', 'ready'] or force:
                     #q.remove(job)
