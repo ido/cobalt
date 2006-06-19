@@ -49,6 +49,9 @@ if __name__ == '__main__':
         raise SystemExit, 1
     if opts['cwd'] == False:
         opts['cwd'] = os.getcwd()
+    if not os.path.isdir(opts['cwd']):
+        print "Error: dir '" + opts['cwd'] + "' is not a directory"
+        raise SystemExit, 1
     # ensure time is actually in minutes
     if opts['time'].count(':') > 0:
         # process as a time
