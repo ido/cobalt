@@ -399,6 +399,8 @@ class Job(Cobalt.Data.Data):
                 logger.error("Job %s has no pgroup associated with it" % self.get('jobid'))
             else:
                 self.KillPGID(self.pgid['user'])
+        elif self.get('state') == 'hold':  #job in 'hold' and running
+            self.KillPGID(self.pgid['user'])
         else:
             logger.error("Got qdel for job %s in unexpected state %s" % (self.get('jobid'), self.get('state')))
  
@@ -750,7 +752,7 @@ class CQM(Cobalt.Component.Component):
         for spec in data:
             for job,q in [(job,queue) for queue in self.Queues for job in queue if job.match(spec)]:
                 ret.append(job.to_rx(spec))
-                if job.get('state') in ['queued', 'ready'] or force:
+                if job.get('state') in ['queued', 'ready'] or force or (job.get('state') == 'hold' and not job.pgid):
                     #q.remove(job)
                     q.Del(spec)
                 else:
