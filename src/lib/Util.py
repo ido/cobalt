@@ -1,7 +1,7 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
-import types
+import types, smtplib, os
 from getopt import getopt, GetoptError
 
 def dgetopt(arglist, opt, vopt, msg):
@@ -92,3 +92,14 @@ def buildRackTopology(partlist):
             partinfo[part['name']][1].append(next)
             children += partport[next]['deps']
     return partinfo
+
+def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
+    '''Sends an email'''
+    msgstr = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % ('cobalt@%s' % os.uname()[1], toaddr, subj))
+    try:
+        server = smtplib.SMTP(smtpserver)
+        server.sendmail('voran@wc1.mcs.anl.gov', toaddr, msgstr + msg)
+        server.quit()
+    except Exception, msg:
+        print 'Problem sending mail', msg
+    

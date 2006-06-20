@@ -17,7 +17,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
     options = {'v':'verbose', 'd':'debug'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
-                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project'}
+                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify'}
     (opts, command) = Cobalt.Util.dgetopt(sys.argv[1:], options, doptions, helpmsg)
     # need to filter here for all args
     level = 30
@@ -96,6 +96,9 @@ if __name__ == '__main__':
 
     if opts['project']:
         jobspec['project'] = opts['project']
+
+    if opts['notify']:
+        jobspec['notify'] = opts['notify']
 
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'], 'jobid':'*',
                     'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'), 'kernel':opts['kernel'],

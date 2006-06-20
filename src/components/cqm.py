@@ -7,7 +7,7 @@ __revision__ = '$Revision: 1.35 $'
 from logging import getLogger, FileHandler, Formatter, INFO
 
 import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
-import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
+import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 logger = logging.getLogger('cqm')
 
@@ -485,7 +485,6 @@ class Job(Cobalt.Data.Data):
         '''Get job execution statistics from timers'''
         result = ''
         for (name, timer) in self.timers.iteritems():
-            print name
             result += "%s:%.02fs " % (name, timer.Check())
         return result
 
@@ -523,9 +522,12 @@ class BGJob(Job):
         if not self.get('kernel', False):
             self.set('kernel', 'default')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
-        self.steps = ['RunBGUserJob', 'FinishUserPgrp', 'Finish']
+        if self.get('notify', False):
+            self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
+        else:
+            self.steps = ['RunBGUserJob', 'FinishUserPgrp', 'Finish']
         if self.config.get('bgkernel', 'false') == 'true':
-            self.steps = ['SetBGKernel', 'RunBGUserJob', 'FinishUserPgrp', 'Finish']            
+            self.steps.insert(0, 'SetBGKernel')
         self.SetPassive()
 #         self.acctlog.LogMessage('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
         
@@ -541,6 +543,18 @@ class BGJob(Job):
                            '/%s/%s' % (self.config.get('partitionboot'), self.get('location')))
             except OSError:
                 logger.error("Failed to reset boot location for partition for %s" % (self.get('location')))
+
+    def NotifyAtStart(self):
+        '''Notify user when job has started'''
+        subj = 'Cobalt: job %s started' % self.get('jobid')
+        msg = 'Job %s starting on partition %s, at %s' % (self.get('jobid'), self.get('location'), time.strftime('%c', time.localtime()))
+        Cobalt.Util.sendemail(self.get('notify'), subj, msg)
+
+    def NotifyAtEnd(self):
+        '''Notify user when job has ended'''
+        subj = 'Cobalt: job %s finished' % self.get('jobid')
+        msg = 'Job %s finished at %s\nStats: %s' %  (self.get('jobid'), time.strftime('%c', time.localtime()), self.GetStats())
+        Cobalt.Util.sendemail(self.get('notify'), subj, msg)
 
     def RunBGUserJob(self):
         '''Run a Blue Gene Job'''
