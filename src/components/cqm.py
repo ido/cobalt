@@ -601,6 +601,12 @@ class Queue(Cobalt.Data.Data, JobSet):
         Cobalt.Data.Data.__init__(self, info)
         JobSet.__init__(self)
 
+        # set defaults if not set already
+        defaults = {'drain':False, 'users':['*'], 'maxtime':0}
+        for d in defaults:
+            if d not in self._attrib:
+                self.set(d, defaults[d])
+
 class QueueSet(Cobalt.Data.DataSet):
     '''Set of queues
     self.data is the list of queues known'''
@@ -655,16 +661,18 @@ class QueueSet(Cobalt.Data.DataSet):
     def CanRun(self, _, job):
         '''Check that job meets criteria of the specified queue'''
 
-        # see if queue specified for job actually exists
-#         rlist = [ lambda job, self.data: job.get('queue') in [q.get('qname') for q in self.data] ] # queue exists
-                  #lambda   ]
+        # restriction list
+        rlist = [ [(job, self.data), (lambda j, queuelist: j.get('queue') in [q.get('qname') for q in queuelist]), 'Queue does not exist'],
+                  [(job, self.data), (lambda wtime, maxtime: job.get('walltime') <= [q.get('maxtime') for q in self.data if q.get('qname') == job.get('queue')][0]), 'Walltime greater than queue maxtime'] ]
 
-#         for qfunc in rlist:
-#             print qfunc, 'is'
+        for qfunc in rlist:
+            result = apply(qfunc[1], qfunc[0])
+            if result == False:
+                return qfunc[2]
              
-        if not (lambda j, queuelist: j.get('queue') in [q.get('qname') for q in queuelist])(job, self.data):
-               #job.get('queue') not in [q.get('qname') for q in self.data]:
-            return 'queue \'' + job.get('queue') + '\' does not exist in queue_manager'
+#         if not (lambda j, queuelist: j.get('queue') in [q.get('qname') for q in queuelist])(job, self.data):
+#                #job.get('queue') not in [q.get('qname') for q in self.data]:
+#             return 'queue \'' + job.get('queue') + '\' does not exist in queue_manager'
 
         # TODO: check job against restrictions
         """
