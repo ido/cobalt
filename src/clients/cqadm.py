@@ -92,9 +92,11 @@ if __name__ == '__main__':
         print "      Deleted Queues"
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['setq']:
-        props = [p.split('=') for p in opts['setq'].split(':')]
+        props = [p.split('=') for p in opts['setq'].split(' ')]
         updates = {}
         for prop,val in props:
+            if prop == 'users':
+                val = val.split(',')
             updates.update({prop:val})
         response = cqm.SetQueues(spec, updates)
     else:
@@ -108,4 +110,3 @@ if __name__ == '__main__':
             updates['queue'] = queue
         response = cqm.SetJobs(spec, updates)
     print response
-    

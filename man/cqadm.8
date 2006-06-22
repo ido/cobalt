@@ -3,11 +3,12 @@
 cqadm \- queue manager administration tool
 .SH "SYNOPSIS"
 .B cqadm [-d] [--drain] [--resume] [--hold] [--release] [--run=<location>] [--kill] [--delete] [--queue=newqueue] <jobid> <jobid>
-.TP
-.B cqadm [-d] [--addq] [--delq] [--getq] <queue> <queue>
-.TP
+
+.B cqadm [-d] [--addq] [--delq] [--getq] [--setq 'prop:value prop:value'] <queue> <queue>
+
 .SH "DESCRIPTION"
-.TP
+Good things
+
 .SH "OPTIONS"
 .TP
 .B \-d
@@ -46,6 +47,27 @@ Delete specified queue(s) from queue manager
 .TP
 .B \-\-getq queue
 List queue(s) in queue manager
+.TP
+.B \-\-setq 'prop:value prop:value' queue
+Set properties for one or more queues. The prop:value pairs are separated by whitespace. 
+.IP 
+Example:
+.IP
+cqadm --setq 'maxtime=01:00:00 users=mike:john:george' someq
+.IP
+Properties:
+.RS
+.TP
+.B maxtime=hh:mm:ss
+The maximum walltime allowed for jobs submitted to the queue.
+.TP
+.B users
+List of users allowed to submit to the queue. An '*' means any user can submit to the queue
+.TP
+.B drain=True|False
+Flag determining whether queue is draining or not.
+
+.RE
 .SH "SEE ALSO"
 .BR cqm(8)
 .SH "BUGS"
