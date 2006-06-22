@@ -2,30 +2,50 @@
 .SH "NAME"
 cqadm \- queue manager administration tool
 .SH "SYNOPSIS"
-.B cqadm [-d] [--run=<location>] [--hold] [--release] [--queue=newqueue] jobid
+.B cqadm [-d] [--drain] [--resume] [--hold] [--release] [--run=<location>] [--kill] [--delete] [--queue=newqueue] <jobid> <jobid>
+.TP
+.B cqadm [-d] [--addq] [--delq] [--getq] <queue> <queue>
+.TP
 .SH "DESCRIPTION"
+.TP
+.SH "OPTIONS"
 .TP
 .B \-d
 Enable communication debugging
 .TP
-.B \-\-hold
+.B \-\-drain
+Drain
+.TP
+.B \-\-resume
+Resume
+.TP
+.B \-\-hold jobid
 Set job state to hold, preventing execution
 .TP
-.B \-\-release
+.B \-\-release jobid
 Set job state to ready, allowing execution
-.TP
-.B \-\-queue
-Change job queue to specified one
-.TP
-.B \-\-kill
-Kill job(s) using normal mechanism
-.TP
-.B \-\-delete
-Kill job(s) using forceable deletion. Job state will be deleted. This
-may leave processes dangling on computation resources. 
 .TP
 .B \-\-run=<location> jobid
 Run the job immediately on the specified location
+.TP
+.B \-\-kill jobid
+Kill job(s) using normal mechanism
+.TP
+.B \-\-delete jobid
+Kill job(s) using forceable deletion. Job state will be deleted. This
+may leave processes dangling on computation resources. 
+.TP
+.B \-\-queue=<queue>
+Change job queue to specified one
+.TP
+.B \-\-addq queue
+Add specified queue(s) to queue manager
+.TP
+.B \-\-delq queue
+Delete specified queue(s) from queue manager
+.TP
+.B \-\-getq queue
+List queue(s) in queue manager
 .SH "SEE ALSO"
 .BR cqm(8)
 .SH "BUGS"

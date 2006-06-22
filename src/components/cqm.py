@@ -705,6 +705,7 @@ class CQM(Cobalt.Component.Component):
 #         self.register_function(self.handle_get_queue, "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
+        self.register_function(lambda  address, data, updates:self.Queues.Get(data, lambda queue, newattr:queue.update(newattr), updates), "SetQueues")
         self.register_function(self.Queues.CanRun, "CanRun")
         self.register_function(self.drain_func, "Drain")
         self.register_function(self.resume_func, "Resume")
@@ -718,7 +719,7 @@ class CQM(Cobalt.Component.Component):
 
     def set_jobid(self, _, jobid):
         '''Set next jobid for new job'''
-        self.Jobs.__id__.idnum = jobid-1
+        self.Queues.__id__.idnum = jobid-1
         return True
 
     def progress(self):

@@ -24,6 +24,43 @@ def dgetopt(arglist, opt, vopt, msg):
             ret[vopt[option]] = garg
     return ret, list(args)
 
+def dgetopt_long(arglist, opt, vopt, msg):
+    '''parse options into a dictionary, long and short options supported'''
+    ret = {}
+    for optname in opt.values() + vopt.values():
+        ret[optname] = False
+    long_opts = []
+    gstr = ''
+
+    # options that don't require args
+    for o in opt.keys():
+        if len(o) > 1:
+            long_opts.append(o)
+        else:
+            gstr = gstr + o
+    # options that require args
+    for o in vopt.keys():
+        if len(o) > 1:
+            long_opts.append(o + '=')
+        else:
+            gstr = gstr + o + ':'
+
+    try:
+        (opts, args) = getopt(arglist, gstr, long_opts)
+    except GetoptError, gerr:
+        print gerr
+        print msg
+        raise SystemExit, 1
+
+    for (gopt, garg) in opts:
+        option = gopt.split('-')[-1]
+        if opt.has_key(option):
+            ret[opt[option]] = True
+        else:
+            ret[vopt[option]] = garg
+
+    return ret, list(args)
+
 def print_tabular(rows):
     '''print data in tabular format'''
     cmax = tuple([-1 * max([len(str(row[index])) for row in rows]) for index in xrange(len(rows[0]))])

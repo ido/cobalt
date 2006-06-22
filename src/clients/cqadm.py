@@ -8,31 +8,29 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 helpmsg = 'Usage: cqadm [-d] [--drain] [--resume] [--hold] [--release] [--run=<location>] ' + \
           '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
-          '       cqadm [-d] [--addq --name=queuename] [--delq queuename queuename] [--getq]'
+          '       cqadm [-d] [--addq] [--delq] [--getq] [--setq property=value:property=value] <queue> <queue>'
 
 def getQueues(cqmConn):
     '''gets queues from cqmConn'''
-    info = [{'tag':'queue','qname':'*'}]
+    info = [{'tag':'queue','qname':'*', 'drain':'*', 'users':'*', 'maxtime':'*'}]
     return cqmConn.GetQueues(info)
 
 if __name__ == '__main__':
-    try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'dj', ['drain', 'hold', 'release',
-                                                          'kill', 'delete', 'queue=', 'resume', 'run=',
-                                                          'addq', 'name=', 'getq', 'delq='])
-    except getopt.GetoptError, msg:
-        print msg
+
+    options = {'drain':'drain', 'resume':'resume', 'getq':'getq', 'd':'debug',
+               'hold':'hold', 'release':'release', 'kill':'kill', 'delete':'delete',
+               'addq':'addq', 'delq':'delq'}
+    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue', 'run':'run', 'setq':'setq'}
+
+    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, helpmsg)
+
+    if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in ['drain', 'resume', 'getq', 'j', 'setjobid']]:
+        print "At least one jobid or queue must be supplied"
         print helpmsg
         raise SystemExit, 1
 
-    if len(args) == 0 and not [opt for opt in sys.argv if opt in ['--addq','--delq','--getq']]:
-        print "At least one jobid must be supplied"
-        print helpmsg
-        raise SystemExit, 1
-
-    if ('-d', '') in opts:
+    if opts['debug']:
         debug = True
-        opts.remove(('-d', ''))
         level = 10
     else:
         debug = False
@@ -43,7 +41,7 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
 
-    if ((('--hold', '') in opts) and (('--release', '') in opts)):
+    if opts['hold'] and opts['release']:
         print "Only one of --hold or --release can be used at once"
         print helpmsg
         raise SystemExit, 1
@@ -51,62 +49,62 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('cqadm', to_syslog=False, level=level)
 
     # set the spec whether working with queues or jobs
-    if [opt for opt in sys.argv if opt in ['--addq','--delq','--getq']]:
-        spec = [{'tag':'queue'}]
+    if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq']:
+        spec = [{'tag':'queue', 'qname':qname} for qname in args]
     else:
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
 
     cqm = Cobalt.Proxy.queue_manager()
     kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
-    if '-j' in sys.argv:
-        response = cqm.SetJobID(int(args[0]))
+    if opts['setjobid']:
+        response = cqm.SetJobID(int(opts['setjobid']))
     elif kdata:
         for cmd in kdata:
             if cmd == '--delete':
                 response = cqm.DelJobs(spec, True)
             else:
                 response = cqm.DelJobs(spec)
-    elif '--run' in [opt for (opt, arg) in opts]:
-        [location] = [arg for (opt, arg) in opts if opt == '--run']
+    elif opts['run']:
+        location = opts['run']
         response = cqm.RunJobs(spec, location.split(':'))
-    elif '--drain' in sys.argv:
+    elif opts['drain']:
         cqm.Drain()
-    elif '--resume' in sys.argv:
+    elif opts['resume']:
         cqm.Resume()
-    elif '--addq' in sys.argv:
-        if '--name' in [opt[0] for opt in opts]:
-            qname = [opt[1] for opt in opts if '--name' == opt[0]][0]
-            existing_queues = getQueues(cqm)
-            if qname in [q.get('qname') for q in existing_queues]:
-                print 'queue \'' + qname + '\' already exists'
-                response = ''
-            else:
-                spec[0].update({'qname':qname})
-                response = cqm.AddQueue(spec)
-                print "Added queue", response[0]['qname']
-        else:
+    elif opts['addq']:
+        existing_queues = getQueues(cqm)
+        if [qname for qname in args if qname in [q.get('qname') for q in existing_queues]]:
+            print 'queue \'' + qname + '\' already exists'
+            response = ''
+        elif len(args) < 1:
             print 'Must specify queue name'
-    elif '--getq' in sys.argv:
+            raise SystemExit, 1
+        else:
+            response = cqm.AddQueue(spec)
+            print "Added queue(s)", [q.get('qname') for q in response]
+    elif opts['getq']:
         response = getQueues(cqm)
-        datatoprint = [('Queue', )] + [(q.get('qname'), ) for q in response]
+        datatoprint = [('Queue', 'Users', 'MaxTime', 'Drain')] + [(q.get('qname'), ','.join(q.get('users')), q.get('maxtime'), q.get('drain')) for q in response]
         Cobalt.Util.print_tabular(datatoprint)
-    elif '--delq' in sys.argv:
-        qname = [opt[1] for opt in opts if '--delq' == opt[0]][0]
-        spec[0].update({'qname':qname})
-        otherqueues = [{'tag':'queue','qname':queue} for queue in args]
-        response = cqm.DelQueues(spec + otherqueues)
+    elif opts['delq']:
+        response = cqm.DelQueues(spec)
         datatoprint = [('Queue', )] + [(q.get('qname'), ) for q in response]
         print "      Deleted Queues"
         Cobalt.Util.print_tabular(datatoprint)
-        
+    elif opts['setq']:
+        props = [p.split('=') for p in opts['setq'].split(':')]
+        updates = {}
+        for prop,val in props:
+            updates.update({prop:val})
+        response = cqm.SetQueues(spec, updates)
     else:
         updates = {}
-        if ('--hold', '') in opts:
+        if opts['hold']:
             updates['state'] = 'hold'
-        elif ('--release', '') in opts:
+        elif opts['release']:
             updates['state'] = 'queued'
-        if '--queue' in [opt[0] for opt in opts]:
-            [queue] = [opt[1] for opt in opts if '--queue' == opt[0]]
+        if opts['queue']:
+            queue = opts['queue']
             updates['queue'] = queue
         response = cqm.SetJobs(spec, updates)
     print response
