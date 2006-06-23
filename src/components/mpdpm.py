@@ -14,26 +14,34 @@ class ProcessGroupCreationError(Exception):
 
 class ProcessGroup(Cobalt.Data.Data):
     '''ProcessGroup is a subclassed sss.restriction.Data object that implements mpd process groups'''
-    required_fields = ['pgid', 'state']
+    required_fields = ['pgid']
     _configfields = ['mpdpath', 'outputspool']
     _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
         _config.read('/etc/cobalt.conf')
-    if not _config._sections.has_key('bgpm'):
-        print '''"bgpm" section missing from cobalt config file'''
+    if not _config._sections.has_key('mpdpm'):
+        print '''"mpdpm" section missing from cobalt config file'''
         raise SystemExit, 1
-    config = _config._sections['bgpm']
+    config = _config._sections['mpdpm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
         raise SystemExit, 1
 
     def __init__(self, data, pgid):
-        data['tag'] = 'process-group'
-        Cobalt.Data.Data.__init__(self, data)
+        print "I am initializing a process group"
         self.log = logging.getLogger('pg')
+        data['tag'] = 'process-group'
+        data['pgid'] = pgid
+        print "attempting to create data object"
+        try:
+            Cobalt.Data.Data.__init__(self, data)
+        except:
+            self.log.error("FAILED TO CREATE DATA OBJECT",exc_info=1)
+        print "I created a data object"
+
         self.set('pgid', pgid)
         self.set('state', 'initializing')
         self.mpdpid = None
@@ -53,7 +61,8 @@ class ProcessGroup(Cobalt.Data.Data):
         if self.get('exitfile', False):
             self.exitlog = self.get('exitfile')
         else:
-            self.exitlog = tempfile.mktemp()            
+            self.exitlog = tempfile.mktemp()
+        print "I am going to start a process"
         self.ProcessStart()
     
     def ProcessStart(self):
@@ -61,7 +70,7 @@ class ProcessGroup(Cobalt.Data.Data):
         self.set('state', 'running')
         self.log.info("PGid %s Started"%(self.get('pgid')))
         self.createMPDfile()
-        self.log.info("running :%s:"%("%s/mpdrun.py -f %s "%(mpdpath, self.mpdlog)))
+        self.log.info("running :%s:"%("%s/mpdrun.py -f %s "%(self.config['mpdpath'], self.mpdlog)))
         pid = os.fork()
         if pid:
             self.log.info("Got pid %s for pgid %s"%(pid, self.get('pgid')))
@@ -73,45 +82,53 @@ class ProcessGroup(Cobalt.Data.Data):
             os.dup2(null.fileno(), sys.__stdin__.fileno())
             os.dup2(out.fileno(), sys.__stdout__.fileno())
             os.dup2(err.fileno(), sys.__stderr__.fileno())
-            os.execl("%s/mpdrun.py"%(mpdpath), 'mpdrun', '-f', self.mpdlog)
+            os.execl("%s/mpdrun.py"%(self.config['mpdpath']), 'mpdrun', '-f', self.mpdlog)
 
     def createMPDfile(self):
         '''This functions pull the information out of the process object and creates
         an xml document that can be used by the mpdrun command'''
         self.mpdxml.setAttribute('exit_codes_filename', self.exitlog )
         self.mpdxml.setAttribute('output', "merged" )
-        self.mpdxml.setAttribute('pgid', self.get('pgid') )
+        self.mpdxml.setAttribute('pgid', '%s'%self.get('pgid') )
         self.mpdxml.setAttribute('state', self.get('state') )
         self.mpdxml.setAttribute('submitter', self.get('user') )
-        self.mpdxml.setAttribute('totalprocs', self.get('size') )
+        self.mpdxml.setAttribute('totalprocs', '%s'%self.get('size') )
         counter = 1
+        #I need a process spec created( how did I forget )
+        processxml = xml.dom.minidom.Element('process-spec')
+        processxml.setAttribute('cwd', self.get('cwd'))
+        processxml.setAttribute('exec', self.get('executable'))
+        processxml.setAttribute('path', self.get('path', '/bin:/usr/bin:/usr/local/bin'))
+        processxml.setAttribute('user', self.get('user'))
         for mpdarg in self.get('args'):
             tempxml = xml.dom.minidom.Element( 'arg' )
-            tempxml.setAttribute( 'idx', counter )
+            tempxml.setAttribute( 'idx', '%s'%counter )
             tempxml.setAttribute( 'value', mpdarg )
-            self.mpdxml.appendChild(tempxml)
+            processxml.appendChild(tempxml)
             counter += 1
-        for key, val in self.get('env'):
+        for key, val in self.get('env', {}):
             tempxml = xml.dom.minidom.Element('env')
             tempxml.setAttribute( 'name', key )
             tempxml.setAttribute( 'value', val )
-            self.mpdxml.appendChild(tempxml)
+            processxml.appendChild(tempxml)
+        self.mpdxml.appendChild(processxml)
         tempxml = xml.dom.minidom.Element('host-spec')
         tempxml.setAttribute('check', 'yes')
         tempdoc = xml.dom.minidom.Document()
         tempxml.appendChild(tempdoc.createTextNode("\n".join( self.get('location'))))
+
         self.mpdxml.appendChild(tempxml)
         open(self.mpdlog, 'w').write(self.mpdxml.toxml())
-
+        
     def FinishProcess(self):
         '''FinishProcess cleans up after the execution of mpdrun has completed'''
         if not self.get('outputfile', False ):
             self.set('output', open(self.outlog).read())
         if not self.get('errorfile', False ):
-            self.set('err', open(self.errlog).read())
+            self.set('error', open(self.errlog).read())
         errorstates = {}
         try:
-            for x in  xml.dom.minidom.parseString(open("/tmp/tmp123").read()).getElementsByTagName('exit-code'):
+            for x in  xml.dom.minidom.parseString(open(self.exitlog).read()).getElementsByTagName('exit-code'):
                 errorstates[x.getAttribute('rank')] = x.getAttribute('status')
         except IOError:
             self.log.info("Failed to read exit status file for pgid %s"%(self.get('pgid')))
@@ -130,7 +147,7 @@ class ProcessGroup(Cobalt.Data.Data):
         self.log.info("PGid %s signaled with %s"%(self.get('pgid'), signal))
         if signal == 'SIGINT':
             self.log.info("PGid %s killed"%(self.get('pgid')))
-            os.execl("%s/mpdkilljob.py"%(mpdpath), "mpdkilljob", '-a', self.get('pgid'))            
+            os.execl("%s/mpdkilljob.py"%(self.config['mpdpath']), "mpdkilljob", '-a', self.get('pgid'))            
         else:
             if scope == 'single':
                 sopt = '-s'
@@ -142,7 +159,7 @@ class ProcessGroup(Cobalt.Data.Data):
 class MPDProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     '''The MPD Process Manager Object'''
     __implementation__ = 'mpdpm'
-    __component__ = 'process-manager'
+    __name__ = 'process-manager'
     __object__ = ProcessGroup
     __id__ = Cobalt.Data.IncrID()
     async_funcs = ['assert_location', 'manage_children']
@@ -171,16 +188,17 @@ class MPDProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
                     break
                 if pid == 0:
                     break
-                pgrps = [pgrp for pgrp in self.data if pgrp.pid == pid]
+                pgrps = [pgrp for pgrp in self.data if pgrp.mpdpid == pid]
                 if len(pgrps) == 0:
                     self.logger.error("Failed to locate process group for pid %s" % (pid))
                 elif len(pgrps) == 1:
-                    pgrps[0].FinishProcess(stat)
+                    pgrps[0].FinishProcess()
                 else:
                     self.logger.error("Got more than one match for pid %s" % (pid))
 
     def create_processgroup(self, address, data):
         '''Create new process group element'''
+        print "I am creating a process group"
         return self.Add(data)
 
     def get_processgroup(self, address, data):
