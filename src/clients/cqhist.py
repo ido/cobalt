@@ -3,7 +3,7 @@
 '''Cobalt job history command'''
 __revision__ = '$Revision$'
 
-import ConfigParser, glob, re, math, datetime, sys, time, getopt
+import ConfigParser, glob, re, sys, time
 import Cobalt.Util
 
 

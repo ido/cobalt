@@ -3,17 +3,18 @@
 '''Cobalt job administration command'''
 __revision__ = '$Revision$'
 
-import getopt, sys
+import sys
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-helpmsg = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
-          '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
-          '       cqadm [-d] [--addq] [--delq] [--getq] [--setq property=value:property=value] <queue> <queue>'
+__helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
+              '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
+              '       cqadm [-d] [--addq] [--delq] [--getq] ' + \
+              '[--setq property=value:property=value] <queue> <queue>'
 
-def getQueues(cqmConn):
+def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
-    info = [{'tag':'queue','name':'*', 'state':'*', 'users':'*', 'maxtime':'*', 'maxuserjobs':'*'}]
-    return cqmConn.GetQueues(info)
+    info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*', 'maxtime':'*', 'maxuserjobs':'*'}]
+    return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
 
@@ -22,11 +23,11 @@ if __name__ == '__main__':
                'addq':'addq', 'delq':'delq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue', 'run':'run', 'setq':'setq'}
 
-    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, helpmsg)
+    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, __helpmsg__)
 
     if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in ['getq', 'j', 'setjobid']]:
         print "At least one jobid or queue must be supplied"
-        print helpmsg
+        print __helpmsg__
         raise SystemExit, 1
 
     if opts['debug']:
@@ -38,12 +39,12 @@ if __name__ == '__main__':
 
     if len(opts) == 0:
         print "At least one command must be specified"
-        print helpmsg
+        print __helpmsg__
         raise SystemExit, 1
 
     if opts['hold'] and opts['release']:
         print "Only one of --hold or --release can be used at once"
-        print helpmsg
+        print __helpmsg__
         raise SystemExit, 1
 
     Cobalt.Logging.setup_logging('cqadm', to_syslog=False, level=level)
@@ -68,9 +69,9 @@ if __name__ == '__main__':
         location = opts['run']
         response = cqm.RunJobs(spec, location.split(':'))
     elif opts['addq']:
-        existing_queues = getQueues(cqm)
+        existing_queues = get_queues(cqm)
         if [qname for qname in args if qname in [q.get('name') for q in existing_queues]]:
-            print 'queue \'' + qname + '\' already exists'
+            print 'queue already exists'
             response = ''
         elif len(args) < 1:
             print 'Must specify queue name'
@@ -79,7 +80,7 @@ if __name__ == '__main__':
             response = cqm.AddQueue(spec)
             print "Added queue(s)", [q.get('name') for q in response]
     elif opts['getq']:
-        response = getQueues(cqm)
+        response = get_queues(cqm)
         for q in response:
             if q['maxtime'] != '*':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
@@ -93,7 +94,7 @@ if __name__ == '__main__':
     elif opts['setq']:
         props = [p.split('=') for p in opts['setq'].split(' ')]
         updates = {}
-        for prop,val in props:
+        for prop, val in props:
             updates.update({prop:val})
         response = cqm.SetQueues(spec, updates)
     else:

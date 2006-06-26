@@ -376,9 +376,9 @@ if __name__ == '__main__':
     except:
         daemon = False
     if len([x for x in opts if x[0] == '-d']):
-        dlevel=logging.DEBUG
+        dlevel = logging.DEBUG
     else:
-        dlevel=logging.INFO
+        dlevel = logging.INFO
     Cobalt.Logging.setup_logging('bgsched', level=dlevel)
     server = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()

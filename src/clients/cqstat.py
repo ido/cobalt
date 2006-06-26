@@ -6,7 +6,7 @@ __revision__ = '$Revision$'
 import getopt, math, sys, time, os
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-def getElapsedTime(starttime, endtime):
+def get_elapsed_time(starttime, endtime):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
     """
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                     output[i][ header[0].index('RunTime') ] = 'N/A'     # RunTime
                 else:
                     output[i][ header[0].index('RunTime') ] = \
-                                      getElapsedTime( float(output[i][ header[0].index('StartTime') ]), time.time())
+                                      get_elapsed_time( float(output[i][ header[0].index('StartTime') ]), time.time())
                     output[i][ header[0].index('StartTime') ] = time.strftime("%m/%d/%y %T", \
                                                                               time.localtime(float(output[i][ header[0].index('StartTime') ])))
             if '-f' in sys.argv:
