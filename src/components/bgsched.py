@@ -384,8 +384,7 @@ if __name__ == '__main__':
         daemon = [x[1] for x in opts if x[0] == '-D'][0]
     except:
         daemon = False
-    debug = len([x for x in opts if x[0] == '-d'])
-    if debug:
+    if len([x for x in opts if x[0] == '-d']):
         dlevel=logging.DEBUG
     else:
         dlevel=logging.INFO

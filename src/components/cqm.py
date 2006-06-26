@@ -841,9 +841,9 @@ if __name__ == '__main__':
         daemon = [x[1] for x in opts if x[0] == '-D'][0]
     except:
         daemon = False
-    level = 10
+    dlevel = logging.INFO
     if len([x for x in opts if x[0] == '-d']):
-        level = 0
-    Cobalt.Logging.setup_logging('cqm', level=20)
+        dlevel = logging.DEBUG
+    Cobalt.Logging.setup_logging('cqm', level=dlevel)
     server = CQM({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()

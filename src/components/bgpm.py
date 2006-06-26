@@ -219,11 +219,14 @@ if __name__ == '__main__':
     except GetoptError,msg:
         print "%s\nUsage:\nbgpm.py [-d] [-C config file] [-D <pidfile>] [--notbgl]" % (msg)
         raise SystemExit, 1
-    Cobalt.Logging.setup_logging('bgpm', level=0)
     try:
         daemon = [item[1] for item in opts if item[0] == '-D'][0]
     except:
         daemon = False
-    ldebug = len([item for item in opts if item[0] == '-d'])
+    if len([item for item in opts if item[0] == '-d']):
+        dlevel=logging.DEBUG
+    else:
+        dlevel=logging.INFO
+    Cobalt.Logging.setup_logging('bgpm', level=dlevel)
     s = BGProcessManager({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     s.serve_forever()
