@@ -602,7 +602,7 @@ class Queue(Cobalt.Data.Data, JobSet):
         JobSet.__init__(self)
 
         # set defaults if not set already
-        defaults = {'drain':False, 'users':['*'], 'maxtime':0}
+        defaults = {'state':'stopped', 'users':'*', 'maxtime':'*', 'maxuserjobs':'*'}
         for d in defaults:
             if d not in self._attrib:
                 self.set(d, defaults[d])
@@ -661,28 +661,30 @@ class QueueSet(Cobalt.Data.DataSet):
     def CanRun(self, _, job):
         '''Check that job meets criteria of the specified queue'''
 
+        # if queue doesn't exist, don't check other restrictions
+        if job.get('queue') not in [q.get('name') for q in self.data]:
+            raise xmlrpclib.Fault(30, "Queue does not exist")
+        
         # restriction list
-        rlist = [ [(job, self.data), (lambda j, queuelist: j.get('queue') in [q.get('qname') for q in queuelist]), 'Queue does not exist'],
-                  [(job, self.data), (lambda wtime, maxtime: job.get('walltime') <= [q.get('maxtime') for q in self.data if q.get('qname') == job.get('queue')][0]), 'Walltime greater than queue maxtime'] ]
-
+        rlist = [ [(job, self.data),
+                   (lambda (j, queuelist): j.get('walltime') <= [q.get('maxtime') for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('maxtime') for q in queuelist if q.get('name') == j.get('queue')][0]),
+                   'Walltime greater than queue maxtime'],
+                  [(job, self.data),
+                   (lambda (j, queuelist): j.get('user') in [q.get('users').split(':') for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('users') for q in queuelist if q.get('name') == j.get('queue')][0]),
+                   "You're not allowed to submit to this queue"],
+        
+                  [(job, self.data), (lambda (j, queuelist): job.get('queue') in [q.get('name') for q in queuelist if q.get('state') != 'draining']), 'Queue is draining, try again later'],
+#                   [(job, self.GetJobs({'tag':'job','user':job.get('user')})), (lambda (j, userjobs): len(userjobs) < int(self.Get({'tag':'queue', 'name':job.get('queue'), 'maxuserjobs':'*'}))), 'Too many jobs running'] ]
+                  ]
+        badlist = ''
         for qfunc in rlist:
-            result = apply(qfunc[1], qfunc[0])
+            result = qfunc[1](qfunc[0],)
             if result == False:
-                return qfunc[2]
-             
-#         if not (lambda j, queuelist: j.get('queue') in [q.get('qname') for q in queuelist])(job, self.data):
-#                #job.get('queue') not in [q.get('qname') for q in self.data]:
-#             return 'queue \'' + job.get('queue') + '\' does not exist in queue_manager'
+                badlist = badlist + qfunc[2] + '\n'
+        if badlist:
+            raise xmlrpclib.Fault(30, badlist)
 
-        # TODO: check job against restrictions
-        """
-        (lambda job, self.data: job.get('qname') in [q.get('qname') for q in self.data])
-        (lambda jspec, rlist: jspec.get('user') in rlist.get('users'))(jobspec, {'users':['voran', 'vinnie']})
-        (lambda x: x in people)(120)
-        (lambda x, name, y: x[name] < y)(jobspec,'time', 9000)
-        """
-
-        return 'True'
+        return job
 
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
@@ -699,7 +701,7 @@ class CQM(Cobalt.Component.Component):
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
         self.register_function(lambda  address, data:self.Queues.GetJobs(data), "GetJobs")
-        self.register_function(lambda  address, data:[Q for Q in self.Queues if Q.get('qname') == data.get('queue')][0].Add(data), "AddJob")
+        self.register_function(lambda  address, data:[Q for Q in self.Queues if Q.get('name') == data.get('queue')][0].Add(data), "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
 #         self.register_function(self.handle_get_queue, "GetQueues")

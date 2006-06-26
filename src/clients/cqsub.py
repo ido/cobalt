@@ -123,9 +123,6 @@ if __name__ == '__main__':
 
         # check if job can run in queue as specified
         response = cqm.CanRun(jobspec)
-        if response != 'True':
-            print 'Problem: ' + response
-            raise SystemExit, 1
 
         # try adding job to queue_manager
         job = cqm.AddJob(jobspec)
@@ -136,6 +133,9 @@ if __name__ == '__main__':
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 31:
             print "System draining. Try again later"
+            raise SystemExit, 1
+        elif flt.faultCode == 30:
+            print 'Job submission failed because: \n%s' % flt.faultString
             raise SystemExit, 1
     except:
         print "Error submitting job"

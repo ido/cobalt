@@ -93,7 +93,7 @@ class Partition(Cobalt.Data.Data):
         self.set('state', 'idle')
 
 class Job(Cobalt.Data.Data):
-    '''This class is represents User Jobs'''
+    '''This class represents User Jobs'''
     def __init__(self, element):
         Cobalt.Data.Data.__init__(self, element)
         self.partition = 'none'
@@ -156,6 +156,7 @@ class PartitionSet(Cobalt.Data.DataSet):
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
         knownjobs = [job.get('jobid') for job in self.jobs]
+        logger.debug('Schedule: knownjobs %s' % knownjobs)
         activejobs = [job.get('jobid') for job in jobs]
         finished = [jobid for jobid in knownjobs if jobid not in activejobs]
         #print "known", knownjobs, "active", activejobs, "finished", finished
@@ -180,9 +181,15 @@ class PartitionSet(Cobalt.Data.DataSet):
                       part.get('functional') and part.get('scheduled')]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
+        # filter for stopped queues
+        cqm = Cobalt.Proxy.queue_manager()
+        stopped_queues = cqm.GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
+        logger.debug('stopped queues %s' % stopped_queues)
+        idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues]]
+        
         #print "jobs:", self.jobs
         if candidates and idlejobs:
-            print "initial candidates: ", [cand.get('name') for cand in candidates]
+            logger.debug("initial candidates: %s" % ([cand.get('name') for cand in candidates]))
             #print "Actively checking"
             if '--nodb2' not in sys.argv:
                 self.db2.execute("select blockid, status from bglblock;")
@@ -216,13 +223,13 @@ class PartitionSet(Cobalt.Data.DataSet):
             candidates = [part for part in candidates
                           if not [item for item in depinfo[part.get('name')][1] if item in busy_part_names]]
 
-            print "cand1", [part.get('name') for part in candidates]
+            logger.debug("cand1 %s" % ([part.get('name') for part in candidates]))
             # need to filter out contained partitions
             candidates = [part for part in candidates
                           if not [block for block in depinfo[part.get('name')][0]
                                   if block in busy_part_names]]
 
-            print "cand2", [part.get('name') for part in candidates]
+            logger.debug("cand2 %s" % ([part.get('name') for part in candidates]))
             # now candidates are only completely free blocks
             potential = {}
             for job in idlejobs:
@@ -343,6 +350,7 @@ class BGSched(Cobalt.Component.Component):
             return 0
         self.qmconnect.Pass()
         active = [job.get('jobid') for job in jobs]
+        logger.debug("RunQueue: active jobs %s" % active)
         for job in [j for j in self.jobs if j.get('jobid') not in active]:
             logger.info("Job %s/%s: gone from qm" % (job.get('jobid'), job.get('user')))
             self.jobs.remove(job)
@@ -350,7 +358,9 @@ class BGSched(Cobalt.Component.Component):
         known = [job.get('jobid') for job in self.jobs]
         [partition.Free() for partition in self.partitions if partition.job not in known + ['none']]
         newjobs = [job for job in jobs if job.get('jobid') not in known]
+        logger.debug('RunQueue: newjobs %s' % newjobs)
         self.jobs.extend([Job(job) for job in newjobs])
+        logger.debug('RunQueue: after extend to Job %s' % self.jobs)
         placements = self.partitions.Schedule(jobs)
         if '-t' not in sys.argv:
             for (jobid, part) in placements:
@@ -375,7 +385,11 @@ if __name__ == '__main__':
     except:
         daemon = False
     debug = len([x for x in opts if x[0] == '-d'])
-    Cobalt.Logging.setup_logging('bgsched', level=20)
+    if debug:
+        dlevel=logging.DEBUG
+    else:
+        dlevel=logging.INFO
+    Cobalt.Logging.setup_logging('bgsched', level=dlevel)
     server = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()
     

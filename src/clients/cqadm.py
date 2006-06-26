@@ -12,7 +12,7 @@ helpmsg = 'Usage: cqadm [-d] [--drain] [--resume] [--hold] [--release] [--run=<l
 
 def getQueues(cqmConn):
     '''gets queues from cqmConn'''
-    info = [{'tag':'queue','qname':'*', 'drain':'*', 'users':'*', 'maxtime':'*'}]
+    info = [{'tag':'queue','name':'*', 'state':'*', 'users':'*', 'maxtime':'*', 'maxuserjobs':'*'}]
     return cqmConn.GetQueues(info)
 
 if __name__ == '__main__':
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     # set the spec whether working with queues or jobs
     if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq']:
-        spec = [{'tag':'queue', 'qname':qname} for qname in args]
+        spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         cqm.Resume()
     elif opts['addq']:
         existing_queues = getQueues(cqm)
-        if [qname for qname in args if qname in [q.get('qname') for q in existing_queues]]:
+        if [qname for qname in args if qname in [q.get('name') for q in existing_queues]]:
             print 'queue \'' + qname + '\' already exists'
             response = ''
         elif len(args) < 1:
@@ -81,22 +81,23 @@ if __name__ == '__main__':
             raise SystemExit, 1
         else:
             response = cqm.AddQueue(spec)
-            print "Added queue(s)", [q.get('qname') for q in response]
+            print "Added queue(s)", [q.get('name') for q in response]
     elif opts['getq']:
         response = getQueues(cqm)
-        datatoprint = [('Queue', 'Users', 'MaxTime', 'Drain')] + [(q.get('qname'), ','.join(q.get('users')), q.get('maxtime'), q.get('drain')) for q in response]
+        for q in response:
+            if q['maxtime'] != '*':
+                q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
+        datatoprint = [('Queue', 'Users', 'MaxTime', 'MaxUserJobs', 'State')] + [(q.get('name'), q.get('users'), q.get('maxtime'), q.get('maxuserjobs'), q.get('state')) for q in response]
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['delq']:
         response = cqm.DelQueues(spec)
-        datatoprint = [('Queue', )] + [(q.get('qname'), ) for q in response]
+        datatoprint = [('Queue', )] + [(q.get('name'), ) for q in response]
         print "      Deleted Queues"
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['setq']:
         props = [p.split('=') for p in opts['setq'].split(' ')]
         updates = {}
         for prop,val in props:
-            if prop == 'users':
-                val = val.split(',')
             updates.update({prop:val})
         response = cqm.SetQueues(spec, updates)
     else:
