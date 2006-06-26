@@ -7,7 +7,7 @@ cqadm \- queue manager administration tool
 .B cqadm [-d] [--addq] [--delq] [--getq] [--setq 'prop:value prop:value'] <queue> <queue>
 
 .SH "DESCRIPTION"
-Good things
+Administrative interface for queue manager. Allows one to hold, run, kill, and set the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
 
 .SH "OPTIONS"
 .TP
@@ -64,8 +64,8 @@ The maximum walltime allowed for jobs submitted to the queue.
 .B users
 List of users allowed to submit to the queue. An '*' means any user can submit to the queue
 .TP
-.B drain=True|False
-Flag determining whether queue is draining or not.
+.B state=running|stopped|draining
+Flag determining state of queue. If the queue is 'stopped', jobs can be submitted to the queue, but no jobs will be run by the scheduler. If the queue is 'draining', no new jobs will be allowed to be added to the queue, but jobs existing in the queue will be run.
 
 .RE
 .SH "SEE ALSO"
