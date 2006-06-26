@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+'''Cobalt job history command'''
+__revision__ = '$Revision$'
+
 import ConfigParser, glob, re, math, datetime, sys, time, getopt
 import Cobalt.Util
 
