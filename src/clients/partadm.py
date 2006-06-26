@@ -58,7 +58,7 @@ if __name__ == '__main__':
     elif '--queue' in [opt for (opt, arg)  in opts]:
         try:
             cqm = Cobalt.Proxy.queue_manager()
-            existing_queues = [q.get('qname') for q in cqm.GetQueues([{'tag':'queue','qname':'*'}])]
+            existing_queues = [q.get('name') for q in cqm.GetQueues([{'tag':'queue','name':'*'}])]
         except:
             print "Error getting queues from queue_manager"
         queue = [arg for (opt, arg) in opts if opt == '--queue'][0]

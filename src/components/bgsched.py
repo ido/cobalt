@@ -52,7 +52,7 @@ class Partition(Cobalt.Data.Data):
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
         basic = self.get('scheduled') and self.get('functional')
-        queue = job.get('queue') in self.get('queue')
+        queue = job.get('queue') in self.get('queue').split(':')
         jsize = int(job.get('nodes')) # should this be 'size' instead?
         psize = int(self.get('size'))
         size = ((psize >= jsize) and ((psize == 32) or (jsize > psize/2)))
@@ -182,8 +182,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         # filter for stopped queues
-        cqm = Cobalt.Proxy.queue_manager()
-        stopped_queues = cqm.GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
+        stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
         logger.debug('stopped queues %s' % stopped_queues)
         idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues]]
         
