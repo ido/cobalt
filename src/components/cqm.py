@@ -704,13 +704,10 @@ class CQM(Cobalt.Component.Component):
         self.register_function(lambda  address, data:[Q for Q in self.Queues if Q.get('name') == data.get('queue')][0].Add(data), "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
-#         self.register_function(self.handle_get_queue, "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
         self.register_function(lambda  address, data, updates:self.Queues.Get(data, lambda queue, newattr:queue.update(newattr), updates), "SetQueues")
         self.register_function(self.Queues.CanRun, "CanRun")
-        self.register_function(self.drain_func, "Drain")
-        self.register_function(self.resume_func, "Resume")
         self.register_function(lambda address, data, nodelist:
                                self.Queues.GetJobs(data, lambda job, nodes:job.Run(nodes), nodelist),
                                'RunJobs')
@@ -734,28 +731,6 @@ class CQM(Cobalt.Component.Component):
         [j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
         Job.acctlog.ChangeLog()
         return 1
-
-    def drain_func(self, _):
-        '''Stop accepting new jobs'''
-        self.drain = True
-
-    def resume_func(self, _):
-        '''Resume accepting new jobs'''
-        self.drain = False
-
-    def addjob(self, address, spec):
-        '''Add new job (respecting self.drain)'''
-        if not self.drain:
-            self.Jobs.Add(address, spec)
-        else:
-            return xmlrpclib.Fault(31, 'System Draining')
-
-    def handle_get_queue(self, _, data):
-
-        print data
-        print self.Queues.__object__, self.Queues.data
-        #print self.Queues.Get(data)
-        return []
 
     def handle_job_del(self, _, data, force=False):
         '''Delete a job'''

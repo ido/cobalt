@@ -126,7 +126,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         print '''bgsched-queue section missing from config file'''
         raise SystemExit, 1
     qconfig = _config._sections['bgsched-queue']
-    qpolicy = {'default':'PlaceFIFO', 'short':'PlaceShort', 'scavenger':'PlaceScavenger'}
+    qpolicy = {'default':'PlaceFIFO', 'scavenger':'PlaceScavenger'}
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
@@ -284,14 +284,6 @@ class PartitionSet(Cobalt.Data.DataSet):
                 if not potential[job]:
                     del potential[job]
         return placements
-
-    def PlaceShort(self, qpotential, queue, depinfo):
-        '''Policy for short queue. Limited to jobs 30 mins or less'''
-        potential = qpotential
-        for job in potential[queue].keys():
-            if float(job.get('walltime')) > 30:
-                del potential[queue][job]
-        return self.PlaceFIFO(potential, queue, depinfo)
 
     def PlaceScavenger(self, qpotential, queue, depinfo):
         '''A really stupid priority queueing mechanism that starves lo queue jobs if the high-queue has idle jobs'''

@@ -6,7 +6,7 @@ __revision__ = '$Revision$'
 import getopt, sys
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-helpmsg = 'Usage: cqadm [-d] [--drain] [--resume] [--hold] [--release] [--run=<location>] ' + \
+helpmsg = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
           '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
           '       cqadm [-d] [--addq] [--delq] [--getq] [--setq property=value:property=value] <queue> <queue>'
 
@@ -17,14 +17,14 @@ def getQueues(cqmConn):
 
 if __name__ == '__main__':
 
-    options = {'drain':'drain', 'resume':'resume', 'getq':'getq', 'd':'debug',
+    options = {'getq':'getq', 'd':'debug',
                'hold':'hold', 'release':'release', 'kill':'kill', 'delete':'delete',
                'addq':'addq', 'delq':'delq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue', 'run':'run', 'setq':'setq'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, helpmsg)
 
-    if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in ['drain', 'resume', 'getq', 'j', 'setjobid']]:
+    if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in ['getq', 'j', 'setjobid']]:
         print "At least one jobid or queue must be supplied"
         print helpmsg
         raise SystemExit, 1
@@ -67,10 +67,6 @@ if __name__ == '__main__':
     elif opts['run']:
         location = opts['run']
         response = cqm.RunJobs(spec, location.split(':'))
-    elif opts['drain']:
-        cqm.Drain()
-    elif opts['resume']:
-        cqm.Resume()
     elif opts['addq']:
         existing_queues = getQueues(cqm)
         if [qname for qname in args if qname in [q.get('name') for q in existing_queues]]:
