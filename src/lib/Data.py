@@ -132,7 +132,7 @@ class DataSet(object):
     def Del(self, cdata, callback=None, cargs={}):
         '''Implement semantics of operations that delete item(s) from the DataSet'''
         retval = []
-        if type(cdata) != types.ListType:
+        if not isinstance(cdata, types.ListType):
             cdata = [cdata]
         for spec in cdata:
             for item in [datum for datum in self.data if datum.match(spec)]:

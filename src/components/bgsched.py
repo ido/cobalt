@@ -193,8 +193,17 @@ class PartitionSet(Cobalt.Data.DataSet):
             if '--nodb2' not in sys.argv:
                 self.db2.execute("select blockid, status from bglblock;")
                 results = self.db2.fetchall()
-                [partition.set('db2', state) for (pname, state) in results
-                 for partition in self.data if partition.get('name') == pname]
+                print results
+                for (pname, state) in results:
+                    partname = pname.strip()
+                    partinfo = [part for part in self.data if part.get('name') == partname]
+                    if partinfo:
+                        partinfo[0].set('db2', state)
+                    else:
+                        continue
+
+                for partition in [part for part in self.data if part.get('db2', 'XXX') == 'XXX']:
+                    logger.error("DB2 has no state for partition %s" % (partition.get('name')))
 
                 # check for discrepancies between candidates and db2
                 for part in [part for part in candidates if part.get('db2') != 'F']:
