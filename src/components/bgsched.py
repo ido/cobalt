@@ -325,6 +325,24 @@ class BGSched(Cobalt.Component.Component):
         return self.partitions.Get(spec, callback=lambda x, y:[x.get('reservations').remove(rsv)
                                                               for rsv in x.get('reservations') if rsv[0] == name])
 
+    def SupressDuplicates(self, provisional):
+        '''Prevent duplicate job start requests from being generated'''
+        seen = []
+        dups = []
+        for (jobid, _) in provisional:
+            if jobid in seen:
+                dups.append(jobid)
+            else:
+                seen.append(jobid)
+        if dups:
+            logger.error("found multiple start records for the same job(s) %s" % (dups))
+            for dup in dups:
+                # kill the first record
+                suppressed = [place for place in provisional if place[0] == dup][0]
+                provisional.remove(suppressed)
+                [partition.Free() for partition in self.partitions if partition.get('name') ==
+                 suppressed[1]]
+
     def RunQueue(self):
         '''Process changes to the cqm queue'''
         since = time.time() - self.lastrun
@@ -354,6 +372,7 @@ class BGSched(Cobalt.Component.Component):
         logger.debug('RunQueue: after extend to Job %s' % self.jobs)
         placements = self.partitions.Schedule(jobs)
         if '-t' not in sys.argv:
+            self.SupressDuplicates(placements)
             for (jobid, part) in placements:
                 try:
                     comm['qm'].RunJobs([{'tag':'job', 'jobid':jobid}], [part])
