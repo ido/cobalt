@@ -548,9 +548,14 @@ class BGJob(Job):
 
     def NotifyAtStart(self):
         '''Notify user when job has started'''
+        mailserver = self.config.get('mailserver', 'false')
+        if mailserver == 'false':
+            mserver = 'localhost'
+        else:
+            mserver = mailserver
         subj = 'Cobalt: job %s started' % self.get('jobid')
         msg = 'Job %s starting on partition %s, at %s' % (self.get('jobid'), self.get('location'), time.strftime('%c', time.localtime()))
-        Cobalt.Util.sendemail(self.get('notify'), subj, msg)
+        Cobalt.Util.sendemail(self.get('notify'), subj, msg, smtpserver=mserver)
 
     def NotifyAtEnd(self):
         '''Notify user when job has ended'''
