@@ -667,7 +667,7 @@ class QueueSet(Cobalt.Data.DataSet):
         
         # restriction list
         rlist = [ [(job, self.data),
-                   (lambda (j, queuelist): j.get('walltime') <= [q.get('maxtime') for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('maxtime') for q in queuelist if q.get('name') == j.get('queue')][0]),
+                   (lambda (j, queuelist): int(j.get('walltime')) <= [int(q.get('maxtime')) for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('maxtime') for q in queuelist if q.get('name') == j.get('queue')][0]),
                    'Walltime greater than queue maxtime'],
                   [(job, self.data),
                    (lambda (j, queuelist): j.get('user') in [q.get('users').split(':') for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('users') for q in queuelist if q.get('name') == j.get('queue')][0]),
