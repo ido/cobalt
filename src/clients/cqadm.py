@@ -13,20 +13,23 @@ __helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
 
 def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
-    info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*', 'maxtime':'*', 'maxuserjobs':'*'}]
+    info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
+             'maxtime':'*', 'maxuserjobs':'*'}]
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
 
-    options = {'getq':'getq', 'd':'debug',
-               'hold':'hold', 'release':'release', 'kill':'kill', 'delete':'delete',
-               'addq':'addq', 'delq':'delq'}
-    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue', 'run':'run', 'setq':'setq'}
+    options = {'getq':'getq', 'd':'debug', 'hold':'hold', 'release':'release',
+               'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq'}
+    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
+                'run':'run', 'setq':'setq'}
 
-    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, __helpmsg__)
+    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
+                                            doptions, __helpmsg__)
 
-    if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in ['getq', 'j', 'setjobid']]:
-        print "At least one jobid or queue must be supplied"
+    if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in
+                               ['getq', 'j', 'setjobid']]:
+        print "At least one jobid or queue name must be supplied"
         print __helpmsg__
         raise SystemExit, 1
 
@@ -70,7 +73,8 @@ if __name__ == '__main__':
         response = cqm.RunJobs(spec, location.split(':'))
     elif opts['addq']:
         existing_queues = get_queues(cqm)
-        if [qname for qname in args if qname in [q.get('name') for q in existing_queues]]:
+        if [qname for qname in args if qname in
+            [q.get('name') for q in existing_queues]]:
             print 'queue already exists'
             response = ''
         elif len(args) < 1:
@@ -78,7 +82,9 @@ if __name__ == '__main__':
             raise SystemExit, 1
         else:
             response = cqm.AddQueue(spec)
-            print "Added queue(s)", [q.get('name') for q in response]
+            datatoprint = [('Added Queues', )] + \
+                          [(q.get('name'), ) for q in response]
+            Cobalt.Util.print_tabular(datatoprint)
     elif opts['getq']:
         response = get_queues(cqm)
         for q in response:
@@ -88,8 +94,8 @@ if __name__ == '__main__':
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['delq']:
         response = cqm.DelQueues(spec)
-        datatoprint = [('Queue', )] + [(q.get('name'), ) for q in response]
-        print "      Deleted Queues"
+        datatoprint = [('Deleted Queues', )] + \
+                      [(q.get('name'), ) for q in response]
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['setq']:
         props = [p.split('=') for p in opts['setq'].split(' ')]
@@ -107,4 +113,4 @@ if __name__ == '__main__':
             queue = opts['queue']
             updates['queue'] = queue
         response = cqm.SetJobs(spec, updates)
-    print response
+    Cobalt.Logging.logging.debug(response)
