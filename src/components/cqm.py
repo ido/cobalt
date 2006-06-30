@@ -559,9 +559,14 @@ class BGJob(Job):
 
     def NotifyAtEnd(self):
         '''Notify user when job has ended'''
+        mailserver = self.config.get('mailserver', 'false')
+        if mailserver == 'false':
+            mserver = 'localhost'
+        else:
+            mserver = mailserver
         subj = 'Cobalt: job %s finished' % self.get('jobid')
         msg = 'Job %s finished at %s\nStats: %s' %  (self.get('jobid'), time.strftime('%c', time.localtime()), self.GetStats())
-        Cobalt.Util.sendemail(self.get('notify'), subj, msg)
+        Cobalt.Util.sendemail(self.get('notify'), subj, msg, smtpserver=mserver)
 
     def RunBGUserJob(self):
         '''Run a Blue Gene Job'''
@@ -597,6 +602,98 @@ class JobSet(Cobalt.Data.DataSet):
         Cobalt.Data.DataSet.__init__(self)
         #self.__id__ = Cobalt.Data.IncrID()
 
+class Restriction(Cobalt.Data.Data):
+    '''Restriction object'''
+
+    __checks__ = {'maxtime':'__maxwalltime', 'users':'__usercheck',
+                  'drain':'__draincheck'}
+
+    def __init__(self, info, myqueue=None):
+        '''info could be like
+        {tag:restriction, jparam:walltime, qparam:maxusertime,
+        value:x, operator:op}
+        how about {tag:restriction, name:name, value:x}
+        myqueue is a reference to the queue that this restriction is associated
+        with
+        '''
+        Cobalt.Data.Data.__init__(self, info)
+        self.queue = myqueue
+
+        if info.get('name', None) not in self.__checks__.keys():
+            print 'restriction check %s not found' % info.get('name', None)
+
+    def __maxwalltime(self, job):
+        '''checks walltime of job against maxtime of queue'''
+        #return int( job.get('walltime') ) <= int( self.queue.get('maxtime') )
+        #or
+        return int( job.get('walltime') ) <= int( self.get('value') )
+
+    def __usercheck(self, job):
+        '''checks if job owner is in approved user list'''
+        #qusers = self.queue.get('users').split(':')
+        qusers = self.get('value').split(':')
+        if '*' in qusers or job.get('user') in qusers:
+            return True
+        else:
+            return False
+
+    def __draincheck(self, job):
+        '''checks if the queue is draining'''
+        if self.queue.get('state') == 'draining':
+            return False
+        else:
+            return True
+        
+    def CanAccept(self, job):
+        ''' '''
+#         if self.op == 'le':
+#             return int(job.get(self.get('jparam'))) <= int(self.queue.get(self.get('qparam')))
+#         if self.op == 'in':
+#             return job.get(self.jparam) in self.queue.get(self.qparam).split(':')
+        
+
+class RestrictionSet(Cobalt.Data.DataSet):
+    """RestrictionSet.Get would check all it's restrictions, if the name
+    matches the field, then add it's name and value to the return list
+
+    RestrictionSet.Set would be something like if that restriction already
+    exists, then update the value, otherwise create the restriction
+    """
+    __object__ = Restriction
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+#         self.__id__ = Cobalt.Data.IncrID()
+
+    def Add(self, cdata, callback=None, cargs=()):
+        '''Add restriction(s)'''
+        retval = []
+        for item in cdata:
+            toupdate = [r for r in self.data if r.get('name') == item.get('name')]
+            if toupdate:
+                # just update the value
+                toupdate[0].set('value', item.get('value'))
+            else:
+                iobj = self.__object__(item)
+                self.data.append(iobj)
+                retval.append(iobj.to_rx(item))
+        print 'Added restriction', retval
+        return retval
+
+    def Get(self, cdata, callback=None, cargs={}):
+        '''Returns restrictions in single dict'''
+        print 'RS.Get cargs', cargs, cdata
+        for c in cargs:
+            self.Add([{'tag':'restriction', 'name':c, 'value':cargs[c]}])
+        response = {}
+        for spec in cdata:  #query
+            for r in self.data:  #restrictions
+                if r.match(spec):  #restriction matches
+                    response.update({r.get('name'):r.get('value')})
+
+        return [response]
+                
+
 class Queue(Cobalt.Data.Data, JobSet):
     '''queue object, subs JobSet and Data, which gives us:
        self is a Queue object (with restrictions and stuff)
@@ -606,8 +703,12 @@ class Queue(Cobalt.Data.Data, JobSet):
         Cobalt.Data.Data.__init__(self, info)
         JobSet.__init__(self)
 
+        self.restrictions = RestrictionSet()
+
         # set defaults if not set already
-        defaults = {'state':'stopped', 'users':'*', 'maxtime':'*', 'maxuserjobs':'*'}
+#         defaults = {'state':'stopped', 'users':'*', 'maxtime':'*',
+#                     'maxuserjobs':'*', 'adminemail':'*'}
+        defaults = {'state':'stopped', 'adminemail':'*'}
         for d in defaults:
             if d not in self._attrib:
                 self.set(d, defaults[d])
@@ -638,7 +739,7 @@ class QueueSet(Cobalt.Data.DataSet):
                     iobj.__id__ = self.__id__
                 else:
                     iobj = self.__object__(item)
-            except DataCreationError, missing:
+            except Cobalt.Data.DataCreationError, missing:
                 print "returning fault"
                 raise xmlrpclib.Fault(8, str(missing))
             #return xmlrpclib.dumps(xmlrpclib.Fault(8, str(missing)))
@@ -648,6 +749,45 @@ class QueueSet(Cobalt.Data.DataSet):
                 apply(callback, (iobj, ) + cargs)
             retval.append(iobj.to_rx(item))
         return retval
+
+    def Get(self, cdata, callback=None, cargs={}):
+        '''Overloading DataSet.Get to check for restriction fields
+
+        does not support a callback function for restrictions'''
+
+        for q in self.data:
+            print q._attrib
+
+        # split cargs into normal properties and checks
+        rupdates = {}
+        cupdates = {}
+        for c in cargs:
+            if c in Restriction.__checks__:
+                rupdates.update({c:cargs[c]})
+            else:
+                cupdates.update({c:cargs[c]})
+
+        normalget = Cobalt.Data.DataSet.Get(self, cdata, callback, cupdates)
+        
+        rdata = copy.deepcopy(cdata)
+        for rd in rdata:
+            rd.update({'tag':'restriction', 'value':'*'})
+
+        # get restrictions for each queue that match cdata
+        # (not sure what'll happen here with multiple specs in cdata)
+        qrestrictions = {}
+        for q in self.data:
+            if [c for c in cdata if q.match(c)]:
+                print 'q', q.get('name'), 'restriction.Get', q.restrictions.Get(rdata)
+                qrestriction = q.restrictions.Get(rdata, cargs=rupdates)
+                qrestrictions.update({q.get('name'):qrestriction[0]})
+
+        # update response with queue restrictions, will probably fail if
+        # queue name is not requested
+        for queue in normalget:
+            queue.update(qrestrictions[queue.get('name')])
+
+        return normalget
 
     def GetJobs(self, data, callback=None, cargs={}):
         '''Uses the Data.Get method to retrieve Jobs from Queues'''
