@@ -626,16 +626,19 @@ class Restriction(Cobalt.Data.Data):
         '''checks walltime of job against maxtime of queue'''
         #return int( job.get('walltime') ) <= int( self.queue.get('maxtime') )
         #or
-        return int( job.get('walltime') ) <= int( self.get('value') )
+        if int( job.get('walltime') ) <= int( self.get('value') ):
+            return (True)
+        else:
+            return (False, "Walltime greater than max walltime of queue")
 
     def usercheck(self, job):
         '''checks if job owner is in approved user list'''
         #qusers = self.queue.get('users').split(':')
         qusers = self.get('value').split(':')
         if '*' in qusers or job.get('user') in qusers:
-            return True
+            return (True)
         else:
-            return False
+            return (False, "You are not allowed to submit to the '%s' queue" % job.get('queue'))
 
     def draincheck(self, job):
         '''checks if the queue is draining'''
@@ -696,8 +699,8 @@ class RestrictionSet(Cobalt.Data.DataSet):
         probs = ''
         for restriction in self.data:
             result = restriction.CanAccept(job)
-            if not result:
-                probs = 'failed'
+            if not result[0]:
+                probs = probs + result[1] + '\n'
 
         if probs:
             return (False, probs)
