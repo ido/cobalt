@@ -187,5 +187,108 @@ Jun 29 21:28:37 sn1 BGSched: Found new job 4720
       <filename>cddbg.py</filename>. This should not be attempted
       unless you really know what you are doing.
     </para>
-</section>
+  </section>
+  <section>
+    <title>Resource Manager Operations</title>
+
+    <para>This section describes basic operations of the Cobalt
+    resource manager in terms of initial setup and long term
+    operations. First we will describe how job flow through the
+    system, and then we will describe how administrators can shape
+    this process.</para>
+
+    <para>
+      Internally, the Cobalt queue manager (cqm) stores a set of
+      queues, each of which is associated with some number of
+      jobs. Each queue has a set (potentially empty) of submission
+      restrictions. These restrictions can limit a queue to jobs of
+      particular sizes, walltimes, or users. At submission time, jobs
+      are verified against all restrictions. If a job fails to pass
+      any of these, it is rejected, and the user is presented with an
+      error message describing its failure. Also, queues have a state
+      that is used to govern its behavior. The state "started" allows
+      jobs the submission and execution of jobs. The state "draining"
+      allows jobs to execute, but prevents submission of new jobs. The
+      state "stopped" allows jobs to be submitted, but does not allow
+      job execution. Finally, the state "dead" prevents both job
+      submission and execution.
+    </para>
+
+    <para>When setting up new Cobalt instance, the default queue must
+    be created. This can be done with the command: </para>
+    <programlisting>
+      $ cqadm.py --addq default
+    </programlisting>
+
+    <para>
+      Restrictions can be added also using cqadm. Once the queues are
+      enabled, users can submit jobs.
+    </para>
+      
+    <para>
+      Job execution is controlled by the scheduler. It makes
+      scheduling decisions based on several criteria.
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>Queue Status</term>
+	<listitem>
+	  <para>The scheduler will only execute jobs from queues that
+	    are in the "started" or "draining" states</para>
+
+	  <para>Queue status can be toggled using the cqadm command.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Partition Status</term>
+	<listitem>
+	  <para>Partitions have two flags that govern their
+	  use. "Active" partitions are functional; that is, they
+	  work. This means that they (and all containing partitions
+	  that are also active) work properly. If a partition is
+	  "inactive", then it and all larger containing partitions
+	  will not be used.</para>
+
+	  <para>Partitions also have a "scheduled" flag. This allows
+	  administrators to control if a partition should have jobs
+	  scheduled on it. Typically, administrators will frequently
+	  toggle the "scheduled" flag, to govern the available machine
+	  topology, while only changing the "active" flag during
+	  system faults.</para>
+
+	  <para>Both partition status flags can be toggled using the
+	  partadm command.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Partition Queue Setting</term>
+	<listitem>
+	  <para>
+	    Partitions are made available to one or more queues at any
+	    given time. Only jobs from the specified queues can be run on a
+	    partition.
+	  </para>
+
+	  <para>Partition queue settings can be set using the partadm command.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Reservations</term>
+	<listitem>
+	  <para>
+	    Reservations each have a list of associated users,
+	    partitions, and an active period. During this period, only
+	    users listed on a reservation can run on reserved
+	    resources. If multiple reservations are active
+	    simultaneously, then a user must be listed on all
+	    reservations in order to consume resources</para>
+	  <para>Reservations can be set, displayed and released using
+	  the commands setres, showres, and releaseres, respectively.</para>
+	</listitem>
+
+      </varlistentry>
+    </variablelist>
+
+  </section>
 </chapter>
