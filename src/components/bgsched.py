@@ -181,11 +181,15 @@ class PartitionSet(Cobalt.Data.DataSet):
                       part.get('functional') and part.get('scheduled')]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
-        # filter for stopped queues
+        # filter for stopped and dead queues
         stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
+        dead_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'dead'}])
         logger.debug('stopped queues %s' % stopped_queues)
-        idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues]]
+        idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues + dead_queues]]
+
+        # filter for maxuserjobs
         
+
         #print "jobs:", self.jobs
         if candidates and idlejobs:
             logger.debug("initial candidates: %s" % ([cand.get('name') for cand in candidates]))

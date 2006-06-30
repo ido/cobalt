@@ -60,9 +60,9 @@ if __name__ == '__main__':
 
     if '-q' in sys.argv:
         for q in response:
-            if q['maxtime'] != '*':
+            if q.get('maxtime','*') != '*':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
-        output = [[q.get(x) for x in [y.lower() for y in header[0]]] for q in response]
+        output = [[q.get(x, '*') for x in [y.lower() for y in header[0]]] for q in response]
     else:
         output = [[job.get(x) for x in [y.lower() for y in header[0]]] for job in response]
 

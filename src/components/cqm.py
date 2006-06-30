@@ -605,8 +605,8 @@ class JobSet(Cobalt.Data.DataSet):
 class Restriction(Cobalt.Data.Data):
     '''Restriction object'''
 
-    __checks__ = {'maxtime':'__maxwalltime', 'users':'__usercheck',
-                  'drain':'__draincheck'}
+    __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
+                  'drain':'draincheck'}
 
     def __init__(self, info, myqueue=None):
         '''info could be like
@@ -622,13 +622,13 @@ class Restriction(Cobalt.Data.Data):
         if info.get('name', None) not in self.__checks__.keys():
             print 'restriction check %s not found' % info.get('name', None)
 
-    def __maxwalltime(self, job):
+    def maxwalltime(self, job):
         '''checks walltime of job against maxtime of queue'''
         #return int( job.get('walltime') ) <= int( self.queue.get('maxtime') )
         #or
         return int( job.get('walltime') ) <= int( self.get('value') )
 
-    def __usercheck(self, job):
+    def usercheck(self, job):
         '''checks if job owner is in approved user list'''
         #qusers = self.queue.get('users').split(':')
         qusers = self.get('value').split(':')
@@ -637,7 +637,7 @@ class Restriction(Cobalt.Data.Data):
         else:
             return False
 
-    def __draincheck(self, job):
+    def draincheck(self, job):
         '''checks if the queue is draining'''
         if self.queue.get('state') == 'draining':
             return False
@@ -645,12 +645,9 @@ class Restriction(Cobalt.Data.Data):
             return True
         
     def CanAccept(self, job):
-        ''' '''
-#         if self.op == 'le':
-#             return int(job.get(self.get('jparam'))) <= int(self.queue.get(self.get('qparam')))
-#         if self.op == 'in':
-#             return job.get(self.jparam) in self.queue.get(self.qparam).split(':')
-        
+        '''Checks if this object will allow the job'''
+        func = getattr(self, self.__checks__[self.get('name')])
+        return func(job)
 
 class RestrictionSet(Cobalt.Data.DataSet):
     """RestrictionSet.Get would check all it's restrictions, if the name
@@ -677,14 +674,15 @@ class RestrictionSet(Cobalt.Data.DataSet):
                 iobj = self.__object__(item)
                 self.data.append(iobj)
                 retval.append(iobj.to_rx(item))
-        print 'Added restriction', retval
         return retval
 
     def Get(self, cdata, callback=None, cargs={}):
         '''Returns restrictions in single dict'''
-        print 'RS.Get cargs', cargs, cdata
         for c in cargs:
-            self.Add([{'tag':'restriction', 'name':c, 'value':cargs[c]}])
+            if cargs[c] == '*':  #delete restriction
+                self.Del({'tag':'restriction', 'name':c})
+            else:
+                self.Add([{'tag':'restriction', 'name':c, 'value':cargs[c]}])
         response = {}
         for spec in cdata:  #query
             for r in self.data:  #restrictions
@@ -692,7 +690,19 @@ class RestrictionSet(Cobalt.Data.DataSet):
                     response.update({r.get('name'):r.get('value')})
 
         return [response]
-                
+
+    def Test(self, job):
+
+        probs = ''
+        for restriction in self.data:
+            result = restriction.CanAccept(job)
+            if not result:
+                probs = 'failed'
+
+        if probs:
+            return (False, probs)
+        else:
+            return (True, probs)
 
 class Queue(Cobalt.Data.Data, JobSet):
     '''queue object, subs JobSet and Data, which gives us:
@@ -706,8 +716,6 @@ class Queue(Cobalt.Data.Data, JobSet):
         self.restrictions = RestrictionSet()
 
         # set defaults if not set already
-#         defaults = {'state':'stopped', 'users':'*', 'maxtime':'*',
-#                     'maxuserjobs':'*', 'adminemail':'*'}
         defaults = {'state':'stopped', 'adminemail':'*'}
         for d in defaults:
             if d not in self._attrib:
@@ -755,9 +763,6 @@ class QueueSet(Cobalt.Data.DataSet):
 
         does not support a callback function for restrictions'''
 
-        for q in self.data:
-            print q._attrib
-
         # split cargs into normal properties and checks
         rupdates = {}
         cupdates = {}
@@ -778,7 +783,6 @@ class QueueSet(Cobalt.Data.DataSet):
         qrestrictions = {}
         for q in self.data:
             if [c for c in cdata if q.match(c)]:
-                print 'q', q.get('name'), 'restriction.Get', q.restrictions.Get(rdata)
                 qrestriction = q.restrictions.Get(rdata, cargs=rupdates)
                 qrestrictions.update({q.get('name'):qrestriction[0]})
 
@@ -809,27 +813,20 @@ class QueueSet(Cobalt.Data.DataSet):
         # if queue doesn't exist, don't check other restrictions
         if job.get('queue') not in [q.get('name') for q in self.data]:
             raise xmlrpclib.Fault(30, "Queue does not exist")
-        
-        # restriction list
-        rlist = [ [(job, self.data),
-                   (lambda (j, queuelist): int(j.get('walltime')) <= [int(q.get('maxtime')) for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('maxtime') for q in queuelist if q.get('name') == j.get('queue')][0]),
-                   'Walltime greater than queue maxtime'],
-                  [(job, self.data),
-                   (lambda (j, queuelist): j.get('user') in [q.get('users').split(':') for q in queuelist if q.get('name') == j.get('queue')][0] or '*' in [q.get('users') for q in queuelist if q.get('name') == j.get('queue')][0]),
-                   "You're not allowed to submit to this queue"],
-        
-                  [(job, self.data), (lambda (j, queuelist): job.get('queue') in [q.get('name') for q in queuelist if q.get('state') != 'draining']), 'Queue is draining, try again later'],
-#                   [(job, self.GetJobs({'tag':'job','user':job.get('user')})), (lambda (j, userjobs): len(userjobs) < int(self.Get({'tag':'queue', 'name':job.get('queue'), 'maxuserjobs':'*'}))), 'Too many jobs running'] ]
-                  ]
-        badlist = ''
-        for qfunc in rlist:
-            result = qfunc[1](qfunc[0],)
-            if result == False:
-                badlist = badlist + qfunc[2] + '\n'
-        if badlist:
-            raise xmlrpclib.Fault(30, badlist)
 
-        return job
+        [testqueue] = [q for q in self.data if q.get('name') == job.get('queue')]
+
+        # check if queue is dead or draining
+        if testqueue.get('state') in ['draining', 'dead']:
+            raise xmlrpclib.Fault(30, "Queue is dead or draining")
+
+        # test job against queue restrictions
+        (result, problems) = testqueue.restrictions.Test(job)
+        if result:
+            return job
+        else:
+            raise xmlrpclib.Fault(30, problems)
+        
 
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
@@ -841,7 +838,6 @@ class CQM(Cobalt.Component.Component):
     def __init__(self, setup):
         self.Queues = QueueSet()
         Cobalt.Component.Component.__init__(self, setup)
-        self.drain = False
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
