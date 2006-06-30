@@ -206,8 +206,8 @@ Jun 29 21:28:37 sn1 BGSched: Found new job 4720
       are verified against all restrictions. If a job fails to pass
       any of these, it is rejected, and the user is presented with an
       error message describing its failure. Also, queues have a state
-      that is used to govern its behavior. The state "started" allows
-      jobs the submission and execution of jobs. The state "draining"
+      that is used to govern its behavior. The state "running" allows
+      the submission and execution of jobs. The state "draining"
       allows jobs to execute, but prevents submission of new jobs. The
       state "stopped" allows jobs to be submitted, but does not allow
       job execution. Finally, the state "dead" prevents both job
@@ -235,7 +235,7 @@ Jun 29 21:28:37 sn1 BGSched: Found new job 4720
 	<term>Queue Status</term>
 	<listitem>
 	  <para>The scheduler will only execute jobs from queues that
-	    are in the "started" or "draining" states</para>
+	    are in the "running" or "draining" states</para>
 
 	  <para>Queue status can be toggled using the cqadm command.</para>
 	</listitem>
