@@ -44,13 +44,13 @@ if __name__ == '__main__':
     cqm = Cobalt.Proxy.queue_manager()
 
     if '-q' in sys.argv:
-        query = [{'tag':'queue', 'name':'*', 'users':'*', 'maxtime':'*', 'state':'*'}]
-        header = [['Name', 'Users', 'MaxTime', 'State']]
+        query = [{'tag':'queue', 'name':'*', 'users':'*', 'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*', 'maxqueuedjobs':'*', 'state':'*'}]
+        header = [['Name', 'Users', 'MaxTime', 'MinTime', 'MaxUserJobs', 'MaxQueuedJobs', 'MaxUserNodes', 'State']]
         response = cqm.GetQueues(query)
     else:
         query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*'}]
         if '-f' in sys.argv:
-            query[0].update({"mode":'*', 'procs':'*', 'queue':'*', 'starttime':'*', 'outputpath':'*'})
+            query[0].update({'mode':'*', 'procs':'*', 'queue':'*', 'starttime':'*', 'outputpath':'*'})
 
             header = [['JobID', 'OutputPath', 'User', 'WallTime', 'RunTime', 'Nodes', 'State',
                        'Location', 'Mode', 'Procs', 'Queue', 'StartTime']]
@@ -62,6 +62,8 @@ if __name__ == '__main__':
         for q in response:
             if q.get('maxtime','*') != '*':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
+            if q.get('mintime', '*') != '*':
+                q['mintime'] = "%02d:%02d:00" % (divmod(int(q['mintime']), 60))
         output = [[q.get(x, '*') for x in [y.lower() for y in header[0]]] for q in response]
     else:
         output = [[job.get(x) for x in [y.lower() for y in header[0]]] for job in response]

@@ -42,6 +42,18 @@ Delete specified queue(s) from queue manager
 .B \-\-getq queue
 List queue(s) in queue manager
 .TP
+.B \-\-stopq queue
+Stop queue(s). Queue state is set to 'stopped'.
+.TP
+.B \-\-startq queue
+Start queue(s). Queue state is set to 'running'.
+.TP
+.B \-\-drainq queue
+Drain queue(s). No new jobs can be submitted, and jobs already in the queue will run normally. Queue state is set to 'draining'.
+.TP
+.B \-\-killq queue
+Kill the queue(s). No new jobs can be submitted, and no jobs in the queue will run. Queue state is set to 'dead'.
+.TP
 .B \-\-setq 'prop:value prop:value' queue
 Set properties for one or more queues. The prop:value pairs are separated by whitespace. 
 .IP 
@@ -55,8 +67,20 @@ Properties:
 .B maxtime=mm
 The maximum walltime (in minutes) allowed for jobs submitted to the queue.
 .TP
+.B mintime=mm
+The minimum walltime (in minutes) allowed for jobs submitted to the queue.
+.TP
+.B maxuserjobs=x
+The maximum number of jobs a user is allowed to have running in the queue.
+.TP
+.B maxqueuedjobs=x
+The maximum number of jobs a user is allowed to have in the queue.
+.TP
+.B maxusernodes=x
+The maximum number of nodes a user is allowed to have allocated with running jobs in the queue.
+.TP
 .B users
-List of users allowed to submit to the queue. An '*' means any user can submit to the queue
+List of users allowed to submit to the queue. An '*' means any user can submit to the queue.
 .TP
 .B state=running|stopped|draining
 Flag determining state of queue. If the queue is 'stopped', jobs can be submitted to the queue, but no jobs will be run by the scheduler. If the queue is 'draining', no new jobs will be allowed to be added to the queue, but jobs existing in the queue will be run.

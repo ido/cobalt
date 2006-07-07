@@ -616,7 +616,8 @@ class Restriction(Cobalt.Data.Data):
     '''Restriction object'''
 
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
-                  'maxuserjobs':'maxuserjobs', 'minwalltime':'minwalltime'}
+                  'maxuserjobs':'maxuserjobs', 'mintime':'minwalltime',
+                  'maxqueuedjobs':'maxqueuedjobs', 'maxusernodes':'maxusernodes'}
 
     def __init__(self, info, myqueue=None):
         '''info could be like
@@ -632,7 +633,7 @@ class Restriction(Cobalt.Data.Data):
         if info.get('name', None) not in self.__checks__.keys():
             print 'restriction check %s not found' % info.get('name', None)
 
-        if info.get('name', None) in ['maxuserjobs', 'maxnodesinuse']:
+        if info.get('name', None) in ['maxuserjobs', 'maxusernodes']:
             self.set('type','run')
         else:
             self.set('type','queue')
@@ -664,7 +665,6 @@ class Restriction(Cobalt.Data.Data):
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
         with potential job added'''
-        print 'maxuserjobs: checking', job, 'with queuestate', queuestate
 #         userjobs = {}
 #         # count user jobs
 #         for j in queuestate:
@@ -688,8 +688,19 @@ class Restriction(Cobalt.Data.Data):
         else:
             return (True, "")
 
+    def maxusernodes(self, job, queuestate=None):
+        '''limits how many nodes a single user can have running'''
+        usernodes = 0
+        for j in [x for x in queuestate if x.get('user') == job.get('user') and x.get('state') == 'running']:
+            usernodes = usernodes + int(j.get('nodes'))
+        if usernodes >= int(self.get('value')):
+            return (False, "The max amount of nodes the user is allowed to run on has been reached")
+        else:
+            return (True, "")
+
     def CanAccept(self, job, queuestate=None):
         '''Checks if this object will allow the job'''
+        logger.debug('checking restriction %s' % self.get('name'))
         func = getattr(self, self.__checks__[self.get('name')])
         return func(job, queuestate)
 
@@ -869,9 +880,9 @@ class QueueSet(Cobalt.Data.DataSet):
         # test job against queue restrictions
         probs = ''
         for restriction in [r for r in testqueue.restrictions if r.get('type') == 'queue']:
-            print 'checking restriction %s' % restriction.get('name')
+            logger.debug('checking restriction %s' % restriction.get('name'))
             result = restriction.CanAccept(job)
-            print 'result was', result
+            logger.debug('result was %s' % result[0])
             if not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:
@@ -884,8 +895,9 @@ class QueueSet(Cobalt.Data.DataSet):
         [testqueue] = [q for q in self.data if q.get('name') == newjob.get('queue')]
         probs = ''
         for restriction in [r for r in testqueue.restrictions if r.get('type') == 'run']:
+            logger.debug('checking restriction %s' % restriction.get('name'))
             result = restriction.CanAccept(newjob, qstate)
-            print 'result was', result
+            logger.debug('result was' % result)
             if not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:

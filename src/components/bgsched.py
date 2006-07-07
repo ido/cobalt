@@ -282,10 +282,10 @@ class PartitionSet(Cobalt.Data.DataSet):
             except xmlrpclib.Fault, flt:
                 if flt.faultCode == 30:
                     logger.debug('Job %s/%s cannot run in queue because %s' %
-                                 (newjob.get('jobid'), newjob.get('user'), flt.faultString)
+                                 (newjob.get('jobid'), newjob.get('user'), flt.faultString))
                     del potential[newjob]
                     continue
-            logger.debug('Job %s/%s accepted to run' % (newjob.get('jobid'), newjob.get('user'))
+            logger.debug('Job %s/%s accepted to run' % (newjob.get('jobid'), newjob.get('user')))
             location = potential[newjob][0]
             location.PlaceJob(newjob)
             newjob.Place(location)

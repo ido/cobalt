@@ -8,19 +8,21 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
-              '       cqadm [-d] [--addq] [--delq] [--getq] ' + \
-              '[--setq property=value:property=value] <queue> <queue>'
+              '       cqadm [-d] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
+              '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>'
 
 def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
-             'maxtime':'*', 'maxuserjobs':'*', 'adminemail':'*'}]
+             'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
+             'maxqueuedjobs':'*', 'adminemail':'*'}]
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
 
     options = {'getq':'getq', 'd':'debug', 'hold':'hold', 'release':'release',
-               'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq'}
+               'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',
+               'stopq':'stopq', 'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
                 'run':'run', 'setq':'setq'}
 
@@ -53,7 +55,7 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('cqadm', to_syslog=False, level=level)
 
     # set the spec whether working with queues or jobs
-    if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq']:
+    if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq'] or opts['startq'] or opts['stopq'] or opts['drainq'] or opts['killq']:
         spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
@@ -90,7 +92,12 @@ if __name__ == '__main__':
         for q in response:
             if q.get('maxtime', '*') != '*':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q.get('maxtime')), 60))
-        datatoprint = [('Queue', 'Users', 'MaxTime', 'MaxUserJobs', 'AdminEmail', 'State')] + [(q.get('name', '*'), q.get('users', '*'), q.get('maxtime', '*'), q.get('maxuserjobs', '*'), q.get('adminemail', '*'), q.get('state')) for q in response]
+        datatoprint = [('Queue', 'Users', 'MaxTime', 'MinTime', 'MaxUserJobs',
+                        'MaxQueuedJobs', 'MaxUserNodes', 'AdminEmail', 'State')] + \
+                        [(q.get('name', '*'), q.get('users', '*'), q.get('maxtime', '*'),
+                          q.get('mintime', '*'), q.get('maxuserjobs', '*'),
+                          q.get('maxqueuedjobs', '*'), q.get('maxusernodes', '*'),
+                          q.get('adminemail', '*'), q.get('state')) for q in response]
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['delq']:
         response = cqm.DelQueues(spec)
@@ -103,6 +110,14 @@ if __name__ == '__main__':
         for prop, val in props:
             updates.update({prop:val})
         response = cqm.SetQueues(spec, updates)
+    elif opts['stopq']:
+        response = cqm.SetQueues(spec, {'state':'stopped'})
+    elif opts['startq']:
+        response = cqm.SetQueues(spec, {'state':'started'})
+    elif opts['drainq']:
+        response = cqm.SetQueues(spec, {'state':'draining'})
+    elif opts['killq']:
+        response = cqm.SetQueues(spec, {'state':'dead'})
     else:
         updates = {}
         if opts['hold']:

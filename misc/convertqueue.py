@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt queue converter script'''
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 import sys, cPickle, shutils
 sys.path.append('/usr/sbin')
