@@ -187,9 +187,6 @@ class PartitionSet(Cobalt.Data.DataSet):
         logger.debug('stopped queues %s' % stopped_queues)
         idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues + dead_queues]]
 
-        # filter for maxuserjobs
-        
-
         #print "jobs:", self.jobs
         if candidates and idlejobs:
             logger.debug("initial candidates: %s" % ([cand.get('name') for cand in candidates]))
@@ -267,6 +264,10 @@ class PartitionSet(Cobalt.Data.DataSet):
         '''Return a set of placements that patch a basic FIFO+backfill policy'''
         placements = []
         potential = qpotential[queue]
+        # update queuestate from cqm once per Schedule cycle
+        queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*',
+                                          'state':'*', 'nodes':'*',
+                                          'queue':'*', 'user':'*'}])
         while potential:
 
             # get lowest jobid and place on first available partition
@@ -274,9 +275,24 @@ class PartitionSet(Cobalt.Data.DataSet):
             potentialjobs.sort()
             newjobid = str(potentialjobs[0])
             [newjob] = [job for job in potential.keys() if job.get('jobid') == newjobid]
+            
+            # filter here for runtime restrictions
+            try:
+                comm['qm'].CanRun(queuestate, newjob._attrib)
+            except xmlrpclib.Fault, flt:
+                if flt.faultCode == 30:
+                    logger.debug('Job %s/%s cannot run in queue because %s' %
+                                 (newjob.get('jobid'), newjob.get('user'), flt.faultString)
+                    del potential[newjob]
+                    continue
+            logger.debug('Job %s/%s accepted to run' % (newjob.get('jobid'), newjob.get('user'))
             location = potential[newjob][0]
             location.PlaceJob(newjob)
             newjob.Place(location)
+            # update local state of job for use in this schedule cycle
+            for j in queuestate:
+                if j.get('jobid') == newjob.get('jobid') and j.get('queue') == newjob.get('queue'):
+                    j.update({'state':'running'})
             placements.append((newjob.get('jobid'), location.get('name')))
             del potential[newjob]
 

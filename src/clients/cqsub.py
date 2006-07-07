@@ -122,11 +122,11 @@ if __name__ == '__main__':
         cqm = Cobalt.Proxy.queue_manager()
 
         # check if job can run in queue as specified
-        response = cqm.CanRun(jobspec)
+        response = cqm.CanQueue(jobspec)
 
         # try adding job to queue_manager
         job = cqm.AddJob(jobspec)
-        
+
     except Cobalt.Proxy.CobaltComponentError:
         print "Can't talk to cqm"
         raise SystemExit, 1

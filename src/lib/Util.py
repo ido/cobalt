@@ -132,7 +132,7 @@ def buildRackTopology(partlist):
 
 def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
     '''Sends an email'''
-    msgstr = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % ('cobalt@%s' % socket.getfqdn(), toaddr, subj))
+    msgstr = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % ('cobalt@%s' % socket.getfqdn(), (',').join(toaddr), subj))
     try:
         server = smtplib.SMTP(smtpserver)
         server.sendmail('cobalt@%s' % socket.getfqdn(), toaddr, msgstr + msg)

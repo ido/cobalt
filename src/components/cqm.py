@@ -524,7 +524,7 @@ class BGJob(Job):
         if not self.get('kernel', False):
             self.set('kernel', 'default')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
-        if self.get('notify', False):
+        if self.get('notify', False) or self.get('adminemail', '*') != '*':
             self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
         else:
             self.steps = ['RunBGUserJob', 'FinishUserPgrp', 'Finish']
@@ -553,9 +553,14 @@ class BGJob(Job):
             mserver = 'localhost'
         else:
             mserver = mailserver
-        subj = 'Cobalt: job %s started' % self.get('jobid')
-        msg = 'Job %s starting on partition %s, at %s' % (self.get('jobid'), self.get('location'), time.strftime('%c', time.localtime()))
-        Cobalt.Util.sendemail(self.get('notify'), subj, msg, smtpserver=mserver)
+        subj = 'Cobalt: Job %s/%s started' % (self.get('jobid'), self.get('user'))
+        msg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()))
+        toaddr = []
+        if self.get('adminemail') != '*':
+            toaddr.append(self.get('adminemail'))
+        if self.get('notify', False):
+            toaddr.append(self.get('notify'))
+        Cobalt.Util.sendemail(toaddr, subj, msg, smtpserver=mserver)
 
     def NotifyAtEnd(self):
         '''Notify user when job has ended'''
@@ -564,9 +569,14 @@ class BGJob(Job):
             mserver = 'localhost'
         else:
             mserver = mailserver
-        subj = 'Cobalt: job %s finished' % self.get('jobid')
-        msg = 'Job %s finished at %s\nStats: %s' %  (self.get('jobid'), time.strftime('%c', time.localtime()), self.GetStats())
-        Cobalt.Util.sendemail(self.get('notify'), subj, msg, smtpserver=mserver)
+        subj = 'Cobalt: Job %s/%s finished' % (self.get('jobid'), self.get('user'))
+        msg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()), self.GetStats())
+        toaddr = []
+        if self.get('adminemail') != '*':
+            toaddr.append(self.get('adminemail'))
+        if self.get('notify', False):
+            toaddr.append(self.get('notify'))
+        Cobalt.Util.sendemail(toaddr, subj, msg, smtpserver=mserver)
 
     def RunBGUserJob(self):
         '''Run a Blue Gene Job'''
@@ -606,7 +616,7 @@ class Restriction(Cobalt.Data.Data):
     '''Restriction object'''
 
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
-                  'drain':'draincheck'}
+                  'maxuserjobs':'maxuserjobs', 'minwalltime':'minwalltime'}
 
     def __init__(self, info, myqueue=None):
         '''info could be like
@@ -622,35 +632,66 @@ class Restriction(Cobalt.Data.Data):
         if info.get('name', None) not in self.__checks__.keys():
             print 'restriction check %s not found' % info.get('name', None)
 
-    def maxwalltime(self, job):
+        if info.get('name', None) in ['maxuserjobs', 'maxnodesinuse']:
+            self.set('type','run')
+        else:
+            self.set('type','queue')
+        print 'created restriction %s with type %s' % (self.get('name'), self.get('type'))
+
+    def maxwalltime(self, job, queuestate=None):
         '''checks walltime of job against maxtime of queue'''
-        #return int( job.get('walltime') ) <= int( self.queue.get('maxtime') )
-        #or
         if int( job.get('walltime') ) <= int( self.get('value') ):
-            return (True)
+            return (True, "")
         else:
             return (False, "Walltime greater than max walltime of queue")
 
-    def usercheck(self, job):
+    def minwalltime(self, job, queuestate=None):
+        '''limits minimum walltime for job'''
+        if int( job.get('walltime') ) >= int( self.get('value') ):
+            return (True, "")
+        else:
+            return (False, "Walltime less than min walltime of queue")
+
+    def usercheck(self, job, queuestate=None):
         '''checks if job owner is in approved user list'''
         #qusers = self.queue.get('users').split(':')
         qusers = self.get('value').split(':')
         if '*' in qusers or job.get('user') in qusers:
-            return (True)
+            return (True, "")
         else:
             return (False, "You are not allowed to submit to the '%s' queue" % job.get('queue'))
 
-    def draincheck(self, job):
-        '''checks if the queue is draining'''
-        if self.queue.get('state') == 'draining':
-            return False
+    def maxuserjobs(self, job, queuestate=None):
+        '''limits how many jobs each user can run by checking queue state
+        with potential job added'''
+        print 'maxuserjobs: checking', job, 'with queuestate', queuestate
+#         userjobs = {}
+#         # count user jobs
+#         for j in queuestate:
+#             if userjobs.has_key(j.get('user')):
+#                 userjobs[j.get('user')] += 1
+#             else:
+#                 userjobs[j.get('user')] = 1
+        userjobs = [j for j in queuestate if j.get('user') == job.get('user') and j.get('state') == 'running']
+#         if userjobs.has_key(job.get('user')) and \
+#                len(userjobs[job.get('user')]) == int(self.get('value')):
+        if len(userjobs) >= int(self.get('value')):
+            return (False, "Maxuserjobs limit reached")
         else:
-            return True
-        
-    def CanAccept(self, job):
+            return (True, "")
+
+    def maxqueuedjobs(self, job, queuestate=None):
+        '''limits how many jobs a user can have in the queue at a time'''
+        userjobs = [j for j in self.queue if j.get('user') == job.get('user')]
+        if len(userjobs) >= int(self.get('value')):
+            return (False, "MaxQueuedJobs limit reached")
+        else:
+            return (True, "")
+
+    def CanAccept(self, job, queuestate=None):
         '''Checks if this object will allow the job'''
         func = getattr(self, self.__checks__[self.get('name')])
-        return func(job)
+        return func(job, queuestate)
 
 class RestrictionSet(Cobalt.Data.DataSet):
     """RestrictionSet.Get would check all it's restrictions, if the name
@@ -661,9 +702,10 @@ class RestrictionSet(Cobalt.Data.DataSet):
     """
     __object__ = Restriction
 
-    def __init__(self):
+    def __init__(self, myqueue):
         Cobalt.Data.DataSet.__init__(self)
 #         self.__id__ = Cobalt.Data.IncrID()
+        self.queue = myqueue
 
     def Add(self, cdata, callback=None, cargs=()):
         '''Add restriction(s)'''
@@ -674,7 +716,7 @@ class RestrictionSet(Cobalt.Data.DataSet):
                 # just update the value
                 toupdate[0].set('value', item.get('value'))
             else:
-                iobj = self.__object__(item)
+                iobj = self.__object__(item, self.queue)
                 self.data.append(iobj)
                 retval.append(iobj.to_rx(item))
         return retval
@@ -694,18 +736,18 @@ class RestrictionSet(Cobalt.Data.DataSet):
 
         return [response]
 
-    def Test(self, job):
+#     def Test(self, job):
+#         '''Test queue restrictions'''
+#         probs = ''
+#         for restriction in [r for r in self.data if r.get('type') == 'queue']:
+#             result = restriction.CanAccept(job, type='queue')
+#             if not result[0]:
+#                 probs = probs + result[1] + '\n'
 
-        probs = ''
-        for restriction in self.data:
-            result = restriction.CanAccept(job)
-            if not result[0]:
-                probs = probs + result[1] + '\n'
-
-        if probs:
-            return (False, probs)
-        else:
-            return (True, probs)
+#         if probs:
+#             return (False, probs)
+#         else:
+#             return (True, probs)
 
 class Queue(Cobalt.Data.Data, JobSet):
     '''queue object, subs JobSet and Data, which gives us:
@@ -716,13 +758,13 @@ class Queue(Cobalt.Data.Data, JobSet):
         Cobalt.Data.Data.__init__(self, info)
         JobSet.__init__(self)
 
-        self.restrictions = RestrictionSet()
-
         # set defaults if not set already
         defaults = {'state':'stopped', 'adminemail':'*'}
         for d in defaults:
             if d not in self._attrib:
                 self.set(d, defaults[d])
+
+        self.restrictions = RestrictionSet(self)
 
 class QueueSet(Cobalt.Data.DataSet):
     '''Set of queues
@@ -780,6 +822,8 @@ class QueueSet(Cobalt.Data.DataSet):
         rdata = copy.deepcopy(cdata)
         for rd in rdata:
             rd.update({'tag':'restriction', 'value':'*'})
+            if rd.has_key('state'):
+                del(rd['state'])
 
         # get restrictions for each queue that match cdata
         # (not sure what'll happen here with multiple specs in cdata)
@@ -810,9 +854,8 @@ class QueueSet(Cobalt.Data.DataSet):
         for Q in self.data:
             Q.Del([data])
             
-    def CanRun(self, _, job):
+    def CanQueue(self, _, job):
         '''Check that job meets criteria of the specified queue'''
-
         # if queue doesn't exist, don't check other restrictions
         if job.get('queue') not in [q.get('name') for q in self.data]:
             raise xmlrpclib.Fault(30, "Queue does not exist")
@@ -824,12 +867,31 @@ class QueueSet(Cobalt.Data.DataSet):
             raise xmlrpclib.Fault(30, "Queue is dead or draining")
 
         # test job against queue restrictions
-        (result, problems) = testqueue.restrictions.Test(job)
-        if result:
-            return job
+        probs = ''
+        for restriction in [r for r in testqueue.restrictions if r.get('type') == 'queue']:
+            print 'checking restriction %s' % restriction.get('name')
+            result = restriction.CanAccept(job)
+            print 'result was', result
+            if not result[0]:
+                probs = probs + result[1] + '\n'
+        if probs:
+            raise xmlrpclib.Fault(30, probs)
         else:
-            raise xmlrpclib.Fault(30, problems)
-        
+            return (True, probs)
+
+    def CanRun(self, _, qstate, newjob):
+        '''Checks if newjob can run with current state of queue'''
+        [testqueue] = [q for q in self.data if q.get('name') == newjob.get('queue')]
+        probs = ''
+        for restriction in [r for r in testqueue.restrictions if r.get('type') == 'run']:
+            result = restriction.CanAccept(newjob, qstate)
+            print 'result was', result
+            if not result[0]:
+                probs = probs + result[1] + '\n'
+        if probs:
+            raise xmlrpclib.Fault(30, probs)
+        else:
+            return (True, probs)
 
 class CQM(Cobalt.Component.Component):
     '''Cobalt Queue Manager'''
@@ -845,12 +907,13 @@ class CQM(Cobalt.Component.Component):
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
         self.register_function(lambda  address, data:self.Queues.GetJobs(data), "GetJobs")
-        self.register_function(lambda  address, data:[Q for Q in self.Queues if Q.get('name') == data.get('queue')][0].Add(data), "AddJob")
+        self.register_function(self.handle_job_add, "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
         self.register_function(lambda  address, data, updates:self.Queues.Get(data, lambda queue, newattr:queue.update(newattr), updates), "SetQueues")
+        self.register_function(self.Queues.CanQueue, "CanQueue")
         self.register_function(self.Queues.CanRun, "CanRun")
         self.register_function(lambda address, data, nodelist:
                                self.Queues.GetJobs(data, lambda job, nodes:job.Run(nodes), nodelist),
@@ -875,6 +938,13 @@ class CQM(Cobalt.Component.Component):
         [j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
         Job.acctlog.ChangeLog()
         return 1
+
+    def handle_job_add(self, _, data):
+        '''Add a job, throws in adminemail'''
+        [thequeue] = [q for q in self.Queues if q.get('name') == data.get('queue')]
+        data.update({'adminemail':thequeue.get('adminemail')})
+        response = thequeue.Add(data)
+        return response
 
     def handle_job_del(self, _, data, force=False):
         '''Delete a job'''
