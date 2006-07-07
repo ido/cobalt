@@ -96,7 +96,7 @@ if __name__ == '__main__':
         for part in parts:
             for pname in busy:
                 if pname in partinfo[part['name']][0] + partinfo[part['name']][1] and pname != part['name']:
-                    part.__setitem__('state', 'busy*')
+                    part.__setitem__('state', 'blocked')
         offline = [part['name'] for part in parts if not part['functional']]
         [part.__setitem__('functional', '-') for part in parts for pname in offline if pname in part['deps']]
         data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
