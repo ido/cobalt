@@ -9,7 +9,7 @@ from logging import getLogger, FileHandler, Formatter, INFO
 import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-logger = logging.getLogger('cqm')
+#logger = logging.getLogger('cqm')
 
 class ProcessManagerError(Exception):
     '''This error occurs when communications with the process manager fail'''
@@ -65,7 +65,7 @@ class Logger(object):
         self.formatter = Formatter('%(asctime)s;%(message)s')
         self.hdlr.setFormatter(self.formatter)
         self.logger.addHandler(self.hdlr)
-        self.logger.setLevel(INFO)
+#        self.logger.setLevel(INFO)
 
     def ChangeLog(self):
         '''Implement log rotation'''
@@ -616,8 +616,9 @@ class Restriction(Cobalt.Data.Data):
     '''Restriction object'''
 
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
-                  'maxuserjobs':'maxuserjobs', 'mintime':'minwalltime',
-                  'maxqueuedjobs':'maxqueuedjobs', 'maxusernodes':'maxusernodes'}
+                  'maxrunning':'maxuserjobs', 'mintime':'minwalltime',
+                  'maxqueued':'maxqueuedjobs', 'maxusernodes':'maxusernodes',
+                  'totalnodes':'maxtotalnodes'}
 
     def __init__(self, info, myqueue=None):
         '''info could be like
@@ -630,28 +631,25 @@ class Restriction(Cobalt.Data.Data):
         Cobalt.Data.Data.__init__(self, info)
         self.queue = myqueue
 
-        if info.get('name', None) not in self.__checks__.keys():
-            print 'restriction check %s not found' % info.get('name', None)
-
-        if info.get('name', None) in ['maxuserjobs', 'maxusernodes']:
+        if info.get('name', None) in ['maxrunning', 'maxusernodes', 'totalnodes']:
             self.set('type','run')
         else:
             self.set('type','queue')
-        print 'created restriction %s with type %s' % (self.get('name'), self.get('type'))
+        logger.debug('created restriction %s with type %s' % (self.get('name'), self.get('type')))
 
     def maxwalltime(self, job, queuestate=None):
         '''checks walltime of job against maxtime of queue'''
         if int( job.get('walltime') ) <= int( self.get('value') ):
             return (True, "")
         else:
-            return (False, "Walltime greater than max walltime of queue")
+            return (False, "Walltime greater than the '%s' queue max walltime of %s" % (job.get('queue'), "%02d:%02d:00" % (divmod(int(self.get('value')), 60))))
 
     def minwalltime(self, job, queuestate=None):
         '''limits minimum walltime for job'''
         if int( job.get('walltime') ) >= int( self.get('value') ):
             return (True, "")
         else:
-            return (False, "Walltime less than min walltime of queue")
+            return (False, "Walltime less than the '%s' queue min walltime of %s" % (job.get('queue'), "%02d:%02d:00" % (divmod(int(self.get('value')), 60))))
 
     def usercheck(self, job, queuestate=None):
         '''checks if job owner is in approved user list'''
@@ -665,16 +663,7 @@ class Restriction(Cobalt.Data.Data):
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
         with potential job added'''
-#         userjobs = {}
-#         # count user jobs
-#         for j in queuestate:
-#             if userjobs.has_key(j.get('user')):
-#                 userjobs[j.get('user')] += 1
-#             else:
-#                 userjobs[j.get('user')] = 1
         userjobs = [j for j in queuestate if j.get('user') == job.get('user') and j.get('state') == 'running']
-#         if userjobs.has_key(job.get('user')) and \
-#                len(userjobs[job.get('user')]) == int(self.get('value')):
         if len(userjobs) >= int(self.get('value')):
             return (False, "Maxuserjobs limit reached")
         else:
@@ -684,7 +673,7 @@ class Restriction(Cobalt.Data.Data):
         '''limits how many jobs a user can have in the queue at a time'''
         userjobs = [j for j in self.queue if j.get('user') == job.get('user')]
         if len(userjobs) >= int(self.get('value')):
-            return (False, "MaxQueuedJobs limit reached")
+            return (False, "The limit of %s jobs per user in the '%s' queue has been reached" % (self.get('value'), job.get('queue')))
         else:
             return (True, "")
 
@@ -693,8 +682,19 @@ class Restriction(Cobalt.Data.Data):
         usernodes = 0
         for j in [x for x in queuestate if x.get('user') == job.get('user') and x.get('state') == 'running']:
             usernodes = usernodes + int(j.get('nodes'))
-        if usernodes >= int(self.get('value')):
-            return (False, "The max amount of nodes the user is allowed to run on has been reached")
+        if usernodes + int(job.get('nodes')) >= int(self.get('value')):
+            return (False, "Job exceeds MaxUserNodes limit")
+        else:
+            return (True, "")
+
+    def maxtotalnodes(self, job, queuestate=None):
+        '''limits how many total nodes can be used by jobs running in
+        this queue'''
+        totalnodes = 0
+        for j in [x for x in queuestate if x.get('state') == 'running']:
+            totalnodes = totalnodes + int(j.get('nodes'))
+        if totalnodes + int(job.get('nodes')) >= int(self.get('value')):
+            return (False, "Job exceeds MaxTotalNodes limit")
         else:
             return (True, "")
 
@@ -869,13 +869,13 @@ class QueueSet(Cobalt.Data.DataSet):
         '''Check that job meets criteria of the specified queue'''
         # if queue doesn't exist, don't check other restrictions
         if job.get('queue') not in [q.get('name') for q in self.data]:
-            raise xmlrpclib.Fault(30, "Queue does not exist")
+            raise xmlrpclib.Fault(30, "Queue '%s' does not exist" % job.get('queue'))
 
         [testqueue] = [q for q in self.data if q.get('name') == job.get('queue')]
 
         # check if queue is dead or draining
         if testqueue.get('state') in ['draining', 'dead']:
-            raise xmlrpclib.Fault(30, "Queue is dead or draining")
+            raise xmlrpclib.Fault(30, "The '%s' queue is dead or draining" % testqueue.get('name'))
 
         # test job against queue restrictions
         probs = ''
@@ -895,9 +895,7 @@ class QueueSet(Cobalt.Data.DataSet):
         [testqueue] = [q for q in self.data if q.get('name') == newjob.get('queue')]
         probs = ''
         for restriction in [r for r in testqueue.restrictions if r.get('type') == 'run']:
-            logger.debug('checking restriction %s' % restriction.get('name'))
             result = restriction.CanAccept(newjob, qstate)
-            logger.debug('result was' % result)
             if not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:
@@ -1046,5 +1044,6 @@ if __name__ == '__main__':
     if len([x for x in opts if x[0] == '-d']):
         dlevel = logging.DEBUG
     Cobalt.Logging.setup_logging('cqm', level=dlevel)
+    logger = logging.getLogger('cqm')
     server = CQM({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
     server.serve_forever()

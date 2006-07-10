@@ -44,8 +44,12 @@ if __name__ == '__main__':
     cqm = Cobalt.Proxy.queue_manager()
 
     if '-q' in sys.argv:
-        query = [{'tag':'queue', 'name':'*', 'users':'*', 'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*', 'maxqueuedjobs':'*', 'state':'*'}]
-        header = [['Name', 'Users', 'MaxTime', 'MinTime', 'MaxUserJobs', 'MaxQueuedJobs', 'MaxUserNodes', 'State']]
+        query = [{'tag':'queue', 'name':'*', 'users':'*', 
+                  'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
+                  'maxqueued':'*', 'maxusernodes':'*',
+                  'totalnodes':'*', 'state':'*'}]
+        header = [['Name', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
+                   'MaxQueued', 'MaxUserNodes', 'TotalNodes', 'State']]
         response = cqm.GetQueues(query)
     else:
         query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*'}]

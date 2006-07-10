@@ -15,7 +15,8 @@ def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
-             'maxqueuedjobs':'*', 'adminemail':'*'}]
+             'maxqueued':'*', 'maxrunning':'*', 'adminemail':'*',
+             'totalnodes':'*'}]
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
@@ -92,12 +93,17 @@ if __name__ == '__main__':
         for q in response:
             if q.get('maxtime', '*') != '*':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q.get('maxtime')), 60))
-        datatoprint = [('Queue', 'Users', 'MaxTime', 'MinTime', 'MaxUserJobs',
-                        'MaxQueuedJobs', 'MaxUserNodes', 'AdminEmail', 'State')] + \
-                        [(q.get('name', '*'), q.get('users', '*'), q.get('maxtime', '*'),
-                          q.get('mintime', '*'), q.get('maxuserjobs', '*'),
-                          q.get('maxqueuedjobs', '*'), q.get('maxusernodes', '*'),
-                          q.get('adminemail', '*'), q.get('state')) for q in response]
+            if q.get('mintime', '*') != '*':
+                q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
+        datatoprint = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
+                        'MaxQueued', 'MaxUserNodes', 'TotalNodes',
+                        'AdminEmail', 'State')] + \
+                        [(q.get('name', '*'), q.get('users', '*'),
+                          q.get('mintime','*'), q.get('maxtime','*'),
+                          q.get('maxrunning','*'),q.get('maxqueued','*'),
+                          q.get('maxusernodes','*'),q.get('totalnodes','*'),
+                          q.get('adminemail', '*'),q.get('state'))
+                         for q in response]
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['delq']:
         response = cqm.DelQueues(spec)
