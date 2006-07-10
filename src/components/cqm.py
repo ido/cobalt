@@ -639,14 +639,14 @@ class Restriction(Cobalt.Data.Data):
 
     def maxwalltime(self, job, queuestate=None):
         '''checks walltime of job against maxtime of queue'''
-        if int( job.get('walltime') ) <= int( self.get('value') ):
+        if float( job.get('walltime') ) <= float( self.get('value') ):
             return (True, "")
         else:
             return (False, "Walltime greater than the '%s' queue max walltime of %s" % (job.get('queue'), "%02d:%02d:00" % (divmod(int(self.get('value')), 60))))
 
     def minwalltime(self, job, queuestate=None):
         '''limits minimum walltime for job'''
-        if int( job.get('walltime') ) >= int( self.get('value') ):
+        if float( job.get('walltime') ) >= float( self.get('value') ):
             return (True, "")
         else:
             return (False, "Walltime less than the '%s' queue min walltime of %s" % (job.get('queue'), "%02d:%02d:00" % (divmod(int(self.get('value')), 60))))
@@ -875,14 +875,12 @@ class QueueSet(Cobalt.Data.DataSet):
 
         # check if queue is dead or draining
         if testqueue.get('state') in ['draining', 'dead']:
-            raise xmlrpclib.Fault(30, "The '%s' queue is dead or draining" % testqueue.get('name'))
+            raise xmlrpclib.Fault(30, "The '%s' queue is %s" % (testqueue.get('name'), testqueue.get('state')))
 
         # test job against queue restrictions
         probs = ''
         for restriction in [r for r in testqueue.restrictions if r.get('type') == 'queue']:
-            logger.debug('checking restriction %s' % restriction.get('name'))
             result = restriction.CanAccept(job)
-            logger.debug('result was %s' % result[0])
             if not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:
