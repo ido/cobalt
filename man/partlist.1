@@ -5,7 +5,15 @@ partlist \-	List online partitions
 .B partlist
 .SH "DESCRIPTION"
 .TP
-This program lists all partitions with online state.
+This program lists all partitions that have been marked as functional. 
+.PP
+Partitions with 
+.B idle 
+state are free to run jobs. Partitions with 
+.B busy 
+state are running jobs. Partitions with 
+.B blocked 
+state are not able to run jobs because one or more of their parent or child partitions are running jobs.
 .SH "SEE ALSO"
 .BR partadm(8)
 .SH "BUGS"

@@ -72,17 +72,8 @@ The maximum walltime (in minutes) allowed for jobs submitted to the queue.
 .B mintime=mm
 The minimum walltime (in minutes) allowed for jobs submitted to the queue.
 .TP
-.B maxrunning=x
-The maximum number of jobs a user is allowed to have running in the queue.
-.TP
 .B maxqueued=x
-The maximum number of jobs a user is allowed to have in the queue, running or queued.
-.TP
-.B maxusernodes=x
-The maximum number of nodes a user is allowed to have allocated with running jobs in the queue.
-.TP
-.B totalnodes=x
-The maximum number of nodes any jobs in the queue are allowed to have allocated with running jobs.
+The maximum number of jobs a user is allowed to have in the queue, whether running or queued.
 .TP
 .B users=user1:user2:user2
 List of users allowed to submit to the queue. An '*' means any user can submit to the queue.
@@ -91,6 +82,15 @@ List of users allowed to submit to the queue. An '*' means any user can submit t
 Flag determining state of queue. If the queue is 'stopped', jobs can be submitted to the queue, but no jobs will be run by the scheduler. If the queue is 'draining', no new jobs will be allowed to be added to the queue, but jobs existing in the queue will be run. If the queue is 'dead', no new jobs will be added and no existing jobs will be run. (Also provided by 
 .B "\-\-startq" "\-\-stopq" "\-\-drainq" "\-\-killq"
 ).
+.TP
+.B maxrunning=x
+The maximum number of jobs a user is allowed to have running in the queue.
+.TP
+.B maxusernodes=x
+The maximum number of nodes a user is allowed to have allocated with running jobs in the queue.
+.TP
+.B totalnodes=x
+The maximum number of nodes any jobs in the queue are allowed to have allocated with running jobs.
 
 .RE
 .SH "SEE ALSO"

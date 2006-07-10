@@ -4,6 +4,8 @@ partadm \- partition administration tool
 .SH "SYNOPSIS"
 .B partadm [-a|-d] [-s size] part1 part2
 .TP
+.B partadm -l
+.TP
 .B partadm [--activate|--deactivate] part1 part2
 .TP
 .B partadm [--enable|--disable] part1 part2
@@ -19,8 +21,11 @@ Add new partitions (of specified size) into the scheduler
 .B \-d 
 Delete partitions from the scheduler
 .TP
+.B \-l
+List partitions and their properties
+.TP
 .B \-\-activate
-Set the partition as functional.
+Set the partition as functional
 .TP
 .B \-\-deactivate
 Se the partition as non-functional. (Jobs will not be run on
