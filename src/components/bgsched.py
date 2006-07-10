@@ -330,6 +330,7 @@ class BGSched(Cobalt.Component.Component):
         self.partitions = PartitionSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.jobs = []
+        self.executed = []
         self.qmconnect = FailureMode("QM Connection")
         self.lastrun = 0
         self.register_function(lambda  address, data:self.partitions.Get(data), "GetPartition")
@@ -353,21 +354,14 @@ class BGSched(Cobalt.Component.Component):
 
     def SupressDuplicates(self, provisional):
         '''Prevent duplicate job start requests from being generated'''
-        seen = []
-        dups = []
-        for (jobid, _) in provisional:
-            if jobid in seen:
-                dups.append(jobid)
-            else:
-                seen.append(jobid)
-        if dups:
-            logger.error("found multiple start records for the same job(s) %s" % (dups))
-            for dup in dups:
-                # kill the first record
-                suppressed = [place for place in provisional if place[0] == dup][0]
-                provisional.remove(suppressed)
+        for (jobid, location) in provisional:
+            if jobid in self.executed:
+                logger.error("Tried to execute job %s multiple times" % (jobid))
+                provisional.remove((jobid, location))
                 [partition.Free() for partition in self.partitions if partition.get('name') ==
                  suppressed[1]]
+            else:
+                self.executed.append(jobid)
 
     def RunQueue(self):
         '''Process changes to the cqm queue'''
