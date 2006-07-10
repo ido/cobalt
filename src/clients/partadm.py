@@ -7,9 +7,9 @@ import sys, getopt, xmlrpclib
 import Cobalt.Proxy, Cobalt.Util
 
 helpmsg = '''Usage: partadm.py [-a] [-d] [-s size] part1 part2 (add or del)
-Usage: partadm.py [-l]
-Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
+Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
+Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
 Usage: partadm.py --deps=dep1:dep2 part1 part2
 Usage: partadm.py --free part1 part2

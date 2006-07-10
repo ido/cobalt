@@ -682,7 +682,7 @@ class Restriction(Cobalt.Data.Data):
         usernodes = 0
         for j in [x for x in queuestate if x.get('user') == job.get('user') and x.get('state') == 'running']:
             usernodes = usernodes + int(j.get('nodes'))
-        if usernodes + int(job.get('nodes')) >= int(self.get('value')):
+        if usernodes + int(job.get('nodes')) > int(self.get('value')):
             return (False, "Job exceeds MaxUserNodes limit")
         else:
             return (True, "")
@@ -693,7 +693,7 @@ class Restriction(Cobalt.Data.Data):
         totalnodes = 0
         for j in [x for x in queuestate if x.get('state') == 'running']:
             totalnodes = totalnodes + int(j.get('nodes'))
-        if totalnodes + int(job.get('nodes')) >= int(self.get('value')):
+        if totalnodes + int(job.get('nodes')) > int(self.get('value')):
             return (False, "Job exceeds MaxTotalNodes limit")
         else:
             return (True, "")
