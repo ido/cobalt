@@ -3,14 +3,14 @@
 '''Cobalt queue converter script'''
 __revision__ = '$Revision$'
 
-import sys, cPickle, shutils
+import sys, cPickle, shutil
 sys.path.append('/usr/sbin')
 from cqm import BGJob, Timer, Logger, CommDict, JobSet, CQM, QueueSet, Queue
 
 if __name__ == '__main__':
 
     # make backup of old pickle
-    shutils.copyfile('/var/spool/cobalt/cqm', '/var/spool/cobalt/cqm.save')
+    shutil.copyfile('/var/spool/cobalt/cqm', '/var/spool/cobalt/cqm.save')
 
     queue = cPickle.loads(open('/var/spool/cobalt/cqm').read())[0]
 
