@@ -9,7 +9,7 @@ from logging import getLogger, FileHandler, Formatter, INFO
 import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-#logger = logging.getLogger('cqm')
+logger = logging.getLogger('cqm')
 
 class ProcessManagerError(Exception):
     '''This error occurs when communications with the process manager fail'''
