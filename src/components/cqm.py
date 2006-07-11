@@ -557,9 +557,9 @@ class BGJob(Job):
         msg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()))
         toaddr = []
         if self.get('adminemail') != '*':
-            toaddr.append(self.get('adminemail'))
+            toaddr = toaddr + self.get('adminemail').split(':')
         if self.get('notify', False):
-            toaddr.append(self.get('notify'))
+            toaddr = toaddr + self.get('notify').split(':')
         Cobalt.Util.sendemail(toaddr, subj, msg, smtpserver=mserver)
 
     def NotifyAtEnd(self):
@@ -573,9 +573,9 @@ class BGJob(Job):
         msg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()), self.GetStats())
         toaddr = []
         if self.get('adminemail') != '*':
-            toaddr.append(self.get('adminemail'))
+            toaddr = toaddr + self.get('adminemail').split(':')
         if self.get('notify', False):
-            toaddr.append(self.get('notify'))
+            toaddr = toaddr + self.get('notify').split(':')
         Cobalt.Util.sendemail(toaddr, subj, msg, smtpserver=mserver)
 
     def RunBGUserJob(self):
