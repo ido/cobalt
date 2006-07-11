@@ -358,8 +358,7 @@ class BGSched(Cobalt.Component.Component):
             if jobid in self.executed:
                 logger.error("Tried to execute job %s multiple times" % (jobid))
                 provisional.remove((jobid, location))
-                [partition.Free() for partition in self.partitions if partition.get('name') ==
-                 suppressed[1]]
+                [partition.Free() for partition in self.partitions if partition.get('name') == location]
             else:
                 self.executed.append(jobid)
 
