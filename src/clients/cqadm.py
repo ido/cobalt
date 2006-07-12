@@ -114,10 +114,10 @@ if __name__ == '__main__':
         props = [p.split('=') for p in opts['setq'].split(' ')]
         updates = {}
         for prop, val in props:
-            if prop in ['maxtime', 'mintime'] and val.count(':') > 0:
+            if prop.lower() in ['maxtime', 'mintime'] and val.count(':') > 0:
                 t = val.split(':')
                 val = str(int(t[0])*60 + int(t[1]))
-            updates.update({prop:val})
+            updates.update({prop.lower():val})
         response = cqm.SetQueues(spec, updates)
     elif opts['stopq']:
         response = cqm.SetQueues(spec, {'state':'stopped'})
