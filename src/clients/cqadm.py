@@ -3,7 +3,7 @@
 '''Cobalt job administration command'''
 __revision__ = '$Revision$'
 
-import sys
+import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
@@ -136,5 +136,11 @@ if __name__ == '__main__':
         if opts['queue']:
             queue = opts['queue']
             updates['queue'] = queue
-        response = cqm.SetJobs(spec, updates)
+        try:
+            response = cqm.SetJobs(spec, updates)
+        except xmlrpclib.Fault, flt:
+            response = []
+            if flt.faultCode == 30:
+                print flt.faultString
+                raise SystemExit, 1
     Cobalt.Logging.logging.debug(response)

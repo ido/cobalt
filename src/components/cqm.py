@@ -852,8 +852,33 @@ class QueueSet(Cobalt.Data.DataSet):
         return normalget
 
     def GetJobs(self, data, callback=None, cargs={}):
-        '''Uses the Data.Get method to retrieve Jobs from Queues'''
+        '''Uses the Data.Get method to retrieve Jobs from Queues
+        Also supports moving job objects between Queue objects,
+        respecting queue restrictions'''
+        failed = []  #messages for jobs that failed to switch queues
+        if isinstance(cargs, types.DictType) and cargs.has_key('queue'):
+            jobs = [q.Get(data) for q in self.data]
+            newqueue = [q for q in self.data if q.get('name') == cargs['queue']]
+            for j in jobs[1:]:
+                jobs[0].extend(j)
+            for job in jobs[0]:
+                [(oldjob,oldqueue)] = [(j,q) for q in self.data for j in q if j.get('jobid') == job.get('jobid')]
+                newjob = copy.deepcopy(oldjob)
+                newjob.set('queue', cargs['queue'])
+                try:
+                    self.CanQueue(None, newjob)
+                    oldjob.set('queue', cargs['queue'])
+                    newqueue[0].append(oldjob)
+                    oldqueue.remove(oldjob)
+                except xmlrpclib.Fault, flt:
+                    if flt.faultCode == 30:
+                        failed.append('Job %s failed to change to queue %s:\n%s' % (oldjob.get('jobid'), cargs['queue'], flt.faultString))
+            del cargs['queue']
         joblist = [Q.Get(data, callback, cargs) for Q in self.data]
+
+        if failed:
+            raise xmlrpclib.Fault(30, ('\n').join(failed))
+                
         for j in joblist[1:]:
             joblist[0].extend(j)
         if joblist:
@@ -912,6 +937,10 @@ class CQM(Cobalt.Component.Component):
         self.Queues = QueueSet()
         Cobalt.Component.Component.__init__(self, setup)
 
+        # make sure default queue exists
+        if not [q for q in self.Queues if q.get('name') == 'default']:
+            self.Queues.Add([{'tag':'queue', 'name':'default'}])
+
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
         self.register_function(lambda  address, data:self.Queues.GetJobs(data), "GetJobs")
@@ -919,7 +948,8 @@ class CQM(Cobalt.Component.Component):
         self.register_function(self.handle_job_del, "DelJobs")
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
-        self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
+#         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
+        self.register_function(self.handle_queue_del, "DelQueues")
         self.register_function(lambda  address, data, updates:self.Queues.Get(data, lambda queue, newattr:queue.update(newattr), updates), "SetQueues")
         self.register_function(self.Queues.CanQueue, "CanQueue")
         self.register_function(self.Queues.CanRun, "CanRun")
@@ -966,6 +996,10 @@ class CQM(Cobalt.Component.Component):
                 else:
                     job.Kill("Job %s killed based on user request")
         return ret
+
+    def handle_queue_del(self, _, data, force=False):
+        '''Delete queue(s)'''
+        
 
     def HandleEvent(self, event):
         '''Process incoming events'''
