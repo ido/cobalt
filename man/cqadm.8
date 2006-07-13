@@ -4,7 +4,7 @@ cqadm \- queue manager administration tool
 .SH "SYNOPSIS"
 .B cqadm [-d] [--hold] [--release] [--run=<location>] [--kill] [--delete] [--queue=newqueue] <jobid> <jobid>
 
-.B cqadm [-d] [--addq] [--delq] [--getq] [--setq 'prop:value prop:value'] <queue> <queue>
+.B cqadm [-d] [-f] [--addq] [--delq] [--getq] [--setq 'prop:value prop:value'] <queue> <queue>
 
 .SH "DESCRIPTION"
 Administrative interface for queue manager. Allows one to hold, run, kill, and set the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
@@ -13,6 +13,9 @@ Administrative interface for queue manager. Allows one to hold, run, kill, and s
 .TP
 .B \-d
 Enable communication debugging
+.TP
+.B \-f
+Force queue deletion
 .TP
 .B \-\-hold jobid
 Set job state to hold, preventing execution

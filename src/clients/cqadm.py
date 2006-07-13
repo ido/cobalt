@@ -8,7 +8,7 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
-              '       cqadm [-d] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
+              '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
               '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>'
 
 def get_queues(cqm_conn):
@@ -21,7 +21,7 @@ def get_queues(cqm_conn):
 
 if __name__ == '__main__':
 
-    options = {'getq':'getq', 'd':'debug', 'hold':'hold', 'release':'release',
+    options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold', 'release':'release',
                'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',
                'stopq':'stopq', 'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
@@ -106,10 +106,14 @@ if __name__ == '__main__':
                          for q in response]
         Cobalt.Util.print_tabular(datatoprint)
     elif opts['delq']:
-        response = cqm.DelQueues(spec)
-        datatoprint = [('Deleted Queues', )] + \
-                      [(q.get('name'), ) for q in response]
-        Cobalt.Util.print_tabular(datatoprint)
+        response = []
+        try:
+            response = cqm.DelQueues(spec, opts['force'])
+            datatoprint = [('Deleted Queues', )] + \
+                          [(q.get('name'), ) for q in response]
+            Cobalt.Util.print_tabular(datatoprint)
+        except xmlrpclib.Fault, flt:
+            print flt.faultString
     elif opts['setq']:
         props = [p.split('=') for p in opts['setq'].split(' ')]
         updates = {}

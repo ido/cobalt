@@ -872,7 +872,10 @@ class QueueSet(Cobalt.Data.DataSet):
                     oldqueue.remove(oldjob)
                 except xmlrpclib.Fault, flt:
                     if flt.faultCode == 30:
-                        failed.append('Job %s failed to change to queue %s:\n%s' % (oldjob.get('jobid'), cargs['queue'], flt.faultString))
+                        failed.append("Job %s moved to '%s' queue, but does not pass restrictions because:\n%s" % (oldjob.get('jobid'), cargs['queue'], flt.faultString))
+                    oldjob.set('queue', cargs['queue'])
+                    newqueue[0].append(oldjob)
+                    oldqueue.remove(oldjob)
             del cargs['queue']
         joblist = [Q.Get(data, callback, cargs) for Q in self.data]
 
@@ -938,8 +941,8 @@ class CQM(Cobalt.Component.Component):
         Cobalt.Component.Component.__init__(self, setup)
 
         # make sure default queue exists
-        if not [q for q in self.Queues if q.get('name') == 'default']:
-            self.Queues.Add([{'tag':'queue', 'name':'default'}])
+#         if not [q for q in self.Queues if q.get('name') == 'default']:
+#             self.Queues.Add([{'tag':'queue', 'name':'default'}])
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = CommDict()
@@ -948,7 +951,6 @@ class CQM(Cobalt.Component.Component):
         self.register_function(self.handle_job_del, "DelJobs")
         self.register_function(lambda  address, data:self.Queues.Get(data), "GetQueues")
         self.register_function(lambda  address, data:self.Queues.Add(data), "AddQueue")
-#         self.register_function(lambda  address, data:self.Queues.Del(data), "DelQueues")
         self.register_function(self.handle_queue_del, "DelQueues")
         self.register_function(lambda  address, data, updates:self.Queues.Get(data, lambda queue, newattr:queue.update(newattr), updates), "SetQueues")
         self.register_function(self.Queues.CanQueue, "CanQueue")
@@ -998,9 +1000,23 @@ class CQM(Cobalt.Component.Component):
         return ret
 
     def handle_queue_del(self, _, data, force=False):
-        '''Delete queue(s)'''
-        
+        '''Delete queue(s), but check if there are still jobs in the queue'''
+        if force:
+            return self.Queues.Del(data)
 
+        failed = []
+        queues = self.Queues.Get(data)
+        for queue in queues[:]:
+            jobs = [j for q in self.Queues for j in q if q.get('name') == queue.get('name')]
+            if len(jobs) > 0:
+                failed.append(queue.get('name'))
+                queues.remove(queue)
+        response = self.Queues.Del(queues)
+        if failed:
+            raise xmlrpclib.Fault(31, "The %s queue(s) have jobs in them. Either move the jobs to another queue, or \nuse 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s" % (",".join(failed), "\n".join([q.get('name') for q in response])))
+        else:
+            return response
+        
     def HandleEvent(self, event):
         '''Process incoming events'''
         (c, m, d) = tuple([event.get(field) for field in ['component', 'msg', 'data']])
