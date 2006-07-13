@@ -83,6 +83,9 @@ Flag determining state of queue. If the queue is 'stopped', jobs can be submitte
 .B "\-\-startq" "\-\-stopq" "\-\-drainq" "\-\-killq"
 ).
 .TP
+.B adminemail=user@example.com:nobody@example.com
+Send an email at the start and stop of every job run through the specified queue.
+.TP
 .B maxrunning=x
 The maximum number of jobs a user is allowed to have running in the queue.
 .TP

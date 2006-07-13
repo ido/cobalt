@@ -18,6 +18,34 @@ Query a particular jobid.
 .TP
 .B \-q
 Show queues and properties.
+.IP
+Properties:
+.RS
+.TP
+.B MaxTime
+The maximum walltime (in minutes) allowed for jobs submitted to the queue.
+.TP
+.B MinTime
+The minimum walltime (in minutes) allowed for jobs submitted to the queue.
+.TP
+.B MaxQueued
+The maximum number of jobs a user is allowed to have in the queue, whether running or queued.
+.TP
+.B Users
+List of users allowed to submit to the queue. An '*' means any user can submit to the queue.
+.TP
+.B State=running|stopped|draining|dead
+Flag determining state of queue. If the queue is 'stopped', jobs can be submitted to the queue, but no jobs will be run by the scheduler. If the queue is 'draining', no new jobs will be allowed to be added to the queue, but jobs existing in the queue will be run. If the queue is 'dead', no new jobs will be added and no existing jobs will be run.
+.TP
+.B MaxRunning
+The maximum number of jobs a user is allowed to have running in the queue.
+.TP
+.B MaxUsernodes
+The maximum number of nodes a user is allowed to have allocated with running jobs in the queue.
+.TP
+.B TotalNodes
+The maximum number of nodes any jobs in the queue are allowed to have allocated with running jobs.
+.RE
 .TP
 .B \-\-version
 Print out version string
