@@ -13,6 +13,9 @@ user and name are optional
 -a automatically find all dependancies of the partion(s) listed'''
 
 if __name__ == '__main__':
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print helpmsg
+        raise SystemExit, 0
     scheduler = Cobalt.Proxy.scheduler()
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 's:d:n:p:u:a', [])
@@ -21,10 +24,10 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     try:
-        partition = [opt[1] for opt in opts if opt[0] == '-p']
+        partitions = [opt[1] for opt in opts if opt[0] == '-p'] + args
     except:
         if args:
-            partition = args
+            partitions = args
         else:
             print "Must supply either -p with value or partitions as arguments"
             print helpmsg
@@ -67,7 +70,7 @@ if __name__ == '__main__':
                                      'scheduled':'*', 'functional':'*', 'deps':'*'}])
         partinfo = Cobalt.Util.buildRackTopology(parts)
         try:
-            for part in partition:
+            for part in partitions:
                 allparts.append(part)
                 spec.append({'tag':'partition', 'name':part})
                 for relative in partinfo[part][1]:
@@ -79,7 +82,7 @@ if __name__ == '__main__':
             print helpmsg
             raise SystemExit, 1 
     else:
-        spec = [{'tag':'partition', 'name':partition[0]}]
+        spec = [{'tag':'partition', 'name':p} for p in partitions]
     try:
         print scheduler.AddReservation(spec, nameinfo, user, starttime, dsec)
     except:

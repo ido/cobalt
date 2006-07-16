@@ -35,13 +35,18 @@ if __name__ == '__main__':
         header = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
         for ((name, user, start, duration), partitions) in reservations.iteritems():
             maxsize = max([npart[part].get('size') for part in partitions])
-            toppart = [npart[part] for part in partitions if npart[part].get('size') == maxsize][0].get('name')
-            if len([part for part in partitions if part in depinfo[toppart][1]]) == len(depinfo[toppart][1]):
-                partitions = toppart + '*'
+            topparts = [npart[part] for part in partitions if npart[part].get('size') == maxsize]
+            for tp in topparts:
+                if len([part for part in partitions if part in depinfo[tp.get('name')][1]]) == len(depinfo[tp.get('name')][1]):
+                    # remove names of parts in depinfo of tp
+                    for p in partitions[:]:
+                        if p in depinfo[tp.get('name')][1] or p == tp.get('name'):
+                            partitions.remove(p)
+                    partitions.append(tp.get('name') + '*')
             dmin = (duration/60)%60
             dhour = duration/3600
             output.append((name, user, time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin), str(partitions)))
+                           "%02d:%02d" % (dhour, dmin), str(' '.join(partitions))))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[2], "%c")), time.mktime(time.strptime(y[2], "%c"))) ) )
     Cobalt.Util.print_tabular(header + output)
