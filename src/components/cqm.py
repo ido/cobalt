@@ -918,6 +918,10 @@ class QueueSet(Cobalt.Data.DataSet):
 
     def CanRun(self, _, qstate, newjob):
         '''Checks if newjob can run with current state of queue'''
+        # if queue doesn't exist, don't check other restrictions
+        if newjob.get('queue') not in [q.get('name') for q in self.data]:
+            raise xmlrpclib.Fault(30, "Queue '%s' does not exist" % job.get('queue'))
+
         [testqueue] = [q for q in self.data if q.get('name') == newjob.get('queue')]
         probs = ''
         for restriction in [r for r in testqueue.restrictions if r.get('type') == 'run']:
