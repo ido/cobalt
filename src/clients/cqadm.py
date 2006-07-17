@@ -118,9 +118,22 @@ if __name__ == '__main__':
         props = [p.split('=') for p in opts['setq'].split(' ')]
         updates = {}
         for prop, val in props:
-            if prop.lower() in ['maxtime', 'mintime'] and val.count(':') > 0:
-                t = val.split(':')
-                val = str(int(t[0])*60 + int(t[1]))
+            if prop.lower() in ['maxtime', 'mintime']:
+                if val.count(':') in [0, 2]:
+                    t = val.split(':')
+                    for i in t:
+                        try:
+                            dummy = int(i)
+                        except:
+                            print prop + ' value is not a number'
+                            raise SystemExit, 1
+                    if val.count(':') == 2:
+                        t = val.split(':')
+                        val = str(int(t[0])*60 + int(t[1]))
+                    elif val.count(':') == 0:
+                        pass
+                else:
+                    print 'Time for ' + prop + ' is not valid, must be in hh:mm:ss or mm format'
             updates.update({prop.lower():val})
         response = cqm.SetQueues(spec, updates)
     elif opts['stopq']:
