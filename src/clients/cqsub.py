@@ -135,7 +135,7 @@ if __name__ == '__main__':
             print "System draining. Try again later"
             raise SystemExit, 1
         elif flt.faultCode == 30:
-            print 'Job submission failed because: \n%s' % flt.faultString
+            print "Job submission failed because: \n%s\nCheck 'cqstat -q' and the cqstat manpage for more details." % flt.faultString
             raise SystemExit, 1
     except:
         print "Error submitting job"

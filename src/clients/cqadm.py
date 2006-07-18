@@ -95,16 +95,17 @@ if __name__ == '__main__':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q.get('maxtime')), 60))
             if q.get('mintime', '*') != '*':
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
-        datatoprint = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
-                        'MaxQueued', 'MaxUserNodes', 'TotalNodes',
-                        'AdminEmail', 'State')] + \
-                        [(q.get('name', '*'), q.get('users', '*'),
-                          q.get('mintime','*'), q.get('maxtime','*'),
-                          q.get('maxrunning','*'),q.get('maxqueued','*'),
-                          q.get('maxusernodes','*'),q.get('totalnodes','*'),
-                          q.get('adminemail', '*'),q.get('state'))
-                         for q in response]
-        Cobalt.Util.print_tabular(datatoprint)
+        header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
+                   'MaxQueued', 'MaxUserNodes', 'TotalNodes',
+                   'AdminEmail', 'State')]
+        datatoprint = [(q.get('name', '*'), q.get('users', '*'),
+                        q.get('mintime','*'), q.get('maxtime','*'),
+                        q.get('maxrunning','*'),q.get('maxqueued','*'),
+                        q.get('maxusernodes','*'),q.get('totalnodes','*'),
+                        q.get('adminemail', '*'),q.get('state'))
+                       for q in response]
+        datatoprint.sort()
+        Cobalt.Util.print_tabular(header + datatoprint)
     elif opts['delq']:
         response = []
         try:

@@ -874,7 +874,7 @@ class QueueSet(Cobalt.Data.DataSet):
                     oldqueue.remove(oldjob)
                 except xmlrpclib.Fault, flt:
                     if flt.faultCode == 30:
-                        failed.append("Job %s moved to '%s' queue, but does not pass restrictions because:\n%s" % (oldjob.get('jobid'), cargs['queue'], flt.faultString))
+                        failed.append("Job %s moved to '%s' queue, even though it does not pass all restrictions:\n%s" % (oldjob.get('jobid'), cargs['queue'], flt.faultString))
                     oldjob.set('queue', cargs['queue'])
                     newqueue[0].append(oldjob)
                     oldqueue.remove(oldjob)
@@ -1019,7 +1019,7 @@ class CQM(Cobalt.Component.Component):
                 queues.remove(queue)
         response = self.Queues.Del(queues)
         if failed:
-            raise xmlrpclib.Fault(31, "The %s queue(s) have jobs in them. Either move the jobs to another queue, or \nuse 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s" % (",".join(failed), "\n".join([q.get('name') for q in response])))
+            raise xmlrpclib.Fault(31, "The %s queue(s) contains jobs. Either move the jobs to another queue, or \nuse 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s" % (",".join(failed), "\n".join([q.get('name') for q in response])))
         else:
             return response
         
