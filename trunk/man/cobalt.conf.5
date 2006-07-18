@@ -1,0 +1,24 @@
+.TH "cobalt.conf" 5
+.SH "NAME"
+cobalt.conf - configuration parameters for cobalt components
+.SH "DESCRIPTION"
+Cobalt.conf includes a section for each component that has
+configuration parameters. Each section has a header, [component] where
+component is the individual component name. Each setting is a
+key/value pair. 
+.PP
+See individual component man pages for component specific parameters.
+.SH "EXAMPLES"
+The following is an example of a single component clause, setting
+the bgkernel parameter to false.
+.RS
+.sp
+.nf
+.ne 0
+[cqm]
+bgkernel=false
+.fi
+.SH "SEE ALSO"
+.BR bgpm(8),
+.BR bgsched(8),
+.BR cqm(8)

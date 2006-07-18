@@ -1,0 +1,42 @@
+.TH "camadmin.py" 1
+.SH NAME
+camadmin.py \- set or retrieve information about the allocation and users of project
+.SH SYNOPSIS
+.B camadmin.py
+.I [-s] [-u user1 ...] [-r user1 ...] [-a] project1 [project2 ...]
+.PP
+.B camadmin.py
+.I [-g] [-u user1 ...] [-p project] 
+.SH DESCRIPTION
+.PP
+.B Set or retrieve information about the allocation and users of projects
+from the Allocation Manager.
+.SH OPTIONS
+.TP
+.B \-g
+Get mode. camadmin.py will retrieve information already in the am.
+.TP
+.B \-s
+Set mode. camadmin.py will add or delete users, projects, or allocations.
+.TP
+.B \-u
+In Get Mode, specifies user by whom to filter project results. In Set
+Mode defines user to add to project.
+.TP
+.B \-p
+In Get Mode this specifies a project by which to filter user results. (i.e.
+shows members of a given project) In Set Mode this specifies to which project
+the user should be added. Projects must have at least one user.
+.TP
+.B \-a
+Used when setting allocations. If no allocation is specified the
+default is -1, an unlimited allocation.
+.TP
+.B \-r
+Used to remove a user from a project or projects. 
+.SH "SEE ALSO"
+.BR showp(1),
+.BR setp(1),
+.BR am(8)
+.SH BUGS
+None known currently.

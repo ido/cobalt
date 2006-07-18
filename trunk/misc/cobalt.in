@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# Cobalt
+#
+# chkconfig: 2345 18 09
+# description: Cobalt resource manager/scheduler
+#
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+CONFIGPATH=@sysconfdir@
+CONFIGFILE="${CONFIGPATH}/cobalt.conf"
+DAEMONDIR=@sbindir@
+PIDPATH=@PATH_TO_PIDFILE@
+
+# Configure DB2 environment
+. /discovery/db.src
+
+case "$1" in
+  start)
+    for component in slp bgpm cqm bgsched; do
+	echo -n "Starting ${component}: "
+	"${DAEMONDIR}/${component}.py" -C "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
+	echo "done"
+    done
+    touch /var/lock/subsys/cobalt
+    ;;
+  stop)
+    for component in bgsched cqm bgpm slp; do
+	if [ -f "${PIDPATH}/${component}.pid" ] ; then
+	    echo -n "Stopping ${component}: "
+	    kill -INT `cat ${PIDPATH}/${component}.pid`
+	    echo "done"
+                      rm -f "${PIDPATH}/${component}.pid"
+	else
+	    echo "${component} not running"
+	fi
+    done
+    rm -f /var/lock/subsys/cobalt
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|force-reload}"
+    exit 1
+esac
+
+exit 0
+
+
+

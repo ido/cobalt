@@ -1,0 +1,66 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
+[
+<!ENTITY install SYSTEM "install.xml">
+<!ENTITY operations SYSTEM "operations.xml">
+<!ENTITY components SYSTEM "components.xml">
+<!ENTITY troubleshooting SYSTEM "troubleshooting.xml">
+]>
+
+<book id="bcfg2">
+  <bookinfo>
+    <title>Cobalt Manual</title>
+    <author>
+      <firstname>Narayan</firstname>
+      <surname>Desai</surname>
+      <email>desai@mcs.anl.gov</email>
+    </author>
+    <author>
+      <firstname>Rick</firstname>
+      <surname>Bradshaw</surname>
+      <email>bradshaw@mcs.anl.gov</email>
+    </author>
+    <affiliation>
+      <orgname>Argonne National Laboratory</orgname>
+      <orgdiv>MCS Division</orgdiv> 
+    </affiliation>
+    <date>April 5, 2006</date>
+    <releaseinfo>$Revision$</releaseinfo>
+    <pubdate>April 2006</pubdate>
+    <copyright>
+      <year>2005-2006</year>
+      <holder>Argonne National Laboratory</holder>
+    </copyright> 
+    
+    <legalnotice>
+      <para>
+	This manual is free software; you can redistribute it and/or
+	modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation; either version 2 of
+	the License, or (at your option) any later version.
+      </para>
+      <para>
+	This is distributed in the hope that it will be useful,
+	but <emphasis>without any warranty</emphasis>; without even the
+	implied warranty of <emphasis>merchantability</emphasis> or
+	<emphasis>fitness for a particular purpose</emphasis>.  See the
+	GNU General Public License for more details.
+      </para>
+    </legalnotice>
+
+    <revhistory>
+      <revision>
+	<revnumber>0.95</revnumber>
+	<date>$Date$</date>
+	<revremark>$Id$</revremark>
+      </revision>
+    </revhistory>
+  </bookinfo>
+
+  <toc/>
+
+  &install;
+  &operations;
+  &components;
+  &troubleshooting;
+</book>
