@@ -859,6 +859,8 @@ class QueueSet(Cobalt.Data.DataSet):
         if isinstance(cargs, types.DictType) and cargs.has_key('queue'):
             jobs = [q.Get(data) for q in self.data]
             newqueue = [q for q in self.data if q.get('name') == cargs['queue']]
+            if not newqueue:
+                raise xmlrpclib.Fault(30, "Queue '%s' doesn't exist" % (cargs['queue']))
             for j in jobs[1:]:
                 jobs[0].extend(j)
             for job in jobs[0]:
