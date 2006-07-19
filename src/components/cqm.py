@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# $Id: cqm.py 1.35 05/10/07 16:04:16-05:00 desai@topaz.mcs.anl.gov $
+# $Id$
 
 '''Cobalt Queue Manager'''
-__revision__ = '$Revision: 1.35 $'
+__revision__ = '$Revision$'
 
 from logging import getLogger, FileHandler, Formatter, INFO
 

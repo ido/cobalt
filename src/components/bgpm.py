@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Process manager for Blue Gene/L systems'''
-__revision__ = '$Revision: 1.21 $'
+__revision__ = '$Revision$'
 
 import atexit, logging, os, pwd, signal, sys, tempfile, time
 import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
