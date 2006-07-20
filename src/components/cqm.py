@@ -369,7 +369,7 @@ class Job(Cobalt.Data.Data):
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'executable':'/usr/bin/mpish',
                  'size':self.get('nodes'), 'args':args, 'envs':self.get('envs'),
                  'location':self.get('location'), 'cwd':'/', 'path':"/bin:/usr/bin:/usr/local/bin"})
-        except xmlrpclib.Fault, fault:
+        except xmlrpclib.Fault:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
         self.pgid['user'] = pgroup[0]['pgid']
@@ -560,13 +560,13 @@ class BGJob(Job):
         else:
             mserver = mailserver
         subj = 'Cobalt: Job %s/%s started' % (self.get('jobid'), self.get('user'))
-        msg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()))
+        mmsg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()))
         toaddr = []
         if self.get('adminemail') != '*':
             toaddr = toaddr + self.get('adminemail').split(':')
         if self.get('notify', False):
             toaddr = toaddr + self.get('notify').split(':')
-        Cobalt.Util.sendemail(toaddr, subj, msg, smtpserver=mserver)
+        Cobalt.Util.sendemail(toaddr, subj, mmsg, smtpserver=mserver)
 
     def NotifyAtEnd(self):
         '''Notify user when job has ended'''
@@ -576,13 +576,13 @@ class BGJob(Job):
         else:
             mserver = mailserver
         subj = 'Cobalt: Job %s/%s finished' % (self.get('jobid'), self.get('user'))
-        msg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()), self.GetStats())
+        mmsg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()), self.GetStats())
         toaddr = []
         if self.get('adminemail') != '*':
             toaddr = toaddr + self.get('adminemail').split(':')
         if self.get('notify', False):
             toaddr = toaddr + self.get('notify').split(':')
-        Cobalt.Util.sendemail(toaddr, subj, msg, smtpserver=mserver)
+        Cobalt.Util.sendemail(toaddr, subj, mmsg, smtpserver=mserver)
 
     def RunBGUserJob(self):
         '''Run a Blue Gene Job'''
