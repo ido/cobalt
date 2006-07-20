@@ -94,7 +94,7 @@ class CommDict(dict):
 class Job(Cobalt.Data.Data):
     '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
 
-    acctlog = Logger()
+    #acctlog = Logger()
 
     def __init__(self, data, jobid):
         Cobalt.Data.Data.__init__(self, data)
@@ -125,7 +125,8 @@ class Job(Cobalt.Data.Data):
             self.set('type', 'mpish')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
         self.SetActive()
-        self.acctlog.LogMessage('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
+        # acctlog
+        logger.info('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
 
     def __getstate__(self):
         data = {}
@@ -205,7 +206,8 @@ class Job(Cobalt.Data.Data):
         self.set('state', 'done')
         self.SetPassive()
         #AddEvent("queue-manager", "job-completed", self.get('jobid'))
-        self.acctlog.LogMessage('E;%s;%s;%s' % (self.get('jobid'), self.get('user'), str(used_time)))
+        # acctlog
+        logger.info('E;%s;%s;%s' % (self.get('jobid'), self.get('user'), str(used_time)))
 
     def Progress(self):
         '''Run next job step'''
@@ -234,9 +236,11 @@ class Job(Cobalt.Data.Data):
             return
         self.timers['queue'].Stop()
         if self.get('reservation', False):
-            self.acctlog.LogMessage('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
+            # acctlog
+            logger.info('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
         else:
-            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
+            # acctlog
+            logger.info('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
                 self.get('jobid'), self.get('user'), self.get('name', 'N/A'), self.get('nodes'), self.get('nodes'),
                 self.get('procs'), self.get('mode'), self.get('walltime')))
         self.set('location', ":".join(nodelist))
@@ -405,7 +409,8 @@ class Job(Cobalt.Data.Data):
         else:
             logger.error("Got qdel for job %s in unexpected state %s" % (self.get('jobid'), self.get('state')))
  
-        self.acctlog.LogMessage('D;%s;%s' % (self.get('jobid'), self.get('user')))
+        # acctlog
+        logger.info('D;%s;%s' % (self.get('jobid'), self.get('user')))
 
     def AdminStart(self, cmd):
         '''Run an administrative job step'''
@@ -982,9 +987,9 @@ class CQM(Cobalt.Component.Component):
         [j.Kill("Job %s Overtime, Killing") for j in [j for queue in self.Queues for j in queue] if j.over_time()]
         [j.LogFinish() for j in [j for queue in self.Queues for j in queue] if j.get('state') == 'done']
         [queue.remove(j) for (j, queue) in [(j, queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']
-        newdate = time.strftime("%m-%d-%y", time.localtime())
-        [j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
-        Job.acctlog.ChangeLog()
+        #newdate = time.strftime("%m-%d-%y", time.localtime())
+        #[j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
+        #Job.acctlog.ChangeLog()
         return 1
 
     def handle_job_add(self, _, data):
