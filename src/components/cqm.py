@@ -4,7 +4,7 @@
 '''Cobalt Queue Manager'''
 __revision__ = '$Revision$'
 
-from logging import getLogger, FileHandler, Formatter, INFO
+from logging import getLogger, FileHandler, Formatter
 
 import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
@@ -265,10 +265,11 @@ class Job(Cobalt.Data.Data):
         self.timers['user'].Stop()
         if self.spgid.has_key('user'):
             try:
-                pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
+                self.comms['pm'].WaitProcessGroup([{'tag':'process-group',
+                                                    'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
                 #self.output = pgroups[0]['output']
                 #self.error = pgroups[0]['error']
-            except xmlrpclib.Fault, fault:
+            except xmlrpclib.Fault:
                 logger.error("Error contacting process manager for finalize, requeueing")
                 self.steps = ['FinalizeStage'] + self.steps
                 self.SetActive()
@@ -414,7 +415,7 @@ class Job(Cobalt.Data.Data):
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
                  'args':[self.get('user')], 'location':self.get('location')})
         except xmlrpclib.Fault, fault:
-            print fault.code
+            print fault.faultCode
         except:
             logger.error("Unexpected failure in administrative process start", exc_info=1)
             self.set('state', 'pm-error')
@@ -436,8 +437,8 @@ class Job(Cobalt.Data.Data):
     def KillPGID(self, pgid):
         '''Kill a process group'''
         try:
-            pgroup = self.comms['pm'].KillProcessGroup({'tag':'process-group', 'pgid':pgid})
-        except xmlrpclib.Fault, fault:
+            self.comms['pm'].KillProcessGroup({'tag':'process-group', 'pgid':pgid})
+        except xmlrpclib.Fault:
             logger.error("Failed to kill process group %s" % (pgid))
             raise ProcessManagerError
 
@@ -593,7 +594,7 @@ class BGJob(Job):
                  'errorfile':self.get('errorpath'), 'path':self.get('path'), 'size':self.get('procs'),
                  'mode':self.get('mode', 'co'), 'cwd':self.get('outputdir'), 'executable':self.get('command'),
                  'args':self.get('args'), 'envs':self.get('envs', {}), 'location':[self.get('location')]})
-        except xmlrpclib.Fault, fault:
+        except xmlrpclib.Fault:
             raise ProcessManagerError
         except Cobalt.Proxy.CobaltComponentError:
             raise ProcessManagerError
@@ -637,21 +638,21 @@ class Restriction(Cobalt.Data.Data):
             self.set('type','queue')
         logger.debug('created restriction %s with type %s' % (self.get('name'), self.get('type')))
 
-    def maxwalltime(self, job, queuestate=None):
+    def maxwalltime(self, job, _=None):
         '''checks walltime of job against maxtime of queue'''
         if float( job.get('walltime') ) <= float( self.get('value') ):
             return (True, "")
         else:
             return (False, "Walltime greater than the '%s' queue max walltime of %s" % (job.get('queue'), "%02d:%02d:00" % (divmod(int(self.get('value')), 60))))
 
-    def minwalltime(self, job, queuestate=None):
+    def minwalltime(self, job, _=None):
         '''limits minimum walltime for job'''
         if float( job.get('walltime') ) >= float( self.get('value') ):
             return (True, "")
         else:
             return (False, "Walltime less than the '%s' queue min walltime of %s" % (job.get('queue'), "%02d:%02d:00" % (divmod(int(self.get('value')), 60))))
 
-    def usercheck(self, job, queuestate=None):
+    def usercheck(self, job, _=None):
         '''checks if job owner is in approved user list'''
         #qusers = self.queue.get('users').split(':')
         qusers = self.get('value').split(':')
@@ -669,7 +670,7 @@ class Restriction(Cobalt.Data.Data):
         else:
             return (True, "")
 
-    def maxqueuedjobs(self, job, queuestate=None):
+    def maxqueuedjobs(self, job, _=None):
         '''limits how many jobs a user can have in the queue at a time'''
         userjobs = [j for j in self.queue if j.get('user') == job.get('user')]
         if len(userjobs) >= int(self.get('value')):
@@ -680,7 +681,8 @@ class Restriction(Cobalt.Data.Data):
     def maxusernodes(self, job, queuestate=None):
         '''limits how many nodes a single user can have running'''
         usernodes = 0
-        for j in [x for x in queuestate if x.get('user') == job.get('user') and x.get('state') == 'running']:
+        for j in [qs for qs in queuestate if qs.get('user') == job.get('user')
+                  and qs.get('state') == 'running']:
             usernodes = usernodes + int(j.get('nodes'))
         if usernodes + int(job.get('nodes')) > int(self.get('value')):
             return (False, "Job exceeds MaxUserNodes limit")
@@ -691,7 +693,7 @@ class Restriction(Cobalt.Data.Data):
         '''limits how many total nodes can be used by jobs running in
         this queue'''
         totalnodes = 0
-        for j in [x for x in queuestate if x.get('state') == 'running']:
+        for j in [qs for qs in queuestate if qs.get('state') == 'running']:
             totalnodes = totalnodes + int(j.get('nodes'))
         if totalnodes + int(job.get('nodes')) > int(self.get('value')):
             return (False, "Job exceeds MaxTotalNodes limit")
@@ -718,7 +720,7 @@ class RestrictionSet(Cobalt.Data.DataSet):
 #         self.__id__ = Cobalt.Data.IncrID()
         self.queue = myqueue
 
-    def Add(self, cdata, callback=None, cargs=()):
+    def Add(self, cdata, _=None, cargs=()):
         '''Add restriction(s)'''
         retval = []
         for item in cdata:
@@ -732,7 +734,7 @@ class RestrictionSet(Cobalt.Data.DataSet):
                 retval.append(iobj.to_rx(item))
         return retval
 
-    def Get(self, cdata, callback=None, cargs={}):
+    def Get(self, cdata, _=None, cargs={}):
         '''Returns restrictions in single dict'''
         for c in cargs:
             if cargs[c] == '*':  #delete restriction
@@ -864,7 +866,7 @@ class QueueSet(Cobalt.Data.DataSet):
             for j in jobs[1:]:
                 jobs[0].extend(j)
             for job in jobs[0]:
-                [(oldjob,oldqueue)] = [(j,q) for q in self.data for j in q if j.get('jobid') == job.get('jobid')]
+                [(oldjob, oldqueue)] = [(j, q) for q in self.data for j in q if j.get('jobid') == job.get('jobid')]
                 newjob = copy.deepcopy(oldjob)
                 newjob.set('queue', cargs['queue'])
                 try:
@@ -922,7 +924,7 @@ class QueueSet(Cobalt.Data.DataSet):
         '''Checks if newjob can run with current state of queue'''
         # if queue doesn't exist, don't check other restrictions
         if newjob.get('queue') not in [q.get('name') for q in self.data]:
-            raise xmlrpclib.Fault(30, "Queue '%s' does not exist" % job.get('queue'))
+            raise xmlrpclib.Fault(30, "Queue '%s' does not exist" % newjob.get('queue'))
 
         [testqueue] = [q for q in self.data if q.get('name') == newjob.get('queue')]
         probs = ''
@@ -979,7 +981,7 @@ class CQM(Cobalt.Component.Component):
         [j.Progress() for j in [j for queue in self.Queues for j in queue] if j.active]
         [j.Kill("Job %s Overtime, Killing") for j in [j for queue in self.Queues for j in queue] if j.over_time()]
         [j.LogFinish() for j in [j for queue in self.Queues for j in queue] if j.get('state') == 'done']
-        [queue.remove(j) for (j,queue) in [(j,queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']
+        [queue.remove(j) for (j, queue) in [(j, queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']
         newdate = time.strftime("%m-%d-%y", time.localtime())
         [j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
         Job.acctlog.ChangeLog()
@@ -996,7 +998,7 @@ class CQM(Cobalt.Component.Component):
         '''Delete a job'''
         ret = []
         for spec in data:
-            for job,q in [(job,queue) for queue in self.Queues for job in queue if job.match(spec)]:
+            for job, q in [(job, queue) for queue in self.Queues for job in queue if job.match(spec)]:
                 ret.append(job.to_rx(spec))
                 if job.get('state') in ['queued', 'ready'] or force or (job.get('state') == 'hold' and not job.pgid):
                     #q.remove(job)
@@ -1023,51 +1025,6 @@ class CQM(Cobalt.Component.Component):
         else:
             return response
         
-    def HandleEvent(self, event):
-        '''Process incoming events'''
-        (c, m, d) = tuple([event.get(field) for field in ['component', 'msg', 'data']])
-        if c == 'node-stage-manager':
-            # jobs gate on nsm up message for all nodes in job
-            j = [j for j in self.Jobs if d in j.nodelist]
-            if len(j) == 1:
-                j[0].booted += 1                    
-            else:
-                pass
-        elif c == 'build-system':
-            # jobs gate on bs state change for action = boot set
-            j = [j for j in self.Jobs if d in j.nodelist]
-            if len(j) == 1:
-                j[0].built += 1                    
-            else:
-                pass
-        elif c == 'fslave':
-            # d is the stageid
-            jl = [j for j in self.Jobs if j.stageid == d]
-            if len(jl) == 0:
-                self.logger.info("Got unknown stage id %s" % (d))
-            elif len(jl) == 1:
-                if m == 'stage-setup':
-                    self.logger.debug("Got stage completed for stageid %s, jobid %s" %
-                                      (d, jl[0].attr['jobid']))
-                    if jl[0].attr['state'] == 'stage-pending':
-                        jl[0].SetActive()
-                    #AddEvent("queue-manager", "job-ready", str(jl[0].attr['jobid']))
-                    jl[0].staged = 1
-                elif m == 'stage-failed':
-                    jl[0].attr['state'] = 'stage-error'
-                else:
-                    self.logger.error("Unexpected fslave event")
-            else:
-                self.logger.error("Got multiple matches for stageid %s" % (d))
-        elif c == 'process-manager':
-            # Something has exited
-            if m == 'process_end':
-                jlist = [j for j in self.Jobs if j.HasPG(d)]
-                self.logger.info("Got process_end for PGID %s" % (d))
-                self.logger.info("Matched %s jobs for PGID %s: %s" % (len(jlist), d,
-                                                                      [j.element.get('jobid') for j in jlist]))
-                [j.CompletePG(d) for j in jlist]
-
     def pm_sync(self):
         '''Resynchronize with the process manager'''
         try:
@@ -1082,7 +1039,7 @@ class CQM(Cobalt.Component.Component):
                 if pgid not in live:
                     self.logger.info("Found dead pg for job %s" % (job.get('jobid')))
                     job.CompletePG(pgid)
-            
+
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
@@ -1091,13 +1048,13 @@ if __name__ == '__main__':
         print "%s\nUsage:\ncqm.py [-d] [-C <configfile>] [-D <pidfile>]" % (msg)
         raise SystemExit, 1
     try:
-        daemon = [x[1] for x in opts if x[0] == '-D'][0]
+        __daemon__ = [x[1] for x in opts if x[0] == '-D'][0]
     except:
-        daemon = False
-    dlevel = logging.INFO
+        __daemon__ = False
+    __dlevel__ = logging.INFO
     if len([x for x in opts if x[0] == '-d']):
-        dlevel = logging.DEBUG
-    Cobalt.Logging.setup_logging('cqm', level=dlevel)
+        __dlevel__ = logging.DEBUG
+    Cobalt.Logging.setup_logging('cqm', level=__dlevel__)
     logger = logging.getLogger('cqm')
-    server = CQM({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
-    server.serve_forever()
+    __server__ = CQM({'configfile':'/etc/cobalt.conf', 'daemon':__daemon__})
+    __server__.serve_forever()
