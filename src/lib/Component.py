@@ -1,7 +1,7 @@
 '''Cobalt component base classes'''
 __revision__ = '$Revision$'
 
-import atexit, logging, os, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
+import atexit, gc, logging, os, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
 import BaseHTTPServer, Cobalt.Proxy, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
 
 log = logging.getLogger('Component')
@@ -249,6 +249,8 @@ class Component(SSLServer,
         if (time.time() - self.atime) > 240:
             slp = Cobalt.Proxy.service_location()
             slp.AssertService({'tag':'location', 'name':self.__name__, 'url':self.url})
+            del slp
+            gc.collect()
             self.atime = time.time()
 
     def deassert_location(self):
