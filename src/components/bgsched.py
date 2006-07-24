@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Super-Simple Scheduler for BG/L'''
-__revision__ = '$Revision'
+__revision__ = '$Revision$'
 
 import copy, logging, sys, time, xmlrpclib, ConfigParser
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
@@ -322,14 +322,14 @@ class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched'
     __name__ = 'scheduler'
-    __statefields__ = ['partitions']
+    __statefields__ = ['partitions', 'jobs']
     __schedcycle__ = 10
     async_funcs = ['assert_location', 'RunQueue']
 
     def __init__(self, setup):
         self.partitions = PartitionSet()
-        Cobalt.Component.Component.__init__(self, setup)
         self.jobs = []
+        Cobalt.Component.Component.__init__(self, setup)
         self.executed = []
         self.qmconnect = FailureMode("QM Connection")
         self.lastrun = 0
