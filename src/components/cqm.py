@@ -81,16 +81,6 @@ class Logger(object):
         '''record accounting message'''
         self.logger.info(message)
 
-
-class CommDict(dict):
-    '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
-    commnames = {'pm':'process_manager', 'fs':'file_stager', 'am':'allocation_manager'}
-
-    def __getitem__(self, name):
-        if not self.has_key(name):
-            self.__setitem__(name, getattr(Cobalt.Proxy, self.commnames[name])())
-        return dict.__getitem__(self, name)
-
 class Job(Cobalt.Data.Data):
     '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
 
@@ -98,7 +88,7 @@ class Job(Cobalt.Data.Data):
 
     def __init__(self, data, jobid):
         Cobalt.Data.Data.__init__(self, data)
-        self.comms = CommDict()
+        self.comms = Cobalt.Proxy.CommDict()
         self.set('jobid', str(jobid))
         self.set('state', 'queued')
         self.set('attribute', 'compute')
@@ -138,7 +128,7 @@ class Job(Cobalt.Data.Data):
     def __setstate__(self, state):
         self.__dict__.update(state)
         #self.acctlog = Logger()
-        self.comms = CommDict()
+        self.comms = Cobalt.Proxy.CommDict()
 
     def fail_job(self, state):
         '''Signal complete job failure, resulting in specified state'''
@@ -958,7 +948,7 @@ class CQM(Cobalt.Component.Component):
 #             self.Queues.Add([{'tag':'queue', 'name':'default'}])
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
-        self.comms = CommDict()
+        self.comms = Cobalt.Proxy.CommDict()
         self.register_function(lambda  address, data:self.Queues.GetJobs(data), "GetJobs")
         self.register_function(self.handle_job_add, "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
