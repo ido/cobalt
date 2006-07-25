@@ -182,8 +182,13 @@ class PartitionSet(Cobalt.Data.DataSet):
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         # filter for stopped and dead queues
-        stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
-        dead_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'dead'}])
+        try:
+            stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
+            dead_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'dead'}])
+        except xmlrpclib.Fault:
+            self.qmconnect.Fail()
+            return 0
+        self.qmconnect.Pass()
         logger.debug('stopped queues %s' % stopped_queues)
         idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues + dead_queues]]
 
@@ -265,9 +270,14 @@ class PartitionSet(Cobalt.Data.DataSet):
         placements = []
         potential = qpotential[queue]
         # update queuestate from cqm once per Schedule cycle
-        queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*',
-                                          'state':'*', 'nodes':'*',
-                                          'queue':'*', 'user':'*'}])
+        try:
+            queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*',
+                                              'state':'*', 'nodes':'*',
+                                              'queue':'*', 'user':'*'}])
+        except xmlrpclib.Fault:
+            self.qmconnect.Fail()
+            return 0
+        self.qmconnect.Pass()
         while potential:
 
             # get lowest jobid and place on first available partition
@@ -285,6 +295,10 @@ class PartitionSet(Cobalt.Data.DataSet):
                                  (newjob.get('jobid'), newjob.get('user'), flt.faultString))
                     del potential[newjob]
                     continue
+                else:
+                    self.qmconnect.Fail()
+                    return 0
+            self.qmconnect.Pass()
             logger.debug('Job %s/%s accepted to run' % (newjob.get('jobid'), newjob.get('user')))
             location = potential[newjob][0]
             location.PlaceJob(newjob)

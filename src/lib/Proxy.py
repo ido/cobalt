@@ -38,7 +38,7 @@ class SafeProxy:
             raise CobaltComponentError
         except:
             self.log.error("Failed to initialize xml-rpc", exc_info=1)
-
+        
     def run_method(self, methodName, methodArgs):
         ''' Perform an XMLRPC invocation against the server'''
         method = getattr(self.proxy, methodName)
@@ -57,14 +57,30 @@ class SafeProxy:
                 self.log.debug("Operation %s completed with fault" % (methodName))
                 raise
             except socket.error, serr:
-                self.log.debug("Attempting %s (%d of %d) failed because %s" % (methodName, (irs+1),
-                                                                               self._retries, serr))
-                time.sleep(0.5)                
+                self.log.debug("Attempting %s (%d of %d) failed because %s" % \
+                               (methodName, (irs+1), self._retries, serr))
+                time.sleep(0.5)
+                # lookup component address
+                self.refresh_component(self.component)
+                method = getattr(self.proxy, methodName)
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
         self.log.error("%s failed:\nCould not connect to %s" % (methodName, self.component))
         raise xmlrpclib.Fault(20, "Server Failure")
+
+    def refresh_component(self, name):
+        '''refreshes location of component'''
+        if self._components.has_key(name):
+            del self._components[name]
+        address = self.__get_location(name)
+        try:
+            self.proxy = xmlrpclib.ServerProxy(address)
+        except IOError, io_error:
+            self.log.error("Invalid server URL %s: %s" % (address, io_error))
+            raise CobaltComponentError
+        except:
+            self.log.error("Failed to initialize xml-rpc", exc_info=1)
         
     def __get_location(self, name):
         '''Perform component location lookups if needed'''
