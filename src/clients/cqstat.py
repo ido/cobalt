@@ -6,6 +6,9 @@ __revision__ = '$Revision$'
 import getopt, math, sys, time, os
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
+__helpmsg__ = "Usage: cqstat [--version] [-d] [-f] <jobid> <jobid>\n" + \
+              "       cqstat [-d] -q <queue> <queue>"
+
 def get_elapsed_time(starttime, endtime):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
@@ -16,10 +19,14 @@ def get_elapsed_time(starttime, endtime):
     return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
 
 if __name__ == '__main__':
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print __helpmsg__
+        raise SystemExit, 1
+    
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'dfq', ['version'])
     except getopt.GetoptError, msg:
-        print "Usage: cqstat [--version] [-d] [-f jobid] [-q]"
+        print __helpmsg__
         print msg
         raise SystemExit, 1
     level = 30
@@ -33,26 +40,26 @@ if __name__ == '__main__':
 
     jobid = None
 
-    if len(args) > 0:
-        jobid = args[0]
+#     if len(args) > 0:
+#         jobid = args[0]
 
-    if jobid:
-        jobid_tosend = jobid
+    if len(args) > 0:
+        names = args
     else:
-        jobid_tosend = "*"
+        names = ["*"]
 
     cqm = Cobalt.Proxy.queue_manager()
 
     if '-q' in sys.argv:
-        query = [{'tag':'queue', 'name':'*', 'users':'*', 
+        query = [{'tag':'queue', 'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
                   'maxqueued':'*', 'maxusernodes':'*',
-                  'totalnodes':'*', 'state':'*'}]
+                  'totalnodes':'*', 'state':'*'} for qname in names]
         header = [['Name', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                    'MaxQueued', 'MaxUserNodes', 'TotalNodes', 'State']]
         response = cqm.GetQueues(query)
     else:
-        query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jobid_tosend, 'location':'*'}]
+        query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jid, 'location':'*'} for jid in names]
         if '-f' in sys.argv:
             query[0].update({'mode':'*', 'procs':'*', 'queue':'*', 'starttime':'*', 'outputpath':'*'})
 
