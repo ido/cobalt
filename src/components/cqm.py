@@ -91,7 +91,8 @@ class Job(Cobalt.Data.Data):
         self.comms = Cobalt.Proxy.CommDict()
         self.set('jobid', str(jobid))
         self.set('state', 'queued')
-        self.set('attribute', 'compute')
+        if not self.get('attribute', False):
+            self.set('attribute', 'compute')
         self.set('location', 'N/A')
         self.set('starttime', '-1')
         if not self.get('queue', False):
@@ -106,15 +107,17 @@ class Job(Cobalt.Data.Data):
         #self.timers['/usr/sbin/epilogue'] = Timer()
         self.pgid = {}
         self.spgid = {}
-        self.steps = ['StageInit', 'FinishStage', 'RunPrologue',
-                      'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'FinalizeStage', 'Finish']
+        #self.steps = ['StageInit', 'FinishStage', 'RunPrologue', 'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'FinalizeStage', 'Finish']
+        #self.steps = ['StageInit', 'FinishStage', 'RunPrologue',
+        #              'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'FinalizeStage', 'Finish']
         #self.steps=['StageInit','FinishStage','RunPrologue','RunUserJob','RunEpilogue','FinalizeStage','Finish']
+        self.steps = ['RunPrologue','RunUserJob','RunEpilogue','FinishUserPgrp','Finish']
         self.stageid = None
         self.reservation = False
         if not self.get('type', False):
             self.set('type', 'mpish')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
-        self.SetActive()
+        self.SetPassive()
         # acctlog
         logger.info('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
 
@@ -259,8 +262,9 @@ class Job(Cobalt.Data.Data):
         self.timers['user'].Stop()
         if self.spgid.has_key('user'):
             try:
-                self.comms['pm'].WaitProcessGroup([{'tag':'process-group',
-                                                    'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
+                #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
+                self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user']}])
+                #this seems needed to get the info back into the object so it can be handed back to the filestager.
                 #self.output = pgroups[0]['output']
                 #self.error = pgroups[0]['error']
             except xmlrpclib.Fault:
@@ -303,6 +307,9 @@ class Job(Cobalt.Data.Data):
             self.fail_job('stage-error')
             print fault
             return
+        except CobaltComponentError:
+            logger.error("couldn't contact the File Stager")
+            return
         except:
             logger.error("Unexpected failure during stage initialization", exc_info=1)
             self.fail_job('stage-error')
@@ -314,20 +321,26 @@ class Job(Cobalt.Data.Data):
 
     def RunPrologue(self):
         '''Run the job prologue'''
+        self.timers['/usr/sbin/prologue'] = Timer()
         if self.get('location') == 'none':
             # requeue if not ready
             self.steps = ['RunPrologue'] + self.steps
             self.SetPassive()
             return
         self.set('state', 'prologue')
-        os.system("/master/bcfg/generators/account/setaccess.py -a %s %s" % (self.get('user'),
-                                                                             " ".join(self.get('location').split(':'))))
+        #this path and executable should be pulled from cfg file
+        try:
+            os.system("/master/bcfg/generators/account/setaccess.py -a %s %s" % (self.get('user'),
+                                                                                 " ".join(self.get('location'))))
+        except:
+            logger.info("access control not enabled")
         self.timers['/usr/sbin/prologue'].Start()
         self.AdminStart('/usr/sbin/prologue')
         self.SetPassive()
 
     def RunEpilogue(self):
         '''Run the job epilogue'''
+        self.timers['/usr/sbin/epilogue'] = Timer()
         self.set('state', 'epilogue')
         os.system("/master/bcfg/generators/account/setaccess.py -r %s %s" % (self.get('user'),
                                                                              " ".join(self.get('location').split(':'))))
@@ -340,25 +353,30 @@ class Job(Cobalt.Data.Data):
         self.set('state', 'running')
         self.timers['user'].Start()
         args = []
-        if self.get("host", None):
+        if self.get("host", False):
             args = ["-i", "-h", self.get('host'), "-p", self.get('port')]
-        if self.get("url", None):
+        if self.get("url", False):
             args += ["-b", self.url]
-        if self.get("stageid", None):
+        if self.get("stageid", False):
             args += ["-n", self.stageid]
-        else:
-            args += ["-c", self.get('script')]
-        if self.get("stageout", None):
+        elif self.get("command", False):
+            args += ["-f", self.get('command')]
+        if self.get("stageout", False):
             args += ["-s", self.get('stageout')]
-        if self.get("type", None) == 'pbs':
+        if self.get("type", '') == 'pbs':
             args.append("-P")
         args.append("-t")
         args.append(str(60 * float(self.get('walltime'))))
+        location = self.get('location').split(':')
+        outputfile = "%s/%s.output" % (self.get('outputdir'), self.get('jobid'))
+        errorfile = "%s/%s.error" % (self.get('outputdir'), self.get('jobid'))
+        cwd = self.get('cwd', self.get('envs')['data']['PWD'])
+        env = self.get('envs')['data']
         try:
             pgroup = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'executable':'/usr/bin/mpish',
-                 'size':self.get('nodes'), 'args':args, 'envs':self.get('envs'),
-                 'location':self.get('location'), 'cwd':'/', 'path':"/bin:/usr/bin:/usr/local/bin"})
+                 'size':self.get('procs'), 'args':args, 'envs':env, 'errorfile':errorfile,
+                 'outputfile':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin"})
         except xmlrpclib.Fault:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
@@ -378,7 +396,7 @@ class Job(Cobalt.Data.Data):
             try:
                 self.comms['am'].DelLien({'tag':'lien', 'id':self.get('lienID')})
             except:
-                logger.error("Failed to delete lien id %s for project %s" % (self.get('lienID'), self.get('project')))
+                logger.error("Failed to delete lien id %s for project %s" % (self.get('lienID', ""), self.get('project')))
             # then perform step manipulation
             if self.get('state') in ['setup', 'prologue']:
                 self.steps.remove('RunUserJob')
@@ -404,19 +422,20 @@ class Job(Cobalt.Data.Data):
 
     def AdminStart(self, cmd):
         '''Run an administrative job step'''
+        location = self.get('location').split(':')
         try:
             pgrp = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'pgid':'*', 'user':'root', 'size':self.get('nodes'),
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
-                 'args':[self.get('user')], 'location':self.get('location')})
+                 'args':[self.get('user')], 'location':location})
         except xmlrpclib.Fault, fault:
-            print fault.faultCode
+            print fault
         except:
             logger.error("Unexpected failure in administrative process start", exc_info=1)
             self.set('state', 'pm-error')
             return
         
-        self.pgid[cmd] = pgrp['pgid']
+        self.pgid[cmd] = pgrp[0]['pgid']
 
     def CompletePG(self, pgid):
         '''Finish accounting for a completed jobid'''
@@ -483,7 +502,11 @@ class Job(Cobalt.Data.Data):
         '''Get job execution statistics from timers'''
         result = ''
         for (name, timer) in self.timers.iteritems():
-            result += "%s:%.02fs " % (name, timer.Check())
+            try:
+                result += "%s:%.02fs " % (name, timer.Check())
+            except Exception, mmsg:
+                logger.error("timer: %s wasn't started" % name)
+                print mmsg
         return result
 
     def LogFinish(self):
