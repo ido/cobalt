@@ -111,7 +111,7 @@ class Job(Cobalt.Data.Data):
         #self.steps = ['StageInit', 'FinishStage', 'RunPrologue',
         #              'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'FinalizeStage', 'Finish']
         #self.steps=['StageInit','FinishStage','RunPrologue','RunUserJob','RunEpilogue','FinalizeStage','Finish']
-        self.steps = ['RunPrologue','RunUserJob','RunEpilogue','FinishUserPgrp','Finish']
+        self.steps = ['RunPrologue', 'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'Finish']
         self.stageid = None
         self.reservation = False
         if not self.get('type', False):
@@ -307,7 +307,7 @@ class Job(Cobalt.Data.Data):
             self.fail_job('stage-error')
             print fault
             return
-        except CobaltComponentError:
+        except Cobalt.Proxy.CobaltComponentError:
             logger.error("couldn't contact the File Stager")
             return
         except:
@@ -785,7 +785,7 @@ class Queue(Cobalt.Data.Data, JobSet):
        self is a Queue object (with restrictions and stuff)
        self.data is a list of BGJob objects'''
 
-    def __init__(self, info, id=None):
+    def __init__(self, info, _=None):
         Cobalt.Data.Data.__init__(self, info)
         JobSet.__init__(self)
 
