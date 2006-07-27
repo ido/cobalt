@@ -3,7 +3,7 @@
 '''Cobalt Queue Status'''
 __revision__ = '$Revision$'
 
-import math, sys, time, os
+import math, sys, time, os, re
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = "Usage: cqstat [--version] [-d] [-f] <jobid> <jobid>\n" + \
@@ -17,6 +17,33 @@ def get_elapsed_time(starttime, endtime):
     minutes, seconds = divmod(runtime, 60)
     hours, minutes = divmod(minutes, 60)
     return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
+
+def mergelist(locations):
+    '''create a set of dashed-ranges from a node list'''
+    uniq = []
+    reg = re.compile('(\D+)(\d+)')
+    [uniq.append(loc) for loc in locations if loc not in uniq]
+    uniq.sort()
+    retl = [[reg.match(uniq[0]).group(2)]]
+    prefix = reg.match(uniq[0]).group(1)
+    uniq = uniq[1:]
+    while uniq:
+        newnum = reg.match(uniq[0]).group(2)
+        block = [item for item in retl if (int(item[0]) == int(newnum) + 1) 
+                 or (int(item[-1]) == int(newnum) -1)]
+        if block:
+            block[0].append(newnum)
+            block[0].sort()
+        else:
+            retl.append([newnum])
+            uniq = uniq[1:]
+    retnl = []
+    for item in retl:
+        if len(item) > 1:
+            retnl.append("[%s%s-%s]" % (prefix, item[0], item[-1]))
+        else:
+            retnl.append("%s%s" % (prefix, item[0]))
+    return ','.join(retnl)
 
 if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
@@ -95,6 +122,8 @@ if __name__ == '__main__':
             t -= (h * 60)
             j['walltime'] = "%02d:%02d:00" % (h, t)
             j['jobid'] = jobidfmt % j['jobid']
+            if len(j['location']) > 1:
+                j['location'] = mergelist(j['location'])
             if opts['full']:
                 if j.get('starttime') in ('-1', 'BUG', None):
                     j['starttime'] = 'N/A'   # StartTime
