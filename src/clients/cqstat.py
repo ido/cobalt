@@ -6,7 +6,7 @@ __revision__ = '$Revision$'
 import math, os, re, sys, time, types
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-__helpmsg__ = "Usage: cqstat [--version] [-d] [-f] <jobid> <jobid>\n" + \
+__helpmsg__ = "Usage: cqstat [--version] [-d] [-f] [-l] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>"
 
 def get_elapsed_time(starttime, endtime):

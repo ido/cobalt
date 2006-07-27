@@ -3,7 +3,7 @@
 cqstat \- query the queue manager for jobs
 .SH SYNOPSIS
 .B cqstat
-.I [--version] [-d] [-f] <jobid> <jobid>
+.I [--version] [-d] [-f] [-l] <jobid> <jobid>
 .TP
 .B cqstat
 .I [-d] -q <queue> <queue>
@@ -18,6 +18,9 @@ Turn on communication debugging
 .TP
 .B \-f
 Query a particular jobid. 
+.TP
+.B \-l
+Show job info in vertical format. Use with '-f' to get all job info.
 .TP
 .B \-q
 Show queues and properties.
