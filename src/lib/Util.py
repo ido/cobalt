@@ -61,6 +61,18 @@ def dgetopt_long(arglist, opt, vopt, msg):
 
     return ret, list(args)
 
+def print_vertical(rows):
+    '''print data in horizontal format'''
+    hmax = max([len(str(x)) for x in rows[0]])
+    hformat = '    %%-%ds: %s' % (hmax+1, '%s')
+    for row in rows[1:]:
+        for x in range(len(row)):
+            if x == 0:
+                print "%s: %s" % (rows[0][x], row[x])
+            else:
+                print hformat % (rows[0][x], row[x])
+        print
+
 def print_tabular(rows):
     '''print data in tabular format'''
     cmax = tuple([-1 * max([len(str(row[index])) for row in rows]) for index in xrange(len(rows[0]))])

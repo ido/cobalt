@@ -3,7 +3,7 @@
 '''Cobalt Queue Status'''
 __revision__ = '$Revision$'
 
-import getopt, math, sys, time, os
+import math, sys, time, os
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = "Usage: cqstat [--version] [-d] [-f] <jobid> <jobid>\n" + \
@@ -22,26 +22,22 @@ if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
         print __helpmsg__
         raise SystemExit, 1
-    
-    try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'dfq', ['version'])
-    except getopt.GetoptError, msg:
-        print __helpmsg__
-        print msg
-        raise SystemExit, 1
+
+    options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
+               'q':'q'}
+    doptions = {}
+    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
+                                            doptions, __helpmsg__)
     level = 30
-    if '-d' in sys.argv:
+    if opts['debug']:
         level = 10
 
-    if '--version' in sys.argv:
+    if opts['version']:
         print "cqstat %s" % __revision__
         raise SystemExit, 0
     Cobalt.Logging.setup_logging('cqstat', to_syslog=False, level=level)
 
     jobid = None
-
-#     if len(args) > 0:
-#         jobid = args[0]
 
     if len(args) > 0:
         names = args
@@ -50,7 +46,7 @@ if __name__ == '__main__':
 
     cqm = Cobalt.Proxy.queue_manager()
 
-    if '-q' in sys.argv:
+    if opts['q']:
         query = [{'tag':'queue', 'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
                   'maxqueued':'*', 'maxusernodes':'*',
@@ -59,17 +55,29 @@ if __name__ == '__main__':
                    'MaxQueued', 'MaxUserNodes', 'TotalNodes', 'State']]
         response = cqm.GetQueues(query)
     else:
-        query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*', 'state':'*', 'jobid':jid, 'location':'*'} for jid in names]
-        if '-f' in sys.argv:
-            query[0].update({'mode':'*', 'procs':'*', 'queue':'*', 'starttime':'*', 'outputpath':'*'})
+        query = [{'tag':'job', 'user':'*', 'walltime':'*', 'nodes':'*',
+                  'state':'*', 'jobid':jid, 'location':'*'} for jid in names]
+        if opts['full']:
+            for q in query:
+                q.update({'mode':'*', 'procs':'*', 'queue':'*',
+                          'starttime':'*', 'outputpath':'*', 'stamp':'*',
+                          })
+                if opts['long']:
+                    q.update({'path':'*', 'outputdir':'*',
+                              'envs':'*', 'command':'*', 'args':'*',
+                              'kernel':'*'})
 
-            header = [['JobID', 'OutputPath', 'User', 'WallTime', 'RunTime', 'Nodes', 'State',
-                       'Location', 'Mode', 'Procs', 'Queue', 'StartTime']]
+            header = [['JobID', 'OutputPath', 'User', 'WallTime', 'Stamp',
+                       'RunTime',
+                       'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue',
+                       'StartTime']]
+            if opts['long']:
+                header[0] += ['SubmitTime', 'Path', 'OutputDir', 'Envs', 'Command', 'Args', 'Kernel']
         else:
             header = [['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
         response = cqm.GetJobs(query)
 
-    if '-q' in sys.argv:
+    if opts['q']:
         for q in response:
             if q.get('maxtime','*') != '*':
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
@@ -77,43 +85,55 @@ if __name__ == '__main__':
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q['mintime']), 60))
         output = [[q.get(x, '*') for x in [y.lower() for y in header[0]]] for q in response]
     else:
-        output = [[job.get(x) for x in [y.lower() for y in header[0]]] for job in response]
-
-        if output:
-            maxjoblen = max([len(item[0]) for item in output])
+        if response:
+            maxjoblen = max([len(item.get('jobid')) for item in response])
             jobidfmt = "%%%ss" % maxjoblen
         # next we cook walltime
-        for i in xrange(len(output)):
-            t = int(output[i][ header[0].index('WallTime') ].split('.')[0])
+        for j in response:
+            t = int(j['walltime'].split('.')[0])
             h = int(math.floor(t/60))
             t -= (h * 60)
-            output[i][ header[0].index('WallTime') ] = "%02d:%02d:00" % (h, t)
-            output[i][ header[0].index('JobID') ] = jobidfmt % output[i][ header[0].index('JobID') ]
-            if '-f' in sys.argv:
-                if output[i][ header[0].index('StartTime') ] in ('-1', 'BUG', None):
-                    output[i][ header[0].index('StartTime') ] = 'N/A'   # StartTime
-                    output[i][ header[0].index('RunTime') ] = 'N/A'     # RunTime
+            j['walltime'] = "%02d:%02d:00" % (h, t)
+            j['jobid'] = jobidfmt % j['jobid']
+            if opts['full']:
+                if j.get('starttime') in ('-1', 'BUG', None):
+                    j['starttime'] = 'N/A'   # StartTime
+                    j['runtime'] = 'N/A'     # RunTime
                 else:
-                    output[i][ header[0].index('RunTime') ] = \
-                                      get_elapsed_time( float(output[i][ header[0].index('StartTime') ]), time.time())
-                    output[i][ header[0].index('StartTime') ] = time.strftime("%m/%d/%y %T", \
-                                                                              time.localtime(float(output[i][ header[0].index('StartTime') ])))
-            if '-f' in sys.argv:
-                outputpath = output[i][ header[0].index('OutputPath') ]
+                    j['runtime'] = get_elapsed_time( float(j['starttime']), time.time())
+                    j['starttime'] = time.strftime("%m/%d/%y %T", time.localtime(float(j['starttime'])))
 
+                outputpath = j.get('outputpath')
                 if outputpath == None:
-                    output[i][ header[0].index('OutputPath') ] = "-"
+                    j['outputpath'] = "-"
                 else:
                     jobname = os.path.basename(outputpath).split('.output')[0]
-
-                    if jobname != output[i][ header[0].index('JobID') ].split()[0]:
-                        output[i][ header[0].index('OutputPath') ] = jobname
+                    if jobname != j['jobid'].split()[0]:
+                        j['outputpath'] = jobname
                     else:
-                        output[i][ header[0].index('OutputPath') ] = "-"
+                        j['outputpath'] = "-"
 
-        if '-f' in sys.argv:
+                if opts['long']:
+                    envs = j.get('envs', False)
+                    if not envs:
+                        j.update({'envs':''})
+                    else:
+                        j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
+                    j['args'] = ' '.join(j['args'])
+                    j.update({'submittime':time.strftime("%m/%d/%y %T", time.localtime(float(j['stamp'])))})
+                
+                j['stamp'] = get_elapsed_time(float(j['stamp']), time.time())
+
+
+        output = [[j.get(x) for x in [y.lower() for y in header[0]]]
+                  for j in response]
+        if opts['full']:
             # change column names
             header[0][ header[0].index('OutputPath') ] = "JobName"
+            header[0][ header[0].index('Stamp') ] = "QueuedTime"
 
     output.sort()
-    Cobalt.Util.print_tabular([tuple(x) for x in header + output])
+    if opts['long']:
+        Cobalt.Util.print_vertical([tuple(x) for x in header + output])
+    else:
+        Cobalt.Util.print_tabular([tuple(x) for x in header + output])
