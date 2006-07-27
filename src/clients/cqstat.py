@@ -3,7 +3,7 @@
 '''Cobalt Queue Status'''
 __revision__ = '$Revision$'
 
-import math, sys, time, os, re
+import math, os, re, sys, time, types
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = "Usage: cqstat [--version] [-d] [-f] <jobid> <jobid>\n" + \
@@ -122,7 +122,7 @@ if __name__ == '__main__':
             t -= (h * 60)
             j['walltime'] = "%02d:%02d:00" % (h, t)
             j['jobid'] = jobidfmt % j['jobid']
-            if len(j['location']) > 1:
+            if isinstance(j['location'], types.ListType) and len(j['location']) > 1:
                 j['location'] = mergelist(j['location'])
             if opts['full']:
                 if j.get('starttime') in ('-1', 'BUG', None):
