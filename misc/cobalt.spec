@@ -5,6 +5,7 @@ Release: 1
 License: GPL
 Group: System Software
 URL: http://www.mcs.anl.gov/cobalt
+Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: pyOpenSSL, python
