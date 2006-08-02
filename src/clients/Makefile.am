@@ -8,9 +8,15 @@ binPROGRAMS_INSTALL = ${INSTALL} -m 755
 
 install: install-am installlinks
 
-installlinks: install-binPROGRAMS
-	ln -sf ./wrapper $(bindir)/cqstat
-	ln -sf ./wrapper $(bindir)/cqsub
-	ln -sf ./wrapper $(bindir)/partlist
-	ln -sf ./wrapper $(bindir)/cqdel
-	ln -sf ./wrapper $(bindir)/showres
+installlinks: install-binPROGRAMS install-wrapper
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqstat
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqsub
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/partlist
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqdel
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/showres
+
+install-binPROGRAMS:
+install-wrapper: $(bin_PROGRAMS)
+	${INSTALL} -m 755 wrapper $(WRAPPERDIR)
+# 	${INSTALL} -m 2755 -g cobalt wrapper $(WRAPPERDIR)
+

@@ -10,3 +10,9 @@ sssinitdir = @sysconfdir@/init.d
 dist_sssinit_SCRIPTS = misc/cobalt
 
 sysconf_DATA = misc/cobalt.conf.sample
+
+install-clients: install-man1
+	@cd src/clients; make installlinks
+
+install-wrapper: 
+	@cd src/clients; make install-wrapper

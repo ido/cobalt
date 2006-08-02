@@ -25,6 +25,14 @@ else
         fi
 fi
 
+
+AC_ARG_WITH(wrapper,[  --with-wrapper            location for wrapper to be installed (default $prefix/bin)],
+	ac_cv_wrapper=$withval)
+
+if test -z "${ac_cv_wrapper}"; then
+        ac_cv_wrapper=$bindir
+fi
+
 AM_PATH_PYTHON(2.2)
 
 PREFIX=${prefix}
@@ -32,6 +40,9 @@ AC_SUBST(PREFIX)
 PATH_TO_PIDFILE=$ac_cv_pidfile
 AC_SUBST(PATH_TO_CONFIG)
 AC_SUBST(PATH_TO_PIDFILE)
+
+WRAPPERDIR=$ac_cv_wrapper
+AC_SUBST(WRAPPERDIR)
 
 AC_CONFIG_FILES(Makefile
 	src/Makefile
