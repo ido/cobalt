@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pprint
-import re
+import sys, re, ConfigParser
 import DB2
 import Cobalt.Data
 
@@ -17,6 +17,21 @@ class BaseSet(Cobalt.Data.DataSet):
                   'J203':'N8', 'J205':'N9', 'J207':'NA', 'J209':'NB',
                   'J210':'NC', 'J212':'ND', 'J214':'NE', 'J216':'NF'}
 
+    _configfields = ['db2uid', 'db2dsn', 'db2pwd']
+    _config = ConfigParser.ConfigParser()
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
+    else:
+        _config.read('/etc/cobalt.conf')
+    if not _config._sections.has_key('bgsched'):
+        print '''"bgsched" section missing from cobalt config file'''
+        raise SystemExit, 1
+    config = _config._sections['bgsched']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
+        raise SystemExit, 1
+
     def __init__(self, racks, psetsize):
         Cobalt.Data.DataSet.__init__(self)
         self.racks = racks
@@ -26,7 +41,7 @@ class BaseSet(Cobalt.Data.DataSet):
     def getPartIONodes(self, partname):
         '''retrieves the IOnodes for the specified partition'''
         ionodes = []
-        db2 = DB2.connect(uid='bglsysdb',pwd='xxx',dsn='bgdb0').cursor()
+        db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
         
         # first get blocksize in nodes
         db2.execute("select size from BGLBLOCKSIZE where blockid='%s'" % partname)
@@ -35,6 +50,7 @@ class BaseSet(Cobalt.Data.DataSet):
 
         if int(blocksize[0][0]) < 512:
             print "small block"
+            #tBGLSMALLBLOCK (BLOCKID, POSINMACHINE, PSETNUM, IONODEPOS, IONODECARD, IONODECHIP, COMPNODEPOS, NUMCOMPUTE)
             db2.execute("select * from tBGLSMALLBLOCK where blockid='%s' order by ionodepos" % partname)
             result = db2.fetchall()
             for b in result:
@@ -55,78 +71,78 @@ class BaseSet(Cobalt.Data.DataSet):
 
     def getIONodes(self):
         '''Get location of i/o nodes from db2'''
+        db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
 
-#         db2 = DB2.connect(uid='bglsysdb',pwd='xxx',dsn='bgdb0').cursor()
-#         db2.execute("SELECT LOCATION,IPADDRESS FROM tbglippool")
- #         results = db2.fetchall()
-#         db2data = [(location.strip(),ip) for (location, ip) in results]
-#         db2.close()
+        db2.execute("SELECT LOCATION,IPADDRESS FROM tbglippool")
+        results = db2.fetchall()
+        ioreturn = [(location.strip(),ip) for (location, ip) in results]
+        db2.close()
 
         #sample for 1:32 system
-        ioreturn = [('R00-M1-NA-I:J18-U01', '172.30.0.53'),
-                    ('R00-M1-NA-I:J18-U11', '172.30.0.54'),
-                    ('R00-M1-NB-I:J18-U01', '172.30.0.55'),
-                    ('R00-M1-NB-I:J18-U11', '172.30.0.56'),
-                    ('R00-M1-NC-I:J18-U01', '172.30.0.57'),
-                    ('R00-M1-NC-I:J18-U11', '172.30.0.58'),
-                    ('R00-M1-ND-I:J18-U01', '172.30.0.59'),
-                    ('R00-M1-ND-I:J18-U11', '172.30.0.60'),
-                    ('R00-M1-NE-I:J18-U01', '172.30.0.61'),
-                    ('R00-M1-NE-I:J18-U11', '172.30.0.62'),
-                    ('R00-M1-NF-I:J18-U01', '172.30.0.63'),
-                    ('R00-M1-NF-I:J18-U11', '172.30.0.64'),
-                    ('R00-M1-N9-I:J18-U11', '172.30.0.52'),
-                    ('R00-M0-N1-I:J18-U11', '172.30.0.4'),
-                    ('R00-M0-N2-I:J18-U01', '172.30.0.5'),
-                    ('R00-M0-N2-I:J18-U11', '172.30.0.6'),
-                    ('R00-M0-N3-I:J18-U01', '172.30.0.7'),
-                    ('R00-M0-N3-I:J18-U11', '172.30.0.8'),
-                    ('R00-M0-N4-I:J18-U01', '172.30.0.9'),
-                    ('R00-M0-N4-I:J18-U11', '172.30.0.10'),
-                    ('R00-M0-N5-I:J18-U01', '172.30.0.11'),
-                    ('R00-M0-N5-I:J18-U11', '172.30.0.12'),
-                    ('R00-M0-N6-I:J18-U01', '172.30.0.13'),
-                    ('R00-M0-N6-I:J18-U11', '172.30.0.14'),
-                    ('R00-M0-N7-I:J18-U01', '172.30.0.15'),
-                    ('R00-M0-N7-I:J18-U11', '172.30.0.16'),
-                    ('R00-M0-N8-I:J18-U01', '172.30.0.17'),
-                    ('Rp00-M0-N8-I:J18-U11', '172.30.0.18'),
-                    ('R00-M0-N9-I:J18-U01', '172.30.0.19'),
-                    ('R00-M0-N9-I:J18-U11', '172.30.0.20'),
-                    ('R00-M0-NA-I:J18-U01', '172.30.0.21'),
-                    ('R00-M0-NA-I:J18-U11', '172.30.0.22'),
-                    ('R00-M0-NB-I:J18-U01', '172.30.0.23'),
-                    ('R00-M0-NB-I:J18-U11', '172.30.0.24'),
-                    ('R00-M0-NC-I:J18-U01', '172.30.0.25'),
-                    ('R00-M0-NC-I:J18-U11', '172.30.0.26'),
-                    ('R00-M0-ND-I:J18-U01', '172.30.0.27'),
-                    ('R00-M0-ND-I:J18-U11', '172.30.0.28'),
-                    ('R00-M0-NE-I:J18-U01', '172.30.0.29'),
-                    ('R00-M0-NE-I:J18-U11', '172.30.0.30'),
-                    ('R00-M0-NF-I:J18-U01', '172.30.0.31'),
-                    ('R00-M0-N0-I:J18-U01', '172.30.0.1'),
-                    ('R00-M0-N0-I:J18-U11', '172.30.0.2'),
-                    ('R00-M0-N1-I:J18-U01', '172.30.0.3'),
-                    ('R00-M0-NF-I:J18-U11', '172.30.0.32'),
-                    ('R00-M1-N0-I:J18-U01', '172.30.0.33'),
-                    ('R00-M1-N0-I:J18-U11', '172.30.0.34'),
-                    ('R00-M1-N1-I:J18-U01', '172.30.0.35'),
-                    ('R00-M1-N1-I:J18-U11', '172.30.0.36'),
-                    ('R00-M1-N2-I:J18-U01', '172.30.0.37'),
-                    ('R00-M1-N2-I:J18-U11', '172.30.0.38'),
-                    ('R00-M1-N3-I:J18-U01', '172.30.0.39'),
-                    ('R00-M1-N3-I:J18-U11', '172.30.0.40'),
-                    ('R00-M1-N4-I:J18-U01', '172.30.0.41'),
-                    ('R00-M1-N4-I:J18-U11', '172.30.0.42'),
-                    ('R00-M1-N5-I:J18-U01', '172.30.0.43'),
-                    ('R00-M1-N5-I:J18-U11', '172.30.0.44'),
-                    ('R00-M1-N6-I:J18-U01', '172.30.0.45'),
-                    ('R00-M1-N6-I:J18-U11', '172.30.0.46'),
-                    ('R00-M1-N7-I:J18-U01', '172.30.0.47'),
-                    ('R00-M1-N7-I:J18-U11', '172.30.0.48'),
-                    ('R00-M1-N8-I:J18-U01', '172.30.0.49'),
-                    ('R00-M1-N8-I:J18-U11', '172.30.0.50'),
-                    ('R00-M1-N9-I:J18-U01', '172.30.0.51')]
+#         ioreturn = [('R00-M1-NA-I:J18-U01', '172.30.0.53'),
+#                     ('R00-M1-NA-I:J18-U11', '172.30.0.54'),
+#                     ('R00-M1-NB-I:J18-U01', '172.30.0.55'),
+#                     ('R00-M1-NB-I:J18-U11', '172.30.0.56'),
+#                     ('R00-M1-NC-I:J18-U01', '172.30.0.57'),
+#                     ('R00-M1-NC-I:J18-U11', '172.30.0.58'),
+#                     ('R00-M1-ND-I:J18-U01', '172.30.0.59'),
+#                     ('R00-M1-ND-I:J18-U11', '172.30.0.60'),
+#                     ('R00-M1-NE-I:J18-U01', '172.30.0.61'),
+#                     ('R00-M1-NE-I:J18-U11', '172.30.0.62'),
+#                     ('R00-M1-NF-I:J18-U01', '172.30.0.63'),
+#                     ('R00-M1-NF-I:J18-U11', '172.30.0.64'),
+#                     ('R00-M1-N9-I:J18-U11', '172.30.0.52'),
+#                     ('R00-M0-N1-I:J18-U11', '172.30.0.4'),
+#                     ('R00-M0-N2-I:J18-U01', '172.30.0.5'),
+#                     ('R00-M0-N2-I:J18-U11', '172.30.0.6'),
+#                     ('R00-M0-N3-I:J18-U01', '172.30.0.7'),
+#                     ('R00-M0-N3-I:J18-U11', '172.30.0.8'),
+#                     ('R00-M0-N4-I:J18-U01', '172.30.0.9'),
+#                     ('R00-M0-N4-I:J18-U11', '172.30.0.10'),
+#                     ('R00-M0-N5-I:J18-U01', '172.30.0.11'),
+#                     ('R00-M0-N5-I:J18-U11', '172.30.0.12'),
+#                     ('R00-M0-N6-I:J18-U01', '172.30.0.13'),
+#                     ('R00-M0-N6-I:J18-U11', '172.30.0.14'),
+#                     ('R00-M0-N7-I:J18-U01', '172.30.0.15'),
+#                     ('R00-M0-N7-I:J18-U11', '172.30.0.16'),
+#                     ('R00-M0-N8-I:J18-U01', '172.30.0.17'),
+#                     ('R00-M0-N8-I:J18-U11', '172.30.0.18'),
+#                     ('R00-M0-N9-I:J18-U01', '172.30.0.19'),
+#                     ('R00-M0-N9-I:J18-U11', '172.30.0.20'),
+#                     ('R00-M0-NA-I:J18-U01', '172.30.0.21'),
+#                     ('R00-M0-NA-I:J18-U11', '172.30.0.22'),
+#                     ('R00-M0-NB-I:J18-U01', '172.30.0.23'),
+#                     ('R00-M0-NB-I:J18-U11', '172.30.0.24'),
+#                     ('R00-M0-NC-I:J18-U01', '172.30.0.25'),
+#                     ('R00-M0-NC-I:J18-U11', '172.30.0.26'),
+#                     ('R00-M0-ND-I:J18-U01', '172.30.0.27'),
+#                     ('R00-M0-ND-I:J18-U11', '172.30.0.28'),
+#                     ('R00-M0-NE-I:J18-U01', '172.30.0.29'),
+#                     ('R00-M0-NE-I:J18-U11', '172.30.0.30'),
+#                     ('R00-M0-NF-I:J18-U01', '172.30.0.31'),
+#                     ('R00-M0-N0-I:J18-U01', '172.30.0.1'),
+#                     ('R00-M0-N0-I:J18-U11', '172.30.0.2'),
+#                     ('R00-M0-N1-I:J18-U01', '172.30.0.3'),
+#                     ('R00-M0-NF-I:J18-U11', '172.30.0.32'),
+#                     ('R00-M1-N0-I:J18-U01', '172.30.0.33'),
+#                     ('R00-M1-N0-I:J18-U11', '172.30.0.34'),
+#                     ('R00-M1-N1-I:J18-U01', '172.30.0.35'),
+#                     ('R00-M1-N1-I:J18-U11', '172.30.0.36'),
+#                     ('R00-M1-N2-I:J18-U01', '172.30.0.37'),
+#                     ('R00-M1-N2-I:J18-U11', '172.30.0.38'),
+#                     ('R00-M1-N3-I:J18-U01', '172.30.0.39'),
+#                     ('R00-M1-N3-I:J18-U11', '172.30.0.40'),
+#                     ('R00-M1-N4-I:J18-U01', '172.30.0.41'),
+#                     ('R00-M1-N4-I:J18-U11', '172.30.0.42'),
+#                     ('R00-M1-N5-I:J18-U01', '172.30.0.43'),
+#                     ('R00-M1-N5-I:J18-U11', '172.30.0.44'),
+#                     ('R00-M1-N6-I:J18-U01', '172.30.0.45'),
+#                     ('R00-M1-N6-I:J18-U11', '172.30.0.46'),
+#                     ('R00-M1-N7-I:J18-U01', '172.30.0.47'),
+#                     ('R00-M1-N7-I:J18-U11', '172.30.0.48'),
+#                     ('R00-M1-N8-I:J18-U01', '172.30.0.49'),
+#                     ('R00-M1-N8-I:J18-U11', '172.30.0.50'),
+#                     ('R00-M1-N9-I:J18-U01', '172.30.0.51')]
 
         ioreturn.sort()
 
@@ -209,7 +225,7 @@ if __name__ == '__main__':
     machine = newbaseset.Get([{'tag':'base', 'psets':'*', 'startnc':'*', 'rack':'*', 'midplane':'*',
                                'ionodes':'*', 'computenodes':'*', 'type':'*', 'state':'*'}])
     pprint.pprint(machine)
-    print 'parents of 16:17:18:19'
+    print 'parents of R00-M1-NC:J18-U01'
     child = newbaseset.Get([{'tag':'base', 'psets':'*', 'startnc':'*', 'rack':'*', 'midplane':'*',
                              'ionodes':'R00-M1-NC:J18-U01', 'computenodes':'*', 'type':'*', 'state':'*'}])
     testparents = newbaseset.getParents(child[0])
@@ -224,6 +240,6 @@ if __name__ == '__main__':
     midio = newbaseset.getMidplaneIONodes('00', '0')
     print midio
     
-    print newbaseset.getPartIONodes("64_R001_J106_N2")
-    print newbaseset.getPartIONodes("NCAR_R00")
+    print newbaseset.getPartIONodes("R001_J210-128")
+    print newbaseset.getPartIONodes("ANL_R000")
     
