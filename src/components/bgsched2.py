@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Super-Simple Scheduler for BG/L'''
+'''Scheduler for BG/L'''
 __revision__ = '$Revision$'
 
 import copy, logging, sys, time, xmlrpclib, ConfigParser
@@ -31,6 +31,48 @@ class FailureMode(object):
         if self.status:
             logger.error("Failure %s occured" % (self.name))
             self.status = False
+
+class event:
+    '''events describe an event in terms of start and duration'''
+    def __init__(self, start, duration, status):
+        self.start = start
+        self.duration = duration
+        self.status = status
+
+class timeData(Cobalt.Data.Data):
+    '''timeData is a class that can generate event traces for temporal ops'''
+    def __init__(self, element):
+        Cobalt.Data.Data.__init__(self, element)
+
+    def getEvents(self):
+        '''Return Duration events for self'''
+        return []
+
+class Job(timeData):
+    '''This class represents User Jobs'''
+    def __init__(self, element):
+        timeData.__init__(self, element)
+        self.partition = 'none'
+        logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
+                                                       self.get('user')))
+        self.start = -1
+
+    def getEvents(self):
+        if self.start != -1:
+            etype = 'soft'
+            if self.status = 'planned':
+                etype = 'hard'
+            return [event(self.start, float(self.get('duration')), etype)]
+        else:
+            return []
+
+    def planRun(self, start):
+        if self.start == -1:
+            self.start = start
+            self.status = 'planned'
+        else:
+            logger.error("Job %s: Attempted to run multiple times" % (self.get('jobid')))
+
 
 class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
@@ -91,19 +133,6 @@ class Partition(Cobalt.Data.Data):
         logger.info("Job %s: Freeing partition %s" % (self.job, self.get('name')))
         self.job = 'none'
         self.set('state', 'idle')
-
-class Job(Cobalt.Data.Data):
-    '''This class represents User Jobs'''
-    def __init__(self, element):
-        Cobalt.Data.Data.__init__(self, element)
-        self.partition = 'none'
-        logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
-                                                       self.get('user')))
-
-    def Place(self, partition):
-        '''Build linkage to execution partition'''
-        self.partition = partition.get('name')
-        self.set('state', 'running')
 
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
