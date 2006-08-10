@@ -227,6 +227,14 @@ class PartitionSet(Cobalt.Data.DataSet):
             self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
                                    dsn=self.config.get('db2dsn')).cursor()
 
+    def isFree(self, partname, starttime, duration):
+        '''checks if partition is active/enabled for time specified'''
+        for part in self.partitions:
+            if part.get('name') == partname and part.get('scheduled') and part.get('functional'):
+                return True
+                
+        return False
+
     def Schedule(self, jobs):
         '''Find new jobs, fit them on a partitions'''
         knownjobs = [job.get('jobid') for job in self.jobs]
@@ -451,29 +459,30 @@ class BGSched(Cobalt.Component.Component):
                 self.executed.append(jobid)
 
     def CanRun(self, nodes, duration, queue, user, location, starttime):
-         '''
-         nodes - size of job
-         duration - walltime of job
-         queue - 
-         user - 
-         location - 
-         starttime - time that job is intended to be started
-         '''
-         # check location
-         if not self.partitions.isFree(location, starttime, duration):
-             return False
-         # check queues
-         
-         # check reservations
-         
-         # check jobs
-         running_jobs = [job for job in self.jobs if job.status == 'running']
-         for rjob in running_jobs:
-             if rjob.get('location') == location or \
-                rjob.get('location') in self.partitions.GetParents(location) or \
-                rjob.location in self.partitions.GetChildren(location):
-                 #if range(starttime, starttime+duration) overlaps with range(rjob.get('starttime'), rjob.get('starttime')+rjob.get('duration')
-                     return False
+        '''
+        nodes - size of job
+        duration - walltime of job
+        queue - 
+        user - 
+        location - 
+        starttime - time that job is intended to be started
+        '''
+        # check location
+        if not self.partitions.isFree(location, starttime, duration):
+            return False
+        # check queues
+        
+        # check reservations
+        
+        # check for conflicts with running jobs
+        for rjob in [job for job in self.jobs if job.status == 'running']:
+            if rjob.get('location') == location or \
+                   rjob.get('location') in self.partitions.GetParents(location) or \
+                   rjob.location in self.partitions.GetChildren(location):
+                for x in range(int(starttime), int(starttime+duration)):
+                    if x in range(int(rjob.get('starttime')), int(rjob.get('starttime')+rjob.get('duration'))):
+                        return False
+                    
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
