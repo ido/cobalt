@@ -60,7 +60,7 @@ class Job(timeData):
     def getEvents(self):
         if self.start != -1:
             etype = 'soft'
-            if self.status = 'planned':
+            if self.status == 'planned':
                 etype = 'hard'
             return [event(self.start, float(self.get('duration')), etype)]
         else:
@@ -73,11 +73,56 @@ class Job(timeData):
         else:
             logger.error("Job %s: Attempted to run multiple times" % (self.get('jobid')))
 
+cqmFailed = FailureMode()
 
-class Partition(Cobalt.Data.Data):
+class JobSet(Cobalt.Data.DataSet):
+    __object__ = Job
+    __syncrate__ = 60
+    alljobq = [{'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
+		'walltime':'*', 'queue':'*', 'user':'*'}]
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+        self.lastrun = -1
+
+    def Sync(self):
+        '''Synchronize with current queue state'''
+        since = time.time() - self.lastrun
+        if since < self.__syncrate__:
+            return
+        try:
+            jobs = comm['qm'].GetJobs(self.alljobq)
+        except xmlrpclib.Fault:
+            cqmFailed.Fail()
+            return 0
+        except:
+            logger.error("Unexpected fault during queue fetch", exc_info=1)
+            return 0
+        cqmFailed.Pass()
+        active = [job.get('jobid') for job in jobs]
+        for current in jobs:
+            if self.Get([current]):
+                # job is already registered and matches
+                continue
+            else:
+                if not self.Get([{'tag':'job', 'jobid':current.get('jobid')}]):
+                    # job is new
+                    self.Add([current])
+                    continue
+                # job is modified
+		# sync data here
+                pass
+	# find finished jobs
+        for job in self:
+            if job.get('jobid') not in active:
+                logger.info("Job %s has completed" % (job.get("jobid")))
+                self.Del([{'tag':'job', 'jobid':job.get('jobid')}])
+        self.lastrun = time.time()
+
+class Partition(timeData):
     '''Partitions are allocatable chunks of the machine'''
     def __init__(self, element):
-        Cobalt.Data.Data.__init__(self, element)
+        timeData.__init__(self, element)
         self.set('state', 'idle')
         self.set('reservations', [])
         self.job = 'none'
@@ -371,7 +416,7 @@ class BGSched(Cobalt.Component.Component):
 
     def __init__(self, setup):
         self.partitions = PartitionSet()
-        self.jobs = []
+        self.jobs = JobSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.executed = []
         self.qmconnect = FailureMode("QM Connection")
@@ -404,46 +449,6 @@ class BGSched(Cobalt.Component.Component):
                 [partition.Free() for partition in self.partitions if partition.get('name') == location]
             else:
                 self.executed.append(jobid)
-
-    def RunQueue(self):
-        '''Process changes to the cqm queue'''
-        since = time.time() - self.lastrun
-        if since < self.__schedcycle__:
-            return
-        try:
-            jobs = comm['qm'].GetJobs([{'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
-                                      'walltime':'*', 'queue':'*', 'user':'*'}])
-        except xmlrpclib.Fault:
-            self.qmconnect.Fail()
-            return 0
-        except:
-            self.logger.error("Unexpected fault during queue fetch", exc_info=1)
-            return 0
-        self.qmconnect.Pass()
-        active = [job.get('jobid') for job in jobs]
-        logger.debug("RunQueue: active jobs %s" % active)
-        for job in [j for j in self.jobs if j.get('jobid') not in active]:
-            logger.info("Job %s/%s: gone from qm" % (job.get('jobid'), job.get('user')))
-            self.jobs.remove(job)
-        # known is jobs that are already registered
-        known = [job.get('jobid') for job in self.jobs]
-        [partition.Free() for partition in self.partitions if partition.job not in known + ['none']]
-        newjobs = [job for job in jobs if job.get('jobid') not in known]
-        logger.debug('RunQueue: newjobs %s' % newjobs)
-        self.jobs.extend([Job(job) for job in newjobs])
-        logger.debug('RunQueue: after extend to Job %s' % self.jobs)
-        placements = self.partitions.Schedule(jobs)
-        if '-t' not in sys.argv:
-            self.SupressDuplicates(placements)
-            for (jobid, part) in placements:
-                try:
-                    comm['qm'].RunJobs([{'tag':'job', 'jobid':jobid}], [part])
-                    pass
-                except:
-                    logger.error("failed to connect to the queue manager to run job %s" % (jobid))
-        else:
-            print "Jobs would be placed on:", placements
-        self.lastrun = time.time()
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
