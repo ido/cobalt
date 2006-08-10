@@ -478,20 +478,20 @@ class BGSched(Cobalt.Component.Component):
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
-        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:t', ['nodb2'])
+        (OPTS, ARGS) = getopt(sys.argv[1:], 'C:dD:t', ['nodb2'])
     except GetoptError, msg:
         print "%s\nUsage:\nbgsched.py [-t] [-C configfile] [-d] [-D <pidfile>] [--nodb2]" % (msg)
         raise SystemExit, 1
     try:
-        daemon = [x[1] for x in opts if x[0] == '-D'][0]
+        DAEMON = [x[1] for x in OPTS if x[0] == '-D'][0]
     except:
-        daemon = False
+        DAEMON = False
     if len([x for x in opts if x[0] == '-d']):
-        dlevel = logging.DEBUG
+        DLEVEL = logging.DEBUG
     else:
-        dlevel = logging.INFO
-    Cobalt.Logging.setup_logging('bgsched', level=dlevel)
-    server = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
-    server.serve_forever()
+        DLEVEL = logging.INFO
+    Cobalt.Logging.setup_logging('bgsched', level=DLEVEL)
+    SERVER = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':DAEMON})
+    SERVER.serve_forever()
     
 
