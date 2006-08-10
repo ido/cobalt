@@ -450,6 +450,31 @@ class BGSched(Cobalt.Component.Component):
             else:
                 self.executed.append(jobid)
 
+    def CanRun(self, nodes, duration, queue, user, location, starttime):
+         '''
+         nodes - size of job
+         duration - walltime of job
+         queue - 
+         user - 
+         location - 
+         starttime - time that job is intended to be started
+         '''
+         # check location
+         if not self.partitions.isFree(location, starttime, duration):
+             return False
+         # check queues
+         
+         # check reservations
+         
+         # check jobs
+         running_jobs = [job for job in self.jobs if job.status == 'running']
+         for rjob in running_jobs:
+             if rjob.get('location') == location or \
+                rjob.get('location') in self.partitions.GetParents(location) or \
+                rjob.location in self.partitions.GetChildren(location):
+                 #if range(starttime, starttime+duration) overlaps with range(rjob.get('starttime'), rjob.get('starttime')+rjob.get('duration')
+                     return False
+
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
     try:
