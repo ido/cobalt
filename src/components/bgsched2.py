@@ -48,6 +48,23 @@ class timeData(Cobalt.Data.Data):
         '''Return Duration events for self'''
         return []
 
+class Reservation(timeData):
+    '''This class represents reservations'''
+    def __init__(self, element):
+        timeData.__init__(self, element)
+
+    def getEvents(self):
+        
+        return [event(self.get('start'), float(self.get('duration')), 'hard')]
+        
+class ReservationSet(Cobalt.Data.DataSet):
+    '''This class hold the reservations'''
+    __object__ = Reservation
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+
+
 class Job(timeData):
     '''This class represents User Jobs'''
     def __init__(self, element):
@@ -62,7 +79,7 @@ class Job(timeData):
             etype = 'soft'
             if self.status == 'planned':
                 etype = 'hard'
-            return [event(self.start, float(self.get('duration')), etype)]
+            return [event(self.start, float(self.get('walltime')), etype)]
         else:
             return []
 
@@ -73,7 +90,7 @@ class Job(timeData):
         else:
             logger.error("Job %s: Attempted to run multiple times" % (self.get('jobid')))
 
-cqmFailed = FailureMode()
+cqmFailed = FailureMode("QM Connection")
 
 class JobSet(Cobalt.Data.DataSet):
     __object__ = Job
@@ -230,7 +247,7 @@ class PartitionSet(Cobalt.Data.DataSet):
     def isFree(self, partname, starttime, duration):
         '''checks if partition is active/enabled for time specified'''
         for part in self.partitions:
-            if part.get('name') == partname and part.get('scheduled') and part.get('functional'):
+            if part.get('name') == partname and part.get('scheduled') and part.get('functional') and part.get('state') == 'idle':
                 return True
                 
         return False
@@ -467,22 +484,29 @@ class BGSched(Cobalt.Component.Component):
         location - 
         starttime - time that job is intended to be started
         '''
+        family = [location] + self.partitions.GetParents(location) + self.partitions.GetChildren(location)
         # check location
         if not self.partitions.isFree(location, starttime, duration):
             return False
         # check queues
         
         # check reservations
-        
+        for res in self.reservations:
+            if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
+                    or
+                    ((float(starttime) + float(duration) < float(res.get('start'))))):
+                
+            if location in res.get('location').split(':') and user not in res.get('user').split(':'):
+                return False
         # check for conflicts with running jobs
         for rjob in [job for job in self.jobs if job.status == 'running']:
-            if rjob.get('location') == location or \
-                   rjob.get('location') in self.partitions.GetParents(location) or \
-                   rjob.location in self.partitions.GetChildren(location):
-                for x in range(int(starttime), int(starttime+duration)):
-                    if x in range(int(rjob.get('starttime')), int(rjob.get('starttime')+rjob.get('duration'))):
-                        return False
-                    
+            if rjob.get('location') in family:
+                if not ((float(starttime) > float(rjob.get('starttime')) + float(rjob.get('walltime')))
+                        or
+                        ((float(starttime) + float(duration) < float(rjob.get('starttime'))))):
+                    return False
+
+        return True
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
