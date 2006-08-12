@@ -58,12 +58,11 @@ class Reservation(timeData):
         return [event(self.get('start'), float(self.get('duration')), 'hard')]
         
 class ReservationSet(Cobalt.Data.DataSet):
-    '''This class hold the reservations'''
+    '''This class holds the reservations'''
     __object__ = Reservation
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
-
 
 class Job(timeData):
     '''This class represents User Jobs'''
@@ -246,7 +245,7 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def isFree(self, partname, starttime, duration):
         '''checks if partition is active/enabled for time specified'''
-        for part in self.partitions:
+        for part in self.data:
             if part.get('name') == partname and part.get('scheduled') and part.get('functional') and part.get('state') == 'idle':
                 return True
                 
@@ -442,6 +441,7 @@ class BGSched(Cobalt.Component.Component):
     def __init__(self, setup):
         self.partitions = PartitionSet()
         self.jobs = JobSet()
+        self.reservations = ReservationSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.executed = []
         self.qmconnect = FailureMode("QM Connection")
@@ -496,8 +496,8 @@ class BGSched(Cobalt.Component.Component):
                     or
                     ((float(starttime) + float(duration) < float(res.get('start'))))):
                 
-            if location in res.get('location').split(':') and user not in res.get('user').split(':'):
-                return False
+                if location in res.get('location').split(':') and user not in res.get('user').split(':'):
+                    return False
         # check for conflicts with running jobs
         for rjob in [job for job in self.jobs if job.status == 'running']:
             if rjob.get('location') in family:
