@@ -6,7 +6,8 @@ import DB2
 import Cobalt.Data
 
 class Base(Cobalt.Data.Data):
-    
+    '''Base block datatype'''
+
     pass
 
 class BaseSet(Cobalt.Data.DataSet):
@@ -173,25 +174,31 @@ class BaseSet(Cobalt.Data.DataSet):
                 if q == total_ionodes:
                     print 'defining whole machine block'
                     base_type = 'full'
+                    topology = 'torus'
+                elif q < total_ionodes and q > iopermidplane*2:
+                    base_type = 'multirack'
+                    topology = 'torus'
                 elif q == iopermidplane*2:
                     print 'defining rack', x / (iopermidplane*2)
                     base_type = 'rack'
+                    topology = 'torus'
                 elif q == iopermidplane:
                     print 'defining R%d M%d' % (x / (iopermidplane*2), (x / iopermidplane) % 2)
                     base_type = 'midplane'
+                    topology = 'torus'
                 else:
                     print 'R%d M%d N%d' % (x / (iopermidplane*2), (x / iopermidplane) % 2, x % (iopermidplane))
                     base_type = 'block'
+                    topology = 'mesh'
 
                 includedIOn = ','.join(['%s' % ionodes[y] for y in range(x, x+q)])
                 computeNodes = q * self.psetsize
                 start_ionode = x
                 rack = '%02d' % (x / (iopermidplane*2))
                 midplane = '%d' % ((x / iopermidplane) % 2)
-                self.Add({'tag':'base', 'type':base_type, 'rack':rack, 'midplane':midplane,
+                self.Add([{'tag':'base', 'type':base_type, 'rack':rack, 'midplane':midplane,
                           'ionodes':includedIOn, 'computenodes':'%d' % computeNodes, 'psets':'%d' % q,
-                          'state':'idle'})
-
+                          'state':'idle', 'topology':topology}])
             q = q / 2
         return
 
@@ -219,27 +226,33 @@ class BaseSet(Cobalt.Data.DataSet):
         else:
             return None
         
-        
+class PartitionSet(BaseSet):
+    '''dummy partitionset'''
+    def Add(self, cdata):
+        '''if adding a partition, fetches the ionodes for it
+        and adds them as a field'''
+        for datum in cdata:
+            print 'datum', datum
+            if datum.get('tag') == 'partition':
+                #todo: check if datum.has_key('name')
+                pionodes = self.getPartIONodes(datum.get('name'))
+                print 'pionodes are', pionodes
+                [baseblock] = [block for block in self.data if block.get('ionodes') == ','.join(pionodes)]
+                for x in baseblock._attrib:
+                    if not datum.has_key(x) and x != 'stamp':
+                        datum.update({x:baseblock._attrib[x]})
+                    
+        BaseSet.Add(self, cdata)
+
 if __name__ == '__main__':
-    newbaseset = BaseSet(1, 32)
-    machine = newbaseset.Get([{'tag':'base', 'psets':'*', 'startnc':'*', 'rack':'*', 'midplane':'*',
-                               'ionodes':'*', 'computenodes':'*', 'type':'*', 'state':'*'}])
-    pprint.pprint(machine)
-    print 'parents of R00-M1-NC:J18-U01'
-    child = newbaseset.Get([{'tag':'base', 'psets':'*', 'startnc':'*', 'rack':'*', 'midplane':'*',
-                             'ionodes':'R00-M1-NC:J18-U01', 'computenodes':'*', 'type':'*', 'state':'*'}])
-    testparents = newbaseset.getParents(child[0])
-    for p in testparents:
-        print "%s-%s: R%s M%s %s" % (p.get('computenodes'), p.get('type'), p.get('rack'), p.get('midplane'), p.get('ionodes'))
-
-    print 'children'
-    testchildren = newbaseset.getChildren(child[0])
-    for c in testchildren:
-        print "%s-%s: R%s M%s %s" % (c.get('computenodes'), c.get('type'), c.get('rack'), c.get('midplane'), c.get('ionodes'))
-
-    midio = newbaseset.getMidplaneIONodes('00', '0')
-    print midio
+    newpartset = PartitionSet(1, 32)
     
-    print newbaseset.getPartIONodes("R001_J210-128")
-    print newbaseset.getPartIONodes("ANL_R000")
+    machine = newpartset.Get([{'tag':'base', 'psets':'*', 'startnc':'*', 'rack':'*', 'midplane':'*',
+                               'ionodes':'*', 'computenodes':'*', 'type':'*', 'topology':'*', 'state':'*'}])
+    pprint.pprint(machine)
+    newpartset.Add([{'tag':'partition', 'name':x} for x in ['R000_J102-128', 'R000_J102-32', 'R000_J102-64', 'R000_J104-32', 'R000_J106-32', 'R000_J106-64', 'R000_J108-32']])
+    pprint.pprint([x._attrib for x in newpartset.data])
+
+    theblock = newpartset.Get([{'tag':'partition', 'name':'R000_J102-128', 'psets':'*', 'computenodes':'*'}])
+    print theblock
     
