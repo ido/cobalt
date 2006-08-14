@@ -58,7 +58,7 @@ class Reservation(timeData):
         timeData.__init__(self, element)
 
     def getEvents(self):
-        
+        '''Reservations are hard events'''
         return [Event(self.get('start'), float(self.get('duration')), 'hard', 0)]
         
 class ReservationSet(Cobalt.Data.DataSet):
@@ -80,8 +80,7 @@ class Job(timeData):
     def __init__(self, element):
         timeData.__init__(self, element)
         self.partition = 'none'
-        logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
-                                                       self.get('user')))
+        logger.info("Job %s/%s: Found new job" % (self.get('jobid'), self.get('user')))
         self.start = -1
 
     def getEvents(self):
@@ -246,11 +245,10 @@ class PartitionSet(Cobalt.Data.DataSet):
             except:
                 print "Failed to connect to DB2"
                 raise SystemExit, 1
-        self.jobs = []
         self.qmconnect = FailureMode("QM Connection")
 
     def __getstate__(self):
-        return {'data':copy.deepcopy(self.data), 'jobs':copy.deepcopy(self.jobs)}
+        return {'data':copy.deepcopy(self.data)}
 
     def __setstate__(self, state):
         self.__dict__.update(state)
@@ -260,26 +258,57 @@ class PartitionSet(Cobalt.Data.DataSet):
             self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
                                    dsn=self.config.get('db2dsn')).cursor()
 
-    def isFree(self, partname, starttime, duration):
-        '''checks if partition is active/enabled for time specified'''
+    def isFree(self, partname):
+        '''checks if partition is active/enabled'''
         for part in self.data:
-            if part.get('name') == partname and part.get('scheduled') and part.get('functional') and part.get('state') == 'idle':
+            if part.get('name') == partname and part.get('scheduled') and \
+                   part.get('functional') and part.get('state') == 'idle':
                 return True
                 
         return False
+
+class AdminAction(timeData):
+    '''machine actions, should have a location for the action'''
+    def __init__(self, element):
+        timeData.__init__(self, element)
+
+    def getEvents(self):
+        '''All admin actions are hard events'''
+        return [Event(float(self.get('start')), float(self.get('duration')), 'hard',
+                      float(self.get('recurrence')))]
+
+class AdminActionSet(Cobalt.Data.DataSet):
+    '''Holds online/offline actions for the machine (partitions and the like)'''
+    __object__ = AdminAction
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+
+    def ScanEvents(self):
+        '''Generic event-grabbing'''
+        events = []
+        for action in self:
+            events += action.getEvents()
+        return events
+
+    def isFree(self, location, starttime, duration):
+        '''Checks for actions that would conflict with the defined time'''
+        # TODO: implement isFree
+        pass
 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched'
     __name__ = 'scheduler'
-    __statefields__ = ['partitions', 'jobs']
+    __statefields__ = ['partitions', 'jobs', 'reservations', 'actions']
     __schedcycle__ = 10
-    async_funcs = ['assert_location', 'RunQueue']
+    async_funcs = ['assert_location']
 
     def __init__(self, setup):
         self.partitions = PartitionSet()
         self.jobs = JobSet()
         self.reservations = ReservationSet()
+        self.actions = AdminActionSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.executed = []
         self.qmconnect = FailureMode("QM Connection")
@@ -324,11 +353,13 @@ class BGSched(Cobalt.Component.Component):
         '''
         family = [location] + self.partitions.GetParents(location) + self.partitions.GetChildren(location)
         # check location
-        if not self.partitions.isFree(location, starttime, duration):
+        if not self.partitions.isFree(location):
             return False
-        # check queues
+        if not self.actions.isFree(location, starttime, duration):
+            return False
+        # TODO: check queues
         
-        # check reservations
+        # check for overlapping reservations
         for res in self.reservations:
             if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
                     or
@@ -336,7 +367,7 @@ class BGSched(Cobalt.Component.Component):
                 
                 if location in res.get('location').split(':') and user not in res.get('user').split(':'):
                     return False
-        # check for conflicts with running jobs
+        # check for overlapping running jobs
         for rjob in [job for job in self.jobs if job.status == 'running']:
             if rjob.get('location') in family:
                 if not ((float(starttime) > float(rjob.get('starttime')) + float(rjob.get('walltime')))
@@ -370,7 +401,7 @@ if __name__ == '__main__':
         DAEMON = [x[1] for x in OPTS if x[0] == '-D'][0]
     except:
         DAEMON = False
-    if len([x for x in opts if x[0] == '-d']):
+    if len([x for x in OPTS if x[0] == '-d']):
         DLEVEL = logging.DEBUG
     else:
         DLEVEL = logging.INFO
