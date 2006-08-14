@@ -34,10 +34,14 @@ class FailureMode(object):
 
 class event:
     '''events describe an event in terms of start and duration'''
-    def __init__(self, start, duration, status):
+    def __init__(self, start, duration, status, recurrence):
         self.start = start
         self.duration = duration
         self.status = status
+        self.recurrence = recurrence
+
+    def __cmp__(self, other):
+        return cmp(self.start, other.start)
 
 class timeData(Cobalt.Data.Data):
     '''timeData is a class that can generate event traces for temporal ops'''
@@ -55,7 +59,7 @@ class Reservation(timeData):
 
     def getEvents(self):
         
-        return [event(self.get('start'), float(self.get('duration')), 'hard')]
+        return [event(self.get('start'), float(self.get('duration')), 'hard', 0)]
         
 class ReservationSet(Cobalt.Data.DataSet):
     '''This class holds the reservations'''
@@ -78,7 +82,7 @@ class Job(timeData):
             etype = 'soft'
             if self.status == 'planned':
                 etype = 'hard'
-            return [event(self.start, float(self.get('walltime')), etype)]
+            return [event(self.start, float(self.get('walltime')), etype, 0)]
         else:
             return []
 
@@ -134,6 +138,11 @@ class JobSet(Cobalt.Data.DataSet):
                 logger.info("Job %s has completed" % (job.get("jobid")))
                 self.Del([{'tag':'job', 'jobid':job.get('jobid')}])
         self.lastrun = time.time()
+
+    def ScanEvents(self):
+        events = []
+        for job in self:
+            events += job.getEvents()
 
 class Partition(timeData):
     '''Partitions are allocatable chunks of the machine'''
