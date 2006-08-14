@@ -32,7 +32,7 @@ class FailureMode(object):
             logger.error("Failure %s occured" % (self.name))
             self.status = False
 
-class event:
+class Event:
     '''events describe an event in terms of start and duration'''
     def __init__(self, start, duration, status, recurrence):
         self.start = start
@@ -59,7 +59,7 @@ class Reservation(timeData):
 
     def getEvents(self):
         
-        return [event(self.get('start'), float(self.get('duration')), 'hard', 0)]
+        return [Event(self.get('start'), float(self.get('duration')), 'hard', 0)]
         
 class ReservationSet(Cobalt.Data.DataSet):
     '''This class holds the reservations'''
@@ -67,6 +67,13 @@ class ReservationSet(Cobalt.Data.DataSet):
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
+
+    def ScanEvents(self):
+        '''ScanEvents returns a list of events describing activity'''
+        events = []
+        for reservation in self:
+            events += reservation.getEvents()
+        return events
 
 class Job(timeData):
     '''This class represents User Jobs'''
@@ -82,7 +89,7 @@ class Job(timeData):
             etype = 'soft'
             if self.status == 'planned':
                 etype = 'hard'
-            return [event(self.start, float(self.get('walltime')), etype, 0)]
+            return [Event(self.start, float(self.get('walltime')), etype, 0)]
         else:
             return []
 
@@ -130,7 +137,7 @@ class JobSet(Cobalt.Data.DataSet):
                     self.Add([current])
                     continue
                 # job is modified
-		# sync data here
+		# FIXME sync data here
                 pass
 	# find finished jobs
         for job in self:
@@ -143,6 +150,7 @@ class JobSet(Cobalt.Data.DataSet):
         events = []
         for job in self:
             events += job.getEvents()
+        return events
 
 class Partition(timeData):
     '''Partitions are allocatable chunks of the machine'''
@@ -337,6 +345,19 @@ class BGSched(Cobalt.Component.Component):
                     return False
 
         return True
+
+    def Schedule(self):
+        '''Perform all periodic scheduling work'''
+        self.jobs.Sync()
+        # FIXME process changes to existing events
+        # FIXME invalidate all provisional events newer than oldest invalid one
+        # FIXME call the recursive checker to produce a list of options
+        # FIXME evaluate metric on each
+        # FIXME set provisional schedule entries 
+
+    def StartJobs(self):
+        '''Start jobs whose start time has passed'''
+        pass
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
