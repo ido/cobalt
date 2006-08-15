@@ -292,9 +292,14 @@ class AdminActionSet(Cobalt.Data.DataSet):
         return events
 
     def isFree(self, location, starttime, duration):
-        '''Checks for actions that would conflict with the defined time'''
-        # TODO: implement isFree
-        pass
+        '''Checks for actions that would conflict with the proposed time'''
+        for action in self:
+            if action.get('location') == location:
+                if not ((float(starttime) > float(action.get('start')) + float(action.get('duration')))
+                        or
+                        ((float(starttime) + float(duration) < float(action.get('start'))))):
+                    return False
+        return True
 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
