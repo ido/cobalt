@@ -374,12 +374,13 @@ class BGSched(Cobalt.Component.Component):
         duration - walltime of job
         queue - 
         user - 
-        location - 
+        location - partition object
         starttime - time that job is intended to be started
         '''
-        family = [location] + self.partitions.GetParents(location) + self.partitions.GetChildren(location)
+        family = [location] + [p.get('name') for p in self.partitions.getParents(location)] + \
+                 [p.get('name') for p in self.partitions.getChildren(location)]
         # check location
-        if not self.partitions.isFree(location):
+        if not location.CanRun():
             return False
         if not self.actions.isFree(location, starttime, duration):
             return False
@@ -409,6 +410,17 @@ class BGSched(Cobalt.Component.Component):
         # FIXME process changes to existing events
         # FIXME invalidate all provisional events newer than oldest invalid one
         # FIXME call the recursive checker to produce a list of options
+        e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
+        j_to_check = [j for j in self.jobs if j.get('state') == 'queued'] #should this be j.start == -1 or self.partition = 'none'?
+
+        j_to_run = {}
+        for j in j_to_check:
+            for e in e_to_check:
+                for p in self.partitions:
+                    if self.CanRun(j.get('nodes'), j.get('walltime'), j.get('queue'),
+                                   j.get('user'), p, e.start + e.duration):
+                        j_to_run[j.get('jobid')].append((e,p))
+        
         # FIXME evaluate metric on each
         # FIXME set provisional schedule entries 
 
