@@ -131,13 +131,19 @@ class JobSet(Cobalt.Data.DataSet):
                 # job is already registered and matches
                 continue
             else:
-                if not self.Get([{'tag':'job', 'jobid':current.get('jobid')}]):
+                oldjob = self.Get([{'tag':'job', 'jobid':current.get('jobid')}])
+                if not oldjob:
                     # job is new
                     self.Add([current])
                     continue
-                # job is modified
-		# FIXME sync data here
-                pass
+                else:
+                    old = oldjob[0]
+                    # job is modified
+                    for key in [key for key in current._attrib if
+                                key not in ['tag', 'jobid']]:
+                        if old.get(key) != current.get(key):
+                            logger.info("Updating field %s for job %s" % (key, current.get('jobid')))
+                            old.set(key, current.get(key))
 	# find finished jobs
         for job in self:
             if job.get('jobid') not in active:
