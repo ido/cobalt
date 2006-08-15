@@ -28,6 +28,11 @@ def GenerateRespMetric(schedule):
     # FIXME figure out how to measure system responsiveness
     return 1.0
 
+def GenerateSpanMetric(schedule):
+    '''Generate Span Metric for schedule'''
+    return max([(sched[0] + sched[3]) for sched in schedule]) - \
+           min([sched[0] for sched in schedule])
+
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
     call Pass() on success and Fail() on error'''
