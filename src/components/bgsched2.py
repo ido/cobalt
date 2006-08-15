@@ -391,11 +391,18 @@ class BGSched(Cobalt.Component.Component):
 
         return True
 
+    def InvalidatePlanned(self):
+        '''Unplan events that have been impacted by system events'''
+        # TODO find pertitent activities
+        # TODO find associated jobs (since they are all we schedule)
+        # TODO remove planned actions (replacement will be handled by stock sched seq)
+        # TODO invalidate all provisional events newer than oldest invalid one
+        pass
+
     def Schedule(self):
         '''Perform all periodic scheduling work'''
         self.jobs.Sync()
-        # FIXME process changes to existing events
-        # FIXME invalidate all provisional events newer than oldest invalid one
+        self.InvalidatePlanned()
         # FIXME call the recursive checker to produce a list of options
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued'] #should this be j.start == -1 or self.partition = 'none'?
