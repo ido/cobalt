@@ -203,24 +203,6 @@ class Partition(timeData):
         size = ((psize >= jsize) and ((psize == 32) or (jsize > psize/2)))
         if not (basic and queue and size):
             return False
-        # add a little slack for job cleanup with reservation calculations
-        wall = float(job.get('walltime')) + 5.0
-        jdur = 60 * wall
-        # all times are in seconds
-        current = time.time()
-        for (_, user, start, rdur) in self.get('reservations'):
-            if job.get('user') in user:
-                continue
-            if current < start:
-                # reservation has not started
-                if start < (current + jdur):
-                    return False
-            elif current > (start + rdur):
-                # reservation has finished
-                continue
-            else:
-                # reservation is active
-                return False
         return True
 
     def PlaceJob(self, job):
@@ -320,7 +302,7 @@ class AdminActionSet(Cobalt.Data.DataSet):
     def isFree(self, location, starttime, duration):
         '''Checks for actions that would conflict with the proposed time'''
         for action in self:
-            if action.get('location') == location:
+            if action.get('location') == location.get('name'):
                 if not ((float(starttime) > float(action.get('start')) + float(action.get('duration')))
                         or
                         ((float(starttime) + float(duration) < float(action.get('start'))))):
@@ -385,7 +367,7 @@ class BGSched(Cobalt.Component.Component):
         family = [location] + [p.get('name') for p in self.partitions.getParents(location)] + \
                  [p.get('name') for p in self.partitions.getChildren(location)]
         # check location
-        if not location.CanRun():
+        if not location.CanRun({'queue':queue, 'nodes':nodes}):
             return False
         if not self.actions.isFree(location, starttime, duration):
             return False
