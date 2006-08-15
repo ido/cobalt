@@ -13,6 +13,21 @@ logger = logging.getLogger('bgsched')
 
 comm = Cobalt.Proxy.CommDict()
 
+def GenerateUtilMetric(schedule):
+    '''Generate Utilization metric for a given provisional schedule'''
+    # schedule is (start, location, nodes, duration) 
+    filled = sum([sched[2] * sched[3] for sched in schedule])
+    span = max([(sched[0] + sched[3]) for sched in schedule]) - \
+           min([sched[0] for sched in schedule])
+    # FIXME get dynamic system size
+    size = 1024.0
+    return filled / (span * size)
+
+def GenerateRespMetric(schedule):
+    '''Generate System Responsiveness Metric'''
+    # FIXME figure out how to measure system responsiveness
+    return 1.0
+
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
     call Pass() on success and Fail() on error'''
