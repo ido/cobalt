@@ -407,16 +407,24 @@ class BGSched(Cobalt.Component.Component):
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued'] #should this be j.start == -1 or self.partition = 'none'?
 
-        j_to_run = {}
-        for j in j_to_check:
-            for e in e_to_check:
+        epossible = {} #events with possible job,partition combinations for each event
+        for e in e_to_check:
+            for j in j_to_check:
+                epossible[e] = []
                 for p in self.partitions:
                     if self.CanRun(j.get('nodes'), j.get('walltime'), j.get('queue'),
                                    j.get('user'), p, e.start + e.duration):
-                        j_to_run[j.get('jobid')].append((e,p))
+                        epossible[e].append( (j.get('jobid'), p) )
+
+        schedule = getPossible(epossible)
         
         # FIXME evaluate metric on each
         # FIXME set provisional schedule entries 
+
+    def getPossible(self, epossible):
+        ''''''
+        # epossible is {event:[(jobid, partition), ...]}
+        pass
 
     def StartJobs(self):
         '''Start jobs whose start time has passed'''
