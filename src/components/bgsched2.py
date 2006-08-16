@@ -371,9 +371,11 @@ class BGSched(Cobalt.Component.Component):
             return False
         if not self.actions.isFree(location, starttime, duration):
             return False
-        # TODO: check queues
+
+        # TODO check runtime queue restrictions
         
         # check for overlapping reservations
+        # TODO make this into method in Reservation object
         for res in self.reservations:
             if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
                     or
@@ -382,6 +384,7 @@ class BGSched(Cobalt.Component.Component):
                 if location in res.get('location').split(':') and user not in res.get('user').split(':'):
                     return False
         # check for overlapping running jobs
+        # TODO make into Job object method
         for rjob in [job for job in self.jobs if job.status == 'running']:
             if rjob.get('location') in family:
                 if not ((float(starttime) > float(rjob.get('starttime')) + float(rjob.get('walltime')))
@@ -405,13 +408,16 @@ class BGSched(Cobalt.Component.Component):
         self.InvalidatePlanned()
         # FIXME call the recursive checker to produce a list of options
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
-        j_to_check = [j for j in self.jobs if j.get('state') == 'queued'] #should this be j.start == -1 or self.partition = 'none'?
+        j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
 
+        # TODO index by job, not event
+        # TODO list of placements, and list of leftover jobs
         epossible = {} #events with possible job,partition combinations for each event
         for e in e_to_check:
             for j in j_to_check:
                 epossible[e] = []
                 for p in self.partitions:
+                    # TODO pass tuple(job, event, location) to CanRun
                     if self.CanRun(j.get('nodes'), j.get('walltime'), j.get('queue'),
                                    j.get('user'), p, e.start + e.duration):
                         epossible[e].append( (j.get('jobid'), p) )
