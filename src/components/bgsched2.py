@@ -355,21 +355,18 @@ class BGSched(Cobalt.Component.Component):
             else:
                 self.executed.append(jobid)
 
-    def CanRun(self, nodes, duration, queue, user, location, starttime):
+    def CanRun(self, jobspec, location, starttime, tentative):
         '''
-        nodes - size of job
-        duration - walltime of job
-        queue - 
-        user - 
+        jobspec - job info
         location - partition object
         starttime - time that job is intended to be started
         '''
         family = [location] + [p.get('name') for p in self.partitions.getParents(location)] + \
                  [p.get('name') for p in self.partitions.getChildren(location)]
         # check location
-        if not location.CanRun({'queue':queue, 'nodes':nodes}):
+        if not location.CanRun({'queue':jobspec.get('queue'), 'nodes':jobspec.get('nodes')}):
             return False
-        if not self.actions.isFree(location, starttime, duration):
+        if not self.actions.isFree(location, starttime, jobspec.get('walltime')):
             return False
 
         # TODO check runtime queue restrictions
@@ -379,9 +376,9 @@ class BGSched(Cobalt.Component.Component):
         for res in self.reservations:
             if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
                     or
-                    ((float(starttime) + float(duration) < float(res.get('start'))))):
+                    ((float(starttime) + float(jobspec.get('walltime')) < float(res.get('start'))))):
                 
-                if location in res.get('location').split(':') and user not in res.get('user').split(':'):
+                if location in res.get('location').split(':') and job.get('user') not in res.get('user').split(':'):
                     return False
         # check for overlapping running jobs
         # TODO make into Job object method
@@ -389,7 +386,15 @@ class BGSched(Cobalt.Component.Component):
             if rjob.get('location') in family:
                 if not ((float(starttime) > float(rjob.get('starttime')) + float(rjob.get('walltime')))
                         or
-                        ((float(starttime) + float(duration) < float(rjob.get('starttime'))))):
+                        ((float(starttime) + float(jobspec.get('walltime')) < float(rjob.get('starttime'))))):
+                    return False
+
+        # check for overlapping tentative jobs
+        for ten in tentative:
+            if ten[1].get('name') in family: 
+                if not ((float(starttime) > float(ten[0].get('starttime')) + float(ten[0].get('walltime')))
+                        or
+                        ((float(starttime) + float(jobspec.get('walltime')) < float(ten[0].get('starttime'))))):
                     return False
 
         return True
@@ -412,25 +417,49 @@ class BGSched(Cobalt.Component.Component):
 
         # TODO index by job, not event
         # TODO list of placements, and list of leftover jobs
-        epossible = {} #events with possible job,partition combinations for each event
-        for e in e_to_check:
-            for j in j_to_check:
-                epossible[e] = []
-                for p in self.partitions:
-                    # TODO pass tuple(job, event, location) to CanRun
-                    if self.CanRun(j.get('nodes'), j.get('walltime'), j.get('queue'),
-                                   j.get('user'), p, e.start + e.duration):
-                        epossible[e].append( (j.get('jobid'), p) )
+        newschedule = self.findPossibleStart(j_to_check, e_to_check)
 
-        schedule = getPossible(epossible)
-        
+                    # TODO check start and end points for event
+                    # TODO pass tuple(job, event, location) to CanRun
+#                     if self.CanRun(j.get('nodes'), j.get('walltime'), j.get('queue'),
+#                                    j.get('user'), p, e.start + e.duration):
+#                         epossible[e].append( (j.get('jobid'), p) )
+
         # FIXME evaluate metric on each
         # FIXME set provisional schedule entries 
 
-    def getPossible(self, epossible):
-        ''''''
-        # epossible is {event:[(jobid, partition), ...]}
-        pass
+    def findPossibleStart(self, newjobs, newevents):
+        '''start func for recursion'''
+        tentative = []
+        
+        theschedule = self.findPossible(newjobs, newevents, tentative)
+        
+
+    def findPossible(self, jobs, events, tentative):
+        '''find possible'''
+        if not jobs:
+            return []
+        for job in jobs:
+            # find all possible run combos for job
+
+            for event in events:
+                for part in self.partitions:
+                    # check start of event
+                    if self.CanRun(job, part, event.start, tentative):
+                        # add to tentative
+                        # recurse with that job event added?
+                        tentative.append((job, part, event.start))
+                        tempjobs = jobs[:]
+                        tempjobs.remove(job)
+                        self.findPossible(tempjobs, events + [Event(event.start, job.get('walltime'), 'hard', 0)], tentative)
+                    # check end of event
+                    if self.CanRun(job, part, event.start + event.duration, tentative):
+                        tentative.append((job, part, event.start + event.duration))
+                        tempjobs = jobs[:]
+                        tempjobs.remove(job)
+                        self.findPossible(tempjobs, events + [Event(event.start + event.duration, job.get('walltime'), 'hard', 0)], tentative)
+
+        print 'tentative schedule', tentative
 
     def StartJobs(self):
         '''Start jobs whose start time has passed'''
