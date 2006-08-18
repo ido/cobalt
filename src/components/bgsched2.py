@@ -419,12 +419,6 @@ class BGSched(Cobalt.Component.Component):
         # TODO list of placements, and list of leftover jobs
         newschedule = self.findPossibleStart(j_to_check, e_to_check)
 
-                    # TODO check start and end points for event
-                    # TODO pass tuple(job, event, location) to CanRun
-#                     if self.CanRun(j.get('nodes'), j.get('walltime'), j.get('queue'),
-#                                    j.get('user'), p, e.start + e.duration):
-#                         epossible[e].append( (j.get('jobid'), p) )
-
         # FIXME evaluate metric on each
         # FIXME set provisional schedule entries 
 
@@ -432,34 +426,30 @@ class BGSched(Cobalt.Component.Component):
         '''start func for recursion'''
         tentative = []
         
-        theschedule = self.findPossible(newjobs, newevents, tentative)
-        
+        (score, theschedule) = self.findPossible(newjobs, newevents, tentative)
 
     def findPossible(self, jobs, events, tentative):
         '''find possible'''
+        # at leaf node, evaluate tentative schedule
         if not jobs:
-            return []
-        for job in jobs:
-            # find all possible run combos for job
+            score = evaluate(tentative)
+            return (score, tentative)
+        # find all possible run combos for job
+        for job,event,part in [(j,e,p) for j in jobs for e in events for p in partitions]:
+            for e in [event.start, event.start + event.duration]:
+                if self.CanRun(job, part, e, tentative):
+                    # add to tentative, recurse with that job event added
+                    # remove job from potential jobs list
+                    ten = tentative[:]
+                    ten.append((job, part, e))
+                    tempjobs = jobs[:]
+                    tempjobs.remove(job)
+                    (newscore, newschedule) = self.findPossible(tempjobs, events + [Event(e, job.get('walltime'), 'hard', 0)], ten)
+                    if newscore > best_score:
+                        best_score = newscore
+                        best_schedule = newschedule
 
-            for event in events:
-                for part in self.partitions:
-                    # check start of event
-                    if self.CanRun(job, part, event.start, tentative):
-                        # add to tentative
-                        # recurse with that job event added?
-                        tentative.append((job, part, event.start))
-                        tempjobs = jobs[:]
-                        tempjobs.remove(job)
-                        self.findPossible(tempjobs, events + [Event(event.start, job.get('walltime'), 'hard', 0)], tentative)
-                    # check end of event
-                    if self.CanRun(job, part, event.start + event.duration, tentative):
-                        tentative.append((job, part, event.start + event.duration))
-                        tempjobs = jobs[:]
-                        tempjobs.remove(job)
-                        self.findPossible(tempjobs, events + [Event(event.start + event.duration, job.get('walltime'), 'hard', 0)], tentative)
-
-        print 'tentative schedule', tentative
+        return (best_score, best_schedule)
 
     def StartJobs(self):
         '''Start jobs whose start time has passed'''
