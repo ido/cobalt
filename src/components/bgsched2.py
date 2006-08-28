@@ -415,8 +415,6 @@ class BGSched(Cobalt.Component.Component):
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
 
-        # TODO index by job, not event
-        # TODO list of placements, and list of leftover jobs
         newschedule = self.findPossibleStart(j_to_check, e_to_check)
 
         # FIXME evaluate metric on each
