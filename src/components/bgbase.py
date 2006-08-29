@@ -41,7 +41,7 @@ class BaseSet(Cobalt.Data.DataSet):
 
     def getIONodes(self):
         '''Get location of i/o nodes from db2'''
-        if '--debug' not in sys.argv:
+        if '--nodb2' not in sys.argv:
             db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
 
             db2.execute("SELECT LOCATION,IPADDRESS FROM tbglippool")
@@ -211,7 +211,7 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def getPartIONodes(self, partname):
         '''retrieves the IOnodes for the specified partition'''
-        if '--debug' in sys.argv:
+        if '--nodb2' in sys.argv:
             iodict = {'32wayN0':['R00-M0-N0:J18-U01'],
                       '32wayN1':['R00-M0-N1:J18-U01'],
                       '32wayN2':['R00-M0-N2:J18-U01'],
