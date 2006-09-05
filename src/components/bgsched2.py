@@ -636,7 +636,7 @@ class BGSched(Cobalt.Component.Component):
                     or
                     ((float(starttime) + float(jobspec.get('walltime')) < float(res.get('start'))))):
                 
-                if location in res.get('location').split(':') and job.get('user') not in res.get('user').split(':'):
+                if location in res.get('location').split(':') and jobspec.get('user') not in res.get('user').split(':'):
                     return False
         # check for overlapping running jobs
         # TODO make into Job object method
@@ -669,7 +669,7 @@ class BGSched(Cobalt.Component.Component):
         '''Perform all periodic scheduling work'''
         self.jobs.Sync()
         self.InvalidatePlanned()
-        # FIXME call the recursive checker to produce a list of options
+        # call the recursive checker to produce a list of options
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
 
@@ -691,7 +691,8 @@ class BGSched(Cobalt.Component.Component):
             score = evaluate(tentative)
             return (score, tentative)
         # find all possible run combos for job
-        for job, event, part in [(j,e,p) for j in jobs for e in events for p in partitions]:
+        best_score = -1
+        for job, event, part in [(j, e, p) for j in jobs for e in events for p in self.partitions]:
             for e in [event.start, event.start + event.duration]:
                 if self.CanRun(job, part, e, tentative):
                     # add to tentative, recurse with that job event added
