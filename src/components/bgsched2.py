@@ -569,7 +569,7 @@ class AdminActionSet(Cobalt.Data.DataSet):
 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
-    __implementation__ = 'bgsched'
+    __implementation__ = 'bgsched2'
     __name__ = 'scheduler'
     __statefields__ = ['partitions', 'jobs', 'reservations', 'actions']
     __schedcycle__ = 10
