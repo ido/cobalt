@@ -572,7 +572,7 @@ class BGJob(Job):
             mserver = 'localhost'
         else:
             mserver = mailserver
-        subj = 'Cobalt: Job %s/%s started' % (self.get('jobid'), self.get('user'))
+        subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.get('jobid'), self.get('user'), self.get('queue'), self.get('location'))
         mmsg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()))
         toaddr = []
         if self.get('adminemail') != '*':
@@ -588,7 +588,7 @@ class BGJob(Job):
             mserver = 'localhost'
         else:
             mserver = mailserver
-        subj = 'Cobalt: Job %s/%s finished' % (self.get('jobid'), self.get('user'))
+        subj = 'Cobalt: Job %s/%s finished - %s/%s %s' % (self.get('jobid'), self.get('user'), self.get('queue'), self.get('location'), self.GetStats())
         mmsg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.get('jobid'), self.get('user'), self.get('location'), self.get('queue'), time.strftime('%c', time.localtime()), self.GetStats())
         toaddr = []
         if self.get('adminemail') != '*':
