@@ -503,7 +503,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             for b in result:
                 rack = b[1].strip()[1:3]
                 midplane = b[1].strip()[-1]
-                ionodes.append("R%s-M%s-%s:%s-%s" % (rack, midplane, self.__ncdefs__[b[3].strip()],
+                ionodes.append("R%s-M%s-%s:%s-%s" % (rack, midplane, self.basemachine.__ncdefs__[b[3].strip()],
                                                      b[4].strip(), b[5].strip()))
         else:  #match up rack and midplane(s)?
             db2.execute("select bpid from TBGLBPBLOCKMAP where blockid='%s'" % partname)
@@ -688,19 +688,17 @@ class BGSched(Cobalt.Component.Component):
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
 
         newschedule = self.findPossibleStart(j_to_check, e_to_check)
-
-        # FIXME evaluate metric on each
         # FIXME set provisional schedule entries 
 
     def findPossibleStart(self, newjobs, newevents):
         '''start func for recursion'''
         tentative = []
         
-        (score, theschedule) = self.findPossible(newjobs, newevents, tentative)
+        (score, theschedule) = self.findBest(newjobs, newevents, tentative)
         return theschedule
 
-    def findPossible(self, jobs, events, tentative):
-        '''find possible'''
+    def findBest(self, jobs, events, tentative):
+        '''find best schedule using DFS and our metrics'''
         # at leaf node, evaluate tentative schedule
         if not jobs:
             score = Evaluate(tentative)
@@ -716,8 +714,8 @@ class BGSched(Cobalt.Component.Component):
                     ten.append((job, part, e))
                     tempjobs = jobs[:]
                     tempjobs.remove(job)
-                    (newscore, newschedule) = self.findPossible(tempjobs,
-                                                                events+[Event(e, job.get('walltime'), 'hard', 0)], ten)
+                    (newscore, newschedule) = self.findBest(tempjobs,
+                                                            events+[Event(e, job.get('walltime'), 'hard', 0)], ten)
                     if newscore > best_score:
                         best_score = newscore
                         best_schedule = newschedule
