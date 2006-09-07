@@ -33,6 +33,10 @@ def GenerateSpanMetric(schedule):
     return max([(sched[0] + sched[3]) for sched in schedule]) - \
            min([sched[0] for sched in schedule])
 
+def Evaluate(schedule):
+    '''Calculate the schedule metric'''
+    return GenerateSpanMetric(schedule)
+
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
     call Pass() on success and Fail() on error'''
@@ -104,6 +108,7 @@ class Job(timeData):
         self.start = -1
 
     def getEvents(self):
+        '''Get events corresponding to this instance'''
         if self.start != -1:
             etype = 'soft'
             if self.status == 'planned':
@@ -113,6 +118,7 @@ class Job(timeData):
             return []
 
     def planRun(self, start):
+        '''Set a tenative start time'''
         if self.start == -1:
             self.start = start
             self.status = 'planned'
@@ -256,7 +262,8 @@ class BaseSet(Cobalt.Data.DataSet):
     def getIONodes(self):
         '''Get location of i/o nodes from db2'''
         if '--nodb2' not in sys.argv:
-            db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
+            db2 = DB2.connect(uid=self.config.get('db2uid'),
+                              pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
 
             db2.execute("SELECT LOCATION,IPADDRESS FROM tbglippool")
             results = db2.fetchall()
@@ -347,7 +354,8 @@ class BaseSet(Cobalt.Data.DataSet):
         total_ionodes = (1024/self.psetsize) * self.racks  #total ionodes
         total_midplanes = self.racks * 2
         iopermidplane = total_ionodes/total_midplanes
-        print 'total_ionodes: %d\ntotal_midplanes: %d\niopermidplane: %d' % (total_ionodes, total_midplanes, iopermidplane)
+        print 'total_ionodes: %d\ntotal_midplanes: %d\niopermidplane: %d' % \
+              (total_ionodes, total_midplanes, iopermidplane)
         print 'length of ionodes', len(ionodes)
         q = total_ionodes
         while q > 0:
@@ -371,7 +379,7 @@ class BaseSet(Cobalt.Data.DataSet):
                     base_type = 'midplane'
                     topology = 'torus'
                 else:
-                    #print 'defining R%d M%d N%d' % (x / (iopermidplane*2), (x / iopermidplane) % 2, x % (iopermidplane))
+                    #print 'defining R%d M%d N%d' % (x/(iopermidplane*2), (x / iopermidplane) % 2, x % (iopermidplane))
                     base_type = 'block'
                     topology = 'mesh'
 
@@ -455,7 +463,8 @@ class PartitionSet(Cobalt.Data.DataSet):
 
                 # from the ionodes, fill in the rest of the attributes from the base block
                 for block in self.basemachine:
-                    if len(pionodes) == len([p for p in pionodes if p in block.get('ionodes')]) and len(pionodes) == len(block.get('ionodes')):
+                    if len(pionodes) == len([p for p in pionodes if p in block.get('ionodes')]) \
+                    and len(pionodes) == len(block.get('ionodes')):
                         baseblock = block
                         print 'block matches', block.get('ionodes')
                 for x in baseblock._attrib:
@@ -478,7 +487,8 @@ class PartitionSet(Cobalt.Data.DataSet):
             return iodict.get(partname, None)
 
         ionodes = []
-        db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
+        db2 = DB2.connect(uid=self.config.get('db2uid'),
+                          pwd=self.config.get('db2pwd'), dsn=self.config.get('db2dsn')).cursor()
         
         # first get blocksize in nodes
         db2.execute("select size from BGLBLOCKSIZE where blockid='%s'" % partname)
@@ -530,8 +540,12 @@ class PartitionSet(Cobalt.Data.DataSet):
             if part.get('name') == partname and part.get('scheduled') and \
                    part.get('functional') and part.get('state') == 'idle':
                 return True
-                
         return False
+
+    def ScanEvents(self):
+        '''Return events corresponding with administrative actions for partitions'''
+        # FIXME implement PartitionSet.ScanEvents()
+        return []
 
 class AdminAction(timeData):
     '''machine actions, should have a location for the action'''
@@ -683,12 +697,13 @@ class BGSched(Cobalt.Component.Component):
         tentative = []
         
         (score, theschedule) = self.findPossible(newjobs, newevents, tentative)
+        return theschedule
 
     def findPossible(self, jobs, events, tentative):
         '''find possible'''
         # at leaf node, evaluate tentative schedule
         if not jobs:
-            score = evaluate(tentative)
+            score = Evaluate(tentative)
             return (score, tentative)
         # find all possible run combos for job
         best_score = -1
@@ -701,7 +716,8 @@ class BGSched(Cobalt.Component.Component):
                     ten.append((job, part, e))
                     tempjobs = jobs[:]
                     tempjobs.remove(job)
-                    (newscore, newschedule) = self.findPossible(tempjobs, events + [Event(e, job.get('walltime'), 'hard', 0)], ten)
+                    (newscore, newschedule) = self.findPossible(tempjobs,
+                                                                events+[Event(e, job.get('walltime'), 'hard', 0)], ten)
                     if newscore > best_score:
                         best_score = newscore
                         best_schedule = newschedule
