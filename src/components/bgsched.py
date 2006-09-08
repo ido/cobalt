@@ -375,6 +375,12 @@ class BGSched(Cobalt.Component.Component):
                 [partition.Free() for partition in self.partitions if partition.get('name') == location]
             else:
                 self.executed.append(jobid)
+        locations = [pro[1] for pro in provisional]
+        for (jobid, location) in provisional:
+            if locations.count(location) > 1:
+                logger.error("Tried to use the same partition multiple times")
+                provisional.remove((jobid, location))
+                locations.remove(location)
 
     def RunQueue(self):
         '''Process changes to the cqm queue'''
