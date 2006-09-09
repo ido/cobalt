@@ -198,6 +198,18 @@ class JobSet(Cobalt.Data.DataSet):
             events += job.getEvents()
         return events
 
+    def isFree(self, location, starttime, jobspec, family):
+        '''Checks for overlapping running jobs'''
+        for rjob in [job for job in self if job.status == 'running']:
+            # a conflicting job is running and overlaps with the new job
+            # on a partition related to location
+            if rjob.get('location') in family:
+                if not ((float(starttime) > float(rjob.get('starttime')) + float(rjob.get('walltime')))
+                        or
+                        ((float(starttime) + float(jobspec.get('walltime')) < float(rjob.get('starttime'))))):
+                    return False
+        return True
+
 class Partition(timeData):
     '''Partitions are allocatable chunks of the machine'''
     def __init__(self, element):
@@ -551,7 +563,7 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def isFree(self, partname):
         '''checks if partition is active/enabled'''
-        for part in self.data:
+        for part in self:
             if part.get('name') == partname and part.get('scheduled') and \
                    part.get('functional') and part.get('state') == 'idle':
                 return True
@@ -662,14 +674,8 @@ class BGSched(Cobalt.Component.Component):
         if not self.reservations.isFree(location, starttime, jobspec):
             return False
         # check for overlapping running jobs
-        # TODO make into Job object method
-        for rjob in [job for job in self.jobs if job.status == 'running']:
-            if rjob.get('location') in family:
-                if not ((float(starttime) > float(rjob.get('starttime')) + float(rjob.get('walltime')))
-                        or
-                        ((float(starttime) + float(jobspec.get('walltime')) < float(rjob.get('starttime'))))):
-                    return False
-
+        if not self.jobs.isFree(location, starttime, jobspec, family):
+            return False
         # check for overlapping tentative jobs
         for ten in tentative:
             if ten[1].get('name') in family: 
