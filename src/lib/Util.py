@@ -151,4 +151,5 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
         server.quit()
     except Exception, msg:
         print 'Problem sending mail', msg
+        server.quit()
     

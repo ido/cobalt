@@ -99,6 +99,21 @@ class ReservationSet(Cobalt.Data.DataSet):
             events += reservation.getEvents()
         return events
 
+    def isFree(self, location, starttime, jobspec):
+        '''Checks for actions that would conflict with the proposed time'''
+        for res in self.data:
+            # A conflict occurs if the user is not in the userlist,
+            # and the job time overlaps with the reservation, and the
+            # location is in the reservation
+            if location in res.get('location').split(':') and \
+                   jobspec.get('user') not in res.get('user').split(':'):
+                if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
+                        or
+                        ((float(starttime) + float(jobspec.get('walltime')) < float(res.get('start'))))):
+                
+                    return False
+        return True
+
 class Job(timeData):
     '''This class represents User Jobs'''
     def __init__(self, element):
@@ -644,14 +659,8 @@ class BGSched(Cobalt.Component.Component):
         # TODO check runtime queue restrictions
         
         # check for overlapping reservations
-        # TODO make this into method in Reservation object
-        for res in self.reservations:
-            if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
-                    or
-                    ((float(starttime) + float(jobspec.get('walltime')) < float(res.get('start'))))):
-                
-                if location in res.get('location').split(':') and jobspec.get('user') not in res.get('user').split(':'):
-                    return False
+        if not self.reservations.isFree(location, starttime, jobspec):
+            return False
         # check for overlapping running jobs
         # TODO make into Job object method
         for rjob in [job for job in self.jobs if job.status == 'running']:
