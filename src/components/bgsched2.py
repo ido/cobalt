@@ -159,9 +159,9 @@ class Job(timeData):
         if self.start == -1:
             return False
         if location == self.location:
-            if self.start <= start <= (self.start + self.duration):
+            if self.start <= start <= (self.start + self.get('duration')):
                 return False
-            if self.start <= (start + duration) <= (self.start + self.duration):
+            if self.start <= (start + duration) <= (self.start + self.get('duration')):
                 return False
         return True
 
@@ -663,7 +663,7 @@ class BGSched(Cobalt.Component.Component):
         '''Add a reservation to matching partitions'''
         reservation = (name, user, start, duration)
         robj = self.partitions.Get(spec, callback=lambda x, y:x.get('reservations').append(reservation))
-        self.InvalidatePlanned(robj.get('location'), start, duration)
+        self.InvalidatePlanned(robj[0].get('location'), start, duration)
         return robj
 
     def ReleaseReservation(self, _, spec, name):
