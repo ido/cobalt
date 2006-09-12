@@ -119,8 +119,10 @@ class Job(timeData):
     def __init__(self, element):
         timeData.__init__(self, element)
         self.partition = 'none'
+        self.status = 'idle'
         logger.info("Job %s/%s: Found new job" % (self.get('jobid'), self.get('user')))
         self.start = -1
+        self.eid = -1
 
     def getEvents(self):
         '''Get events corresponding to this instance'''
@@ -132,13 +134,36 @@ class Job(timeData):
         else:
             return []
 
-    def planRun(self, start):
+    def Plan(self, start, location, eid):
         '''Set a tenative start time'''
         if self.start == -1:
             self.start = start
             self.status = 'planned'
+            self.location = location
+            self.eid = eid
         else:
             logger.error("Job %s: Attempted to run multiple times" % (self.get('jobid')))
+
+    def Unplan(self, eid=-1):
+        '''Remove scheduled execution'''
+        if (eid == -1) or (eid < self.eid):
+            self.start = -1
+            self.location = None
+            self.status = 'idle'
+            oldid = self.eid
+            self.eid = -1
+            return oldid
+
+    def Overlapped(self, location, start, duration):
+        '''Test if job overlaps with a given locale'''
+        if self.start == -1:
+            return False
+        if location == self.location:
+            if self.start <= start <= (self.start + self.duration):
+                return False
+            if self.start <= (start + duration) <= (self.start + self.duration):
+                return False
+        return True
 
 cqmFailed = FailureMode("QM Connection")
 
@@ -637,7 +662,9 @@ class BGSched(Cobalt.Component.Component):
     def AddReservation(self, _, spec, name, user, start, duration):
         '''Add a reservation to matching partitions'''
         reservation = (name, user, start, duration)
-        return self.partitions.Get(spec, callback=lambda x, y:x.get('reservations').append(reservation))
+        robj = self.partitions.Get(spec, callback=lambda x, y:x.get('reservations').append(reservation))
+        self.InvalidatePlanned(robj.get('location'), start, duration)
+        return robj
 
     def ReleaseReservation(self, _, spec, name):
         '''Release specified reservation'''
@@ -686,18 +713,14 @@ class BGSched(Cobalt.Component.Component):
 
         return True
 
-    def InvalidatePlanned(self):
+    def InvalidatePlanned(self, location, start, duration):
         '''Unplan events that have been impacted by system events'''
-        # TODO find pertitent activities
-        # TODO find associated jobs (since they are all we schedule)
-        # TODO remove planned actions (replacement will be handled by stock sched seq)
+        ids = [job.Unplan() for job in self.jobs if job.Overlaps(location, start, duration)]
         # TODO invalidate all provisional events newer than oldest invalid one
-        pass
 
     def Schedule(self):
         '''Perform all periodic scheduling work'''
         self.jobs.Sync()
-        self.InvalidatePlanned()
         # call the recursive checker to produce a list of options
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
