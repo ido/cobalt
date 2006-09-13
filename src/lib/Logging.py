@@ -100,7 +100,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             while msgdata:
                 newrec = copy.deepcopy(record)
                 newrec.msg = msgdata[:250]
-                msgs.append(newrec)
+                msgs.insert(0,newrec)
                 msgdata = msgdata[250:]
             msgs[0].exc_info = error
         else:
@@ -112,8 +112,18 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             try:
                 self.socket.send(msg)
             except socket.error:
-                self.socket.connect(self.address)
-                self.socket.send(msg)
+                while True:
+                    try:
+                        if isinstance(self.address, types.TupleType):
+                            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        else:
+                            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+                        self.socket.connect(self.address)
+                        break
+                    except socket.error:
+                        continue
+                    self.socket.send("Reconnected to syslog")
+                    self.socket.send(msg)
 
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
     '''setup logging for bcfg2 software'''
