@@ -716,7 +716,8 @@ class BGSched(Cobalt.Component.Component):
     def InvalidatePlanned(self, location, start, duration):
         '''Unplan events that have been impacted by system events'''
         ids = [job.Unplan() for job in self.jobs if job.Overlaps(location, start, duration)]
-        # TODO invalidate all provisional events newer than oldest invalid one
+        # invalidate all provisional events newer than oldest invalid one
+        [job.Unplan(mid(ids)) for job in self.jobs]
 
     def Schedule(self):
         '''Perform all periodic scheduling work'''
@@ -726,7 +727,9 @@ class BGSched(Cobalt.Component.Component):
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
 
         newschedule = self.findPossibleStart(j_to_check, e_to_check)
-        # FIXME set provisional schedule entries 
+        for (job, location, evt) in newschedule:
+            job.Plan(location, evt.start)
+            # FIXME need to make sure that job start requests happen at the right time
 
     def findPossibleStart(self, newjobs, newevents):
         '''start func for recursion'''
