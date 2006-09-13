@@ -168,6 +168,7 @@ class Job(timeData):
 cqmFailed = FailureMode("QM Connection")
 
 class JobSet(Cobalt.Data.DataSet):
+    '''JobSet holds all current submitted jobs'''
     __object__ = Job
     __syncrate__ = 60
     alljobq = [{'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
@@ -218,6 +219,7 @@ class JobSet(Cobalt.Data.DataSet):
         self.lastrun = time.time()
 
     def ScanEvents(self):
+        '''Provide an event stream for all current jobs'''
         events = []
         for job in self:
             events += job.getEvents()
@@ -454,6 +456,7 @@ class BaseSet(Cobalt.Data.DataSet):
             return None
 
 class PartitionSet(Cobalt.Data.DataSet):
+    '''PartitionSet contains all partitions'''
     __object__ = Partition
 
     _configfields = ['db2uid', 'db2dsn', 'db2pwd']
@@ -519,11 +522,10 @@ class PartitionSet(Cobalt.Data.DataSet):
                     and len(pionodes) == len(block.get('ionodes')):
                         baseblock = block
                         print 'block matches', block.get('ionodes')
-                for x in baseblock._attrib:
-                    if not datum.has_key(x) and x != 'stamp':
-                        datum.update({x:baseblock._attrib[x]})
+                [datum.update({x:baseblock._attrib[x]}) for x in baseblock._attrib \
+                 if not datum.has_key(x) and x != 'stamp']
                 #datum.tag = 'partition'
-                Cobalt.Data.DataSet.Add(self, [datum])
+                Cobalt.Data.DataSet.Add(self, [datum], callback, cargs)
 
     def getPartIONodes(self, partname):
         '''retrieves the IOnodes for the specified partition'''
@@ -726,17 +728,10 @@ class BGSched(Cobalt.Component.Component):
         e_to_check = self.jobs.ScanEvents() + self.partitions.ScanEvents() + self.actions.ScanEvents()
         j_to_check = [j for j in self.jobs if j.get('state') == 'queued']
 
-        newschedule = self.findPossibleStart(j_to_check, e_to_check)
+        (_, newschedule) = self.findBest(j_to_check, e_to_check, [])
         for (job, location, evt) in newschedule:
             job.Plan(location, evt.start)
             # FIXME need to make sure that job start requests happen at the right time
-
-    def findPossibleStart(self, newjobs, newevents):
-        '''start func for recursion'''
-        tentative = []
-        
-        (score, theschedule) = self.findBest(newjobs, newevents, tentative)
-        return theschedule
 
     def findBest(self, jobs, events, tentative):
         '''find best schedule using DFS and our metrics'''
