@@ -717,7 +717,7 @@ class BGSched(Cobalt.Component.Component):
         '''Unplan events that have been impacted by system events'''
         ids = [job.Unplan() for job in self.jobs if job.Overlaps(location, start, duration)]
         # invalidate all provisional events newer than oldest invalid one
-        [job.Unplan(mid(ids)) for job in self.jobs]
+        [job.Unplan(min(ids)) for job in self.jobs]
 
     def Schedule(self):
         '''Perform all periodic scheduling work'''
