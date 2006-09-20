@@ -145,15 +145,15 @@ def calc_range(reserv_dict):
             min_start_time = curr_reserv[2]
         if curr_reserv[4] > max_end_time:   # end_Time(a) > curr_max_end_time
             max_end_time = curr_reserv[4]
-    return (min_start_time, max_end_time);
+    return (min_start_time, max_end_time)
 
 # possibly optional
 def round_range(reserv_dict):
-    """Fill out documentation string.
+    '''Fill out documentation string.
        reserv_dict -- 
        return value -- 
        exceptions
-    """
+    '''
     range_tuple = calc_range(reserv_dict)
     # duration time for all reservs / (mins * secs); epoch time is in secs
     length_in_hours = (range_tuple[1] - range_tuple[0]) / 3600 
@@ -165,7 +165,7 @@ def round_range(reserv_dict):
     #d_hours = int(math.floor(length_in_hours - (d_days * 24)))
     #d_mins = int((length_in_hours - ((d_days * 24) + d_hours)) * 60)  
     d_days += 1 # PROBLEM; fix so exact times derived
-    return d_days;  
+    return d_days
 
 def week_from_today():
     """Fill out documentation string.
