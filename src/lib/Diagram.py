@@ -812,15 +812,15 @@ if __name__ == '__main__':
         os.execl("/usr/bin/showres", "showres", "-l") # 2 os.execl statements cannot work together. why?
 
     if options.graph: 
-        gen_image(reservations, args)
+        gen_image(reservations)
 
     if options.graph and options.confplain:   # -g and -p
         prnt_plain_conflicts() 
-        gen_image(reservations, args)
+        gen_image(reservations)
 
     if options.graph and options.confverbose: # -g and -v
         prnt_verbose_conflicts()
-        gen_image(reservations, args)
+        gen_image(reservations)
   
         
 
