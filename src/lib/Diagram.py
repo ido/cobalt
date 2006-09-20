@@ -19,8 +19,8 @@ __revision__ = '$Revision$'
 
 # BASIC USAGE:
 #
-# MapresOD.py -flag file_name file_format res_select w/wo_conflicts_legened
-# e.g. MapresOD.py -g my_file png 1 y
+# Diagram.py -flag file_name file_format res_select w/wo_conflicts_legened
+# e.g. Diagram.py -g my_file png 1 y
 #
 # PIL DOCUMENTATION:
 #
@@ -310,7 +310,8 @@ def prnt_plain_conflicts():
         for pair in part_conflicts.keys():
             # pair[0][*] = attributes of first reserv; pair[1][*] = attributes of second reserv
             format_conflicts.insert(next_index, (pair[0][0], pair[0][1], ret_short_str(pair[0][2]), \
-              ret_short_str(pair[0][4]), pair[1][0], pair[1][1], ret_short_str(pair[1][2]), ret_short_str(pair[1][4]))) 
+              ret_short_str(pair[0][4]), pair[1][0], pair[1][1], \
+              ret_short_str(pair[1][2]), ret_short_str(pair[1][4]))) 
             next_index += 1 # advances index to placeholder of next reserv pair
         Cobalt.Util.print_tabular(header + format_conflicts) # prints info in org fashion
         print("\n")
@@ -335,15 +336,15 @@ def prnt_verbose_conflicts():
         for pair in part_conflicts.keys():
             # pair[0][*] = attrbs of 1st reserv; pair[1][*] = attrbs of 2nd reserv; prints info in org fashion
             Cobalt.Util.print_tabular(header + [(pair[0][0], pair[0][1], ret_short_str(pair[0][2]), \
-              ret_short_str(pair[0][4]), pair[1][0], pair[1][1], ret_short_str(pair[1][2]), ret_short_str(pair[1][4]))]) 
+              ret_short_str(pair[0][4]), pair[1][0], pair[1][1], \
+              ret_short_str(pair[1][2]), ret_short_str(pair[1][4]))]) 
             # for each pair prints the list of conflicting partitions separated by '|'
             print("|".join(part_conflicts[pair]) + "\n") 
     return
 
-def gen_image(reserv_dict, args):
+def gen_image(reserv_dict):
     """Create a graphic of the current reservations in Blue Gene/L using PIL.
        reserv_dict --
-       args --
        return 
        exceptions
     """
@@ -352,7 +353,7 @@ def gen_image(reserv_dict, args):
     # The permisable resolutions are:
     # 1024 x 768, 1154 x 864, 1280 x 1024, 1400 x 1050, 1600 x 1200
     
-    if int(options.graph[2]) == 1:# or 'if int(args[2]) == 1' 
+    if int(options.graph[2]) == 1:
         res_x = 1024
         res_y = 768
     if int(options.graph[2]) == 2:
@@ -395,8 +396,10 @@ def gen_image(reserv_dict, args):
     date_s = time.strftime("%m-%d-%Y", time.localtime(time.time())) # current date e.g. 09-15-2006
     time_s = time.strftime("%H:%M:%S", time.localtime(time.time())) # current time e.g. 15:13:43
     stat_info = "User: " + user_s + " || Host: " + host_s + " || Date: " + date_s + " || Time: " + time_s
-    # draws statistic info centered in terms of canvas's width; 'textsize' returns tuple (x, y) of last string character 
-    # moves text 50% of its width to the left and 5% of the canvas's height towards the bottom so it does not overlap with the title (2% slack space) 
+    # draws statistic info centered in terms of canvas's width; 
+    # 'textsize' returns tuple (x, y) of last string character 
+    # moves text 50% of its width to the left and 5% of the canvas's height towards the bottom 
+    # it does not overlap with the title (5% - 3% = 2% slack space) 
     # color = red, font = default   
     canvas.text((canvas_x * 0.5 - canvas.textsize(stat_info)[0] * 0.5, canvas_y * 0.05), \
         fill = (255, 0, 0), text = stat_info, font = def_font) 
@@ -434,11 +437,10 @@ def gen_image(reserv_dict, args):
     # - 110% or - 1.1 label width will result in a wider mesh, which runs out of the canvas
     mesh_width = canvas_x - 1.3 * mesh_start_pixel 
 
-    # rectangle width in the mesh; based on the duration of all reservs in days = num_days; MUST MAKE rect_width dynamic 
+    # rectangle width in the mesh; based on the duration of all reservs in days = num_days; MAKE rect_width dynamic 
     rect_width = mesh_width / num_days     
-    # height of a single rectangle in the mesh; 1.5% the mesh width (do not change percentage)                                  
-    rect_height = mesh_width * 0.015 
-                                     
+    # height of a single rectangle in the mesh; 1.5% the mesh width (do not change percentage)       
+    rect_height = mesh_width * 0.015                                      
 
     # starting x-coordinate of the first rectangle in the mesh;  
     mesh_x = mesh_start_pixel 
@@ -566,10 +568,12 @@ def gen_image(reserv_dict, args):
                     copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step # increment x               
                 #back slash of 'X'
                 canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
-                    (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y + step)], fill = cross_hatch_color) 
+                    (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y + step)], \
+                    fill = cross_hatch_color) 
                 #forward slash of 'X'                   
                 canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y + step), \
-                    (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y)], fill = cross_hatch_color)
+                    (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y)], \
+                    fill = cross_hatch_color)
                 copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step
             copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + step          
 
@@ -600,7 +604,9 @@ def gen_image(reserv_dict, args):
             mesh_y = mesh_y + rect_height 
         # break this coupling here = ruler must not be drawn a rectangle at a time but as a whole aka dynamic ruler
 
-        # DRAWS THE X-AXIS = DRAWS THE RULER ONE RECTANGLE AT A TIME = each rectangle acts as last row for current column
+        # DRAWS THE X-AXIS = DRAWS THE RULER ONE RECTANGLE AT A TIME 
+
+        # each rectangle acts as last row for current column
 
         tick_color = (255, 69, 0)
         # generates major tick marks          
@@ -689,8 +695,10 @@ def gen_image(reserv_dict, args):
         reserv_text = str(curr_reserv[0]) + "/" + str(curr_reserv[1]) + "/" + str(reserv_top_part[curr_reserv])
         # moves rectangles and their labels to a different column if drawn outside of the canvas
         if (legend_y + legend_square_side) > image.size[1]: # current depth + height of the rectangle
-            legend_x = legend_x + legend_longest_string + legend_square_side + 20 #look at canvas.text... the x parameter
-            legend_y = legend_y_copy # fresh copy since starting a new col with a reset depth     
+            #look at canvas.text... the x parameter
+            legend_x = legend_x + legend_longest_string + legend_square_side + 20 
+            # fresh copy since starting a new col with a reset depth
+            legend_y = legend_y_copy      
         canvas.rectangle([(legend_x, legend_y), (legend_x + legend_square_side, legend_y + legend_square_side)], \
             fill = reserv_colors[curr_reserv[1]], outline = (0, 0, 0)) # draws color rectangle
         canvas.text((legend_x + legend_square_side + 10, legend_y + 0.25 * legend_square_side), \
@@ -759,16 +767,16 @@ if __name__ == '__main__':
 
     [npart.__setitem__(partition.get('name'), partition) for partition in partitions]
     # builds topology; key = partition, val = ((parents), (children))
-    dep_info = Cobalt.Util.buildRackTopology(partitions) 
+    depinfo = Cobalt.Util.buildRackTopology(partitions) 
     
     #modifies the 'reservation' dictionary to a different format
-    mod_reserv_dict(reservations, partitions, npart, dep_info) 
+    mod_reserv_dict(reservations, partitions, npart, depinfo) 
     # builds data structure of reservations and their lists of 32-node partition 
     gen_part_hits(reservations) 
     # stores any detected conflicts to the data structure 'part_conflicts_times'
     detect_conflicts(reservations) 
 
-    parser = optparse.OptionParser(usage="%prog [-options]", version="\n'%prog' written by " + orig_author  
+    parser = optparse.OptionParser(usage = "%prog [-options]", version = "\n'%prog' written by " + orig_author  
         + " (denkov@mcs.anl.gov)\nversion: " + ver_num + " date: " + ver_date + " modified by: " 
         + last_mod + "\n\nACKNOWLEDGEMENTs:" + "\nSusan Coghlan - advice and supervision" 
         + "\nAndrew Cherry - advice and supervision" + "\nNarayan Desai - source code contribution" 
