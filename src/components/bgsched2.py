@@ -15,10 +15,10 @@ comm = Cobalt.Proxy.CommDict()
 
 def GenerateUtilMetric(schedule):
     '''Generate Utilization metric for a given provisional schedule'''
-    # schedule is (start, location, nodes, duration) 
-    filled = sum([sched[2] * sched[3] for sched in schedule])
-    span = max([(sched[0] + sched[3]) for sched in schedule]) - \
-           min([sched[0] for sched in schedule])
+    # schedule is (job, partition, start)
+    filled = sum([int(sched[0].get('nodes')) * int(sched[0].get('walltime')) for sched in schedule])
+    span = max([(float(sched[2]) + float(sched[0].get('walltime'))) for sched in schedule]) - \
+           min([float(sched[0]) for sched in schedule])
     # FIXME get dynamic system size
     size = 1024.0
     return filled / (span * size)
@@ -30,8 +30,10 @@ def GenerateRespMetric(schedule):
 
 def GenerateSpanMetric(schedule):
     '''Generate Span Metric for schedule'''
-    return max([(sched[0] + sched[3]) for sched in schedule]) - \
-           min([sched[0] for sched in schedule])
+    # schedule is (job, partition, start)
+    print schedule
+    return max([(float(sched[2]) + float(sched[0].get('walltime'))) for sched in schedule]) - \
+           min([float(sched[2]) for sched in schedule])
 
 def Evaluate(schedule):
     '''Calculate the schedule metric'''
@@ -524,6 +526,8 @@ class PartitionSet(Cobalt.Data.DataSet):
                         print 'block matches', block.get('ionodes')
                 [datum.update({x:baseblock._attrib[x]}) for x in baseblock._attrib \
                  if not datum.has_key(x) and x != 'stamp']
+#                 datum['functional'] = False
+#                 datum['scheduled'] = False
                 #datum.tag = 'partition'
                 Cobalt.Data.DataSet.Add(self, [datum], callback, cargs)
 
@@ -638,7 +642,7 @@ class AdminActionSet(Cobalt.Data.DataSet):
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched2'
-    __name__ = 'scheduler'
+    __name__ = 'proto-scheduler'
     __statefields__ = ['partitions', 'jobs', 'reservations', 'actions']
     __schedcycle__ = 10
     async_funcs = ['assert_location']
@@ -741,6 +745,7 @@ class BGSched(Cobalt.Component.Component):
             return (score, tentative)
         # find all possible run combos for job
         best_score = -1
+        best_schedule = []
         for job, event, part in [(j, e, p) for j in jobs for e in events for p in self.partitions]:
             for e in [event.start, event.start + event.duration]:
                 if self.CanRun(job, part, e, tentative):
