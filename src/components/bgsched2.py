@@ -29,9 +29,9 @@ def GenerateRespMetric(schedule):
     return 1.0
 
 def GenerateSpanMetric(schedule):
-    '''Generate Span Metric for schedule'''
+    '''Generate Span Metric for schedule
+    This is the length (time) of a schedule'''
     # schedule is (job, partition, start)
-    print schedule
     return max([(float(sched[2]) + float(sched[0].get('walltime'))) for sched in schedule]) - \
            min([float(sched[2]) for sched in schedule])
 
@@ -689,11 +689,14 @@ class BGSched(Cobalt.Component.Component):
 
     def CanRun(self, jobspec, location, starttime, tentative):
         '''
+        Checks if a job (jobspec) can run, against current state of system,
+        and against the tentative job schedule
         jobspec - job info
         location - partition object
         starttime - time that job is intended to be started
+        tentative - [(job, partition, start)]
         '''
-        family = [location] + [p.get('name') for p in self.partitions.getParents(location)] + \
+        family = [location.get('name')] + [p.get('name') for p in self.partitions.getParents(location)] + \
                  [p.get('name') for p in self.partitions.getChildren(location)]
         # check location
         if not location.CanRun({'queue':jobspec.get('queue'), 'nodes':jobspec.get('nodes')}):
@@ -711,12 +714,11 @@ class BGSched(Cobalt.Component.Component):
             return False
         # check for overlapping tentative jobs
         for ten in tentative:
-            if ten[1].get('name') in family: 
-                if not ((float(starttime) > float(ten[0].get('starttime')) + float(ten[0].get('walltime')))
-                        or
-                        ((float(starttime) + float(jobspec.get('walltime')) < float(ten[0].get('starttime'))))):
+            if ten[1].get('name') in family:
+                if not ((float(starttime) >= float(ten[2]) + float(ten[0].get('walltime')))
+                    or
+                    ((float(starttime) + float(jobspec.get('walltime')) <= float(ten[2])))):
                     return False
-
         return True
 
     def InvalidatePlanned(self, location, start, duration):
