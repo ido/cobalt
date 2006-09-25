@@ -63,4 +63,8 @@ e_to_check = bs.jobs.ScanEvents() + bs.reservations.ScanEvents()# + [Event(10, 1
 
 theschedule = bs.findBest([j for j in bs.jobs], e_to_check, [])
 
-print 'theschedule', theschedule
+print 'schedule:'
+print 'score: %s' % theschedule[0]
+for job, location, time in theschedule[1]:
+    print "Running job %s on partition %s at timestep %s for %s seconds" % \
+          (job.get('jobid'), location.get('name'), time, job.get('walltime'))
