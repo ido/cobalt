@@ -32,7 +32,7 @@ def GenerateSpanMetric(schedule):
     '''Generate Span Metric for schedule
     This is the length (time) of a schedule'''
     # schedule is (job, partition, start)
-    return max([(float(sched[2]) + float(sched[0].get('walltime'))) for sched in schedule]) - \
+    return 1/ max([(float(sched[2]) + float(sched[0].get('walltime'))) for sched in schedule]) - \
            min([float(sched[2]) for sched in schedule])
 
 def Evaluate(schedule):

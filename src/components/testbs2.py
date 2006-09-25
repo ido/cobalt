@@ -15,15 +15,15 @@ bs.jobs.Add([{'tag':'job', 'nodes':'32', 'location':None, 'jobid':'1',
               'user':'nobody'},
              {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'2',
               'state':'queued', 'walltime':15, 'queue':'default',
-              'user':'nobody'}])
-#           {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'3',
-#            'state':'queued', 'walltime':10, 'queue':'default',
-#            'user':'nobody'}])
+              'user':'nobody'},
+           {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'3',
+            'state':'queued', 'walltime':10, 'queue':'default',
+            'user':'nobody'}])
 
 bs.reservations.Add([{'tag':'reservation', 'user':'nobody', 'start':0,
                       'duration':15, 'location':'32wayN0', 'recurrence':0}])
 
-bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':True, 'scheduled':True, 'queue':'default'} for x,y in [('32wayN0', '32')]])#, ('32wayN1', '32')]])
+bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':True, 'scheduled':True, 'queue':'default'} for x,y in [('32wayN0', '32'), ('32wayN1', '32')]])
 
 e_to_check = bs.jobs.ScanEvents() + bs.reservations.ScanEvents()# + [Event(10, 12, 'hard', 0)]
 
