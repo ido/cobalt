@@ -13,6 +13,12 @@ logger = logging.getLogger('bgsched')
 
 comm = Cobalt.Proxy.CommDict()
 
+def printSchedule(sched):
+    print 40*'='
+    for item in sched:
+        print item[0].get('jobid'), item[1].get('name'), item[2]
+    print 40*'='
+
 def GenerateUtilMetric(schedule):
     '''Generate Utilization metric for a given provisional schedule'''
     # schedule is (job, partition, start)
@@ -742,26 +748,38 @@ class BGSched(Cobalt.Component.Component):
     def findBest(self, jobs, events, tentative):
         '''find best schedule using DFS and our metrics'''
         # at leaf node, evaluate tentative schedule
+        #print "J:", jobs
+        #print "E:", events
+        #print "T:", tentative
+        #raw_input()
         if not jobs:
             score = Evaluate(tentative)
+            #print "bottomed out with score: %s" % (score)
             return (score, tentative)
         # find all possible run combos for job
         best_score = -1
         best_schedule = []
-        for job, event, part in [(j, e, p) for j in jobs for e in events for p in self.partitions]:
-            for e in [event.start, event.start + event.duration]:
-                if self.CanRun(job, part, e, tentative):
-                    # add to tentative, recurse with that job event added
-                    # remove job from potential jobs list
-                    ten = tentative[:]
-                    ten.append((job, part, e))
-                    tempjobs = jobs[:]
-                    tempjobs.remove(job)
-                    (newscore, newschedule) = self.findBest(tempjobs,
-                                                            events+[Event(e, job.get('walltime'), 'hard', 0)], ten)
-                    if newscore > best_score:
-                        best_score = newscore
-                        best_schedule = newschedule
+        # do a pointwise uniq on events
+        uevt = []
+        [uevt.append(item) for event in events for item in \
+         [event.start, event.start + event.duration] if item not in uevt]
+            
+        for job, event, part in [(j, e, p) for j in jobs for e in uevt for p in self.partitions]:
+            if self.CanRun(job, part, event, tentative):
+                #print "Adding ===>", job.get('jobid'), event, part.get('name')
+                # add to tentative, recurse with that job event added
+                # remove job from potential jobs list
+                ten = tentative[:]
+                ten.append((job, part, event))
+                ten.sort()
+                #printSchedule(ten)
+                njobs = [j for j in jobs if j != job]
+                (newscore, newschedule) = \
+                           self.findBest(njobs, events + \
+                                         [Event(event, job.get('walltime'), 'hard', 0)], ten)
+                if newscore > best_score:
+                    best_score = newscore
+                    best_schedule = newschedule
 
         return (best_score, best_schedule)
 

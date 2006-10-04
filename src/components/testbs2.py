@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
-from bgsched2 import JobSet, PartitionSet, ReservationSet, Event, BGSched
 import time, sys
-
 sys.argv.append('--nodb2')
+
+import psyco
+psyco.full()
+
+from bgsched2 import JobSet, PartitionSet, ReservationSet, Event, BGSched
+
 
 bs = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':False})
 # jobs = JobSet()
@@ -17,6 +21,12 @@ bs.jobs.Add([{'tag':'job', 'nodes':'32', 'location':None, 'jobid':'1',
               'state':'queued', 'walltime':15, 'queue':'default',
               'user':'nobody'},
            {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'3',
+            'state':'queued', 'walltime':10, 'queue':'default',
+            'user':'nobody'},
+           {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'4',
+            'state':'queued', 'walltime':40, 'queue':'default',
+            'user':'nobody'},
+           {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'5',
             'state':'queued', 'walltime':10, 'queue':'default',
             'user':'nobody'}])
 
@@ -34,3 +44,7 @@ print 'score: %s' % theschedule[0]
 for job, location, time in theschedule[1]:
     print "Running job %s on partition %s at timestep %s for %s seconds" % \
           (job.get('jobid'), location.get('name'), time, job.get('walltime'))
+
+# FIXME need to test reservations
+# FIXME need to test partition status
+# FIXME need to test partition cascading
