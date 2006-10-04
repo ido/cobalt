@@ -107,18 +107,21 @@ class ReservationSet(Cobalt.Data.DataSet):
             events += reservation.getEvents()
         return events
 
-    def isFree(self, location, starttime, jobspec):
+    def isFree(set, location, starttime, jobspec):
         '''Checks for actions that would conflict with the proposed time'''
-        for res in self.data:
+        for res in set.data:
             # A conflict occurs if the user is not in the userlist,
             # and the job time overlaps with the reservation, and the
             # location is in the reservation
-            if location in res.get('location').split(':') and \
-                   jobspec.get('user') not in res.get('user').split(':'):
-                if not ((float(starttime) > float(res.get('start')) + float(res.get('duration')))
-                        or
-                        ((float(starttime) + float(jobspec.get('walltime')) < float(res.get('start'))))):
-                
+            if location.get('name') in res.get('location') and \
+                   jobspec.get('user') not in res.get('user'):
+                if float(res.get('start')) <= starttime <= \
+                       float(res.get('start') + res.get('duration')):
+                    # job starts during reservation
+                    return False
+                if float(res.get('start')) <= (starttime + float(jobspec.get('walltime'))) <= \
+                       float(res.get('start') + res.get('duration')):
+                    # job ends during reservation
                     return False
         return True
 
