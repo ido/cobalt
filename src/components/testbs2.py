@@ -6,7 +6,7 @@ sys.argv.append('--nodb2')
 import psyco
 psyco.full()
 
-from bgsched2 import JobSet, PartitionSet, ReservationSet, Event, BGSched
+from bgsched2 import BGSched
 
 
 bs = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':False})
@@ -33,9 +33,9 @@ bs.jobs.Add([{'tag':'job', 'nodes':'32', 'location':None, 'jobid':'1',
 bs.reservations.Add([{'tag':'reservation', 'user':['nobody'], 'start':0,
                       'duration':150, 'location':['32wayN0'], 'recurrence':0}])
 
-bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':True, 'scheduled':True, 'queue':'default'} for x,y in [('32wayN0', '32'), ('32wayN1', '32')]])
+bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':True, 'scheduled':True, 'queue':'default'} for x, y in [('32wayN0', '32'), ('32wayN1', '32')]])
 
-bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':False, 'scheduled':False, 'queue':'default'} for x,y in [('32wayN2', '32'), ('32wayN3', '32')]])
+bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':False, 'scheduled':False, 'queue':'default'} for x, y in [('32wayN2', '32'), ('32wayN3', '32')]])
 
 e_to_check = bs.jobs.ScanEvents() + bs.reservations.ScanEvents()# + [Event(10, 12, 'hard', 0)]
 
