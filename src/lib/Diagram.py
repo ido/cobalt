@@ -131,7 +131,7 @@ def gen_part_hits(reserv_dict):
         reserv_part_hits[curr_reserv] = temp_partition_list # records the list of partition hits for the curr reserv
     return
 
-# must calculate range for any 2 parameters - establish a separate function 
+# optional 
 def calc_range(reserv_dict):
     """Find the x range of lowest start time and highest end time for all 
        reservations.
@@ -148,7 +148,7 @@ def calc_range(reserv_dict):
             max_end_time = curr_reserv[4]
     return (min_start_time, max_end_time)
 
-# possibly optional
+# optional
 def round_range(reserv_dict):
     """Fill out documentation string.
        reserv_dict -- 
@@ -168,6 +168,7 @@ def round_range(reserv_dict):
     d_days += 1 # PROBLEM; fix so exact times derived
     return d_days  
 
+# optional
 def week_from_today():
     """Fill out documentation string.
        arguments
@@ -178,6 +179,7 @@ def week_from_today():
     end_weekday_time = start_weekday_time + 6 * 24 * 3600 # six days later
     return (start_weekday_time, end_weekday_time)
 
+# optional
 def this_week():
     """Fill out documentation string.
        arguments
@@ -404,28 +406,19 @@ def gen_image(reserv_dict):
     canvas.text((canvas_x * 0.5 - canvas.textsize(stat_info)[0] * 0.5, canvas_y * 0.05), \
         fill = (255, 0, 0), text = stat_info, font = def_font) 
 
-    #------------------------------------------------------------------------------------------------
+    # CREATES DYNAMIC X-AXIS
 
-    # WILL TAKE CARE OF A DYNAMIC X-AXIS
+    # e.g. 09/30/006-12:04:24
+    start_date = time.mktime(time.strptime(options.graph[4], "%m/%d/%y-%H:%M:%S"))
+    end_date = time.mktime(time.strptime(options.graph[5], "%m/%d/%y-%H:%M:%S"))
+    num_days = int(math.floor((end_date - start_date) / (24 * 3600)))
 
-    rounded_days = round_range(reserv_dict) # number of actual days + 2
-    actual_range = calc_range(reserv_dict) # tuple in epoch time
-    
-    # displays at least one week 
-    if rounded_days < 7:
-        num_days = 7 # default x-range for all reservs
-    else:
-        # PROBLEM; modify so not = rounded_days (reservs x-range), but a specified time
-        num_days = rounded_days # current x-range for all reservs; 
-
-    days_names = {}
-    # selects proper code based on 'options' present and their values 
-    # choice 1: sets up x-axis labels for the entire x-range
-    start_res_x = actual_range[0] # today; != today, but the start time of first reserv
-    # PROBLEM; currently graphing reservs and generating the x-axis labels are not linked; 
+    days_names = {} # coordinates of the day label names corresponding to major tics on the ruler
+    start_res_x = start_date # first day = start date specified
     for day in xrange(0, num_days + 1): # +1 so rightmost day mark is included
         days_names[day] = start_res_x
-        start_res_x = start_res_x + 24 * 3600 # increments by day
+        start_res_x = start_res_x + 24 * 3600 # increments by day in terms of seconds
+
     #------------------------------------------------------------------------------------------------
 
     # generates complete partition name following the node notation
@@ -468,41 +461,72 @@ def gen_image(reserv_dict):
     #------------------------------------------------------------------------------------------------
 
     # GENERATES THE X COORDINATES (X1, X2) FOR ALL RESERVATIONS
+    # (X1, Y1) and (X2, Y2) = 2 pts defining the reservations' rectangles
 
-    # FIX THIS so it works with different modes
-    general_start_time = calc_range(reserv_dict)[0] # mesh start time in epoch format
-    general_end_time = calc_range(reserv_dict)[1]   # mesh end time in epoch format
-    general_duration_time = general_end_time - general_start_time
-    #general_start_point = 0 # converted to a start point
-    #general_end_point = general_duration_time # converted to an end point
-    time_per_pixel = float(general_duration_time) / mesh_width # number epoch time units per pixel based on mesh width
-
+    time_per_pixel = float(end_date - start_date) / mesh_width # number epoch time units per pixel based on mesh width
     for curr_reserv in reserv_dict.keys():
-        particular_start_time = curr_reserv[2] - general_start_time # start time distance from mesh start time
-        particular_end_time = curr_reserv[4] - general_start_time   # end time distance from mesh start time
-        #particular_duration_time = particular_start_time - particular_end_time
-        start_pixel = (particular_start_time / time_per_pixel) + label_width # reserv start pixel based on mesh
-        end_pixel = (particular_end_time / time_per_pixel) + label_width # reserv end pixel based on mesh
-        reserv_xy[curr_reserv] = [int(math.ceil(start_pixel)), int(math.ceil(end_pixel))] #x1, x2
-
+        # reservation occurs before or after the currently observed time period
+        # hence no need to draw it
+        if (curr_reserv[2] < start_date and curr_reserv[4] <= start_date) or \
+           (curr_reserv[2] >= end_date and curr_reserv[4] > end_date):
+             #del reserv_dict[curr_reserv]
+             start_pixel = -1 # x1; negative value so the 'dot' drawn off the canvas
+             end_pixel = -1 # x2; negative value so the 'dot' drawn off the canvas
+        else:
+             # reservation occurs at the start date of the currently observed time period
+             # hence 'cut off' any parts hanging to the left of the mesh
+             if curr_reserv[4] > start_date and curr_reserv[2] <= start_date:
+                 particular_start_time = start_date - start_date
+                 particular_end_time = curr_reserv[4] - start_date
+             # reservation occurs at the end date of the currently observed time period
+             # hence 'cut off' any parts hanging to the right of the mesh
+             elif curr_reserv[2] < end_date and curr_reserv[4] >= end_date:
+                 particular_start_time = curr_reserv[2] - start_date
+                 particular_end_time = end_date - start_date
+             # reservation occurs within the currently observed time period
+             # hence draw the entire reservation
+             elif curr_reserv[2] > start_date and curr_reserv[4] < end_date:
+                 particular_start_time = curr_reserv[2] - start_date 
+                 particular_end_time = curr_reserv[4] - start_date
+             start_pixel = (particular_start_time / time_per_pixel) + label_width # reserv start pixel based on mesh
+             end_pixel = (particular_end_time / time_per_pixel) + label_width # reserv end pixel based on mesh
+        reserv_xy[curr_reserv] = [int(math.ceil(start_pixel)), int(math.ceil(end_pixel))] # X1, X2
+       
     # GENERATES THE Y COORDINATES (Y1, Y2) FOR ALL RESERVATIONS
+    # (X1, Y1) and (X2, Y2) = 2 pts defining the reservations' rectangles
+
+    # reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][-1]][0])))
+    # reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][0]][1]))) 
+    # these two lines can cause a problem if a reservation is scheduled, which includes
+    # only the top partition and no other partitions (aka '#' notation)
+    # e.g. ANL_Roo, ANL_R001, ANL_R000 or R000_J102-128
+    # it is a problem because no 32-node partitions are detected
+    # in theory no such reservation should exist
+    # breaks at reserv_part_hits[curr_reserv][0 or  -1] because there is no such value
 
     labels_y_copy = labels_y
     for partition in label_names: # take into account the reversed order
-        part_y[partition] = (labels_y_copy, labels_y_copy + rect_height) #these remain constant
+        part_y[partition] = (labels_y_copy, labels_y_copy + rect_height) # these remain constant
         labels_y_copy += rect_height
-    for curr_reserv in reserv_dict.keys():      
-        #reserv_part_hits[curr_reserv] is already sorted in incrementing order 
-        # y1 [-1] = top partition by name (bottom border) 
-        # e.g. 117 (upper in the graph, hence smaller depth), [0] = y1 (first of 2 values in tuple)
-        reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][-1]][0]))) 
-        # y2   [0] = first partition by name (upper border) 
-        # e.g. 111 (lower in the graph, hence bigger depth), [1] = y2 (second of 2 values in tuple)
-        reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][0]][1]))) 
+    for curr_reserv in reserv_dict.keys():  
+        # X1 = X2 = -1; reserv located out of mesh, so it must not be drawn    
+        if reserv_xy[curr_reserv][0] == 0 and reserv_xy[curr_reserv][1] == 0: 
+            reserv_xy[curr_reserv].append(-1) # Y1 = -1
+            reserv_xy[curr_reserv].append(-1) # Y2 = -1
+        else:
+            # reserv_part_hits[curr_reserv] is already sorted in incrementing order 102, 104...
+            # reserv_part_hits[curr_reserv][-1] = top 32-node part by name for curr reserv e.g 216 
+            # (upper in the graph image, hence smaller depth in pixels)
+            # [0] = Y1, first of 2 values in tuple returned by part_y (y coords of curr part)
+            reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][-1]][0]))) 
+            # reserv_part_hits[curr_reserv][0] = first 32- node part by name for curr reserv e.g. 102
+            # (lower in the graph image, hence bigger depth in pixels),
+            # [1] = Y2, second of 2 values in tuple returned by part_y (y coords of curr part)
+            reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][0]][1]))) 
 
     # CREATES THE RESERVATION COLORS
 
-    reserv_colors = {} # key = reservation name, val= color (tuple form)
+    reserv_colors = {} # key = reserv name, val = color (tuple form)
     colors = [(255, 131, 250), (139, 123, 139), (255, 215, 0), (165, 42, 42), (124, 252, 0), \
               (255, 64, 64), (30, 144, 255), (255, 255, 0), (205, 127, 50), (153, 204, 50), \
               (138, 43, 226), (255, 0, 255), (127, 255, 212), (139, 115, 85), (219, 219, 112),  \
@@ -526,10 +550,10 @@ def gen_image(reserv_dict):
     # DRAWS CROSS-HATCHED CONFLICTS = LAYER 2
 
     for conflict in part_conflicts_times.keys():
-        conflict_start_time = part_conflicts_times[conflict][0] - general_start_time
-        conflict_end_time = part_conflicts_times[conflict][1] - general_start_time
-        conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) #x1
-        conflict_end_pixel_x = int(math.ceil((conflict_end_time / time_per_pixel) + label_width)) #x2
+        conflict_start_time = part_conflicts_times[conflict][0] - start_date
+        conflict_end_time = part_conflicts_times[conflict][1] - start_date
+        conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) # X1
+        conflict_end_pixel_x = int(math.ceil((conflict_end_time / time_per_pixel) + label_width)) # X2
         temp_node_names = part_conflicts_times[conflict][2] # list of overlapping 32-node partitions
         # temp_node_names already sorted in incrementing order
         # y1 [-1] = top node group by name (bottom border) 
@@ -539,17 +563,17 @@ def gen_image(reserv_dict):
         # e.g. 111 (lower in the graph, hence bigger depth), [1] = y2 (second of 2 values in tuple) 
         conflict_end_pixel_y = int(math.floor(part_y[temp_node_names[0]][1])) 
         #canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
-        #     (conflict_end_pixel_x, conflict_end_pixel_y)], fill = (0, 0, 0)) #use black rectangles to map conflicts
-        #print (conflict, conflict_start_pixel_x, conflict_end_pixel_x, \
-        #     conflict_start_pixel_y, conflict_end_pixel_y)     
+        #     (conflict_end_pixel_x, conflict_end_pixel_y)], fill = (0, 0, 0)) #use black rectangles to map conflicts  
         red_amount = random.randint(0, 255)
         green_amount = random.randint(0, 255)
         blue_amount = random.randint(0, 255)
         cross_hatch_color = (red_amount, green_amount, blue_amount) 
+
         duration_x = conflict_end_pixel_x - conflict_start_pixel_x # x-axis span for current conflict
         duration_y = conflict_end_pixel_y - conflict_start_pixel_y # y-axis span for current conflict
-        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the required var
-        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copyl indirectly modify the required var   
+
+        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
+        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
         step = 0.75 * rect_height # 10 is a good static value #modify this or the next 2 lines
         #step_x = duration_x * 0.1 
         #step_y = duration_y * 0.1
@@ -565,7 +589,8 @@ def gen_image(reserv_dict):
                 if (copy_conflict_start_pixel_y >= conflict_end_pixel_y) \
                    and (copy_conflict_start_pixel_x < conflict_end_pixel_x): # end of the y-coordinates
                     copy_conflict_start_pixel_y = conflict_start_pixel_y # reset y
-                    copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step # increment x               
+                    copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step # increment x 
+              
                 #back slash of 'X'
                 canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
                     (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y + step)], \
@@ -629,8 +654,8 @@ def gen_image(reserv_dict):
         # generates date/time labels
         # day-1 because in days_names coordinates start at 0
         year_r = time.strftime("%Y", time.localtime(days_names[day-1]))     # ruler year
-        month_r = time.strftime("%b,%d", time.localtime(days_names[day-1])) # ruler month and day
-        day_r = time.strftime("%A", time.localtime(days_names[day-1]))      # weekday
+        month_r = time.strftime("%m/%d", time.localtime(days_names[day-1])) # ruler month and day
+        day_r = time.strftime("%a", time.localtime(days_names[day-1]))      # weekday
         time_r = time.strftime("%H:%M", time.localtime(days_names[day-1]))  # ruler time
         canvas.text((mesh_x - canvas.textsize(year_r)[0] * 0.5, mesh_y + 20), \
             fill = (0, 0, 255), text = year_r, font = def_font)
@@ -646,8 +671,8 @@ def gen_image(reserv_dict):
             mesh_y_new = mesh_y_copy + (len(label_names)+1) * rect_height # +1 because of the ruler
             # day and not day-1 because it is the rightmost mark
             year_r = time.strftime("%Y", time.localtime(days_names[day]))     # ruler year
-            month_r = time.strftime("%b,%d", time.localtime(days_names[day])) # ruler month and day
-            day_r = time.strftime("%A", time.localtime(days_names[day]))      # weekday
+            month_r = time.strftime("%m/%d", time.localtime(days_names[day])) # ruler month and day
+            day_r = time.strftime("%a", time.localtime(days_names[day]))      # weekday
             time_r = time.strftime("%H:%M", time.localtime(days_names[day]))  # ruler time
             canvas.text((mesh_x_new - canvas.textsize(year_r)[0] * 0.5, mesh_y_new + 20), \
                 fill = (0, 0, 255), text = year_r, font = def_font)
@@ -752,27 +777,11 @@ def gen_image(reserv_dict):
     else:
         sys.stderr("Unrecognized image format!")
         sys.exit("Exiting...")
-    
-    os.execl("/soft/apps/tools/ImageMagick/bin/display", "display", "./" \
-        + image_name + "." + options.graph[1], "&") # views the generated image
+    # comment out next line if image needs to be saved but not displayed
+    """os.execl("/soft/apps/tools/ImageMagick/bin/display", "display", "./" \
+        + image_name + "." + options.graph[1], "&") # views the generated image"""
 
     return
-
-class ScheduleDiagram:
-    '''Provides Visualization of Schedules'''
-    def __init__(self, schedule, partitions, reservations):
-        self.schedule = schedule
-        self.partitions = partitions
-        self.reservations = reservations
-        self.window = (-1, -1)
-
-    def setWindow(self, start, stop):
-        '''Set visible window for diagram'''
-        self.window = (start, stop)
-
-    def outputFile(self, format, name):
-        '''Output diagram in location and format specified'''
-        pass
 
 if __name__ == '__main__':
 
@@ -802,7 +811,7 @@ if __name__ == '__main__':
                       help = "print a plain summary of conflicting reservations pairs") 
     parser.add_option("-v", "--verbose", action = "store_true", dest = "confverbose", \
                       help = "print a verbose summary of conflicting reservations pairs")
-    parser.add_option("-g", "--graph", nargs = 4, dest = "graph", \
+    parser.add_option("-g", "--graph", nargs = 6, dest = "graph", \
                       help = "generates an image representing the current reservations in the system")
     parser.add_option("-s", "--showres", action = "store_true", dest = "showres", \
                       help = "call the 'showres' command with the -l option selected")
