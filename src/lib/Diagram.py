@@ -3,10 +3,6 @@
    gen_tree_view --
    mod_reserv_dict --
    gen_part_hits --
-   calc_range --
-   round_range --
-   week_from_today --
-   this_week -- 
    ret_short_str --
    ret_all_reservs --
    detect_shared_parts --
@@ -130,70 +126,6 @@ def gen_part_hits(reserv_dict):
                 temp_partition_list.append(match) # adds partition name to the temp list of partition hits
         reserv_part_hits[curr_reserv] = temp_partition_list # records the list of partition hits for the curr reserv
     return
-
-# optional 
-def calc_range(reserv_dict):
-    """Find the x range of lowest start time and highest end time for all 
-       reservations.
-       reserv_dict -- 
-       return value --
-       exceptions
-    """
-    min_start_time = time.time() # current time
-    max_end_time = time.time()
-    for curr_reserv in reserv_dict.keys():
-        if curr_reserv[2] < min_start_time: # start_time(a) < currr_min_start_time
-            min_start_time = curr_reserv[2]
-        if curr_reserv[4] > max_end_time:   # end_Time(a) > curr_max_end_time
-            max_end_time = curr_reserv[4]
-    return (min_start_time, max_end_time)
-
-# optional
-def round_range(reserv_dict):
-    """Fill out documentation string.
-       reserv_dict -- 
-       return value -- 
-       exceptions
-    """
-    range_tuple = calc_range(reserv_dict)
-    # duration time for all reservs / (mins * secs); epoch time is in secs
-    length_in_hours = (range_tuple[1] - range_tuple[0]) / 3600 
-    #dmin = ((range_tuple[1] - range_tuple[0]) / 60) % 60       
-    #d_year = None  #hopefully no duration of years  
-    #d_month = None #hopefully no duration of months 
-    #d_type = None  #no particular day type since it is duration
-    d_days = int(math.floor(length_in_hours / 24))
-    #d_hours = int(math.floor(length_in_hours - (d_days * 24)))
-    #d_mins = int((length_in_hours - ((d_days * 24) + d_hours)) * 60)  
-    d_days += 1 # PROBLEM; fix so exact times derived
-    return d_days  
-
-# optional
-def week_from_today():
-    """Fill out documentation string.
-       arguments
-       return value --
-       exceptions
-    """
-    start_weekday_time = time.time() # today
-    end_weekday_time = start_weekday_time + 6 * 24 * 3600 # six days later
-    return (start_weekday_time, end_weekday_time)
-
-# optional
-def this_week():
-    """Fill out documentation string.
-       arguments
-       return value--
-       exceptions
-    """
-    today = time.time() # today
-    num_day = time.localtime(today)[6]
-    if num_day != 0: # today != mon
-        mon = today - num_day * 24 * 3600
-        sun = mon + 6 * 24 * 3600
-        return (mon, sun)
-    else: # today == mon
-        return (today, today + 6 * 24 * 3600)   
 
 def ret_short_str(epoch_time):
     """Return a human-readable string of epoch time in the format: 
@@ -344,6 +276,35 @@ def prnt_verbose_conflicts():
             print("|".join(part_conflicts[pair]) + "\n") 
     return
 
+def R1(left, right, the_list):
+    """recursive binary division test - horizontal line"""
+    middle = int(math.ceil((left + right)/2))
+    if middle == left or middle == right:
+        pass
+    elif middle != 0 and middle > 0:
+        the_list.append(middle)
+        print "D1: " + str(left) + " D2: " + str(right) + " Dm: " + str(middle)
+        R1(left, middle, the_list)
+        R1(middle, right, the_list)
+
+def R2(left, right, bottom, top):
+    """recursive binary division test - horizontal and vertical lines"""
+    middle_h = int(math.ceil((left + right) / 2))
+    middle_v = int(math.ceil((bottom + top) / 2))
+
+   
+    if middle_h == left or middle_h == right:
+        pass
+    elif middle_h != 0 and middle_h > 0:
+        R1(left, middle_h)
+        R1(middle_h, right)  
+    print ""
+    if middle_v == bottom or middle_v == top:
+        pass
+    elif middle_v != 0 and middle_v > 0:
+        R1(bottom, middle_v)
+        R1(middle_v, top)  
+
 def gen_image(reserv_dict):
     """Create a graphic of the current reservations in Blue Gene/L using PIL.
        reserv_dict --
@@ -391,7 +352,7 @@ def gen_image(reserv_dict):
     canvas.text((canvas_x * 0.5 - canvas.textsize(image_title)[0] * 0.5, canvas_y * 0.03), \
         fill = (0, 0, 0), text = image_title, font = def_font) 
 
-    #DRAWS THE STATISTIC INFORMATION
+    # DRAWS THE STATISTIC INFORMATION
 
     user_s = os.environ['USER'] # user currently running the application
     host_s = os.environ['HOST'] # host machine currently running the application
@@ -419,7 +380,7 @@ def gen_image(reserv_dict):
         days_names[day] = start_res_x
         start_res_x = start_res_x + 24 * 3600 # increments by day in terms of seconds
 
-    #------------------------------------------------------------------------------------------------
+    # SETS UP THE MESH	
 
     # generates complete partition name following the node notation
     part_label = part_planes[0] + part_names[0] + part_size 
@@ -457,8 +418,6 @@ def gen_image(reserv_dict):
     labels_x = canvas_x * 0.01 
     # starting y-coordinate of the y-axis labels; 8% of the canvas width (increases progressively) 
     labels_y = mesh_y            
-
-    #------------------------------------------------------------------------------------------------
 
     # GENERATES THE X COORDINATES (X1, X2) FOR ALL RESERVATIONS
     # (X1, Y1) and (X2, Y2) = 2 pts defining the reservations' rectangles
@@ -519,7 +478,7 @@ def gen_image(reserv_dict):
             # (upper in the graph image, hence smaller depth in pixels)
             # [0] = Y1, first of 2 values in tuple returned by part_y (y coords of curr part)
             reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][-1]][0]))) 
-            # reserv_part_hits[curr_reserv][0] = first 32- node part by name for curr reserv e.g. 102
+            # reserv_part_hits[curr_reserv][0] = first 32-node part by name for curr reserv e.g. 102
             # (lower in the graph image, hence bigger depth in pixels),
             # [1] = Y2, second of 2 values in tuple returned by part_y (y coords of curr part)
             reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][0]][1]))) 
@@ -550,58 +509,177 @@ def gen_image(reserv_dict):
     # DRAWS CROSS-HATCHED CONFLICTS = LAYER 2
 
     for conflict in part_conflicts_times.keys():
-        conflict_start_time = part_conflicts_times[conflict][0] - start_date
-        conflict_end_time = part_conflicts_times[conflict][1] - start_date
-        conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) # X1
-        conflict_end_pixel_x = int(math.ceil((conflict_end_time / time_per_pixel) + label_width)) # X2
-        temp_node_names = part_conflicts_times[conflict][2] # list of overlapping 32-node partitions
-        # temp_node_names already sorted in incrementing order
-        # y1 [-1] = top node group by name (bottom border) 
-        # e.g. 117 (upper in the graph, hence smaller depth), [0] = y1 (first of 2 values in tuple)
-        conflict_start_pixel_y = int(math.floor(part_y[temp_node_names[-1]][0])) 
-        # y2 [0] = first node group by name (upper border) 
-        # e.g. 111 (lower in the graph, hence bigger depth), [1] = y2 (second of 2 values in tuple) 
-        conflict_end_pixel_y = int(math.floor(part_y[temp_node_names[0]][1])) 
-        #canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
-        #     (conflict_end_pixel_x, conflict_end_pixel_y)], fill = (0, 0, 0)) #use black rectangles to map conflicts  
+        # takes care of the x-axis aspect of the conflict rectangles
+        if (part_conflicts_times[conflict][0] < start_date and \
+            part_conflicts_times[conflict][1] <= start_date) or \
+           (part_conflicts_times[conflict][0] >= end_date and \
+            part_conflicts_times[conflict][1] > end_date):
+             conflict_start_pixel_x = -1 # X1; negative value so the 'dot' drawn off the canvas
+             conflict_end_pixel_x = -1 # X2; negative value so the 'dot' drawn off the canvas
+             conflict_start_pixel_y = -1 # Y1; negative value so the 'dot' drawn off the canvas
+             conflict_end_pixel_y = -1 # Y2; negative value so the 'dot' drawn off the canvas
+        else:
+             # conflict occurs at the start date of the currently observed time period
+             # hence 'cut off' any parts hanging to the left of the mesh
+             if part_conflicts_times[conflict][1] > start_date and \
+                part_conflicts_times[conflict][0] <= start_date:
+                 conflict_start_time = start_date - start_date
+                 conflict_end_time = part_conflicts_times[conflict][1] - start_date
+             # reservation occurs at the end date of the currently observed time period
+             # hence 'cut off' any parts hanging to the right of the mesh
+             elif part_conflicts_times[conflict][0] < end_date and \
+                  part_conflicts_times[conflict][1] >= end_date:
+                 conflict_start_time = part_conflicts_times[conflict][0] - start_date
+                 conflict_end_time = end_date - start_date
+             # reservation occurs within the currently observed time period
+             # hence draw the entire reservation
+             elif part_conflicts_times[conflict][0] > start_date and \
+                  part_conflicts_times[conflict][1] < end_date:
+                 conflict_start_time = part_conflicts_times[conflict][0] - start_date 
+                 conflict_end_time = part_conflicts_times[conflict][1] - start_date
+             conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) # X1
+             conflict_end_pixel_x = int(math.ceil((conflict_end_time / time_per_pixel) + label_width)) # X2
+             temp_node_names = part_conflicts_times[conflict][2] # list of overlapping 32-node partitions
+             # temp_node_names already sorted in incrementing order e.g. 102, 104, 106...
+             # temp_node_names[-1] = last 32-node part by name for curr conflict e.g. 216
+             # (upper in the graph image, hence smaller depth in pixels)
+             # [0] = Y1, first of 2 values in tuple returned by part_y (y coords of curr part)
+             conflict_start_pixel_y = int(math.floor(part_y[temp_node_names[-1]][0]))   
+             # temp_node_names[0] = first 32-node part by name for curr conflict e.g. 102
+             # (lower in the graph image, hence bigger depth in pixels),
+             # [1] = Y2, second of 2 values in tuple returned by part_y (y coords of curr part)
+             conflict_end_pixel_y = int(math.floor(part_y[temp_node_names[0]][1]))       
+        """
+        canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
+             (conflict_end_pixel_x, conflict_end_pixel_y)], fill = (0, 0, 0)) #use black rectangles to map conflicts 
+        """ 
         red_amount = random.randint(0, 255)
         green_amount = random.randint(0, 255)
         blue_amount = random.randint(0, 255)
         cross_hatch_color = (red_amount, green_amount, blue_amount) 
-
+        #----------------------------------------------------------------------
+         
+        #----------------------------------------------------------------------
         duration_x = conflict_end_pixel_x - conflict_start_pixel_x # x-axis span for current conflict
         duration_y = conflict_end_pixel_y - conflict_start_pixel_y # y-axis span for current conflict
-
+        """
+        canvas.line([(conflict_start_pixel_x, conflict_start_pixel_y), \
+                    (conflict_end_pixel_x, conflict_end_pixel_y)], \
+                    fill = cross_hatch_color)
+        canvas.line([(conflict_end_pixel_x, conflict_start_pixel_y), \
+                    (conflict_start_pixel_x, conflict_end_pixel_y)], \
+                    fill = cross_hatch_color)
+        canvas.ellipse([(conflict_start_pixel_x, conflict_start_pixel_y), \
+                    (conflict_end_pixel_x, conflict_end_pixel_y)], \
+                    outline = cross_hatch_color)
+        canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
+                    (conflict_end_pixel_x, conflict_end_pixel_y)], \
+                    outline = cross_hatch_color)
+        """
+        
         copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
         copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
-        step = 0.75 * rect_height # 10 is a good static value #modify this or the next 2 lines
-        #step_x = duration_x * 0.1 
-        #step_y = duration_y * 0.1
-        for column in xrange(0, duration_y): # modify this; column does not play a role right now
+        copy_conflict_end_pixel_x = conflict_end_pixel_x
+        copy_conflict_end_pixel_y = conflict_end_pixel_y
+        """
+        step = 0.75 * rect_height # step modifies copy_conflict_start_pixel_x
+        step_x = int(0.20 * duration_x) 
+        step_y = int(0.20 * duration_y) 
+        for col in xrange(0, duration_y): # modify this; col does not play a role right now
             for row in xrange(0, duration_x): # modify this; row does not play a role right now
+                #
                 if (copy_conflict_start_pixel_y >= conflict_end_pixel_y) \
                    and (copy_conflict_start_pixel_x >= conflict_end_pixel_x):      
                     break              
+                #
                 if (copy_conflict_start_pixel_x >= conflict_end_pixel_x) \
                    and (copy_conflict_start_pixel_y < conflict_end_pixel_y):
                     copy_conflict_start_pixel_x = conflict_start_pixel_x # reset x
-                    copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + step # increment y
+                    copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + step_y # increment y
+                #
                 if (copy_conflict_start_pixel_y >= conflict_end_pixel_y) \
                    and (copy_conflict_start_pixel_x < conflict_end_pixel_x): # end of the y-coordinates
                     copy_conflict_start_pixel_y = conflict_start_pixel_y # reset y
-                    copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step # increment x 
-              
+                    copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step_x # increment x 
                 #back slash of 'X'
                 canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
-                    (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y + step)], \
+                    (copy_conflict_start_pixel_x + step_x, copy_conflict_start_pixel_y + step_y)], \
                     fill = cross_hatch_color) 
                 #forward slash of 'X'                   
-                canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y + step), \
-                    (copy_conflict_start_pixel_x + step, copy_conflict_start_pixel_y)], \
+                canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y + step_y), \
+                    (copy_conflict_start_pixel_x + step_x, copy_conflict_start_pixel_y)], \
                     fill = cross_hatch_color)
-                copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step
-            copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + step          
-
+                copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + step_x
+                row = row + step_x
+            copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + step_y    
+            col = col + step_y     
+        """
+        canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
+                    (conflict_end_pixel_x, conflict_end_pixel_y)], \
+                    outline = cross_hatch_color)
+        while copy_conflict_start_pixel_x < conflict_end_pixel_x and \
+              copy_conflict_end_pixel_y > conflict_start_pixel_y:
+            canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
+                   (copy_conflict_end_pixel_x, copy_conflict_end_pixel_y)], \
+                   fill = cross_hatch_color)
+            copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + int(0.5 * duration_x)
+            copy_conflict_end_pixel_y = copy_conflict_end_pixel_y - int(0.5 * duration_y)
+        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
+        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+        copy_conflict_end_pixel_x = conflict_end_pixel_x
+        copy_conflict_end_pixel_y = conflict_end_pixel_y
+        while copy_conflict_end_pixel_x > conflict_start_pixel_x and \
+              copy_conflict_start_pixel_y < conflict_end_pixel_y:
+            canvas.line([(copy_conflict_end_pixel_x, copy_conflict_end_pixel_y), \
+                   (copy_conflict_start_pixel_x, copy_conflict_start_pixel_y)], \
+                   fill = cross_hatch_color)
+            copy_conflict_end_pixel_x = copy_conflict_end_pixel_x - int(0.5 * duration_x)
+            copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + int(0.5 * duration_y)
+        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
+        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+        copy_conflict_end_pixel_x = conflict_end_pixel_x
+        copy_conflict_end_pixel_y = conflict_end_pixel_y 
+        while copy_conflict_start_pixel_x < conflict_end_pixel_x and \
+              copy_conflict_start_pixel_y < conflict_end_pixel_y:
+            canvas.line([(copy_conflict_start_pixel_x, copy_conflict_end_pixel_y), \
+                   (copy_conflict_end_pixel_x, copy_conflict_start_pixel_y)], \
+                   fill = cross_hatch_color)
+            copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + int(0.5 * duration_x)
+            copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + int(0.5 * duration_y)  
+        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
+        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+        copy_conflict_end_pixel_x = conflict_end_pixel_x
+        copy_conflict_end_pixel_y = conflict_end_pixel_y 
+        while copy_conflict_end_pixel_x > conflict_start_pixel_x and \
+              copy_conflict_end_pixel_y > conflict_start_pixel_y:
+            canvas.line([(copy_conflict_start_pixel_x, copy_conflict_end_pixel_y), \
+                   (copy_conflict_end_pixel_x, copy_conflict_start_pixel_y)], \
+                   fill = cross_hatch_color)
+            copy_conflict_end_pixel_x = copy_conflict_end_pixel_x - int(0.5 * duration_x)
+            copy_conflict_end_pixel_y = copy_conflict_end_pixel_y - int(0.5 * duration_y)
+      
+        """
+        for column in xrange(0, duration_y):
+            canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
+                   (conflict_end_pixel_x, copy_conflict_start_pixel_y)], \
+                   fill = cross_hatch_color) 
+            if (copy_conflict_start_pixel_y + 8 < conflict_end_pixel_y):
+                copy_conflict_start_pixel_y += 8
+                column += 8
+            else: 
+               pass
+        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
+        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+        for row in xrange(0, duration_x):
+            canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
+                   (copy_conflict_start_pixel_x, conflict_end_pixel_y)], \
+                   fill = cross_hatch_color) 
+            if (copy_conflict_start_pixel_x + 8 < conflict_end_pixel_x):
+                copy_conflict_start_pixel_x += 8
+                row += 8
+            else: 
+               pass
+         """
     # DRAWS THE Y-AXIS = DRAWS THE 32-NODE PARTITION LABELS = LAYER 3A
 
     # currently labels exist for 32 partitions of 32 nodes each, 0 to 32 = 32
@@ -784,7 +862,14 @@ def gen_image(reserv_dict):
     return
 
 if __name__ == '__main__':
-
+    """A = []
+    R1(0, 10, A)
+    print A
+    B = []
+    R1(0, 20, B)
+    print B
+    #print R2(0, 10, 0, 20)"""
+    
     scheduler = Cobalt.Proxy.scheduler()
     reservations = {}
     npart = {}
