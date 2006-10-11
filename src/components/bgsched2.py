@@ -755,10 +755,6 @@ class BGSched(Cobalt.Component.Component):
         #print "E:", events
         #print "T:", tentative
         #raw_input()
-        if not jobs:
-            score = Evaluate(tentative)
-            #print "bottomed out with score: %s" % (score)
-            return (score, tentative)
         # find all possible run combos for job
         best_score = -1
         best_schedule = []
@@ -777,9 +773,13 @@ class BGSched(Cobalt.Component.Component):
                 ten.sort()
                 #printSchedule(ten)
                 njobs = [j for j in jobs if j != job]
-                (newscore, newschedule) = \
-                           self.findBest(njobs, events + \
-                                         [Event(event, job.get('walltime'), 'hard', 0)], ten)
+                if not njobs:
+                    newschedule = ten
+                    newscore = Evaluate(newschedule)
+                else:
+                    (newscore, newschedule) = \
+                               self.findBest(njobs, events + \
+                                             [Event(event, job.get('walltime'), 'hard', 0)], ten)
                 if newscore > best_score:
                     best_score = newscore
                     best_schedule = newschedule

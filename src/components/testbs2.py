@@ -28,7 +28,8 @@ bs.jobs.Add([{'tag':'job', 'nodes':'32', 'location':None, 'jobid':'1',
             'user':'voran'},
            {'tag':'job', 'nodes':'32', 'location':None, 'jobid':'5',
             'state':'queued', 'walltime':10, 'queue':'default',
-            'user':'nobody'}])
+            'user':'nobody'}
+             ])
 
 bs.reservations.Add([{'tag':'reservation', 'user':['nobody'], 'start':0,
                       'duration':150, 'location':['32wayN0'], 'recurrence':0}])
@@ -39,13 +40,16 @@ bs.partitions.Add([{'tag':'partition', 'name':x, 'size':y, 'functional':False, '
 
 e_to_check = bs.jobs.ScanEvents() + bs.reservations.ScanEvents()# + [Event(10, 12, 'hard', 0)]
 
+t1 = time.clock()
 theschedule = bs.findBest([j for j in bs.jobs], e_to_check, [])
+t2 = time.clock()
+print 'took %.3f seconds to find schedule' % (t2-t1)
 
 print 'schedule:'
 print 'score: %s' % theschedule[0]
-for job, location, time in theschedule[1]:
+for job, location, tstep in theschedule[1]:
     print "Running job %s on partition %s at timestep %s for %s seconds" % \
-          (job.get('jobid'), location.get('name'), time, job.get('walltime'))
+          (job.get('jobid'), location.get('name'), tstep, job.get('walltime'))
 
 # Reservations work
 # Partition status works
