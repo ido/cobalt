@@ -861,6 +861,22 @@ def gen_image(reserv_dict):
 
     return
 
+class ScheduleDiagram:
+    '''Provides Visualization of Schedules'''
+    def __init__(self, schedule, partitions, reservations):
+        self.schedule = schedule
+        self.partitions = partitions
+        self.reservations = reservations
+        self.window = (-1, -1)
+
+    def setWindow(self, start, stop):
+        '''Set visible window for diagram'''
+        self.window = (start, stop)
+
+    def Diagram(self, name, format):
+        '''Output diagram in location and format specified'''
+        pass
+
 if __name__ == '__main__':
     """A = []
     R1(0, 10, A)
