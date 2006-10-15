@@ -428,27 +428,28 @@ def gen_image(reserv_dict):
         # hence no need to draw it
         if (curr_reserv[2] < start_date and curr_reserv[4] <= start_date) or \
            (curr_reserv[2] >= end_date and curr_reserv[4] > end_date):
-             #del reserv_dict[curr_reserv]
-             start_pixel = -1 # x1; negative value so the 'dot' drawn off the canvas
-             end_pixel = -1 # x2; negative value so the 'dot' drawn off the canvas
+            #del reserv_dict[curr_reserv]
+            start_pixel = -1 # x1; negative value so the 'dot' drawn off the canvas
+            end_pixel = -1 # x2; negative value so the 'dot' drawn off the canvas
         else:
-             # reservation occurs at the start date of the currently observed time period
-             # hence 'cut off' any parts hanging to the left of the mesh
-             if curr_reserv[4] > start_date and curr_reserv[2] <= start_date:
-                 particular_start_time = start_date - start_date
-                 particular_end_time = curr_reserv[4] - start_date
-             # reservation occurs at the end date of the currently observed time period
-             # hence 'cut off' any parts hanging to the right of the mesh
-             elif curr_reserv[2] < end_date and curr_reserv[4] >= end_date:
-                 particular_start_time = curr_reserv[2] - start_date
-                 particular_end_time = end_date - start_date
-             # reservation occurs within the currently observed time period
-             # hence draw the entire reservation
-             elif curr_reserv[2] > start_date and curr_reserv[4] < end_date:
-                 particular_start_time = curr_reserv[2] - start_date 
-                 particular_end_time = curr_reserv[4] - start_date
-             start_pixel = (particular_start_time / time_per_pixel) + label_width # reserv start pixel based on mesh
-             end_pixel = (particular_end_time / time_per_pixel) + label_width # reserv end pixel based on mesh
+            # reservation occurs at the start date of the currently observed time period
+            # hence 'cut off' any parts hanging to the left of the mesh
+            if curr_reserv[4] > start_date and curr_reserv[2] <= start_date:
+                particular_start_time = start_date - start_date
+                particular_end_time = curr_reserv[4] - start_date
+            # reservation occurs at the end date of the currently observed time period
+            # hence 'cut off' any parts hanging to the right of the mesh
+            elif curr_reserv[2] < end_date and curr_reserv[4] >= end_date:
+                particular_start_time = curr_reserv[2] - start_date
+                particular_end_time = end_date - start_date
+                # reservation occurs within the currently observed time period
+                # hence draw the entire reservation
+            elif curr_reserv[2] > start_date and curr_reserv[4] < end_date:
+                particular_start_time = curr_reserv[2] - start_date 
+                particular_end_time = curr_reserv[4] - start_date
+            # reserv start and end pixel based on mesh
+            start_pixel = (particular_start_time / time_per_pixel) + label_width
+            end_pixel = (particular_end_time / time_per_pixel) + label_width 
         reserv_xy[curr_reserv] = [int(math.ceil(start_pixel)), int(math.ceil(end_pixel))] # X1, X2
        
     # GENERATES THE Y COORDINATES (Y1, Y2) FOR ALL RESERVATIONS
@@ -514,41 +515,45 @@ def gen_image(reserv_dict):
             part_conflicts_times[conflict][1] <= start_date) or \
            (part_conflicts_times[conflict][0] >= end_date and \
             part_conflicts_times[conflict][1] > end_date):
-             conflict_start_pixel_x = -1 # X1; negative value so the 'dot' drawn off the canvas
-             conflict_end_pixel_x = -1 # X2; negative value so the 'dot' drawn off the canvas
-             conflict_start_pixel_y = -1 # Y1; negative value so the 'dot' drawn off the canvas
-             conflict_end_pixel_y = -1 # Y2; negative value so the 'dot' drawn off the canvas
+            # X1; negative value so the 'dot' drawn off the canvas
+            conflict_start_pixel_x = -1
+            # X2; negative value so the 'dot' drawn off the canvas
+            conflict_end_pixel_x = -1
+            # Y1; negative value so the 'dot' drawn off the canvas
+            conflict_start_pixel_y = -1
+            # Y2; negative value so the 'dot' drawn off the canvas
+            conflict_end_pixel_y = -1 
         else:
-             # conflict occurs at the start date of the currently observed time period
-             # hence 'cut off' any parts hanging to the left of the mesh
-             if part_conflicts_times[conflict][1] > start_date and \
-                part_conflicts_times[conflict][0] <= start_date:
-                 conflict_start_time = start_date - start_date
-                 conflict_end_time = part_conflicts_times[conflict][1] - start_date
-             # reservation occurs at the end date of the currently observed time period
-             # hence 'cut off' any parts hanging to the right of the mesh
-             elif part_conflicts_times[conflict][0] < end_date and \
-                  part_conflicts_times[conflict][1] >= end_date:
-                 conflict_start_time = part_conflicts_times[conflict][0] - start_date
-                 conflict_end_time = end_date - start_date
-             # reservation occurs within the currently observed time period
-             # hence draw the entire reservation
-             elif part_conflicts_times[conflict][0] > start_date and \
-                  part_conflicts_times[conflict][1] < end_date:
-                 conflict_start_time = part_conflicts_times[conflict][0] - start_date 
-                 conflict_end_time = part_conflicts_times[conflict][1] - start_date
-             conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) # X1
-             conflict_end_pixel_x = int(math.ceil((conflict_end_time / time_per_pixel) + label_width)) # X2
-             temp_node_names = part_conflicts_times[conflict][2] # list of overlapping 32-node partitions
-             # temp_node_names already sorted in incrementing order e.g. 102, 104, 106...
-             # temp_node_names[-1] = last 32-node part by name for curr conflict e.g. 216
-             # (upper in the graph image, hence smaller depth in pixels)
-             # [0] = Y1, first of 2 values in tuple returned by part_y (y coords of curr part)
-             conflict_start_pixel_y = int(math.floor(part_y[temp_node_names[-1]][0]))   
-             # temp_node_names[0] = first 32-node part by name for curr conflict e.g. 102
-             # (lower in the graph image, hence bigger depth in pixels),
-             # [1] = Y2, second of 2 values in tuple returned by part_y (y coords of curr part)
-             conflict_end_pixel_y = int(math.floor(part_y[temp_node_names[0]][1]))       
+            # conflict occurs at the start date of the currently observed time period
+            # hence 'cut off' any parts hanging to the left of the mesh
+            if part_conflicts_times[conflict][1] > start_date and \
+                   part_conflicts_times[conflict][0] <= start_date:
+                conflict_start_time = start_date - start_date
+                conflict_end_time = part_conflicts_times[conflict][1] - start_date
+            elif part_conflicts_times[conflict][0] < end_date and \
+                     part_conflicts_times[conflict][1] >= end_date:
+                # reservation occurs at the end date of the currently observed time period
+                # hence 'cut off' any parts hanging to the right of the mesh
+                conflict_start_time = part_conflicts_times[conflict][0] - start_date
+                conflict_end_time = end_date - start_date
+            elif part_conflicts_times[conflict][0] > start_date and \
+                     part_conflicts_times[conflict][1] < end_date:
+                # reservation occurs within the currently observed time period
+                # hence draw the entire reservation
+                conflict_start_time = part_conflicts_times[conflict][0] - start_date 
+                conflict_end_time = part_conflicts_times[conflict][1] - start_date
+            conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) # X1
+            conflict_end_pixel_x = int(math.ceil((conflict_end_time / time_per_pixel) + label_width)) # X2
+            temp_node_names = part_conflicts_times[conflict][2] # list of overlapping 32-node partitions
+            # temp_node_names already sorted in incrementing order e.g. 102, 104, 106...
+            # temp_node_names[-1] = last 32-node part by name for curr conflict e.g. 216
+            # (upper in the graph image, hence smaller depth in pixels)
+            # [0] = Y1, first of 2 values in tuple returned by part_y (y coords of curr part)
+            conflict_start_pixel_y = int(math.floor(part_y[temp_node_names[-1]][0]))   
+            # temp_node_names[0] = first 32-node part by name for curr conflict e.g. 102
+            # (lower in the graph image, hence bigger depth in pixels),
+            # [1] = Y2, second of 2 values in tuple returned by part_y (y coords of curr part)
+            conflict_end_pixel_y = int(math.floor(part_y[temp_node_names[0]][1]))       
         """
         canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
              (conflict_end_pixel_x, conflict_end_pixel_y)], fill = (0, 0, 0)) #use black rectangles to map conflicts 
@@ -841,19 +846,11 @@ def gen_image(reserv_dict):
 
     # EXPORTS THE IMAGE
     image_name = options.graph[0] + "_" + user_s + "@" + host_s + "_" \
-        + time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time())) + "_" + str(canvas_x) + "x" + str(canvas_y) 
-    if options.graph[1] == "png":
-        image.save(image_name + ".png", "PNG") # saves generated image in .png format
-    elif options.graph[1] == "tif":
-        image.save(image_name + ".tif", "TIF") # saves generated image in .tif format
-    elif options.graph[1] == "jpeg":
-        image.save(image_name + ".jpeg", "JPEG") # saves generated image in .jpeg format
-    elif options.graph[1] == "pdf":
-        image.save(image_name + ".pdf", "PDF") # saves generated images in .pdf format (great quality loss)
-    elif options.graph[1] == "gif":
-        image.save(image_name + ".gif", "GIF") # saves generated image in .gif format (great quality loss)
+        + time.strftime("%Y%m%d_%H%M%S", time.localtime(time.time())) + "_" + str(canvas_x) + "x" + str(canvas_y)
+    if options.graph[1] in ['png', 'tif', 'jpeg', 'pdf', 'gif']:
+        image.save(image_name + "." + options.graph[1], options.graph[1].upper())
     else:
-        sys.stderr("Unrecognized image format!")
+        sys.stderr("Unrecognized image format: %s" % options.graph[1])
         sys.exit("Exiting...")
     # comment out next line if image needs to be saved but not displayed
     """os.execl("/soft/apps/tools/ImageMagick/bin/display", "display", "./" \
