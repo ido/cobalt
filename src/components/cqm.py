@@ -682,7 +682,7 @@ class Restriction(Cobalt.Data.Data):
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
         with potential job added'''
-        userjobs = [j for j in queuestate if j.get('user') == job.get('user') and j.get('state') == 'running']
+        userjobs = [j for j in queuestate if j.get('user') == job.get('user') and j.get('state') == 'running' and j.get('queue') == job.get('queue')]
         if len(userjobs) >= int(self.get('value')):
             return (False, "Maxuserjobs limit reached")
         else:
@@ -700,7 +700,8 @@ class Restriction(Cobalt.Data.Data):
         '''limits how many nodes a single user can have running'''
         usernodes = 0
         for j in [qs for qs in queuestate if qs.get('user') == job.get('user')
-                  and qs.get('state') == 'running']:
+                  and qs.get('state') == 'running'
+                  and qs.get('queue') == job.get('queue')]:
             usernodes = usernodes + int(j.get('nodes'))
         if usernodes + int(job.get('nodes')) > int(self.get('value')):
             return (False, "Job exceeds MaxUserNodes limit")
@@ -711,7 +712,8 @@ class Restriction(Cobalt.Data.Data):
         '''limits how many total nodes can be used by jobs running in
         this queue'''
         totalnodes = 0
-        for j in [qs for qs in queuestate if qs.get('state') == 'running']:
+        for j in [qs for qs in queuestate if qs.get('state') == 'running'
+                  and qs.get('queue') == job.get('queue')]:
             totalnodes = totalnodes + int(j.get('nodes'))
         if totalnodes + int(job.get('nodes')) > int(self.get('value')):
             return (False, "Job exceeds MaxTotalNodes limit")
