@@ -673,6 +673,10 @@ class BGSched(Cobalt.Component.Component):
                                'Set')  
         self.register_function(self.AddReservation, "AddReservation")
         self.register_function(self.ReleaseReservation, "DelReservation")
+        self.routinecounter = 0
+        self.loopcounter = 0
+        self.visitedschedules = []
+        self.partialschedules = []
 
     def AddReservation(self, _, spec, name, user, start, duration):
         '''Add a reservation to matching partitions'''
@@ -748,12 +752,12 @@ class BGSched(Cobalt.Component.Component):
             job.Plan(location, evt.start)
             # FIXME need to make sure that job start requests happen at the right time
 
-    def findBest(self, jobs, events, tentative):
+    def findBest(self, jobs, events, tentative, depth=0):
         '''find best schedule using DFS and our metrics'''
         # at leaf node, evaluate tentative schedule
-        #print "J:", jobs
-        #print "E:", events
-        #print "T:", tentative
+        #print "J:", ', '.join([j.get('jobid') for j in jobs])
+        #print "E:", [(e.start, e.duration) for e in events]
+        #print "T:", ["%s->%s" % (t[0].get('jobid'), t[1].get('name')) for t in tentative]
         #raw_input()
         # find all possible run combos for job
         best_score = -1
@@ -762,28 +766,66 @@ class BGSched(Cobalt.Component.Component):
         uevt = []
         [uevt.append(item) for event in events for item in \
          [event.start, event.start + event.duration] if item not in uevt]
-            
+        uevt.sort()
+
+        self.routinecounter += 1
+        #print depth, ':', len([j for j in jobs]) * len(uevt) * len([p for p in self.partitions])
+        print 'events to check', [uevt]
         for job, event, part in [(j, e, p) for j in jobs for e in uevt for p in self.partitions]:
+            self.loopcounter += 1
+            # check if schedule that led us to job has already been
+            # visited in one form or another
+            if tentative in self.partialschedules:
+                print 'this %d-level schedule already found:' % len(tentative), 
+                print 'pruning branch', ["%s,%s,%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in tentative] # + [(job, part, event)]]
+                return None, []
+            print depth, ": Checking ===>", "j%s" % job.get('jobid'), event, part.get('name'), "to", ["%s,%s,%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in tentative], '...',
             if self.CanRun(job, part, event, tentative):
-                #print "Adding ===>", job.get('jobid'), event, part.get('name')
+                print 'canrun'
+                #print depth, ": Adding ===>", "j%s" % job.get('jobid'), event, part.get('name'), "to", ["%s->%s@%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in tentative]
                 # add to tentative, recurse with that job event added
                 # remove job from potential jobs list
                 ten = tentative[:]
                 ten.append((job, part, event))
                 ten.sort()
+
+#                 for p in self.partialschedules:
+#                     print 'partials', ["%s,%s,%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in p]
+
                 #printSchedule(ten)
                 njobs = [j for j in jobs if j != job]
                 if not njobs:
+                    # check if the schedule has already been visited
+                    if ten in self.visitedschedules:
+                        print 'Schedule already found, length', len(ten)
+                        continue
+                    self.visitedschedules.append(ten)
+                    #print 'schedules visited', len(self.visitedschedules)
+                    #print 'sched to eval is', ["%s->%s@%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in ten]
                     newschedule = ten
+                    print 'running eval'
                     newscore = Evaluate(newschedule)
+                    #print 'eval is', newscore
                 else:
                     (newscore, newschedule) = \
                                self.findBest(njobs, events + \
-                                             [Event(event, job.get('walltime'), 'hard', 0)], ten)
-                if newscore > best_score:
+                                             [Event(event, job.get('walltime'), 'hard', 0)], ten, depth = depth+1)
+                if newscore != None and newscore > best_score:
                     best_score = newscore
                     best_schedule = newschedule
 
+                # add ten to partialschedules on the way out
+                if len(ten) > 1 and ten not in self.partialschedules:
+                    print '%d : adding ten to partialschedules' % len(ten), ["%s,%s,%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in ten]
+                    printSchedule(ten)
+                    self.partialschedules.append(ten)
+
+            else:
+                print 'bad'
+                
+#         print 'partial schedules'
+#         for s in self.partialschedules:
+#             print ["%s->%s@%d" % (t[0].get('jobid'), t[1].get('name'), t[2]) for t in s]
         return (best_score, best_schedule)
 
     def StartJobs(self):
