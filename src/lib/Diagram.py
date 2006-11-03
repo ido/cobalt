@@ -276,6 +276,7 @@ def prnt_verbose_conflicts():
             print("|".join(part_conflicts[pair]) + "\n") 
     return
 
+#optional
 def R1(left, right, the_list):
     """recursive binary division test - horizontal line"""
     middle = int(math.ceil((left + right)/2))
@@ -287,12 +288,12 @@ def R1(left, right, the_list):
         R1(left, middle, the_list)
         R1(middle, right, the_list)
 
+#optional
 def R2(left, right, bottom, top):
     """recursive binary division test - horizontal and vertical lines"""
     middle_h = int(math.ceil((left + right) / 2))
     middle_v = int(math.ceil((bottom + top) / 2))
-
-   
+ 
     if middle_h == left or middle_h == right:
         pass
     elif middle_h != 0 and middle_h > 0:
@@ -442,8 +443,8 @@ def gen_image(reserv_dict):
             elif curr_reserv[2] < end_date and curr_reserv[4] >= end_date:
                 particular_start_time = curr_reserv[2] - start_date
                 particular_end_time = end_date - start_date
-                # reservation occurs within the currently observed time period
-                # hence draw the entire reservation
+            # reservation occurs within the currently observed time period
+            # hence draw the entire reservation
             elif curr_reserv[2] > start_date and curr_reserv[4] < end_date:
                 particular_start_time = curr_reserv[2] - start_date 
                 particular_end_time = curr_reserv[4] - start_date
@@ -459,10 +460,10 @@ def gen_image(reserv_dict):
     # reserv_xy[curr_reserv].append(int(math.floor(part_y[reserv_part_hits[curr_reserv][0]][1]))) 
     # these two lines can cause a problem if a reservation is scheduled, which includes
     # only the top partition and no other partitions (aka '#' notation)
-    # e.g. ANL_Roo, ANL_R001, ANL_R000 or R000_J102-128
+    # e.g. ANL_R00, ANL_R001, ANL_R000 or R000_J102-128
     # it is a problem because no 32-node partitions are detected
-    # in theory no such reservation should exist
-    # breaks at reserv_part_hits[curr_reserv][0 or  -1] because there is no such value
+    # in theory no such reservation should exist (hack used by admins for scheduling reservations)
+    # breaks at reserv_part_hits[curr_reserv][0 or -1] because there is no such value (a 32-node hit)
 
     labels_y_copy = labels_y
     for partition in label_names: # take into account the reversed order
@@ -499,7 +500,7 @@ def gen_image(reserv_dict):
     for curr_reserv in reserv_xy.keys():
         # always selects the head of the list
         color = colors_copy[0] 
-        # save the color for later so the legend can retrieve based on reserv name only
+        # save the color for later so the legend can retrieve it based on reserv name only
         reserv_colors[curr_reserv[1]] = color 
         # unique colors; new copy of the array to keep the orig intact
         colors_copy.remove(color) 
@@ -530,16 +531,16 @@ def gen_image(reserv_dict):
                    part_conflicts_times[conflict][0] <= start_date:
                 conflict_start_time = start_date - start_date
                 conflict_end_time = part_conflicts_times[conflict][1] - start_date
+            # reservation occurs at the end date of the currently observed time period
+            # hence 'cut off' any parts hanging to the right of the mesh
             elif part_conflicts_times[conflict][0] < end_date and \
                      part_conflicts_times[conflict][1] >= end_date:
-                # reservation occurs at the end date of the currently observed time period
-                # hence 'cut off' any parts hanging to the right of the mesh
                 conflict_start_time = part_conflicts_times[conflict][0] - start_date
                 conflict_end_time = end_date - start_date
+            # reservation occurs within the currently observed time period
+            # hence draw the entire reservation
             elif part_conflicts_times[conflict][0] > start_date and \
                      part_conflicts_times[conflict][1] < end_date:
-                # reservation occurs within the currently observed time period
-                # hence draw the entire reservation
                 conflict_start_time = part_conflicts_times[conflict][0] - start_date 
                 conflict_end_time = part_conflicts_times[conflict][1] - start_date
             conflict_start_pixel_x = int(math.ceil((conflict_start_time / time_per_pixel) + label_width)) # X1
@@ -567,7 +568,10 @@ def gen_image(reserv_dict):
         #----------------------------------------------------------------------
         duration_x = conflict_end_pixel_x - conflict_start_pixel_x # x-axis span for current conflict
         duration_y = conflict_end_pixel_y - conflict_start_pixel_y # y-axis span for current conflict
+
         """
+        # Pattern 1 - optional
+        # X within a circle within a square
         canvas.line([(conflict_start_pixel_x, conflict_start_pixel_y), \
                     (conflict_end_pixel_x, conflict_end_pixel_y)], \
                     fill = cross_hatch_color)
@@ -587,6 +591,8 @@ def gen_image(reserv_dict):
         copy_conflict_end_pixel_x = conflict_end_pixel_x
         copy_conflict_end_pixel_y = conflict_end_pixel_y
         """
+        # Pattern 2 - optional 
+        # Mesh of Xs (not calculated properly)
         step = 0.75 * rect_height # step modifies copy_conflict_start_pixel_x
         step_x = int(0.20 * duration_x) 
         step_y = int(0.20 * duration_y) 
@@ -619,6 +625,7 @@ def gen_image(reserv_dict):
             copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + step_y    
             col = col + step_y     
         """
+        # draws the conflict rectangle
         canvas.rectangle([(conflict_start_pixel_x, conflict_start_pixel_y), \
                     (conflict_end_pixel_x, conflict_end_pixel_y)], \
                     outline = cross_hatch_color)
@@ -629,8 +636,9 @@ def gen_image(reserv_dict):
                    fill = cross_hatch_color)
             copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + int(0.5 * duration_x)
             copy_conflict_end_pixel_y = copy_conflict_end_pixel_y - int(0.5 * duration_y)
-        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
-        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+        # reset variables
+        copy_conflict_start_pixel_x = conflict_start_pixel_x 
+        copy_conflict_start_pixel_y = conflict_start_pixel_y    
         copy_conflict_end_pixel_x = conflict_end_pixel_x
         copy_conflict_end_pixel_y = conflict_end_pixel_y
         while copy_conflict_end_pixel_x > conflict_start_pixel_x and \
@@ -640,8 +648,9 @@ def gen_image(reserv_dict):
                    fill = cross_hatch_color)
             copy_conflict_end_pixel_x = copy_conflict_end_pixel_x - int(0.5 * duration_x)
             copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + int(0.5 * duration_y)
-        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
-        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+        # reset variables
+        copy_conflict_start_pixel_x = conflict_start_pixel_x 
+        copy_conflict_start_pixel_y = conflict_start_pixel_y    
         copy_conflict_end_pixel_x = conflict_end_pixel_x
         copy_conflict_end_pixel_y = conflict_end_pixel_y 
         while copy_conflict_start_pixel_x < conflict_end_pixel_x and \
@@ -650,9 +659,10 @@ def gen_image(reserv_dict):
                    (copy_conflict_end_pixel_x, copy_conflict_start_pixel_y)], \
                    fill = cross_hatch_color)
             copy_conflict_start_pixel_x = copy_conflict_start_pixel_x + int(0.5 * duration_x)
-            copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + int(0.5 * duration_y)  
-        copy_conflict_start_pixel_x = conflict_start_pixel_x # new copy; indirectly modify the var
-        copy_conflict_start_pixel_y = conflict_start_pixel_y # new copy; indirectly modify the var   
+            copy_conflict_start_pixel_y = copy_conflict_start_pixel_y + int(0.5 * duration_y) 
+        # reset variables 
+        copy_conflict_start_pixel_x = conflict_start_pixel_x 
+        copy_conflict_start_pixel_y = conflict_start_pixel_y    
         copy_conflict_end_pixel_x = conflict_end_pixel_x
         copy_conflict_end_pixel_y = conflict_end_pixel_y 
         while copy_conflict_end_pixel_x > conflict_start_pixel_x and \
@@ -664,6 +674,7 @@ def gen_image(reserv_dict):
             copy_conflict_end_pixel_y = copy_conflict_end_pixel_y - int(0.5 * duration_y)
       
         """
+        # optional
         for column in xrange(0, duration_y):
             canvas.line([(copy_conflict_start_pixel_x, copy_conflict_start_pixel_y), \
                    (conflict_end_pixel_x, copy_conflict_start_pixel_y)], \
@@ -875,7 +886,9 @@ class ScheduleDiagram:
         pass
 
 if __name__ == '__main__':
-    """A = []
+    """
+    # Calculating midpoints for the mesh's Xs - optional
+    A = []
     R1(0, 10, A)
     print A
     B = []
