@@ -368,20 +368,19 @@ class BGSched(Cobalt.Component.Component):
 
     def SupressDuplicates(self, provisional):
         '''Prevent duplicate job start requests from being generated'''
+        locations = [pro[1] for pro in provisional]
         for (jobid, location) in provisional:
             if jobid in self.executed:
                 logger.error("Tried to execute job %s multiple times" % (jobid))
                 provisional.remove((jobid, location))
                 [partition.Free() for partition in self.partitions if partition.get('name') == location]
-            else:
-                self.executed.append(jobid)
-        locations = [pro[1] for pro in provisional]
-        for (jobid, location) in provisional:
-            if locations.count(location) > 1:
+            elif locations.count(location) > 1:
                 logger.error("Tried to use the same partition multiple times")
                 provisional.remove((jobid, location))
                 locations.remove(location)
-
+            else:
+                self.executed.append(jobid)
+            
     def RunQueue(self):
         '''Process changes to the cqm queue'''
         since = time.time() - self.lastrun
