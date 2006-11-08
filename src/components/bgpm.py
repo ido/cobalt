@@ -99,7 +99,7 @@ class ProcessGroup(Cobalt.Data.Data):
             if '--notbgl' in sys.argv:
                 cmd = (program, os.path.basename(program), args)
 
-            self.log.error("User %s: Running %s" % (self.get('user'), " ".join(cmd)))
+            self.log.error("Job %s/%s: Running %s" % (self.get('jobid'), self.get('user'), " ".join(cmd)))
             try:
                 err = open(self.errlog, 'a')
                 os.chmod(self.errlog, 0600)

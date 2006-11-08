@@ -611,7 +611,8 @@ class BGJob(Job):
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'outputfile':self.get('outputpath'),
                  'errorfile':self.get('errorpath'), 'path':self.get('path'), 'size':self.get('procs'),
                  'mode':self.get('mode', 'co'), 'cwd':self.get('outputdir'), 'executable':self.get('command'),
-                 'args':self.get('args'), 'envs':self.get('envs', {}), 'location':[self.get('location')]})
+                 'args':self.get('args'), 'envs':self.get('envs', {}), 'location':[self.get('location')],
+                 'jobid':self.get('jobid')})
         except xmlrpclib.Fault:
             raise ProcessManagerError
         except Cobalt.Proxy.CobaltComponentError:
