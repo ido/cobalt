@@ -7,7 +7,7 @@ import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
-              '[--kill] [--delete] [--queue=queuename] <jobid> <jobid>\n' + \
+              '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
               '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>'
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
                'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',
                'stopq':'stopq', 'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
-                'run':'run', 'setq':'setq'}
+                'run':'run', 'setq':'setq', 'time':'time'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
@@ -154,6 +154,8 @@ if __name__ == '__main__':
         if opts['queue']:
             queue = opts['queue']
             updates['queue'] = queue
+        if opts['time']:
+            updates['walltime'] = opts['time']
         try:
             response = cqm.SetJobs(spec, updates)
         except xmlrpclib.Fault, flt:
