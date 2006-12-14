@@ -255,13 +255,28 @@ class PartitionSet(Cobalt.Data.DataSet):
         '''Switch between queue policies'''
         qpotential = {}
         placements = []
-        for job in potential.keys():
+        for job in potential:
             if qpotential.has_key(job.get('queue')):
                 qpotential[job.get('queue')][job] = potential[job]
             else:
                 qpotential[job.get('queue')] = {job:potential[job]}
-        for queue in qpotential.keys():
+        for queue in qpotential:
             qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
+            # need to remove partitions, included and containing, for newly used partitions
+            # for all jobs in qpotential
+            used = []
+            for loc in [loc for jobid, loc in placements]:
+                used.append(loc)
+                used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
+            for block in used:
+                for job, places in qpotential.iteritems():
+                    if block in [p.get('name') for p in places]:
+                        qpotential[job].remove([b for b in qpotential[job] \
+                                                if b.get('name')==block][0])
+            for job in qpotential.keys():
+                if not qpotential[job]:
+                    del qpotential[job]
+
             placements += qfunc(qpotential, queue, depinfo)
         return placements
 
