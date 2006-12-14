@@ -149,6 +149,7 @@ if __name__ == '__main__':
         updates = {}
         if opts['hold']:
             updates['state'] = 'hold'
+            spec[0]['state'] = 'queued'
         elif opts['release']:
             updates['state'] = 'queued'
         if opts['queue']:
