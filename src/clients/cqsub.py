@@ -66,7 +66,12 @@ if __name__ == '__main__':
         totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
         print "submitting walltime=%s minutes" % str(totaltime)
         opts['time'] = str(totaltime)
-    if float(opts['time']) <= 0:
+    try:
+        numtime = float(opts['time'])
+    except:
+        print "invalid time specification"
+        raise SystemExit, 1
+    if numtime <= 0:
         print "invalid time specification"
         raise SystemExit, 1
     user = pwd.getpwuid(os.getuid())[0]
