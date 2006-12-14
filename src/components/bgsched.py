@@ -265,7 +265,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             # need to remove partitions, included and containing, for newly used partitions
             # for all jobs in qpotential
             used = []
-            for loc in [loc for jobid, loc in placements]:
+            for loc in [loc for (_, loc) in placements]:
                 used.append(loc)
                 used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
             for block in used:
