@@ -7,7 +7,7 @@
 <!ENTITY troubleshooting SYSTEM "troubleshooting.xml">
 ]>
 
-<book id="bcfg2">
+<book id="cobalt">
   <bookinfo>
     <title>Cobalt Manual</title>
     <author>
@@ -50,7 +50,7 @@
 
     <revhistory>
       <revision>
-	<revnumber>0.95</revnumber>
+	<revnumber>0.97</revnumber>
 	<date>$Date$</date>
 	<revremark>$Id$</revremark>
       </revision>

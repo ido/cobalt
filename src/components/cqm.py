@@ -233,8 +233,8 @@ class Job(Cobalt.Data.Data):
             logger.info('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
         else:
             # acctlog
-            logger.info('S;%s;%s;%s;%s;%s;%s;%s;%s' % (
-                self.get('jobid'), self.get('user'), self.get('name', 'N/A'), self.get('nodes'), self.get('nodes'),
+            logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (
+                self.get('jobid'), self.get('user'), self.get('name', 'N/A'), self.get('nodes'),
                 self.get('procs'), self.get('mode'), self.get('walltime')))
         self.set('location', ":".join(nodelist))
         self.set('starttime', str(time.time()))

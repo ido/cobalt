@@ -116,7 +116,7 @@ class ProcessGroup(Cobalt.Data.Data):
             sys.exit(0)
         else:
             self.set('state', 'running')
-            self.log.info("ProcessGroup %s Started on partition %s. pid: %s" % (pgid,
+            self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
                                                                                 partition, self.pid))
             #AddEvent("process-manager", "process_start", pgid)
 
@@ -124,8 +124,9 @@ class ProcessGroup(Cobalt.Data.Data):
         '''Handle cleanup for exited process'''
         # process has already been waited on
         self.set('state', 'finished')
-        self.log.info("User %s: ProcessGroup %s Finshed. pid %s" % (self.get('user'),
-                                                                    self.get('pgid'), self.pid))
+        self.log.info("Job %s/%s: ProcessGroup %s Finshed with exit code %d. pid %s" % \
+                      (self.get('jobid'), self.get('user'), self.get('pgid'),
+                       status, self.pid))
         #AddEvent("process-manager", "process_end", self.element.get('pgid'))
         if not self.get('outputfile', False):
             self.set('output', open(self.outlog).read())

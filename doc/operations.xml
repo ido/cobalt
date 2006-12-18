@@ -160,8 +160,64 @@ Jun 29 21:28:37 sn1 BGSched: Found new job 4720
     </programlisting>
     
     <para>
-      In the event that this job ran out of time or was cqdelled,
+      In the event that this job ran out of time or was cqdel'ed,
       additional log messages would appear to that effect. 
+    </para>
+
+</section>
+
+<section>
+    <title>Job Accounting Messages</title>
+
+    <para>
+      Job accounting log messages are logged to syslog. The basic
+      messages are logged by the queue-manager for job queuing (Q),
+      execution (S), and exit (E).
+
+	<programlisting>
+Q;jobid;user;queue
+S;jobid;user;job name;nodes;processors;mode;walltime
+E;jobid;user;walltime
+	</programlisting>
+
+    </para>
+
+    <para>
+      Example:
+      <programlisting>
+Dec 15 17:29:36 localhost cqm[4152]: Q;25537;voran;default
+Dec 15 17:29:39 localhost cqm[4152]: S;25537;voran;N/A;32;32;co;10
+Dec 15 17:29:59 localhost cqm[4152]: E;25537;voran;10
+      </programlisting>
+
+    </para>
+
+    <para>
+      More details can be found in the log messages from the
+      scheduler, process-manager, and queue-manager. The scheduler
+      logs where the job is executing. The process-manager (bgpm) logs
+      the program executable and arguments, as well as the exit code
+      of the program. The queue-manager also logs statistics about the
+      job execution, such as the actuall run time and the queue wait
+      time.
+    </para>
+
+    <para>
+      Example:
+      <programlisting>
+Dec 15 17:29:39 localhost bgsched[4760]: Job 25537/voran: Scheduling
+  job 25537 on partition 32wayN0
+Dec 15 17:29:39 localhost bgpm[4124]: Job 25537/voran: ProcessGroup 1
+  Started on partition 32wayN0. pid: 4220
+Dec 15 17:29:39 localhost bgpm[4220]: Job 25537/voran: Running
+  /bgl/BlueLight/ppcfloor/bglsys/bin/mpirun mpirun -np 32 -partition 
+  32wayN0 -mode co -cwd /home/voran/tests -exe /home/voran/tests/ring-hello
+Dec 15 17:35:49 localhost bgpm[4124]: Job 25537/voran: ProcessGroup 1
+  Finshed with exit code 0. pid 4220
+Dec 15 17:35:59 localhost cqm[4152]: Job 25537/voran on 32 nodes
+  done. queue:2.99s user:10.18s
+      </programlisting>
+
     </para>
 </section>
 
