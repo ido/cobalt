@@ -353,7 +353,7 @@ class BGSched(Cobalt.Component.Component):
     __name__ = 'scheduler'
     __statefields__ = ['partitions', 'jobs']
     __schedcycle__ = 10
-    async_funcs = ['assert_location', 'RunQueue']
+    async_funcs = ['assert_location', 'RunQueue', 'RemoveOldReservations']
 
     def __init__(self, setup):
         self.partitions = PartitionSet()
@@ -380,6 +380,13 @@ class BGSched(Cobalt.Component.Component):
         '''Release specified reservation'''
         return self.partitions.Get(spec, callback=lambda x, y:[x.get('reservations').remove(rsv)
                                                               for rsv in x.get('reservations') if rsv[0] == name])
+
+    def RemoveOldReservations(self):
+        '''Release all reservations that have expired'''
+        for partition in self.partitions:
+            for reservation in partition.get('reservations'):
+                if (reservation[2] + reservation[3]) < time.time():
+                    partition.get('reservations').remove(reservation)
 
     def SupressDuplicates(self, provisional):
         '''Prevent duplicate job start requests from being generated'''
