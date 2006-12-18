@@ -21,7 +21,10 @@ if __name__ == '__main__':
 
     # need to cascade up non-functional
     offline = [part['name'] for part in parts if not part['functional']]
-    [part.__setitem__('functional', False) for part in parts for pname in offline if pname in part['deps']]
+    forced = [part for part in parts \
+              if [down for down in offline \
+                  if down in partinfo[part['name']][0] + partinfo[part['name']][1]]]
+    [part.__setitem__('functional', False) for part in forced]
     online = [part for part in parts if part['functional'] and part['scheduled']]
     header = [['Name', 'Queue', 'State']]
     output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in online]

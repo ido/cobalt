@@ -98,7 +98,10 @@ if __name__ == '__main__':
                 if pname in partinfo[part['name']][0] + partinfo[part['name']][1] and pname != part['name']:
                     part.__setitem__('state', 'blocked')
         offline = [part['name'] for part in parts if not part['functional']]
-        [part.__setitem__('functional', '-') for part in parts for pname in offline if pname in part['deps']]
+        forced = [part for part in parts \
+                  if [down for down in offline \
+                      if down in partinfo[part['name']][0] + partinfo[part['name']][1]]]
+        [part.__setitem__('functional', '-') for part in forced]
         data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
         data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
                   part['state'], ','.join(part['deps'])] for part in parts]
