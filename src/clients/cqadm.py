@@ -164,4 +164,7 @@ if __name__ == '__main__':
             if flt.faultCode == 30:
                 print flt.faultString
                 raise SystemExit, 1
-    Cobalt.Logging.logging.debug(response)
+    if not response:
+        Cobalt.Logging.logging.error("Failed to match any jobs")
+    else:
+        Cobalt.Logging.logging.debug(response)
