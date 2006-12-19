@@ -209,10 +209,11 @@ class Job(Cobalt.Data.Data):
             self.SetPassive()
             return
         logger.info("Job %s/%s: running step %s" % (self.get('jobid'), self.get('user'), self.steps[0]))
+        currentstep = self.steps[0]
         try:
             getattr(self, self.steps[0])()
         except:
-            logger.error("Unexpected failure jobid:%s step:%s" % (self.get('jobid'), self.steps[0]),
+            logger.error("Unexpected failure jobid:%s step:%s" % (self.get('jobid'), currentstep),
                          exc_info=1)
             self.SetPassive()
             return
@@ -554,16 +555,25 @@ class BGJob(Job):
         
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
-        current = os.readlink('/%s/%s' % (self.config.get('partitionboot'), self.get('location')))
-        if current != "/%s/%s" % (self.config.get('bootprofiles'), self.get('kernel')):
+        try:
+            current = os.readlink('%s/%s' % (self.config.get('partitionboot'), self.get('location')))
+        except OSError:
+            logger.error("Failed to read partitionboot location %s/%s" % (self.config.get('partitionboot'), self.get('location')))
+            logger.info("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), 'N/A'))
+            return
+        switched = current.split('/')[-1]
+        if current != "%s/%s" % (self.config.get('bootprofiles'), self.get('kernel')):
             logger.info("Updating boot image for %s" % (self.get('location')))
             logger.info("Set to %s should be %s" % (current.split('/')[-1], self.get('kernel')))
             try:
-                os.unlink('/%s/%s' % (self.config.get('partitionboot'), self.get('location')))
-                os.symlink('/%s/%s' % (self.config.get('bootprofiles'), self.get('kernel')),
-                           '/%s/%s' % (self.config.get('partitionboot'), self.get('location')))
+                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.get('location')))
+                os.symlink('%s/%s' % (self.config.get('bootprofiles'), self.get('kernel')),
+                           '%s/%s' % (self.config.get('partitionboot'), self.get('location')))
+                switched = self.get('kernel')
             except OSError:
                 logger.error("Failed to reset boot location for partition for %s" % (self.get('location')))
+
+        logger.info("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), switched))
 
     def NotifyAtStart(self):
         '''Notify user when job has started'''
