@@ -268,14 +268,15 @@ class PartitionSet(Cobalt.Data.DataSet):
             for loc in [loc for (_, loc) in placements]:
                 used.append(loc)
                 used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
+            qp = qpotential[queue]
             for block in used:
-                for job, places in qpotential.iteritems():
+                for job, places in qp.iteritems():
                     if block in [p.get('name') for p in places]:
-                        qpotential[job].remove([b for b in qpotential[job] \
-                                                if b.get('name')==block][0])
-            for job in qpotential.keys():
-                if not qpotential[job]:
-                    del qpotential[job]
+                        qp[job].remove([b for b in qp[job] \
+                                        if b.get('name')==block][0])
+            for job in qp.keys():
+                if not qp[job]:
+                    del qp[job]
 
             placements += qfunc(qpotential, queue, depinfo)
         return placements
