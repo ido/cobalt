@@ -198,8 +198,8 @@ Dec 15 17:29:59 localhost cqm[4152]: E;25537;voran;10
       logs where the job is executing. The process-manager (bgpm) logs
       the program executable and arguments, as well as the exit code
       of the program. The queue-manager also logs statistics about the
-      job execution, such as the actuall run time and the queue wait
-      time.
+      job execution, such as the kernel used, the actual run time and
+      the queue wait time.  
     </para>
 
     <para>
@@ -207,6 +207,7 @@ Dec 15 17:29:59 localhost cqm[4152]: E;25537;voran;10
       <programlisting>
 Dec 15 17:29:39 localhost bgsched[4760]: Job 25537/voran: Scheduling
   job 25537 on partition 32wayN0
+Dec 15 17:29:39 localhost cqm[4152]: Job 25537/voran using kernel default
 Dec 15 17:29:39 localhost bgpm[4124]: Job 25537/voran: ProcessGroup 1
   Started on partition 32wayN0. pid: 4220
 Dec 15 17:29:39 localhost bgpm[4220]: Job 25537/voran: Running
