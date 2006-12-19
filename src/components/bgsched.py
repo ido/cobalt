@@ -32,6 +32,20 @@ class FailureMode(object):
             logger.error("Failure %s occured" % (self.name))
             self.status = False
 
+def filterByTopology(placements, depinfo, potential):
+    '''Filter out all potential placements that overlap with already allocated partitions'''
+    used = []
+    for loc in [loc for (_, loc) in placements]:
+        used.append(loc)
+        used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
+        for block in used:
+            for job, places in potential.iteritems():
+                if block in [p.get('name') for p in places]:
+                    potential[job].remove([b for b in potential[job] \
+                                           if b.get('name')==block][0])
+        for job in [job for job in potential if not potential[job]]:
+            del potential[job]
+
 class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
     def __init__(self, element):
@@ -264,20 +278,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
             # need to remove partitions, included and containing, for newly used partitions
             # for all jobs in qpotential
-            used = []
-            for loc in [loc for (_, loc) in placements]:
-                used.append(loc)
-                used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
-            qp = qpotential[queue]
-            for block in used:
-                for job, places in qp.iteritems():
-                    if block in [p.get('name') for p in places]:
-                        qp[job].remove([b for b in qp[job] \
-                                        if b.get('name')==block][0])
-            for job in qp.keys():
-                if not qp[job]:
-                    del qp[job]
-
+            self.filterByTopology(placements, depinfo, qpotential[queue])
             placements += qfunc(qpotential, queue, depinfo)
         return placements
 
@@ -295,7 +296,6 @@ class PartitionSet(Cobalt.Data.DataSet):
             return 0
         self.qmconnect.Pass()
         while potential:
-
             # get lowest jobid and place on first available partition
             potentialjobs = [int(key.get('jobid')) for key in potential.keys()]
             potentialjobs.sort()
@@ -328,17 +328,7 @@ class PartitionSet(Cobalt.Data.DataSet):
 
             # now we need to remove location (and dependencies and all
             # partitions containing it) from potential lists
-
-            # remove entries in potential for all related partitions
-            related = [part for part in depinfo[location.get('name')][0] + depinfo[location.get('name')][1]]
-            for block in [location.get('name')] + related:
-                for job, places in potential.iteritems():
-                    if block in [p.get('name') for p in places]:
-                        potential[job].remove([b for b in potential[job] if b.get('name')==block][0])
-
-            for job in potential.keys():
-                if not potential[job]:
-                    del potential[job]
+            self.filterByTopology(placements, depinfo, potential)
         return placements
 
     def PlaceScavenger(self, qpotential, queue, depinfo):
