@@ -19,6 +19,7 @@ if __name__ == '__main__':
         spec = [{'tag':'partition', 'name':opts[0][1]}]
     else:
         spec = [{'tag':'partition', 'name':'*'}]
-    print scheduler.DelReservation(spec, args[0])
+    print "Released reservation %s, matched on %d partitions" % \
+          (args[0], len(scheduler.DelReservation(spec, args[0])))
 
     

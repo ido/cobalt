@@ -369,8 +369,10 @@ class BGSched(Cobalt.Component.Component):
 
     def ReleaseReservation(self, _, spec, name):
         '''Release specified reservation'''
-        return self.partitions.Get(spec, callback=lambda x, y:[x.get('reservations').remove(rsv)
-                                                              for rsv in x.get('reservations') if rsv[0] == name])
+        return self.partitions.Get(spec,
+                                    callback=lambda x, y: \
+                                   [x.get('reservations').remove(rsv)
+                                    for rsv in x.get('reservations') if rsv[0] == name])
 
     def RemoveOldReservations(self):
         '''Release all reservations that have expired'''
