@@ -57,6 +57,11 @@ if __name__ == '__main__':
     print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
     if '-u' in sys.argv[1:]:
         user = [opt[1] for opt in opts if opt[0] == '-u'][0]
+        for usr in user.split(':'):
+            try:
+                pwd.getpwnam(usr)
+            except KeyError:
+                print "User %s does not exist" % (usr)
     else:
         user = ''
     if '-n' in sys.argv[1:]:
