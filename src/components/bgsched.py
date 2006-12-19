@@ -278,7 +278,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
             # need to remove partitions, included and containing, for newly used partitions
             # for all jobs in qpotential
-            self.filterByTopology(placements, depinfo, qpotential[queue])
+            filterByTopology(placements, depinfo, qpotential[queue])
             placements += qfunc(qpotential, queue, depinfo)
         return placements
 
@@ -328,7 +328,7 @@ class PartitionSet(Cobalt.Data.DataSet):
 
             # now we need to remove location (and dependencies and all
             # partitions containing it) from potential lists
-            self.filterByTopology(placements, depinfo, potential)
+            filterByTopology(placements, depinfo, potential)
         return placements
 
     def PlaceScavenger(self, qpotential, queue, depinfo):
