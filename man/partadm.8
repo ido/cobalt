@@ -50,6 +50,10 @@ Dump partition state
 .B \-\-load <filename>
 Load partition state from file. Note that this is not exclusive;
 existing partitions will continue to exist.
+.TP
+.B \-r
+Activate recursive mode. All child partitions of all specified
+partitions will be modified (for activate/deactivate/enable/disable/queue/deps/free)
 .SH "SEE ALSO"
 .BR partlist(1)
 .SH "BUGS"
