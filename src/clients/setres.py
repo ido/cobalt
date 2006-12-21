@@ -6,7 +6,7 @@ __revision__ = '$Id$'
 import getopt, sys, time
 import Cobalt.Proxy, Cobalt.Util
 
-helpmsg = '''Usage: setres [-a] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
+helpmsg = '''Usage: setres [-a] [-x] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 user and name are optional
@@ -18,7 +18,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
     scheduler = Cobalt.Proxy.scheduler()
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:n:p:u:a', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:n:p:u:ax', [])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']
     else:
         nameinfo = 'system'
-    if '-a' in sys.argv[1:]:
+    if '-a' in sys.argv[1:] or '-x' in sys.argv[1:]:
         allparts = []
         spec = []
         parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
@@ -78,14 +78,18 @@ if __name__ == '__main__':
             for part in partitions:
                 allparts.append(part)
                 spec.append({'tag':'partition', 'name':part})
-                for relative in partinfo[part][1]:
+                if '-a' in sys.argv[1:]:
+                    extra = partinfo[part][1]
+                else:
+                    extra = partinfo[part][0] + partinfo[part][1]
+                for relative in extra:
                     if relative not in allparts:
                         spec.append({'tag':'partition', 'name':relative})
                         allparts.append(relative)
         except:
             print "Invalid partition(s)"
             print helpmsg
-            raise SystemExit, 1 
+            raise SystemExit, 1
     else:
         spec = [{'tag':'partition', 'name':p} for p in partitions]
     try:

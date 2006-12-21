@@ -21,8 +21,13 @@ This program creates new scheduler reservations.
 .TP
 .B \-u
 .I Set user for reservation
-.E \-a 
+.TP
+.B \-a 
 .I Enable auto dependancy generation for listed partition(s)
+.TP
+.B \-x 
+.I Reserve the partition for exclusive access (also reserves all
+client and parent partitions)
 .SH "SEE ALSO"
 .BR showres(1)
 .BR releaseres(8)
