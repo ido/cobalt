@@ -8,7 +8,8 @@ binPROGRAMS_INSTALL = ${INSTALL} -m 755
 
 install: install-am installlinks
 
-installlinks: install-binPROGRAMS install-wrapper
+installlinks: install-binPROGRAMS install-dist_binSCRIPTS install-wrapper
+	test -z $(bindir) || $(mkdir_p) $(bindir)
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqstat
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqsub
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/partlist
