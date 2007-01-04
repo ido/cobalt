@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 '''Cobalt queue converter script'''
-__revision__ = '$Revision: 194 $'
+__revision__ = '$Revision$'
 
-__helpmsg__ ="""This script converts queue and job data to the 0.96.2 format, and is
-intended to be run after installing 0.96.2. It takes no arguments, and
-makes a backup copy of the old cqm data in
-'/var/spool/cobalt/bgsched.save' and saves the new cqm data in
+__helpmsg__ ="""This script converts scheduler data to the 0.97.0 format, and is
+intended to be run after installing 0.97. It takes no arguments, and
+makes a backup copy of the old bgsched data in
+'/var/spool/cobalt/bgsched.save' and saves the new bgsched data in
 '/var/spool/cobalt/bgsched'.
 
-If you installed cqm.py in a location other than '/usr/sbin', then you
-will need to modify line 6 of this script to reflect the location of
+If you installed bgsched.py in a location other than '/usr/sbin', then you
+will need to modify line 25 of this script to reflect the location of
 cqm.py.
 
 Make sure there are no jobs running in the queue before you run this
