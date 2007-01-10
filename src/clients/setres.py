@@ -6,7 +6,7 @@ __revision__ = '$Id$'
 import getopt, sys, time
 import Cobalt.Proxy, Cobalt.Util
 
-helpmsg = '''Usage: setres [-a] [-x] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
+helpmsg = '''Usage: setres [-a] [-x] [-m] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 user and name are optional
@@ -95,6 +95,37 @@ if __name__ == '__main__':
             print "Invalid partition(s)"
             print helpmsg
             raise SystemExit, 1
+    elif '-m' in sys.argv[1:]:
+        if not opts.has_key('name'):
+            print "-m must by called with -n <reservation name>"
+            raise SystemExit
+        parts = scheduler.GetPartition({'tag':'partition', 'reservations':'*'})
+        #(name, user, start, duration)
+        d = [(r, p) for p in parts for r in p.get('reservations') if r[0] == opts['name']]
+        r = d[0][0]
+        parts = [data[1] for data in d]
+        tmpnam = opts['name'] + '-temp'
+        if user:
+            nuser = user
+        else:
+            nuser = r[1]
+        try:
+            if starttime:
+                nstart = starttime
+        except:
+            nstart = r[2]
+        try:
+            if dsec:
+                ndur = dsec
+        except:
+            ndur = r[3]
+        # set reservation n2 with new args
+        scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
+                                 tmpnam, nuser, nstart, ndur)
+        scheduler.DelReservation({'tag':'partition', 'name':'*'}, opts['name'])
+        scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
+                                 opts['name'], nuser, nstart, ndur)
+        scheduler.DelReservation({'tag':'partition', 'name':'*'}, tmpnam)        
     else:
         spec = [{'tag':'partition', 'name':p} for p in partitions]
     try:
