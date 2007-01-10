@@ -13,6 +13,18 @@ logger = logging.getLogger('bgsched')
 
 comm = Cobalt.Proxy.CommDict()
 
+def fifocmp(job1, job2):
+    '''Compare 2 jobs for fifo mode'''
+    if job1.get('index'):
+        j1 = int(job1.get('index'))
+    else:
+        j1 = int(job1.get('jobid'))
+    if job2.get('index'):
+        j2 = int(job2.get('index'))
+    else:
+        j2 = int(job2.get('jobid'))
+    return cmp(j1, j2)
+
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
     call Pass() on success and Fail() on error'''
@@ -288,7 +300,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         potential = qpotential[queue]
         # update queuestate from cqm once per Schedule cycle
         try:
-            queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*',
+            queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*', 'index':'*'
                                               'state':'*', 'nodes':'*',
                                               'queue':'*', 'user':'*'}])
         except xmlrpclib.Fault:
@@ -297,10 +309,9 @@ class PartitionSet(Cobalt.Data.DataSet):
         self.qmconnect.Pass()
         while potential:
             # get lowest jobid and place on first available partition
-            potentialjobs = [int(key.get('jobid')) for key in potential.keys()]
-            potentialjobs.sort()
-            newjobid = str(potentialjobs[0])
-            [newjob] = [job for job in potential.keys() if job.get('jobid') == newjobid]
+            jobs = potential.keys()
+            jobs.sort(fifocmp)
+            newjob = jobs[0]
             
             # filter here for runtime restrictions
             try:
@@ -402,8 +413,9 @@ class BGSched(Cobalt.Component.Component):
         if since < self.__schedcycle__:
             return
         try:
-            jobs = comm['qm'].GetJobs([{'tag':'job', 'nodes':'*', 'location':'*', 'jobid':'*', 'state':'*',
-                                      'walltime':'*', 'queue':'*', 'user':'*'}])
+            jobs = comm['qm'].GetJobs([{'tag':'job', 'nodes':'*', 'location':'*',
+                                        'jobid':'*', 'state':'*', 'index':'*',
+                                        'walltime':'*', 'queue':'*', 'user':'*'}])
         except xmlrpclib.Fault:
             self.qmconnect.Fail()
             return 0

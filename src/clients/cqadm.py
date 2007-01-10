@@ -24,7 +24,7 @@ if __name__ == '__main__':
     options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold', 'release':'release',
                'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',
                'stopq':'stopq', 'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
-    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
+    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue','i':'index'
                 'run':'run', 'setq':'setq', 'time':'time'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
@@ -155,6 +155,8 @@ if __name__ == '__main__':
         if opts['queue']:
             queue = opts['queue']
             updates['queue'] = queue
+        if opts['index']:
+            updates['index'] = opts['index']
         if opts['time']:
             updates['walltime'] = opts['time']
         try:
