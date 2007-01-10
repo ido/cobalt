@@ -57,7 +57,14 @@ Use specified working directory for job.
 Use specified prefix for .output and .error files.
 .TP
 .B \-N "email address"
-Send an email notification at the start and stop of the job to the specified email address.
+Send an email notification at the start and stop of the job to the
+specified email address.
+.TP
+.B \-E "stderr file path"
+Send job stderr to file specified.
+.TP
+.B \-o "stderr file path"
+Send job stdout to file specified.
 .SH "SEE ALSO"
 .BR cqstat(1),
 .BR cqdel(1),

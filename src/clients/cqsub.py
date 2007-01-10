@@ -9,6 +9,7 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
           + "<working directory> -e envvar1=value1:envvar2=value2" \
           + " -k <kernel profile> -O <outputprefix> -t time <in minutes>" \
+          + " -E <error file path> -o <output file path>" \
           + " -n <number of nodes> -c <processor count> -m <mode co/vn> <command> <args>"
 
 if __name__ == '__main__':
@@ -17,7 +18,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
     options = {'v':'verbose', 'd':'debug'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
-                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify'}
+                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify', 'E':'error', 'o':'output'}
     (opts, command) = Cobalt.Util.dgetopt(sys.argv[1:], options, doptions, helpmsg)
     # need to filter here for all args
     level = 30
@@ -115,6 +116,10 @@ if __name__ == '__main__':
         else:
             jobspec.update({'outputpath':"%s/%s.output" % (opts['cwd'], opts['outputprefix']),
                             'errorpath':"%s/%s.error" % (opts['cwd'], opts['outputprefix'])})
+    if opts['error']:
+        jobspec.set('errorpath', opts['error'])
+    if opts['output']:
+        jobspec.set('outputpath': opts['output'])
     if opts['env']:
         jobspec['envs'] = {}
         [jobspec['envs'].update({key:value}) for key, value
