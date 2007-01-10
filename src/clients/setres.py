@@ -71,6 +71,7 @@ if __name__ == '__main__':
     if '-a' in sys.argv[1:] or '-x' in sys.argv[1:]:
         allparts = []
         spec = []
+        rspec = []
         parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
                                      'scheduled':'*', 'functional':'*', 'deps':'*'}])
         partinfo = Cobalt.Util.buildRackTopology(parts)
@@ -84,8 +85,12 @@ if __name__ == '__main__':
                     extra = partinfo[part][0] + partinfo[part][1]
                 for relative in extra:
                     if relative not in allparts:
-                        spec.append({'tag':'partition', 'name':relative})
                         allparts.append(relative)
+                        if '-a' in sys.argv[1:]:
+                            spec.append({'tag':'partition', 'name':relative})
+                        else:
+                            rspec.append({'tag':'partition', 'name':relative})
+
         except:
             print "Invalid partition(s)"
             print helpmsg
@@ -94,6 +99,8 @@ if __name__ == '__main__':
         spec = [{'tag':'partition', 'name':p} for p in partitions]
     try:
         print scheduler.AddReservation(spec, nameinfo, user, starttime, dsec)
+        if '-x' in sys.argv[1:]:
+            print scheduler.AddReservation(rspec, nameinfo, '', starttime, dsec)
     except:
         print "Couldn't contact the scheduler"
         
