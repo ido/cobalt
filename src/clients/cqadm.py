@@ -16,7 +16,7 @@ def get_queues(cqm_conn):
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxqueued':'*', 'maxrunning':'*', 'adminemail':'*',
-             'totalnodes':'*'}]
+             'totalnodes':'*', 'cron':'*'}]
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
@@ -97,12 +97,12 @@ if __name__ == '__main__':
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
         header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                    'MaxQueued', 'MaxUserNodes', 'TotalNodes',
-                   'AdminEmail', 'State')]
+                   'AdminEmail', 'State', 'Cron')]
         datatoprint = [(q.get('name', '*'), q.get('users', '*'),
                         q.get('mintime','*'), q.get('maxtime','*'),
                         q.get('maxrunning','*'),q.get('maxqueued','*'),
                         q.get('maxusernodes','*'),q.get('totalnodes','*'),
-                        q.get('adminemail', '*'),q.get('state'))
+                        q.get('adminemail', '*'),q.get('state'), q.get('cron'))
                        for q in response]
         datatoprint.sort()
         Cobalt.Util.print_tabular(header + datatoprint)

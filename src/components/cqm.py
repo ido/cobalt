@@ -793,6 +793,32 @@ class RestrictionSet(Cobalt.Data.DataSet):
 #         else:
 #             return (True, probs)
 
+def dexpr(daystr):
+    if '-' in daystr:
+        dmin, dmax = map(int, daystr.split('-', 1))
+        return dmin <= time.localtime()[6] <= dmax
+    else:
+        return int(daystr) == time.localtime()[6]
+
+def hexpr(hstr):
+    if '-' in hstr:
+        hmin, hmax = map(int, hstr.split('-', 1))
+        return hmin <= time.localtime()[3] <= hmax
+    else:
+        return int(hstr) == time.localtime()[3]
+
+def cronmatch(pattern):
+    '''match cron setting with current TOD'''
+    # cron format is d-d,d:h-h
+    (day, hour) = pattern.split(':', 1)
+    if True in \
+       [dexpr(dstr) for dstr in day.split(',')] and \
+       True in \
+       [hexpr(hstr) for hstr in hour.split(',')]:
+        return True
+    else:
+        return False
+
 class Queue(Cobalt.Data.Data, JobSet):
     '''queue object, subs JobSet and Data, which gives us:
        self is a Queue object (with restrictions and stuff)
@@ -809,6 +835,19 @@ class Queue(Cobalt.Data.Data, JobSet):
                 self.set(d, defaults[d])
 
         self.restrictions = RestrictionSet(self)
+
+    def get(self, field, default=None):
+        '''Overload Queue get for smartstate'''
+        if field == 'smartstate':
+            if self.get('cron', False):
+                if cronmatch(self.get('cron')):
+                    return 'running'
+                else:
+                    return 'stopped'
+            else:
+                return self.get('state')
+        else:
+            return Cobalt.Data.Data.get(self, field, default)
 
 class QueueSet(Cobalt.Data.DataSet):
     '''Set of queues

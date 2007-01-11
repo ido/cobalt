@@ -209,7 +209,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
         # filter for stopped and dead queues
         try:
-            stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'stopped'}])
+            stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'smartstate':'stopped'}])
             dead_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'dead'}])
         except xmlrpclib.Fault:
             self.qmconnect.Fail()
