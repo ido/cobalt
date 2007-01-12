@@ -3,7 +3,7 @@
 '''Setup reservations in the scheduler'''
 __revision__ = '$Id$'
 
-import getopt, sys, time
+import getopt, pwd, sys, time
 import Cobalt.Proxy, Cobalt.Util
 
 helpmsg = '''Usage: setres [-a] [-x] [-m] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
