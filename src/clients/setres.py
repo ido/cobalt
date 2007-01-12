@@ -18,7 +18,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
     scheduler = Cobalt.Proxy.scheduler()
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:n:p:u:ax', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:mn:p:u:ax', [])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -36,9 +36,10 @@ if __name__ == '__main__':
         [start] = [opt[1] for opt in opts if opt[0] == '-s']
         [duration] = [opt[1] for opt in opts if opt[0] == '-d']
     except:
-        print "Must supply -s and -d with values" 
-        print helpmsg
-        raise SystemExit, 1
+        if '-m' not in sys.argv[1:]:
+            print "Must supply -s and -d with values" 
+            print helpmsg
+            raise SystemExit, 1
     if duration.count(':') == 0:
         dsec = int(duration) * 60
     else:
@@ -96,15 +97,16 @@ if __name__ == '__main__':
             print helpmsg
             raise SystemExit, 1
     elif '-m' in sys.argv[1:]:
-        if not opts.has_key('name'):
+        if '-n' not in sys.argv[1:]
             print "-m must by called with -n <reservation name>"
             raise SystemExit
+        rname = [arg for (opt, arg) in opts if opt == '-n'][0]
         parts = scheduler.GetPartition({'tag':'partition', 'reservations':'*'})
         #(name, user, start, duration)
-        d = [(r, p) for p in parts for r in p.get('reservations') if r[0] == opts['name']]
+        d = [(r, p) for p in parts for r in p.get('reservations') if r[0] == rname]
         r = d[0][0]
         parts = [data[1] for data in d]
-        tmpnam = opts['name'] + '-temp'
+        tmpnam = rname + '-temp'
         if user:
             nuser = user
         else:
@@ -122,9 +124,9 @@ if __name__ == '__main__':
         # set reservation n2 with new args
         scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
                                  tmpnam, nuser, nstart, ndur)
-        scheduler.DelReservation({'tag':'partition', 'name':'*'}, opts['name'])
+        scheduler.DelReservation({'tag':'partition', 'name':'*'}, rname)
         scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
-                                 opts['name'], nuser, nstart, ndur)
+                                 rname, nuser, nstart, ndur)
         scheduler.DelReservation({'tag':'partition', 'name':'*'}, tmpnam)        
     else:
         spec = [{'tag':'partition', 'name':p} for p in partitions]
