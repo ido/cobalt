@@ -80,18 +80,23 @@ if __name__ == '__main__':
             for part in partitions:
                 allparts.append(part)
                 spec.append({'tag':'partition', 'name':part})
+                if '-x' in sys.argv[1:]:
+                    if '-a' in sys.argv[1:]:
+                        extra_exclusive = partinfo[part][0]
+                    else:
+                        extra_exclusive = partinfo[part][0] + partinfo[part][1]
                 if '-a' in sys.argv[1:]:
-                    extra = partinfo[part][1]
+                    extra_inclusive = partinfo[part][1]
                 else:
-                    extra = partinfo[part][0] + partinfo[part][1]
-                for relative in extra:
+                    extra_inclusive = []
+                for relative in extra_inclusive:
                     if relative not in allparts:
                         allparts.append(relative)
-                        if '-a' in sys.argv[1:]:
-                            spec.append({'tag':'partition', 'name':relative})
-                        else:
-                            rspec.append({'tag':'partition', 'name':relative})
-
+                        spec.append({'tag':'partition', 'name':relative})
+                for relative in extra_exclusive:
+                    if relative not in allparts:
+                        allparts.append(relative)
+                        rspec.append({'tag':'partition', 'name':relative})
         except:
             print "Invalid partition(s)"
             print helpmsg
