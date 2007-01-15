@@ -300,7 +300,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         potential = qpotential[queue]
         # update queuestate from cqm once per Schedule cycle
         try:
-            queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*', 'index':'*'
+            queuestate = comm['qm'].GetJobs([{'tag':'job', 'jobid':'*', 'index':'*',
                                               'state':'*', 'nodes':'*',
                                               'queue':'*', 'user':'*'}])
         except xmlrpclib.Fault:
