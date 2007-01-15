@@ -97,11 +97,11 @@ if __name__ == '__main__':
             print helpmsg
             raise SystemExit, 1
     elif '-m' in sys.argv[1:]:
-        if '-n' not in sys.argv[1:]
+        if '-n' not in sys.argv[1:]:
             print "-m must by called with -n <reservation name>"
             raise SystemExit
         rname = [arg for (opt, arg) in opts if opt == '-n'][0]
-        parts = scheduler.GetPartition({'tag':'partition', 'reservations':'*'})
+        parts = scheduler.GetPartition([{'tag':'partition', 'reservations':'*'}])
         #(name, user, start, duration)
         d = [(r, p) for p in parts for r in p.get('reservations') if r[0] == rname]
         r = d[0][0]
@@ -124,10 +124,10 @@ if __name__ == '__main__':
         # set reservation n2 with new args
         scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
                                  tmpnam, nuser, nstart, ndur)
-        scheduler.DelReservation({'tag':'partition', 'name':'*'}, rname)
+        scheduler.DelReservation([{'tag':'partition', 'name':'*'}], rname)
         scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
                                  rname, nuser, nstart, ndur)
-        scheduler.DelReservation({'tag':'partition', 'name':'*'}, tmpnam)        
+        scheduler.DelReservation([{'tag':'partition', 'name':'*'}], tmpnam)        
     else:
         spec = [{'tag':'partition', 'name':p} for p in partitions]
     try:
