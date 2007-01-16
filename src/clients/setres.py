@@ -25,7 +25,10 @@ if __name__ == '__main__':
         raise SystemExit, 1
     try:
         partitions = [opt[1] for opt in opts if opt[0] == '-p'] + args
-    except:
+        if '-m' in sys.argv:
+            print "Cannot specify -p with -m"
+            raise SystemExit, 1
+    except ValueError:
         if args:
             partitions = args
         else:
@@ -37,28 +40,29 @@ if __name__ == '__main__':
         raise SystemExit, 1
     try:
         [start] = [opt[1] for opt in opts if opt[0] == '-s']
-        [duration] = [opt[1] for opt in opts if opt[0] == '-d']
     except:
-        if '-m' not in sys.argv[1:]:
-            print "Must supply -s and -d with values" 
-            print helpmsg
-            raise SystemExit, 1
-    if duration.count(':') == 0:
-        dsec = int(duration) * 60
-    else:
-        units = duration.split(':')
-        units.reverse()
-        totaltime = 0
-        mults = [1, 60, 3600]
-        if len(units) > 3:
-            print "time too large"
-            raise SystemExit, 1
-        dsec = sum([mults[index] * float(units[index]) for index in range(len(units))])
-    (day, rtime) = start.split('-')
-    (syear, smonth, sday) = [int(field) for field in day.split('_')]
-    (shour, smin) = [int(field) for field in rtime.split(':')]
-    starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
-    print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
+        start = '-1'
+    try:
+        [duration] = [opt[1] for opt in opts if opt[0] == '-d']
+        if duration.count(':') == 0:
+            dsec = int(duration) * 60
+        else:
+            units = duration.split(':')
+            units.reverse()
+            totaltime = 0
+            mults = [1, 60, 3600]
+            if len(units) > 3:
+                print "time too large"
+                raise SystemExit, 1
+            dsec = sum([mults[index] * float(units[index]) for index in range(len(units))])
+    except ValueError:
+        pass
+    if start != '-1':
+        (day, rtime) = start.split('-')
+        (syear, smonth, sday) = [int(field) for field in day.split('_')]
+        (shour, smin) = [int(field) for field in rtime.split(':')]
+        starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
+        print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
     if '-u' in sys.argv[1:]:
         user = [opt[1] for opt in opts if opt[0] == '-u'][0]
         for usr in user.split(':'):
@@ -109,7 +113,7 @@ if __name__ == '__main__':
             print "-m must by called with -n <reservation name>"
             raise SystemExit
         rname = [arg for (opt, arg) in opts if opt == '-n'][0]
-        parts = scheduler.GetPartition([{'tag':'partition', 'reservations':'*'}])
+        parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'reservations':'*'}])
         #(name, user, start, duration)
         d = [(r, p) for p in parts for r in p.get('reservations') if r[0] == rname]
         r = d[0][0]
@@ -130,12 +134,13 @@ if __name__ == '__main__':
         except:
             ndur = r[3]
         # set reservation n2 with new args
-        scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
+        scheduler.AddReservation([{'tag':'partition', 'name':n['name']} for n in parts],
                                  tmpnam, nuser, nstart, ndur)
         scheduler.DelReservation([{'tag':'partition', 'name':'*'}], rname)
-        scheduler.AddReservation([{'tag':'partition', 'name':n} for n in parts],
+        scheduler.AddReservation([{'tag':'partition', 'name':n['name']} for n in parts],
                                  rname, nuser, nstart, ndur)
-        scheduler.DelReservation([{'tag':'partition', 'name':'*'}], tmpnam)        
+        scheduler.DelReservation([{'tag':'partition', 'name':'*'}], tmpnam)
+        raise SystemExit, 0
     else:
         spec = [{'tag':'partition', 'name':p} for p in partitions]
     try:
