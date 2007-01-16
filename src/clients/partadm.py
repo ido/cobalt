@@ -27,11 +27,11 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     sched = Cobalt.Proxy.scheduler()
-    if ('-r', ) in opts:
+    if '-r' in sys.argv:
         partdata = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*',
                                         'state':'*', 'scheduled':'*', 'functional':'*',
                                         'deps':'*'}])
-        partinto = Cobalt.Util.buildRackTopology(partdata)
+        partinfo = Cobalt.Util.buildRackTopology(partdata)
         parts = []
         for part in args:
             for relative in partinfo[part][1]:
