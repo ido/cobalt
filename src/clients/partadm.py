@@ -32,7 +32,7 @@ if __name__ == '__main__':
                                         'state':'*', 'scheduled':'*', 'functional':'*',
                                         'deps':'*'}])
         partinfo = Cobalt.Util.buildRackTopology(partdata)
-        parts = []
+        parts = args
         for part in args:
             for relative in partinfo[part][1]:
                 if relative not in parts:
