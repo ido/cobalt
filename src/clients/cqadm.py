@@ -24,7 +24,7 @@ if __name__ == '__main__':
     options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold', 'release':'release',
                'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',
                'stopq':'stopq', 'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
-    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue','i':'index',
+    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue', 'i':'index',
                 'run':'run', 'setq':'setq', 'time':'time'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
@@ -56,7 +56,8 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('cqadm', to_syslog=False, level=level)
 
     # set the spec whether working with queues or jobs
-    if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq'] or opts['startq'] or opts['stopq'] or opts['drainq'] or opts['killq']:
+    if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq'] \
+           or opts['startq'] or opts['stopq'] or opts['drainq'] or opts['killq']:
         spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]

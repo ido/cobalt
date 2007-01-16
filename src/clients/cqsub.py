@@ -119,7 +119,7 @@ if __name__ == '__main__':
     if opts['error']:
         jobspec.set('errorpath', opts['error'])
     if opts['output']:
-        jobspec.set('outputpath': opts['output'])
+        jobspec.set('outputpath', opts['output'])
     if opts['env']:
         jobspec['envs'] = {}
         [jobspec['envs'].update({key:value}) for key, value
