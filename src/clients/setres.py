@@ -73,6 +73,8 @@ if __name__ == '__main__':
         allparts = []
         spec = []
         rspec = []
+        extra_inclusive = []
+        extra_exclusive = []
         parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
                                      'scheduled':'*', 'functional':'*', 'deps':'*'}])
         partinfo = Cobalt.Util.buildRackTopology(parts)
@@ -87,8 +89,6 @@ if __name__ == '__main__':
                         extra_exclusive = partinfo[part][0] + partinfo[part][1]
                 if '-a' in sys.argv[1:]:
                     extra_inclusive = partinfo[part][1]
-                else:
-                    extra_inclusive = []
                 for relative in extra_inclusive:
                     if relative not in allparts:
                         allparts.append(relative)

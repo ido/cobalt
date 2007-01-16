@@ -92,12 +92,12 @@ if __name__ == '__main__':
                 if opts['long']:
                     q.update({'path':'*', 'outputdir':'*',
                               'envs':'*', 'command':'*', 'args':'*',
-                              'kernel':'*'})
+                              'kernel':'*', 'index':'*'})
 
             header = [['JobID', 'OutputPath', 'User', 'WallTime', 'Stamp',
                        'RunTime',
                        'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue',
-                       'StartTime']]
+                       'StartTime', 'Index']]
             if opts['long']:
                 header[0] += ['SubmitTime', 'Path', 'OutputDir', 'Envs', 'Command', 'Args', 'Kernel']
         else:
