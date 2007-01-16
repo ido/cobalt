@@ -15,11 +15,11 @@ comm = Cobalt.Proxy.CommDict()
 
 def fifocmp(job1, job2):
     '''Compare 2 jobs for fifo mode'''
-    if job1.get('index'):
+    if job1.get('index', False):
         j1 = int(job1.get('index'))
     else:
         j1 = int(job1.get('jobid'))
-    if job2.get('index'):
+    if job2.get('index', False):
         j2 = int(job2.get('index'))
     else:
         j2 = int(job2.get('jobid'))
@@ -353,7 +353,8 @@ class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched'
     __name__ = 'scheduler'
-    __statefields__ = ['partitions', 'jobs']
+    #__statefields__ = ['partitions', 'jobs']
+    __statefields__ = ['partitions']
     __schedcycle__ = 10
     async_funcs = ['assert_location', 'RunQueue', 'RemoveOldReservations']
 
