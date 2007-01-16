@@ -159,6 +159,23 @@ if __name__ == '__main__':
         if opts['index']:
             updates['index'] = opts['index']
         if opts['time']:
+            if ':' in opts['time']:
+                units = opts['time'].split(':')
+                units.reverse()
+                totaltime = 0
+                mults = [0, 1, 60]
+                if len(units) > 3:
+                    print "time too large"
+                    raise SystemExit, 1
+                totaltime = sum([mults[index] * float(units[index]) \
+                                 for index in range(len(units))])
+                opts['time'] = str(totaltime)
+            else:
+                try:
+                    int(opts['time'])
+                except:
+                    print "Invalid value for time"
+                    raise SystemExit, 1
             updates['walltime'] = opts['time']
         try:
             response = cqm.SetJobs(spec, updates)
