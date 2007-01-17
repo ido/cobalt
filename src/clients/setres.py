@@ -35,9 +35,6 @@ if __name__ == '__main__':
             print "Must supply either -p with value or partitions as arguments"
             print helpmsg
             raise SystemExit, 1
-    if '-x' in sys.argv and '-a' in sys.argv:
-        print "-x and -a options are exclusive; both cannot be used at the same time."
-        raise SystemExit, 1
     try:
         [start] = [opt[1] for opt in opts if opt[0] == '-s']
     except:
