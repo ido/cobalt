@@ -97,7 +97,10 @@ class ProcessGroup(Cobalt.Data.Data):
                 cmd = cmd + ('-mapfile', mapfile)
 
             if '--notbgl' in sys.argv:
-                cmd = (program, os.path.basename(program), args)
+                if args == '':
+                    cmd = (program, os.path.basename(program))
+                else:
+                    cmd = (program, os.path.basename(program), args)
 
             self.log.error("Job %s/%s: Running %s" % (self.get('jobid'), self.get('user'), " ".join(cmd)))
             try:
