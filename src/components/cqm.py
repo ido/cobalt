@@ -41,50 +41,10 @@ class Timer(object):
             return time.time() - self.start
         return self.stop - self.start
 
-class Logger(object):
-    '''This logger object writes out accounting log records'''
-    def __init__(self):
-        _configfields = ['log_dir']
-        _config = ConfigParser.ConfigParser()
-        if '-C' in sys.argv:
-            _config.read(sys.argv[sys.argv.index('-C') + 1])
-        else:
-            _config.read('/etc/cobalt.conf')
-        if not _config._sections.has_key('cqm'):
-            print '''"%s" section missing from cobalt config file''' % ('cqm')
-            raise SystemExit, 1
-        self.config = _config._sections['cqm']
-        mfields = [field for field in _configfields if not self.config.has_key(field)]
-        if mfields:
-            print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-            raise SystemExit, 1
-
-        self.logger = getLogger('cqm')
-        self.hdlr = FileHandler('%s/%s-%s.log' % (
-            self.config['log_dir'], 'cqm', time.strftime("%m-%d-%y", time.localtime())))
-        self.formatter = Formatter('%(asctime)s;%(message)s')
-        self.hdlr.setFormatter(self.formatter)
-        self.logger.addHandler(self.hdlr)
-#        self.logger.setLevel(INFO)
-
-    def ChangeLog(self):
-        '''Implement log rotation'''
-        self.logger.removeHandler(self.hdlr)
-        self.hdlr.close()
-        self.hdlr = FileHandler('%s/%s-%s.log' % (
-            self.config['log_dir'], 'cqm', time.strftime("%m-%d-%y", time.localtime())))
-        self.hdlr.setFormatter(self.formatter)
-        self.logger.addHandler(self.hdlr)
-        self.prevdate = time.strftime("%m-%d-%y", time.localtime())
-
-    def LogMessage(self, message):
-        '''record accounting message'''
-        self.logger.info(message)
-
 class Job(Cobalt.Data.Data):
     '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
 
-    #acctlog = Logger()
+    acctlog = Cobalt.Util.AccountingLog('qm')
 
     def __init__(self, data, jobid):
         Cobalt.Data.Data.__init__(self, data)
@@ -119,7 +79,8 @@ class Job(Cobalt.Data.Data):
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
         self.SetPassive()
         # acctlog
-        logger.info('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
+        self.acctlog.LogMessage('Q;%s;%s;%s' % \
+                                (self.get('jobid'), self.get('user'), self.get('queue')))
 
     def __getstate__(self):
         data = {}
@@ -130,7 +91,7 @@ class Job(Cobalt.Data.Data):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        #self.acctlog = Logger()
+        self.acctlog = Cobalt.Util.AccountingLog('qm')
         self.comms = Cobalt.Proxy.CommDict()
 
     def fail_job(self, state):
@@ -200,7 +161,8 @@ class Job(Cobalt.Data.Data):
         self.SetPassive()
         #AddEvent("queue-manager", "job-completed", self.get('jobid'))
         # acctlog
-        logger.info('E;%s;%s;%s' % (self.get('jobid'), self.get('user'), str(used_time)))
+        self.acctlog.LogMessage('E;%s;%s;%s' % \
+                                (self.get('jobid'), self.get('user'), str(used_time)))
 
     def Progress(self):
         '''Run next job step'''
@@ -231,12 +193,14 @@ class Job(Cobalt.Data.Data):
         self.timers['queue'].Stop()
         if self.get('reservation', False):
             # acctlog
-            logger.info('R;%s;%s;%s' % (self.get('jobid'), self.get('queue'), self.get('user')))
+            self.acctlog.LogMessage('R;%s;%s;%s' % \
+                                    (self.get('jobid'), self.get('queue'), self.get('user')))
         else:
             # acctlog
-            logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (
-                self.get('jobid'), self.get('user'), self.get('name', 'N/A'), self.get('nodes'),
-                self.get('procs'), self.get('mode'), self.get('walltime')))
+            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s' % (
+                self.get('jobid'), self.get('user'), self.get('name', 'N/A'),
+                self.get('nodes'), self.get('procs'), self.get('mode'),
+                self.get('walltime')))
         self.set('location', ":".join(nodelist))
         self.set('starttime', str(time.time()))
         self.SetActive()
@@ -419,7 +383,7 @@ class Job(Cobalt.Data.Data):
             logger.error("Got qdel for job %s in unexpected state %s" % (self.get('jobid'), self.get('state')))
  
         # acctlog
-        logger.info('D;%s;%s' % (self.get('jobid'), self.get('user')))
+        self.acctlog.LogMessage('D;%s;%s' % (self.get('jobid'), self.get('user')))
 
     def AdminStart(self, cmd):
         '''Run an administrative job step'''
@@ -551,7 +515,8 @@ class BGJob(Job):
         if self.config.get('bgkernel', 'false') == 'true':
             self.steps.insert(0, 'SetBGKernel')
         self.SetPassive()
-#         self.acctlog.LogMessage('Q;%s;%s;%s' % (self.get('jobid'), self.get('user'), self.get('queue')))
+        self.acctlog.LogMessage('Q;%s;%s;%s' % \
+                                (self.get('jobid'), self.get('user'), self.get('queue')))
         
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''

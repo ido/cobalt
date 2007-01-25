@@ -153,3 +153,18 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
         print 'Problem sending mail', msg
         server.quit()
     
+class AccountingLog:
+    logdir = '/var/log/cobalt-accounting'
+    def __init__(self, name):
+        self.date = None
+        self.logfile = open('/dev/null', 'w+')
+        self.name = name
+    def RotateLog(self):
+        if self.date != time.localtime()[:3]:
+            self.date = time.localtime()[:3]
+            self.logfile = open("%s/%s-%s_%02d_%02d.log" % \
+                                ((self.logdir, self.name,) + self.date), 'w+')
+    def LogMessage(self, message):
+        self.RotateLog()
+        self.logfile.write(message + '\n')
+        self.logfile.flush()
