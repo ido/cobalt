@@ -138,7 +138,7 @@ if __name__ == '__main__':
         job = cqm.AddJob(jobspec)
 
     except Cobalt.Proxy.CobaltComponentError:
-        print "Can't talk to cqm"
+        print "Can't connect to the queue manager"
         raise SystemExit, 1
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 31:

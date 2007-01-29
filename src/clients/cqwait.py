@@ -23,7 +23,11 @@ if __name__ == '__main__':
         print "cqstat %s" % __revision__
         raise SystemExit, 0
     Cobalt.Logging.setup_logging('cqstat', to_syslog = False, level = level)
-    cqm = Cobalt.Proxy.queue_manager()
+    try:
+        cqm = Cobalt.Proxy.queue_manager()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to queue manager"
+        raise SystemExit, 1
     query = [{'tag':'job', 'jobid':jid} for jid in args]
 
     while True:

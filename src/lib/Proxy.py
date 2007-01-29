@@ -86,7 +86,12 @@ class SafeProxy:
         '''Perform component location lookups if needed'''
         if self._components.has_key(name):
             return self._components[name]
-        slp = SafeProxy('service-location', url=self._cfile.get('components', 'service-location'))
+        try:
+            slp = SafeProxy('service-location',
+                            url=self._cfile.get('components', 'service-location'))
+        except ConfigParser.NoOptionError:
+            raise CobaltComponentError, "SLP Failure"
+
         try:
             sdata = slp.run_method('LookupService',
                                    ([{'tag':'location', 'name':name, 'url':'*'}],))

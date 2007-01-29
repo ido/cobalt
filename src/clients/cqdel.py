@@ -26,7 +26,11 @@ if __name__ == '__main__':
         level = 10
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('cqdel', to_syslog=False, level=level)
-    cqm = Cobalt.Proxy.queue_manager()
+    try:
+        cqm = Cobalt.Proxy.queue_manager()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to queue manager"
+        raise SystemExit, 1
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     jobs = cqm.DelJobs(spec)
     time.sleep(1)

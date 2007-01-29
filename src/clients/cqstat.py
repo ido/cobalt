@@ -71,7 +71,11 @@ if __name__ == '__main__':
     else:
         names = ["*"]
 
-    cqm = Cobalt.Proxy.queue_manager()
+    try:
+        cqm = Cobalt.Proxy.queue_manager()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to queue manager"
+        raise SystemExit, 1
 
     if opts['q']:
         query = [{'tag':'queue', 'name':qname, 'users':'*', 

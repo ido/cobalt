@@ -62,7 +62,11 @@ if __name__ == '__main__':
     else:
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
 
-    cqm = Cobalt.Proxy.queue_manager()
+    try:
+        cqm = Cobalt.Proxy.queue_manager()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to queue manager"
+        raise SystemExit, 1
     kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
     if opts['setjobid']:
         response = cqm.SetJobID(int(opts['setjobid']))
