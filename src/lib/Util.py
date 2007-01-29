@@ -1,7 +1,7 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
-import types, smtplib, socket
+import types, smtplib, socket, time
 from getopt import getopt, GetoptError
 
 def dgetopt(arglist, opt, vopt, msg):
@@ -163,7 +163,7 @@ class AccountingLog:
         if self.date != time.localtime()[:3]:
             self.date = time.localtime()[:3]
             self.logfile = open("%s/%s-%s_%02d_%02d.log" % \
-                                ((self.logdir, self.name,) + self.date), 'w+')
+                                ((self.logdir, self.name,) + self.date), 'a+')
     def LogMessage(self, message):
         self.RotateLog()
         self.logfile.write(message + '\n')
