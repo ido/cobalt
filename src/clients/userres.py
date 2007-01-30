@@ -2,6 +2,7 @@
 
 '''Setup reservations in the scheduler'''
 __revision__ = '$Id: setres.py 64 2006-04-01 20:07:13Z voran $'
+__version__ = '$Version$'
 
 import getopt, sys, time, os
 import Cobalt.Proxy, Cobalt.Util
@@ -13,6 +14,10 @@ duration may be in minutes or HH:MM:SS
 -u user where user can be a : delimited list of users is optional'''
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "userres %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 's:d:p:u:', [])
     except getopt.GetoptError, msg:

@@ -2,13 +2,17 @@
 .SH "NAME"
 releaseres \- Delete cobalt scheduler reservation(s)
 .SH "SYNOPSIS"
-.B releaseres [-p partition] name
+.B releaseres [--version] [-p partition] name
 .SH "DESCRIPTION"
 .TP
 This program deletes scheduler reservation(s)
+.SH OPTIONS
 .TP
 .B \-p
 .I set partition name (or quoted "*" as a wildcard)
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .SH "SEE ALSO"
 .BR showres(1)
 .BR setres(8)

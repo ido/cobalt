@@ -2,11 +2,12 @@
 
 '''Cobalt job administration command'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-__helpmsg__ = 'Usage: cqadm [-d] [--hold] [--release] [--run=<location>] ' + \
+__helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
               '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>'
@@ -20,6 +21,10 @@ def get_queues(cqm_conn):
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "cqadm %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
 
     options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold', 'release':'release',
                'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',

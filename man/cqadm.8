@@ -6,6 +6,8 @@ cqadm \- queue manager administration tool
 
 .B cqadm [-d] [-f] [--addq] [--delq] [--getq] [--setq 'prop:value prop:value'] <queue> <queue>
 
+.B cqadm [--version]
+
 .SH "DESCRIPTION"
 Administrative interface for queue manager. Allows one to hold, run, kill, and set the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
 
@@ -66,6 +68,9 @@ Kill the queue(s). No new jobs can be submitted, and no jobs in the queue will r
 .TP
 .B \-\-setq 'prop:value prop:value' queue
 Set properties for one or more queues. The prop:value pairs are separated by whitespace. A value of '*' effectively disables the property.
+.TP
+.B \-\-version
+Display client revision and Cobalt version
 .IP 
 Example:
 .IP

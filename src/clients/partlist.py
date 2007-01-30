@@ -2,12 +2,18 @@
 
 '''Partlist displays online partitions for users'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import Cobalt.Proxy, Cobalt.Util
 
-helpmsg = '''Usage: partlist'''
+helpmsg = '''Usage: partlist [--version]'''
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "partlist %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
+
     sched = Cobalt.Proxy.scheduler()
     parts = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
                                  'scheduled':'*', 'functional':'*', 'deps':'*'}])

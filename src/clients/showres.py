@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 '''Display reservations'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import sys, time
 import Cobalt.Proxy, Cobalt.Logging, Cobalt.Util
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "showres %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
     Cobalt.Logging.setup_logging('showres', to_syslog=False, level=20)
     scheduler = Cobalt.Proxy.scheduler()
     reservations = {}

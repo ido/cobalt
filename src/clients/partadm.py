@@ -2,6 +2,7 @@
 
 '''Partadm sets partition attributes in the scheduler'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import sys, getopt, xmlrpclib
 import Cobalt.Proxy, Cobalt.Util
@@ -15,9 +16,14 @@ Usage: partadm.py --deps=dep1:dep2 part1 part2
 Usage: partadm.py --free part1 part2
 Usage: partadm.py --dump
 Usage: partadm.py --load <filename>
+Usage: partadm.py --version
 Must supply one of -a or -d or -l or -start or -stop or --queue'''
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "partadm %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',

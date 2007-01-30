@@ -2,16 +2,22 @@
 
 '''This script removes reservations'''
 __revision__ = '$Id$'
+__version__ = '$Version$'
 
 import getopt, sys
 import Cobalt.Proxy
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "releaseres %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
+
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'p:', [])
     except getopt.GetoptError, msg:
         print msg
-        print "releaseres -p <partition> name"
+        print "releaseres [--version] -p <partition> name"
         raise SystemExit, 1
 
     scheduler = Cobalt.Proxy.scheduler()

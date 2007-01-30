@@ -2,7 +2,7 @@
 .SH "NAME"
 setres \- Create a new cobalt scheduler reservation
 .SH "SYNOPSIS"
-.B setres [-a] [-p partition] [-s starttime] [-d duration] [-u user] [-n name] [partion1 partion2 ... partitionN]
+.B setres [--version][-a] [-p partition] [-s starttime] [-d duration] [-u user] [-n name] [partion1 partion2 ... partitionN]
 .SH "DESCRIPTION"
 .TP
 This program creates new scheduler reservations.
@@ -28,6 +28,9 @@ This program creates new scheduler reservations.
 .B \-x 
 .I Reserve the partition for exclusive access (also reserves all
 client and parent partitions)
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .SH "SEE ALSO"
 .BR showres(1)
 .BR releaseres(8)

@@ -2,17 +2,22 @@
 
 '''Setup reservations in the scheduler'''
 __revision__ = '$Id$'
+__version__ = '$Version$'
 
 import getopt, pwd, sys, time
 import Cobalt.Proxy, Cobalt.Util
 
-helpmsg = '''Usage: setres [-a] [-x] [-m] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
+helpmsg = '''Usage: setres.py [--version] [-a] [-x] [-m] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 user and name are optional
 -a automatically find all dependancies of the partion(s) listed'''
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "setres %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
     if '-h' in sys.argv or '--help' in sys.argv:
         print helpmsg
         raise SystemExit, 0

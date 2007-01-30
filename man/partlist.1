@@ -2,7 +2,7 @@
 .SH "NAME"
 partlist \-	List online partitions
 .SH "SYNOPSIS"
-.B partlist
+.B partlist [--version]
 .SH "DESCRIPTION"
 .TP
 This program lists all partitions that have been marked as functional. 
@@ -14,6 +14,10 @@ state are free to run jobs. Partitions with
 state are running jobs. Partitions with 
 .B blocked 
 state are not able to run jobs because one or more of their parent or child partitions are running jobs.
+.SH OPTIONS
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .SH "SEE ALSO"
 .BR partadm(8)
 .SH "BUGS"

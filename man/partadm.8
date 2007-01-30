@@ -13,6 +13,8 @@ partadm \- partition administration tool
 .B partadm [--deps=dep1:dep2] part1 part2
 .TP
 .B partadm --free part1 part2
+.TP
+.B partadm --version
 .SH "DESCRIPTION"
 .TP
 .B \-a
@@ -54,6 +56,9 @@ existing partitions will continue to exist.
 .B \-r
 Activate recursive mode. All child partitions of all specified
 partitions will be modified (for activate/deactivate/enable/disable/queue/deps/free)
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .SH "SEE ALSO"
 .BR partlist(1)
 .SH "BUGS"

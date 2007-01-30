@@ -2,12 +2,14 @@
 
 '''Cobalt Queue Status'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import math, os, re, sys, time, types
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-__helpmsg__ = "Usage: cqstat [--version] [-d] [-f] [-l] <jobid> <jobid>\n" + \
-              "       cqstat [-d] -q <queue> <queue>"
+__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] <jobid> <jobid>\n" + \
+              "       cqstat [-d] -q <queue> <queue>\n" + \
+              "       cqstat [--version]"
 
 def get_elapsed_time(starttime, endtime):
     """
@@ -46,6 +48,10 @@ def mergelist(locations):
     return ','.join(retnl)
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "cqstat %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
     if '-h' in sys.argv or '--help' in sys.argv:
         print __helpmsg__
         raise SystemExit, 1

@@ -2,6 +2,7 @@
 
 '''Cobalt qsub command'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
@@ -57,6 +58,7 @@ helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
 if __name__ == '__main__':
     if '--version' in sys.argv:
         print "cqsub %s" % __revision__
+        print "cobalt %s" % __version__
         raise SystemExit, 0
     options = {'v':'verbose', 'd':'debug'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',

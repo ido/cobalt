@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 '''query the slp daemon for component location information'''
-__revision__ = '0.96'
+__revision__ = '$Revision$'
+__version__ = '$Version$'
 
 from Cobalt.Util import print_tabular
 
@@ -9,6 +10,10 @@ import sys, time, xmlrpclib
 import Cobalt.Logging, Cobalt.Proxy
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "slpstat %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
     level = 20
     if '-d' in sys.argv:
         level = 10

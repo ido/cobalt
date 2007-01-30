@@ -2,15 +2,17 @@
 
 '''Cobalt queue delete'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import getopt, os, pwd, sys, time
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-usehelp = "Usage:\ncqdel [-f] <jobid> <jobid>"
+usehelp = "Usage:\ncqdel [--version] [-f] <jobid> <jobid>"
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
         print "cqdel %s" % __revision__
+        print "cobalt %s" % __version__
         raise SystemExit, 0
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'f')

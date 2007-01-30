@@ -3,6 +3,7 @@
 '''Program that does not return until the job(s) specified is not
    present in the queue'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
 import sys, time
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
@@ -10,6 +11,11 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 __helpmsg__ = "Usage: cqwait [--version] [-vr] <jobid> <jobid>\n"
 
 if __name__ == '__main__':
+    if '--version' in sys.argv:
+        print "cqwait %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
+
     options = {'r':'quickreturn', 'v':'version', 'version':'version'}
     doptions = {}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
