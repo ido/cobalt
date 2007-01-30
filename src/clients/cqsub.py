@@ -3,8 +3,50 @@
 '''Cobalt qsub command'''
 __revision__ = '$Revision$'
 
-import os, sys, pwd, os.path, xmlrpclib
+import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+
+def runcommand(cmd):
+    '''Execute command, returning rc, stdout, stderr'''
+    cmdp = popen2.Popen3(cmd, True)
+    out = []
+    err = []
+    while cmdp.poll() == -1:
+        err.append(cmdp.childerr.readline())
+        out.append(cmdp.fromchild.readline())
+    out += cmdp.fromchild.readlines()
+    err += cmdp.childerr.readlines()
+    if '' in out:
+        out.remove('')
+    if '' in err:
+        err.remove('')
+    return (cmdp.wait(), out, err)
+
+def processfilter(cmdstr, jobdict):
+    '''Run a filter on the job, passing in all job args and processing all output'''
+    extra = []
+    for key, value in jobdict.iteritems():
+        if isinstance(value, list):
+            extra.append("%s=%s" % (key, ':'.join(value)))
+        elif isinstance(value, dict):
+            extra.append("%s={%s}" % (key, str(value)))
+        else:
+            extra.append("%s=%s" % (key, value))
+    rc, out, err = runcommand(" ".join([cmdstr] + extra))
+    if err:
+        print '\n'.join(err)
+    if rc != 0:
+        print "Filter %s failed" % (cmdstr)
+        raise SystemExit, 0
+    if out:
+        for line in out:
+            key, value = line.split('=', 1)
+            if isinstance(jobdict[key], list):
+                jobdict[key] = value.split(':')
+            elif isinstance(jobdict[key], dict):
+                jobdict[key].update(eval(value))
+            else:
+                jobdict[key] = value
 
 helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
           + "<working directory> -e envvar1=value1:envvar2=value2" \
@@ -106,20 +148,22 @@ if __name__ == '__main__':
     if opts['notify']:
         jobspec['notify'] = opts['notify']
 
-    jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'], 'jobid':'*',
-                    'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'), 'kernel':opts['kernel'],
-                    'queue':opts['queue'], 'procs':opts.get('proccount'), 'nodes':opts.get('nodecount')})
+    jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
+                    'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
+                    'kernel':opts['kernel'], 'queue':opts['queue'],
+                    'procs':opts.get('proccount'), 'nodes':opts.get('nodecount')})
     if opts['outputprefix']:
         if opts['outputprefix'][0] == '/':
             jobspec.update({'outputpath':"%s.output" % (opts['outputprefix']),
                             'errorpath':"%s.error" % (opts['outputprefix'])})
         else:
-            jobspec.update({'outputpath':"%s/%s.output" % (opts['cwd'], opts['outputprefix']),
+            jobspec.update({'outputpath':"%s/%s.output" % (opts['cwd'],
+                                                           opts['outputprefix']),
                             'errorpath':"%s/%s.error" % (opts['cwd'], opts['outputprefix'])})
     if opts['error']:
-        jobspec.set('errorpath', opts['error'])
+        jobspec.update({'errorpath': opts['error']})
     if opts['output']:
-        jobspec.set('outputpath', opts['output'])
+        jobspec.update({'outputpath': opts['output']})
     if opts['env']:
         jobspec['envs'] = {}
         [jobspec['envs'].update({key:value}) for key, value
@@ -127,6 +171,15 @@ if __name__ == '__main__':
     jobspec.update({'command':command[0], 'args':command[1:]})
 
     Cobalt.Logging.setup_logging('cqsub', to_syslog=False, level=level)
+
+    CP = ConfigParser.ConfigParser()
+    CP.read(['/etc/cobalt.conf'])
+    try:
+        filters = CP.get('queue-manager', 'filters').split(':')
+    except ConfigParser.NoOptionError:
+        filters = []
+    for filt in filters:
+        runfilter(filt, jobspec)
     
     try:
         cqm = Cobalt.Proxy.queue_manager()
