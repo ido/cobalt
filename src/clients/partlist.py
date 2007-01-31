@@ -4,6 +4,7 @@
 __revision__ = '$Revision$'
 __version__ = '$Version$'
 
+import sys
 import Cobalt.Proxy, Cobalt.Util
 
 helpmsg = '''Usage: partlist [--version]'''
@@ -13,8 +14,12 @@ if __name__ == '__main__':
         print "partlist %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
+    try:
+        sched = Cobalt.Proxy.scheduler()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to scheduler"
+        raise SystemExit, 1
 
-    sched = Cobalt.Proxy.scheduler()
     parts = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
                                  'scheduled':'*', 'functional':'*', 'deps':'*'}])
     partinfo = Cobalt.Util.buildRackTopology(parts)

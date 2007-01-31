@@ -12,7 +12,11 @@ if __name__ == '__main__':
         print "cobalt %s" % __version__
         raise SystemExit, 0
     Cobalt.Logging.setup_logging('showres', to_syslog=False, level=20)
-    scheduler = Cobalt.Proxy.scheduler()
+    try:
+        scheduler = Cobalt.Proxy.scheduler()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to scheduler"
+        raise SystemExit, 1
     reservations = {}
     partitions = scheduler.GetPartition([{'size':'*', 'tag':'partition', 'name':'*', 'reservations':'*', 'deps':'*'}])
     npart = {}

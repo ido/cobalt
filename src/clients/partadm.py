@@ -32,7 +32,12 @@ if __name__ == '__main__':
         print msg
         print helpmsg
         raise SystemExit, 1
-    sched = Cobalt.Proxy.scheduler()
+    try:
+        sched = Cobalt.Proxy.scheduler()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to scheduler"
+        raise SystemExit, 1
+
     if '-r' in sys.argv:
         partdata = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*',
                                         'state':'*', 'scheduled':'*', 'functional':'*',

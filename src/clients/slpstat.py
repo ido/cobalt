@@ -28,6 +28,9 @@ if __name__ == '__main__':
         else:
             print "Unknown Fault %s" % (flt.faultString)
             raise SystemExit, 1
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to service location component"
+        raise SystemExit, 1
 
     fields = ['name', 'url', 'stamp']
     header = [('Name', 'Location', 'Update Time')]

@@ -21,7 +21,11 @@ if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
         print helpmsg
         raise SystemExit, 0
-    scheduler = Cobalt.Proxy.scheduler()
+    try:
+        scheduler = Cobalt.Proxy.scheduler()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to scheduler"
+        raise SystemExit, 1
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 's:d:mn:p:u:ax', [])
     except getopt.GetoptError, msg:
