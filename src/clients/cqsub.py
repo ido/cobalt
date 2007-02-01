@@ -177,7 +177,7 @@ if __name__ == '__main__':
     CP = ConfigParser.ConfigParser()
     CP.read(['/etc/cobalt.conf'])
     try:
-        filters = CP.get('queue-manager', 'filters').split(':')
+        filters = CP.get('cqm', 'filters').split(':')
     except ConfigParser.NoOptionError:
         filters = []
     for filt in filters:
