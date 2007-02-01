@@ -202,6 +202,13 @@ if __name__ == '__main__':
         elif flt.faultCode == 30:
             print "Job submission failed because: \n%s\nCheck 'cqstat -q' and the cqstat manpage for more details." % flt.faultString
             raise SystemExit, 1
+        elif flt.faultCode == 1:
+            print "Job submission failed due to queue-manager failure"
+            raise SystemExit, 1
+        else:
+            print "Job submission failed"
+            print flt
+            raise SystemExit, 1
     except:
         print "Error submitting job"
         raise SystemExit, 1
