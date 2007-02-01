@@ -1,7 +1,7 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
-import types, smtplib, socket, time
+import types, smtplib, socket, time, ConfigParser
 from getopt import getopt, GetoptError
 
 def dgetopt(arglist, opt, vopt, msg):
@@ -154,8 +154,13 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
         server.quit()
     
 class AccountingLog:
-    logdir = '/var/log/cobalt-accounting'
     def __init__(self, name):
+        CP = ConfigParser.ConfigParser()
+        CP.read(['/etc/cobalt.conf'])
+        try:
+            self.logdir = CP.get('cqm', 'log_dir')
+        except ConfigParser.NoOptionError:
+            self.logdir = '/var/log/cobalt-accounting'
         self.date = None
         self.logfile = open('/dev/null', 'w+')
         self.name = name
