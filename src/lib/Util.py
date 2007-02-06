@@ -171,5 +171,6 @@ class AccountingLog:
                                 ((self.logdir, self.name,) + self.date), 'a+')
     def LogMessage(self, message):
         self.RotateLog()
-        self.logfile.write(message + '\n')
+        timenow = time.strftime("%Y-%m-%d %T", time.localtime())
+        self.logfile.write("%s %s\n" % (timenow, message))
         self.logfile.flush()
