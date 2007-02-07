@@ -12,16 +12,10 @@ def runcommand(cmd):
     cmdp = popen2.Popen3(cmd, True)
     out = []
     err = []
-    while cmdp.poll() == -1:
-        err.append(cmdp.childerr.readline())
-        out.append(cmdp.fromchild.readline())
+    status = cmdp.wait()
     out += cmdp.fromchild.readlines()
     err += cmdp.childerr.readlines()
-    if '' in out:
-        out.remove('')
-    if '' in err:
-        err.remove('')
-    return (cmdp.wait(), out, err)
+    return (status, out, err)
 
 def processfilter(cmdstr, jobdict):
     '''Run a filter on the job, passing in all job args and processing all output'''
@@ -41,8 +35,10 @@ def processfilter(cmdstr, jobdict):
         raise SystemExit, 0
     if out:
         for line in out:
-            key, value = line.split('=', 1)
-            if isinstance(jobdict[key], list):
+            key, value = line.strip().split('=', 1)
+            if key not in jobdict.keys():
+                jobdict[key] = value
+            elif isinstance(jobdict[key], list):
                 jobdict[key] = value.split(':')
             elif isinstance(jobdict[key], dict):
                 jobdict[key].update(eval(value))
@@ -181,7 +177,7 @@ if __name__ == '__main__':
     except ConfigParser.NoOptionError:
         filters = []
     for filt in filters:
-        runfilter(filt, jobspec)
+        processfilter(filt, jobspec)
     
     try:
         cqm = Cobalt.Proxy.queue_manager()
