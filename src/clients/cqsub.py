@@ -120,7 +120,8 @@ if __name__ == '__main__':
         command[0] = opts['cwd'] + '/' + command[0]
 
     if not os.path.isfile( command[0] ):
-        print "Warning: command", command[0], "not found, or is not a file"
+        print "command", command[0], "not found, or is not a file"
+        raise SystemExit, 1
 
     if not opts['mode']:
         opts['mode'] = 'co'
