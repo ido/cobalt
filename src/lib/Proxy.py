@@ -153,6 +153,11 @@ class bcfg2(ComponentProxy):
     name = 'bcfg2'
     methods = ['AssertProfile', 'GetConfig', 'GetProbes', 'RecvProbeData', 'RecvStats']
 
+class simulator(ComponentProxy):
+    '''bgl simulator client code'''
+    name = 'simulator'
+    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2']
+
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
     commnames = {'pm':process_manager, 'fs':file_stager, 'am':allocation_manager,
