@@ -79,6 +79,8 @@ class Job(Cobalt.Data.Data):
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
         self.SetPassive()
         # acctlog
+        logger.info('Q;%s;%s;%s' % \
+                    (self.get('jobid'), self.get('user'), self.get('queue')))
         self.acctlog.LogMessage('Q;%s;%s;%s' % \
                                 (self.get('jobid'), self.get('user'), self.get('queue')))
 
@@ -161,6 +163,8 @@ class Job(Cobalt.Data.Data):
         self.SetPassive()
         #AddEvent("queue-manager", "job-completed", self.get('jobid'))
         # acctlog
+        logger.info('E;%s;%s;%s' % \
+                    (self.get('jobid'), self.get('user'), str(used_time)))
         self.acctlog.LogMessage('E;%s;%s;%s' % \
                                 (self.get('jobid'), self.get('user'), str(used_time)))
 
@@ -193,10 +197,16 @@ class Job(Cobalt.Data.Data):
         self.timers['queue'].Stop()
         if self.get('reservation', False):
             # acctlog
+            logger.info('R;%s;%s;%s' % \
+                        (self.get('jobid'), self.get('queue'), self.get('user')))
             self.acctlog.LogMessage('R;%s;%s;%s' % \
                                     (self.get('jobid'), self.get('queue'), self.get('user')))
         else:
             # acctlog
+            logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (
+                self.get('jobid'), self.get('user'), self.get('name', 'N/A'),
+                self.get('nodes'), self.get('procs'), self.get('mode'),
+                self.get('walltime')))
             self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s' % (
                 self.get('jobid'), self.get('user'), self.get('name', 'N/A'),
                 self.get('nodes'), self.get('procs'), self.get('mode'),
@@ -205,11 +215,21 @@ class Job(Cobalt.Data.Data):
         self.set('starttime', str(time.time()))
         self.SetActive()
         if self.get('project', 'XX') != 'XX':
-            logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.get('jobid'), self.get('user'),
-                                                             self.get('project'), self.get('queue'), ":".join(nodelist)))
+            logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % \
+                                    (self.get('jobid'), self.get('user'),
+                                     self.get('project'), self.get('queue'),
+                                     ":".join(nodelist)))
+            self.acctlog.LogMessage("Job %s/%s/%s/Q:%s: Running job on %s" % \
+                                    (self.get('jobid'), self.get('user'),
+                                     self.get('project'), self.get('queue'),
+                                     ":".join(nodelist)))
         else:
-            logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.get('jobid'),
-                                                          self.get('user'), self.get('queue'), ":".join(nodelist)))
+            logger.info("Job %s/%s/Q:%s: Running job on %s" % \
+                        (self.get('jobid'), self.get('user'),
+                         self.get('queue'), ":".join(nodelist)))
+            self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" % \
+                                    (self.get('jobid'), self.get('user'),
+                                     self.get('queue'), ":".join(nodelist)))
 
     def FinishStage(self):
         '''Complete a stage'''
@@ -383,6 +403,7 @@ class Job(Cobalt.Data.Data):
             logger.error("Got qdel for job %s in unexpected state %s" % (self.get('jobid'), self.get('state')))
  
         # acctlog
+        logger.info('D;%s;%s' % (self.get('jobid'), self.get('user')))
         self.acctlog.LogMessage('D;%s;%s' % (self.get('jobid'), self.get('user')))
 
     def AdminStart(self, cmd):
@@ -476,8 +497,13 @@ class Job(Cobalt.Data.Data):
 
     def LogFinish(self):
         '''Log end of job data'''
-        logger.info("Job %s/%s on %s nodes done. %s" % (self.get('jobid'),
-                                                        self.get('user'), self.get('nodes'), self.GetStats()))
+        logger.info("Job %s/%s on %s nodes done. %s" % \
+                    (self.get('jobid'), self.get('user'),
+                     self.get('nodes'), self.GetStats()))
+        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s" % \
+                                (self.get('jobid'), self.get('user'),
+                                 self.get('nodes'), self.GetStats()))
+        
         #AddEvent("queue-manager", "job-done", self.get('jobid'))
 
 class BGJob(Job):
@@ -515,8 +541,8 @@ class BGJob(Job):
         if self.config.get('bgkernel', 'false') == 'true':
             self.steps.insert(0, 'SetBGKernel')
         self.SetPassive()
-        self.acctlog.LogMessage('Q;%s;%s;%s' % \
-                                (self.get('jobid'), self.get('user'), self.get('queue')))
+#         self.acctlog.LogMessage('Q;%s;%s;%s' % \
+#                                 (self.get('jobid'), self.get('user'), self.get('queue')))
         
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
