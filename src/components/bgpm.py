@@ -127,7 +127,7 @@ class ProcessGroup(Cobalt.Data.Data):
         '''Handle cleanup for exited process'''
         # process has already been waited on
         self.set('state', 'finished')
-        self.log.info("Job %s/%s: ProcessGroup %s Finshed with exit code %d. pid %s" % \
+        self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
                       (self.get('jobid'), self.get('user'), self.get('pgid'),
                        status, self.pid))
         #AddEvent("process-manager", "process_end", self.element.get('pgid'))
