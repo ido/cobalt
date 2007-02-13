@@ -20,12 +20,31 @@ if __name__ == '__main__':
         print "releaseres [--version] -p <partition> name"
         raise SystemExit, 1
 
-    scheduler = Cobalt.Proxy.scheduler()
+    try:
+        scheduler = Cobalt.Proxy.scheduler()
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Failed to connect to scheduler"
+        raise SystemExit, 1
     if opts:
         spec = [{'tag':'partition', 'name':opts[0][1]}]
     else:
         spec = [{'tag':'partition', 'name':'*'}]
-    print "Released reservation %s, matched on %d partitions" % \
-          (args[0], len(scheduler.DelReservation(spec, args[0])))
 
-    
+    # Check if reservation exists
+    result = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'reservations':'*'}])
+    parts = []  # member partitions
+    for r in result:
+        if args[0] in [x[0] for x in r.get('reservations')]:
+            parts.append(r.get('name'))
+    if not parts:
+        print "Reservation '%s' not found" % args[0]
+        raise SystemExit, 1
+
+    # delete reservation from member partitions
+    if opts:
+        spec = [{'tag':'partition', 'name':opts[0][1]}]
+    else:
+        spec = [{'tag':'partition', 'name':p} for p in parts]
+    result = scheduler.DelReservation(spec, args[0])
+    print "Released reservation '%s', matched on %d partitions" % \
+          (args[0], len(result))
