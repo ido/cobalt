@@ -1,104 +1,143 @@
 #!/usr/bin/env python
 
-'''Cobalt job history command'''
+'''Cobalt queue history command'''
 __revision__ = '$Revision$'
+__version__ = '$Version$'
 
-import ConfigParser, glob, re, sys, time
-import Cobalt.Util
+#
+# cqhist.py
+# Extended Cobalt queue history
+#
+# Matthew Woitaszek
+# 21 November 2006
+#
+# Portions of this file are based on the existing Cobalt qhist script developed
+# by Argonne National Laboratory. Special thanks to Theron Voran for his
+# assistance!
+#
 
+#
+# This script prints Cobalt job history.
+#
+
+# Python imports
+import sys
+from optparse import OptionParser
+
+# Application imports
+import Cobalt.Cqparse as cqparse
 
 if __name__ == '__main__':
-    (opts, command) = Cobalt.Util.dgetopt(sys.argv[1:], {'f':'full'}, {'d':'days'},
-                                          "Usage: cqhist [-d days] [-f]")
-    if not opts['days']:
-        opts['days'] = 1
-    # get day range
-    day_range = [time.strftime("%Y-%m-%d", time.localtime(int(time.time() - d*24*3600))) for d in range(int(opts['days']))]
-    day_range = '(' + '|'.join(day_range) + ')'
+    if '--version' in sys.argv:
+        print "cqhist %s" % __revision__
+        print "cobalt %s" % __version__
+        raise SystemExit, 0
 
-    # setup regex's
-    user_re = "(?P<user>\w+)"
-    jobid_re = "(?P<jobid>\d+)"
-    location_re = "(?P<location>\S+)"
+    # -------------------------------------------------------------------
+    #
+    # Option Processing
+    #
+    # -------------------------------------------------------------------
 
-    done_re = re.compile("(?P<time>" + day_range + " \d+:\d+:\d+),\d{,3};Job " + \
-                         jobid_re + "/" + user_re + " on (?P<nodes>\d+) nodes done. queue:(?P<queuetime>\d+\.\d+)s user:(?P<usertime>\d+\.\d+)s*")
-    start_re = re.compile("(?P<time>" + day_range + " \d+:\d+:\d+),\d{,3};S;(?P<jobid>\d+);" + \
-                          user_re + ";" + location_re + ";(\d+);(?P<nodes>\d+);(?P<processors>\d+);(?P<mode>\w+);(?P<walltime>\d+)")
-    run_re = re.compile("(?P<time>" + day_range + " \d+:\d+:\d+),\d{,3};Job " + \
-                        jobid_re + "/" + user_re + "/Q:" + "(?P<queue>\w+): Running job on " + location_re)
+    description = "Cobalt Queue History"
+    usage = "usage: %prog [<options>]"
+    parser = OptionParser(usage=usage, description=description)
 
-    _config = ConfigParser.ConfigParser()
-    _config.read('/etc/cobalt.conf')
-    cqm_section = _config._sections['cqm']
+    # Query selection options
+    parser.add_option( "-u", "--user", default=None,
+                       action="store", type="string", dest="username",
+                       help="display only jobs from this user" )
+    parser.add_option( "-q", "--queue", default=None,
+                       action="store", type="string", dest="queue",
+                       help="display only jobs from this queue" )
 
-    logfiles = glob.glob(cqm_section['log_dir'] + '/cqm*.log')
-    logfiles.sort()
-    #logfiles.reverse()  # put most recent log first
 
-    rundict = {}
-    donedict = {}
-    startdict = {}
+    # Output length
+    parser.add_option( "-n", "--rows", default=20,
+                       action="store", type="int", dest="lines",
+                       help="output only the last LINES lines [default: %default]" )
+    parser.add_option( "", "--noheader", default=False,
+                       action="store_true", dest="noheader",
+                       help="suppress all headers" )
 
-    output = []
+    # Output options
+    parser.add_option( "-a", "--alldetails", default=False,
+                       action="store_true", dest="alldetails",
+                       help="show all job details" )
 
-    for logfile in logfiles:
-        thefile = open(logfile, 'r')
-        for line in thefile:
-            d = done_re.match(line)
-            if d:
-                # format usertime
-                minutes, seconds = divmod(float(d.group('usertime')), 60)
-                hours, minutes = divmod(minutes, 60)
-                usertime = "%02d:%02d:%02d" % (hours, minutes, seconds)
+    # Get the options
+    (options, args) = parser.parse_args()
 
-                # format queuetime
-                minutes, seconds = divmod(float(d.group('queuetime')), 60)
-                hours, minutes = divmod(minutes, 60)
-                queuetime = "%02d:%02d:%02d" % (hours, minutes, seconds)
-                output.append([d.group('time'), d.group('jobid'), d.group('user'),
-                               d.group('nodes'), queuetime, usertime])
+    # -------------------------------------------------------------------------
+    #
+    # Execution
+    #
+    # -------------------------------------------------------------------------
+    
+    #
+    # Get all of the jobs
+    #
+    cqp = cqparse.CobaltLogParser()
+    cqp.perform_default_parse()
+    jobs = [ x for x in cqp.finished_jobs() ]
 
-            r = run_re.match(line)
-            if r:
-                rundict.update({r.group('jobid'):{ 'queue':r.group('queue'),
-                                                   'location':r.group('location') } })
+    #
+    # Get the statistics
+    #
+    print "Cobalt queue history (%i jobs):" % (len(jobs))
 
-            s = start_re.match(line)
-            if s:
-                startdict.update({s.group('jobid'):{ 'processors':s.group('processors'),
-                                                     'nodes':s.group('nodes'), 'mode':s.group('mode'),
-                                                     'walltime':s.group('walltime') } })
+    #
+    # Filter the jobs using the specified selection criteria
+    #
+    if options.username:
+        jobs = [ job for job in jobs if job.username == options.username ]
+    if options.queue:
+        jobs = [ job for job in jobs if job.queue == options.queue ]
 
-        thefile.close()
+    # Now, sort the jobs
+    js = [ (job.finish_time, job) for job in jobs ]
+    js.sort()
+    jobs = [ job[1] for job in js ]
 
-    uniqified = []
+    # Finally, truncate the results  
+    if options.lines:
+        jobs = jobs[-abs(options.lines):]
 
-    for line in range( len(output) ):
+    #
+    # Print the standard output
+    #
 
-        jobid = output[line][1]
+    # Print the header
+    if not options.noheader:
+        if options.alldetails:
+            print "%-19s %7s %-10s %-8s %5s %4s %5s %18s %9s  %9s %8s %6s" % (
+                "Termination Time", "Job ID", "Queue", "User",
+                "ncpus", "mode", "nodes",
+                "partition", "queuetime",
+                "walltime", "cpuh", "Exit" )
+        else:
+            print "%s" % ( "-" * 78 )
+            print "%-19s %6s %-10s %-8s %5s %4s %5s %8s %6s" % (
+                "Termination Time", "Job ID", "Queue", "User",
+                "ncpus", "mode", "nodes", "Walltime", "Exit")
 
-        if '-f' in sys.argv:
-            if rundict.has_key(jobid):
-                output[line] = output[line] + [rundict[jobid]['location']]
+    # Print the job lines
+    for job in jobs:
+        if options.alldetails:
+            if job.queuetime > job.usertime:
+                wait_flag = "*"
             else:
-                output[line] = output[line] + ['-']
+                wait_flag = " "
 
-        if '-f' in sys.argv:
-            if startdict.has_key(jobid):
-                output[line] = output[line] + [ startdict[jobid]['processors'],
-                                            startdict[jobid]['mode'] ]
-            else:
-                output[line] = output[line] + ['-', '-']
+            print "%19s %7i %-10s %-8s %5i %4s %5i %18s %9s%s %9s %8.2f %6s" % (
+                job.finish_time, job.jobid, job.queue, job.username,
+                job.processors, job.mode, job.partition_size,
+                job.partition, job.queuetime_formatted, wait_flag,
+                job.usertime_formatted,
+                job.partition_size * job.usertime / 3600, job.exitcode)        
+        else:
+            print "%19s %6i %-10s %-8s %5i %4s %5i %8s %6s" % (
+                job.finish_time, job.jobid, job.queue, job.username,
+                job.processors, job.mode, job.partition_size, 
+                job.usertime_formatted, job.exitcode )
 
-    for line in output:
-        if uniqified.count(line) == 0:
-            uniqified.append(line)
-
-    if '-f' in sys.argv:
-        header = [['Time completed', 'JobID', 'User', 'Nodes', \
-                   'QueueTime', 'RunTime', 'Location', 'Proc', 'Mode']]
-    else:
-        header = [['Time completed', 'JobID', 'User', 'Nodes', 'QueueTime', 'RunTime']]
-
-    Cobalt.Util.print_tabular([tuple(x) for x in header + uniqified])

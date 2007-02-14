@@ -248,7 +248,8 @@ class Job(Cobalt.Data.Data):
         if self.spgid.has_key('user'):
             try:
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
-                self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user']}])
+                result = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'exit-status':'*'}])
+                self.set('exit-status', result[0].get('exit-status'))
                 #this seems needed to get the info back into the object so it can be handed back to the filestager.
                 #self.output = pgroups[0]['output']
                 #self.error = pgroups[0]['error']
@@ -500,7 +501,7 @@ class Job(Cobalt.Data.Data):
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.get('jobid'), self.get('user'),
                      self.get('nodes'), self.GetStats()))
-        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s" % \
+        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit code %s" % \
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats()))
         
@@ -624,6 +625,16 @@ class BGJob(Job):
         else:
             self.pgid['user'] = pgroup[0]['pgid']
         self.SetPassive()
+
+    def LogFinish(self):
+        '''Log end of job data'''
+        logger.info("Job %s/%s on %s nodes done. %s" % \
+                    (self.get('jobid'), self.get('user'),
+                     self.get('nodes'), self.GetStats()))
+        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
+                                (self.get('jobid'), self.get('user'),
+                                 self.get('nodes'), self.GetStats(),
+                                 self.get('exit-status').get('BG/L', 'N/A')))
 
 class JobSet(Cobalt.Data.DataSet):
     '''Set of currently queued jobs'''
