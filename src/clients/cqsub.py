@@ -45,11 +45,13 @@ def processfilter(cmdstr, jobdict):
             else:
                 jobdict[key] = value
 
-helpmsg = "Usage: cqsub [-d] [-v] -p <project> -q <queue> -C " \
-          + "<working directory> -e envvar1=value1:envvar2=value2" \
-          + " -k <kernel profile> -O <outputprefix> -t time <in minutes>" \
-          + " -E <error file path> -o <output file path>" \
-          + " -n <number of nodes> -c <processor count> -m <mode co/vn> <command> <args>"
+helpmsg = """
+Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
+             -e envvar1=value1:envvar2=value2 -k <kernel profile>
+             -O <outputprefix> -t time <in minutes> -E <error file path>
+             -o <output file path> -n <number of nodes> -c <processor count>
+             -m <mode co/vn> <command> <args>
+"""
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -125,6 +127,9 @@ if __name__ == '__main__':
 
     if not opts['mode']:
         opts['mode'] = 'co'
+    elif opts['mode'] != 'co' and opts['mode'] != 'vn':
+        print "Specifed mode '%s' not valid, valid modes are\nco\nvn" % opts['mode']
+        raise SystemExit, 1
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
