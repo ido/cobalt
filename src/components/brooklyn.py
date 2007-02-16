@@ -26,11 +26,13 @@ class Brooklyn(Cobalt.Component.Component):
         rack = doc.getroot()
         parents = {}
         children = {}
+        sizes = {}
         for partition in rack.findall('Partition'):
             parents[partition.get('name')] = []
             children[partition.get('name')] = [p.get('name') \
                                                for p in partition.findall('.//Partition')]
             work = partition.findall('Partition')
+            sizes[partition.get('name')] = int(partition.get('size'))
         while work:
             next = work.pop()
             work += next.findall('Partition')
@@ -38,8 +40,9 @@ class Brooklyn(Cobalt.Component.Component):
                                           for p in next.findall('.//Partition')]
             npar = next.getparent().get('name')
             parents[next.get('name')] = [npar] + parents[npar]
+            sizes[next.get('name')] = int(next.get('size'))
         for part in parents:
-            self.partitions[part] = (parents[part], children[part])
+            self.partitions[part] = (parents[part], children[part], sizes[part])
 
     def GetMachineStateDB2(self, conn):
         '''Return db2-like list of tuples describing state'''
@@ -58,13 +61,19 @@ class Brooklyn(Cobalt.Component.Component):
                     + self.partitions[partition][1]:
                 self.blocked.append(relative)
 
-    def ReservePartition(self, conn, name):
+    def ReservePartition(self, conn, name, size):
         '''Reserve partition and block all related partitions'''
+        if name not in self.partitions:
+            logger.error("Tried to use nonexistent partition %s" % (name))
+            return False
         if name in self.used:
             logger.error("Tried to use busy partition %s" % (name))
             return False
         if name in self.blocked:
             logger.error("Tried to use blocked partition %s" % (name))
+            return False
+        if size > self.partitions[name][2]:
+            logger.error("Partition %s too small for job size %s" % (name, size))
             return False
         self.used.append(name)
         logger.info("After reservation:")
