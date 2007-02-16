@@ -13,7 +13,7 @@ if __name__ == '__main__':
     pm = Cobalt.Proxy.process_manager()
     r = pm.CreateProcessGroup([{'tag':'process-group', 'pgid':'*', 'user':'desai', 'args':[],
                                 'executable':'/bin/ls', 'size':2, 'cwd':'/tmp', 'location':'localhost',
-                                'outputfile':'/tmp/test1-output', 'errorfile':'/tmp/test1-error'}])
+                                'outputfile':'/tmp/test1-output', 'errorfile':'/tmp/test1-error', 'jobid': 'pmrun'}])
     pgid = r[0]['pgid']
     while True:
         r = pm.GetProcessGroup([{'tag':'process-group', 'pgid':pgid, 'state':'*'}])

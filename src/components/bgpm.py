@@ -119,7 +119,7 @@ class ProcessGroup(Cobalt.Data.Data):
             sys.exit(0)
         else:
             self.set('state', 'running')
-            self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('pgid'), self.get('user'), pgid,
+            self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
                                                                                 partition, self.pid))
             #AddEvent("process-manager", "process_start", pgid)
 
@@ -128,7 +128,7 @@ class ProcessGroup(Cobalt.Data.Data):
         # process has already been waited on
         self.set('state', 'finished')
         self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
-                      (self.get('pgid'), self.get('user'), self.get('pgid'),
+                      (self.get('jobid'), self.get('user'), self.get('pgid'),
                        status, self.pid))
         #AddEvent("process-manager", "process_end", self.element.get('pgid'))
         if not self.get('outputfile', False):
