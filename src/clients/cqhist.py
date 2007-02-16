@@ -26,6 +26,7 @@ from optparse import OptionParser
 
 # Application imports
 import Cobalt.Cqparse as cqparse
+import Cobalt.Proxy
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -77,9 +78,25 @@ if __name__ == '__main__':
     #
     # Get all of the jobs
     #
-    cqp = cqparse.CobaltLogParser()
-    cqp.perform_default_parse()
-    jobs = [ x for x in cqp.finished_jobs() ]
+    try:
+        cqm = Cobalt.Proxy.queue_manager()
+        response = cqm.GetHistory([
+            {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
+             'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
+             'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
+             'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
+             'usertime':'*', 'queuetime':'*'}])
+        jobs = response
+    except Cobalt.Proxy.CobaltComponentError:
+        print "Can't connect to queue manager, falling back to log files"
+        cqp = cqparse.CobaltLogParser()
+        cqp.perform_default_parse()
+        jobs = cqp.Get([
+            {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
+             'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
+             'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
+             'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
+             'usertime':'*', 'queuetime':'*'}])
 
     #
     # Get the statistics
@@ -90,12 +107,12 @@ if __name__ == '__main__':
     # Filter the jobs using the specified selection criteria
     #
     if options.username:
-        jobs = [ job for job in jobs if job.username == options.username ]
+        jobs = [ job for job in jobs if job['username'] == options.username ]
     if options.queue:
-        jobs = [ job for job in jobs if job.queue == options.queue ]
+        jobs = [ job for job in jobs if job['queue'] == options.queue ]
 
     # Now, sort the jobs
-    js = [ (job.finish_time, job) for job in jobs ]
+    js = [ (job['finish_time_formatted'], job) for job in jobs ]
     js.sort()
     jobs = [ job[1] for job in js ]
 
@@ -124,20 +141,20 @@ if __name__ == '__main__':
     # Print the job lines
     for job in jobs:
         if options.alldetails:
-            if job.queuetime > job.usertime:
-                wait_flag = "*"
-            else:
-                wait_flag = " "
-
+#             print job['queuetime'], job['usertime']
+#             if job['queuetime'] > job['usertime']:
+#                 wait_flag = "*"
+#             else:
+#                 wait_flag = " "
+            wait_flag = " "
             print "%19s %7i %-10s %-8s %5i %4s %5i %18s %9s%s %9s %8.2f %6s" % (
-                job.finish_time, job.jobid, job.queue, job.username,
-                job.processors, job.mode, job.partition_size,
-                job.partition, job.queuetime_formatted, wait_flag,
-                job.usertime_formatted,
-                job.partition_size * job.usertime / 3600, job.exitcode)        
+                job['finish_time_formatted'], job['jobid'], job['queue'], job['username'],
+                job['processors'], job['mode'], job['partition_size'],
+                job['partition'], job['queuetime_formatted'], wait_flag,
+                job['usertime_formatted'],
+                job['partition_size'] * job['usertime'] / 3600, job.get('exitcode', 'N/A'))        
         else:
             print "%19s %6i %-10s %-8s %5i %4s %5i %8s %6s" % (
-                job.finish_time, job.jobid, job.queue, job.username,
-                job.processors, job.mode, job.partition_size, 
-                job.usertime_formatted, job.exitcode )
-
+                job['finish_time_formatted'], job['jobid'], job['queue'], job['username'],
+                job['processors'], job['mode'], job['partition_size'], 
+                job['usertime_formatted'], job.get('exitcode', 'N/A') )

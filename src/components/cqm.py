@@ -7,7 +7,7 @@ __revision__ = '$Revision$'
 from logging import getLogger, FileHandler, Formatter
 
 import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
-import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util, Cobalt.Cqparse
 
 logger = logging.getLogger('cqm')
 
@@ -1042,6 +1042,7 @@ class CQM(Cobalt.Component.Component):
                                self.Queues.GetJobs(data, lambda job, newattr:job.update(newattr), updates),
                                'SetJobs')
         self.register_function(self.set_jobid, 'SetJobID')
+        self.register_function(self.handle_queue_history, "GetHistory")
 
     def set_jobid(self, _, jobid):
         '''Set next jobid for new job'''
@@ -1096,7 +1097,14 @@ class CQM(Cobalt.Component.Component):
             raise xmlrpclib.Fault(31, "The %s queue(s) contains jobs. Either move the jobs to another queue, or \nuse 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s" % (",".join(failed), "\n".join([q.get('name') for q in response])))
         else:
             return response
-        
+
+    def handle_queue_history(self, _, data):
+        '''Fetches queue history from acct log'''
+        print 'data is', data
+        cqp = Cobalt.Cqparse.CobaltLogParser()
+        cqp.perform_default_parse()
+        return cqp.Get(data)
+
     def pm_sync(self):
         '''Resynchronize with the process manager'''
         try:

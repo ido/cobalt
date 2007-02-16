@@ -15,7 +15,7 @@
 __revision__ = '$Revision$'
 
 import commands, datetime, os, re, logging, string, sys, time, ConfigParser, math
-import Cobalt.Proxy
+import Cobalt.Proxy, Cobalt.Data
 
 #
 # Configuration
@@ -53,14 +53,14 @@ DEFAULT_DAYS = 3
 #    format='%(name)-16.16s %(levelname)-8s : %(message)s')
 
 # Create a logger Python 2.3-style:
-formatter = logging.Formatter('%(name)-9.9s %(levelname)-8s : %(message)s')
-console = logging.StreamHandler()
-console.setFormatter(formatter)
-logging.getLogger('').addHandler(console)
+# formatter = logging.Formatter('%(name)-9.9s %(levelname)-8s : %(message)s')
+# console = logging.StreamHandler()
+# console.setFormatter(formatter)
+# logging.getLogger('').addHandler(console)
 
-# Get a logger for the main program
-logger = logging.getLogger( "cqparse" )
-logger.setLevel( logging.DEBUG )
+# # Get a logger for the main program
+# logger = logging.getLogger( "cqparse" )
+# logger.setLevel( logging.DEBUG )
 
 # ----------------------------------------------------------------------------
 #
@@ -191,7 +191,7 @@ re_done = re.compile("""
 #
 # ----------------------------------------------------------------------------
 
-class CobaltJob(object):
+class CobaltJob(Cobalt.Data.Data):
     """
     The CobaltJob class represents a single job run through the Cobalt
     scheduling system.
@@ -201,44 +201,53 @@ class CobaltJob(object):
         """
         Create a new empty CobaltJob object.
         """
-        
-        self.jobid = long(jobid)
+        Cobalt.Data.Data.__init__(self, {'tag':'job'})
+        self.set('jobid', long(jobid))
         
         # Job submission information
         self._submit = False
-        self.submit_time = None
+        self.set('submit_time', None)
         
         # Basic user and job information
         self._start = False
-        self.start_time = None
-        self.username = None
-        self.nodes = None
-        self.processors = None
-        self.mode = None
-        self.walltime = None
+        self.set('start_time', None)
+        self.set('username', None)
+        self.set('nodes', None)
+        self.set('processors', None)
+        self.set('mode', None)
+        self.set('walltime', None)
         
         # Job assignment information
         self._run = False
-        self.queue = None
-        self.partition = None
-        self.partition_size = None
+        self.set('queue', None)
+        self.set('partition', None)
+        self.set('partition_size', None)
         
         # Final job times
         self._done = False
-        self.finish_time = None
-        self.queuetime = None
-        self.usertime = None
+        self.set('finish_time', None)
+        self.set('queuetime', None)
+        self.set('usertime', None)
         
         # Derived job state and other information
-        self.state = None   # queued, running, done, None (invalid)
-        self.usertime_formatted = None
-        self.queuetime_formatted = None
-        self.exitcode = None
+        self.set('state', None)   # queued, running, done, None (invalid)
+        self.set('usertime_formatted', None)
+        self.set('queuetime_formatted', None)
+        self.set('exitcode', None)
     
 
     def __str__(self):
-        return "<CobaltJob %i>" % (self.jobid)
+        return "<CobaltJob %i>" % (self.get('jobid'))
 
+    def get(self, field, default=None):
+        '''return attribute (overloaded from Data)'''
+        if self._attrib.has_key(field):
+            if isinstance(self._attrib[field], datetime.datetime):
+                return time.mktime(self._attrib[field].timetuple())
+            return self._attrib[field]
+        if default != None:
+            return default
+        raise KeyError, field
 
     def finalize(self):
         """
@@ -254,31 +263,31 @@ class CobaltJob(object):
         # the job as invalid
         #
         if self._submit and self._start and self._run and self._done:
-            self.state = "done"
+            self.set('state', "done")
         elif self._submit and self._start and self._run and (not self._done):
-            self.state = "running"
+            self.set('state', "running")
         elif self._submit and not self._start and not self._run and not self._done:
-            self.state = "queued"        
+            self.set('state', "queued")
         elif not self._submit and self._start and self._run and self._done:
-            self.state = "done"
+            self.set('state', "done")
 
         # If we have only the tail end states, that means the job started before
         # our analysis period. Ignore those silently!
         elif not self._submit and not self._start and self._run and self._done:
-            self.state = None
+            self.set('state', None)
         elif not self._submit and not self.start_time and not self._run and self._done:
-            self.state = None
+            self.set('state', None)
 #         elif self._submit and self._start and self._done:
 #             self.state = "done"
         else:
-            self.state = None
+            self.set('state', None)
             logger.error("Job %i has a bogus state: %i %i %i %i" % (self.jobid,
                 self._submit, self._start, self._run, self._done ))
             return False
 
         # If the job is queued or running, the completion statistics will not
         # be available. Leave now.
-        if self.state != "done":
+        if self.get('state') != "done":
             return True
         
         #
@@ -288,38 +297,38 @@ class CobaltJob(object):
         result = True
         
         # Make sure that we have a username
-        if not self.username:
-            logger.error("Job %i has an empty username" % (self.jobid))
+        if not self.get('username'):
+            logger.error("Job %i has an empty username" % (self.get('jobid')))
             result = False
         
         # Check that the finish time is after the start time
-        if self.start_time > self.finish_time:
+        if self.get('start_time') > self.get('finish_time'):
             logger.error("Job %i finishes before it starts (%s, %s)" %
-                (self.jobid, self.start_time, self.finish_time))
+                (self.get('jobid'), self.get('start_time'), self.get('finish_time')))
             result = False
         
         # Verify that the partition size is sane for a BG/L system
-        if self.partition_size <= 0:
+        if self.get('partition_size') <= 0:
             logger.error("Job %i partition %s size decoded as %i" %
-                (self.jobid, self.partition, self.partition_size))
+                (self.get('jobid'), self.get('partition'), self.get('partition_size')))
             result = False
-        if self.partition_size % 32 != 0:
+        if self.get('partition_size') % 32 != 0:
             logger.error("Job %i partition size %i is not a multiple of 32" %
-                (self.jobid, self.partition_size))
+                (self.get('jobid'), self.get('partition_size')))
             result = False
         
         # Verify that the number of nodes fits within the paritition
-        if self.nodes > self.partition_size:
+        if self.get('nodes') > self.get('partition_size'):
             logger.error("Job %i fits %i nodes on a %i-node partition" %
-                (self.jobid, self.nodes, self.partition_size))
+                (self.get('jobid'), self.get('nodes'), self.get('partition_size')))
             result = False
         
         # Make sure that the queue and user times are positive
-        if self.queuetime < 0:
-            logger.error("Job %i has negative queue time" % (self.jobid))
+        if self.get('queuetime') < 0:
+            logger.error("Job %i has negative queue time" % (self.get('jobid')))
             result = False
-        if self.usertime < 0:
-            logger.error("Job %i has negative user time" % (self.jobid))
+        if self.get('usertime') < 0:
+            logger.error("Job %i has negative user time" % (self.get('jobid')))
             result = False
             
         #
@@ -337,24 +346,29 @@ class CobaltJob(object):
                 seconds = seconds - (minutes * 60)
             return "%02i:%02i:%02i" % (hours, minutes, seconds)
         
-        self.usertime_formatted = format_time(self.usertime)
-        self.queuetime_formatted = format_time(self.queuetime)
+        self.set('usertime_formatted', format_time(self.get('usertime')))
+        self.set('queuetime_formatted', format_time(self.get('queuetime')))
+        self.set('finish_time_formatted', self._attrib['finish_time'].strftime("%Y-%m-%d %H:%M:%S"))
+        if self.get('exitcode') == None:
+            self.set('exitcode', 'N/A')
         
         return result
 
 
-class CobaltLogParser(object):
+class CobaltLogParser(Cobalt.Data.DataSet):
     """
     The CobaltLogParser contains a processed list of Cobalt jobs.
     
     Logfiles are processed by calling parse_file, and a directory of logfiles
     may be processed in any order. 
     """
-
+    __object__ = CobaltJob
+    
     def __init__(self):
         """
         Create a new CobaltLogParser.
         """
+        Cobalt.Data.DataSet.__init__(self)
         self._jobs = {}
         try:
             sched = Cobalt.Proxy.scheduler()
@@ -374,7 +388,7 @@ class CobaltLogParser(object):
         """
         for jobid in self._jobs:
             job = self._jobs[jobid]
-            if job.state == "done":
+            if job.get('state') == "done":
                 yield(job)
 
     def running_jobs(self):
@@ -383,7 +397,7 @@ class CobaltLogParser(object):
         """
         for jobid in self._jobs:
             job = self._jobs[jobid]
-            if job.state == "running":
+            if job.get('state') == "running":
                 yield(job)
 
     def queued_jobs(self):
@@ -392,7 +406,7 @@ class CobaltLogParser(object):
         """
         for jobid in self._jobs:
             job = self._jobs[jobid]
-            if job.state == "queued":
+            if job.get('state') == "queued":
                 yield(job)
 
 
@@ -495,24 +509,24 @@ class CobaltLogParser(object):
             # Set the object's parameters
             if m_submit:
                 job._submit = True
-                job.submit_time = self.__prepare_time(
-                    year_hint, m_submit.group("submit_time"))
+                job.set('submit_time', self.__prepare_time(
+                    year_hint, m_submit.group("submit_time")))
             if m_start:
                 job._start = True
-                job.start_time = self.__prepare_time(
-                    year_hint, m_start.group("start_time"))
-                job.username = m_start.group("username")
-                job.nodes = int(m_start.group("nodes"))
-                job.processors = int(m_start.group("processors"))
-                job.mode = m_start.group("mode")
-                job.walltime = m_start.group("walltime")
+                job.set('start_time', self.__prepare_time(
+                    year_hint, m_start.group("start_time")))
+                job.set('username', m_start.group("username"))
+                job.set('nodes', int(m_start.group("nodes")))
+                job.set('processors', int(m_start.group("processors")))
+                job.set('mode', m_start.group("mode"))
+                job.set('walltime', m_start.group("walltime"))
             if m_run:
                 job._run = True
-                job.queue = m_run.group("queue")
-                job.partition = m_run.group("partition")
-                part = [p for p in self._partitions if p.get('name') == job.partition]
+                job.set('queue', m_run.group("queue"))
+                job.set('partition', m_run.group("partition"))
+                part = [p for p in self._partitions if p.get('name') == job.get('partition')]
                 if part:
-                    job.partition_size = int(part[0].get('size'))
+                    job.set('partition_size', int(part[0].get('size')))
 #                     print 'size of %s is %s' % (job.partition, job.partition_size)
                 else:
                 # We have to manually size full racks! They don't start with
@@ -520,11 +534,11 @@ class CobaltLogParser(object):
                     nums = re.findall(r"\d+", m_run.group("partition"))
                     for n in nums:
                         if int(n) > 1 and math.log(int(n), 2) % 1 == 0:
-                            job.partition_size = int(n)
+                            job.set('partition_size', int(n))
 
-                    if not job.partition_size:
+                    if not job.get('partition_size'):
                         print "While parsing log line '%s': Could not determine size of partition '%s'." % (line, job.partition)
-                        job.partition_size = 0
+                        job.set('partition_size', 0)
 
             # Most of the time, we get freeing following by done. In some
             # crashes, we get freeing without the done. Flag those jobs as
@@ -542,20 +556,19 @@ class CobaltLogParser(object):
             
             if m_stats:
                 job._done = True
-                job.finish_time = self.__prepare_time(
-                    year_hint, m_stats.group("finish_time"))
-                job.queuetime = float(m_stats.group("queuetime"))
-                job.usertime = float(m_stats.group("usertime"))
-                job.exitcode = m_stats.group("exitcode")
+                job.set('finish_time', self.__prepare_time(
+                    year_hint, m_stats.group("finish_time")))
+                job.set('queuetime', float(m_stats.group("queuetime")))
+                job.set('usertime', float(m_stats.group("usertime")))
+                job.set('exitcode', m_stats.group("exitcode"))
 
             if m_done:
                 job._done = True
-                job.finish_time = self.__prepare_time(
-                    year_hint, m_done.group("finish_time"))
-                job.usertime = float(m_done.group("usertime"))
+                job.set('finish_time', self.__prepare_time(
+                    year_hint, m_done.group("finish_time")))
+                job.set('usertime', float(m_done.group("usertime")))
         
         file.close()
-    
     
     def finalize_parse(self):
         """
@@ -564,9 +577,11 @@ class CobaltLogParser(object):
         """
         
         # First, calculate derived job state for all of the jobs
+        #print dir(self.data)
         for job in self._jobs.itervalues():
             job.finalize()
     
+        self.data = self._jobs.values()
     
     # ----------------------------------------
     # Log folder parsing
