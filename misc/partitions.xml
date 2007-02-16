@@ -1,0 +1,51 @@
+<Rack name='R00'>
+  <Partition name='ANLR00' size='1024'>
+    <Partition name='ANLR000' size='512'>
+      <Partition name='R000_J102-256' size='256'>
+        <Partition name='R000_J102-128' size='128'>
+          <Partition name='R000_J102-64' size='64'>
+            <Partition name='R000_J102-32' size='32'/>
+            <Partition name='R000_J104-32' size='32'/>
+          </Partition>
+          <Partition name='R000_J106-64' size='64'>
+            <Partition name='R000_J106-32' size='32'/>
+            <Partition name='R000_J108-32' size='32'/>
+          </Partition>
+        </Partition>
+        <Partition name='R000_J111-128' size='128'>
+          <Partition name='R000_J111-64' size='64'>
+            <Partition name='R000_J111-32' size='32'/>
+            <Partition name='R000_J113-32' size='32'/>
+          </Partition>
+          <Partition name='R000_J115-64' size='64'>
+            <Partition name='R000_J115-32' size='32'/>
+            <Partition name='R000_J117-32' size='32'/>
+          </Partition>
+        </Partition>
+      </Partition>
+      <Partition name='R000_J203-256' size='256'>
+        <Partition name='R000_J203-128' size='128'>
+          <Partition name='R000_J203-64' size='64'>
+            <Partition name='R000_J203-32' size='32'/>
+            <Partition name='R000_J205-32' size='32'/>
+          </Partition>
+          <Partition name='R000_J207-64' size='64'>
+            <Partition name='R000_J207-32' size='32'/>
+            <Partition name='R000_J209-32' size='32'/>
+          </Partition>
+        </Partition>
+        <Partition name='R000_J210-128' size='128'>
+          <Partition name='R000_J210-64' size='64'>
+            <Partition name='R000_J210-32' size='32'/>
+            <Partition name='R000_J212-32' size='32'/>
+          </Partition>
+          <Partition name='R000_J214-64' size='64'>
+            <Partition name='R000_J214-32' size='32'/>
+            <Partition name='R000_J216-32' size='32'/>
+          </Partition>
+        </Partition>
+      </Partition>
+    </Partition>
+  </Partition>
+</Rack>
+
