@@ -47,7 +47,7 @@ class SafeProxy:
                 ret = apply(method, self._authinfo + methodArgs)
                 if irs > 0:
                     self.log.warning("Required %d attempts to contact %s for operation %s" %
-                                     (irs, self.component, methodName))
+                                     (irs + 1, self.component, methodName))
                 self.log.debug("%s completed successfully" % (methodName))
                 return ret
             except xmlrpclib.ProtocolError:
