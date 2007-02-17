@@ -80,13 +80,12 @@ if __name__ == '__main__':
     #
     try:
         cqm = Cobalt.Proxy.queue_manager()
-        response = cqm.GetHistory([
+        jobs = cqm.GetHistory([
             {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
              'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
              'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
-             'usertime':'*', 'queuetime':'*'}])
-        jobs = response
+             'usertime':'*', 'queuetime':'*', 'state':'done'}])
     except Cobalt.Proxy.CobaltComponentError:
         print "Can't connect to queue manager, falling back to log files"
         cqp = cqparse.CobaltLogParser()
@@ -96,7 +95,7 @@ if __name__ == '__main__':
              'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
              'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
-             'usertime':'*', 'queuetime':'*'}])
+             'usertime':'*', 'queuetime':'*', 'state':'done'}])
 
     #
     # Get the statistics

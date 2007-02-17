@@ -97,14 +97,14 @@ if __name__ == '__main__':
         if opts['full']:
             for q in query:
                 q.update({'mode':'*', 'procs':'*', 'queue':'*',
-                          'starttime':'*', 'outputpath':'*', 'stamp':'*',
+                          'starttime':'*', 'outputpath':'*', 'submittime':'*'
                           })
                 if opts['long']:
                     q.update({'path':'*', 'outputdir':'*',
                               'envs':'*', 'command':'*', 'args':'*',
                               'kernel':'*', 'index':'*'})
 
-            header = [['JobID', 'OutputPath', 'User', 'WallTime', 'Stamp',
+            header = [['JobID', 'OutputPath', 'User', 'WallTime', 'QueuedTime',
                        'RunTime',
                        'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue',
                        'StartTime', 'Index']]
@@ -138,8 +138,10 @@ if __name__ == '__main__':
                 if j.get('starttime') in ('-1', 'BUG', None):
                     j['starttime'] = 'N/A'   # StartTime
                     j['runtime'] = 'N/A'     # RunTime
+                    j['queuedtime'] = get_elapsed_time(float(j['submittime']), time.time())
                 else:
                     j['runtime'] = get_elapsed_time( float(j['starttime']), time.time())
+                    j['queuedtime'] = get_elapsed_time(float(j['submittime']), float(j['starttime']))
                     j['starttime'] = time.strftime("%m/%d/%y %T", time.localtime(float(j['starttime'])))
 
                 outputpath = j.get('outputpath')
@@ -159,17 +161,13 @@ if __name__ == '__main__':
                     else:
                         j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
                     j['args'] = ' '.join(j['args'])
-                    j.update({'submittime':time.strftime("%m/%d/%y %T", time.localtime(float(j['stamp'])))})
-                
-                j['stamp'] = get_elapsed_time(float(j['stamp']), time.time())
-
+                    j.update({'submittime':time.strftime("%m/%d/%y %T", time.localtime(float(j['submittime'])))})
 
         output = [[j.get(x) for x in [y.lower() for y in header[0]]]
                   for j in response]
         if opts['full']:
             # change column names
             header[0][ header[0].index('OutputPath') ] = "JobName"
-            header[0][ header[0].index('Stamp') ] = "QueuedTime"
 
     output.sort()
     if opts['long']:

@@ -15,7 +15,7 @@
 __revision__ = '$Revision$'
 
 import commands, datetime, os, re, logging, string, sys, time, ConfigParser, math
-import Cobalt.Proxy, Cobalt.Data
+import Cobalt.Proxy, Cobalt.Data, Cobalt.Logging
 
 #
 # Configuration
@@ -61,6 +61,8 @@ DEFAULT_DAYS = 3
 # # Get a logger for the main program
 # logger = logging.getLogger( "cqparse" )
 # logger.setLevel( logging.DEBUG )
+Cobalt.Logging.setup_logging('cqp', level=logging.INFO)
+logger = logging.getLogger('cqp')
 
 # ----------------------------------------------------------------------------
 #
@@ -185,6 +187,20 @@ re_done = re.compile("""
     (?P<usertime>\d+)
     """, re.VERBOSE)
 
+# Job deleted regex
+# 2007-02-16 15:09:07 D;22;voran
+#
+re_deleted = re.compile("""
+    (?P<finish_time>
+    \d\d\d\d-\d\d-\d\d\s+
+    \d+:\d+:\d+)\s+                         # hh:nn:ss
+
+    D;
+    (?P<jobid>\d+);                         # jobid;
+    (?P<username>\S+)\s*                    # username
+    """, re.VERBOSE)
+
+
 # ----------------------------------------------------------------------------
 #
 # Cobalt Job Object
@@ -228,6 +244,8 @@ class CobaltJob(Cobalt.Data.Data):
         self.set('finish_time', None)
         self.set('queuetime', None)
         self.set('usertime', None)
+        self._deleted = False
+        self.set('deletedtime', None)
         
         # Derived job state and other information
         self.set('state', None)   # queued, running, done, None (invalid)
@@ -262,14 +280,12 @@ class CobaltJob(Cobalt.Data.Data):
         # we have observed for this job. If we get a bogus combination, mark
         # the job as invalid
         #
-        if self._submit and self._start and self._run and self._done:
+        if self._start and self._run and (self._done or self._deleted):
             self.set('state', "done")
         elif self._submit and self._start and self._run and (not self._done):
             self.set('state', "running")
         elif self._submit and not self._start and not self._run and not self._done:
             self.set('state', "queued")
-        elif not self._submit and self._start and self._run and self._done:
-            self.set('state', "done")
 
         # If we have only the tail end states, that means the job started before
         # our analysis period. Ignore those silently!
@@ -302,7 +318,7 @@ class CobaltJob(Cobalt.Data.Data):
             result = False
         
         # Check that the finish time is after the start time
-        if self.get('start_time') > self.get('finish_time'):
+        if self.get('start_time') > self.get('finish_time') and not self._deleted:
             logger.error("Job %i finishes before it starts (%s, %s)" %
                 (self.get('jobid'), self.get('start_time'), self.get('finish_time')))
             result = False
@@ -322,6 +338,13 @@ class CobaltJob(Cobalt.Data.Data):
             logger.error("Job %i fits %i nodes on a %i-node partition" %
                 (self.get('jobid'), self.get('nodes'), self.get('partition_size')))
             result = False
+
+        # hack for a job that is forcibly deleted (cqadm.py --delete)
+        # job stats are not produced, only D; line
+        if not self.get('finish_time') and self._deleted:
+            self.set('queuetime', self.get('start_time') - self.get('submit_time'))
+            self.set('usertime', self.get('deleted_time') - self.get('start_time'))
+            self.set('finish_time', self._attrib['deleted_time'])
         
         # Make sure that the queue and user times are positive
         if self.get('queuetime') < 0:
@@ -424,11 +447,11 @@ class CobaltLogParser(Cobalt.Data.DataSet):
         """
         if str(year_hint) in log_time_string:
             return datetime.datetime(
-                *time.strptime(log_time_string, "%Y-%m-%d %H:%M:%S")[0:5])
+                *time.strptime(log_time_string, "%Y-%m-%d %H:%M:%S")[0:6])
         else:
             return datetime.datetime(
                 *time.strptime(
-                    "%s %i" % (log_time_string, year_hint),"%b %d %H:%M:%S %Y")[0:5])
+                    "%s %i" % (log_time_string, year_hint),"%b %d %H:%M:%S %Y")[0:6])
     
 
     def parse_file(self, filename):
@@ -491,6 +514,9 @@ class CobaltLogParser(Cobalt.Data.DataSet):
             m_done = re_done.match(line)
             if m_done:
                 jobid = long(m_done.group("jobid"))
+            m_deleted = re_deleted.match(line)
+            if m_deleted:
+                jobid = long(m_deleted.group("jobid"))
             m_stats = re_stats.match(line)
             if m_stats:
                 jobid = long(m_stats.group("jobid"))
@@ -567,6 +593,11 @@ class CobaltLogParser(Cobalt.Data.DataSet):
                 job.set('finish_time', self.__prepare_time(
                     year_hint, m_done.group("finish_time")))
                 job.set('usertime', float(m_done.group("usertime")))
+
+            if m_deleted:
+                job._deleted = True
+                job.set('deleted_time', self.__prepare_time(
+                    year_hint, m_deleted.group("finish_time")))
         
         file.close()
     

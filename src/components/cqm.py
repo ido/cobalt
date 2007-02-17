@@ -55,6 +55,7 @@ class Job(Cobalt.Data.Data):
             self.set('attribute', 'compute')
         self.set('location', 'N/A')
         self.set('starttime', '-1')
+        self.set('submittime', time.time())
         if not self.get('queue', False):
             self.set('queue', 'default')
         self.staged = 0
@@ -249,7 +250,8 @@ class Job(Cobalt.Data.Data):
             try:
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
                 result = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'exit-status':'*'}])
-                self.set('exit-status', result[0].get('exit-status'))
+                if result:
+                    self.set('exit-status', result[0].get('exit-status'))
                 #this seems needed to get the info back into the object so it can be handed back to the filestager.
                 #self.output = pgroups[0]['output']
                 #self.error = pgroups[0]['error']
@@ -627,14 +629,17 @@ class BGJob(Job):
         self.SetPassive()
 
     def LogFinish(self):
-        '''Log end of job data'''
+        '''Log end of job data, specific for BG/L exit status'''
+        exitstatus = self.get('exit-status', 'N/A')
+        if exitstatus != 'N/A':
+            exitstatus = exitstatus.get('BG/L', 'N/A')
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.get('jobid'), self.get('user'),
                      self.get('nodes'), self.GetStats()))
         self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats(),
-                                 self.get('exit-status').get('BG/L', 'N/A')))
+                                 exitstatus))
 
 class JobSet(Cobalt.Data.DataSet):
     '''Set of currently queued jobs'''
@@ -1073,8 +1078,13 @@ class CQM(Cobalt.Component.Component):
         for spec in data:
             for job, q in [(job, queue) for queue in self.Queues for job in queue if job.match(spec)]:
                 ret.append(job.to_rx(spec))
-                if job.get('state') in ['queued', 'ready'] or force or (job.get('state') == 'hold' and not job.pgid):
+                if job.get('state') in ['queued', 'ready'] or (job.get('state') == 'hold' and not job.pgid):
                     #q.remove(job)
+                    q.Del(spec)
+                elif force:
+                    # Need acct log message for forced delete, 
+                    # otherwise can't tell if job ever ended
+                    job.Kill("Job %s killed based on admin request")
                     q.Del(spec)
                 else:
                     job.Kill("Job %s killed based on user request")
@@ -1100,10 +1110,11 @@ class CQM(Cobalt.Component.Component):
 
     def handle_queue_history(self, _, data):
         '''Fetches queue history from acct log'''
-        print 'data is', data
         cqp = Cobalt.Cqparse.CobaltLogParser()
         cqp.perform_default_parse()
-        return cqp.Get(data)
+        response = cqp.Get(data)
+        del cqp
+        return response
 
     def pm_sync(self):
         '''Resynchronize with the process manager'''
