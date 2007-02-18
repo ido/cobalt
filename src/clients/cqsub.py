@@ -54,15 +54,16 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
 """
 
 if __name__ == '__main__':
-    if '--version' in sys.argv:
+    options = {'v':'verbose', 'd':'debug', 'version':'version'}
+    doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
+                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify', 'E':'error', 'o':'output'}
+    (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, helpmsg)
+    # need to filter here for all args
+    if opts['version']:
         print "cqsub %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
-    options = {'v':'verbose', 'd':'debug'}
-    doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
-                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify', 'E':'error', 'o':'output'}
-    (opts, command) = Cobalt.Util.dgetopt(sys.argv[1:], options, doptions, helpmsg)
-    # need to filter here for all args
+
     level = 30
     if '-d' in sys.argv:
         level = 10
