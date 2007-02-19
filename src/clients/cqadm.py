@@ -162,6 +162,7 @@ if __name__ == '__main__':
             spec[0]['state'] = 'queued'
         elif opts['release']:
             updates['state'] = 'queued'
+            spec[0]['state'] = 'hold'
         if opts['queue']:
             queue = opts['queue']
             updates['queue'] = queue
@@ -194,6 +195,6 @@ if __name__ == '__main__':
                 print flt.faultString
                 raise SystemExit, 1
     if not response:
-        Cobalt.Logging.logging.error("Failed to match any jobs")
+        Cobalt.Logging.logging.error("Failed to match any jobs or queues")
     else:
         Cobalt.Logging.logging.debug(response)

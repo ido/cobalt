@@ -949,6 +949,9 @@ class QueueSet(Cobalt.Data.DataSet):
                 jobs[0].extend(j)
             for job in jobs[0]:
                 [(oldjob, oldqueue)] = [(j, q) for q in self.data for j in q if j.get('jobid') == job.get('jobid')]
+                if oldjob.get('state') == 'running':
+                    failed.append("Job %s not moved to queue '%s' because job is running" % (oldjob.get('jobid'), cargs['queue']))
+                    continue
                 newjob = copy.deepcopy(oldjob)
                 newjob.set('queue', cargs['queue'])
                 try:
