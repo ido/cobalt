@@ -919,14 +919,19 @@ class QueueSet(Cobalt.Data.DataSet):
         # (not sure what'll happen here with multiple specs in cdata)
         qrestrictions = {}
         for q in self.data:
+            qrestrictions[q.get('name')] = {}
             if [c for c in cdata if q.match(c)]:
                 qrestriction = q.restrictions.Get(rdata, cargs=rupdates)
-                qrestrictions.update({q.get('name'):qrestriction[0]})
+                for r in qrestriction[0]:
+                    for cd in cdata:
+                        if r in cd:
+                            qrestrictions[q.get('name')].update({r:qrestriction[0][r]})
 
-        # update response with queue restrictions, will probably fail if
+        # update response with queue restrictions, will fail if a
         # queue name is not requested
         for queue in normalget:
-            queue.update(qrestrictions[queue.get('name')])
+            if queue['name'] in qrestrictions.keys():
+                queue.update(qrestrictions[queue['name']])
 
         return normalget
 
@@ -953,7 +958,7 @@ class QueueSet(Cobalt.Data.DataSet):
                     oldqueue.remove(oldjob)
                 except xmlrpclib.Fault, flt:
                     if flt.faultCode == 30:
-                        failed.append("Job %s moved to '%s' queue, even though it does not pass all restrictions:\n%s" % (oldjob.get('jobid'), cargs['queue'], flt.faultString))
+                        failed.append("WARNING: Job %s moved to '%s' queue, even though the job does not pass these restrictions:\n%s\nThe job will run if the '%s' queue is running." % (oldjob.get('jobid'), cargs['queue'], flt.faultString, cargs['queue']))
                     oldjob.set('queue', cargs['queue'])
                     newqueue[0].append(oldjob)
                     oldqueue.remove(oldjob)
