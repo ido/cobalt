@@ -11,7 +11,7 @@ if __name__ == '__main__':
             raise SystemExit, 1
     partition = sys.argv[sys.argv.index('-partition') + 1]
     mode = sys.argv[sys.argv.index('-mode') + 1]
-    size = sys.argv[sys.argv.index('-np') + 1]
+    size = int(sys.argv[sys.argv.index('-np') + 1])
     if mode == 'vn':
         size = int(math.ceil(float(size) / 2))
     brooklyn = Cobalt.Proxy.simulator()
