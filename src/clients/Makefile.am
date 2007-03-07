@@ -1,5 +1,5 @@
 dist_sbin_SCRIPTS = cqadm.py partadm.py setres.py releaseres.py slpstat.py
-dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py partlist.py showres.py
+dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py partlist.py showres.py cqhist.py
 
 bin_PROGRAMS = wrapper
 wrapper_SOURCES = wrapper.c
