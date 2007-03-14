@@ -34,7 +34,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
     try:
         partitions = [opt[1] for opt in opts if opt[0] == '-p'] + args
-        if '-m' in sys.argv:
+        if partitions and '-m' in sys.argv:
             print "Cannot specify -p with -m"
             raise SystemExit, 1
     except ValueError:
