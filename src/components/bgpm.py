@@ -102,7 +102,7 @@ class ProcessGroup(Cobalt.Data.Data):
                 else:
                     cmd = (program, os.path.basename(program), args)
 
-            self.log.error("Job %s/%s: Running %s" % (self.get('jobid'), self.get('user'), " ".join(cmd)))
+            self.log.info("Job %s/%s: Running %s" % (self.get('jobid'), self.get('user'), " ".join(cmd)))
             try:
                 err = open(self.errlog, 'a')
                 os.chmod(self.errlog, 0600)
