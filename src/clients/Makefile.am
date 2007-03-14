@@ -15,6 +15,7 @@ installlinks: install-binPROGRAMS install-dist_binSCRIPTS install-wrapper
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/partlist
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqdel
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/showres
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqhist
 
 install-binPROGRAMS:
 install-wrapper: $(bin_PROGRAMS)
