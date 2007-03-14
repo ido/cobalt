@@ -97,8 +97,8 @@ if __name__ == '__main__':
         if opts['full']:
             for q in query:
                 q.update({'mode':'*', 'procs':'*', 'queue':'*',
-                          'starttime':'*', 'outputpath':'*', 'submittime':'*'
-                          })
+                          'starttime':'*', 'outputpath':'*', 'submittime':'*',
+                          'stamp':'*'})
                 if opts['long']:
                     q.update({'path':'*', 'outputdir':'*',
                               'envs':'*', 'command':'*', 'args':'*',
@@ -138,10 +138,10 @@ if __name__ == '__main__':
                 if j.get('starttime') in ('-1', 'BUG', None):
                     j['starttime'] = 'N/A'   # StartTime
                     j['runtime'] = 'N/A'     # RunTime
-                    j['queuedtime'] = get_elapsed_time(float(j['submittime']), time.time())
+                    j['queuedtime'] = get_elapsed_time(float(j.get('submittime', j.get('stamp'))), time.time())
                 else:
                     j['runtime'] = get_elapsed_time( float(j['starttime']), time.time())
-                    j['queuedtime'] = get_elapsed_time(float(j['submittime']), float(j['starttime']))
+                    j['queuedtime'] = get_elapsed_time(float(j.get('submittime', j.get('stamp'))), float(j['starttime']))
                     j['starttime'] = time.strftime("%m/%d/%y %T", time.localtime(float(j['starttime'])))
 
                 outputpath = j.get('outputpath')
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                     else:
                         j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
                     j['args'] = ' '.join(j['args'])
-                    j.update({'submittime':time.strftime("%m/%d/%y %T", time.localtime(float(j['submittime'])))})
+                    j.update({'submittime':time.strftime("%m/%d/%y %T", time.localtime(float(j.get('submittime', j.get('stamp')))))})
 
         output = [[j.get(x) for x in [y.lower() for y in header[0]]]
                   for j in response]
