@@ -67,6 +67,8 @@ if __name__ == '__main__':
     level = 30
     if '-d' in sys.argv:
         level = 10
+    CP = ConfigParser.ConfigParser()
+    CP.read(['/etc/cobalt.conf'])
         
     failed = False
     needed = ['time', 'nodecount'] #, 'project']
@@ -87,8 +89,12 @@ if __name__ == '__main__':
     except:
         print "non-integer node count specified"
         raise SystemExit, 1
-    
-    if not 0 < nc <= 1024:
+
+    try:
+        sys_size = int(CP.get('cqm', 'size'))
+    except:
+        sys_size = 1024
+    if not 0 < nc <= sys_size:
         print "node count out of realistic range"
         raise SystemExit, 1
     if opts['cwd'] == False:
@@ -126,18 +132,36 @@ if __name__ == '__main__':
         print "command", command[0], "not found, or is not a file"
         raise SystemExit, 1
 
+    try:
+        sys_type = CP.get('cqm', 'bgtype')
+    except:
+        sys_type = 'bgl'
+    if sys_type == 'bgp':
+        job_types = ['smp', 'co', 'dual', 'vn']
+    else:
+        job_types = ['co', 'vn']
+        
     if not opts['mode']:
         opts['mode'] = 'co'
-    elif opts['mode'] != 'co' and opts['mode'] != 'vn':
-        print "Specifed mode '%s' not valid, valid modes are\nco\nvn" % opts['mode']
+    elif opts['mode'] not in job_types:
+        print "Specifed mode '%s' not valid, valid modes are\%s" % \
+              (opts['mode'], "\n".join(job_types))
         raise SystemExit, 1
+    if opts['mode'] == 'co' and sys_type == 'bgp':
+        opts['mode'] = 'SMP'
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
     if not opts['proccount']:
         if opts.get('mode', 'co') == 'vn':
             # set procs to 2 x nodes
-            opts['proccount'] = str(2 * int(opts['nodecount']))
+            if sys_type == 'bgl':
+                opts['proccount'] = str(2 * int(opts['nodecount']))
+            elif sys_type == 'bgp':
+                opts['proccount'] = str(4 * int(opts['nodecount']))
+            else:
+                print "Unknown bgtype %s" % (sys_type)
+                raise SystemExit, 1
         else:
             opts['proccount'] = opts['nodecount']
     else:
@@ -177,8 +201,6 @@ if __name__ == '__main__':
 
     Cobalt.Logging.setup_logging('cqsub', to_syslog=False, level=level)
 
-    CP = ConfigParser.ConfigParser()
-    CP.read(['/etc/cobalt.conf'])
     try:
         filters = CP.get('cqm', 'filters').split(':')
     except ConfigParser.NoOptionError:

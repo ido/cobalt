@@ -8,7 +8,7 @@ import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
 
 '''bgpm api:
 CreateProcessGroup({user: 'user', executable:'executable', args:['arg1', 'arg2'], location:['location'],
-                     env={'key':'val'}, errfile:'/errfile', outfile:'/outfile', mode:'co|vn', size:'count', cwd:'cwd'})
+                     env={'key':'val'}, errfile:'/errfile', outfile:'/outfile', mode:'co|vn|smp|dual', size:'count', cwd:'cwd'})
                      '''
 
 class ProcessGroupCreationError(Exception):
