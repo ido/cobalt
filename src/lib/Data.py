@@ -68,7 +68,8 @@ class Data(object):
     def match(self, spec):
         '''Implement datatype matching'''
         fields = [field for field in spec if field != 'tag']
-        return self.tag == spec['tag'] and not [field for field in fields if spec[field] != '*' and (self.get(field) != spec[field])]
+        dfields = [field for field in fields if field in self._attrib]
+        return self.tag == spec['tag'] and not [field for field in dfields if spec[field] != '*' and (self.get(field) != spec[field])]
         
     def to_rx(self, spec):
         '''return transmittable version of instance'''
