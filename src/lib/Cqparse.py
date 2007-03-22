@@ -291,13 +291,13 @@ class CobaltJob(Cobalt.Data.Data):
         # our analysis period. Ignore those silently!
         elif not self._submit and not self._start and self._run and self._done:
             self.set('state', None)
-        elif not self._submit and not self.start_time and not self._run and self._done:
+        elif not self._submit and not self._start and not self._run and self._done:
             self.set('state', None)
 #         elif self._submit and self._start and self._done:
 #             self.state = "done"
         else:
             self.set('state', None)
-            logger.error("Job %i has a bogus state: %i %i %i %i" % (self.jobid,
+            logger.error("Job %i has a bogus state: %i %i %i %i" % (self.get('jobid'),
                 self._submit, self._start, self._run, self._done ))
             return False
 
@@ -342,7 +342,11 @@ class CobaltJob(Cobalt.Data.Data):
         # hack for a job that is forcibly deleted (cqadm.py --delete)
         # job stats are not produced, only D; line
         if not self.get('finish_time') and self._deleted:
-            self.set('queuetime', self.get('start_time') - self.get('submit_time'))
+            # definitely has start_time and deleted_time at this point
+            if self.get('submit_time'):
+                self.set('queuetime', self.get('start_time') - self.get('submit_time'))
+            else:
+                self.set('queuetime', 0)
             self.set('usertime', self.get('deleted_time') - self.get('start_time'))
             self.set('finish_time', self._attrib['deleted_time'])
         
@@ -563,7 +567,7 @@ class CobaltLogParser(Cobalt.Data.DataSet):
                             job.set('partition_size', int(n))
 
                     if not job.get('partition_size'):
-                        print "While parsing log line '%s': Could not determine size of partition '%s'." % (line, job.partition)
+                        print "While parsing log line '%s': Could not determine size of partition '%s'." % (line, job.get('partition'))
                         job.set('partition_size', 0)
 
             # Most of the time, we get freeing following by done. In some
