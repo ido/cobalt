@@ -784,7 +784,6 @@ class RestrictionSet(Cobalt.Data.DataSet):
             for r in self.data:  #restrictions
                 if r.match(spec):  #restriction matches
                     response.update({r.get('name'):r.get('value')})
-
         return [response]
 
 #     def Test(self, job):
@@ -909,12 +908,14 @@ class QueueSet(Cobalt.Data.DataSet):
 
         normalget = Cobalt.Data.DataSet.Get(self, cdata, callback, cupdates)
         
+        # rdata is used to query q.restrictions.Get, so copy cdata, and
+        # filter for anything that isn't a restriction
         rdata = copy.deepcopy(cdata)
         for rd in rdata:
+            for f in rd.keys():
+                if f not in Restriction.__checks__:
+                    del rd[f]
             rd.update({'tag':'restriction', 'value':'*'})
-            if rd.has_key('state'):
-                del(rd['state'])
-
         # get restrictions for each queue that match cdata
         # (not sure what'll happen here with multiple specs in cdata)
         qrestrictions = {}
