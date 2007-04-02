@@ -49,14 +49,15 @@ helpmsg = """
 Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -e envvar1=value1:envvar2=value2 -k <kernel profile>
              -O <outputprefix> -t time <in minutes> -E <error file path>
-             -o <output file path> -n <number of nodes> -c <processor count>
-             -m <mode co/vn> <command> <args>
+             -o <output file path> -i <input file path> -n <number of nodes>
+             -c <processor count> -m <mode co/vn> <command> <args>
 """
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
-                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify', 'E':'error', 'o':'output'}
+                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify',
+                'E':'error', 'o':'output', 'i':'inputfile'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, helpmsg)
     # need to filter here for all args
     if opts['version']:
@@ -128,7 +129,7 @@ if __name__ == '__main__':
     if command[0][0] != '/':
         command[0] = opts['cwd'] + '/' + command[0]
 
-    if not os.path.isfile( command[0] ):
+    if not os.path.isfile(command[0]):
         print "command", command[0], "not found, or is not a file"
         raise SystemExit, 1
 
@@ -197,7 +198,14 @@ if __name__ == '__main__':
         jobspec['envs'] = {}
         [jobspec['envs'].update({key:value}) for key, value
          in [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]]
-        
+    if opts['inputfile']:
+        if not opts['inputfile'].startswith('/'):
+            jobspec.update({'inputfile':"%s/%s" % (opts['cwd'], opts['inputfile'])})
+        else:
+            jobspec.update({'inputfile':opts['inputfile']})
+        if not os.path.isfile(jobspec.get('inputfile')):
+            print "file", jobspec.get('inputfile'), "not found, or is not a file"
+            raise SystemExit, 1
     jobspec.update({'command':command[0], 'args':command[1:]})
 
     Cobalt.Logging.setup_logging('cqsub', to_syslog=False, level=level)

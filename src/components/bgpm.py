@@ -65,6 +65,7 @@ class ProcessGroup(Cobalt.Data.Data):
             pnum = str(self.get('size'))
             mode = self.get('mode', 'co')
             args = " ".join(self.get('args', []))
+            inputfile = self.get('inputfile', '')
             # strip out BGLMPI_MAPPING until mpirun bug is fixed 
             mapfile = ''
             if self.get('env', {}).has_key('BGLMPI_MAPPING'):
@@ -85,8 +86,12 @@ class ProcessGroup(Cobalt.Data.Data):
             os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
             os.environ["DB2INSTANCE"] = self.config['db2_instance']
             os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
-            null = open('/dev/null', 'r')
-            os.dup2(null.fileno(), sys.__stdin__.fileno())
+            if inputfile != '':
+                infile = open(inputfile, 'r')
+                os.dup2(infile.fileno(), sys.__stdin__.fileno())
+            else:
+                null = open('/dev/null', 'r')
+                os.dup2(null.fileno(), sys.__stdin__.fileno())
             cmd = (self.config['mpirun'], "mpirun", '-np', pnum, '-partition', partition,
                                '-mode', mode, '-cwd', cwd, '-exe', program)
             if args != '':
@@ -97,6 +102,7 @@ class ProcessGroup(Cobalt.Data.Data):
                 cmd = cmd + ('-mapfile', mapfile)
 
             if '--notbgl' in sys.argv:
+                self.log.debug("would have run %s" % " ".join(cmd))
                 if args == '':
                     cmd = (program, os.path.basename(program))
                 else:

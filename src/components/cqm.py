@@ -364,7 +364,7 @@ class Job(Cobalt.Data.Data):
             pgroup = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'executable':'/usr/bin/mpish',
                  'size':self.get('procs'), 'args':args, 'envs':env, 'errorfile':errorfile,
-                 'outputfile':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin"})
+                 'outputfile':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin", 'inputfile':self.get('inputfile', '')})
         except xmlrpclib.Fault:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
@@ -416,7 +416,7 @@ class Job(Cobalt.Data.Data):
             pgrp = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'pgid':'*', 'user':'root', 'size':self.get('nodes'),
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
-                 'args':[self.get('user')], 'location':location})
+                 'args':[self.get('user')], 'location':location, 'inputfile':self.get('inputfile', '')})
         except xmlrpclib.Fault, fault:
             print fault
         except:
@@ -616,7 +616,7 @@ class BGJob(Job):
                  'errorfile':self.get('errorpath'), 'path':self.get('path'), 'size':self.get('procs'),
                  'mode':self.get('mode', 'co'), 'cwd':self.get('outputdir'), 'executable':self.get('command'),
                  'args':self.get('args'), 'envs':self.get('envs', {}), 'location':[self.get('location')],
-                 'jobid':self.get('jobid')})
+                 'jobid':self.get('jobid'), 'inputfile':self.get('inputfile', '')})
         except xmlrpclib.Fault:
             raise ProcessManagerError
         except Cobalt.Proxy.CobaltComponentError:
