@@ -7,16 +7,6 @@ __version__ = '$Version$'
 import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-def runcommand(cmd):
-    '''Execute command, returning rc, stdout, stderr'''
-    cmdp = popen2.Popen3(cmd, True)
-    out = []
-    err = []
-    status = cmdp.wait()
-    out += cmdp.fromchild.readlines()
-    err += cmdp.childerr.readlines()
-    return (status, out, err)
-
 def processfilter(cmdstr, jobdict):
     '''Run a filter on the job, passing in all job args and processing all output'''
     extra = []
@@ -27,7 +17,7 @@ def processfilter(cmdstr, jobdict):
             extra.append("%s={%s}" % (key, str(value)))
         else:
             extra.append("%s=%s" % (key, value))
-    rc, out, err = runcommand(" ".join([cmdstr] + extra))
+    rc, out, err = Cobalt.Util.runcommand(" ".join([cmdstr] + extra))
     if err:
         print '\n'.join(err)
     if rc != 0:

@@ -1,7 +1,7 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
-import types, smtplib, socket, time, ConfigParser
+import types, smtplib, socket, time, ConfigParser, popen2
 from getopt import getopt, GetoptError
 
 def dgetopt(arglist, opt, vopt, msg):
@@ -153,6 +153,16 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
         print 'Problem sending mail', msg
         server.quit()
     
+def runcommand(cmd):
+    '''Execute command, returning rc, stdout, stderr'''
+    cmdp = popen2.Popen3(cmd, True)
+    out = []
+    err = []
+    status = cmdp.wait()
+    out += cmdp.fromchild.readlines()
+    err += cmdp.childerr.readlines()
+    return (status, out, err)
+
 class AccountingLog:
     def __init__(self, name):
         CP = ConfigParser.ConfigParser()

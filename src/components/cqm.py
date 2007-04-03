@@ -640,6 +640,29 @@ class BGJob(Job):
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats(),
                                  exitstatus))
+    def Finish(self):
+        '''Finish up accounting for job, also adds postscript ability'''
+        Job.Finish(self)
+
+        if self.config.get('postscript'):
+            postscripts = self.config.get('postscript').split(':')
+            extra = []
+            for key, value in self._attrib.iteritems():
+                if isinstance(value, list):
+                    extra.append("%s=%s" % (key, ':'.join(value)))
+                elif isinstance(value, dict):
+                    extra.append("%s={%s}" % (key, str(value)))
+                else:
+                    extra.append("%s=%s" % (key, value))
+            for p in postscripts:
+                try:
+                    rc, out, err = Cobalt.Util.runcommand("%s %s" % (p, " ".join(extra)))
+                    if rc != 0:
+                        logger.error("Job %s/%s: return of postscript %s was %d, error message is %s" %
+                                     (self.get('jobid'), self.get('user'), p, rc, "\n".join(err)))
+                except Exception, e:
+                    logger.error("Job %s/%s: exception with postscript %s, error is %s" %
+                                 (self.get('jobid'), self.get('user'), p, e))
 
 class JobSet(Cobalt.Data.DataSet):
     '''Set of currently queued jobs'''
