@@ -61,8 +61,8 @@ DEFAULT_DAYS = 3
 # # Get a logger for the main program
 # logger = logging.getLogger( "cqparse" )
 # logger.setLevel( logging.DEBUG )
-Cobalt.Logging.setup_logging('cqp', level=logging.INFO)
-logger = logging.getLogger('cqp')
+Cobalt.Logging.setup_logging('cqm', level=logging.INFO)
+logger = logging.getLogger('cqm')
 
 # ----------------------------------------------------------------------------
 #
@@ -273,7 +273,7 @@ class CobaltJob(Cobalt.Data.Data):
         is properly formatted, or False if there is a problem.
         """
         
-        logger = logging.getLogger("cqparse.CobaltJob") 
+        logger = logging.getLogger('cqm') 
         
         #
         # First, determine the state. The state is defined by which log messages
