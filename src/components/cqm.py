@@ -658,10 +658,10 @@ class BGJob(Job):
                 try:
                     rc, out, err = Cobalt.Util.runcommand("%s %s" % (p, " ".join(extra)))
                     if rc != 0:
-                        logger.error("Job %s/%s: return of postscript %s was %d, error message is %s" %
+                        logger.info("Job %s/%s: return of postscript %s was %d, error message is %s" %
                                      (self.get('jobid'), self.get('user'), p, rc, "\n".join(err)))
                 except Exception, e:
-                    logger.error("Job %s/%s: exception with postscript %s, error is %s" %
+                    logger.info("Job %s/%s: exception with postscript %s, error is %s" %
                                  (self.get('jobid'), self.get('user'), p, e))
 
 class JobSet(Cobalt.Data.DataSet):
