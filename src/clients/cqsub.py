@@ -19,7 +19,11 @@ def processfilter(cmdstr, jobdict):
             extra.append("%s=%s" % (key, value))
     rc, out, err = Cobalt.Util.runcommand(" ".join([cmdstr] + extra))
     if err:
-        print '\n'.join(err)
+        # strip \n from last line of stderr to make sure only
+        # one \n is print'ed 
+        err[-1] = err[-1].strip()
+        # the lines in err already end in \n from readlines()
+        print ''.join(err)
     if rc != 0:
         print "Filter %s failed" % (cmdstr)
         raise SystemExit, 0
