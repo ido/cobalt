@@ -636,10 +636,10 @@ class BGJob(Job):
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.get('jobid'), self.get('user'),
                      self.get('nodes'), self.GetStats()))
-        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
+        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%d" % \
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats(),
-                                 exitstatus))
+                                 int(exitstatus)/256))
     def Finish(self):
         '''Finish up accounting for job, also adds postscript ability'''
         Job.Finish(self)

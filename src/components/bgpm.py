@@ -139,7 +139,7 @@ class ProcessGroup(Cobalt.Data.Data):
         self.set('state', 'finished')
         self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
                       (self.get('jobid'), self.get('user'), self.get('pgid'),
-                       status, self.pid))
+                       int(status)/256, self.pid))
         #AddEvent("process-manager", "process_end", self.element.get('pgid'))
         if not self.get('outputfile', False):
             self.set('output', open(self.outlog).read())

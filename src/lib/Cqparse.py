@@ -380,8 +380,8 @@ class CobaltJob(Cobalt.Data.Data):
         self.set('finish_time_formatted', self._attrib['finish_time'].strftime("%Y-%m-%d %H:%M:%S"))
         if self.get('exitcode') == None:
             self.set('exitcode', 'N/A')
-        else:
-            self.set('exitcode', int(self.get('exitcode')) % 255)
+        elif int(self.get('exitcode')) > 255:
+            self.set('exitcode', int(self.get('exitcode'))/256)
         
         return result
 
