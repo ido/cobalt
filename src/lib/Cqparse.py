@@ -353,9 +353,11 @@ class CobaltJob(Cobalt.Data.Data):
         # Make sure that the queue and user times are positive
         if self.get('queuetime') < 0:
             logger.error("Job %i has negative queue time" % (self.get('jobid')))
+            self.set('queuetime', 0)
             result = False
         if self.get('usertime') < 0:
             logger.error("Job %i has negative user time" % (self.get('jobid')))
+            self.set('usertime', 0)
             result = False
             
         #
@@ -378,6 +380,8 @@ class CobaltJob(Cobalt.Data.Data):
         self.set('finish_time_formatted', self._attrib['finish_time'].strftime("%Y-%m-%d %H:%M:%S"))
         if self.get('exitcode') == None:
             self.set('exitcode', 'N/A')
+        else:
+            self.set('exitcode', int(self.get('exitcode')) % 255)
         
         return result
 
