@@ -114,13 +114,17 @@ class ProcessGroup(Cobalt.Data.Data):
                 os.chmod(self.errlog, 0600)
                 os.dup2(err.fileno(), sys.__stderr__.fileno())
             except IOError:
-                self.log.error("Failed to open stderr file %s. Stderr will be lost" % (self.errlog))
+                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
+            except OSError:
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
             try:
                 out = open(self.outlog, 'a')
                 os.chmod(self.outlog, 0600)
                 os.dup2(out.fileno(), sys.__stdout__.fileno())
             except IOError:
-                self.log.error("Failed to open stdout file %s. Stdout will be lost" % (self.outlog))
+                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.get('jobid'), self.get('user'), self.outlog))
+            except OSError:
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
             apply(os.execl, cmd)
             sys.exit(0)
         else:
