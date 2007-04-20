@@ -79,19 +79,19 @@ class Partition(Cobalt.Data.Data):
         '''Check that job can run on partition with reservation constraints'''
         basic = self.get('scheduled') and self.get('functional')
         queue = job.get('queue') in self.get('queue').split(':')
+        jqueue = job.get('queue')
         jsize = int(job.get('nodes')) # should this be 'size' instead?
         psize = int(self.get('size'))
         size = ((psize >= jsize) and ((psize == 32) or (jsize > psize/2)))
-        if not (basic and queue and size):
+        if not (basic and size):
             return False
-        # add a little slack for job cleanup with reservation calculations
+        # add a slack for job cleanup with reservation calculations
         wall = float(job.get('walltime')) + 5.0
         jdur = 60 * wall
         # all times are in seconds
         current = time.time()
-        for (_, user, start, rdur) in self.get('reservations'):
-            if job.get('user') in user:
-                continue
+        rstates = []
+        for (rname, _, start, rdur) in self.get('reservations'):
             if current < start:
                 # reservation has not started
                 if start < (current + jdur):
@@ -101,7 +101,11 @@ class Partition(Cobalt.Data.Data):
                 continue
             else:
                 # reservation is active
-                return False
+                rstates.append(jqueue == ('R.%s' % (rname)))
+        if rstates:
+            return False not in rstates
+        else:
+            return queue
         return True
 
     def PlaceJob(self, job):
@@ -365,26 +369,69 @@ class BGSched(Cobalt.Component.Component):
         self.executed = []
         self.qmconnect = FailureMode("QM Connection")
         self.lastrun = 0
-        self.register_function(lambda  address, data:self.partitions.Get(data), "GetPartition")
-        self.register_function(lambda  address, data:self.partitions.Add(data), "AddPartition")
-        self.register_function(lambda  address, data:self.partitions.Del(data), "DelPartition")
+        self.register_function(lambda  address,
+                               data:self.partitions.Get(data),
+                               "GetPartition")
+        self.register_function(lambda  address,
+                               data:self.partitions.Add(data),
+                               "AddPartition")
+        self.register_function(lambda  address,
+                               data:self.partitions.Del(data),
+                               "DelPartition")
         self.register_function(lambda address, data, updates:
                                self.partitions.Get(data, lambda part, newattr:part.update(newattr), updates),
                                'Set')  
         self.register_function(self.AddReservation, "AddReservation")
         self.register_function(self.ReleaseReservation, "DelReservation")
 
+    def GetReservations(self):
+        '''build a list of reservation names in use'''
+        reservs = []
+        [reservs.append(rinfo) for partition in self.partitions
+         for rinfo in self.partitions.get('reservations')
+         if rinfo not in names]
+        return reservs
+
+    def ResQueueSync(self):
+        '''Create any needed rqueues, and kill unneeded ones'''
+        queues = comm['cqm'].GetQueues([{'tag':'queue', 'name':'*'}])
+        qnames = [q['name'] for q in queues]
+        for reserv in self.GetReservations():
+            if "R.%s" % (reserv[0]) not in qnames:
+                spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
+                attrs = {'state':'stopped', 'users': reserv[1]}
+                try:
+                    comm['cqm'].AddQueue(spec)
+                    comm['cqm'].SetQueue(spec, attrs)
+                except:
+                    logger.error("Queue setup for %s failed" \
+                                 % ("R.%s" % reserv[0]))
+        rnames = [r[0] for r in self.GetReservations()]
+        for qn in qnames:
+            if qn.startswith("R.") and qn[2:] not in rnames:
+                logger.info("Disabling Rqueue %s" % (qn))
+                try:
+                    response = cqm.SetQueues({'tag':'queue', 'name':qn},
+                                             {'state':'dead'})
+                except:
+                    logger.error("Disable request failed")
+
     def AddReservation(self, _, spec, name, user, start, duration):
         '''Add a reservation to matching partitions'''
         reservation = (name, user, start, duration)
-        return self.partitions.Get(spec, callback=lambda x, y:x.get('reservations').append(reservation))
-
+        data = self.partitions.Get(spec, callback=lambda x,
+                                   y:x.get('reservations').append(reservation))
+        self.ResQueueSync()
+        return data
+    
     def ReleaseReservation(self, _, spec, name):
         '''Release specified reservation'''
-        return self.partitions.Get(spec,
-                                    callback=lambda x, y: \
-                                   [x.get('reservations').remove(rsv)
-                                    for rsv in x.get('reservations') if rsv[0] == name])
+        cb = lambda x, y: [x.get('reservations').remove(rsv)
+                           for rsv in x.get('reservations')
+                           if rsv[0] == name]
+        data = self.partitions.Get(spec, cb)
+        self.ResQueueSync()
+        return data
 
     def RemoveOldReservations(self):
         '''Release all reservations that have expired'''
@@ -392,6 +439,7 @@ class BGSched(Cobalt.Component.Component):
             for reservation in partition.get('reservations'):
                 if (reservation[2] + reservation[3]) < time.time():
                     partition.get('reservations').remove(reservation)
+        self.ResQueueSync()
 
     def SupressDuplicates(self, provisional):
         '''Prevent duplicate job start requests from being generated'''
