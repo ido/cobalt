@@ -554,6 +554,7 @@ class BGJob(Job):
         except OSError:
             logger.error("Failed to read partitionboot location %s/%s" % (self.config.get('partitionboot'), self.get('location')))
             logger.info("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), 'N/A'))
+            self.acctlog.LogMessage("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), 'N/A'))
             return
         switched = current.split('/')[-1]
         if current != "%s/%s" % (self.config.get('bootprofiles'), self.get('kernel')):
@@ -568,6 +569,7 @@ class BGJob(Job):
                 logger.error("Failed to reset boot location for partition for %s" % (self.get('location')))
 
         logger.info("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), switched))
+        self.acctlog.LogMessage("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), switched))
 
     def NotifyAtStart(self):
         '''Notify user when job has started'''

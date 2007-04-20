@@ -200,6 +200,16 @@ re_deleted = re.compile("""
     (?P<username>\S+)\s*                    # username
     """, re.VERBOSE)
 
+# kernel regex
+# 2007-04-19 22:32:34 Job 49/voran using kernel default
+re_kernel = re.compile("""
+    \d\d\d\d-\d\d-\d\d\s+                   # yyyy-mm-dd
+    \d+:\d+:\d+\s+                          # hh:nn:ss
+    Job\s+
+    (?P<jobid>\d+)/(?P<username>\S+)\s+     # nnnnnn/username
+    using\s+kernel\s+
+    (?P<kernel>\S+)\s*
+    """, re.VERBOSE)
 
 # ----------------------------------------------------------------------------
 #
@@ -252,7 +262,7 @@ class CobaltJob(Cobalt.Data.Data):
         self.set('usertime_formatted', None)
         self.set('queuetime_formatted', None)
         self.set('exitcode', None)
-    
+        self.set('kernel', None)
 
     def __str__(self):
         return "<CobaltJob %i>" % (self.get('jobid'))
@@ -359,7 +369,11 @@ class CobaltJob(Cobalt.Data.Data):
             logger.error("Job %i has negative user time" % (self.get('jobid')))
             self.set('usertime', 0)
             result = False
-            
+
+        # if no kernel, set to 'default'
+        if not self.get('kernel', None):
+            self.set('kernel', 'default')
+        
         #
         # Now, calculate the derived parameters
         #
@@ -528,6 +542,9 @@ class CobaltLogParser(Cobalt.Data.DataSet):
             m_stats = re_stats.match(line)
             if m_stats:
                 jobid = long(m_stats.group("jobid"))
+            m_kernel = re_kernel.match(line)
+            if m_kernel:
+                jobid = long(m_kernel.group("jobid"))
             
             # If none matched, then get the next line
             if not jobid:
@@ -606,6 +623,9 @@ class CobaltLogParser(Cobalt.Data.DataSet):
                 job._deleted = True
                 job.set('deleted_time', self.__prepare_time(
                     year_hint, m_deleted.group("finish_time")))
+
+            if m_kernel:
+                job.set('kernel', m_kernel.group("kernel"))
         
         file.close()
     

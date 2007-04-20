@@ -85,7 +85,7 @@ if __name__ == '__main__':
              'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
              'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
-             'usertime':'*', 'queuetime':'*', 'state':'done'}])
+             'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
     except Cobalt.Proxy.CobaltComponentError:
         print "Can't connect to queue manager, falling back to log files"
         cqp = cqparse.CobaltLogParser()
@@ -95,7 +95,7 @@ if __name__ == '__main__':
              'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
              'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
-             'usertime':'*', 'queuetime':'*', 'state':'done'}])
+             'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
 
     #
     # Get the statistics
@@ -126,11 +126,11 @@ if __name__ == '__main__':
     # Print the header
     if not options.noheader:
         if options.alldetails:
-            print "%-19s %7s %-10s %-8s %5s %4s %5s %18s %9s  %9s %8s %6s" % (
+            print "%-19s %7s %-10s %-8s %5s %4s %5s %18s %9s  %9s %8s %6s %10s" % (
                 "Termination Time", "Job ID", "Queue", "User",
                 "ncpus", "mode", "nodes",
                 "partition", "queuetime",
-                "walltime", "cpuh", "Exit" )
+                "walltime", "cpuh", "Exit", "Kernel")
         else:
             print "%s" % ( "-" * 78 )
             print "%-19s %6s %-10s %-8s %5s %4s %5s %8s %6s" % (
@@ -146,12 +146,13 @@ if __name__ == '__main__':
 #             else:
 #                 wait_flag = " "
             wait_flag = " "
-            print "%19s %7i %-10s %-8s %5i %4s %5i %18s %9s%s %9s %8.2f %6s" % (
+            print "%19s %7i %-10s %-8s %5i %4s %5i %18s %9s%s %9s %8.2f %6s %10s" % (
                 job['finish_time_formatted'], job['jobid'], job['queue'], job['username'],
                 job['processors'], job['mode'], job['partition_size'],
                 job['partition'], job['queuetime_formatted'], wait_flag,
                 job['usertime_formatted'],
-                job['partition_size'] * job['usertime'] / 3600, job.get('exitcode', 'N/A'))        
+                job['partition_size'] * job['usertime'] / 3600, job.get('exitcode', 'N/A'),
+                job['kernel'])
         else:
             print "%19s %6i %-10s %-8s %5i %4s %5i %8s %6s" % (
                 job['finish_time_formatted'], job['jobid'], job['queue'], job['username'],
