@@ -102,14 +102,14 @@ if __name__ == '__main__':
                 if opts['long']:
                     q.update({'path':'*', 'outputdir':'*',
                               'envs':'*', 'command':'*', 'args':'*',
-                              'kernel':'*', 'index':'*'})
+                              'kernel':'*', 'kerneloptions':'*', 'index':'*'})
 
             header = [['JobID', 'OutputPath', 'User', 'WallTime', 'QueuedTime',
                        'RunTime',
                        'Nodes', 'State', 'Location', 'Mode', 'Procs', 'Queue',
                        'StartTime', 'Index']]
             if opts['long']:
-                header[0] += ['SubmitTime', 'Path', 'OutputDir', 'Envs', 'Command', 'Args', 'Kernel']
+                header[0] += ['SubmitTime', 'Path', 'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions']
         else:
             header = [['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']]
         response = cqm.GetJobs(query)

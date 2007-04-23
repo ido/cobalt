@@ -66,6 +66,7 @@ class ProcessGroup(Cobalt.Data.Data):
             mode = self.get('mode', 'co')
             args = " ".join(self.get('args', []))
             inputfile = self.get('inputfile', '')
+            kerneloptions = self.get('kerneloptions', '')
             # strip out BGLMPI_MAPPING until mpirun bug is fixed 
             mapfile = ''
             if self.get('env', {}).has_key('BGLMPI_MAPPING'):
@@ -98,6 +99,8 @@ class ProcessGroup(Cobalt.Data.Data):
                 cmd = cmd + ('-args', args)
             if envs != '':
                 cmd = cmd + ('-env',  envs)
+            if kerneloptions != '':
+                cmd = cmd + ('-kernel_options', kerneloptions)
             if mapfile != '':
                 cmd = cmd + ('-mapfile', mapfile)
 

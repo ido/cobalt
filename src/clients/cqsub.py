@@ -42,15 +42,15 @@ def processfilter(cmdstr, jobdict):
 helpmsg = """
 Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -e envvar1=value1:envvar2=value2 -k <kernel profile>
-             -O <outputprefix> -t time <in minutes> -E <error file path>
-             -o <output file path> -i <input file path> -n <number of nodes>
-             -c <processor count> -m <mode co/vn> <command> <args>
+             -K <kernel options> -O <outputprefix> -t time <in minutes>
+             -E <error file path> -o <output file path> -i <input file path>
+             -n <number of nodes> -c <processor count> -m <mode co/vn> <command> <args>
 """
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode', 'c':'proccount', 'C':'cwd',
-                'e':'env', 'k':'kernel', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify',
+                'e':'env', 'k':'kernel', 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'p':'project', 'N':'notify',
                 'E':'error', 'o':'output', 'i':'inputfile'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:], options, doptions, helpmsg)
     # need to filter here for all args
@@ -84,6 +84,9 @@ if __name__ == '__main__':
     except:
         print "non-integer node count specified"
         raise SystemExit, 1
+
+    if opts['kerneloptions']:
+        jobspec['kerneloptions'] = opts['kerneloptions']
 
     try:
         sys_size = int(CP.get('cqm', 'size'))
