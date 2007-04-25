@@ -1098,9 +1098,9 @@ class CQM(Cobalt.Component.Component):
         [j.Kill("Job %s Overtime, Killing") for j in [j for queue in self.Queues for j in queue] if j.over_time()]
         [j.LogFinish() for j in [j for queue in self.Queues for j in queue] if j.get('state') == 'done']
         [queue.remove(j) for (j, queue) in [(j, queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']
-        [self.Queues.remove(q) for q in self.Queues[:]
+        [self.Queues.remove(q) for q in self.Queues.data[:]
          if q.get('state') == 'dead' and q.get('name').startswith('R.')
-         and len(q) == 0]
+         and len(q.data) == 0]
         #newdate = time.strftime("%m-%d-%y", time.localtime())
         #[j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
         #Job.acctlog.ChangeLog()

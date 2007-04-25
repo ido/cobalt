@@ -387,34 +387,37 @@ class BGSched(Cobalt.Component.Component):
     def GetReservations(self):
         '''build a list of reservation names in use'''
         reservs = []
-        [reservs.append(rinfo) for partition in self.partitions
-         for rinfo in self.partitions.get('reservations')
-         if rinfo not in names]
+        names = []
+        for partition in self.partitions:
+            rinfo = partition.get('reservations')
+            if rinfo and rinfo[0][0] not in names:
+                names.append(rinfo[0][0])
+                reservs.append(rinfo[0])
         return reservs
 
     def ResQueueSync(self):
         '''Create any needed rqueues, and kill unneeded ones'''
-        queues = comm['cqm'].GetQueues([{'tag':'queue', 'name':'*'}])
+        queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
         qnames = [q['name'] for q in queues]
         for reserv in self.GetReservations():
             if "R.%s" % (reserv[0]) not in qnames:
                 spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
                 attrs = {'state':'stopped', 'users': reserv[1]}
                 try:
-                    comm['cqm'].AddQueue(spec)
-                    comm['cqm'].SetQueue(spec, attrs)
-                except:
-                    logger.error("Queue setup for %s failed" \
-                                 % ("R.%s" % reserv[0]))
+                    comm['qm'].AddQueue(spec)
+                    comm['qm'].SetQueues(spec, attrs)
+                except Exception, e:
+                    logger.error("Queue setup for %s failed: %s" \
+                                 % ("R.%s" % reserv[0], e))
         rnames = [r[0] for r in self.GetReservations()]
         for qn in qnames:
             if qn.startswith("R.") and qn[2:] not in rnames:
                 logger.info("Disabling Rqueue %s" % (qn))
                 try:
-                    response = cqm.SetQueues({'tag':'queue', 'name':qn},
-                                             {'state':'dead'})
-                except:
-                    logger.error("Disable request failed")
+                    response = comm['qm'].SetQueues([{'tag':'queue', 'name':qn}],
+                                                    {'state':'dead'})
+                except Exception, e:
+                    logger.error("Disable request failed: %s" % e)
 
     def AddReservation(self, _, spec, name, user, start, duration):
         '''Add a reservation to matching partitions'''
