@@ -22,10 +22,19 @@ Query a particular jobid.
 .B \-l
 Show job info in vertical format. Use with '-f' to get all job info.
 .TP
+.B \-\-header <header fields>
+Specify custom header for cqstat display with a colon-separated list. (See cqstat -lf for the possible fields.) The custom header may also be specified setting CQSTAT_HEADER in the environment or a cqstat_header entry under [cqm] in /etc/cobalt.conf. The header is taken from /etc/cobalt.conf first, then $CQSTAT_HEADER, and finally cqstat --header.
+.IP
+.B Example:
+.RS
+.TP
+cqstat --header JobId:State:RunTime
+.RE
+.TP
 .B \-q
 Show queues and properties.
 .IP
-Properties:
+.B Properties:
 .RS
 .TP
 .B MaxTime
@@ -55,6 +64,12 @@ The maximum number of nodes any jobs in the queue are allowed to have allocated 
 .TP
 .B \-\-version
 Displays client revision and Cobalt version
+.PP
+.SH "ENIRONMENT VARIABLES"
+The following environment variables affect cqstat:
+.TP
+.B CQSTAT_HEADER
+Specifies custom header for job queries (See --header).
 .SH "SEE ALSO"
 .BR cqdel(1),
 .BR cqsub(1),
