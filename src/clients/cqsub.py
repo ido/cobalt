@@ -142,7 +142,7 @@ if __name__ == '__main__':
     if not opts['mode']:
         opts['mode'] = 'co'
     elif opts['mode'] not in job_types:
-        print "Specifed mode '%s' not valid, valid modes are\%s" % \
+        print "Specifed mode '%s' not valid, valid modes are\n%s" % \
               (opts['mode'], "\n".join(job_types))
         raise SystemExit, 1
     if opts['mode'] == 'co' and sys_type == 'bgp':
