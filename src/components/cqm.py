@@ -364,7 +364,8 @@ class Job(Cobalt.Data.Data):
             pgroup = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'executable':'/usr/bin/mpish',
                  'size':self.get('procs'), 'args':args, 'envs':env, 'errorfile':errorfile,
-                 'outputfile':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin", 'inputfile':self.get('inputfile', '')})
+                 'outputfile':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin",
+                 'inputfile':self.get('inputfile', ''), 'kerneloptions':self.get('kerneloptions', '')})
         except xmlrpclib.Fault:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
@@ -416,7 +417,8 @@ class Job(Cobalt.Data.Data):
             pgrp = self.comms['pm'].CreateProcessGroup(
                 {'tag':'process-group', 'pgid':'*', 'user':'root', 'size':self.get('nodes'),
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
-                 'args':[self.get('user')], 'location':location, 'inputfile':self.get('inputfile', '')})
+                 'args':[self.get('user')], 'location':location, 'inputfile':self.get('inputfile', ''),
+                 'kerneloptions':self.get('kerneloptions', '')})
         except xmlrpclib.Fault, fault:
             print fault
         except:
@@ -618,7 +620,7 @@ class BGJob(Job):
                  'errorfile':self.get('errorpath'), 'path':self.get('path'), 'size':self.get('procs'),
                  'mode':self.get('mode', 'co'), 'cwd':self.get('outputdir'), 'executable':self.get('command'),
                  'args':self.get('args'), 'envs':self.get('envs', {}), 'location':[self.get('location')],
-                 'jobid':self.get('jobid'), 'inputfile':self.get('inputfile', '')})
+                 'jobid':self.get('jobid'), 'inputfile':self.get('inputfile', ''), 'kerneloptions':self.get('kerneloptions', '')})
         except xmlrpclib.Fault:
             raise ProcessManagerError
         except Cobalt.Proxy.CobaltComponentError:
@@ -1065,6 +1067,8 @@ class CQM(Cobalt.Component.Component):
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.comms = Cobalt.Proxy.CommDict()
+        self.cqp = Cobalt.Cqparse.CobaltLogParser()
+        
         self.register_function(lambda  address, data:self.Queues.GetJobs(data), "GetJobs")
         self.register_function(self.handle_job_add, "AddJob")
         self.register_function(self.handle_job_del, "DelJobs")
@@ -1147,11 +1151,8 @@ class CQM(Cobalt.Component.Component):
 
     def handle_queue_history(self, _, data):
         '''Fetches queue history from acct log'''
-        cqp = Cobalt.Cqparse.CobaltLogParser()
-        cqp.perform_default_parse()
-        response = cqp.Get(data)
-        del cqp
-        return response
+        self.cqp.perform_default_parse()
+        return self.cqp.Get(data)
 
     def pm_sync(self):
         '''Resynchronize with the process manager'''

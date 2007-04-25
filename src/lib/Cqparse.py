@@ -415,13 +415,7 @@ class CobaltLogParser(Cobalt.Data.DataSet):
         """
         Cobalt.Data.DataSet.__init__(self)
         self._jobs = {}
-        try:
-            sched = Cobalt.Proxy.scheduler()
-            self._partitions = sched.GetPartition([{'tag':'partition', 'name':'*', 'size':'*'}])
-        except Cobalt.Proxy.CobaltComponentError:
-            print "Failed to connect to scheduler"
-            self._partitions = []
-            #raise SystemExit, 1
+        self.comms = Cobalt.Proxy.CommDict()
     
     # ----------------------------------------
     # Generators
@@ -651,6 +645,13 @@ class CobaltLogParser(Cobalt.Data.DataSet):
         for logfiles. (See the configuration at the top!)
         """
         
+        try:
+            self._partitions = self.comms['sched'].GetPartition([{'tag':'partition', 'name':'*', 'size':'*'}])
+        except Cobalt.Proxy.CobaltComponentError:
+            print "Failed to connect to scheduler"
+            self._partitions = []
+            #raise SystemExit, 1
+
         # Verify that the log directory exists
         logdir = os.path.abspath( DEFAULT_LOG_DIRECTORY )
         if not os.path.exists( logdir ):
