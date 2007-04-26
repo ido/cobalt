@@ -13,15 +13,34 @@ CONFIGFILE="${CONFIGPATH}/cobalt.conf"
 DAEMONDIR=@sbindir@
 PIDPATH=@PATH_TO_PIDFILE@
 
+start_component () {
+    component=$1
+    echo -n "Starting ${component}: "
+    "${DAEMONDIR}/${component}.py" -C "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
+    echo "done"
+    return 0
+}
+
+stop_component () {
+    component=$1
+    if [ -f "${PIDPATH}/${component}.pid" ] ; then
+	echo -n "Stopping ${component}: "
+	kill -INT `cat ${PIDPATH}/${component}.pid`
+	echo "done"
+	rm -f "${PIDPATH}/${component}.pid"
+    else
+	echo "${component} not running"
+    fi
+    return 0
+}
+
 # Configure DB2 environment
 . /discovery/db.src
 
 case "$1" in
   start)
     for component in slp bgpm cqm bgsched; do
-	echo -n "Starting ${component}: "
-	"${DAEMONDIR}/${component}.py" -C "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
-	echo "done"
+	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
@@ -34,20 +53,28 @@ case "$1" in
     ;;
   stop)
     for component in bgsched cqm bgpm slp; do
-	if [ -f "${PIDPATH}/${component}.pid" ] ; then
-	    echo -n "Stopping ${component}: "
-	    kill -INT `cat ${PIDPATH}/${component}.pid`
-	    echo "done"
-	    rm -f "${PIDPATH}/${component}.pid"
-	else
-	    echo "${component} not running"
-	fi
+	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
     ;;
   restart)
-    $0 stop
-    $0 start
+    if [ $# -gt 1 ] ; then
+	shift
+	for component in $@; do 
+	    case "$component" in 
+		cqm|bgsched)
+		    stop_component $component
+		    start_component $component
+		    ;;
+		slp|bgpm)
+		    echo "${component} cannot be restarted with jobs running"
+		    ;;
+	    esac
+	done
+    else
+	$0 stop
+	$0 start
+    fi
     ;;
   force-reload)
     $0 stop
