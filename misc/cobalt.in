@@ -38,7 +38,7 @@ case "$1" in
 	    echo -n "Stopping ${component}: "
 	    kill -INT `cat ${PIDPATH}/${component}.pid`
 	    echo "done"
-                      rm -f "${PIDPATH}/${component}.pid"
+	    rm -f "${PIDPATH}/${component}.pid"
 	else
 	    echo "${component} not running"
 	fi
