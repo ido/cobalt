@@ -402,7 +402,7 @@ class BGSched(Cobalt.Component.Component):
         for reserv in self.GetReservations():
             if "R.%s" % (reserv[0]) not in qnames:
                 spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
-                attrs = {'state':'stopped', 'users': reserv[1]}
+                attrs = {'state':'running', 'users': reserv[1]}
                 try:
                     comm['qm'].AddQueue(spec)
                     comm['qm'].SetQueues(spec, attrs)
