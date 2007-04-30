@@ -91,7 +91,7 @@ class Partition(Cobalt.Data.Data):
         # all times are in seconds
         current = time.time()
         rstates = []
-        for (rname, _, start, rdur) in self.get('reservations'):
+        for (rname, ruser, start, rdur) in self.get('reservations'):
             if current < start:
                 # reservation has not started
                 if start < (current + jdur):
@@ -101,7 +101,8 @@ class Partition(Cobalt.Data.Data):
                 continue
             else:
                 # reservation is active
-                rstates.append(jqueue == ('R.%s' % (rname)))
+                rstates.append(jqueue == ('R.%s' % (rname))
+                               and job.get('user') in ruser.split(':'))
         if rstates:
             return False not in rstates
         else:
