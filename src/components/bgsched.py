@@ -361,7 +361,8 @@ class BGSched(Cobalt.Component.Component):
     #__statefields__ = ['partitions', 'jobs']
     __statefields__ = ['partitions']
     __schedcycle__ = 10
-    async_funcs = ['assert_location', 'RunQueue', 'RemoveOldReservations']
+    async_funcs = ['assert_location', 'RunQueue',
+                   'RemoveOldReservations', 'ResQueueSync']
 
     def __init__(self, setup):
         self.partitions = PartitionSet()
@@ -391,9 +392,11 @@ class BGSched(Cobalt.Component.Component):
         names = []
         for partition in self.partitions:
             rinfo = partition.get('reservations')
-            if rinfo and rinfo[0][0] not in names:
-                names.append(rinfo[0][0])
-                reservs.append(rinfo[0])
+            if rinfo:
+                for res in rinfo:
+                    if res[0] not in names:
+                        names.append(res[0])
+                        reservs.append(res)
         return reservs
 
     def ResQueueSync(self):
@@ -402,6 +405,7 @@ class BGSched(Cobalt.Component.Component):
         qnames = [q['name'] for q in queues]
         for reserv in self.GetReservations():
             if "R.%s" % (reserv[0]) not in qnames:
+                logger.info("Adding reservation queue R.%s" % (reserv[0]))
                 spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
                 attrs = {'state':'running', 'users': reserv[1]}
                 try:
