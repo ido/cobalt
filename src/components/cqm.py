@@ -635,15 +635,18 @@ class BGJob(Job):
     def LogFinish(self):
         '''Log end of job data, specific for BG/L exit status'''
         exitstatus = self.get('exit-status', 'N/A')
-        if exitstatus != 'N/A':
-            exitstatus = exitstatus.get('BG/L', 'N/A')
+        try:
+            exitstatus = exitstatus.get('BG/L')
+            exitstatus = int(exitstatus)/256
+        except:
+            pass
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.get('jobid'), self.get('user'),
                      self.get('nodes'), self.GetStats()))
-        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%d" % \
+        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats(),
-                                 int(exitstatus)/256))
+                                 str(exitstatus)))
     def Finish(self):
         '''Finish up accounting for job, also adds postscript ability'''
         Job.Finish(self)

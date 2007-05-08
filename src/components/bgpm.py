@@ -218,8 +218,8 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
         for pg in self.data:
             if pg.get('pgid') == data['pgid']:
                 return pg.Signal(sig)
-        # could not find pg, so return None
-        return None
+        # could not find pg, so return False
+        return False
 
     def kill_processgroup(self, address, data):
         '''kill existing process group'''
