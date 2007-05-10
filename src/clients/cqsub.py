@@ -26,7 +26,7 @@ def processfilter(cmdstr, jobdict):
         print >>sys.stderr, ''.join(err)
     if rc != 0:
         print >>sys.stderr, "Filter %s failed" % (cmdstr)
-        raise SystemExit, 0
+        raise SystemExit, 1
     if out:
         for line in out:
             key, value = line.strip().split('=', 1)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     if opts['version']:
         print "cqsub %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 0
+        raise SystemExit, 1
 
     # setup logging
     level = 30
