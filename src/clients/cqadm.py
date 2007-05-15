@@ -10,7 +10,8 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
-              '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>'
+              '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>\n' + \
+              '       cqadm [-j <next jobid>]'
 
 def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
