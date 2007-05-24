@@ -58,6 +58,14 @@ def filterByTopology(placements, depinfo, potential):
         for job in [job for job in potential if not potential[job]]:
             del potential[job]
 
+def filterByLength(potential, length):
+    '''Filter out all potential placements for jobs longer than length'''
+    if length == -1:
+        return
+    for job in potential.keys():
+        if float(job.get('walltime')) > float(length):
+            del potential[job]
+            
 class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
     def __init__(self, element):
@@ -157,7 +165,8 @@ class PartitionSet(Cobalt.Data.DataSet):
         print '''bgsched-queue section missing from config file'''
         raise SystemExit, 1
     qconfig = _config._sections['bgsched-queue']
-    qpolicy = {'default':'PlaceFIFO', 'scavenger':'PlaceScavenger'}
+    qpolicy = {'default':'PlaceFIFO', 'scavenger':'PlaceScavenger',
+               'high-prio':'PlaceSpruce'}
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
@@ -282,6 +291,13 @@ class PartitionSet(Cobalt.Data.DataSet):
         else:
             return []
 
+    def QueueCMP(self, q1, q2):
+        if self.qconfig.get(q1, 'default') == 'high-prio':
+            return -1
+        if self.qconfig.get(q2, 'default') == 'high-prio':
+            return 1
+        return 0
+
     def ImplementPolicy(self, potential, depinfo):
         '''Switch between queue policies'''
         qpotential = {}
@@ -291,12 +307,16 @@ class PartitionSet(Cobalt.Data.DataSet):
                 qpotential[job.get('queue')][job] = potential[job]
             else:
                 qpotential[job.get('queue')] = {job:potential[job]}
-        for queue in qpotential:
+        queues = qpotential.keys()
+        queues.sort(self.QueueCMP)
+        for queue in queues:
             qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
-            # need to remove partitions, included and containing, for newly used partitions
+            # need to remove partitions, included and containing,
+            # for newly used partitions
             # for all jobs in qpotential
             filterByTopology(placements, depinfo, qpotential[queue])
-            placements += qfunc(qpotential, queue, depinfo)
+            newplace = qfunc(qpotential, queue, depinfo)
+            placements += newplace
         return placements
 
     def PlaceFIFO(self, qpotential, queue, depinfo):
@@ -353,6 +373,17 @@ class PartitionSet(Cobalt.Data.DataSet):
         if live.count(queue) != len(live):
             return []
         return self.PlaceFIFO(qpotential[queue], depinfo)
+
+    def PlaceSpruce(self, qpotential, queue, depinfo):
+        '''Defer other jobs which spruce queue has idle jobs'''
+        idle = [job for job in self.jobs if job.get('queue') == queue \
+                  and job.get('state') == 'queued']
+        p = self.PlaceFIFO(qpotential, queue, depinfo)
+        if len(p) != len(idle):
+            # we have idle jobs, so defer others
+            for q in qpotential:
+                qpotential[q] = []
+        return p
                 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
