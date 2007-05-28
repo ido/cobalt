@@ -1,0 +1,320 @@
+# Makefile.in generated automatically by automake 1.4 from Makefile.am
+
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+
+
+
+SHELL = @SHELL@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
+
+DESTDIR =
+
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
+
+top_builddir = ..
+
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+transform = @program_transform_name@
+
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+host_alias = @host_alias@
+host_triplet = @host@
+AR = @AR@
+ARFLAGS = @ARFLAGS@
+AS = @AS@
+CC = @CC@
+CFLAGS = @CFLAGS@
+CPP = @CPP@
+CPPFLAGS = @CPPFLAGS@
+CROSS = @CROSS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXFLAGS = @CXXFLAGS@
+DIRT_BRANCH_ID = @DIRT_BRANCH_ID@
+DIRT_TIMESTAMP = @DIRT_TIMESTAMP@
+DLLTOOL = @DLLTOOL@
+DOT = @DOT@
+DOXYFILE = @DOXYFILE@
+DOXYGEN = @DOXYGEN@
+EXEEXT = @EXEEXT@
+F77 = @F77@
+F77FLAGS = @F77FLAGS@
+F90 = @F90@
+F90FLAGS = @F90FLAGS@
+FILELIST_FILE = @FILELIST_FILE@
+GLOBUS_FLAVOR_NAME = @GLOBUS_FLAVOR_NAME@
+GPT_CFLAGS = @GPT_CFLAGS@
+GPT_CONFIG_CFLAGS = @GPT_CONFIG_CFLAGS@
+GPT_CONFIG_INCLUDES = @GPT_CONFIG_INCLUDES@
+GPT_CONFIG_LIBS = @GPT_CONFIG_LIBS@
+GPT_CONFIG_PKG_LIBS = @GPT_CONFIG_PKG_LIBS@
+GPT_EXTERNAL_INCLUDES = @GPT_EXTERNAL_INCLUDES@
+GPT_EXTERNAL_LIBS = @GPT_EXTERNAL_LIBS@
+GPT_INCLUDES = @GPT_INCLUDES@
+GPT_IS_2 = @GPT_IS_2@
+GPT_LDFLAGS = @GPT_LDFLAGS@
+GPT_LIBS = @GPT_LIBS@
+GPT_LIB_LINKS = @GPT_LIB_LINKS@
+GPT_LINKTYPE = @GPT_LINKTYPE@
+GPT_LOCATION = @GPT_LOCATION@
+GPT_MAJOR_VERSION = @GPT_MAJOR_VERSION@
+GPT_MINOR_VERSION = @GPT_MINOR_VERSION@
+GPT_PGM_LINKS = @GPT_PGM_LINKS@
+GPT_PKG_CFLAGS = @GPT_PKG_CFLAGS@
+HAVE_DOT = @HAVE_DOT@
+INSURE = @INSURE@
+LD = @LD@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
+LN_S = @LN_S@
+MAINT = @MAINT@
+MAKEINFO = @MAKEINFO@
+OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
+PACKAGE = @PACKAGE@
+PERL = @PERL@
+RANLIB = @RANLIB@
+COBALT_SETUP_FLAGS = @COBALT_SETUP_FLAGS@
+VERSION = @VERSION@
+builddir = @builddir@
+cross_compiling = @cross_compiling@
+lac_doxygen_examples = @lac_doxygen_examples@
+lac_doxygen_file_patterns = @lac_doxygen_file_patterns@
+lac_doxygen_installdox = @lac_doxygen_installdox@
+lac_doxygen_internal_tagfiles = @lac_doxygen_internal_tagfiles@
+lac_doxygen_output_tagfile = @lac_doxygen_output_tagfile@
+lac_doxygen_predefines = @lac_doxygen_predefines@
+lac_doxygen_project = @lac_doxygen_project@
+lac_doxygen_srcdirs = @lac_doxygen_srcdirs@
+lac_doxygen_tagfiles = @lac_doxygen_tagfiles@
+
+setupdir = $(GLOBUS_LOCATION)/setup/globus
+
+testdir = $(GLOBUS_LOCATION)/test/$(PACKAGE)
+
+scriptsysconfdir = $(GLOBUS_LOCATION)/etc
+
+flavorincludedir = $(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOR_NAME)
+
+pkgdir = $(GLOBUS_LOCATION)/etc/globus_packages/$(PACKAGE)
+
+aclocaldir = $(GLOBUS_LOCATION)/share/globus_aclocal
+
+amdirdir = $(GLOBUS_LOCATION)/share/globus_amdir
+
+doxygendir = $(GLOBUS_LOCATION)/share/doxygen
+
+docdir = $(GLOBUS_LOCATION)/share/doc
+
+LINK_BAK = orig
+AUTOMAKE_OPTIONS = no-dependencies
+
+#
+# Automake rules for installing and building doxygen docs
+#
+
+doxygen_installdox = @lac_doxygen_installdox@
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_CLEAN_FILES =  Doxyfile Doxyfile-internal
+DIST_COMMON =  Doxyfile-internal.in Doxyfile.in Makefile.am Makefile.in
+
+
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+
+TAR = gtar
+GZIP_ENV = --best
+all: all-redirect
+.SUFFIXES:
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) $(top_srcdir)/globus_automake_pre $(top_srcdir)/globus_automake_post
+	cd $(top_srcdir) && $(AUTOMAKE) --foreign doxygen/Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+Doxyfile: $(top_builddir)/config.status Doxyfile.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+Doxyfile-internal: $(top_builddir)/config.status Doxyfile-internal.in
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+tags: TAGS
+TAGS:
+
+
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+
+subdir = doxygen
+
+distdir: $(DISTFILES)
+	@for file in $(DISTFILES); do \
+	  d=$(srcdir); \
+	  if test -d $$d/$$file; then \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
+	done
+	$(MAKE) $(AM_MAKEFLAGS) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-hook
+info-am:
+info: info-am
+dvi-am:
+dvi: dvi-am
+check-am: all-am
+check: check-am
+installcheck-am:
+installcheck: installcheck-am
+install-exec-am:
+install-exec: install-exec-am
+
+install-data-am: install-data-local
+install-data: install-data-am
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-am
+uninstall-am:
+uninstall: uninstall-am
+all-am: Makefile all-local
+all-redirect: all-am
+install-strip:
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+installdirs:
+
+
+mostlyclean-generic:
+
+clean-generic:
+
+distclean-generic:
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+
+maintainer-clean-generic:
+mostlyclean-am:  mostlyclean-generic
+
+mostlyclean: mostlyclean-am
+
+clean-am:  clean-generic mostlyclean-am
+
+clean: clean-am
+
+distclean-am:  distclean-generic clean-am
+	-rm -f libtool
+
+distclean: distclean-am
+
+maintainer-clean-am:  maintainer-clean-generic distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-am
+
+.PHONY: tags distdir info-am info dvi-am dvi check check-am \
+installcheck-am installcheck install-exec-am install-exec \
+install-data-local install-data-am install-data install-am install \
+uninstall-am uninstall all-local all-redirect all-am all installdirs \
+mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+
+all-local: @DOXYFILE@
+	@if test ! -z "@DOXYGEN@"; then \
+		@DOXYGEN@  @DOXYFILE@;  \
+		if test -n "$(doxygen_installdox)"; then \
+		    if test -x ./doc/html/installdox; then \
+		        $(PERL) ./doc/html/installdox $(doxygen_installdox) ./doc/html/*;\
+		    fi ; \
+		fi ; \
+	fi
+
+install-data-local:
+	@if test ! -z "@DOXYGEN@"; then                     \
+		for dir in `find ./doc/* -type d -print|sed "s,./doc/,,"`; do \
+			if test -z "`echo $${dir}|sed -n '/^man/ p'`"; then \
+				$(INSTALL) -d -m 755 \
+					$(DESTDIR)$(docdir)/@PACKAGE@/$${dir}; \
+			else \
+				$(INSTALL) -d -m 755 \
+					$(DESTDIR)$(prefix)/$${dir}; \
+			fi \
+		done; \
+		for file in `find ./doc -type f -print|sed "s,./doc/,,"`; do \
+			if test -z "`echo $${file}|sed -n '/^man/ p'`"; then \
+				$(INSTALL) -m 644 ./doc/$${file} \
+					$(DESTDIR)$(docdir)/@PACKAGE@/$${file}; \
+			else \
+				$(INSTALL) -m 644 ./doc/$${file} \
+					$(DESTDIR)$(prefix)/$${file};\
+			fi \
+		done \
+	fi
+
+clean-data-local:
+	@if test ! -z "@DOXYGEN@"; then \
+		rm -rf ./doc*;          \
+	fi
+
+filelist:
+	@if test ! -z "@DOXYGEN@"; then \
+		find ./doc -type f -print| \
+		sed "s,./doc/man,$(prefix)/man,"| \
+		sed "s,./doc,$(docdir)/@PACKAGE@," \
+		>> $(FILELIST_FILE); \
+	fi
+
+dist-hook: all-local
+	@if test ! -z "@DOXYGEN@"; then \
+		if test -d doc; then \
+		    cp -r doc $(distdir)/doc ; \
+		fi ; \
+		if test -d doc-internal; then \
+		    cp -r doc-internal $(distdir)/doc-internal ; \
+		fi ; \
+	fi ;
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:
