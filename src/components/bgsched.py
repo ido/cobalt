@@ -144,6 +144,15 @@ class Job(Cobalt.Data.Data):
         self.partition = partition.get('name')
         self.set('state', 'running')
 
+    def Sync(self, data):
+        upd = [(k, v) for (k, v) in data.iteritems() \
+               if self.get(k) != v]
+        if upd:
+            logger.info("Resetting job %s parameters %s" % \
+                        (self.get('jobid'), ':'.join([u[0] for u in upd])))
+            for (k, v) in upd.iteritems():
+                self.set(k, v)
+
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
 
@@ -199,25 +208,30 @@ class PartitionSet(Cobalt.Data.DataSet):
         logger.debug('Schedule: knownjobs %s' % knownjobs)
         activejobs = [job.get('jobid') for job in jobs]
         finished = [jobid for jobid in knownjobs if jobid not in activejobs]
-        #print "known", knownjobs, "active", activejobs, "finished", finished
+        #print "known", knownjobs, "active", activejobs,
+        # "finished", finished
         # add new jobs
         #print jobs
-        [self.jobs.append(Job(jobdata)) for jobdata in jobs if jobdata.get('jobid') not in knownjobs]
+        [self.jobs.append(Job(jobdata)) for jobdata in jobs \
+         if jobdata.get('jobid') not in knownjobs]
         # delete finished jobs
-        [self.jobs.remove(job) for job in self.jobs if job.get('jobid') in finished]
-        for (jobid, state, queue) in [(job.get('jobid'), job.get('state'), job.get('queue')) for job in jobs]:
+        [self.jobs.remove(job) for job in self.jobs \
+         if job.get('jobid') in finished]
+        # sync existing parameters
+        for jdata in jobs:
             try:
-                [currjob] = [job for job in self.jobs if job.get('jobid') == jobid]
+                [currjob] = [j for j in self.jobs
+                             if j.get('jobid') == jdata.get('jobid')]
             except:
                 continue
-            if ((currjob.get('queue') != queue) or (currjob.get('state') != state)):
-                logger.error("Detected local state inconsistency for job %s. Fixing." % jobid)
-                currjob.set('state', state)
-                currjob.set('queue', queue)
+            currjob.Sync(jdata)
         # free partitions with nonexistant jobs
-        [partition.Free() for partition in self.data if partition.job not in activejobs + ['none']]
-        # find idle partitions for new jobs (idle, functional, and scheduled)
-        candidates = [part for part in self.data if part.get('state') == 'idle' and
+        [partition.Free() for partition in self.data \
+         if partition.job not in activejobs + ['none']]
+        # find idle partitions for new jobs
+        # (idle, functional, and scheduled)
+        candidates = [part for part in self.data \
+                      if part.get('state') == 'idle' and
                       part.get('functional') and part.get('scheduled')]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
@@ -230,7 +244,8 @@ class PartitionSet(Cobalt.Data.DataSet):
             return 0
         self.qmconnect.Pass()
         logger.debug('stopped queues %s' % stopped_queues)
-        idlejobs = [job for job in idlejobs if job.get('queue') not in [q.get('name') for q in stopped_queues + dead_queues]]
+        idlejobs = [job for job in idlejobs if job.get('queue') not \
+                    in [q.get('name') for q in stopped_queues + dead_queues]]
 
         #print "jobs:", self.jobs
         if candidates and idlejobs:
