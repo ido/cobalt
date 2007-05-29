@@ -536,6 +536,8 @@ class BGJob(Job):
 
     def __init__(self, data, jobid):
         Job.__init__(self, data, jobid)
+        if data.get('state', False):
+            self.set('state', data['state'])
         if not self.get('kernel', False):
             self.set('kernel', 'default')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
