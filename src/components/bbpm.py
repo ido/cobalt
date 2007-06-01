@@ -18,6 +18,15 @@ class ProcessGroup(Cobalt.Data.Data):
             userid, groupid = pwd.getpwnam(self.get('user'))[2:4]
         except KeyError:
             raise ProcessGroupCreationError, "user/group"
+        if self.get('outputfile', False):
+            self.outlog = self.get('outputfile')
+        else:
+            self.outlog = tempfile.mktemp()            
+        if self.get('errorfile', False):
+            self.errlog = self.get('errorfile')
+        else:
+            self.errlog = tempfile.mktemp()
+
         self.pid = os.fork()
         if not self.pid:
             program = self.get('executable')
@@ -32,6 +41,22 @@ class ProcessGroup(Cobalt.Data.Data):
             except OSError:
                 self.log.error("Failed to change userid/groupid for PG %s" % (self.get("pgid")))
                 sys.exit(0)
+            try:
+                err = open(self.errlog, 'a')
+                os.chmod(self.errlog, 0600)
+                os.dup2(err.fileno(), sys.__stderr__.fileno())
+            except IOError:
+                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
+            except OSError:
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
+            try:
+                out = open(self.outlog, 'a')
+                os.chmod(self.outlog, 0600)
+                os.dup2(out.fileno(), sys.__stdout__.fileno())
+            except IOError:
+                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.get('jobid'), self.get('user'), self.outlog))
+            except OSError:
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
             os.execl(self.get('executable'), self.get('executable'))
 
     def FinishProcess(self, status):
