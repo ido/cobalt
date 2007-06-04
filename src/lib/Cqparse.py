@@ -333,21 +333,21 @@ class CobaltJob(Cobalt.Data.Data):
                 (self.get('jobid'), self.get('start_time'), self.get('finish_time')))
             result = False
         
-        # Verify that the partition size is sane for a BG/L system
-        if self.get('partition_size') <= 0:
-            logger.error("Job %i partition %s size decoded as %i" %
-                (self.get('jobid'), self.get('partition'), self.get('partition_size')))
-            result = False
-        if self.get('partition_size') % 32 != 0:
-            logger.error("Job %i partition size %i is not a multiple of 32" %
-                (self.get('jobid'), self.get('partition_size')))
-            result = False
+#         # Verify that the partition size is sane for a BG/L system
+#         if self.get('partition_size') <= 0:
+#             logger.error("Job %i partition %s size decoded as %i" %
+#                 (self.get('jobid'), self.get('partition'), self.get('partition_size')))
+#             result = False
+#         if self.get('partition_size') % 32 != 0:
+#             logger.error("Job %i partition size %i is not a multiple of 32" %
+#                 (self.get('jobid'), self.get('partition_size')))
+#             result = False
         
-        # Verify that the number of nodes fits within the paritition
-        if self.get('nodes') > self.get('partition_size'):
-            logger.error("Job %i fits %i nodes on a %i-node partition" %
-                (self.get('jobid'), self.get('nodes'), self.get('partition_size')))
-            result = False
+#         # Verify that the number of nodes fits within the paritition
+#         if self.get('nodes') > self.get('partition_size'):
+#             logger.error("Job %i fits %i nodes on a %i-node partition" %
+#                 (self.get('jobid'), self.get('nodes'), self.get('partition_size')))
+#             result = False
 
         # hack for a job that is forcibly deleted (cqadm.py --delete)
         # job stats are not produced, only D; line
@@ -645,13 +645,14 @@ class CobaltLogParser(Cobalt.Data.DataSet):
         for logfiles. (See the configuration at the top!)
         """
         
-        try:
-            self._partitions = self.comms['sched'].GetPartition([{'tag':'partition', 'name':'*', 'size':'*'}])
-        except Cobalt.Proxy.CobaltComponentError:
-            print "Failed to connect to scheduler"
-            self._partitions = []
-            #raise SystemExit, 1
-
+#         try:
+#             self._partitions = self.comms['sched'].GetPartition([{'tag':'partition', 'name':'*', 'size':'*'}])
+#         except Cobalt.Proxy.CobaltComponentError:
+#             print "Failed to connect to scheduler"
+#             self._partitions = []
+#             #raise SystemExit, 1
+        self._partitions = []
+        
         # Verify that the log directory exists
         logdir = os.path.abspath( DEFAULT_LOG_DIRECTORY )
         if not os.path.exists( logdir ):
