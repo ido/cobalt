@@ -339,7 +339,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             return []
         # if None, set default
         for qinfo in qps:
-            if qinfo['policy'] != None:
+            if qinfo.get('policy', None) != None:
                 qpol[qinfo['name']] = qinfo['policy']
             else:
                 qpol[qinfo['name']] = 'default'
