@@ -127,8 +127,11 @@ class Job(PreStub):
 class Switch(PreStub):
     pass
 
+class PSet(PreStub):
+    pass
+
 class Partition(PreStub):
-    nocache = ['Switchtail', 'BPtail']
+    nocache = ['Switchtail', 'BPtail', 'psetNext']
     __attrinfo__ = \
                  {'id': \
                   (bgl_rm_api.RM_PartitionID,
@@ -175,7 +178,8 @@ class Partition(PreStub):
                   (bgl_rm_api.RM_PartitionDescription, c_char_p, getvalue),
                   'small': \
                   (bgl_rm_api.RM_PartitionSmall, c_int, boolean),
-                   
+                  'psetsPerBP': \
+                  (bgl_rm_api.RM_PartitionPsetsPerBP, c_int, getvalue),
                   }
     def __init__(self, pointer):
         PreStub.__init__(self, pointer)
@@ -262,5 +266,5 @@ if __name__ == '__main__':
     #    print job.id, job.user, job.partition, job.state
     for part in partlist:
         print [getattr(part, name) for name in \
-               ['id', 'description', 'small', 'connection', 'mode']]
+               ['id', 'description', 'small', 'connection', 'psetsPerBP']]
 

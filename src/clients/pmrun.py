@@ -12,7 +12,7 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('cmd', to_syslog=False, level=0)
     pm = Cobalt.Proxy.process_manager()
     r = pm.CreateProcessGroup([{'tag':'process-group', 'pgid':'*', 'user':'desai', 'args':[],
-                                'executable':'/bin/ls', 'size':2, 'cwd':'/tmp', 'location':'localhost',
+                                'executable':'/tmp/testscript', 'size':2, 'cwd':'/tmp', 'location':'localhost',
                                 'outputfile':'/tmp/test1-output', 'errorfile':'/tmp/test1-error', 'jobid': 'pmrun'}])
     pgid = r[0]['pgid']
     while True:
