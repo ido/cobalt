@@ -47,6 +47,7 @@ class FailureMode(object):
 def filterByTopology(placements, depinfo, potential):
     '''Filter out all potential placements that overlap with already allocated partitions'''
     used = []
+    print type(potential)
     for loc in [loc for (_, loc) in placements]:
         used.append(loc)
         used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
@@ -417,7 +418,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         if len(p) != len(idle):
             # we have idle jobs, so defer others
             for q in qpotential:
-                qpotential[q] = []
+                qpotential[q] = {}
         return p
                 
 class BGSched(Cobalt.Component.Component):
