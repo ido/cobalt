@@ -327,8 +327,25 @@ class PartitionSet(Cobalt.Data.DataSet):
                 qpotential[job.get('queue')] = {job:potential[job]}
         queues = qpotential.keys()
         queues.sort(self.QueueCMP)
+        qpols = {}
+        # get queue policies
+        try:
+            qps = comm['qm'].GetQueues([{'tag':'queue',
+                                         'name':'*', 'policy':'*'}])
+            self.qmconnect.Pass()
+        except:
+            self.qmconnect.Fail()
+            return []
+        # if None, set default
+        for qinfo in qps:
+            if qinfo['policy'] != None:
+                qpol[qinfo['name']] = qinfo['policy']
+            else:
+                qpol[qinfo['name']] = 'default'
         for queue in queues:
-            qfunc = getattr(self, self.qpolicy.get(self.qconfig.get(queue, 'default'), 'default'))
+            qp = self.qpolicy.get(qpol[queue], 'default')
+            qfunc = getattr(self, qp, 'default')
+                            
             # need to remove partitions, included and containing,
             # for newly used partitions
             # for all jobs in qpotential

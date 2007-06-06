@@ -10,7 +10,7 @@ import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
-              '[--drainq] [--killq] [--setq property=value:property=value] <queue> <queue>\n' + \
+              '[--drainq] [--killq] [--setq property=value:property=value] --policy=<qpolicy> <queue> <queue>\n' + \
               '       cqadm [-j <next jobid>]'
 
 def get_queues(cqm_conn):
@@ -18,7 +18,7 @@ def get_queues(cqm_conn):
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxqueued':'*', 'maxrunning':'*', 'adminemail':'*',
-             'totalnodes':'*', 'cron':'*'}]
+             'totalnodes':'*', 'cron':'*', 'policy':'*'}]
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
@@ -27,11 +27,13 @@ if __name__ == '__main__':
         print "cobalt %s" % __version__
         raise SystemExit, 0
 
-    options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold', 'release':'release',
-               'kill':'kill', 'delete':'delete', 'addq':'addq', 'delq':'delq',
-               'stopq':'stopq', 'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
-    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue', 'i':'index',
-                'run':'run', 'setq':'setq', 'time':'time'}
+    options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold',
+               'release':'release', 'kill':'kill', 'delete':'delete',
+               'addq':'addq', 'delq':'delq', 'stopq':'stopq',
+               'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
+    doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
+                'i':'index', 'policy':'policy', 'run':'run',
+                'setq':'setq', 'time':'time'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
@@ -63,7 +65,8 @@ if __name__ == '__main__':
 
     # set the spec whether working with queues or jobs
     if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq'] \
-           or opts['startq'] or opts['stopq'] or opts['drainq'] or opts['killq']:
+           or opts['startq'] or opts['stopq'] or opts['drainq'] \
+           or opts['killq'] or opts['policy']:
         spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
@@ -108,12 +111,13 @@ if __name__ == '__main__':
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
         header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                    'MaxQueued', 'MaxUserNodes', 'TotalNodes',
-                   'AdminEmail', 'State', 'Cron')]
+                   'AdminEmail', 'State', 'Cron', 'Policy')]
         datatoprint = [(q.get('name', '*'), q.get('users', '*'),
                         q.get('mintime','*'), q.get('maxtime','*'),
                         q.get('maxrunning','*'),q.get('maxqueued','*'),
                         q.get('maxusernodes','*'),q.get('totalnodes','*'),
-                        q.get('adminemail', '*'),q.get('state'), q.get('cron'))
+                        q.get('adminemail', '*'),q.get('state'),
+                        q.get('cron'), q.get('policy'))
                        for q in response]
         datatoprint.sort()
         Cobalt.Util.print_tabular(header + datatoprint)
@@ -156,6 +160,8 @@ if __name__ == '__main__':
         response = cqm.SetQueues(spec, {'state':'draining'})
     elif opts['killq']:
         response = cqm.SetQueues(spec, {'state':'dead'})
+    elif opts['policy']:
+        response = cqm.SetQueues(spec, {'policy':opts['policy']})
     else:
         updates = {}
         if opts['hold']:

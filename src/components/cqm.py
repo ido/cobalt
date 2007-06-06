@@ -873,7 +873,7 @@ class Queue(Cobalt.Data.Data, JobSet):
         JobSet.__init__(self)
 
         # set defaults if not set already
-        defaults = {'state':'stopped', 'adminemail':'*'}
+        defaults = {'state':'stopped', 'adminemail':'*', 'policy':'default'}
         for d in defaults:
             if d not in self._attrib:
                 self.set(d, defaults[d])
