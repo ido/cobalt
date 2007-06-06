@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Cobalt job administration command'''
+'''Cobalt state dump and load command'''
 __revision__ = '$Revision: 427 $'
 __version__ = '$Version$'
 
@@ -14,7 +14,7 @@ def get_queues(cqm_conn):
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxqueued':'*', 'maxrunning':'*', 'adminemail':'*',
-             'totalnodes':'*', 'cron':'*'}]
+             'totalnodes':'*', 'cron':'*', 'policy':'*', 'stamp':'*'}]
     return cqm_conn.GetQueues(info)
 
 def get_jobs(cqm_conn):
@@ -79,10 +79,8 @@ def makedict(xmlnodes):
             elif attr_type == 'float':
                 element_data = float(element_data)
             elif attr_type == 'list':
-                # attempt to parse a list into a python list
-#                 print xmlrpclib.loads(element_data)[0]
+                # load list data using xmlrpc marshalling
                 element_data = list(xmlrpclib.loads(element_data)[0])
-#                 print 'makedict:     %s %s' % (attr, element_data)
             newdict.update({attr.nodeName:element_data})
         nodelist.append(newdict)
     return nodelist
@@ -99,13 +97,7 @@ if __name__ == '__main__':
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
 
-#     if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in
-#                                ['getq', 'j', 'setjobid']]:
-#         print "At least one jobid or queue name must be supplied"
-#         print __helpmsg__
-#         raise SystemExit, 1
-
-    if opts['dump']:
+    if opts['dump'] or not sys.argv[1:]:
         try:
             cqm = Cobalt.Proxy.queue_manager()
         except Cobalt.Proxy.CobaltComponentError:
@@ -124,8 +116,7 @@ if __name__ == '__main__':
             queues.appendChild(newq)
             maketree(newq, q)
 
-        #get jobs
-        #doc = xml.dom.minidom.Document()
+        #dump jobs
         jobs = doc.createElement('jobs')
         cobalt_xml.appendChild(jobs)
         for job in get_jobs(cqm):
@@ -133,6 +124,7 @@ if __name__ == '__main__':
             jobs.appendChild(newjob)
             maketree(newjob, job)
 
+        # make connection to scheduler
         try:
             bgsched = Cobalt.Proxy.scheduler()
         except Cobalt.Proxy.CobaltComponentError:
@@ -147,8 +139,9 @@ if __name__ == '__main__':
             partitions.appendChild(newpart)
             maketree(newpart, part)
 
+        #print unformatted xml to stdout
         print doc.toxml()
-        print >>sys.stderr, doc.toprettyxml(indent='    ')
+#         print >>sys.stderr, doc.toprettyxml(indent='    ')
 
     elif opts['load']:
         # make queue manager connection, and fetch current jobs and queues
@@ -254,7 +247,3 @@ if __name__ == '__main__':
             else:
                 print 'failed to update %s' % query[0].get('name')
         
-#     if not response:
-#         Cobalt.Logging.logging.error("Failed to match any jobs or queues")
-#     else:
-#         Cobalt.Logging.logging.debug(response)
