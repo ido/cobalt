@@ -647,6 +647,7 @@ class BGJob(Job):
             exitstatus = int(exitstatus)/256
         except:
             pass
+        self.set('endtime', time.time())
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.get('jobid'), self.get('user'),
                      self.get('nodes'), self.GetStats()))
