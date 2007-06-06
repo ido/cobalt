@@ -327,7 +327,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 qpotential[job.get('queue')] = {job:potential[job]}
         queues = qpotential.keys()
         queues.sort(self.QueueCMP)
-        qpols = {}
+        qpol = {}
         # get queue policies
         try:
             qps = comm['qm'].GetQueues([{'tag':'queue',
