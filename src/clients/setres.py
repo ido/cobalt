@@ -18,7 +18,7 @@ if __name__ == '__main__':
         print "setres %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
-    if '-h' in sys.argv or '--help' in sys.argv:
+    if '-h' in sys.argv or '--help' in sys.argv or len(sys.argv) == 1:
         print helpmsg
         raise SystemExit, 0
     try:
