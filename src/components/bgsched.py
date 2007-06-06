@@ -70,11 +70,14 @@ class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
     def __init__(self, element):
         Cobalt.Data.Data.__init__(self, element)
-        self.set('state', 'idle')
-        self.set('reservations', [])
+        if 'state' not in element.keys():
+            self.set('state', 'idle')
+        if 'reservations' not in element.keys():
+            self.set('reservations', [])
         self.job = 'none'
         self.rcounter = 1
-        self.set('db2', 'XX')
+        if 'db2' not in element.keys():
+            self.set('db2', 'XX')
 
     def isIdle(self):
         '''Return True if partition is idle'''

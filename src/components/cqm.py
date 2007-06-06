@@ -49,13 +49,20 @@ class Job(Cobalt.Data.Data):
     def __init__(self, data, jobid):
         Cobalt.Data.Data.__init__(self, data)
         self.comms = Cobalt.Proxy.CommDict()
-        self.set('jobid', str(jobid))
-        self.set('state', 'queued')
+        if not self.get('jobid', False) or self.get('jobid') == '*':
+            self.set('jobid', str(jobid))
+        else:
+            self.set('jobid', data.get('jobid'))
+        if not self.get('state', False):
+            self.set('state', 'queued')
         if not self.get('attribute', False):
             self.set('attribute', 'compute')
-        self.set('location', 'N/A')
-        self.set('starttime', '-1')
-        self.set('submittime', time.time())
+        if not self.get('location', False):
+            self.set('location', 'N/A')
+        if not self.get('starttime', False):
+            self.set('starttime', '-1')
+        if not self.get('submittime', False):
+            self.set('submittime', time.time())
         if not self.get('queue', False):
             self.set('queue', 'default')
         self.staged = 0
@@ -536,8 +543,6 @@ class BGJob(Job):
 
     def __init__(self, data, jobid):
         Job.__init__(self, data, jobid)
-        if data.get('state', False):
-            self.set('state', data['state'])
         if not self.get('kernel', False):
             self.set('kernel', 'default')
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
