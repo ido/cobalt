@@ -4,7 +4,7 @@
 __revision__ = '$Revision: 427 $'
 __version__ = '$Version$'
 
-import sys, xmlrpclib, xml.dom.minidom, pickle
+import sys, xmlrpclib, xml.dom.minidom
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
 __helpmsg__ = 'Usage: cqdump [--dump] [--load xmlfile]'
@@ -91,13 +91,15 @@ if __name__ == '__main__':
         print "cobalt %s" % __version__
         raise SystemExit, 0
 
-    options = {'dump':'dump'}
+    options = {'dump':'dump', 'd':'debug'}
     doptions = {'load':'load'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
 
     if opts['dump'] or not sys.argv[1:]:
+        #TODO: check version
+        
         #new xml dom
         doc = xml.dom.minidom.Document()
         cobalt_xml = doc.createElement('cobalt')
@@ -108,6 +110,17 @@ if __name__ == '__main__':
         except Cobalt.Proxy.CobaltComponentError:
             print "Failed to connect to queue manager"
             raise SystemExit, 1
+
+        #get the next jobid
+        try:
+            next_jobid = cqm.GetJobID()
+            next_jobid_xml = doc.createElement('nextjobid')
+            cobalt_xml.appendChild(next_jobid_xml)
+            next_jobid_text = doc.createTextNode(str(next_jobid))
+            next_jobid_xml.appendChild(next_jobid_text)
+        except AttributeError:
+            #cqm version must not have GetJobID()
+            pass
 
         #dump queues
         queues = doc.createElement('queues')
@@ -145,6 +158,8 @@ if __name__ == '__main__':
 #         print >>sys.stderr, doc.toprettyxml(indent='    ')
 
     elif opts['load']:
+        #TODO: check version
+        
         # make queue manager connection, and fetch current jobs and queues
         try:
             cqm = Cobalt.Proxy.queue_manager()
@@ -165,25 +180,26 @@ if __name__ == '__main__':
         new_queues = [queue for queue in queuequery if queue.get('name') not in current_queue_names]
 
         print 'Setting queues:'
-        response = cqm.AddQueue(new_queues)
-        if response:
-            for r in response:
-                print 'added %s' % r.get('name')
-        else:
-            for r in response:
-                print 'failed to add %s' % r.get('name')
+        if not opts['debug']:
+            response = cqm.AddQueue(new_queues)
+            if response:
+                for r in response:
+                    print 'added %s' % r.get('name')
+            else:
+                for r in response:
+                    print 'failed to add %s' % r.get('name')
 
         for eq in existing_queues:
             query = [{'tag':'queue', 'name':eq.get('name')}]
             for eq_key in eq.keys():
                 if eq_key == 'name' or eq_key == 'tag':
                     del eq[eq_key]
-            [response] = cqm.SetQueues(query, eq)
-            print response
-            if response:
-                print 'updated %s' % response.get('name')
-            else:
-                print 'failed to update %s' % query[0].get('name')
+            if not opts['debug']:
+                [response] = cqm.SetQueues(query, eq)
+                if response:
+                    print 'updated %s' % response.get('name')
+                else:
+                    print 'failed to update %s' % query[0].get('name')
 
         # get jobs from xml dom
         jobs = xmldoc.getElementsByTagName('jobs')
@@ -192,24 +208,35 @@ if __name__ == '__main__':
         current_job_names = [cj.get('jobid') for cj in current_jobs]
         existing_jobs = [job for job in jobquery if job.get('jobid') in current_job_names]
         new_jobs = [job for job in jobquery if job.get('jobid') not in current_job_names]
-        print "Setting jobs:"
+        print "\nSetting jobs:"
         for jq in new_jobs:
-            [response] = cqm.AddJob(jq)
-            if response:
-                print "added job %s/%s" % (response.get('jobid'), jq.get('user'))
-            else:
-                print "failed to add job %s/%s" % (jq.get('jobid'), jq.get('user'))
+            if not opts['debug']:
+                [response] = cqm.AddJob(jq)
+                if response:
+                    print "added job %s/%s" % (response.get('jobid'), jq.get('user'))
+                else:
+                    print "failed to add job %s/%s" % (jq.get('jobid'), jq.get('user'))
 
         for ej in existing_jobs:
             query = [{'tag':'job', 'jobid':ej.get('jobid')}]
             for ej_key in ej.keys():
                 if ej_key == 'jobid' or ej_key == 'tag':
                     del ej[ej_key]
-            [response] = cqm.SetJobs(query, ej)
-            if response:
-                print 'updated %s/%s' % (response.get('jobid'), ej.get('user'))
-            else:
-                print 'failed to update %s/%s' % (query[0].get('jobid'), ej.get('user'))
+            if not opts['debug']:
+                [response] = cqm.SetJobs(query, ej)
+                if response:
+                    print 'updated %s/%s' % (response.get('jobid'), ej.get('user'))
+                else:
+                    print 'failed to update %s/%s' % (query[0].get('jobid'), ej.get('user'))
+
+        # get next jobid
+        nextjobid = xmldoc.getElementsByTagName('nextjobid')
+        if nextjobid:
+#         print nextjobid[0].childNodes[0].data
+            print "\nSetting next jobid:"
+            print nextjobid[0].childNodes[0].data
+            if not opts['debug']:
+                cqm.SetJobID(int(nextjobid[0].childNodes[0].data))
 
         # restore partitions
         partitions = xmldoc.getElementsByTagName('partitions')
@@ -227,24 +254,26 @@ if __name__ == '__main__':
         existing_partitions = [part for part in partquery if part.get('name') in current_names]
         new_partitions = [part for part in partquery if part.get('name') not in current_names]
 
-        print "Setting partitions:"
+        print "\nSetting partitions:"
         # new partitions
-        result = bgsched.AddPartition(new_partitions)
-        if result:
-            for p in new_partitions:
-                print "added %s" % p.get('name')
-        else:
-            for p in new_partitions:
-                print "failed to add %s" % p.get('name')
+        if not opts['debug']:
+            result = bgsched.AddPartition(new_partitions)
+            if result:
+                for p in new_partitions:
+                    print "added %s" % p.get('name')
+            else:
+                for p in new_partitions:
+                    print "failed to add %s" % p.get('name')
         # existing partitions
         for part in existing_partitions:
             query = [{'tag':'partition', 'name':part.get('name')}]
             for p in part.keys():
                 if p == 'tag' or p == 'name':
                     del part[p]
-            result = bgsched.Set(query, part)
-            if result:
-                print 'updated %s' % query[0].get('name')
-            else:
-                print 'failed to update %s' % query[0].get('name')
+            if not opts['debug']:
+                result = bgsched.Set(query, part)
+                if result:
+                    print 'updated %s' % query[0].get('name')
+                else:
+                    print 'failed to update %s' % query[0].get('name')
         

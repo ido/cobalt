@@ -1108,8 +1108,13 @@ class CQM(Cobalt.Component.Component):
         self.register_function(lambda address, data, updates:
                                self.Queues.GetJobs(data, lambda job, newattr:job.update(newattr), updates),
                                'SetJobs')
+        self.register_function(self.get_jobid, 'GetJobID')
         self.register_function(self.set_jobid, 'SetJobID')
         self.register_function(self.handle_queue_history, "GetHistory")
+
+    def get_jobid(self, _):
+        '''Get next jobid'''
+        return self.Queues.__id__.idnum + 1
 
     def set_jobid(self, _, jobid):
         '''Set next jobid for new job'''
