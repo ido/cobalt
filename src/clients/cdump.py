@@ -33,12 +33,12 @@ def get_jobs(cqm_conn):
                 q.update({h.lower():'*'})
     return cqm_conn.GetJobs(query)
 
-def get_partitions(cqm_conn):
+def get_partitions(bgsched_conn):
     '''gets all partition info'''
     query = [{'tag':'partition', 'scheduled':'*', 'name':'*', 'stamp':'*',
               'reservations':'*', 'functional':'*', 'queue':'*', 'state':'*',
               'deps':'*', 'db2':'*', 'size':'*'}]
-    return cqm_conn.GetPartition(query)
+    return bgsched_conn.GetPartition(query)
 
 def maketree(xmlnode, elements):
     '''appends children to xmlnode from members of elements dictionary'''
@@ -98,15 +98,16 @@ if __name__ == '__main__':
                                             doptions, __helpmsg__)
 
     if opts['dump'] or not sys.argv[1:]:
+        #new xml dom
+        doc = xml.dom.minidom.Document()
+        cobalt_xml = doc.createElement('cobalt')
+        doc.appendChild(cobalt_xml)
+
         try:
             cqm = Cobalt.Proxy.queue_manager()
         except Cobalt.Proxy.CobaltComponentError:
             print "Failed to connect to queue manager"
             raise SystemExit, 1
-
-        doc = xml.dom.minidom.Document()
-        cobalt_xml = doc.createElement('cobalt')
-        doc.appendChild(cobalt_xml)
 
         #dump queues
         queues = doc.createElement('queues')

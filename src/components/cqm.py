@@ -913,6 +913,15 @@ class QueueSet(Cobalt.Data.DataSet):
         if type(cdata) != types.ListType:
             cdata = [cdata]
         for item in cdata:
+            #first update cargs with restriction elements, and remove any restrictions
+            #from item, so they aren't created as normal attributes of iobj
+            rupdates = {}  #restriction updates
+            for datum in item.keys():
+                if datum in Restriction.__checks__:
+                    rupdates.update({datum:item.get(datum)})
+                    del item[datum]
+
+            #create new queue
             try:
                 if self.__id__:
                     iobj = self.__object__(item)
@@ -925,6 +934,11 @@ class QueueSet(Cobalt.Data.DataSet):
             #return xmlrpclib.dumps(xmlrpclib.Fault(8, str(missing)))
             # uniqueness test goes here
             self.data.append(iobj)
+
+            #now add restrictions through the Get function
+            if rupdates:
+                self.Get([iobj.to_rx(item)], cargs=rupdates)
+
             if callback:
                 apply(callback, (iobj, ) + cargs)
             retval.append(iobj.to_rx(item))
@@ -934,7 +948,6 @@ class QueueSet(Cobalt.Data.DataSet):
         '''Overloading DataSet.Get to check for restriction fields
 
         does not support a callback function for restrictions'''
-
         # split cargs into normal properties and checks
         rupdates = {}
         cupdates = {}
