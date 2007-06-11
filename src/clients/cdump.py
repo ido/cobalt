@@ -5,9 +5,18 @@ __revision__ = '$Revision: 427 $'
 __version__ = '$Version$'
 
 import sys, xmlrpclib, xml.dom.minidom
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util, Cobalt.Data, Cobalt.Component
 
 __helpmsg__ = 'Usage: cqdump [--dump] [--load xmlfile]'
+
+def get_version():
+    '''determines cobalt version from lib imports'''
+    version_dict = {('202', '154', '101', '170', '170'):'0.96.2',
+                    ('202', '388', '262', '499', '392'):'current'}
+    this_version = [x.__revision__.split()[1] for x in Cobalt.Component,
+                    Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util]
+    print 'this version', this_version
+    print version_dict[tuple(this_version)]
 
 def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
@@ -99,7 +108,8 @@ if __name__ == '__main__':
 
     if opts['dump'] or not sys.argv[1:]:
         #TODO: check version
-        
+#         this_version = get_version()
+
         #new xml dom
         doc = xml.dom.minidom.Document()
         cobalt_xml = doc.createElement('cobalt')
@@ -118,7 +128,7 @@ if __name__ == '__main__':
             cobalt_xml.appendChild(next_jobid_xml)
             next_jobid_text = doc.createTextNode(str(next_jobid))
             next_jobid_xml.appendChild(next_jobid_text)
-        except AttributeError:
+        except xmlrpclib.Fault:
             #cqm version must not have GetJobID()
             pass
 
