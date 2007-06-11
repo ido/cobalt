@@ -311,9 +311,9 @@ class PartitionSet(Cobalt.Data.DataSet):
             return []
 
     def QueueCMP(self, q1, q2):
-        if self.qconfig.get(q1, 'default') == 'high-prio':
+        if self.qpol.get(q1, 'default') == 'high-prio':
             return -1
-        if self.qconfig.get(q2, 'default') == 'high-prio':
+        if self.qpol.get(q2, 'default') == 'high-prio':
             return 1
         return 0
 
@@ -326,9 +326,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 qpotential[job.get('queue')][job] = potential[job]
             else:
                 qpotential[job.get('queue')] = {job:potential[job]}
-        queues = qpotential.keys()
-        queues.sort(self.QueueCMP)
-        qpol = {}
+        self.qpol = {}
         # get queue policies
         try:
             qps = comm['qm'].GetQueues([{'tag':'queue',
@@ -340,11 +338,13 @@ class PartitionSet(Cobalt.Data.DataSet):
         # if None, set default
         for qinfo in qps:
             if qinfo.get('policy', None) != None:
-                qpol[qinfo['name']] = qinfo['policy']
+                self.qpol[qinfo['name']] = qinfo['policy']
             else:
-                qpol[qinfo['name']] = 'default'
+                self.qpol[qinfo['name']] = 'default'
+        queues = qpotential.keys()
+        queues.sort(self.QueueCMP)
         for queue in queues:
-            qp = self.qpolicy.get(qpol[queue], 'default')
+            qp = self.qpolicy.get(self.qpol[queue], 'default')
             qfunc = getattr(self, qp, 'default')
                             
             # need to remove partitions, included and containing,
