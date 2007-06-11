@@ -17,8 +17,8 @@ def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
-             'maxqueued':'*', 'maxrunning':'*', 'adminemail':'*',
-             'totalnodes':'*', 'cron':'*', 'policy':'*'}]
+             'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*',
+             'adminemail':'*', 'totalnodes':'*', 'cron':'*', 'policy':'*'}]
     return cqm_conn.GetQueues(info)
 
 if __name__ == '__main__':
