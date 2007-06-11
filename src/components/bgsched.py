@@ -341,9 +341,11 @@ class PartitionSet(Cobalt.Data.DataSet):
                 self.qpol[qinfo['name']] = qinfo['policy']
             else:
                 self.qpol[qinfo['name']] = 'default'
-        queues = qpotential.keys()
+        queues = self.qpol.keys()
         queues.sort(self.QueueCMP)
         for queue in queues:
+            if queue not in qpotential:
+                qpotential[queue] = {}
             qp = self.qpolicy.get(self.qpol[queue], 'default')
             qfunc = getattr(self, qp, 'default')
                             
