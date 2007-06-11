@@ -146,7 +146,7 @@ class queue_manager(ComponentProxy):
 class scheduler(ComponentProxy):
     '''scheduler proxy'''
     name = 'scheduler'
-    methods = ['AddReservation', 'DelReservation', 'GetPartition', 'AddPartition', 'DelPartition', 'Set']
+    methods = ['AddReservation', 'DelReservation', 'SetReservation', 'GetPartition', 'AddPartition', 'DelPartition', 'Set']
 
 class bcfg2(ComponentProxy):
     '''bcfg2 client code'''

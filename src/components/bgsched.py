@@ -452,6 +452,7 @@ class BGSched(Cobalt.Component.Component):
                                'Set')  
         self.register_function(self.AddReservation, "AddReservation")
         self.register_function(self.ReleaseReservation, "DelReservation")
+        self.register_function(self.SetReservation, "SetReservation")
 
     def GetReservations(self):
         '''build a list of reservation names in use'''
@@ -466,11 +467,31 @@ class BGSched(Cobalt.Component.Component):
                         reservs.append(res)
         return reservs
 
-    def ResQueueSync(self):
-        '''Create any needed rqueues, and kill unneeded ones'''
+    def SetReservation(self,  _, spec, name, user, start, duration):
+        '''updates reservations'''
+        for s in spec:
+            s.update({'reservations':'*'})
+        affected_partitions = self.partitions.Get(spec)
+        resv_updates = []
+        for ap in affected_partitions:
+            for res in ap['reservations']:
+                if res[0] == name:
+                    ap['reservations'].remove(res)
+                    ap['reservations'].append((name, user, start, duration))
+                    resv_updates.append((name, user, start, duration))
+        #now update queues
+        self.ResQueueSync(updates=resv_updates)
+        return affected_partitions
+
+    def ResQueueSync(self, updates=[]):
+        '''Create any needed rqueues, update attributes, and kill
+        unneeded rqueues'''
         queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
         qnames = [q['name'] for q in queues]
+        update_names = [r[0] for r in updates]
+        
         for reserv in self.GetReservations():
+            #adding reservation queue
             if "R.%s" % (reserv[0]) not in qnames:
                 logger.info("Adding reservation queue R.%s" % (reserv[0]))
                 spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
@@ -481,6 +502,17 @@ class BGSched(Cobalt.Component.Component):
                 except Exception, e:
                     logger.error("Queue setup for %s failed: %s" \
                                  % ("R.%s" % reserv[0], e))
+            #updating reservation queue
+            elif reserv[0] in update_names:
+                logger.info("Updating reservation queue R.%s" % (reserv[0]))
+                spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
+                attrs = {'users': reserv[1]}
+                try:
+                    comm['qm'].SetQueues(spec, attrs)
+                except Exception, e:
+                    logger.error("Queue setup for %s failed: %s" \
+                                 % ("R.%s" % reserv[0], e))
+
         rnames = [r[0] for r in self.GetReservations()]
         for qn in qnames:
             if qn.startswith("R.") and qn[2:] not in rnames:

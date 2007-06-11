@@ -140,12 +140,7 @@ if __name__ == '__main__':
         except:
             ndur = r[3]
         # set reservation n2 with new args
-        scheduler.AddReservation([{'tag':'partition', 'name':n['name']} for n in parts],
-                                 tmpnam, nuser, nstart, ndur)
-        scheduler.DelReservation([{'tag':'partition', 'name':'*'}], rname)
-        scheduler.AddReservation([{'tag':'partition', 'name':n['name']} for n in parts],
-                                 rname, nuser, nstart, ndur)
-        scheduler.DelReservation([{'tag':'partition', 'name':'*'}], tmpnam)
+        scheduler.SetReservation([{'tag':'partition', 'name':n['name']} for n in parts], rname, nuser, nstart, ndur)
         raise SystemExit, 0
     else:
         spec = [{'tag':'partition', 'name':p} for p in partitions]
