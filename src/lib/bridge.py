@@ -266,5 +266,5 @@ if __name__ == '__main__':
     #    print job.id, job.user, job.partition, job.state
     for part in partlist:
         print [getattr(part, name) for name in \
-               ['id', 'description', 'small', 'connection', 'psetsPerBP']]
+               ['id', 'description', 'small', 'connection', 'ramdisk']]
 
