@@ -120,8 +120,27 @@ class Job(PreStub):
                   'state': \
                   (bgl_rm_api.RM_JobState, bgl_rm_api.rm_job_state_t,
                    bgl_rm_api.RM_JobStateEnum),
+                  'executable': \
+                  (bgl_rm_api.RM_JobExecutable, c_char_p, getvalue),
                   'user': \
                   (bgl_rm_api.RM_JobUserName, c_char_p, getvalue),
+                  'dbjobid': \
+                  (bgl_rm_api.RM_JobDBJobID,
+                   bgl_rm_api.db_job_id_t, getvalue),
+                  'outfile': \
+                  (bgl_rm_api.RM_JobOutFile, c_char_p, getvalue),
+                  'infile': \
+                  (bgl_rm_api.RM_JobInFile, c_char_p, getvalue),
+                  'errfile': \
+                  (bgl_rm_api.RM_JobErrFile, c_char_p, getvalue),
+                  'outdir': \
+                  (bgl_rm_api.RM_JobOutDir, c_char_p, getvalue),
+                  'errtext': \
+                  (bgl_rm_api.RM_JobErrText, c_char_p, getvalue),
+                  'args': \
+                  (bgl_rm_api.RM_JobArgs, c_char_p, getvalue),
+                  'envs': \
+                  (bgl_rm_api.RM_JobEnvs, c_char_p, getvalue),
                   }
 
 class Switch(PreStub):
@@ -268,3 +287,6 @@ if __name__ == '__main__':
         print [getattr(part, name) for name in \
                ['id', 'description', 'small', 'connection', 'ramdisk']]
 
+    for job in joblist:
+        print [getattr(job, name) for name in \
+               ['id', 'dbjobid', 'user', 'partition', 'state']]
