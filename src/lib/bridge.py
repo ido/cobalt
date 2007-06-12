@@ -141,6 +141,36 @@ class Job(PreStub):
                   (bgl_rm_api.RM_JobArgs, c_char_p, getvalue),
                   'envs': \
                   (bgl_rm_api.RM_JobEnvs, c_char_p, getvalue),
+                  'inhist': \
+                  (bgl_rm_api.RM_JobInHist, c_int, boolean),
+                  'mode': \
+                  (bgl_rm_api.RM_JobMode,
+                   bgl_rm_api.rm_job_mode_t, getvalue),
+                  'strace': \
+                  (bgl_rm_api.RM_JobStrace,
+                   bgl_rm_api.rm_job_strace_t, getvalue),
+                  'stdin': \
+                  (bgl_rm_api.RM_JobStdinInfo,
+                   bgl_rm_api.rm_job_stdin_info_t, getvalue),
+                  'stdout': \
+                  (bgl_rm_api.RM_JobStdoutInfo,
+                   bgl_rm_api.rm_job_stdout_info_t, getvalue),
+                  'stderr': \
+                  (bgl_rm_api.RM_JobStderrInfo,
+                   bgl_rm_api.rm_job_stderr_info_t, getvalue),
+                  'starttime': \
+                  (bgl_rm_api.RM_JobStartTime, c_char_p, getvalue),
+                  'endtime': \
+                  (bgl_rm_api.RM_JobEndTime, c_char_p, getvalue),
+                  'runtime': \
+                  (bgl_rm_api.RM_JobRunTime,
+                   bgl_rm_api.rm_job_runtime_t, getvalue),
+                  'computenodesused': \
+                  (bgl_rm_api.RM_JobComputeNodesUsed,
+                   bgl_rm_api.rm_job_computenodes_used_t, getvalue),
+                  'exitstatus': \
+                  (bgl_rm_api.RM_JobExitStatus,
+                   bgl_rm_api.rm_job_exitstatus_t, getvalue),
                   }
 
 class Switch(PreStub):
