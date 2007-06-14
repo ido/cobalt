@@ -14,6 +14,7 @@ boolean = lambda x:x.value != 0
 
 class BGStub(object):
     nocache = []
+    hidden = []
     def __init__(self, debug=4):
         self.setDebug(debug)
         s = bridge.rm_set_serial(c_char_p("BGL"))
@@ -38,6 +39,10 @@ class BGStub(object):
             return self.attrcache[attr]
         else:
             return object.__getattribute__(self, attr)
+
+    def Visible(self):
+        return [item for item in self.__attrinfo__ \
+                if item not in self.hidden]
 
 class LazyRMSet(object):
     def __init__(self, object, sname, hname, tname, cclass):
@@ -181,6 +186,8 @@ class PSet(PreStub):
 
 class Partition(PreStub):
     nocache = ['Switchtail', 'BPtail', 'psetNext']
+    hidden = ['id', 'BPnum', 'BPhead', 'BPtail', 'Switchnum', 'Switchhead',
+              'Switchtail']
     __attrinfo__ = \
                  {'id': \
                   (bgl_rm_api.RM_PartitionID,
