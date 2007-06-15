@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-__revision__ = '$Revision$'
-
-import bridge, sys
+import bridge, getopt, sys
 
 def matchFilters(filters, path):
     if not filters:
@@ -17,22 +15,34 @@ def matchFilters(filters, path):
     return False
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        filters = sys.argv[1:]
-    else:
-        filters = []
+    try:
+        opts, filters = getopt.getopt(sys.argv[1:], 's:q:')
+    except:
+        print "Usage:\nbgbtl -s <value> -q <qvalue> <filter1> <filter2>"
+        raise SystemExit, 1
 
+    mode = 'read'
+    if [opt for opt in opts if opt[0] == '-s']:
+        mode = 'set'
+        sval = [opt[1] for opt in opts if opt[0] == '-s'][0]
+    qval = False
+    if [opt for opt in opts if opt[0] == '-q']:
+        qval = [opt[1] for opt in opts if opt[0] == '-q'][0]
     parts = bridge.PartList()
-    for part in parts:
-        for key in part.Visible():
-            fullkey = "partition:%s:%s" % (part.id, key)
-            if matchFilters(filters, fullkey):
-                print "%s = %s" % (fullkey, getattr(part, key))
     jobs = bridge.JobList()
-    for job in jobs:
-        for key in job.Visible():
-            fullkey = "job:%s:%s" % (job.id, key)
-            if matchFilters(filters, fullkey):
-                print "%s = %s" % (fullkey, getattr(job, key))
 
+    for (prefix, objlist) in [("partition", parts), ("job", jobs)]:
+        for obj in objlist:
+            for key in obj.Visible():
+                fullkey = "%s:%s:%s" % (prefix, obj.id, key)
+                if matchFilters(filters, fullkey):
+                    if qval:
+                        if getattr(obj, key) != qval:
+                            continue
+                    if mode == 'read':
+                        print "%s=%s" % (fullkey, getattr(obj, key))
+                    else:
+                        # mode = set
+                        setattr(obj, key, sval)
+                        print "%s=%s" % (fullkey, sval)
 
