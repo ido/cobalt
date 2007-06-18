@@ -30,10 +30,19 @@ Set the path to the directory location of partition boot links
 Set the path to the directory containing BG/L kernel profiles
 .TP
 .B log_dir=path
-Set the path to the directory for cqm's log files.
+Set the path to the directory for cqm's accounting log files.
 .TP
 .B mailserver=server
 Set the mailserver used for sending notifications at the beginning and end of job execution.
+.TP
+.B filters=pathtoscript
+Set submission filter scripts to be run against a job submitted with cqsub. Multiple filters should be separated by colons. All the job attributes are passed to each filter script in the form 'attr1=value attr2=value'. If the script(s) returns 0, the job will successfully be submitted. Otherwise, the job is rejected. STDERR from the script(s) will be echo'ed to the terminal, and STDOUT from the script will be used to modify the job attributes before submission to cqm (attribute=value on separate lines.)
+.TP
+.B postscript=pathtoscript
+Set post-job scripts to be run upon completion of a job. If the script(s) does not return 0, the STDERR from the script(s) will be logged via syslog. 
+.TP
+.B cqstat_header=attr fields
+Set custom display header for cqstat, using colon-separated job attributes (pick from the cqstat -lf listing)
 .SH "SEE ALSO"
 .BR cqsub(1),
 .BR cqstat(1),
