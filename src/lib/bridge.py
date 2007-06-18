@@ -272,21 +272,27 @@ class Partition(PreStub):
                    bgl_rm_api.rm_connection_type_t,
                    bgl_rm_api.RM_ConnectionTypeEnum),
                   'user': \
-                  (bgl_rm_api.RM_PartitionUserName, None, c_char_p, getvalue),
+                  (bgl_rm_api.RM_PartitionUserName, bgl_rm_api.RM_MODIFY_Owner,
+                   c_char_p, getvalue),
                   'mloader': \
-                  (bgl_rm_api.RM_PartitionMloaderImg, None, c_char_p, getvalue),
+                  (bgl_rm_api.RM_PartitionMloaderImg,
+                   bgl_rm_api.RM_MODIFY_MloaderImg, c_char_p, getvalue),
                   'blrts': \
-                  (bgl_rm_api.RM_PartitionBlrtsImg, None, c_char_p, getvalue),
+                  (bgl_rm_api.RM_PartitionBlrtsImg,
+                   bgl_rm_api.RM_MODIFY_BlrtsImg, c_char_p, getvalue),
                   'linux': \
-                  (bgl_rm_api.RM_PartitionLinuxImg, None, c_char_p, getvalue),
+                  (bgl_rm_api.RM_PartitionLinuxImg,
+                   bgl_rm_api.RM_MODIFY_LinuxImg, c_char_p, getvalue),
                   'ramdisk': \
-                  (bgl_rm_api.RM_PartitionRamdiskImg, None, c_char_p, getvalue),
+                  (bgl_rm_api.RM_PartitionRamdiskImg,
+                   bgl_rm_api.RM_MODIFY_RamdiskImg, c_char_p, getvalue),
                   'mode': \
                   (bgl_rm_api.RM_PartitionMode, None,
                    bgl_rm_api.rm_partition_mode_t,
                    bgl_rm_api.RM_PartitionModeEnum),
                   'description': \
-                  (bgl_rm_api.RM_PartitionDescription, None, c_char_p, getvalue),
+                  (bgl_rm_api.RM_PartitionDescription,
+                   bgl_rm_api.RM_MODIFY_Description, c_char_p, getvalue),
                   'small': \
                   (bgl_rm_api.RM_PartitionSmall, None, c_int, boolean),
                   'psetsPerBP': \
@@ -411,7 +417,7 @@ if __name__ == '__main__':
 #                ['id', 'description', 'small', 'connection', 'ramdisk']]
         if part.id == 'test32_R000_J102':
 #             part.description = 'modified by PyBridge'
-#             part.user = 'nobody'
+            part.user = 'nobody'
             print part.psetsPerBP
             break
 
