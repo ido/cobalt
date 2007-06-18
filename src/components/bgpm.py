@@ -87,6 +87,7 @@ class ProcessGroup(Cobalt.Data.Data):
             os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
             os.environ["DB2INSTANCE"] = self.config['db2_instance']
             os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
+            os.environ["COBALT_JOBID"] = self.get('jobid')
             if inputfile != '':
                 infile = open(inputfile, 'r')
                 os.dup2(infile.fileno(), sys.__stdin__.fileno())
