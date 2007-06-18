@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import bridge, getopt, sys
+import Cobalt.bridge, getopt, sys
 
 def matchFilters(filters, path):
     if not filters:
