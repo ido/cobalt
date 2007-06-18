@@ -26,7 +26,8 @@ if __name__ == '__main__':
         raise SystemExit, 1
     level = 30
     if opts['version']:
-        print "cqstat %s" % __revision__
+        print "cqwait %s" % __revision__
+        print "cobalt %s" % __version__
         raise SystemExit, 0
     Cobalt.Logging.setup_logging('cqstat', to_syslog = False, level = level)
     try:

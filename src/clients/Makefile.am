@@ -1,5 +1,5 @@
 dist_sbin_SCRIPTS = cqadm.py partadm.py setres.py releaseres.py slpstat.py
-dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py partlist.py showres.py cqhist.py
+dist_bin_SCRIPTS = cqsub.py cqstat.py cqdel.py partlist.py showres.py cqhist.py cqwait.py
 
 bin_PROGRAMS = wrapper
 wrapper_SOURCES = wrapper.c
@@ -16,6 +16,7 @@ installlinks: install-binPROGRAMS install-dist_binSCRIPTS install-wrapper
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqdel
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/showres
 	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqhist
+	ln -sf $(WRAPPERDIR)/wrapper $(bindir)/cqwait
 
 install-binPROGRAMS:
 install-wrapper: $(bin_PROGRAMS)
