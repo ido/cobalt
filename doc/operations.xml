@@ -25,11 +25,11 @@
 	    A request is sent to the queue manager describing a
 	    new job. Aspects of this request are checked both on the
 	    server side, and in <filename>cqsub</filename>, for better
-	    user error messages. Whenever a job is created or changes
-	    state, appropriate events are emitted. These events can be
-	    seen using the <filename>eminfo.py</filename> command. Any
-	    client that has subscribed to this sort of event will
-	    receive a copy.
+	    user error messages. <!-- Whenever a job is created or changes -->
+<!-- 	    state, appropriate events are emitted. These events can be -->
+<!-- 	    seen using the <filename>eminfo.py</filename> command. Any -->
+<!-- 	    client that has subscribed to this sort of event will -->
+<!-- 	    receive a copy. -->
 	  </para>
 	</listitem>
       </varlistentry>
@@ -170,24 +170,31 @@ Jun 29 21:28:37 sn1 BGSched: Found new job 4720
     <title>Job Accounting Messages</title>
 
     <para>
-      Job accounting log messages are logged to syslog. The basic
-      messages are logged by the queue-manager for job queuing (Q),
-      execution (S), and exit (E).
+      Job accounting log messages are logged to files in the directory
+      specified by <filename>log_dir</filename> in the [cqm] section
+      of the config file. Basic messages are logged by the
+      queue-manager for job queuing (Q), execution (S), and exit
+      (E). Additional messages include the location where the job is
+      running and the exit code.
 
 	<programlisting>
 Q;jobid;user;queue
 S;jobid;user;job name;nodes;processors;mode;walltime
+Job jobid/user/Q:queue: Running job on location
 E;jobid;user;walltime
+Job jobid/user on nodes nodes done. queue:[queuetime]s
+  user:[walltime]s  exit:exitcode
 	</programlisting>
-
     </para>
-
     <para>
       Example:
       <programlisting>
-Dec 15 17:29:36 localhost cqm[4152]: Q;25537;voran;default
-Dec 15 17:29:39 localhost cqm[4152]: S;25537;voran;N/A;32;32;co;10
-Dec 15 17:29:59 localhost cqm[4152]: E;25537;voran;10
+2007-06-06 12:43:50 Q;59;bob;default
+2007-06-06 12:44:56 S;59;bob;N/A;32;32;co;20
+2007-06-06 12:44:56 Job 59/bob/4539/Q:default: Running job on 32_R000_J108_N3
+2007-06-06 12:44:56 Job 59/bob using kernel default
+2007-06-06 12:45:08 E;59;bob;14
+2007-06-06 12:45:09 Job 59/bob on 32 nodes done. queue:65.88s user:11.98s  exit:0
       </programlisting>
 
     </para>
@@ -205,17 +212,17 @@ Dec 15 17:29:59 localhost cqm[4152]: E;25537;voran;10
     <para>
       Example:
       <programlisting>
-Dec 15 17:29:39 localhost bgsched[4760]: Job 25537/voran: Scheduling
+Dec 15 17:29:39 localhost bgsched[4760]: Job 25537/bob: Scheduling
   job 25537 on partition 32wayN0
-Dec 15 17:29:39 localhost cqm[4152]: Job 25537/voran using kernel default
-Dec 15 17:29:39 localhost bgpm[4124]: Job 25537/voran: ProcessGroup 1
+Dec 15 17:29:39 localhost cqm[4152]: Job 25537/bob using kernel default
+Dec 15 17:29:39 localhost bgpm[4124]: Job 25537/bob: ProcessGroup 1
   Started on partition 32wayN0. pid: 4220
-Dec 15 17:29:39 localhost bgpm[4220]: Job 25537/voran: Running
+Dec 15 17:29:39 localhost bgpm[4220]: Job 25537/bob: Running
   /bgl/BlueLight/ppcfloor/bglsys/bin/mpirun mpirun -np 32 -partition 
-  32wayN0 -mode co -cwd /home/voran/tests -exe /home/voran/tests/ring-hello
-Dec 15 17:35:49 localhost bgpm[4124]: Job 25537/voran: ProcessGroup 1
+  32wayN0 -mode co -cwd /home/bob/tests -exe /home/bob/tests/ring-hello
+Dec 15 17:35:49 localhost bgpm[4124]: Job 25537/bob: ProcessGroup 1
   Finshed with exit code 0. pid 4220
-Dec 15 17:35:59 localhost cqm[4152]: Job 25537/voran on 32 nodes
+Dec 15 17:35:59 localhost cqm[4152]: Job 25537/bob on 32 nodes
   done. queue:2.99s user:10.18s
       </programlisting>
 
@@ -233,17 +240,17 @@ Dec 15 17:35:59 localhost cqm[4152]: Job 25537/voran on 32 nodes
       persistent. Periodically, each component marshalls this data
       down to a text stream (using Python's cPickle module), and saves
       this data in a file in the directory
-      <filename>/var/spool/sss</filename>. The filenames in this
+      <filename>/var/spool/cobalt/</filename>. The filenames in this
       directory correspond to the component implementation name. This
       is the name that appears in syslog log messages (ie cqm, bgpm,
       BGSched). 
     </para>
 
-    <para>
-      This data can be manipulated from a python interpreter using the
-      <filename>cddbg.py</filename>. This should not be attempted
-      unless you really know what you are doing.
-    </para>
+<!--     <para> -->
+<!--       This data can be manipulated from a python interpreter using the -->
+<!--       <filename>cddbg.py</filename>. This should not be attempted -->
+<!--       unless you really know what you are doing. -->
+<!--     </para> -->
   </section>
   <section>
     <title>Resource Manager Operations</title>
