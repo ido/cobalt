@@ -3,7 +3,7 @@
 bgsched \- Blue Gene/L Scheduler
 .SH SYNOPSIS
 .B bgsched
-.I [-d] [--nodb2] [-C <configfile>] [--daemon=<pidfile>]
+.I [-d] [--nodb2] [-C <configfile>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B bgsched
@@ -19,7 +19,7 @@ Partition states are not checked against the BGL db2 database.
 .B \-C <configfile>
 Specify path to cobalt.conf.
 .TP
-.B \-\-daemon=<pidfile>
+.B \-D=<pidfile>
 Daemonize, and write pid to pidfile.
 .SH "CONFIGURATION FILE PARAMETERS"
 .TP

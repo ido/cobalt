@@ -3,7 +3,7 @@
 bgqm \- Blue Gene/L Process Manager
 .SH SYNOPSIS
 .B bgqm 
-.I [-d] [--notbgl] [-C <configfile>] [--daemon=<pidfile>]
+.I [-d] [--notbgl] [-C <configfile>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B bgqm 
@@ -19,7 +19,7 @@ Debugging mode, where mpirun is not used to launch executable. The executable is
 .B \-C <configfile>
 Specify path to cobalt.conf.
 .TP
-.B \-\-daemon=<pidfile>
+.B \-D=<pidfile>
 Daemonize, and write pid to pidfile.
 .SH "CONFIGURATION FILE PARAMETERS"
 .TP

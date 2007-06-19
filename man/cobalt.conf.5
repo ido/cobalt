@@ -5,7 +5,7 @@ cobalt.conf - configuration parameters for cobalt components
 Cobalt.conf includes a section for each component that has
 configuration parameters. Each section has a header, [component] where
 component is the individual component name. Each setting is a
-key/value pair. 
+key/value pair. You can comment out lines by starting them with '#'.
 .PP
 See individual component man pages for component specific parameters.
 .SH "EXAMPLES"
@@ -19,6 +19,7 @@ the bgkernel parameter to false.
 bgkernel=false
 .fi
 .SH "SEE ALSO"
+.BR slp(8),
 .BR bgpm(8),
 .BR bgsched(8),
 .BR cqm(8)

@@ -1,0 +1,36 @@
+.TH "slp" 8
+.SH NAME
+slp \- Cobalt service location protocol
+.SH SYNOPSIS
+.B slp
+.I [-d] [-C <configfile>] [-D=<pidfile>]
+.SH "DESCRIPTION"
+.PP
+.B slp
+Service location protocol
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-C <configfile>
+Specify path to cobalt.conf.
+.TP
+.B \-D=<pidfile>
+Daemonize, and write pid to pidfile.
+.SH "CONFIGURATION FILE PARAMETERS"
+.TP
+.B [components]
+.TP
+.B service-location
+Host and port of node running the slp component in the form https://servicenode:port
+.TP
+.B [communication]
+.TP
+.B password
+Shared password for components
+.PP
+.B key
+Path to SSL key
+.SH "SEE ALSO"
+.BR slpstat(1)
