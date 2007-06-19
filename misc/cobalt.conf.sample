@@ -1,5 +1,5 @@
 [bgpm]
-bridge_config: //bgl/BlueLight/ppcfloor/bglsys/bin/bridge.config
+bridge_config: /bgl/BlueLight/ppcfloor/bglsys/bin/bridge.config
 db2_connect: /software/common/bin/db2connect
 db2_instance: db2instance
 db2_properties: /bgl/BlueLight/ppcfloor/bglsys/bin/db.properties
@@ -14,10 +14,6 @@ log_dir: /var/log/cobalt
 db2uid: bglsysdb
 db2dsn: bgdb0
 db2pwd: acb123
-
-[bgsched-queue]
-default: default
-short: short
 
 [anl-sched]
 scheduler_file: /etc/scheduler-file
