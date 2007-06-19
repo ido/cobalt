@@ -47,7 +47,6 @@ class FailureMode(object):
 def filterByTopology(placements, depinfo, potential):
     '''Filter out all potential placements that overlap with already allocated partitions'''
     used = []
-    print type(potential)
     for loc in [loc for (_, loc) in placements]:
         used.append(loc)
         used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
