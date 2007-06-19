@@ -81,7 +81,16 @@ Install:
     log directory (where the qm-YYYY_MM_DD.log files are located)
     On frost.ncar.teragrid.org, this is /bgl/local/logs
 
-2 - Install the GT4 bundles. For pre-ws-gram, install the 
+2 - Create the GPT bundles for the GRAM components. In each component
+    directory (except globus_scheduler_event_generator_cobalt), execute
+    ./configure 
+    make dist
+
+    For globus_scheduler_event_generator_cobalt, execute
+    ./configure --with-flavor=<globus flavor>
+    make dist
+
+3 - Install the GT4 bundles. For pre-ws-gram, install the 
 	globus_gram_job_manager_setup_cobalt package. For ws-gram, 
 	install all four packages
     gpt-build globus_gram_job_manager_setup_cobalt-0.5.tar.gz  
@@ -89,11 +98,13 @@ Install:
     gpt-build globus_scheduler_event_generator_setup_cobalt-0.5.tar.gz 
     gpt-build globus_wsrf_gram_service_java_setup_cobalt-0.5.tar.gz
 
-3 - Run the Globus postinstall tools
+4 - Run the Globus postinstall tools
     gpt-postinstall 
 
 Tested Platforms (host, cobalt release):
 - frost.ncar.teragrid.org, cobalt 0.97.0pre7a
+- bgl.mcs.anl.gov, cobalt 0.97.0pre10
+  - only tested pre ws gram (using the personal gatekeeper)
 
 Troubleshooting:
 - Contact Jason Cope at jason.cope@colorado.edu if you have any questions
@@ -107,3 +118,5 @@ This software was derived from
    packaging and support files for the Cobalt tools was derived from
    the UK eScience distributions. See 
    http://www.lesc.ic.ac.uk/projects/SGE-GT4.html 
+
+Thanks to Brad Viviano of RENCI for providing feedback on this software.
