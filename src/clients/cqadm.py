@@ -139,7 +139,8 @@ if __name__ == '__main__':
                     t = val.split(':')
                     for i in t:
                         try:
-                            dummy = int(i)
+                            if i != '*':
+                                dummy = int(i)
                         except:
                             print prop + ' value is not a number'
                             raise SystemExit, 1
