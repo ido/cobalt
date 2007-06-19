@@ -119,6 +119,17 @@ ftp://ftp.mcs.anl.gov/pub/cobalt/rpms/sles9-ppc64/cobalt-clients-0.97-1.ppc64.rp
 
     <variablelist>
       <varlistentry>
+	<term>Service Location Protocol</term>
+	<listitem>
+	  <para>
+	    The service location component tracks the locations of
+	    active systems in the component. It uses a heartbeat
+	    mechanism to detect component failure or exit. It can be
+	    queried with the slpstat command.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term>Process Manager</term>
 	<listitem>
 	  <para>
@@ -156,15 +167,6 @@ ftp://ftp.mcs.anl.gov/pub/cobalt/rpms/sles9-ppc64/cobalt-clients-0.97-1.ppc64.rp
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term>Service Location Protocol</term>
-	<listitem>
-	  <para>
-	    The service location component tracks the locations of
-	    active systems in the component. It uses a heartbeat
-	    mechanism to detect component failure or exit. It can be
-	    queried with the slpstat command.
-	  </para>
-	</listitem>
 	<term>Queue Manager</term>
 	<listitem>
 	  <para>
@@ -242,7 +244,7 @@ ftp://ftp.mcs.anl.gov/pub/cobalt/rpms/sles9-ppc64/cobalt-clients-0.97-1.ppc64.rp
       Each component can also be queried with a component specific
       tool. For example, the queue manager can be queried with the
       <filename>cqstat</filename> command. See the clients directory
-      for other commands that can connect to cobalt clients. 
+      for other commands that can connect to cobalt components. 
     </para>
   </section>
 
