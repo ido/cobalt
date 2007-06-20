@@ -1,4 +1,4 @@
-import bgl_rm_api
+import bgl_rm_api, Cobalt.Util
 from ctypes import *
 
 bridge = cdll.LoadLibrary('libbglbridge.so.1')
@@ -102,13 +102,25 @@ class BasePartition(PreStub):
                     (bgl_rm_api.RM_BPID, None, bgl_rm_api.rm_bp_id_t, getvalue),
                     'state': \
                     (bgl_rm_api.RM_BPState, None, bgl_rm_api.rm_BP_state_t,
-                     getvalue),
+                     bgl_rm_api.RM_BPStateEnum),
                     'location': \
                     (bgl_rm_api.RM_BPLoc, None, bgl_rm_api.rm_location_t,
                      lambda data:{'X':data.X, 'Y':data.Y, 'Z':data.Z}),
                     'partid': \
                     (bgl_rm_api.RM_BPPartID, None, bgl_rm_api.pm_partition_id_t,
                      getvalue),
+                    'partstate': \
+                    (bgl_rm_api.RM_BPPartState, None,
+                     bgl_rm_api.rm_partition_state_t,
+                     bgl_rm_api.RM_PartitionStateEnum),
+                     #used by smaller partition
+                    'sdb': \
+                    (bgl_rm_api.RM_BPSDB, None,
+                     c_int, boolean),
+                     #divided into a small (free) partition
+                    'sd': \
+                    (bgl_rm_api.RM_BPSD, None,
+                     c_int, boolean),
                     'computenodememory': \
                     (bgl_rm_api.RM_BPComputeNodeMemory, None,
                      bgl_rm_api.rm_BP_computenode_memory_t,
@@ -172,6 +184,9 @@ class Wire(PreStub):
 class Job(PreStub):
     __attrinfo__ = \
                  {'id': \
+                  (bgl_rm_api.RM_JobDBJobID, None,
+                   bgl_rm_api.db_job_id_t, getvalue),
+                  'pid': \
                   (bgl_rm_api.RM_JobID, None, bgl_rm_api.jm_job_id_t, getvalue),
                   'partition': \
                   (bgl_rm_api.RM_JobPartitionID, None,
@@ -183,9 +198,6 @@ class Job(PreStub):
                   (bgl_rm_api.RM_JobExecutable, None, c_char_p, getvalue),
                   'user': \
                   (bgl_rm_api.RM_JobUserName, None, c_char_p, getvalue),
-                  'dbjobid': \
-                  (bgl_rm_api.RM_JobDBJobID, None,
-                   bgl_rm_api.db_job_id_t, getvalue),
                   'outfile': \
                   (bgl_rm_api.RM_JobOutFile, None, c_char_p, getvalue),
                   'infile': \
@@ -404,13 +416,18 @@ if __name__ == '__main__':
     #    print wire.src.component, wire.src.id, "=>", wire.dst.component, wire.dst.id
     #for job in joblist:
     #    print job.id, job.user, job.partition, job.state
+
     for bp in bg.basePartitions:
-        print [x for x in ('id', 'state', 'location', 'partid')]
-        print bp.id, bp.state, bp.location, bp.partid, bp.computenodememory
+        output = [getattr(bp, name) for name in bp.__attrinfo__]
+        Cobalt.Util.print_tabular([tuple(x) for x in \
+                                   [BasePartition.__attrinfo__.keys()] + [output]])
+
         nclist = NodeCardList(debug=4, bp=bp.id)
-        print [x for x in ('id', 'cardionodes', 'cardpartid', 'quarter', 'cardstate')]
-        for nc in nclist:
-            print nc.id, nc.cardionodes, nc.cardpartid, nc.quarter, nc.cardstate
+        header = [x for x in ('id', 'cardionodes', 'cardpartid', 'quarter',
+                              'cardstate')]
+        output = [(nc.id, nc.cardionodes, nc.cardpartid, nc.quarter,
+                   nc.cardstate) for nc in nclist]
+        Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
 
     for part in partlist:
 #         print [getattr(part, name) for name in \
@@ -420,7 +437,11 @@ if __name__ == '__main__':
             part.user = 'nobody'
             print part.psetsPerBP
             break
-
+    
+    header = ['id', 'pid', 'user', 'partition', 'state']
+    output = []
     for job in joblist:
-        print [getattr(job, name) for name in \
-               ['id', 'dbjobid', 'user', 'partition', 'state']]
+        output.append([getattr(job, name) for name in header])
+
+    Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
+    
