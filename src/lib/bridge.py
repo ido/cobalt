@@ -129,6 +129,7 @@ class BasePartition(PreStub):
     def __init__(self, pointer):
         self.attrcache = {}
         self.ptr = pointer
+        self.nodecards = NodeCardList(debug=4, bp=self.id)
 
 class NodeCard(PreStub):
     __attrinfo__ = {'id': \
@@ -153,7 +154,6 @@ class NodeCard(PreStub):
                      bgl_rm_api.rm_partition_state_t, getvalue),
                     }
                     
-
 class Port(PreStub):
     __attrinfo__ = {'component': \
                     (bgl_rm_api.RM_PortComponentID, None,
@@ -250,6 +250,12 @@ class Switch(PreStub):
 class PSet(PreStub):
     pass
 
+class PartitionUsers(PreStub):
+    __attrinfo__ = \
+                 {'name': \
+                  (bgl_rm_api.RM_PartitionUserName, None,
+                   c_char_p, getvalue)}
+
 class Partition(PreStub):
     nocache = ['Switchtail', 'BPtail', 'psetNext']
     __modify__ = bridge.rm_modify_partition
@@ -309,6 +315,20 @@ class Partition(PreStub):
                   (bgl_rm_api.RM_PartitionSmall, None, c_int, boolean),
                   'psetsPerBP': \
                   (bgl_rm_api.RM_PartitionPsetsPerBP, None, c_int, getvalue),
+                  'Usersnum': \
+                  (bgl_rm_api.RM_PartitionUsersNum, None, c_int, getvalue),
+                  'Usershead': \
+                  (bgl_rm_api.RM_PartitionFirstUser, None, c_char_p, passthru),
+                  'Userstail': \
+                  (bgl_rm_api.RM_PartitionNextUser, None, c_char_p, passthru),
+                  'NCnum': \
+                  (bgl_rm_api.RM_PartitionNodeCardNum, None, c_int, getvalue),
+                  'NChead': \
+                  (bgl_rm_api.RM_PartitionFirstNodeCard, None,
+                   bgl_rm_api.rm_element_t, passthru),
+                  'NCtail': \
+                  (bgl_rm_api.RM_PartitionNextNodeCard, None,
+                   bgl_rm_api.rm_element_t, passthru),
                   }
     def __init__(self, pointer):
         PreStub.__init__(self, pointer)
@@ -316,6 +336,12 @@ class Partition(PreStub):
                                         'BPtail', BasePartition)
         self.switches = LazyRMSet(self, 'Switchnum', 'Switchhead',
                                         'Switchtail', Switch)
+        self.users = LazyRMSet(self, 'Usersnum', 'Usershead',
+                               'Userstail', PartitionUsers)
+#         for [bp.id for bp in self.basePartitions]:
+            
+        self.nodecards = LazyRMSet(self, 'NCnum', 'NChead',
+                                   'NCtail', NodeCard)
 
 class BG(BGStub):
     __attrinfo__ = {'BPsize': \
@@ -405,7 +431,8 @@ class NodeCardList(BGStub,LazyRMSet):
 
 if __name__ == '__main__':
     bg = BG()
-
+    print 'base partition size %dx%dx%d' % (bg.BPsize['X'], bg.BPsize['Y'], bg.BPsize['Z'])
+    print 'base partition num', bg.BPnum
 #     ncsize = c_int()
 #     bridge.rm_get_data(bg.ptr, bgl_rm_api.RM_NodeCardListSize, byref(ncsize))
 #     print 'got ncsize of', ncsize.value
@@ -420,23 +447,31 @@ if __name__ == '__main__':
     for bp in bg.basePartitions:
         output = [getattr(bp, name) for name in bp.__attrinfo__]
         Cobalt.Util.print_tabular([tuple(x) for x in \
-                                   [BasePartition.__attrinfo__.keys()] + [output]])
+                                   [BasePartition.__attrinfo__.keys()] + \
+                                   [output]])
 
-        nclist = NodeCardList(debug=4, bp=bp.id)
         header = [x for x in ('id', 'cardionodes', 'cardpartid', 'quarter',
                               'cardstate')]
         output = [(nc.id, nc.cardionodes, nc.cardpartid, nc.quarter,
-                   nc.cardstate) for nc in nclist]
+                   nc.cardstate) for nc in bp.nodecards]
         Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
 
     for part in partlist:
 #         print [getattr(part, name) for name in \
 #                ['id', 'description', 'small', 'connection', 'ramdisk']]
-        if part.id == 'test32_R000_J102':
-#             part.description = 'modified by PyBridge'
-            part.user = 'nobody'
-            print part.psetsPerBP
-            break
+#         print part.psetsPerBP, part.Usersnum
+#         for u in part.users:
+#             print u.name
+
+#         print part.id, part.NCnum, len(part.nodecards)
+        print {part.id: [pnc.id for pnc in part.nodecards]}
+
+#         for bp in part.basePartitions:
+#             print [getattr(bp, name) for name in bp.__attrinfo__]
+#         if part.id == 'test32_R000_J102':
+# #             part.description = 'modified by PyBridge'
+#             part.user = 'nobody'
+#             break
     
     header = ['id', 'pid', 'user', 'partition', 'state']
     output = []
