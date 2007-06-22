@@ -245,7 +245,11 @@ class Job(PreStub):
                   }
 
 class Switch(PreStub):
-    pass
+    __attrinfo__ = \
+                 {'id': \
+                  (bgl_rm_api.RM_SwitchID, None,
+                   bgl_rm_api.rm_switch_id_t, getvalue),
+                  }
 
 class PSet(PreStub):
     pass
@@ -257,7 +261,7 @@ class PartitionUsers(PreStub):
                    c_char_p, getvalue)}
 
 class Partition(PreStub):
-    nocache = ['Switchtail', 'BPtail', 'psetNext']
+    nocache = ['Switchtail', 'BPtail', 'psetNext', 'NCtail']
     __modify__ = bridge.rm_modify_partition
     hidden = ['id', 'BPnum', 'BPhead', 'BPtail', 'Switchnum', 'Switchhead',
               'Switchtail']
