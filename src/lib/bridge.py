@@ -129,7 +129,7 @@ class BasePartition(PreStub):
     def __init__(self, pointer):
         self.attrcache = {}
         self.ptr = pointer
-        self.nodecards = NodeCardList(debug=4, bp=self.id)
+        self.nodecards = NodeCardList(basepart=self.id)
 
 class NodeCard(PreStub):
     __attrinfo__ = {'id': \
@@ -261,7 +261,7 @@ class PartitionUsers(PreStub):
                    c_char_p, getvalue)}
 
 class Partition(PreStub):
-    nocache = ['Switchtail', 'BPtail', 'psetNext', 'NCtail']
+    nocache = ['Switchtail', 'BPtail', 'psetNext', 'NCtail', 'Userstail']
     __modify__ = bridge.rm_modify_partition
     hidden = ['id', 'BPnum', 'BPhead', 'BPtail', 'Switchnum', 'Switchhead',
               'Switchtail']
@@ -334,6 +334,7 @@ class Partition(PreStub):
                   (bgl_rm_api.RM_PartitionNextNodeCard, None,
                    bgl_rm_api.rm_element_t, passthru),
                   }
+
     def __init__(self, pointer):
         PreStub.__init__(self, pointer)
         self.basePartitions = LazyRMSet(self, 'BPnum', 'BPhead',
@@ -342,10 +343,20 @@ class Partition(PreStub):
                                         'Switchtail', Switch)
         self.users = LazyRMSet(self, 'Usersnum', 'Usershead',
                                'Userstail', PartitionUsers)
-#         for [bp.id for bp in self.basePartitions]:
-            
-        self.nodecards = LazyRMSet(self, 'NCnum', 'NChead',
-                                   'NCtail', NodeCard)
+
+        if self.small:
+            assert len(self.basePartitions) == 1
+            [bpid] = [bp.id for bp in self.basePartitions]
+            self.nodecards = LazyRMSet(self, 'NCnum', 'NChead',
+                                       'NCtail', NodeCard)
+            for nc in self.nodecards:
+                nc.basepart = bpid
+        else:
+            self.nodecards = []
+            for bp in self.basePartitions:
+                newnclist = NodeCardList(basepart=bp.id)
+                self.nodecards.extend([nc for nc in newnclist])
+                del newnclist  #is this necessary?
 
 class BG(BGStub):
     __attrinfo__ = {'BPsize': \
@@ -416,6 +427,11 @@ class PartList(BGStub,LazyRMSet):
         LazyRMSet.__init__(self, self, 'size', 'head', 'tail', Partition)
 
 class NodeCardList(BGStub,LazyRMSet):
+    """Builds a list of NodeCards given a basepartition.
+
+    Uses the rm_get_nodecards function. Tags each NodeCard with it's
+    basepartition id (.basepart)
+    """
     __attrinfo__ = \
                  {'size': \
                   (bgl_rm_api.RM_NodeCardListSize, None, c_int, getvalue),
@@ -427,11 +443,17 @@ class NodeCardList(BGStub,LazyRMSet):
                    bgl_rm_api.rm_element_t, passthru)}
     nocache = ['tail']
 
-    def __init__(self, bp, debug=1):
-        self.ptr = pointer(bgl_rm_api.rm_nodecard_list_t())
+    def __init__(self, basepart=None, debug=1):
+        if not basepart:
+            raise Exception, "Must specify a base partition"
+
         BGStub.__init__(self, debug)
-        rc = bridge.rm_get_nodecards(bp, byref(self.ptr))
+        self.ptr = pointer(bgl_rm_api.rm_nodecard_list_t())
+        rc = bridge.rm_get_nodecards(basepart, byref(self.ptr))
         LazyRMSet.__init__(self, self, 'size', 'head', 'tail', NodeCard)
+        #tag the nodecard with it's base partition id
+        for nc in self:
+            nc.basepart = basepart
 
 if __name__ == '__main__':
     bg = BG()
@@ -448,18 +470,20 @@ if __name__ == '__main__':
     #for job in joblist:
     #    print job.id, job.user, job.partition, job.state
 
-    for bp in bg.basePartitions:
-        output = [getattr(bp, name) for name in bp.__attrinfo__]
-        Cobalt.Util.print_tabular([tuple(x) for x in \
-                                   [BasePartition.__attrinfo__.keys()] + \
-                                   [output]])
+#     for bp in bg.basePartitions:
+#         output = [getattr(bp, name) for name in bp.__attrinfo__]
+#         Cobalt.Util.print_tabular([tuple(x) for x in \
+#                                    [BasePartition.__attrinfo__.keys()] + \
+#                                    [output]])
 
-        header = [x for x in ('id', 'cardionodes', 'cardpartid', 'quarter',
-                              'cardstate')]
-        output = [(nc.id, nc.cardionodes, nc.cardpartid, nc.quarter,
-                   nc.cardstate) for nc in bp.nodecards]
-        Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
+#         header = [x for x in ('id', 'bpid', 'cardionodes', 'cardpartid', 'quarter',
+#                               'cardstate')]
+#         output = [(nc.id, nc.basepart, nc.cardionodes, nc.cardpartid, nc.quarter,
+#                    nc.cardstate) for nc in bp.nodecards]
+#         Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
 
+    header = ['basepart', 'id']
+    output = []
     for part in partlist:
 #         print [getattr(part, name) for name in \
 #                ['id', 'description', 'small', 'connection', 'ramdisk']]
@@ -468,7 +492,12 @@ if __name__ == '__main__':
 #             print u.name
 
 #         print part.id, part.NCnum, len(part.nodecards)
-        print {part.id: [pnc.id for pnc in part.nodecards]}
+        print part.id
+        for nc in part.nodecards:
+            output.append([getattr(nc, name) for name in header])
+        Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
+        output = []
+        print
 
 #         for bp in part.basePartitions:
 #             print [getattr(bp, name) for name in bp.__attrinfo__]
@@ -482,5 +511,6 @@ if __name__ == '__main__':
     for job in joblist:
         output.append([getattr(job, name) for name in header])
 
+    print "\nJobs\n"
     Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
     
