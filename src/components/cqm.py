@@ -63,6 +63,8 @@ class Job(Cobalt.Data.Data):
             self.set('starttime', '-1')
         if not self.get('submittime', False):
             self.set('submittime', time.time())
+        if not self.get('endtime', False):
+            self.set('endtime', '-1')
         if not self.get('queue', False):
             self.set('queue', 'default')
         self.staged = 0
@@ -175,6 +177,7 @@ class Job(Cobalt.Data.Data):
                     (self.get('jobid'), self.get('user'), str(used_time)))
         self.acctlog.LogMessage('E;%s;%s;%s' % \
                                 (self.get('jobid'), self.get('user'), str(used_time)))
+        self.set('endtime', str(time.time()))
 
     def Progress(self):
         '''Run next job step'''
@@ -647,7 +650,6 @@ class BGJob(Job):
             exitstatus = int(exitstatus)/256
         except:
             pass
-        self.set('endtime', time.time())
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.get('jobid'), self.get('user'),
                      self.get('nodes'), self.GetStats()))

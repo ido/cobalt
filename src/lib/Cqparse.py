@@ -582,7 +582,7 @@ class CobaltLogParser(Cobalt.Data.DataSet):
                             job.set('partition_size', int(n))
 
                     if not job.get('partition_size'):
-                        print "While parsing log line '%s': Could not determine size of partition '%s'." % (line, job.get('partition'))
+                        logger.debug("While parsing log line '%s': Could not determine size of partition '%s'." % (line, job.get('partition')))
                         job.set('partition_size', 0)
 
             # Most of the time, we get freeing following by done. In some
@@ -601,8 +601,6 @@ class CobaltLogParser(Cobalt.Data.DataSet):
             
             if m_stats:
                 job._done = True
-                job.set('finish_time', self.__prepare_time(
-                    year_hint, m_stats.group("finish_time")))
                 job.set('queuetime', float(m_stats.group("queuetime")))
                 job.set('usertime', float(m_stats.group("usertime")))
                 job.set('exitcode', m_stats.group("exitcode"))
