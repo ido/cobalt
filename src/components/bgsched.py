@@ -173,10 +173,7 @@ class PartitionSet(Cobalt.Data.DataSet):
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
         raise SystemExit, 1
-    if not _config._sections.has_key('bgsched-queue'):
-        print '''bgsched-queue section missing from config file'''
-        raise SystemExit, 1
-    qconfig = _config._sections['bgsched-queue']
+
     qpolicy = {'default':'PlaceFIFO', 'scavenger':'PlaceScavenger',
                'high-prio':'PlaceSpruce'}
 
