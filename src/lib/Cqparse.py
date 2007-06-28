@@ -392,7 +392,8 @@ class CobaltJob(Cobalt.Data.Data):
         self.set('usertime_formatted', format_time(self.get('usertime')))
         self.set('queuetime_formatted', format_time(self.get('queuetime')))
         self.set('finish_time_formatted', self._attrib['finish_time'].strftime("%Y-%m-%d %H:%M:%S"))
-        if self.get('exitcode') == None:
+
+        if self.get('exitcode') == None or self.get('exitcode') == "N/A":
             self.set('exitcode', 'N/A')
         elif int(self.get('exitcode')) > 255:
             self.set('exitcode', int(self.get('exitcode'))/256)

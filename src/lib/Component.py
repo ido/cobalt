@@ -118,7 +118,12 @@ class Component(SSLServer,
         self.password = self.cfile.get('communication', 'password')
             
         SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
-        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+        # python2.5 adds allow_none and encoding parameters
+        # to SimpleXMLRPCDispatcher
+        if sys.version_info[1] == 5:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, False, None)
+        else:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
         self.logRequests = 0
         if self.setup['daemon']:
             daemonize(self.setup['daemon'])

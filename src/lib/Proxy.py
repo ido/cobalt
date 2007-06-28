@@ -158,10 +158,15 @@ class simulator(ComponentProxy):
     name = 'simulator'
     methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2']
 
+class system(ComponentProxy):
+    '''system component'''
+    name = 'system'
+    methods = ['StartJob', 'QueryPartition']
+
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
     commnames = {'pm':process_manager, 'fs':file_stager, 'am':allocation_manager,
-                 'sched':scheduler, 'qm':queue_manager}
+                 'sched':scheduler, 'qm':queue_manager, 'sys':system}
 
     def __getitem__(self, name):
         if not self.has_key(name):
