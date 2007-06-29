@@ -4,12 +4,12 @@
 __revision__ = '$Revision$'
 
 import atexit, logging, os, pwd, signal, sys, tempfile, time
-import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
+import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
 
-'''bgpm api:
+"""bgpm api:
 CreateProcessGroup({user: 'user', executable:'executable', args:['arg1', 'arg2'], location:['location'],
                      env={'key':'val'}, errfile:'/errfile', outfile:'/outfile', mode:'co|vn|smp|dual', size:'count', cwd:'cwd'})
-                     '''
+                     """
 
 class ProcessGroupCreationError(Exception):
     '''ProcessGroupCreation Error is used when not enough information is specified'''
@@ -17,125 +17,28 @@ class ProcessGroupCreationError(Exception):
 
 class ProcessGroup(Cobalt.Data.Data):
     '''The ProcessGroup class implements all stages of running parallel processes'''
-    # read in config from cobalt.conf
-    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
-    _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
-    _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read('/etc/cobalt.conf')
-    if not _config._sections.has_key('bgpm'):
-        print '''"bgpm" section missing from cobalt config file'''
-        raise SystemExit, 1
-    config = _config._sections['bgpm']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
-
     def __init__(self, data, pgid):
+        print 'bgpm got data', data
         data['tag'] = 'process-group'
         Cobalt.Data.Data.__init__(self, data)
+        self.comms = Cobalt.Proxy.CommDict()
         self.log = logging.getLogger('pg')
         self.set('pgid', pgid)
         self.set('state', 'initializing')
-        if self.get('outputfile', False):
-            self.outlog = self.get('outputfile')
-        else:
-            self.outlog = tempfile.mktemp()            
-        if self.get('errorfile', False):
-            self.errlog = self.get('errorfile')
-        else:
-            self.errlog = tempfile.mktemp()
 
-        if not self.get('location', False):
-            raise ProcessGroupCreationError, "location"
-        partition = self.get('location')[0]
-            
-        try:
-            userid, groupid = pwd.getpwnam(self.get('user'))[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError, "user/group"
-
-        self.pid = os.fork()
-        if not self.pid:
-            program = self.get('executable')
-            cwd = self.get('cwd')
-            pnum = str(self.get('size'))
-            mode = self.get('mode', 'co')
-            args = " ".join(self.get('args', []))
-            inputfile = self.get('inputfile', '')
-            kerneloptions = self.get('kerneloptions', '')
-            # strip out BGLMPI_MAPPING until mpirun bug is fixed 
-            mapfile = ''
-            if self.get('env', {}).has_key('BGLMPI_MAPPING'):
-                mapfile = self.get('env')['BGLMPI_MAPPING']
-                del self.get('env')['BGLMPI_MAPPING']
-            envs = " ".join(["%s=%s" % envdata for envdata in self.get('envs', {}).iteritems()])
-            atexit._atexit = []
-            try:
-                os.setgid(groupid)
-                os.setuid(userid)
-            except OSError:
-                self.log.error("Failed to change userid/groupid for PG %s" % (self.get("pgid")))
-                sys.exit(0)
-            #system("/bgl/BlueLight/ppcfloor/bglsys/bin/db2profile > /dev/null 2>&1")
-            os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
-            os.environ["DB_PROPERTY"] = self.config['db2_properties']
-            os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
-            os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
-            os.environ["DB2INSTANCE"] = self.config['db2_instance']
-            os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
-            os.environ["COBALT_JOBID"] = self.get('jobid')
-            if inputfile != '':
-                infile = open(inputfile, 'r')
-                os.dup2(infile.fileno(), sys.__stdin__.fileno())
-            else:
-                null = open('/dev/null', 'r')
-                os.dup2(null.fileno(), sys.__stdin__.fileno())
-            cmd = (self.config['mpirun'], "mpirun", '-np', pnum, '-partition', partition,
-                               '-mode', mode, '-cwd', cwd, '-exe', program)
-            if args != '':
-                cmd = cmd + ('-args', args)
-            if envs != '':
-                cmd = cmd + ('-env',  envs)
-            if kerneloptions != '':
-                cmd = cmd + ('-kernel_options', kerneloptions)
-            if mapfile != '':
-                cmd = cmd + ('-mapfile', mapfile)
-
-            if '--notbgl' in sys.argv:
-                self.log.debug("would have run %s" % " ".join(cmd))
-                if args == '':
-                    cmd = (program, os.path.basename(program))
-                else:
-                    cmd = (program, os.path.basename(program), args)
-
-            self.log.info("Job %s/%s: Running %s" % (self.get('jobid'), self.get('user'), " ".join(cmd)))
-            try:
-                err = open(self.errlog, 'a')
-                os.chmod(self.errlog, 0600)
-                os.dup2(err.fileno(), sys.__stderr__.fileno())
-            except IOError:
-                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
-            except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
-            try:
-                out = open(self.outlog, 'a')
-                os.chmod(self.outlog, 0600)
-                os.dup2(out.fileno(), sys.__stdout__.fileno())
-            except IOError:
-                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.get('jobid'), self.get('user'), self.outlog))
-            except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.get('jobid'), self.get('user'), self.errlog))
-            apply(os.execl, cmd)
-            sys.exit(0)
-        else:
-            self.set('state', 'running')
-            self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
-                                                                                partition, self.pid))
-            #AddEvent("process-manager", "process_start", pgid)
+        print 'bgpm going to startjob'
+        dbjobid = self.comms['sys'].StartJob(data)
+        print 'dbjobid =', dbjobid
+#        self.pid = os.fork()
+#        if not self.pid:
+#        self.log.info("Job %s/%s: Running %s" % (data.get('jobid'), data.get('user'), " ".join(cmd)))
+#             apply(os.execl, cmd)
+#            sys.exit(0)
+#        else:
+        self.set('state', 'running')
+#         self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
+#                                                                                partition, self.pid))
+        #AddEvent("process-manager", "process_start", pgid)
 
     def FinishProcess(self, status):
         '''Handle cleanup for exited process'''
@@ -162,7 +65,7 @@ class ProcessGroup(Cobalt.Data.Data):
     def Kill(self):
         '''Kill Blue Gene job. This method is more vicious; it is processed through the bridge API
         Not Yet Implemented'''
-        pass
+        self.comms['system'].KillJob()
 
 class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     '''The BGProcessManager supports the BG/L process execution model'''
