@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt state dump and load command'''
-__revision__ = '$Revision: 427 $'
+__revision__ = '$Revision$'
 __version__ = '$Version$'
 
 import sys, xmlrpclib, xml.dom.minidom
