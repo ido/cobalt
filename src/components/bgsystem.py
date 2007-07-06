@@ -38,19 +38,36 @@ class System(Cobalt.Component.Component):
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
         self.comms = Cobalt.Proxy.CommDict()
+        self.log = logging.getLogger('sys')
         self.register_function(self.start_job, "StartJob")
-#        self.register_function(self.query_job, "QueryJob")
+        self.register_function(self.query_jobs, "QueryJobs")
+        self.register_function(self.kill_job, "KillJob")
         self.register_function(self.query_part, "QueryPartition")
 
     def start_job(self, _, jobinfo):
-        '''starts a job'''
+        '''starts a job
+        daemonizes the mpirun process, passing the mpirun pid back to the
+        parent process via a pipe'''
 
-        print 'jobinfo', jobinfo
-        print 'pid before fork is', os.getpid()
+        # make pipe for daemon mpirun to talk to bgsystem
+        newpipe_r, newpipe_w = os.pipe()
+
         pid = os.fork()
         print 'pid is', pid
         if not pid:
-            print 'i am child, with pid', os.getpid(), os.getppid()
+            os.close(newpipe_r)
+            os.setsid()
+            pid2 = os.fork()
+            if pid2 != 0:
+                newpipe_w = os.fdopen(newpipe_w, 'w')
+                newpipe_w.write(str(pid2))
+                newpipe_w.close()
+                os._exit(0)
+
+            #start daemonized child
+            os.close(newpipe_w)
+
+            #setup output and error files
             if jobinfo.get('outputfile', False):
                 self.outlog = jobinfo.get('outputfile')
             else:
@@ -60,10 +77,12 @@ class System(Cobalt.Component.Component):
             else:
                 self.errlog = tempfile.mktemp()
 
+            #check for location to run
             if not jobinfo.get('location', False):
                 raise ProcessGroupCreationError, "location"
             partition = jobinfo.get('location')[0]
 
+            #check for valid user/group
             try:
                 userid, groupid = pwd.getpwnam(jobinfo.get('user'))[2:4]
             except KeyError:
@@ -116,10 +135,6 @@ class System(Cobalt.Component.Component):
             if mapfile != '':
                 cmd = cmd + ('-mapfile', mapfile)
 
-            print 'going to daemonize...',
-            #daemonize thy self...then set stdout/err
-            Cobalt.Component.daemonize('/dev/null')
-
             try:
                 err = open(self.errlog, 'a')
                 os.chmod(self.errlog, 0600)
@@ -138,26 +153,57 @@ class System(Cobalt.Component.Component):
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), self.errlog))
 
-            print 'daemonized?'
-            print 'going to run cmd', cmd
             try:
                 apply(os.execl, cmd)
             except Exception, e:
-                print 'got exception', e
+                print 'got exception when trying to exec mpirun', e
+                raise SystemExit, 1
+
             sys.exit(0)
 
         else:
-            print 'parent: is this the child?', pid
-            return pid
-            
+            #parent process reads daemon child's pid through pipe
+            os.close(newpipe_w)
+            newpipe_r = os.fdopen(newpipe_r, 'r')
+            childpid = newpipe_r.read()
+            newpipe_r.close()
+            rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
+            self.log.info('rc from waitpid was (%d, %d)' % rc)
+            jobinfo['pid'] = childpid
+            return jobinfo
 
     def kill_job(self, _, jobinfo):
-        '''kills a job using PyBridge or Allocator API'''
+        '''kills a job using via signal to pid'''
         # status_t jm_signal_job(db_job_id_t jid, rm_signal_t signal);
-        signal = bgl_rm_api.rm_signal_t(15)
-        jobid = jobinfo.get('dbjobid')
-        bridge.jm_signal_job(jobid, signal)
-    
+        print 'bgsystem got a kill_job call'
+        pid = jobinfo.get('pid')
+        signame = 'SIGINT'
+        try:
+            os.kill(int(pid), getattr(signal, signame))
+        except OSError, error:
+            self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+        return 0
+#         signal = bgl_rm_api.rm_signal_t(15)
+#         jobid = jobinfo.get('dbjobid')
+#         bridge.jm_signal_job(jobid, signal)
+
+    def query_jobs(self, _, jobsinfo):
+        '''queries jobs via pid or PyBridge
+        returns those jobs that are running'''
+        return [job for job in jobsinfo
+                if self.checkpid(job.get('pid'))]
+
+    def checkpid(self, somepid):
+        '''checks if the specified pid is still around'''
+        ps = os.popen('ps ax')
+        pids = ps.readlines()
+        ps.close()
+        pidlist = [p.split()[0] for p in pids]
+        if str(somepid) in pidlist:
+            return True
+        else:
+            return False
+
     def query_part(self, _, partinfo):
         '''queries partitions for status info'''
         pass

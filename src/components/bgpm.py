@@ -27,8 +27,11 @@ class ProcessGroup(Cobalt.Data.Data):
         self.set('state', 'initializing')
 
         print 'bgpm going to startjob'
-        dbjobid = self.comms['sys'].StartJob(data)
-        print 'dbjobid =', dbjobid
+        result = self.comms['sys'].StartJob(data)
+        #TODO sync from startjob to self
+        print 'result was', result
+        self.set('pid', result.get('pid'))
+        self.pid = result.get('pid')
 #        self.pid = os.fork()
 #        if not self.pid:
 #        self.log.info("Job %s/%s: Running %s" % (data.get('jobid'), data.get('user'), " ".join(cmd)))
@@ -57,7 +60,7 @@ class ProcessGroup(Cobalt.Data.Data):
     def Signal(self, signame):
         '''Send a signal to a process group'''
         try:
-            os.kill(self.pid, getattr(signal, signame))
+            os.kill(int(self.pid), getattr(signal, signame))
         except OSError, error:
             self.log.error("Signal failure for pgid %s:%s" % (self.get('pgid'), error.strerror))
         return 0
@@ -65,7 +68,7 @@ class ProcessGroup(Cobalt.Data.Data):
     def Kill(self):
         '''Kill Blue Gene job. This method is more vicious; it is processed through the bridge API
         Not Yet Implemented'''
-        self.comms['system'].KillJob()
+#         self.comms['system'].KillJob()
 
 class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     '''The BGProcessManager supports the BG/L process execution model'''
@@ -74,6 +77,7 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     __object__ = ProcessGroup
     __id__ = Cobalt.Data.IncrID()
     async_funcs = ['assert_location', 'manage_children']
+    comms = Cobalt.Proxy.CommDict()
 
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
@@ -88,23 +92,20 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
         self.register_function(self.kill_processgroup, "KillProcessGroup")
 
     def manage_children(self):
+        '''queries the system component with a list of process groups
+        system component should check for the jobs using whatever mechanism
+        it chooses (pid, PyBridge) and return those jobs that are running. Those
+        that are not running, but still listed in self are called FinishProcess.
+        (this loses the exit code)
+        '''
         if (time.time() - self.lastwait) > 6:
-            while True:
-                try:
-                    self.lastwait = time.time()
-                    (pid, stat) = os.waitpid(-1, os.WNOHANG)
-                except OSError:
-                    break
-                if pid == 0:
-                    break
-                pgrps = [pgrp for pgrp in self.data if pgrp.pid == pid]
-                if len(pgrps) == 0:
-                    self.logger.error("Failed to locate process group for pid %s" % (pid))
-                elif len(pgrps) == 1:
-                    pgrps[0].FinishProcess(stat)
-                else:
-                    self.logger.error("Got more than one match for pid %s" % (pid))
-
+            self.lastwait = time.time()
+            result = self.comms['sys'].QueryJobs([pg.to_rx(pg._attrib) for pg in self.data])
+            result_pgs = [pg.get('pgid') for pg in result]
+            for pg in self:
+                if pg.get('pgid') not in result_pgs:
+                    pg.FinishProcess(0)
+                    
     def create_processgroup(self, address, data):
         '''Create new process group element'''
         return self.Add(data)
