@@ -49,6 +49,8 @@ class System(Cobalt.Component.Component):
         daemonizes the mpirun process, passing the mpirun pid back to the
         parent process via a pipe'''
 
+#         self.log.info("Job %s/%s: Running %s" % (jobinfo.get('jobid'), jobinfo.get('user'), " ".join(cmd)))
+
         # make pipe for daemon mpirun to talk to bgsystem
         newpipe_r, newpipe_w = os.pipe()
 

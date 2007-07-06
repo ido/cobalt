@@ -18,7 +18,7 @@ class ProcessGroupCreationError(Exception):
 class ProcessGroup(Cobalt.Data.Data):
     '''The ProcessGroup class implements all stages of running parallel processes'''
     def __init__(self, data, pgid):
-        print 'bgpm got data', data
+
         data['tag'] = 'process-group'
         Cobalt.Data.Data.__init__(self, data)
         self.comms = Cobalt.Proxy.CommDict()
@@ -26,21 +26,14 @@ class ProcessGroup(Cobalt.Data.Data):
         self.set('pgid', pgid)
         self.set('state', 'initializing')
 
-        print 'bgpm going to startjob'
         result = self.comms['sys'].StartJob(data)
         #TODO sync from startjob to self
-        print 'result was', result
         self.set('pid', result.get('pid'))
         self.pid = result.get('pid')
-#        self.pid = os.fork()
-#        if not self.pid:
-#        self.log.info("Job %s/%s: Running %s" % (data.get('jobid'), data.get('user'), " ".join(cmd)))
-#             apply(os.execl, cmd)
-#            sys.exit(0)
-#        else:
+
         self.set('state', 'running')
-#         self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
-#                                                                                partition, self.pid))
+        self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
+                                                                               partition, self.pid))
         #AddEvent("process-manager", "process_start", pgid)
 
     def FinishProcess(self, status):
@@ -98,6 +91,8 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
         that are not running, but still listed in self are called FinishProcess.
         (this loses the exit code)
         '''
+        if not len(self.data):
+            return
         if (time.time() - self.lastwait) > 6:
             self.lastwait = time.time()
             result = self.comms['sys'].QueryJobs([pg.to_rx(pg._attrib) for pg in self.data])
