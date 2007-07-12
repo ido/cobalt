@@ -161,7 +161,7 @@ class simulator(ComponentProxy):
 class system(ComponentProxy):
     '''system component'''
     name = 'system'
-    methods = ['StartJob', 'QueryJobs', 'KillJob', 'QueryPartition']
+    methods = ['StartJob', 'QueryJobs', 'KillJob', 'QueryPartition', 'FullPartitionInfo']
 
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''

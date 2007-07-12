@@ -8,9 +8,93 @@ from optparse import OptionParser
 
 import logging, random, sys, ConfigParser, xmlrpclib, pwd, atexit, os
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
-#import Cobalt.bridge
+import Cobalt.bridge
 
 logger = logging.getLogger('bgsystem')
+
+class BaseBlock(Cobalt.Data.Data):
+    '''BG/L block (nodecard)'''
+    pass
+
+class BaseSystem(Cobalt.Data.DataSet):
+    '''Defines a BG/L system'''
+    __object__ = BaseBlock
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+        self.buildBlocks()
+
+    def buildBlocks(self):
+        '''populate basesystem with nodecard blocks'''
+        bg = Cobalt.bridge.BG()
+        query = []
+        for bp in bg.basePartitions:
+            for nc in bp.nodecards:
+                query.append({'tag':'block', 'id':nc.id, 'bpid':nc.basepart})
+        self.Add(query)
+        print query
+
+class Partition(Cobalt.Data.Data):
+    '''BG/L partition'''
+    pass
+
+class PartitionSet(Cobalt.Data.DataSet):
+    '''set of partitions'''
+    __object__ = Partition
+
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+        self.populatePartitions()
+   #TODO should there be a different .match() for checking directly against bridge objects?
+    def populatePartitions(self):
+        '''Populate the partition set with partitions from bridge api'''
+        parts = Cobalt.bridge.PartList()
+        query = []
+        for part in parts:
+            nodecards = ["%s-%s" % (nc.basepart, nc.id) \
+                         for nc in part.nodecards]
+            print 'before sort', nodecards
+            nodecards.sort()
+            print 'after sort', nodecards
+            query.append({'tag':'partition', 'name':part.id,
+                          'nodes':len(nodecards)*32,
+                          'nodecards':nodecards,
+                          'state':part.state})
+        self.Add(query)
+
+    def get_more_deps(self, depdict, check_size, parent):
+
+        print 'get_more_deps, check_size', check_size
+        while check_size > 1:
+            for p in [part for part in self if part.get('nodes') == check_size]:
+                ischild = True
+                for n in p.get('nodecards'):
+                    if n not in parent.get('nodecards'):
+                        ischild = False
+                if ischild:
+                    
+                    print p.get('name'), p.get('nodes')
+                    depdict.update({p.get('name'):{}})
+                    self.get_more_deps(depdict[p.get('name')], check_size/2, p)
+            return
+        return
+
+    def getDeps(self):
+        '''generate dependencies between partitions'''
+        bg = Cobalt.bridge.BG()
+        bpsize = bg.BPsize['X']*bg.BPsize['Y']*bg.BPsize['Z']
+        machine_size = bpsize*bg.BPnum
+        print 'machine is %d nodes' % machine_size
+        full_partitions = [p for p in self if p.get('nodes') == machine_size]
+#         print 'full partition is', full_partition[0]._attrib
+        depdict = {}
+        check_size = machine_size
+
+        print type(check_size), [part.get('nodes') for part in self.data if part.get('nodes') == check_size]
+        for part in full_partitions:
+            self.get_more_deps(depdict, check_size, part)
+
+        return depdict
 
 class System(Cobalt.Component.Component):
     __implementation__ = 'bgsys'
@@ -43,6 +127,9 @@ class System(Cobalt.Component.Component):
         self.register_function(self.query_jobs, "QueryJobs")
         self.register_function(self.kill_job, "KillJob")
         self.register_function(self.query_part, "QueryPartition")
+        self.register_function(self.full_partition_info, "FullPartitionInfo")
+
+        self.partitions = PartitionSet()
 
     def start_job(self, _, jobinfo):
         '''starts a job
@@ -210,6 +297,13 @@ class System(Cobalt.Component.Component):
         '''queries partitions for status info'''
         pass
 
+    def full_partition_info(self, _):
+        '''returns nested partition relation dictionary,
+        and another dictionary of all partition attributes
+        '''
+        partition_relations = self.partitions.getDeps()
+        return (partition_relations, [part._attrib for part in self.partitions])
+
 if __name__ == '__main__':
     # setup option parsing
     parser = OptionParser()
@@ -220,11 +314,15 @@ if __name__ == '__main__':
                       help="Run component as a daemon")
     (opts, args) = parser.parse_args()
 
+#     newbase = BaseSystem()
+#     for nc in newbase:
+#         print nc._attrib
+
     __daemon__ = opts.daemon
     __dlevel__ = logging.INFO
     if opts.debug:
         __dlevel__ = logging.DEBUG
-    Cobalt.Logging.setup_logging('bgsystem', level = __dlevel__)
+    Cobalt.Logging.setup_logging('bgsystem', level = __dlevel__, to_syslog=False)
     logger = logging.getLogger('bgsystem')
     __server__ = System({'configfile':'/etc/cobalt.conf', 'daemon':__daemon__})
     __server__.serve_forever()
