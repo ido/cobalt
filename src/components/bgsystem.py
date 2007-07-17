@@ -50,11 +50,22 @@ class BridgeData(Cobalt.Data.Data):
                 self._attrib.update({attr:None})
 
     def get(self, field, default=None):
-        '''return attribute from self.obj'''
+        '''return attribute from either self or self.obj,
+        preferring self.obj
+        '''
         try:
             return getattr(self.obj, field)
         except AttributeError:
             return Cobalt.Data.Data.get(self, field, default)
+
+    def set(self, field, value):
+        '''set attribute in either self of self.obj,
+        preferring self.obj
+        '''
+        if field in self.obj.attrinfo:
+            getattr(self.obj, field) = value
+        else:
+            Cobalt.Data.Data.set(self, field, value)
 
 class Partition(BridgeData):
     '''BG/L partition'''
