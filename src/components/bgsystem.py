@@ -34,7 +34,29 @@ class BaseSystem(Cobalt.Data.DataSet):
         self.Add(query)
         print query
 
-class Partition(Cobalt.Data.Data):
+class BridgeData(Cobalt.Data.Data):
+    '''A Data object that ties into another object, like something
+    returned from the bridge module
+    '''
+    def __init__(self, info):
+        Cobalt.Data.Data.__init__(self, info)
+        self.obj = None
+        
+    def setObject(self, newobject):
+        '''sets the backing bridge object, and updates self._attrib'''
+        self.obj = newobject
+        for attr in type(newobject).__attrinfo__.keys():
+            if attr not in self._attrib:
+                self._attrib.update({attr:None})
+
+    def get(self, field, default=None):
+        '''return attribute from self.obj'''
+        try:
+            return getattr(self.obj, field)
+        except AttributeError:
+            return Cobalt.Data.Data.get(self, field, default)
+
+class Partition(BridgeData):
     '''BG/L partition'''
     pass
 
@@ -44,13 +66,47 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def __init__(self):
         Cobalt.Data.DataSet.__init__(self)
+        self.partitions = Cobalt.bridge.PartList()
+        self.bridge_objects = {}
+        for part in self.partitions:
+            self.bridge_objects.update({part.id:part})
         self.populatePartitions()
-   #TODO should there be a different .match() for checking directly against bridge objects?
+
+#     def Add(self, cdata, obj, callback=None, cargs=()):
+
+#         print 'partitionset: about to add object', obj
+#         result = Cobalt.Data.DataSet.Add(self, cdata, callback, cargs)
+#         print 'partitionset: trying to add object', obj
+                    
+# #                    return result
+#         return result
+#         #TODO set new object.obj = obj
+#         #lambda theobj, thevalue: obj.obj = cargs[0]
+
+    def refresh(self):
+        '''refreshes partitions from bridge'''
+        #TODO add new partition if partition in bridge not in self
+        #TODO deal with partition in self but not in bridge (disable?)
+        self.partitions.__freepartlist__()
+        self.partitions.__init__()
+
+        self.sync_bridge_refs(self)
+
+    def sync_bridge_refs(self, somedata):
+        '''reloads all the partition.obj bridge references'''
+        local_objects = {}  # local object lookup (to avoid nxn looping)
+        for part in self:
+            local_objects.update({part.get('name'):part})
+        for datum in somedata:
+            if datum.get('name') in self.bridge_objects.keys():
+                local_objects[datum.get('name')].setObject(self.bridge_objects[datum.get('name')])
+
     def populatePartitions(self):
         '''Populate the partition set with partitions from bridge api'''
-        parts = Cobalt.bridge.PartList()
+        
         query = []
-        for part in parts:
+        for part in self.partitions:
+            print 'part is', part
             nodecards = ["%s-%s" % (nc.basepart, nc.id) \
                          for nc in part.nodecards]
             print 'before sort', nodecards
@@ -60,8 +116,10 @@ class PartitionSet(Cobalt.Data.DataSet):
                           'nodes':len(nodecards)*32,
                           'nodecards':nodecards,
                           'state':part.state})
-        self.Add(query)
+        result = self.Add(query)
 
+        self.sync_bridge_refs(result)
+        
     def get_more_deps(self, depdict, check_size, parent):
 
         print 'get_more_deps, check_size', check_size

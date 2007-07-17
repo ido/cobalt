@@ -36,7 +36,9 @@ class BGStub(object):
         if attr in self.__attrinfo__:
             # use local cache
             if attr not in self.attrcache:
+#                 print 'not using local cache', self.id, attr
                 return self.fetchattr(attr)
+#             print 'using cache for:', self.id, attr
             return self.attrcache[attr]
         else:
             return object.__getattribute__(self, attr)
@@ -70,11 +72,11 @@ class BGStub(object):
 class LazyRMSet(object):
     def __init__(self, object, sname, hname, tname, cclass):
         self.nocache = [tname]
-        self.object = object
-        self.sname = sname
-        self.hname = hname
-        self.tname = tname
-        self.cclass = cclass
+        self.object = object  #usually self
+        self.sname = sname    #size attribute
+        self.hname = hname    #head attribute
+        self.tname = tname    #tail attribute
+        self.cclass = cclass  #class for list members
         self.data = []
         if len(self) > 0:
             head = self.cclass(getattr(self.object, self.hname))
@@ -426,6 +428,12 @@ class PartList(BGStub,LazyRMSet):
         bridge.rm_get_partitions(c_int(filter), byref(self.ptr))
         LazyRMSet.__init__(self, self, 'size', 'head', 'tail', Partition)
 
+    def __freepartlist__(self):
+        '''frees the partition list'''
+        print 'before free len of partition list is %d' % len(self)
+        bridge.rm_free_partition_list(self.ptr)
+        print 'after free, len %d' % len(self)
+
 class NodeCardList(BGStub,LazyRMSet):
     """Builds a list of NodeCards given a basepartition.
 
@@ -492,20 +500,41 @@ if __name__ == '__main__':
 #             print u.name
 
 #         print part.id, part.NCnum, len(part.nodecards)
-        print part.id
-        for nc in part.nodecards:
-            output.append([getattr(nc, name) for name in header])
-        Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
-        output = []
-        print
+#         print part.id
+#         for nc in part.nodecards:
+#             output.append([getattr(nc, name) for name in header])
+#         Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
+#         output = []
+#         print
 
 #         for bp in part.basePartitions:
 #             print [getattr(bp, name) for name in bp.__attrinfo__]
-#         if part.id == 'test32_R000_J102':
-# #             part.description = 'modified by PyBridge'
+        if part.id == 'test32_R000_J102':
+            print 'before modification', part.user, part.description
+            if part.user == 'nobody':
+                part.user = 'voran'
+            else:
+                part.user = 'nobody'
+            if part.description == 'changed by pyBridge':
+                part.description = 'modified by pyBridge'
+            else:
+                part.description = 'changed by pyBridge'
+            print 'user' in part.attrcache
+            print part.attrcache
+            partlist.__freepartlist__()
+            print 'after modification and inline flush "%s" "%s"' % (part.user, part.description)
 #             part.user = 'nobody'
 #             break
-    
+
+#     partlist.__freepartlist__()
+#     for part in partlist:
+#         if part.id == 'test32_R000_J102':
+#             if 'description' in part.attrcache:
+#                 print 'description in attrcache'
+#                 del part.attrcache['description']
+#             print 'after flush: checking if description cached', part.description
+#             print 'user says', part.user
+
     header = ['id', 'pid', 'user', 'partition', 'state']
     output = []
     for job in joblist:
