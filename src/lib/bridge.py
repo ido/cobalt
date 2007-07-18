@@ -360,6 +360,13 @@ class Partition(PreStub):
                 self.nodecards.extend([nc for nc in newnclist])
                 del newnclist  #is this necessary?
 
+    def reload(self):
+        '''clears the lookup cache and reloads the bridge pointer using
+        rm_get_partition() individually
+        '''
+        self.attrcache.clear()
+        bridge.rm_get_partition(self.id, byref(self.ptr))
+
 class BG(BGStub):
     __attrinfo__ = {'BPsize': \
                     (bgl_rm_api.RM_BPsize, None, bgl_rm_api.rm_size3D_t, \
@@ -433,6 +440,14 @@ class PartList(BGStub,LazyRMSet):
         print 'before free len of partition list is %d' % len(self)
         bridge.rm_free_partition_list(self.ptr)
         print 'after free, len %d' % len(self)
+
+    def reload(self):
+        '''reloads the bridge pointers using rm_get_partition individually'''
+        for part in self:
+            print 'reloading part', part.id
+            part.reload()
+#             part.attrcache.clear()
+#             bridge.rm_get_partition(part.id, byref(part.ptr))
 
 class NodeCardList(BGStub,LazyRMSet):
     """Builds a list of NodeCards given a basepartition.
