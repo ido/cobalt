@@ -58,6 +58,18 @@ class BridgeData(Cobalt.Data.Data):
         else:
             Cobalt.Data.Data.set(self, field, value)
 
+    def to_rx(self, spec):
+        '''return transmittable version of instance, sans ctype stuff
+        that cannot be marshalled
+        '''
+        rxval = {'tag':self.tag}
+        for field in [field for field in spec.keys() if field != 'tag' and
+                      self._attrib.has_key(field) and
+                      not isinstance(self.get(field), Cobalt.bridge.c_void_p) and
+                      not isinstance(self.get(field), Cobalt.bridge.c_char_p)]:
+            rxval[field] = self.get(field)
+        return rxval
+
     def setObject(self, newobject):
         '''sets the backing bridge object, and updates self._attrib'''
         self.obj = newobject
@@ -113,15 +125,16 @@ class PartitionSet(Cobalt.Data.DataSet):
 
     def populatePartitions(self):
         '''Populate the partition set with partitions from bridge api'''
+        logger.info("populating partitions")
         
         query = []
         for part in self.partitions:
             print 'part is', part
             nodecards = ["%s-%s" % (nc.basepart, nc.id) \
                          for nc in part.nodecards]
-            print 'before sort', nodecards
+#             print 'before sort', nodecards
             nodecards.sort()
-            print 'after sort', nodecards
+#             print 'after sort', nodecards
             query.append({'tag':'partition', 'name':part.id,
                           'nodes':len(nodecards)*32,
                           'nodecards':nodecards,
@@ -194,9 +207,10 @@ class System(Cobalt.Component.Component):
         self.register_function(self.start_job, "StartJob")
         self.register_function(self.query_jobs, "QueryJobs")
         self.register_function(self.kill_job, "KillJob")
-        self.register_function(self.query_part, "QueryPartition")
+        self.register_function(self.query_part, "GetPartition")
         self.register_function(self.full_partition_info, "FullPartitionInfo")
 
+        logger.info('getting partitions')
         self.partitions = PartitionSet()
 
     def start_job(self, _, jobinfo):
@@ -363,14 +377,16 @@ class System(Cobalt.Component.Component):
 
     def query_part(self, _, partinfo):
         '''queries partitions for status info'''
-        pass
+        return self.partitions.Get(partinfo)
 
     def full_partition_info(self, _):
         '''returns nested partition relation dictionary,
         and another dictionary of all partition attributes
         '''
         partition_relations = self.partitions.getDeps()
-        return (partition_relations, [part._attrib for part in self.partitions])
+
+        return (partition_relations, [part.to_rx(part._attrib)
+                                      for part in self.partitions])
 
 if __name__ == '__main__':
     # setup option parsing
