@@ -124,7 +124,7 @@ if __name__ == '__main__':
     try:
         numtime = float(opts['time'])
     except:
-        logger.erorr("invalid time specification")
+        logger.error("invalid time specification")
         raise SystemExit, 1
     if numtime <= 0:
         logger.error("invalid time specification")
