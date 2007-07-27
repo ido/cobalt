@@ -12,28 +12,6 @@ import Cobalt.bridge
 
 logger = logging.getLogger('bgsystem')
 
-class BaseBlock(Cobalt.Data.Data):
-    '''BG/L block (nodecard)'''
-    pass
-
-class BaseSystem(Cobalt.Data.DataSet):
-    '''Defines a BG/L system'''
-    __object__ = BaseBlock
-
-    def __init__(self):
-        Cobalt.Data.DataSet.__init__(self)
-        self.buildBlocks()
-
-    def buildBlocks(self):
-        '''populate basesystem with nodecard blocks'''
-        bg = Cobalt.bridge.BG()
-        query = []
-        for bp in bg.basePartitions:
-            for nc in bp.nodecards:
-                query.append({'tag':'block', 'id':nc.id, 'bpid':nc.basepart})
-        self.Add(query)
-        print query
-
 class BridgeData(Cobalt.Data.Data):
     '''A Data object that ties into another object, like something
     returned from the bridge module
@@ -77,22 +55,16 @@ class BridgeData(Cobalt.Data.Data):
             if attr not in self._attrib:
                 self._attrib.update({attr:None})
 
-class Partition(BridgeData):
-    '''BG/L partition'''
-    pass
+class BridgeDataSet(Cobalt.Data.DataSet):
+    '''a collection of data objects that reference the bridge'''
+    bridge_objects = {} #indexed by object.id
 
-class PartitionSet(Cobalt.Data.DataSet):
-    '''set of partitions'''
-    __object__ = Partition
-
-    def __init__(self):
+    def __init__(self, bridge_list):
+        '''calls DataSet init, then builds dictionary of bridge objects'''
         Cobalt.Data.DataSet.__init__(self)
-        self.partitions = Cobalt.bridge.PartList()
-        self.bridge_objects = {}
-        for part in self.partitions:
-            self.bridge_objects.update({part.id:part})
-        self.populatePartitions()
-
+        for datum in bridge_list:
+            self.bridge_objects.update({datum.id:datum})
+        
     def Get(self, cdata, callback=None, cargs=()):
         '''DataSet.Get which reloads any bridge objects that may
         have been modified via the callback
@@ -104,6 +76,65 @@ class PartitionSet(Cobalt.Data.DataSet):
                 self.bridge_objects[part.get('name')].reload()
         return result
 
+    def sync_bridge_refs(self, somedata):
+        #TODO: why did I do this?
+        '''reloads all the partition.obj -> bridge.Partition references'''
+        local_objects = {}  # local object lookup (to avoid nxn looping)
+        for datum in self:
+            local_objects.update({datum.get('name'):datum})
+        for datum in somedata:
+            if datum.get('name') in self.bridge_objects.keys():
+                local_objects[datum.get('name')].setObject(self.bridge_objects[datum.get('name')])
+
+class BaseBlock(BridgeData):
+    '''BG/L block (nodecard)'''
+    pass
+
+class BaseSystem(BridgeDataSet):
+    '''Defines a BG/L system'''
+    __object__ = BaseBlock
+
+    def __init__(self):
+        '''build list of bridge nodecard objects'''
+        Cobalt.Data.DataSet.__init__(self)
+
+        bg = Cobalt.bridge.BG()
+        nodecardlist = []
+        for bp in bg.basePartitions:
+            for nc in bp.nodecards:
+                self.bridge_objects.update({"%s-%s" % (bp.id, nc.id):nc})
+
+        # initializes self with nodecard blocks
+        
+        self.buildBlocks()
+
+    def buildBlocks(self):
+        '''populate basesystem with nodecard blocks'''
+        bg = Cobalt.bridge.BG()
+        query = []
+        for bp in bg.basePartitions:
+            for nc in bp.nodecards:
+                query.append({'tag':'block', 'state':'idle', 'queue':False,
+                              'name':"%s-%s" % (bp.id, nc.id)})
+        self.Add(query)
+#         print query
+
+class Partition(BridgeData):
+    '''BG/L partition'''
+    pass
+
+class PartitionSet(BridgeDataSet):
+    '''set of partitions'''
+    __object__ = Partition
+
+    def __init__(self):
+        # using partlist for the backing bridge data
+        BridgeDataSet.__init__(self, Cobalt.bridge.PartList())
+#         self.partitions = Cobalt.bridge.PartList()
+#         for part in self.partitions:
+#             self.bridge_objects.update({part.id:part})
+        self.populatePartitions()
+
     def refresh(self):
         '''refreshes partitions from bridge'''
         #TODO add new partition if partition in bridge not in self
@@ -114,31 +145,21 @@ class PartitionSet(Cobalt.Data.DataSet):
         self.partitions.reload()
         self.sync_bridge_refs(self)
 
-    def sync_bridge_refs(self, somedata):
-        '''reloads all the partition.obj -> bridge.Partition references'''
-        local_objects = {}  # local object lookup (to avoid nxn looping)
-        for part in self:
-            local_objects.update({part.get('name'):part})
-        for datum in somedata:
-            if datum.get('name') in self.bridge_objects.keys():
-                local_objects[datum.get('name')].setObject(self.bridge_objects[datum.get('name')])
-
     def populatePartitions(self):
         '''Populate the partition set with partitions from bridge api'''
         logger.info("populating partitions")
         
         query = []
         for part in self.partitions:
-            print 'part is', part
+            print 'part is', part.id
             nodecards = ["%s-%s" % (nc.basepart, nc.id) \
                          for nc in part.nodecards]
 #             print 'before sort', nodecards
-            nodecards.sort()
+#             nodecards.sort()
 #             print 'after sort', nodecards
             query.append({'tag':'partition', 'name':part.id,
                           'nodes':len(nodecards)*32,
-                          'nodecards':nodecards,
-                          'state':part.state})
+                          'nodecards':nodecards})
         result = self.Add(query)
 
         self.sync_bridge_refs(self)
@@ -171,7 +192,7 @@ class PartitionSet(Cobalt.Data.DataSet):
         depdict = {}
         check_size = machine_size
 
-        print type(check_size), [part.get('nodes') for part in self.data if part.get('nodes') == check_size]
+#         print type(check_size), [part.get('nodes') for part in self.data if part.get('nodes') == check_size]
         for part in full_partitions:
             self.get_more_deps(depdict, check_size, part)
 
