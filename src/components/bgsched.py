@@ -68,6 +68,13 @@ def filterByLength(potential, length):
             
 class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
+    _config = ConfigParser.ConfigParser()
+    _config.read(['/etc/cobalt.conf'])
+    try:
+        min_psize = int(_config.get('system', 'minpsize'))
+    except:
+        min_psize = 32
+
     def __init__(self, element):
         Cobalt.Data.Data.__init__(self, element)
         if 'state' not in element.keys():
@@ -93,7 +100,8 @@ class Partition(Cobalt.Data.Data):
         jqueue = job.get('queue')
         jsize = int(job.get('nodes')) # should this be 'size' instead?
         psize = int(self.get('size'))
-        size = ((psize >= jsize) and ((psize == 32) or (jsize > psize/2)))
+        size = ((psize >= jsize) and \
+                ((psize == self.min_psize) or (jsize > psize/2)))
         if not (basic and size):
             return False
         # add a slack for job cleanup with reservation calculations
@@ -252,7 +260,14 @@ class PartitionSet(Cobalt.Data.DataSet):
             logger.debug("initial candidates: %s" % ([cand.get('name') for cand in candidates]))
             #print "Actively checking"
             if '--nodb2' not in sys.argv:
-                self.db2.execute("select blockid, status from bglblock;")
+                try:
+                    sys_type = self._config.get('system', 'bgtype')
+                except:
+                    sys_type = 'bgl'
+                if sys_type == 'bgp':
+                    self.db2.execute("select blockid, status from bgpblock;")
+                else:
+                    self.db2.execute("select blockid, status from bglblock;")
                 results = self.db2.fetchall()
                 for (pname, state) in results:
                     partname = pname.strip()
