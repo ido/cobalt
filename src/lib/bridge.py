@@ -132,9 +132,9 @@ class BasePartition(PreStub):
                      bgl_rm_api.rm_BP_computenode_memory_t,
                      bgl_rm_api.RM_ComputenodeMemoryEnum),
                     }
-    def __init__(self, pointer):
+    def __init__(self, mypointer):
         self.attrcache = {}
-        self.ptr = pointer
+        self.ptr = mypointer
         self.nodecards = NodeCardList(basepart=self.id)
 
 class NodeCard(PreStub):
@@ -346,8 +346,8 @@ class Partition(PreStub):
                    bgl_rm_api.rm_element_t, passthru),
                   }
 
-    def __init__(self, pointer):
-        PreStub.__init__(self, pointer)
+    def __init__(self, mypointer):
+        PreStub.__init__(self, mypointer)
         self.basePartitions = LazyRMSet(self, 'BPnum', 'BPhead',
                                         'BPtail', BasePartition)
         self.switches = LazyRMSet(self, 'Switchnum', 'Switchhead',
@@ -373,10 +373,10 @@ class Partition(PreStub):
         '''clears the lookup cache, frees the pointer, and reloads the
         bridge pointer using rm_get_partition() individually
         '''
-        self.attrcache.clear()
         saveid = self.id
-        bridge.rm_free_partition(self.ptr)
-        self.ptr = pointer(bgl_rm_api.rm_element_t())
+        self.attrcache.clear()
+#         bridge.rm_free_partition(self.ptr)
+#         self.ptr = pointer(bgl_rm_api.rm_element_t())
         bridge.rm_get_partition(c_char_p(saveid), byref(self.ptr))
 
 class BG(BGStub):
@@ -447,38 +447,49 @@ class PartList(BGStub,LazyRMSet):
         bridge.rm_get_partitions(c_int(filter), byref(self.ptr))
         LazyRMSet.__init__(self, self, 'size', 'head', 'tail', Partition)
 
-    def refresh(self):
-        '''refreshes the bridge pointers using part.reload() individually'''
-        for part in self:
-            print 'reloading part', part.id
-            part.reload()
+    def __del__(self):
+        '''frees the partition_list_t pointer on delete'''
+        bridge.rm_free_partition_list(self.ptr)
+
+#     def refresh(self):
+#         '''refreshes the bridge pointers using part.reload() individually'''
+#         for part in self:
+#             print 'reloading part', part.id
+#             part.reload()
 
     def reload(self):
-        '''loads the entire list again'''
+        '''loads the entire list again, updating pointers and clearing
+        attrcaches along the way
+        '''
+        # clear the lookup cache so the head pointer isn't cached
+        self.attrcache.clear()
+        
         local_bridge = {}
         for bridgepart in self:
             local_bridge.update({bridgepart.id:bridgepart})
 #         print "reloading", type(self.ptr)
         bridge.rm_free_partition_list(self.ptr)
         self.ptr = pointer(bgl_rm_api.rm_partition_list_t())
-        bridge.rm_get_partitions(c_int(bgl_rm_api.PARTITION_ALL_FLAG), byref(self.ptr))
-        print 'trying to set head', self.cclass, self.object, self.hname
-        headptr = pointer(bgl_rm_api.rm_element_t())
-        bridge.rm_get_data(self.ptr, bgl_rm_api.RM_PartListFirstPart, byref(headptr))
-        head = Partition(headptr)
-#         head = self.cclass(getattr(self.object, self.hname))
+        bridge.rm_get_partitions(c_int(bgl_rm_api.PARTITION_ALL_FLAG),
+                                 byref(self.ptr))
+
+        # the class way
+        head_ptr = getattr(self.object, self.hname)
+        head = self.cclass(head_ptr)
         if head.id in local_bridge.keys():
             print 'updating ptr', local_bridge[head.id].ptr, head.ptr
+            local_bridge[head.id].attrcache.clear()
             local_bridge[head.id].ptr = head.ptr
+        else:
+            self.data.append(head)
 
         for x in range(getattr(self.object, self.sname) - 1):
-#             print 'trying to set tail', self.cclass, self.object, self.tname
-            tail_ptr = pointer(bgl_rm_api.rm_element_t())
-            bridge.rm_get_data(self.ptr, bgl_rm_api.RM_PartListNextPart, byref(tail_ptr))
-            tail = Partition(tail_ptr)
+            # the class way
+            tail = self.cclass(getattr(self.object, self.tname))
             print 'checking', tail.id
             if tail.id in local_bridge.keys():
                 print 'updating ptr', local_bridge[tail.id].ptr, tail.ptr
+                local_bridge[tail.id].attrcache.clear()
                 local_bridge[tail.id].ptr = tail.ptr
             else:
                 self.data.append(tail)
