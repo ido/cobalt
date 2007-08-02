@@ -56,7 +56,9 @@ class BridgeData(Cobalt.Data.Data):
                 self._attrib.update({attr:None})
 
 class BridgeDataSet(Cobalt.Data.DataSet):
-    '''a collection of data objects that reference the bridge'''
+    '''a collection of data objects that reference their counterpart bridge
+    objects
+    '''
     bridge_objects = {} #indexed by object.id
 
     def __init__(self, bridge_list):
@@ -72,19 +74,39 @@ class BridgeDataSet(Cobalt.Data.DataSet):
         '''
         result = Cobalt.Data.DataSet.Get(self, cdata, callback, cargs)
         if callback and cargs:
+            self.partitions.reload()
             for part in result:
-                self.bridge_objects[part.get('name')].reload()
+                if 'name' in part.keys():
+                    self.bridge_objects[part.get('name')].attrcache.clear()
+                elif 'id' in part.keys():
+                    self.bridge_objects[part.get('id')].attrcache.clear()
         return result
 
     def sync_bridge_refs(self, somedata):
-        #TODO: why did I do this?
-        '''reloads all the partition.obj -> bridge.Partition references'''
-        local_objects = {}  # local object lookup (to avoid nxn looping)
-        for datum in self:
-            local_objects.update({datum.get('name'):datum})
+        '''reloads all the partition.obj -> bridge.Partition references
+
+        builds dict of local objects (Data), and then calls
+        BridgeData.setObject() with corresponding bridge_objects{}
+        reference
+
+        all are indexed with "name"
+        
+        presumably this would be used in the event that the backing
+        bridge_objects{} references have been updated against the BG
+        system, and need to be propagated to BridgeData.obj for each
+        Data object in self
+        '''
+        data_objects = {}  # local object lookup (to avoid nxn looping)
+        for local_datum in self:
+            data_objects.update({local_datum.get('name'):local_datum})
+
         for datum in somedata:
             if datum.get('name') in self.bridge_objects.keys():
-                local_objects[datum.get('name')].setObject(self.bridge_objects[datum.get('name')])
+                # NOTE: self.bridge_objects should be updated prior to this
+                print "updating data_objects[%s] -> bridge_objects %s" % (datum.get('name'), self.bridge_objects[datum.get('name')])
+                print 'before, obj is', data_objects[datum.get('name')].obj
+                data_objects[datum.get('name')].setObject(self.bridge_objects[datum.get('name')])
+                print 'after, obj is', data_objects[datum.get('name')].obj
 
 class BaseBlock(BridgeData):
     '''BG/L block (nodecard)'''
@@ -100,23 +122,27 @@ class BaseSystem(BridgeDataSet):
 
         bg = Cobalt.bridge.BG()
         nodecardlist = []
+        query = []
+        # initializes self with nodecard blocks
         for bp in bg.basePartitions:
             for nc in bp.nodecards:
                 self.bridge_objects.update({"%s-%s" % (bp.id, nc.id):nc})
-
-        # initializes self with nodecard blocks
-        
-        self.buildBlocks()
-
-    def buildBlocks(self):
-        '''populate basesystem with nodecard blocks'''
-        bg = Cobalt.bridge.BG()
-        query = []
-        for bp in bg.basePartitions:
-            for nc in bp.nodecards:
                 query.append({'tag':'block', 'state':'idle', 'queue':False,
-                              'name':"%s-%s" % (bp.id, nc.id)})
-        self.Add(query)
+                              'name':'%s-%s' % (bp.id, nc.id), 'bpid':bp.id})
+        result = self.Add(query)
+        self.sync_bridge_refs(result)
+        
+#         self.buildBlocks()
+
+#     def buildBlocks(self):
+#         '''populate basesystem with nodecard blocks'''
+#         bg = Cobalt.bridge.BG()
+#         query = []
+#         for bp in bg.basePartitions:
+#             for nc in bp.nodecards:
+#                 query.append({'tag':'block', 'state':'idle', 'queue':False,
+#                               'name':"%s-%s" % (bp.id, nc.id)})
+#         self.Add(query)
 #         print query
 
 class Partition(BridgeData):
@@ -129,21 +155,27 @@ class PartitionSet(BridgeDataSet):
 
     def __init__(self):
         # using partlist for the backing bridge data
-        BridgeDataSet.__init__(self, Cobalt.bridge.PartList())
+        self.partitions = Cobalt.bridge.PartList()
+        BridgeDataSet.__init__(self, self.partitions)
 #         self.partitions = Cobalt.bridge.PartList()
 #         for part in self.partitions:
 #             self.bridge_objects.update({part.id:part})
         self.populatePartitions()
 
-    def refresh(self):
-        '''refreshes partitions from bridge'''
+    def reload(self):
+        '''reloads partitions from bridge
+        gets new partition list, then must update each Partition.obj reference
+        '''
         #TODO add new partition if partition in bridge not in self
         #TODO deal with partition in self but not in bridge (disable?)
-        self.partitions.__freepartlist__()
 #         self.partitions.__init__()
-        # try using rm_get_partition
+        # 
         self.partitions.reload()
-        self.sync_bridge_refs(self)
+
+        for datum in self.partitions:
+            self.bridge_objects.update({datum.id:datum})
+
+#         self.sync_bridge_refs(self)
 
     def populatePartitions(self):
         '''Populate the partition set with partitions from bridge api'''
@@ -151,7 +183,6 @@ class PartitionSet(BridgeDataSet):
         
         query = []
         for part in self.partitions:
-            print 'part is', part.id
             nodecards = ["%s-%s" % (nc.basepart, nc.id) \
                          for nc in part.nodecards]
 #             print 'before sort', nodecards
@@ -165,7 +196,7 @@ class PartitionSet(BridgeDataSet):
         self.sync_bridge_refs(self)
         
     def get_more_deps(self, depdict, check_size, parent):
-
+        '''recursive partner for getDeps'''
         print 'get_more_deps, check_size', check_size
         while check_size > 1:
             for p in [part for part in self if part.get('nodes') == check_size]:
@@ -202,7 +233,7 @@ class System(Cobalt.Component.Component):
     __implementation__ = 'bgsys'
     __name__ = 'system'
     __statefields__ = []
-    async_funcs = ['assert_location']
+    async_funcs = ['assert_location', 'progress']
 
     # read in config from cobalt.conf
     required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
@@ -408,6 +439,10 @@ class System(Cobalt.Component.Component):
 
         return (partition_relations, [part.to_rx(part._attrib)
                                       for part in self.partitions])
+
+    def progress(self):
+        '''some asynchronous work'''
+        self.partitions.reload()
 
 if __name__ == '__main__':
     # setup option parsing
