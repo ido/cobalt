@@ -69,6 +69,10 @@ class BGStub(object):
         return [item for item in self.__attrinfo__ \
                 if item not in self.hidden]
 
+    def reload(self):
+        '''reloads self from bridge data'''
+        pass
+
 class LazyRMSet(object):
     def __init__(self, object, sname, hname, tname, cclass):
         self.nocache = [tname]
@@ -95,9 +99,9 @@ class LazyRMSet(object):
         return self.data.__getitem__(num)
 
 class PreStub(BGStub):
-    def __init__(self, pointer):
+    def __init__(self, mypointer):
         self.attrcache = {}
-        self.ptr = pointer
+        self.ptr = mypointer
 
 class BasePartition(PreStub):
     __attrinfo__ = {'id': \
@@ -155,6 +159,11 @@ class NodeCard(PreStub):
                     (bgl_rm_api.RM_NodeCardPartState, None,
                      bgl_rm_api.rm_partition_state_t, getvalue),
                     }
+
+    def reload(self):
+        '''reload nodecard from bridge
+        does not do anything because nodecards are not modified'''
+        pass
                     
 class Port(PreStub):
     __attrinfo__ = {'component': \
@@ -361,11 +370,14 @@ class Partition(PreStub):
                 del newnclist  #is this necessary?
 
     def reload(self):
-        '''clears the lookup cache and reloads the bridge pointer using
-        rm_get_partition() individually
+        '''clears the lookup cache, frees the pointer, and reloads the
+        bridge pointer using rm_get_partition() individually
         '''
         self.attrcache.clear()
-        bridge.rm_get_partition(self.id, byref(self.ptr))
+        saveid = self.id
+        bridge.rm_free_partition(self.ptr)
+        self.ptr = pointer(bgl_rm_api.rm_element_t())
+        bridge.rm_get_partition(c_char_p(saveid), byref(self.ptr))
 
 class BG(BGStub):
     __attrinfo__ = {'BPsize': \
@@ -435,19 +447,41 @@ class PartList(BGStub,LazyRMSet):
         bridge.rm_get_partitions(c_int(filter), byref(self.ptr))
         LazyRMSet.__init__(self, self, 'size', 'head', 'tail', Partition)
 
-    def __freepartlist__(self):
-        '''frees the partition list'''
-        print 'before free len of partition list is %d' % len(self)
-        bridge.rm_free_partition_list(self.ptr)
-        print 'after free, len %d' % len(self)
-
-    def reload(self):
-        '''reloads the bridge pointers using rm_get_partition individually'''
+    def refresh(self):
+        '''refreshes the bridge pointers using part.reload() individually'''
         for part in self:
             print 'reloading part', part.id
             part.reload()
-#             part.attrcache.clear()
-#             bridge.rm_get_partition(part.id, byref(part.ptr))
+
+    def reload(self):
+        '''loads the entire list again'''
+        local_bridge = {}
+        for bridgepart in self:
+            local_bridge.update({bridgepart.id:bridgepart})
+#         print "reloading", type(self.ptr)
+        bridge.rm_free_partition_list(self.ptr)
+        self.ptr = pointer(bgl_rm_api.rm_partition_list_t())
+        bridge.rm_get_partitions(c_int(bgl_rm_api.PARTITION_ALL_FLAG), byref(self.ptr))
+        print 'trying to set head', self.cclass, self.object, self.hname
+        headptr = pointer(bgl_rm_api.rm_element_t())
+        bridge.rm_get_data(self.ptr, bgl_rm_api.RM_PartListFirstPart, byref(headptr))
+        head = Partition(headptr)
+#         head = self.cclass(getattr(self.object, self.hname))
+        if head.id in local_bridge.keys():
+            print 'updating ptr', local_bridge[head.id].ptr, head.ptr
+            local_bridge[head.id].ptr = head.ptr
+
+        for x in range(getattr(self.object, self.sname) - 1):
+#             print 'trying to set tail', self.cclass, self.object, self.tname
+            tail_ptr = pointer(bgl_rm_api.rm_element_t())
+            bridge.rm_get_data(self.ptr, bgl_rm_api.RM_PartListNextPart, byref(tail_ptr))
+            tail = Partition(tail_ptr)
+            print 'checking', tail.id
+            if tail.id in local_bridge.keys():
+                print 'updating ptr', local_bridge[tail.id].ptr, tail.ptr
+                local_bridge[tail.id].ptr = tail.ptr
+            else:
+                self.data.append(tail)
 
 class NodeCardList(BGStub,LazyRMSet):
     """Builds a list of NodeCards given a basepartition.
