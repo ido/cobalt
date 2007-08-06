@@ -199,8 +199,10 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
                     self.logger.error("Failed to locate process group for pid %s" % (pid))
                 elif len(pgrps) == 1:
                     pgrps[0].FinishProcess(stat)
+                    pgrps[0].pid = None
                 else:
                     self.logger.error("Got more than one match for pid %s" % (pid))
+                    [pgrp.FinishProcess(stat) for pgrp in pgrps]
 
     def create_processgroup(self, address, data):
         '''Create new process group element'''
