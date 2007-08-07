@@ -4,44 +4,76 @@
       <Partition name='R000_J102-256' size='256'>
         <Partition name='R000_J102-128' size='128'>
           <Partition name='R000_J102-64' size='64'>
-            <Partition name='R000_J102-32' size='32'/>
-            <Partition name='R000_J104-32' size='32'/>
+            <Partition name='R000_J102-32' size='32'>
+		<Nodecard name='R000-J102'/>
+	    </Partition>
+            <Partition name='R000_J104-32' size='32'>
+		<Nodecard name='R000-J104'/>
+	    </Partition>
           </Partition>
           <Partition name='R000_J106-64' size='64'>
-            <Partition name='R000_J106-32' size='32'/>
-            <Partition name='R000_J108-32' size='32'/>
+            <Partition name='R000_J106-32' size='32'>
+		<Nodecard name='R000-J106'/>
+	    </Partition>
+            <Partition name='R000_J108-32' size='32'>
+		<Nodecard name='R000-J108'/>
+	    </Partition>		
           </Partition>
         </Partition>
         <Partition name='R000_J111-128' size='128'>
           <Partition name='R000_J111-64' size='64'>
-            <Partition name='R000_J111-32' size='32'/>
-            <Partition name='R000_J113-32' size='32'/>
+            <Partition name='R000_J111-32' size='32'>
+		<Nodecard name='R000-J111'/>
+	    </Partition>		
+            <Partition name='R000_J113-32' size='32'>
+		<Nodecard name='R000-J113'/>
+	    </Partition>
           </Partition>
           <Partition name='R000_J115-64' size='64'>
-            <Partition name='R000_J115-32' size='32'/>
-            <Partition name='R000_J117-32' size='32'/>
+            <Partition name='R000_J115-32' size='32'>
+		<Nodecard name='R000-J115'/>
+	    </Partition>
+            <Partition name='R000_J117-32' size='32'>
+		<Nodecard name='R000-J117'/>
+	    </Partition>
           </Partition>
         </Partition>
       </Partition>
       <Partition name='R000_J203-256' size='256'>
         <Partition name='R000_J203-128' size='128'>
           <Partition name='R000_J203-64' size='64'>
-            <Partition name='R000_J203-32' size='32'/>
-            <Partition name='R000_J205-32' size='32'/>
+            <Partition name='R000_J203-32' size='32'>
+		<Nodecard name='R000-J203'/>
+	    </Partition>
+            <Partition name='R000_J205-32' size='32'>
+		<Nodecard name='R000-J205'/>
+	    </Partition>
           </Partition>
           <Partition name='R000_J207-64' size='64'>
-            <Partition name='R000_J207-32' size='32'/>
-            <Partition name='R000_J209-32' size='32'/>
+            <Partition name='R000_J207-32' size='32'>
+		<Nodecard name='R000-J207'/>
+	    </Partition>
+            <Partition name='R000_J209-32' size='32'>
+		<Nodecard name='R000-J209'/>
+	    </Partition>
           </Partition>
         </Partition>
         <Partition name='R000_J210-128' size='128'>
           <Partition name='R000_J210-64' size='64'>
-            <Partition name='R000_J210-32' size='32'/>
-            <Partition name='R000_J212-32' size='32'/>
+            <Partition name='R000_J210-32' size='32'>
+		<Nodecard name='R000-J210'/>
+	    </Partition>
+            <Partition name='R000_J212-32' size='32'>
+		<Nodecard name='R000-J212'/>
+	    </Partition>		
           </Partition>
           <Partition name='R000_J214-64' size='64'>
-            <Partition name='R000_J214-32' size='32'/>
-            <Partition name='R000_J216-32' size='32'/>
+            <Partition name='R000_J214-32' size='32'>
+		<Nodecard name='R000-J214'/>
+	    </Partition>
+            <Partition name='R000_J216-32' size='32'>
+		<Nodecard name='R000-J216'/>
+	    </Partition>		
           </Partition>
         </Partition>
       </Partition>

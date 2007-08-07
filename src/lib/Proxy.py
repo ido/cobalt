@@ -156,7 +156,7 @@ class bcfg2(ComponentProxy):
 class simulator(ComponentProxy):
     '''bgl simulator client code'''
     name = 'simulator'
-    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2']
+    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2', 'GetPartition', 'ReserveNodecards', 'ReleaseNodecards']
 
 class system(ComponentProxy):
     '''system component'''
