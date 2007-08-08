@@ -6,9 +6,6 @@ __revision__ = '$Revision$'
 import copy, logging, sys, time, xmlrpclib, ConfigParser
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 
-if '--nodb2' not in sys.argv:
-    import DB2
-
 logger = logging.getLogger('bgsched')
 
 comm = Cobalt.Proxy.CommDict()
@@ -44,20 +41,6 @@ class FailureMode(object):
             logger.error("Failure %s occured" % (self.name))
             self.status = False
 
-def filterByTopology(placements, depinfo, potential):
-    '''Filter out all potential placements that overlap with already allocated partitions'''
-    used = []
-    for loc in [loc for (_, loc) in placements]:
-        used.append(loc)
-        used += [part for part in depinfo[loc][0] + depinfo[loc][1]]
-        for block in used:
-            for job, places in potential.iteritems():
-                if block in [p.get('name') for p in places]:
-                    potential[job].remove([b for b in potential[job] \
-                                           if b.get('name')==block][0])
-        for job in [job for job in potential if not potential[job]]:
-            del potential[job]
-
 def filterByLength(potential, length):
     '''Filter out all potential placements for jobs longer than length'''
     if length == -1:
@@ -65,27 +48,111 @@ def filterByLength(potential, length):
     for job in potential.keys():
         if float(job.get('walltime')) > float(length):
             del potential[job]
-            
+
+class ForeignData(Cobalt.Data.Data):
+    def Sync(self, data):
+        upd = [(k, v) for (k, v) in data.iteritems() \
+               if k != 'tag' and self.get(k) != v]
+        if upd:
+            logger.info("Resetting job %s parameters %s" % \
+                        (self.get('jobid'), ':'.join([u[0] for u in upd])))
+            for (k, v) in upd:
+                self.set(k, v)
+
+class ForeignDataSet(Cobalt.Data.DataSet):
+    def Sync(self):
+        try:
+            func = getattr(comm[__osource__[0]], __osource__[1])
+            data = func(__osource__[2])
+        except xmlrpclib.Fault:
+            self.__oserror__.Fail()
+            return
+        except:
+            self.logger.error("Unexpected fault during data sync",
+                              exc_info=1)
+            return
+        self.__oserror__.Pass()
+        exists = [item.get(self.__oidfield__) for item in self]
+        active = [item.get(self.__oidfield__) for item in data]
+        syncd = dict([(item.get(self.__oidfield__), item) \
+                      for item in self \
+                      if item.get(self.__oidfield__) in active])
+        done = [item for item in exists if item not in active]
+        new_o = [item for item in data \
+                 if item.get(self.__oidfield__) not in exists]
+        # remove finished jobs
+        [self.data.remove(item) for item in self \
+         if item.get(self.__oidfield__) in done]
+        # create new jobs
+        [self.data.append(self.__object__(data)) for data in new_o]
+        # sync existing jobs
+        for item in [item for item in self \
+                     if item.get(self.__oidfield__) in syncd]:
+            item.Sync(syncd[item.get(self.__oidfield__)])
+
+class Reservation(Cobalt.Data.Data):
+    '''Reservation\nHas attributes:\nname, start, stop, cycle, users, resources'''
+    def Overlaps(self, location, start, duration):
+        '''check job overlap with reservations'''
+        if location not in self.get('locations'):
+            return False
+        if self.get('start') <= start <= self.get('stop'):
+            return True
+        elif self.get('start') <= (start + duration) <= self.get('stop'):
+            return True
+        if self.get('cycle') == 0:
+            return False
+        # 3 cases, front, back and complete coverage of a cycle
+        cstart = math.floor((start - self.get('start')) / self.get('cycle'))
+        if cstart <= start <= (cstart + self.get('duration')):
+            return True
+        cend = math.floor(((start + duration) - self.get('start')) / self.get('cycle'))
+        if cend <= (start + duration) <= (cend + self.get('duration')):
+            return True
+        if duration >= self.get('cycle'):
+            return True
+        return False
+
+class ReservationSet(Cobalt.Data.DataSet):
+    __object__ = Reservation
+
+    def CreateRQueue(self, reserv):
+        queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
+        qnames = [q['name'] for q in queues]
+        if "R.%s" % reserv.get('name') not in qnames:
+            logger.info("Adding reservation queue R.%s" % \
+                        (reserv.get('name')))
+            spec = [{'tag':'queue', 'name': 'R.%s' % \
+                     (reserv.get('name'))}]
+            attrs = {'state':'running', 'users': reserv.get('users')}
+                try:
+                    comm['qm'].AddQueue(spec)
+                    comm['qm'].SetQueues(spec, attrs)
+                except Exception, e:
+                    logger.error("Queue setup for %s failed: %s" \
+                                 % ("R.%s" % reserv.get('name'), e))
+
+    def DeleteRQueue(self, reserv):
+        queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
+        qnames = [q['name'] for q in queues]
+        rqn = "R.%s" % reserv.get("name")
+        if rqn in qnames:
+            logger.info("Disabling Rqueue %s" % (qn))
+            try:
+                response = comm['qm'].SetQueues([{'tag':'queue',
+                                                  'name':rqn}],
+                                                {'state':'dead'})
+            except Exception, e:
+                logger.error("Disable request failed: %s" % e)
+
+    def Add(self, cdata, callback=None, cargs={}):
+        Cobalt.Data.DataSet.Add(self, cdata, self.CreateRQueue, cargs)
+        
+    def Del(self, cdata, callback=None, cargs={}):
+        Cobalt.Data.DataSet.Del(self, cdata, self.DeleteRQueue, cargs)
+
 class Partition(Cobalt.Data.Data):
     '''Partitions are allocatable chunks of the machine'''
-    def __init__(self, element):
-        Cobalt.Data.Data.__init__(self, element)
-        if 'state' not in element.keys():
-            self.set('state', 'idle')
-        if 'reservations' not in element.keys():
-            self.set('reservations', [])
-        self.job = 'none'
-        self.rcounter = 1
-        if 'db2' not in element.keys():
-            self.set('db2', 'XX')
-
-    def isIdle(self):
-        '''Return True if partition is idle'''
-        if '--nodb2' not in sys.argv:
-            return self.get('state') == 'idle' and self.get('db2') == 'F'
-        else:
-            return self.get('state') == 'idle'
-
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
         basic = self.get('scheduled') and self.get('functional')
@@ -120,41 +187,39 @@ class Partition(Cobalt.Data.Data):
             return queue
         return True
 
-    def PlaceJob(self, job):
-        '''Allocate this partition for Job'''
-        logger.info("Job %s/%s: Scheduling job %s on partition %s" % (
-            job.get('jobid'), job.get('user'), job.get('jobid'),
-            self.get('name')))
-        self.job = job.get('jobid')
-        self.set('state', 'busy')
 
-    def Free(self):
-        '''DeAllocate partition for current job'''
-        logger.info("Job %s: Freeing partition %s" % (self.job, self.get('name')))
-        self.job = 'none'
-        self.set('state', 'idle')
-
-class Job(Cobalt.Data.Data):
+class Job(ForeignData):
     '''This class represents User Jobs'''
     def __init__(self, element):
-        Cobalt.Data.Data.__init__(self, element)
+        ForeignData.__init__(self, element)
         self.partition = 'none'
         logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
-                                                       self.get('user')))
+                                                  self.get('user')))
 
-    def Place(self, partition):
-        '''Build linkage to execution partition'''
-        self.partition = partition.get('name')
-        self.set('state', 'running')
+class JobSet(Cobalt.Data.DataSet):
+    __object__ = Job
+    __oidfield__ = 'jobid'
+    __oserror__ = FailureMode("QM Connection")
+    __osource__ = ('qm', 'GetJobs',
+                   [{'tag':'job', 'nodes':'*', 'location':'*',
+                     'jobid':'*', 'state':'*', 'index':'*',
+                     'walltime':'*', 'queue':'*', 'user':'*'}]
 
-    def Sync(self, data):
-        upd = [(k, v) for (k, v) in data.iteritems() \
-               if k != 'tag' and self.get(k) != v]
-        if upd:
-            logger.info("Resetting job %s parameters %s" % \
-                        (self.get('jobid'), ':'.join([u[0] for u in upd])))
-            for (k, v) in upd:
-                self.set(k, v)
+    def __init__(self):
+        Cobalt.Data.DataSet.__init__(self)
+        self.qmconnect = FailureMode("QM Connection")
+
+    def Run(self, jobid, location):
+        pass
+
+class Queue(ForeignData):
+    pass
+
+class QueueSet(ForeignDataSet):
+    __object__ = Queue
+    __oidfield__ = 'name'
+    __oserror__ = FailureMode("QM Connection")
+    __osource__ = ('qm', 'GetQueues', [{'tag':'queue', 'name':'*'}]
 
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
@@ -205,79 +270,23 @@ class PartitionSet(Cobalt.Data.DataSet):
             self.db2 = DB2.connect(uid=self.config.get('db2uid'), pwd=self.config.get('db2pwd'),
                                    dsn=self.config.get('db2dsn')).cursor()
 
+    def NewSchedule(self):
+        # self.jobs contains jobs
+        # self queues contains queues
+        # self.reservations contains reservations
+        # self.resources contains resources
+        pass
+
     def Schedule(self, jobs):
-        '''Find new jobs, fit them on a partitions'''
-        knownjobs = [job.get('jobid') for job in self.jobs]
-        logger.debug('Schedule: knownjobs %s' % knownjobs)
-        activejobs = [job.get('jobid') for job in jobs]
-        finished = [jobid for jobid in knownjobs if jobid not in activejobs]
-        #print "known", knownjobs, "active", activejobs,
-        # "finished", finished
-        # add new jobs
-        #print jobs
-        [self.jobs.append(Job(jobdata)) for jobdata in jobs \
-         if jobdata.get('jobid') not in knownjobs]
-        # delete finished jobs
-        [self.jobs.remove(job) for job in self.jobs \
-         if job.get('jobid') in finished]
-        # sync existing parameters
-        for jdata in jobs:
-            try:
-                [currjob] = [j for j in self.jobs
-                             if j.get('jobid') == jdata.get('jobid')]
-            except:
-                continue
-            currjob.Sync(jdata)
-        # free partitions with nonexistant jobs
-        [partition.Free() for partition in self.data \
-         if partition.job not in activejobs + ['none']]
-        # find idle partitions for new jobs
-        # (idle, functional, and scheduled)
         candidates = [part for part in self.data \
                       if part.get('state') == 'idle' and
                       part.get('functional') and part.get('scheduled')]
         # find idle jobs
         idlejobs = [job for job in self.jobs if job.get('state') == 'queued']
-        # filter for stopped and dead queues
-        try:
-            stopped_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'smartstate':'stopped'}])
-            dead_queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*', 'state':'dead'}])
-        except xmlrpclib.Fault:
-            self.qmconnect.Fail()
-            return 0
-        self.qmconnect.Pass()
-        logger.debug('stopped queues %s' % stopped_queues)
+        # filter for dead queus
+        # FIXME use self.queues methods to determine live queues
         idlejobs = [job for job in idlejobs if job.get('queue') not \
                     in [q.get('name') for q in stopped_queues + dead_queues]]
-
-        #print "jobs:", self.jobs
-        if candidates and idlejobs:
-            logger.debug("initial candidates: %s" % ([cand.get('name') for cand in candidates]))
-            #print "Actively checking"
-            if '--nodb2' not in sys.argv:
-                self.db2.execute("select blockid, status from bglblock;")
-                results = self.db2.fetchall()
-                for (pname, state) in results:
-                    partname = pname.strip()
-                    partinfo = [part for part in self.data if part.get('name') == partname]
-                    if partinfo:
-                        partinfo[0].set('db2', state)
-
-                for partition in [part for part in self.data if part.get('db2', 'XXX') == 'XXX']:
-                    logger.error("DB2 has no state for partition %s" % (partition.get('name')))
-
-                # check for discrepancies between candidates and db2
-                for part in [part for part in candidates if part.get('db2') != 'F']:
-                    foundlocation = [job for job in jobs if job.get('location') == part.get('name')]
-                    if foundlocation:
-                        part.job = foundlocation[0].get('jobid')
-                        part.set('state', 'busy')
-                        logger.error("Found job %s on Partition %s. Manually setting state." % \
-                                     (foundlocation[0].get('jobid'), part.get('name')))
-                    else:
-                        logger.error('Partition %s in inconsistent state' % (part.get('name')))
-                    candidates.remove(part)
-            #print "after db2 check"
 
             # now we get dependency info
             depsrc = [part.to_rx({'tag':'partition', 'name':'*', 'deps':'*'}) for part in self.data]
@@ -454,100 +463,6 @@ class BGSched(Cobalt.Component.Component):
         self.register_function(self.AddReservation, "AddReservation")
         self.register_function(self.ReleaseReservation, "DelReservation")
         self.register_function(self.SetReservation, "SetReservation")
-
-    def GetReservations(self):
-        '''build a list of reservation names in use'''
-        reservs = []
-        names = []
-        for partition in self.partitions:
-            rinfo = partition.get('reservations')
-            if rinfo:
-                for res in rinfo:
-                    if res[0] not in names:
-                        names.append(res[0])
-                        reservs.append(res)
-        return reservs
-
-    def SetReservation(self,  _, spec, name, user, start, duration):
-        '''updates reservations'''
-        for s in spec:
-            s.update({'reservations':'*'})
-        affected_partitions = self.partitions.Get(spec)
-        resv_updates = []
-        for ap in affected_partitions:
-            for res in ap['reservations']:
-                if res[0] == name:
-                    ap['reservations'].remove(res)
-                    ap['reservations'].append((name, user, start, duration))
-                    resv_updates.append((name, user, start, duration))
-        #now update queues
-        self.ResQueueSync(updates=resv_updates)
-        return affected_partitions
-
-    def ResQueueSync(self, updates=[]):
-        '''Create any needed rqueues, update attributes, and kill
-        unneeded rqueues'''
-        queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
-        qnames = [q['name'] for q in queues]
-        update_names = [r[0] for r in updates]
-        
-        for reserv in self.GetReservations():
-            #adding reservation queue
-            if "R.%s" % (reserv[0]) not in qnames:
-                logger.info("Adding reservation queue R.%s" % (reserv[0]))
-                spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
-                attrs = {'state':'running', 'users': reserv[1]}
-                try:
-                    comm['qm'].AddQueue(spec)
-                    comm['qm'].SetQueues(spec, attrs)
-                except Exception, e:
-                    logger.error("Queue setup for %s failed: %s" \
-                                 % ("R.%s" % reserv[0], e))
-            #updating reservation queue
-            elif reserv[0] in update_names:
-                logger.info("Updating reservation queue R.%s" % (reserv[0]))
-                spec = [{'tag':'queue', 'name': 'R.%s' % (reserv[0])}]
-                attrs = {'users': reserv[1]}
-                try:
-                    comm['qm'].SetQueues(spec, attrs)
-                except Exception, e:
-                    logger.error("Queue setup for %s failed: %s" \
-                                 % ("R.%s" % reserv[0], e))
-
-        rnames = [r[0] for r in self.GetReservations()]
-        for qn in qnames:
-            if qn.startswith("R.") and qn[2:] not in rnames:
-                logger.info("Disabling Rqueue %s" % (qn))
-                try:
-                    response = comm['qm'].SetQueues([{'tag':'queue', 'name':qn}],
-                                                    {'state':'dead'})
-                except Exception, e:
-                    logger.error("Disable request failed: %s" % e)
-
-    def AddReservation(self, _, spec, name, user, start, duration):
-        '''Add a reservation to matching partitions'''
-        reservation = (name, user, start, duration)
-        data = self.partitions.Get(spec, callback=lambda x,
-                                   y:x.get('reservations').append(reservation))
-        self.ResQueueSync()
-        return data
-    
-    def ReleaseReservation(self, _, spec, name):
-        '''Release specified reservation'''
-        cb = lambda x, y: [x.get('reservations').remove(rsv)
-                           for rsv in x.get('reservations')
-                           if rsv[0] == name]
-        data = self.partitions.Get(spec, cb)
-        self.ResQueueSync()
-        return data
-
-    def RemoveOldReservations(self):
-        '''Release all reservations that have expired'''
-        for partition in self.partitions:
-            for reservation in partition.get('reservations'):
-                if (reservation[2] + reservation[3]) < time.time():
-                    partition.get('reservations').remove(reservation)
-        self.ResQueueSync()
 
     def SupressDuplicates(self, provisional):
         '''Prevent duplicate job start requests from being generated'''
