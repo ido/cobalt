@@ -29,6 +29,7 @@ class Brooklyn(Cobalt.Component.Component):
         self.register_function(self.ReleaseNodecards, "ReleaseNodecards")
 
     def readConfigFile(self, path):
+        '''reads hardware info from xml (partitions, nodecards)'''
         self.partitions = {}
         doc = lxml.etree.parse(path)
         rack = doc.getroot()
@@ -36,13 +37,12 @@ class Brooklyn(Cobalt.Component.Component):
         children = {}
         sizes = {}
         nodecards = {}
-        print rack.findall('Partition')
+
         for partition in rack.findall('Partition'):
             parents[partition.get('name')] = []
             children[partition.get('name')] = [p.get('name') \
                                                for p in partition.findall('.//Partition')]
-            print 'children for %s are' % partition.get('name'), children[partition.get('name')]
-            nodecards[partition.get('name')] = set([n.get('name') for n in partition.findall('.//Nodecard')])
+            nodecards[partition.get('name')] = set(["%s-%s" % (n.get('bpid'), n.get('id')) for n in partition.findall('.//Nodecard')])
             work = partition.findall('Partition')
             sizes[partition.get('name')] = int(partition.get('size'))
         while work:
@@ -50,7 +50,7 @@ class Brooklyn(Cobalt.Component.Component):
             work += next.findall('Partition')
             children[next.get('name')] = [p.get('name') \
                                           for p in next.findall('.//Partition')]
-            nodecards[next.get('name')] = set([n.get('name') for n in next.findall('.//Nodecard')])
+            nodecards[next.get('name')] = set(["%s-%s" % (n.get('bpid'), n.get('id')) for n in next.findall('.//Nodecard')])
             
             npar = next.getparent().get('name')
             parents[next.get('name')] = [npar] + parents[npar]
@@ -61,21 +61,7 @@ class Brooklyn(Cobalt.Component.Component):
         for p in self.partitions.values():
             self.nodecards.update(p[3])
 
-        print self.nodecards
-#     def readNodeCardConfigFile(self, path):
-#         '''reads node cards from xml'''
-#         self.nodecards = {}
-#         print 'parsing', path
-#         doc = ET.parse(path)
-#         rack = doc.getroot()
-#         for basepart in rack:
-#             for nodecard in basepart:
-#                 nodecard.attrib.update({'basepart':basepart.get('id')})
-#                 self.nodecards.update({'%s-%s' % (basepart.get('id'), nodecard.get('id')):nodecard.attrib})
-        
-#         print self.nodecards
-#         for x in self.nodecards:
-#             print x, self.nodecards[x]
+        print 'set of nodecards in machine:', self.nodecards
 
     def GetMachineStateDB2(self, conn):
         '''Return db2-like list of tuples describing state'''
@@ -87,7 +73,7 @@ class Brooklyn(Cobalt.Component.Component):
 #                 part in self.partitions]
 
     def GetMachineState(self, _):
-        '''simulates DataSet get'''
+        '''simulates DataSet get, returns hardware state (nodecards)'''
         result = []
         print 'self.usednodecards', self.usednodecards, self.nodecards
         for nc in self.nodecards:
@@ -190,7 +176,7 @@ class Brooklyn(Cobalt.Component.Component):
     def ReleaseNodecards(self, _, nclist):
         '''Release group of nodecards'''
         if not self.usednodecards.issuperset(nclist):
-            logger.error("Tried to release some free nodecards %s" % nclist)
+            logger.error("Tried to release some free nodecards: %s" % set(nclist).difference(self.usednodecards))
             return False
         else:
             self.usednodecards.difference_update(set(nclist))
