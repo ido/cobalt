@@ -15,14 +15,15 @@ if __name__ == '__main__':
         print "cobalt %s" % __version__
         raise SystemExit, 0
     try:
-        system = Cobalt.Proxy.simulator()
+        system = Cobalt.Proxy.system()
     except Cobalt.Proxy.CobaltComponentError:
         print "Failed to connect to system"
         raise SystemExit, 1
 
     parts = system.GetState()
-    header = [['Name', 'State']]
-    output = [[part.get('name'), part.get('state')] for part in parts]
+    header = [['Name', 'Midplane', 'HW id', 'State', 'Queue']]
+    output = [[part.get('name'), part.get('bpid'), part.get('id'),
+               part.get('state'), part.get('queue')] for part in parts]
     Cobalt.Util.printTabular(header + output)
 
 #     parts = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \

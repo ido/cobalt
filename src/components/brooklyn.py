@@ -9,17 +9,18 @@ logger = logging.getLogger('bgsched')
 class Brooklyn(Cobalt.Component.Component):
     '''Brooklyn is a bgl bridge simulator'''
     __implementation__ = 'brooklyn'
-    __name__ = 'simulator'
+    __name__ = 'system'
 
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
-        self.partitions = {}
-        self.nodecards = set()
+        self.partitions = {}        #dictionary of part:(parents, children, sizes, nodecards)
+        self.partitioninfo = {}     #nested dictionary for nodecard info
+        self.nodecards = set()      #set of nodecard names
+        self.nodecardinfo = {}      #nested dictionary for nodecard info
         self.readConfigFile(setup.get('partconfig'))
-#         self.readNodeCardConfigFile(setup.get('ncfile'))
-        self.used = []
-        self.blocked = []
-        self.usednodecards = set()
+        self.used = []              #list of used partitions
+        self.blocked = []           #list of blocked (overlapping) partitions
+        self.usednodecards = set()  #set of used nodecard names
         self.register_function(self.GetMachineState, "GetState")
         self.register_function(self.GetMachineStateDB2, "GetDB2State")
         self.register_function(self.ReservePartition, "ReservePartition")
@@ -37,6 +38,13 @@ class Brooklyn(Cobalt.Component.Component):
         children = {}
         sizes = {}
         nodecards = {}
+
+        racknodecards = rack.findall('.//Nodecard')
+        for x in racknodecards:
+            newname = "%s-%s" % (x.get('bpid'), x.get('id'))
+            self.nodecardinfo[newname] = {'tag':'nodecard', 'bpid':x.get('bpid'),
+                                          'id':x.get('id'), 'queue':'default'}
+            print x.get('bpid'), x.get('id')
 
         for partition in rack.findall('Partition'):
             parents[partition.get('name')] = []
@@ -56,8 +64,10 @@ class Brooklyn(Cobalt.Component.Component):
             parents[next.get('name')] = [npar] + parents[npar]
             sizes[next.get('name')] = int(next.get('size'))
         for part in parents:
-            self.partitions[part] = (parents[part], children[part], sizes[part], nodecards[part])
+            self.partitions[part] = (parents[part], children[part],
+                                     sizes[part], nodecards[part])
 
+        #build nodecard set of names (duplicates are ignored)
         for p in self.partitions.values():
             self.nodecards.update(p[3])
 
@@ -65,15 +75,10 @@ class Brooklyn(Cobalt.Component.Component):
 
     def GetMachineStateDB2(self, conn):
         '''Return db2-like list of tuples describing state'''
-        return [(name, self.used[name]) for name in self.partitions]
-
-#     def GetMachineState(self, conn):
-#         '''Return an overall description of machine state'''
-#         return [(part, part in self.used, part in self.blocked) for \
-#                 part in self.partitions]
+        return [(name, name in self.used and 'I' or 'F') for name in self.partitions]
 
     def GetMachineState(self, _):
-        '''simulates DataSet get, returns hardware state (nodecards)'''
+        '''returns hardware state (nodecards)'''
         result = []
         print 'self.usednodecards', self.usednodecards, self.nodecards
         for nc in self.nodecards:
@@ -81,8 +86,11 @@ class Brooklyn(Cobalt.Component.Component):
                 state = 'used'
             else:
                 state = 'idle'
-            result.append({'tag':'nodecard', 'name':nc, 'state':state})
-        result.sort(key=operator.itemgetter('name'))
+            result.append({'tag':'nodecard', 'name':nc,
+                           'bpid':self.nodecardinfo[nc]['bpid'],
+                           'id':self.nodecardinfo[nc]['id'], 'state':state,
+                           'queue':self.nodecardinfo[nc]['queue']})
+        result.sort(key=operator.itemgetter('bpid', 'id'))
         print result
         return result
 

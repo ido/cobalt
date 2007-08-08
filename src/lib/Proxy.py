@@ -146,7 +146,7 @@ class queue_manager(ComponentProxy):
 class scheduler(ComponentProxy):
     '''scheduler proxy'''
     name = 'scheduler'
-    methods = ['AddReservation', 'DelReservation', 'SetReservation', 'GetPartition', 'AddPartition', 'DelPartition', 'Set']
+    methods = ['AddReservation', 'DelReservation', 'SetReservation', 'Set']
 
 class bcfg2(ComponentProxy):
     '''bcfg2 client code'''
@@ -156,12 +156,16 @@ class bcfg2(ComponentProxy):
 class simulator(ComponentProxy):
     '''bgl simulator client code'''
     name = 'simulator'
-    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2', 'GetPartition', 'ReserveNodecards', 'ReleaseNodecards']
+    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2',
+               'GetPartition', 'ReserveNodecards', 'ReleaseNodecards']
 
 class system(ComponentProxy):
     '''system component'''
     name = 'system'
-    methods = ['StartJob', 'QueryJobs', 'KillJob', 'GetPartition', 'FullPartitionInfo']
+    methods = ['StartJob', 'QueryJobs', 'KillJob', 'GetPartition', 'AddPartition',
+               'DelPartition', 'FullPartitionInfo', 'ReservePartition',
+               'ReleasePartition', 'ReserveNodecards', 'ReleaseNodecards',
+               'GetState', 'GetDB2State']
 
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
