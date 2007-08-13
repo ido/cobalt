@@ -441,7 +441,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 and job.get('state') == 'queued']
         p = self.PlaceFIFO(qpotential, queue, depinfo)
         if len(p) != len(idle):
-            for qname in [q for q in qpotential if q.startswith('R.')]:
+            for qname in [q for q in qpotential if not q.startswith('R.')]:
                 qpotential[qname] = {}
         return p
                 
@@ -507,9 +507,9 @@ class BGSched(Cobalt.Component.Component):
                     #account = , # optional accounting string
                     #queue = , # name of the instantiated reservation queue or the name of the queue of the reservation-job
                     #ctime = , # time at which the resource reservation was created
-                    start = int(start), # time at which the reservation period is to start
-                    end = int(start + duration), # time at which the reservation period is to end
-                    duration = int(duration), # duration specified or computed for the resource reservation
+                    start = start, # time at which the reservation period is to start
+                    end = start + duration, # time at which the reservation period is to end
+                    duration = duration, # duration specified or computed for the resource reservation
                     #exec_host = , #nodes and node-associated resources
                     #authorized_users = , #the list of acl_users on the queue that is instantiated to service the reservation
                     #authorized_groups = , if specified, the list of acl_groups on the queue that is instantiated to service the reservation

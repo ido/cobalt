@@ -110,7 +110,7 @@ class Job(Cobalt.Data.Data):
     def __getstate__(self):
         data = {}
         for key, value in self.__dict__.iteritems():
-            if key not in ['log', 'comms', 'acctlog']:
+            if key not in ['log', 'comms', 'acctlog', 'pbslog']:
                 data[key] = value
         return data
 
@@ -137,18 +137,18 @@ class Job(Cobalt.Data.Data):
             else:
                 return input
         
-        walltime_minutes = len2(int(self.get("walltime")) % 60)
-        walltime_hours = len2(int(self.get("walltime")) // 60)
+        walltime_minutes = len2(int(float(self.get("walltime"))) % 60)
+        walltime_hours = len2(int(float(self.get("walltime"))) // 60)
         
         self.pbslog.log("S",
             user = self.get("user"), # the user name under which the job will execute
             #group = , # the group name under which the job will execute
             jobname = self.get("jobname"), # the name of the job
             queue = self.get("queue"), # the name of the queue in which the job resides
-            ctime = int(self.timers['queue'].start), # time in seconds when job was created (first submitted)
-            qtime = int(self.timers['current_queue'].start), # time in seconds when job was queued into current queue
+            ctime = self.timers['queue'].start, # time in seconds when job was created (first submitted)
+            qtime = self.timers['current_queue'].start, # time in seconds when job was queued into current queue
             etime = self.etime, # time in seconds when job became eligible to run; no holds, etc.
-            start = int(self.timers['user'].start), # time in seconds when job execution started
+            start = self.timers['user'].start, # time in seconds when job execution started
             exec_host = self.get("location"), # name of host on which the job is being executed (location is a :-separated list of nodes)
             #Resource_List__dot__RES = , # limit for use of RES
             Resource_List__dot__ncpus = self.get("procs"), # max number of cpus
@@ -162,7 +162,7 @@ class Job(Cobalt.Data.Data):
             mode = self.get("mode"),
             cwd = self.get("cwd"),
             exe = self.get("command"),
-            args = self.get("args").join(":"),
+            args = ":".join(self.get("args")),
         )
 
     def fail_job(self, state):
@@ -589,8 +589,8 @@ class Job(Cobalt.Data.Data):
             else:
                 return input
         
-        req_walltime_minutes = len2(int(self.get("walltime")) % 60)
-        req_walltime_hours = len2(int(self.get("walltime")) // 60)
+        req_walltime_minutes = len2(int(float(self.get("walltime"))) % 60)
+        req_walltime_hours = len2(int(float(self.get("walltime"))) // 60)
         
         runtime = int(self.timers['user'].Check())
         walltime_seconds = len2(runtime % (60))
@@ -611,10 +611,10 @@ class Job(Cobalt.Data.Data):
             queue = self.get("queue"), # the name of the queue in which the job executed
             #resvname = , # the name of the resource reservation, if applicable
             #resvID = , # the id of the resource reservation, if applicable
-            ctime = int(self.timers['queue'].start), # time in seconds when job was created (first submitted)
-            qtime = int(self.timers['current_queue'].start), # time in seconds when job was queued into current queue
+            ctime = self.timers['queue'].start, # time in seconds when job was created (first submitted)
+            qtime = self.timers['current_queue'].start, # time in seconds when job was queued into current queue
             etime = self.etime, # time in seconds when job became eligible to run
-            start = int(self.timers['user'].start), # time in seconds when job execution started
+            start = self.timers['user'].start, # time in seconds when job execution started
             exec_host = self.get("location"), # name of host on which the job is being executed
             #Resource_List__dot__RES = , # limit for use of RES
             Resource_List__dot__ncpus = self.get("procs"), # max number of cpus
@@ -630,7 +630,7 @@ class Job(Cobalt.Data.Data):
             mode = self.get("mode"),
             cwd = self.get("cwd"),
             exe = self.get("command"),
-            args = self.get("args").join(":"),
+            args = ":".join(self.get("args")),
             **optional_pbs_data
         )
         
@@ -1251,13 +1251,13 @@ class CQM(Cobalt.Component.Component):
     def progress(self):
         '''Process asynchronous job work'''
         [j.Progress() for j in [j for queue in self.Queues for j in queue] if j.active]
-        overtime_jobs = (j for j in (j for queue in self.Queues for j in queue) if j.over_time() and not j.killed)
+        overtime_jobs = [j for j in [j for queue in self.Queues for j in queue] if j.over_time() and not j.killed]
         for job in overtime_jobs:
             job.Kill("Job %s Overtime, Killing")
             job.pbslog.log("A",
                 # No attributes.
             )
-        finished_jobs = (j for j in (j for queue in self.Queues for j in queue) if j.get('state') == 'done')
+        finished_jobs = [j for j in [j for queue in self.Queues for j in queue] if j.get('state') == 'done']
         for job in finished_jobs:
             job.LogFinish()
         [queue.remove(j) for (j, queue) in [(j, queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']

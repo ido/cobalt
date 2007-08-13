@@ -261,10 +261,10 @@ class PBSLog (object):
         
         assert id_string or self.id_string
         
-        message_text = " ".join((
+        message_text = " ".join([
             "%s=%s" % (key.replace("__dot__", "."), value)
             for key, value in messages.items()
-        ))
+        ])
         
         self.logfile.write("%s;%s;%s;%s\n" % (
             datetime.strftime(format),
