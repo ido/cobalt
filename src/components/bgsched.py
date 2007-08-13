@@ -424,7 +424,7 @@ class PartitionSet(Cobalt.Data.DataSet):
             return []
         return self.PlaceFIFO(qpotential[queue], depinfo)
 
-    def PlaceSpruce(self, qpotential, queue, depinfo):
+    def PlaceSpruceOld(self, qpotential, queue, depinfo):
         '''Defer other jobs which spruce queue has idle jobs'''
         idle = [job for job in self.jobs if job.get('queue') == queue \
                   and job.get('state') == 'queued']
@@ -433,6 +433,16 @@ class PartitionSet(Cobalt.Data.DataSet):
             # we have idle jobs, so defer others
             for q in qpotential:
                 qpotential[q] = {}
+        return p
+
+    def PlaceSpruce(self, qpotential, queue, depinfo):
+        '''Defer non-reservation jobs when idle jobs in queue'''
+        idle = [job for job in self.jobs if job.get('queue') == queue \
+                and job.get('state') == 'queued']
+        p = self.PlaceFIFO(qpotential, queue, depinfo)
+        if len(p) != len(idle):
+            for qname in [q for q in qpotential if q.startswith('R.')]:
+                qpotential[qname] = {}
         return p
                 
 class BGSched(Cobalt.Component.Component):
