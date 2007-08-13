@@ -60,12 +60,14 @@ class BridgeDataSet(Cobalt.Data.DataSet):
     objects
     '''
     bridge_objects = {} #indexed by object.id
+    bridge_list = None  #bridge list object (partlist, nodecards, etc.)
 
     def __init__(self, bridge_list):
         '''calls DataSet init, then builds dictionary of bridge objects'''
         Cobalt.Data.DataSet.__init__(self)
         for datum in bridge_list:
             self.bridge_objects.update({datum.id:datum})
+        self.bridge_list = bridge_list
         
     def Get(self, cdata, callback=None, cargs=()):
         '''DataSet.Get which reloads any bridge objects that may
@@ -74,7 +76,7 @@ class BridgeDataSet(Cobalt.Data.DataSet):
         '''
         result = Cobalt.Data.DataSet.Get(self, cdata, callback, cargs)
         if callback and cargs:
-            self.partitions.reload()
+            self.bridge_reload()
             for part in result:
                 if 'name' in part.keys():
                     self.bridge_objects[part.get('name')].attrcache.clear()
@@ -97,6 +99,7 @@ class BridgeDataSet(Cobalt.Data.DataSet):
         Data object in self
         '''
         data_objects = {}  # local object lookup (to avoid nxn looping)
+
         for local_datum in self:
             data_objects.update({local_datum.get('name'):local_datum})
 
@@ -107,6 +110,9 @@ class BridgeDataSet(Cobalt.Data.DataSet):
                 print 'before, obj is', data_objects[datum.get('name')].obj
                 data_objects[datum.get('name')].setObject(self.bridge_objects[datum.get('name')])
                 print 'after, obj is', data_objects[datum.get('name')].obj
+
+    def bridge_reload(self):
+        pass
 
 class BaseBlock(BridgeData):
     '''BG/L block (nodecard)'''
@@ -128,23 +134,16 @@ class BaseSystem(BridgeDataSet):
             for nc in bp.nodecards:
                 self.bridge_objects.update({"%s-%s" % (bp.id, nc.id):nc})
                 query.append({'tag':'block', 'state':'idle', 'queue':False,
-                              'name':'%s-%s' % (bp.id, nc.id), 'bpid':bp.id})
+                              'name':'%s-%s' % (bp.id, nc.id), 'bpid':bp.id,
+                              'id':nc.id})
         result = self.Add(query)
         self.sync_bridge_refs(result)
+
+    def bridge_reload(self):
+        '''reload nodecards from bridge
+        pass for now since nodecards should not be changing'''
+        pass
         
-#         self.buildBlocks()
-
-#     def buildBlocks(self):
-#         '''populate basesystem with nodecard blocks'''
-#         bg = Cobalt.bridge.BG()
-#         query = []
-#         for bp in bg.basePartitions:
-#             for nc in bp.nodecards:
-#                 query.append({'tag':'block', 'state':'idle', 'queue':False,
-#                               'name':"%s-%s" % (bp.id, nc.id)})
-#         self.Add(query)
-#         print query
-
 class Partition(BridgeData):
     '''BG/L partition'''
     pass
@@ -162,7 +161,7 @@ class PartitionSet(BridgeDataSet):
 #             self.bridge_objects.update({part.id:part})
         self.populatePartitions()
 
-    def reload(self):
+    def bridge_reload(self):
         '''reloads partitions from bridge
         gets new partition list, then must update each Partition.obj reference
         '''
@@ -261,9 +260,11 @@ class System(Cobalt.Component.Component):
         self.register_function(self.kill_job, "KillJob")
         self.register_function(self.query_part, "GetPartition")
         self.register_function(self.full_partition_info, "FullPartitionInfo")
+        self.register_function(self.get_machine_state, "GetState")
 
         logger.info('getting partitions')
         self.partitions = PartitionSet()
+        self.nodecards = BaseSystem()
 
     def start_job(self, _, jobinfo):
         '''starts a job
@@ -440,9 +441,20 @@ class System(Cobalt.Component.Component):
         return (partition_relations, [part.to_rx(part._attrib)
                                       for part in self.partitions])
 
+    def get_machine_state(self, _):
+        '''returns machine state (in terms of nodecards'''
+        return self.nodecards.Get([{'tag':'block', 'name':'*', 'state':'*',
+                                    'bpid':'*', 'id':'*'}])
+
     def progress(self):
         '''some asynchronous work'''
-        self.partitions.reload()
+        self.partitions.bridge_reload()
+        busy_parts = self.partitions.Get([{'tag':'partition', 'name':'*',
+                                          'nodecards':'*',
+                                           'state':'RM_PARTITION_READY'}])
+        busy_nodecards = [n for p in busy_parts for n in p.get('nodecards')]
+        self.nodecards.Get([{'tag':'block', 'name':nc} for nc in busy_nodecards], lambda x,y:x.update(y), {'state':'busy'})
+        print "these nodecards are busy", busy_nodecards
 
 if __name__ == '__main__':
     # setup option parsing
