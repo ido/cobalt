@@ -20,6 +20,6 @@ installlinks: install-binPROGRAMS install-dist_binSCRIPTS install-wrapper
 
 install-binPROGRAMS:
 install-wrapper: $(bin_PROGRAMS)
-	${INSTALL} -m 755 wrapper $(WRAPPERDIR)
-# 	${INSTALL} -m 2755 -g cobalt wrapper $(WRAPPERDIR)
+	${INSTALL} -m 2755 -g cobalt wrapper $(WRAPPERDIR) || ${INSTALL} -m 755 wrapper $(WRAPPERDIR)
+
 
