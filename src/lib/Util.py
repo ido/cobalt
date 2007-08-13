@@ -1,7 +1,8 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
-import types, smtplib, socket, time, ConfigParser, popen2
+import os, types, smtplib, socket, time, ConfigParser, popen2
+from datetime import date, datetime
 from getopt import getopt, GetoptError
 
 def dgetopt(arglist, opt, vopt, msg):
@@ -183,4 +184,93 @@ class AccountingLog:
         self.RotateLog()
         timenow = time.strftime("%Y-%m-%d %T", time.localtime())
         self.logfile.write("%s %s\n" % (timenow, message))
+        self.logfile.flush()
+
+
+class PBSLog (object):
+    
+    """Manage a log using the PBS accounting log file format.
+    
+    Properties:
+    logfile -- The (open) file to log messages to.
+        
+    For more information see section 10.3 of the PBS Pro. 7 Admin Guide.
+    """
+    
+    def __init__ (self, id_string=None):
+        """Initialize a new PBS-style log generator."""
+        self.id_string = id_string
+        # Get the log directory from a config file.
+        config = ConfigParser.ConfigParser()
+        config.read(['/etc/cobalt.conf'])
+        try:
+            self.logdir = config.get('cqm', 'log_dir')
+        except ConfigParser.NoOptionError:
+            self.logdir = "/var/log/cobalt-accounting"
+        # The date of the last log entry.
+        self._last_date = None
+        # The active (open) log file.
+        self._last_file = None
+    
+    def _get_logfile (self):
+        """Return an appropriate open file for logging."""
+        if self._last_date == date.today():
+            # The date has not changed, so reuse
+            # the previous file.
+            return self._last_file
+        else:
+            # The date has changed, so open a new
+            # file.
+            self._last_date = date.today()
+            format = "%Y%m%d" # ccyymmdd
+            filename = os.path.join(
+                self.logdir,
+                self._last_date.strftime(format),
+            )
+            self._last_file = file(filename, "a")
+            return self._last_file
+    logfile = property(_get_logfile)
+    
+    def reset (self):
+        """Reset the open log file."""
+        self._last_date = None
+        self._last_file = None
+    
+    def log (self, record_type, id_string=None, datetime=datetime.now, **messages):
+        
+        """Add a log entry.
+        
+        Arguments:
+        id_string -- The job, reservation, or reservation-job identifier. (default self.id_string)
+        record_type -- A single character indicating the type of record.
+        
+        Keyword arguments:
+        datetime -- Either a datetime, or a callable that returns a datetime. (default datetime.now)
+        
+        Additional keyword arguments may be specified to set messages.
+        """
+        
+        try:
+            datetime = datetime()
+        except:
+            pass # assume datetime is already a datetime
+        format = "%m/%d/%Y %H:%M:%S" # mm/dd/ccyy hh:mm:ss
+        
+        assert record_type in ("A", "B", "C", "D", "E", "F", "K",
+                               "k", "Q", "R", "S", "T", "U", "Y")
+        
+        assert id_string or self.id_string
+        
+        message_text = " ".join((
+            "%s=%s" % (key.replace("__dot__", "."), value)
+            for key, value in messages.items()
+        ))
+        
+        self.logfile.write("%s;%s;%s;%s\n" % (
+            datetime.strftime(format),
+            record_type,
+            id_string or self.id_string,
+            message_text,
+        ))
+        
         self.logfile.flush()

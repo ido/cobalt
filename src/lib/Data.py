@@ -113,7 +113,7 @@ class DataSet(object):
                 raise xmlrpclib.Fault(8, str(missing))
             #return xmlrpclib.dumps(xmlrpclib.Fault(8, str(missing)))
             # uniqueness test goes here
-            self.data.append(iobj)
+            self.append(iobj)
             if callback:
                 apply(callback, (iobj, ) + cargs)
             retval.append(iobj.to_rx(item))

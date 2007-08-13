@@ -4,6 +4,7 @@
 __revision__ = '$Id$'
 __version__ = '$Version$'
 
+import getpass
 import getopt, sys
 import Cobalt.Proxy
 
@@ -45,6 +46,7 @@ if __name__ == '__main__':
         spec = [{'tag':'partition', 'name':opts[0][1]}]
     else:
         spec = [{'tag':'partition', 'name':p} for p in parts]
-    result = scheduler.DelReservation(spec, args[0])
+    user = getpass.getuser()
+    result = scheduler.DelReservation(spec, args[0], user)
     print "Released reservation '%s', matched on %d partitions" % \
           (args[0], len(result))
