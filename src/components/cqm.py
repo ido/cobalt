@@ -631,7 +631,7 @@ class Job(Cobalt.Data.Data):
             resources_used__dot__walltime = "%s:%s:%s" % (walltime_hours, walltime_minutes, walltime_seconds),
             #accounting_id = , # CSA JID job id
             mode = self.get("mode"),
-            cwd = self.get("cwd"),
+            cwd = self.get("cwd", "N/A"),
             exe = self.get("command"),
             args = ":".join(self.get("args")),
             **optional_pbs_data
