@@ -163,7 +163,7 @@ class Job(Cobalt.Data.Data):
             #session = , # session number of job
             #accountint_id = , # identifier associated with system-generated accounting data
             mode = self.get("mode"),
-            cwd = self.get("cwd"),
+            cwd = self.get("cwd", "N/A"),
             exe = self.get("command"),
             args = ":".join(self.get("args")),
         )
