@@ -165,7 +165,7 @@ class Job(Cobalt.Data.Data):
             mode = self.get("mode"),
             cwd = self.get("cwd", "N/A"),
             exe = self.get("command"),
-            args = ":".join(self.get("args")),
+            args = " ".join(self.get("args")),
         )
 
     def fail_job(self, state):
@@ -633,7 +633,7 @@ class Job(Cobalt.Data.Data):
             mode = self.get("mode"),
             cwd = self.get("cwd", "N/A"),
             exe = self.get("command"),
-            args = ":".join(self.get("args")),
+            args = " ".join(self.get("args")),
             **optional_pbs_data
         )
         
