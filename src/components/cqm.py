@@ -146,7 +146,7 @@ class Job(Cobalt.Data.Data):
         self.pbslog.log("S",
             user = self.get("user"), # the user name under which the job will execute
             #group = , # the group name under which the job will execute
-            jobname = self.get("jobname"), # the name of the job
+            jobname = self.get("jobname", 'N/A'), # the name of the job
             queue = self.get("queue"), # the name of the queue in which the job resides
             ctime = self.timers['queue'].start, # time in seconds when job was created (first submitted)
             qtime = self.timers['current_queue'].start, # time in seconds when job was queued into current queue
@@ -610,7 +610,7 @@ class Job(Cobalt.Data.Data):
             user = self.get("user"), # the user name under which the job executed
             #group = , # the group name under which the job executed
             #account = , # if job has an "account name" string
-            jobname = self.get("jobname"), # the name of the job
+            jobname = self.get("jobname", 'N/A'), # the name of the job
             queue = self.get("queue"), # the name of the queue in which the job executed
             #resvname = , # the name of the resource reservation, if applicable
             #resvID = , # the id of the resource reservation, if applicable
