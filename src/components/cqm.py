@@ -118,6 +118,9 @@ class Job(Cobalt.Data.Data):
         self.__dict__.update(state)
         # I don't think you really want to re-instantiate the AccountingLog?
         # It's a class attribute, not an object attribute.
+        if not self.timers.has_key('current_queue'):
+            self.timers['current_queue'] = Timer()
+            self.timers['current_queue'].Start()
         #self.acctlog = Cobalt.Util.AccountingLog('qm')
         self.comms = Cobalt.Proxy.CommDict()
         self.pbslog = Cobalt.Util.PBSLog(self.get('jobid'))
