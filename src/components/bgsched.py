@@ -526,16 +526,16 @@ class BGSched(Cobalt.Component.Component):
         for ap in affected_partitions:
             for res in ap['reservations']:
                 if res[0] == name:
-                    datetime = datetime.now()
+                    dt = datetime.now()
                     ap['reservations'].remove(res)
-                    self.pbslog.log("K", res[0], datetime=datetime,
+                    self.pbslog.log("K", res[0], datetime=dt,
                         requester = user or "N/A", # who deleted the resource reservation
                     )
-                    self.pbslog.log("U", name, datetime=datetime,
+                    self.pbslog.log("U", name, datetime=dt,
                         requester = user or "N/A", # who requested the resources reservation
                     )
                     ap['reservations'].append((name, user, start, duration))
-                    self.pbslog.log("Y", name, datetime=datetime,
+                    self.pbslog.log("Y", name, datetime=dt,
                         requester = user or "N/A", # who requested the resource reservation
                     )
                     resv_updates.append((name, user, start, duration))
