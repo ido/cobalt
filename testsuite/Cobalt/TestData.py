@@ -42,40 +42,13 @@ class TestData (object):
     )
     
     def test_tag (self):
-        # Why is tag an attribute rather than a field?
-        # attribute-style access could be handled with a property.
-        #
-        #  def _get_tag (self):
-        #      return self.get('tag')
-        #  
-        #  def _set_tag (self, value):
-        #      self.set('tag', value)
-        #  
-        #  tag = property(_get_tag, _set_tag)
-        #
-        # Otherwise the behavior should be defined in Data.set(),
-        # rather than Data.__init__().
-        # Data.set('tag', value) might produce unexpected behavior.
-        #
-        # Also, Class.__init__() should always set a value for all
-        # attributes of an instance of type Class,
-        # so Data.__init__ should have
-        #
-        #  self.tag = None
-        #
         data = Cobalt.Data.Data({})
-        assert not hasattr(data, "tag")
+        assert data.tag is None
         
         data = Cobalt.Data.Data({
             'tag': self.TAG,
         })
         assert data.tag == self.TAG
-        try:
-            data.get("tag")
-        except KeyError:
-            pass
-        else:
-            assert not "Tag should not be kept as a field."
     
     def test_required_fields (self):
         class NewData (Cobalt.Data.Data):
@@ -142,34 +115,27 @@ class TestData (object):
             assert data.get(key) == value
     
     def test_match (self):
-        # This test case fails because of what I noted
-        # in TestData.test_tag()
-        #
-        # Data.match() breaks if not hasattr(self, "tag"),
-        # but such a case is explicitly allowed by Data.__init__
         data = Cobalt.Data.Data(self.FIELDS)
-        assert data.match(self.FIELDS)
-        assert not data.match(self.INVALID)
-    
-    def test_match_tag (self):
-        # This test case fails because of what I noted
-        # in TestData.test_tag()
-        #
-        # Data.match() requires hasattr(self, "tag"),
-        # which is not always defined by Data.__init__()
-        fields = self.FIELDS.copy()
-        fields['tag'] = self.TAG
         
-        data = Cobalt.Data.Data(self.FIELDS)
+        assert data.match(self.FIELDS)
+        
+        fields = self.FIELDS.copy()
+        for key, value in zip(fields.keys(), self.INVALID_FIELDS.values()):
+            fields[key] = value
         assert not data.match(fields)
         
-        data = Cobalt.Data.Data(fields)
-        assert data.match(fields)
+        try:
+            data.match(self.INVALID_FIELDS)
+        except KeyError:
+            pass
+        else:
+            assert not "Fields must be valid for the instance."
     
     def test_to_rx (self):
-        # Data.to_rx() requires hasattr(self, "tag"), which
-        # is not always defined by Data.__init__()
-        #
-        # The fact that Data.to_rx() writes self.tag back
-        # to a field makes me ask again why tag is an attribute.
-        assert False
+        data = Cobalt.Data.Data(self.FIELDS)
+        
+        rx = data.to_rx(self.FIELDS)
+        assert rx == self.FIELDS
+        
+        rx = data.to_rx(self.INVALID_FIELDS)
+        assert not rx
