@@ -86,17 +86,36 @@ class DataSet(object):
 
     def __init__(self):
         self.data = []
+        self.names = []
 
     def __iter__(self):
         return iter(self.data)
 
+    def __getitem__(self, key):
+        if not self.__unique__:
+            raise KeyError, key
+        ret = [item for item in self if item.get(self.__unique__) == key]
+        if len(ret) == 1:
+            return ret[0]
+        elif len(ret) == 0:
+            raise KeyError, key
+
     def append(self, x):
         '''add a new element to the set'''
-        return self.data.append(x)
+        if self.__unique__:
+            newname = x.get(self.__unique__)
+            if newname in self.names:
+                return
+            self.names.append(newname)
+        self.data.append(x)
 
     def remove(self, x):
         '''remove an element from the set'''
-        return self.data.remove(x)
+        if self.__unique__:
+            remname = x.get(self.__unique__)
+            if remname in self.names:
+                self.names.remove(remname)
+        self.data.remove(x)
 
     def Add(self, cdata, callback=None, cargs=()):
         '''Implement semantics of operations that add new item(s) to the DataSet'''
