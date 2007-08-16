@@ -264,6 +264,7 @@ class TestDataSet (object):
         cb_state = dict(data=[])
         def callback (data):
             cb_state['data'].append(data)
+        data_set.Add(self.CDATA)
         
         data_set.Get(self.CDATA, callback)
         for cb_data, data in zip(cb_state['data'], data_set):
@@ -288,24 +289,25 @@ class TestDataSet (object):
             items = data_set.Del(data)
             assert not data_set.Get(data)
     
-    def test_Get_multiple (self):
+    def test_Del_multiple (self):
         data_set = Cobalt.Data.DataSet()
         data_set.Add(self.CDATA)
         
         value = data_set.Del(self.CDATA)
         assert not data_set.Get(self.CDATA)
     
-    def test_Get_callback (self):
+    def test_Del_callback (self):
         data_set = Cobalt.Data.DataSet()
         cb_state = dict(data=[])
         def callback (data):
             cb_state['data'].append(data)
+        data_set.Add(self.CDATA)
         
         data_set.Del(self.CDATA, callback)
         for cb_data, data in zip(cb_state['data'], data_set):
             assert cb_data is data
     
-    def test_Get_cargs (self):
+    def test_Del_cargs (self):
         data_set = Cobalt.Data.DataSet()
         cb_state = dict(args=[])
         def callback (data, *args):
