@@ -2,6 +2,7 @@
 __revision__ = '$Revision$'
 
 import time, types, xmlrpclib, random
+import Cobalt.Util
 
 class DataCreationError(Exception):
     '''Used when a new object cannot be created'''
