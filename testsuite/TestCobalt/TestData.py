@@ -206,7 +206,6 @@ class TestDataSet (object):
         prior_length = len(list(data_set))
         data_set.Add(self.CDATA)
         assert len(list(data_set)) - prior_length == len(self.CDATA)
-        
     
     def test_Add_callback (self):
         data_set = Cobalt.Data.DataSet()
@@ -235,3 +234,84 @@ class TestDataSet (object):
         value = data_set.Add(self.CDATA)
         for rx, data, cdata in zip(value, list(data_set)[-len(self.CDATA):], self.CDATA):
             assert rx == Cobalt.Data.DataSet.__object__.to_rx(data, cdata)
+    
+    def test_Get_single (self):
+        data_set = Cobalt.Data.DataSet()
+        data_set.Add(self.CDATA)
+        
+        for data in self.CDATA:
+            items = data_set.Get(data)
+            for item in items:
+                for key, value in data.items():
+                    assert item.get(key)
+    
+    def test_Get_multiple (self):
+        data_set = Cobalt.Data.DataSet()
+        data_set.Add(self.CDATA)
+        
+        value = data_set.Get(self.CDATA)
+        for rx in value:
+            match = False
+            for data in self.CDATA:
+                match = rx == data
+                if match:
+                    break
+            assert match
+            match = False
+    
+    def test_Get_callback (self):
+        data_set = Cobalt.Data.DataSet()
+        cb_state = dict(data=[])
+        def callback (data):
+            cb_state['data'].append(data)
+        
+        data_set.Get(self.CDATA, callback)
+        for cb_data, data in zip(cb_state['data'], data_set):
+            assert cb_data is data
+    
+    def test_Get_cargs (self):
+        data_set = Cobalt.Data.DataSet()
+        cb_state = dict(args=[])
+        def callback (data, *args):
+            cb_state['args'].append(args)
+        
+        data_set.Get(self.CDATA, callback, self.CARGS)
+        for cb_args in cb_state['args']:
+            for cb_arg, carg in zip(cb_args, self.CARGS):
+                assert cb_arg is carg
+    
+    def test_Del_single (self):
+        data_set = Cobalt.Data.DataSet()
+        data_set.Add(self.CDATA)
+        
+        for data in self.CDATA:
+            items = data_set.Del(data)
+            assert not data_set.Get(data)
+    
+    def test_Get_multiple (self):
+        data_set = Cobalt.Data.DataSet()
+        data_set.Add(self.CDATA)
+        
+        value = data_set.Del(self.CDATA)
+        assert not data_set.Get(self.CDATA)
+    
+    def test_Get_callback (self):
+        data_set = Cobalt.Data.DataSet()
+        cb_state = dict(data=[])
+        def callback (data):
+            cb_state['data'].append(data)
+        
+        data_set.Del(self.CDATA, callback)
+        for cb_data, data in zip(cb_state['data'], data_set):
+            assert cb_data is data
+    
+    def test_Get_cargs (self):
+        data_set = Cobalt.Data.DataSet()
+        cb_state = dict(args=[])
+        def callback (data, *args):
+            cb_state['args'].append(args)
+        
+        data_set.Del(self.CDATA, callback, self.CARGS)
+        for cb_args in cb_state['args']:
+            for cb_arg, carg in zip(cb_args, self.CARGS):
+                assert cb_arg is carg

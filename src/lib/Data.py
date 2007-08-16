@@ -111,9 +111,18 @@ class DataSet(object):
         return self.data.remove(x)
 
     def Add(self, cdata, callback=None, cargs=()):
-        '''Implement semantics of operations that add new item(s) to the DataSet'''
+        """Construct new items of type self.__object__ in the dataset.
+        
+        Arguments:
+        cdata -- The first argument to be passed to the data constructor.
+            If cdata is a list, construct multiple items.
+        callback -- Applied to each new item after it is constructed. (optional)
+        cargs -- A tuple of arguments to pass to callback after the new object.
+        
+        Returns a list of transmittable representations of the new items.
+        """
         retval = []
-        if type(cdata) != types.ListType:
+        if not isinstance(cdata, types.ListType):
             cdata = [cdata]
         for item in cdata:
             try:
@@ -133,8 +142,17 @@ class DataSet(object):
         return retval
 
     def Get(self, cdata, callback=None, cargs={}):
-        '''Implement semantics of operations that get item(s) from the DataSet'''
+        """Return a list of transmittable representations of items.
+        
+        Arguments:
+        cdata -- A dictionary representing criteria to match.
+            If cdata is a list, match against multiple sets of criteria.
+        callback -- Applied to each matched item. (optional)
+        cargs -- A tuple of arguments to pass to callback after the item.
+        """
         retval = []
+        if not isinstance(cdata, types.ListType):
+            cdata = [cdata]
         for spec in cdata:
             for item in [datum for datum in self.data if datum.match(spec)]:
                 if callback:
@@ -143,7 +161,14 @@ class DataSet(object):
         return retval
 
     def Del(self, cdata, callback=None, cargs={}):
-        '''Implement semantics of operations that delete item(s) from the DataSet'''
+        """Delete items from the dataset.
+        
+        Arguments:
+        cdata -- A dictionary representing criteria to match.
+            If cdata is a list, match against multiple sets of criteria.
+        callback -- Applied to each matched item. (optional)
+        cargs -- A tuple of arguments to pass to callback after the item.
+        """
         retval = []
         if not isinstance(cdata, types.ListType):
             cdata = [cdata]
