@@ -139,3 +139,37 @@ class TestData (object):
         
         rx = data.to_rx(self.INVALID_FIELDS)
         assert not rx
+
+
+class TestDataSet (object):
+    
+    DATA = [object(), object(), object()]
+    
+    def test_data (self):
+        data_set = Cobalt.Data.DataSet()
+        assert data_set.data == []
+    
+    def test_iteration (self):
+        data_set = Cobalt.Data.DataSet()
+        for data in self.DATA:
+            data_set.append(data)
+        for source, state in zip(self.DATA, data_set):
+            assert source is state
+    
+    def test_append (self):
+        data_set = Cobalt.Data.DataSet()
+        data = object()
+        
+        for data in self.DATA:
+            data_set.append(data)
+            assert list(data_set)[-1] is data
+    
+    def test_remove (self):
+        data_set = Cobalt.Data.DataSet()
+        data = object()
+        
+        for data in self.DATA:
+            data_set.append(data)
+        count = list(data_set).count(data)
+        data_set.remove(data)
+        assert list(data_set).count(data) == count - 1
