@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 import time, types, xmlrpclib, random
 import Cobalt.Util
+import Cobalt.Proxy
 
 class DataCreationError(Exception):
     '''Used when a new object cannot be created'''
@@ -61,10 +62,10 @@ class Data(object):
         self._attrib[field] = value
         self._attrib['stamp'] = time.time()
 
-    def update(self, attrdict):
-        '''update attributes based on attrdict'''
-        for item in attrdict.iteritems():
-            self.set(item[0], item[1])
+    def update(self, spec):
+        '''update attributes based on spec'''
+        for key, value in spec.iteritems():
+            self.set(key, value)
             
     def match(self, spec):
         '''Implement datatype matching'''
@@ -166,25 +167,27 @@ class DataSet(object):
         return [item for item in self.data if item.match(spec)]
 
 class ForeignData(Data):
-    def Sync(self, data):
-        upd = [(k, v) for (k, v) in data.iteritems() \
-               if k != 'tag' and self.get(k) != v]
-        if upd:
-            logger.info("Resetting job %s parameters %s" % \
-                        (self.get('jobid'), ':'.join([u[0] for u in upd])))
-            for (k, v) in upd:
-                self.set(k, v)
+    
+    def Sync (self, spec):
+        """directly update attributes based on spec.
+        
+        Specifically, this does not automatically update the stamp.
+        """
+        self._attrib.update(spec)
 
 class ForeignDataSet(DataSet):
-    __failname__ = 'QM Connection'
-    __oserror__ = Cobalt.Util.FailureMode(__failname__)
+    __oserror__ = Cobalt.Util.FailureMode("ForeignData connection")
+    __component__ = None
+    __procedure__ = None
+    __fields__ = []
     
     def Sync(self):
+        comm = Cobalt.Proxy.CommDict()
+        component = comm[self.__component__]
+        procedure = getattr(component, self.__procedure__)
+        spec = dict([(field, "*") for field in self.__fields__])
         try:
-            spec = [dict([(key, '*') for key in self.__osource__[2]])]
-            func = getattr(comm[self.__osource__[0]],
-                           self.__osource__[1])
-            data = func(spec)
+            foreign_data = procedure([spec])
         except xmlrpclib.Fault:
             self.__oserror__.Fail()
             return
@@ -193,20 +196,20 @@ class ForeignDataSet(DataSet):
                               exc_info=1)
             return
         self.__oserror__.Pass()
-        exists = [item.get(self.__oidfield__) for item in self]
-        active = [item.get(self.__oidfield__) for item in data]
-        syncd = dict([(item.get(self.__oidfield__), item) \
-                      for item in self \
-                      if item.get(self.__oidfield__) in active])
-        done = [item for item in exists if item not in active]
-        new_o = [item for item in data \
-                 if item.get(self.__oidfield__) not in exists]
-        # remove finished jobs
-        [self.data.remove(item) for item in self \
-         if item.get(self.__oidfield__) in done]
-        # create new jobs
-        [self.data.append(self.__object__(data)) for data in new_o]
-        # sync existing jobs
-        for item in [item for item in self \
-                     if item.get(self.__oidfield__) in syncd]:
-            item.Sync(syncd[item.get(self.__oidfield__)])
+        
+        local_ids = [item.get(self.__unique__) for item in self]
+        foreign_ids = [item_dict.get(self.__unique__) for item_dict in foreign_data]
+        
+        # sync removed items
+        for item in self:
+            if item.get(self.__unique__) not in foreign_ids:
+                self.remove(item)
+        
+        # sync new items
+        for item_dict in foreign_data:
+            if item_dict.get(self.__unique__) not in local_ids:
+                self.Add(item_dict)
+        
+        # sync all items
+        for item_dict in foreign_data:
+            self[item_dict.get(self.__unique__)].Sync(item_dict)
