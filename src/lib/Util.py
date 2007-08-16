@@ -184,3 +184,22 @@ class AccountingLog:
         timenow = time.strftime("%Y-%m-%d %T", time.localtime())
         self.logfile.write("%s %s\n" % (timenow, message))
         self.logfile.flush()
+
+class FailureMode(object):
+    '''FailureModes are used to report (and supress) errors appropriately
+    call Pass() on success and Fail() on error'''
+    def __init__(self, name):
+        self.name = name
+        self.status = True
+
+    def Pass(self):
+        '''Check if status was previously failure and report OK status if needed'''
+        if not self.status:
+            logger.error("Failure %s cleared" % (self.name))
+            self.status = True
+
+    def Fail(self):
+        '''Check if status was previously success and report failed status if needed'''
+        if self.status:
+            logger.error("Failure %s occured" % (self.name))
+            self.status = False

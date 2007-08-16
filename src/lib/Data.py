@@ -141,3 +141,52 @@ class DataSet(object):
                     callback(item, cargs)
                 retval.append(item.to_rx(spec))
         return retval
+
+    def Match(self, spec):
+        return [item for item in self.data if item.match(spec)]
+
+class ForeignData(Data):
+    def Sync(self, data):
+        upd = [(k, v) for (k, v) in data.iteritems() \
+               if k != 'tag' and self.get(k) != v]
+        if upd:
+            logger.info("Resetting job %s parameters %s" % \
+                        (self.get('jobid'), ':'.join([u[0] for u in upd])))
+            for (k, v) in upd:
+                self.set(k, v)
+
+class ForeignDataSet(DataSet):
+    __failname__ = 'QM Connection'
+    __oserror__ = Cobalt.Util.FailureMode(__failname__)
+    
+    def Sync(self):
+        try:
+            spec = [dict([(key, '*') for key in self.__osource__[2]])]
+            func = getattr(comm[self.__osource__[0]],
+                           self.__osource__[1])
+            data = func(spec)
+        except xmlrpclib.Fault:
+            self.__oserror__.Fail()
+            return
+        except:
+            self.logger.error("Unexpected fault during data sync",
+                              exc_info=1)
+            return
+        self.__oserror__.Pass()
+        exists = [item.get(self.__oidfield__) for item in self]
+        active = [item.get(self.__oidfield__) for item in data]
+        syncd = dict([(item.get(self.__oidfield__), item) \
+                      for item in self \
+                      if item.get(self.__oidfield__) in active])
+        done = [item for item in exists if item not in active]
+        new_o = [item for item in data \
+                 if item.get(self.__oidfield__) not in exists]
+        # remove finished jobs
+        [self.data.remove(item) for item in self \
+         if item.get(self.__oidfield__) in done]
+        # create new jobs
+        [self.data.append(self.__object__(data)) for data in new_o]
+        # sync existing jobs
+        for item in [item for item in self \
+                     if item.get(self.__oidfield__) in syncd]:
+            item.Sync(syncd[item.get(self.__oidfield__)])
