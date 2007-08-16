@@ -33,12 +33,10 @@ class TestData (object):
     FIELDS = dict(
         one = 1,
         two = 2,
-        three = 3,
     )
     INVALID_FIELDS = dict(
         four = 4,
         five = 5,
-        six = 6,
     )
     
     def test_tag (self):
@@ -141,9 +139,30 @@ class TestData (object):
         assert not rx
 
 
+class TestForeignData (TestData):
+    
+    def test_Sync (self):
+        # argument 'data' should be 'spec'
+        # there should not be a reference to jobid here.
+        assert False
+        data = Cobalt.Data.Data(self.FIELDS)
+        upd_fields = self.FIELDS.copy()
+        for key, value in zip(upd_fields.keys(), self.INVALID_FIELDS.values()):
+            upd_fields[key] = value
+
+
 class TestDataSet (object):
     
-    DATA = [object(), object(), object()]
+    DATA_FIELDS = TestData.FIELDS
+    
+    DATA = [
+        Cobalt.Data.DataSet.__object__(DATA_FIELDS),
+        Cobalt.Data.DataSet.__object__(DATA_FIELDS),
+    ]
+    
+    CDATA = [DATA_FIELDS, DATA_FIELDS]
+    
+    CARGS = (object(), object())
     
     def test_data (self):
         data_set = Cobalt.Data.DataSet()
@@ -173,3 +192,46 @@ class TestDataSet (object):
         count = list(data_set).count(data)
         data_set.remove(data)
         assert list(data_set).count(data) == count - 1
+    
+    def test_Add_single (self):
+        data_set = Cobalt.Data.DataSet()
+        prior_length = len(list(data_set))
+        data_set.Add(self.CDATA[0])
+        assert len(list(data_set)) - prior_length == 1
+        for data in data_set:
+            assert isinstance(data, Cobalt.Data.DataSet.__object__)
+    
+    def test_Add_multiple (self):
+        data_set = Cobalt.Data.DataSet()
+        prior_length = len(list(data_set))
+        data_set.Add(self.CDATA)
+        assert len(list(data_set)) - prior_length == len(self.CDATA)
+        
+    
+    def test_Add_callback (self):
+        data_set = Cobalt.Data.DataSet()
+        cb_state = dict(data=[])
+        def callback (data):
+            cb_state['data'].append(data)
+        
+        data_set.Add(self.CDATA, callback)
+        for cb_data, data in zip(cb_state['data'], data_set):
+            assert cb_data is data
+    
+    def test_Add_cargs (self):
+        data_set = Cobalt.Data.DataSet()
+        cb_state = dict(args=[])
+        def callback (data, *args):
+            cb_state['args'].append(args)
+        
+        data_set.Add(self.CDATA, callback, self.CARGS)
+        for cb_args in cb_state['args']:
+            for cb_arg, carg in zip(cb_args, self.CARGS):
+                assert cb_arg is carg
+    
+    def test_Add_value (self):
+        data_set = Cobalt.Data.DataSet()
+        
+        value = data_set.Add(self.CDATA)
+        for rx, data, cdata in zip(value, list(data_set)[-len(self.CDATA):], self.CDATA):
+            assert rx == Cobalt.Data.DataSet.__object__.to_rx(data, cdata)
