@@ -10,6 +10,18 @@ logger = logging.getLogger('bgsched')
 
 comm = Cobalt.Proxy.CommDict()
 
+def fifocmp(job1, job2):
+    '''Compare 2 jobs for fifo mode'''
+    if job1.get('index', False):
+        j1 = int(job1.get('index'))
+    else:
+        j1 = int(job1.get('jobid'))
+    if job2.get('index', False):
+        j2 = int(job2.get('index'))
+    else:
+        j2 = int(job2.get('jobid'))
+    return cmp(j1, j2)
+
 def filterByLength(potential, length):
     '''Filter out all potential placements for jobs longer than length'''
     if length == -1:
@@ -121,9 +133,9 @@ class Partition(Cobalt.Data.ForeignData):
 
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
-    __oidfield__ = 'name'
     __failname__ = 'System Connection'
     __osource__ = ('system', 'GetBlah', ['name', 'queue'])
+    __unique__ = 'name'
 
 class Job(Cobalt.Data.ForeignData):
     '''This class represents User Jobs'''
@@ -135,7 +147,7 @@ class Job(Cobalt.Data.ForeignData):
 
 class JobSet(Cobalt.Data.ForeignDataSet):
     __object__ = Job
-    __oidfield__ = 'jobid'
+    __unique__ = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection")
     __osource__ = ('qm', 'GetJobs',
                    ['nodes', 'location', 'jobid', 'state', 'index',
@@ -150,7 +162,7 @@ class Queue(Cobalt.Data.ForeignData):
 
 class QueueSet(Cobalt.Data.ForeignDataSet):
     __object__ = Queue
-    __oidfield__ = 'name'
+    __unique__ = 'name'
     __osource__ = ('qm', 'GetQueues', ['name', 'status', 'policy']
 
 class BGSched(Cobalt.Component.Component):
@@ -168,9 +180,9 @@ class BGSched(Cobalt.Component.Component):
         self.jobs = JobSet()
         self.queues = QueueSet()
         self.reservations = ReservationSet()
+        self.resources = PartitionSet()
         Cobalt.Component.Component.__init__(self, setup)
         self.executed = []
-        self.qmconnect = Cobalt.Util.FailureMode("QM Connection")
         self.lastrun = 0
         self.register_function(self.reservations.Add, "AddReservation")
         self.register_function(self.reservations.Del, "DelReservation")
@@ -195,49 +207,46 @@ class BGSched(Cobalt.Component.Component):
         # self.jobs contains jobs
         activej = [j for j in self.jobs if j.get('queue') in activeq \
                    and j.get('state') == 'queued']
-        # self.resources contains resources
+        print "activej:", activej
+        # need to perform search
         # need to check reservation conflict
         # return self.ImplementPolicy(potential, depinfo)
-
-    def ImplementPolicy(self, potential, depinfo):
-        '''Switch between queue policies'''
-        qpotential = {}
+        viable = []
+        [viable.extend(queue.keys()) for queue in potential.values()]
+        viable.sort(fifocmp)
+        # call all queue policies
+        [q.policy.Prepare(viable, potential) for q in self.queues]
+        # place all viable jobs
         placements = []
-        for job in potential:
-            if qpotential.has_key(job.get('queue')):
-                qpotential[job.get('queue')][job] = potential[job]
-            else:
-                qpotential[job.get('queue')] = {job:potential[job]}
-        self.qpol = {}
-        # get queue policies
-        try:
-            qps = comm['qm'].GetQueues([{'tag':'queue',
-                                         'name':'*', 'policy':'*'}])
-            self.qmconnect.Pass()
-        except:
-            self.qmconnect.Fail()
-            return []
-        # if None, set default
-        for qinfo in qps:
-            if qinfo.get('policy', None) != None:
-                self.qpol[qinfo['name']] = qinfo['policy']
-            else:
-                self.qpol[qinfo['name']] = 'default'
-        queues = self.qpol.keys()
-        queues.sort(self.QueueCMP)
-        for queue in queues:
-            if queue not in qpotential:
-                qpotential[queue] = {}
-            qp = self.qpolicy.get(self.qpol[queue], 'default')
-            qfunc = getattr(self, qp, 'default')
-                            
-            # need to remove partitions, included and containing,
-            # for newly used partitions
-            # for all jobs in qpotential
-            filterByTopology(placements, depinfo, qpotential[queue])
-            newplace = qfunc(qpotential, queue, depinfo)
-            placements += newplace
-        return placements
+        for job in viable:
+            QP = self.queues[job.get('queue')].policy
+            place = QP.PlaceJob(job, potential)
+            if place:
+                # clean up that job placement
+                del potential[job.get('queue')][job.get('jobid')]
+                # tidy other placements
+                self.TidyPlacements(potential, place[1])
+                placements.append(place)
+        self.RunJobs(placements)
+
+    def TidyPlacements(self, potential, newlocation):
+        '''Remove any potential spots that overlap with newlocation'''
+        nodecards = [res for res in self.resources \
+                     if res.get('name') == newlocation][0].get('nodecards')
+        overlap = [res.get('name') for res in self.resources \
+                   if [nc for nc in res.get('nodecards') \
+                       if nc in nodecards]]
+        for queue in potential:
+            for job, locations in queue.iteritems():
+                [locations.remove(location) for location in locations \
+                 if location in overlap]
+                if not locations:
+                    del queue[job]
+
+    def RunJobs(self, placements):
+        '''Connect to cqm and run jobs'''
+        # FIXME
+        pass
 
 if __name__ == '__main__':
     from getopt import getopt, GetoptError
