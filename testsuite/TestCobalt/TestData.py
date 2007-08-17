@@ -122,12 +122,7 @@ class TestData (object):
             fields[key] = value
         assert not data.match(fields)
         
-        try:
-            data.match(self.INVALID_FIELDS)
-        except KeyError:
-            pass
-        else:
-            assert not "Fields must be valid for the instance."
+        assert not data.match(self.INVALID_FIELDS)
     
     def test_to_rx (self):
         data = Cobalt.Data.Data(self.FIELDS)
