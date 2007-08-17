@@ -22,14 +22,6 @@ def fifocmp(job1, job2):
         j2 = int(job2.get('jobid'))
     return cmp(j1, j2)
 
-def filterByLength(potential, length):
-    '''Filter out all potential placements for jobs longer than length'''
-    if length == -1:
-        return
-    for job in potential.keys():
-        if float(job.get('walltime')) > float(length):
-            del potential[job]
-
 class Reservation(Cobalt.Data.Data):
     '''Reservation\nHas attributes:\nname, start, stop, cycle, users, resources'''
     def Overlaps(self, location, start, duration):
@@ -53,9 +45,34 @@ class Reservation(Cobalt.Data.Data):
             return True
         return False
 
-    def IsActive(self):
-        # FIXME implement
-        pass
+    def IsActive(self, stime=False):
+        if not stime:
+            stime = time.time()
+        if self.get('start') <= stime <= self.get('stop'):
+            return True
+
+    def FilterPlacements(self, placements, resources):
+        '''Filter placements not allowed by reservation'''
+        overlaps = resources.GetOverlaps(self.get('location'))
+        now = time.time()
+        # filter overlapping jobs not in reservation
+        for job in placements:
+            if job.get('queue').startswith("R.%s" % self.get("name")):
+                if job.get('user') not in self.get('users'):
+                    del placements[job]
+                    continue
+                placements[job] = [location for location in \
+                                   placements[job] if location in \
+                                   self.get('location')]
+            for location in placements[job][:]:
+                if location in overlaps:
+                    if self.Overlaps(location, now,
+                                     job.get('duration')):
+                        placements[job].remove(location)
+        if not self.IsActive():
+            # filter jobs in Rqueue if not active
+            if "R.%s" % self.get('name') in placements.keys():
+                del placements["R.%" % self.get('name')]
 
 class ReservationSet(Cobalt.Data.DataSet):
     __object__ = Reservation
@@ -100,42 +117,30 @@ class Partition(Cobalt.Data.ForeignData):
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
         basic = self.get('scheduled') and self.get('functional')
-        queue = job.get('queue') in self.get('queue').split(':')
-        jqueue = job.get('queue')
+        queue = job.get('queue').startswith('R.') or \
+                job.get('queue') in self.get('queue').split(':')
         jsize = int(job.get('nodes')) # should this be 'size' instead?
         psize = int(self.get('size'))
-        size = ((psize >= jsize) and ((psize == 32) or (jsize > psize/2)))
+        size = (psize >= jsize) and ((psize == 32) or (jsize > psize/2))
         if not (basic and size):
             return False
-        # add a slack for job cleanup with reservation calculations
-        wall = float(job.get('walltime')) + 5.0
-        jdur = 60 * wall
-        # all times are in seconds
-        current = time.time()
-        rstates = []
-        for (rname, ruser, start, rdur) in self.get('reservations'):
-            if current < start:
-                # reservation has not started
-                if start < (current + jdur):
-                    return False
-            elif current > (start + rdur):
-                # reservation has finished
-                continue
-            else:
-                # reservation is active
-                rstates.append(jqueue == ('R.%s' % (rname))
-                               and job.get('user') in ruser.split(':'))
-        if rstates:
-            return False not in rstates
-        else:
-            return queue
-        return True
+        return queue
 
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
     __failname__ = 'System Connection'
-    __osource__ = ('system', 'GetBlah', ['name', 'queue'])
+    __osource__ = ('system', 'GetBlah', ['name', 'queue', 'nodecards'])
     __unique__ = 'name'
+
+    def GetOverlaps(self, partnames):
+        ncs = []
+        for part in partnames:
+            [ncs.append(nc) for nc in part.nodecards if nc not in ncs]
+        ret = []
+        for part in self:
+            if [nc for nc in part.nodecards if nc in ncs]:
+                ret.append(part)
+        return ret
 
 class Job(Cobalt.Data.ForeignData):
     '''This class represents User Jobs'''
@@ -169,14 +174,12 @@ class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
     __implementation__ = 'bgsched'
     __name__ = 'scheduler'
-    #__statefields__ = ['partitions', 'jobs']
-    __statefields__ = ['partitions']
+    __statefields__ = ['reservations']
     __schedcycle__ = 10
     async_funcs = ['assert_location', 'RunQueue',
                    'RemoveOldReservations', 'ResQueueSync']
 
     def __init__(self, setup):
-        self.partitions = PartitionSet()
         self.jobs = JobSet()
         self.queues = QueueSet()
         self.reservations = ReservationSet()
@@ -190,6 +193,10 @@ class BGSched(Cobalt.Component.Component):
             lambda a,d,u: \
             self.reservations.Get(d, lambda r, na:r.update(na), u), 
             "SetReservation")
+
+    def SyncData(self):
+        for item in [self.resources, self.queues, self.jobs]:
+            item.Sync()
 
     def Schedule(self):
         # self queues contains queues
@@ -214,10 +221,15 @@ class BGSched(Cobalt.Component.Component):
         viable = []
         [viable.extend(queue.keys()) for queue in potential.values()]
         viable.sort(fifocmp)
+        potential = {}
+        for job in viable:
+            potential[job] = []
+            [potential[job].append(partition) for partition \
+             in self.resources if partition.CanRun(job)]
+                    
         # call all queue policies
         [q.policy.Prepare(viable, potential) for q in self.queues]
         # place all viable jobs
-        placements = []
         for job in viable:
             QP = self.queues[job.get('queue')].policy
             place = QP.PlaceJob(job, potential)

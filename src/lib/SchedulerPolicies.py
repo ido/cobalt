@@ -22,8 +22,7 @@ class FirstFit(SchedulerPolicy):
     __name__ = 'FirstFit'
 
     def PlaceJobs(self, job, potential):
-        jname = job.get('name')
-        return (jname, potential[self.qname][jname][0])
+        return (jname, potential[job][0])
 
 class DeferAll(FirstFit):
     __name__ = 'DeferAll'
@@ -31,8 +30,9 @@ class DeferAll(FirstFit):
         '''If idle jobs in this queue exist, defer all others'''
         if [job for job in idle \
             if self.qname in job.get('queue').split(':')]:
-            for queue in potential:
-                if queue != self.qname and not queue.startswith('R.'):
-                    potential[queue] = {}
+            for job in potential:
+                if job.get('queue') != self.qname and \
+                       not job.get('queue').startswith('R.'):
+                    del potential[job]
 
 
