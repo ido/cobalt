@@ -83,39 +83,38 @@ class DataSet(object):
     '''DataSet provides storage, iteration, and matching across sets of Data instances'''
     __object__ = Data
     __id__ = None
-    __unique__ = False
+    __unique__ = None
+    
+    def keys (self):
+        if not self.__unique__:
+            raise KeyError("No unique key is set.")
+        return [item.get(self.__unique__) for item in self.data]
 
     def __init__(self):
         self.data = []
-        self.names = []
 
     def __iter__(self):
         return iter(self.data)
 
     def __getitem__(self, key):
         if not self.__unique__:
-            raise KeyError, key
-        ret = [item for item in self if item.get(self.__unique__) == key]
-        if len(ret) == 1:
-            return ret[0]
-        elif len(ret) == 0:
-            raise KeyError, key
+            raise KeyError("No unique key is set.")
+        for item in self:
+            if item.get(self.__unique__) == key:
+                return item
+        raise KeyError(key)
+    
+    def __delitem__(self, key):
+        self.remove(self[key])
 
-    def append(self, x):
+    def append(self, item):
         '''add a new element to the set'''
-        if self.__unique__:
-            newname = x.get(self.__unique__)
-            if newname in self.names:
-                return
-            self.names.append(newname)
+        if self.__unique__ and item.get(self.__unique__) in self.keys():
+            raise KeyError("duplicate: %s" % item.get(self.__unique__))
         self.data.append(x)
 
     def remove(self, x):
         '''remove an element from the set'''
-        if self.__unique__:
-            remname = x.get(self.__unique__)
-            if remname in self.names:
-                self.names.remove(remname)
         self.data.remove(x)
 
     def Add(self, cdata, callback=None, cargs=()):
@@ -133,8 +132,7 @@ class DataSet(object):
                 print "returning fault"
                 raise xmlrpclib.Fault(8, str(missing))
             #return xmlrpclib.dumps(xmlrpclib.Fault(8, str(missing)))
-            # uniqueness test goes here
-            self.data.append(iobj)
+            self.append(iobj)
             if callback:
                 apply(callback, (iobj, ) + cargs)
             retval.append(iobj.to_rx(item))
@@ -144,7 +142,7 @@ class DataSet(object):
         '''Implement semantics of operations that get item(s) from the DataSet'''
         retval = []
         for spec in cdata:
-            for item in [datum for datum in self.data if datum.match(spec)]:
+            for item in [datum for datum in self if datum.match(spec)]:
                 if callback:
                     callback(item, cargs)
                 retval.append(item.to_rx(spec))
