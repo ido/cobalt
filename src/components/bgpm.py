@@ -25,6 +25,7 @@ class ProcessGroup(Cobalt.Data.Data):
         self.log = logging.getLogger('pg')
         self.set('pgid', pgid)
         self.set('state', 'initializing')
+        self.set('exit-status', False)
 
         result = self.comms['sys'].StartJob(data)
         #TODO sync from startjob to self
@@ -32,13 +33,17 @@ class ProcessGroup(Cobalt.Data.Data):
         self.pid = result.get('pid')
 
         self.set('state', 'running')
-        self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" % (self.get('jobid'), self.get('user'), pgid,
-                                                                               partition, self.pid))
+        self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" %
+                      (self.get('jobid'), self.get('user'), self.get('pgid'),
+                       result.get('location'), self.pid))
         #AddEvent("process-manager", "process_start", pgid)
 
     def FinishProcess(self, status):
         '''Handle cleanup for exited process'''
         # process has already been waited on
+        if self.get('state') == 'finished':
+            self.log.info("Job %s/%s: ProcessGroup %s Already finished" %
+                           (self.get('jobid'), self.get('user'), self.get('pgid')))
         self.set('state', 'finished')
         self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
                       (self.get('jobid'), self.get('user'), self.get('pgid'),
@@ -95,12 +100,16 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
             return
         if (time.time() - self.lastwait) > 6:
             self.lastwait = time.time()
+            #get existing jobs from system component and compare to local list
+            print 'querying jobs', time.ctime()
             result = self.comms['sys'].QueryJobs([pg.to_rx(pg._attrib) for pg in self.data])
             result_pgs = [pg.get('pgid') for pg in result]
             for pg in self:
-                if pg.get('pgid') not in result_pgs:
-                    pg.FinishProcess(0)
-                    
+                print pg.get('pgid'), pg.get('pid'), pg.get('state')
+                if pg.get('pgid') not in result_pgs and pg.get('state') != 'finished':
+                    #pid of pg is not present in system component, so finishprocess
+                    pg.FinishProcess(False) 
+    
     def create_processgroup(self, address, data):
         '''Create new process group element'''
         return self.Add(data)

@@ -1,10 +1,24 @@
 #!/usr/bin/env python
 
-import logging, sys, lxml.etree, operator, os
-from xml.etree import ElementTree as ET
+import logging, sys, lxml.etree, operator, os, pwd, atexit, ConfigParser, tempfile, signal
 from getopt import getopt, GetoptError
-import Cobalt.Component, Cobalt.Logging
+import Cobalt.Component, Cobalt.Logging, Cobalt.Data
 logger = logging.getLogger('bgsched')
+
+def checkpid(somepid):
+    '''checks if the specified pid is still around'''
+    process_list = os.popen('ps ax')
+    pids = process_list.readlines()
+    process_list.close()
+    pidlist = [p.split()[0] for p in pids]
+    if str(somepid) in pidlist:
+        return True
+    else:
+        return False
+
+class ProcessGroupCreationError(Exception):
+    '''ProcessGroupCreation Error is used when not enough information is specified'''
+    pass
 
 class Brooklyn(Cobalt.Component.Component):
     '''Brooklyn is a bgl bridge simulator'''
@@ -13,14 +27,19 @@ class Brooklyn(Cobalt.Component.Component):
 
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
+        self.log = logger
         self.partitions = {}        #dictionary of part:(parents, children, sizes, nodecards)
-        self.partitioninfo = {}     #nested dictionary for nodecard info
+        self.partitioninfo = Cobalt.Data.DataSet()
         self.nodecards = set()      #set of nodecard names
         self.nodecardinfo = {}      #nested dictionary for nodecard info
         self.readConfigFile(setup.get('partconfig'))
         self.used = []              #list of used partitions
         self.blocked = []           #list of blocked (overlapping) partitions
         self.usednodecards = set()  #set of used nodecard names
+
+        self.config = ConfigParser.ConfigParser()
+        self.config.read(setup.get('configfile'))
+        
         self.register_function(self.GetMachineState, "GetState")
         self.register_function(self.GetMachineStateDB2, "GetDB2State")
         self.register_function(self.ReservePartition, "ReservePartition")
@@ -42,13 +61,18 @@ class Brooklyn(Cobalt.Component.Component):
         children = {}
         sizes = {}
         nodecards = {}
-
+        
         racknodecards = rack.findall('.//Nodecard')
-        for x in racknodecards:
-            newname = "%s-%s" % (x.get('bpid'), x.get('id'))
-            self.nodecardinfo[newname] = {'tag':'nodecard', 'bpid':x.get('bpid'),
-                                          'id':x.get('id'), 'queue':'default'}
-            print x.get('bpid'), x.get('id')
+        for racknode in racknodecards:
+            newname = "%s-%s" % (racknode.get('bpid'), racknode.get('id'))
+            self.nodecardinfo[newname] = {'tag':'nodecard', 'bpid':racknode.get('bpid'),
+                                          'id':racknode.get('id'), 'queue':'default'}
+        rackpartitions = rack.findall('.//Partition')
+        for rackpart in rackpartitions:
+            self.partitioninfo.Add([{'tag':'partition', 'name':rackpart.get('name'),
+                                     'queue':'default', 'scheduled':True,
+                                     'functional':True, 'state':'idle',
+                                     'size':rackpart.get('size')}])
 
         for partition in rack.findall('Partition'):
             parents[partition.get('name')] = []
@@ -71,20 +95,18 @@ class Brooklyn(Cobalt.Component.Component):
             self.partitions[part] = (parents[part], children[part],
                                      sizes[part], nodecards[part])
 
-        #build nodecard set of names (duplicates are ignored)
-        for p in self.partitions.values():
-            self.nodecards.update(p[3])
+        #build nodecard set() of names (duplicates are ignored)
+        for part in self.partitions.values():
+            self.nodecards.update(part[3])
 
-        print 'set of nodecards in machine:', self.nodecards
-
-    def GetMachineStateDB2(self, conn):
+    def GetMachineStateDB2(self, _):
         '''Return db2-like list of tuples describing state'''
         return [(name, name in self.used and 'I' or 'F') for name in self.partitions]
 
     def GetMachineState(self, _):
         '''returns hardware state (nodecards)'''
         result = []
-        print 'self.usednodecards', self.usednodecards, self.nodecards
+
         for nc in self.nodecards:
             if nc in self.usednodecards:
                 state = 'used'
@@ -95,11 +117,47 @@ class Brooklyn(Cobalt.Component.Component):
                            'id':self.nodecardinfo[nc]['id'], 'state':state,
                            'queue':self.nodecardinfo[nc]['queue']})
         result.sort(key=operator.itemgetter('bpid', 'id'))
-        print result
+
         return result
 
+    def getorderedlist(self, nodelist, newsize, depth, result_list):
+        '''searches for partition whose nodecards match groups of nodecards in nodelist
+        nodelist is ordered list of nodecards in system
+        newsize is the size of the stencil used to match partition nodecards
+        result_list is where the partitions are appended in order
+        '''
+        for x in range(0, len(nodelist), newsize):
+            search_nodes = nodelist[x:x+newsize]
+            for p in self.partitions:
+                if self.partitions[p][3] == set(search_nodes):
+                    result_list.append(p)
+                    if newsize > 1:
+                        self.getorderedlist(nodelist[x:x+newsize], newsize/2, depth+1, result_list)
+
     def GetPartition(self, _, query):
-        pass
+        '''returns query like DataSet.Get'''
+        nclist = sorted(list(self.nodecards))
+        olist = []
+        depth = 0
+        self.getorderedlist(nclist, len(nclist), depth, olist)
+
+        response = self.partitioninfo.Get(query)
+        for part in response:
+            if part.get('name') in self.used:
+                part.update({'state':'busy'})
+            elif part.get('name') in self.blocked:
+                part.update({'state':'blocked'})
+            else:
+                part.update({'state':'idle'})
+
+        # reorder response based on olist
+        newlist = []
+        for opart in olist:
+            ordered_part = [p for p in response if p.get('name') == opart]
+            if ordered_part:
+                newlist.append(ordered_part[0])
+
+        return newlist
 
     def GenBlocked(self):
         '''Generate the blocked table from the values of set self.usednodecards'''
@@ -107,27 +165,17 @@ class Brooklyn(Cobalt.Component.Component):
         if not self.usednodecards:
             return
         for partition in self.partitions:
-            print self.partitions[partition][3]
             if self.partitions[partition][3] == self.usednodecards:
-                print 'this is the partition being used', partition
+                print 'this is probably the partition being used', partition
                 print self.used
             elif self.partitions[partition][3].issubset(self.usednodecards):
-                print 'partition %s is subset of busy nodecards %s' % (partition, self.usednodecards)
                 self.blocked.append(partition)
             elif self.partitions[partition][3].issuperset(self.usednodecards):
-                print 'partition %s is superset of busy nodecards %s' % (partition, self.usednodecards)
                 self.blocked.append(partition)
-            else:
-                print 'partition %s is not super or sub' % partition
 
         logger.info("blocked partitions %s" % self.blocked)
 
-#         for partition in [p for p in self.partitions if p in self.used]:
-#             for relative in self.partitions[partition][0] \
-#                     + self.partitions[partition][1]:
-#                 self.blocked.append(relative)
-
-    def ReservePartition(self, conn, name, size):
+    def ReservePartition(self, _, name, size):
         '''Reserve partition and block all related partitions'''
         if name not in self.partitions:
             logger.error("Tried to use nonexistent partition %s" % (name))
@@ -172,15 +220,13 @@ class Brooklyn(Cobalt.Component.Component):
         return True
 
     def GetPossibleNodegroups(self, group_size):
-        '''returns list of possible groups of that size'''
+        '''returns list of possible groups of nodecards of size group_size'''
         nclist = list(self.nodecards)
         nclist.sort()
-        print self.nodecards, nclist
         if group_size > len(nclist):
             logger.error("Tried to use %d nodecards in a %d nodecard system" % (group_size, len(nclist)))
             return []
         possible_groups = []
-        stencil_size = len(nclist)/group_size
         for x in range(0, len(nclist), group_size):
             possible_groups.append(nclist[x:x+group_size])
         return possible_groups
@@ -198,9 +244,10 @@ class Brooklyn(Cobalt.Component.Component):
             else:
                 logger.info(" Empty")
             self.GenBlocked()
+            print "blocked: ", self.blocked
             return True
 
-    def ReleasePartition(self, conn, name):
+    def ReleasePartition(self, _, name):
         '''Release used partition'''
         if name not in self.used:
             logger.error("Tried to release free partition %s" % name)
@@ -239,13 +286,13 @@ class Brooklyn(Cobalt.Component.Component):
 
             #setup output and error files
             if jobinfo.get('outputfile', False):
-                self.outlog = jobinfo.get('outputfile')
+                outlog = jobinfo.get('outputfile')
             else:
-                self.outlog = tempfile.mktemp()            
+                outlog = tempfile.mktemp()            
             if jobinfo.get('errorfile', False):
-                self.errlog = jobinfo.get('errorfile')
+                errlog = jobinfo.get('errorfile')
             else:
-                self.errlog = tempfile.mktemp()
+                errlog = tempfile.mktemp()
 
             #check for location to run
             if not jobinfo.get('location', False):
@@ -280,11 +327,11 @@ class Brooklyn(Cobalt.Component.Component):
                 logger.error("Failed to change userid/groupid for PG %s" % (jobinfo.get("pgid")))
                 sys.exit(0)
 
-            #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
-            os.environ["DB_PROPERTY"] = self.config['db2_properties']
-            os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
-            os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
-            os.environ["DB2INSTANCE"] = self.config['db2_instance']
+            #os.system("%s > /dev/null 2>&1" % (self.config.get('bgpm', 'db2_connect')))
+            os.environ["DB_PROPERTY"] = self.config.get('bgpm', 'db2_properties')
+            os.environ["BRIDGE_CONFIG_FILE"] = self.config.get('bgpm', 'bridge_config')
+            os.environ["MMCS_SERVER_IP"] = self.config.get('bgpm', 'mmcs_server_ip')
+            os.environ["DB2INSTANCE"] = self.config.get('bgpm', 'db2_instance')
             os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
             os.environ["COBALT_JOBID"] = jobinfo.get('jobid')
             if inputfile != '':
@@ -293,7 +340,7 @@ class Brooklyn(Cobalt.Component.Component):
             else:
                 null = open('/dev/null', 'r')
                 os.dup2(null.fileno(), sys.__stdin__.fileno())
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
+            cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun')),
                    '-np', pnum, '-partition', partition,
                    '-mode', mode, '-cwd', cwd, '-exe', program)
             if args != '':
@@ -306,22 +353,22 @@ class Brooklyn(Cobalt.Component.Component):
                 cmd = cmd + ('-mapfile', mapfile)
 
             try:
-                err = open(self.errlog, 'a')
-                os.chmod(self.errlog, 0600)
+                err = open(errlog, 'a')
+                os.chmod(errlog, 0600)
                 os.dup2(err.fileno(), sys.__stderr__.fileno())
             except IOError:
-                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), self.errlog))
+                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), errlog))
             except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), self.errlog))
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), errlog))
 
             try:
-                out = open(self.outlog, 'a')
-                os.chmod(self.outlog, 0600)
+                out = open(outlog, 'a')
+                os.chmod(outlog, 0600)
                 os.dup2(out.fileno(), sys.__stdout__.fileno())
             except IOError:
-                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), self.outlog))
+                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), outlog))
             except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), self.errlog))
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), errlog))
 
             try:
                 apply(os.execl, cmd)
@@ -345,19 +392,9 @@ class Brooklyn(Cobalt.Component.Component):
     def query_jobs(self, _, jobsinfo):
         '''queries jobs via pid or PyBridge
         returns those jobs that are running'''
+        print 'brooklyn: got query for these pid', [job.get('pid') for job in jobsinfo]
         return [job for job in jobsinfo
-                if self.checkpid(job.get('pid'))]
-
-    def checkpid(self, somepid):
-        '''checks if the specified pid is still around'''
-        ps = os.popen('ps ax')
-        pids = ps.readlines()
-        ps.close()
-        pidlist = [p.split()[0] for p in pids]
-        if str(somepid) in pidlist:
-            return True
-        else:
-            return False
+                if checkpid(job.get('pid'))]
 
     def kill_job(self, _, jobinfo):
         '''kills a job using via signal to pid'''

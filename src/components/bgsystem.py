@@ -12,6 +12,10 @@ import Cobalt.bridge
 
 logger = logging.getLogger('bgsystem')
 
+class ProcessGroupCreationError(Exception):
+    '''ProcessGroupCreation Error is used when not enough information is specified'''
+    pass
+
 class BridgeData(Cobalt.Data.Data):
     '''A Data object that ties into another object, like something
     returned from the bridge module
