@@ -117,7 +117,7 @@ class DataSet(object):
         '''remove an element from the set'''
         self.data.remove(x)
 
-    def Add(self, cdata, callback=None, cargs=()):
+    def Add(self, cdata, callback=None, cargs={}):
         '''Implement semantics of operations that add new item(s) to the DataSet'''
         retval = []
         if type(cdata) != types.ListType:
@@ -134,7 +134,7 @@ class DataSet(object):
             #return xmlrpclib.dumps(xmlrpclib.Fault(8, str(missing)))
             self.append(iobj)
             if callback:
-                apply(callback, (iobj, ) + cargs)
+                callback(iobj, cargs)
             retval.append(iobj.to_rx(item))
         return retval
 
