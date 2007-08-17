@@ -76,11 +76,11 @@ class Data(object):
             
     def match(self, spec):
         '''Implement datatype matching'''
-        fields_delta = [field for field in spec
-            if spec[field] != '*'
-            and (self.get(field) != spec[field])
+        matching_fields = [field for field in spec.keys()
+            if spec[field] == '*'
+            or (self.get(field, False) and self.get(field) == spec[field])
         ]
-        return not fields_delta
+        return len(matching_fields) == len(spec.keys())
         
     def to_rx(self, spec):
         '''return transmittable version of instance'''
