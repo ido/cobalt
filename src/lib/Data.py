@@ -60,7 +60,7 @@ class Data(object):
         try:
             return self._attrib[field]
         except KeyError:
-            if default:
+            if default is not None:
                 return default
             raise
 
