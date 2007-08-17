@@ -110,7 +110,7 @@ class DataSet(object):
         '''remove an element from the set'''
         return self.data.remove(x)
 
-    def Add(self, cdata, callback=None, cargs=()):
+    def Add(self, cdata, callback=None, cargs={}):
         """Construct new items of type self.__object__ in the dataset.
         
         Arguments:
@@ -137,7 +137,7 @@ class DataSet(object):
             # uniqueness test goes here
             self.append(iobj)
             if callback:
-                callback(iobj, *cargs)
+                callback(iobj, cargs)
             retval.append(iobj.to_rx(item))
         return retval
 
@@ -156,7 +156,7 @@ class DataSet(object):
         for spec in cdata:
             for item in [datum for datum in self.data if datum.match(spec)]:
                 if callback:
-                    callback(item, *cargs)
+                    callback(item, cargs)
                 retval.append(item.to_rx(spec))
         return retval
 
@@ -176,6 +176,6 @@ class DataSet(object):
             for item in [datum for datum in self.data if datum.match(spec)]:
                 self.data.remove(item)
                 if callback:
-                    callback(item, *cargs)
+                    callback(item, cargs)
                 retval.append(item.to_rx(spec))
         return retval
