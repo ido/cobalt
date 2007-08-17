@@ -111,7 +111,7 @@ class DataSet(object):
         '''add a new element to the set'''
         if self.__unique__ and item.get(self.__unique__) in self.keys():
             raise KeyError("duplicate: %s" % item.get(self.__unique__))
-        self.data.append(x)
+        self.data.append(item)
 
     def remove(self, x):
         '''remove an element from the set'''
