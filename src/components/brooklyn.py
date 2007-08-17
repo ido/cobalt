@@ -131,6 +131,7 @@ class Brooklyn(Cobalt.Component.Component):
             for p in self.partitions:
                 if self.partitions[p][3] == set(search_nodes):
                     result_list.append(p)
+                    self.partitioninfo.Get([{'tag':'partition', 'name':p}], lambda x,y: x.update(y), {'depth':depth})
                     if newsize > 1:
                         self.getorderedlist(nodelist[x:x+newsize], newsize/2, depth+1, result_list)
 

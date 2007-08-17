@@ -20,6 +20,9 @@ if __name__ == '__main__':
     parser.add_option("--hardware", dest="hardware", default=False,
                       action="store_true", 
                       help="Displays hardware (nodecard) status")
+    parser.add_option("--flat", dest="flat", default=True,
+                      action="store_false",
+                      help="Displays partitions as flat list")
     (opts, args) = parser.parse_args()
 
     try:
@@ -36,12 +39,19 @@ if __name__ == '__main__':
         Cobalt.Util.printTabular(header + output)
 
     else:
-        #defaults to partition status
+        #display partition status
         parts = system.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*',
                                       'state':'*', 'scheduled':'*',
-                                      'functional':'*', 'deps':'*'}])
+                                      'functional':'*', 'depth':'*'}])
         somelist = []
         
         header = [['Name', 'Queue', 'State', 'Nodecards']]
-        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts]
+        #build output list, adding
+        if opts.flat:
+            output = []
+            for part in parts:
+                name = '  '*int(part.get('depth')) + part.get('name')
+                output.append([name] + [part.get(x) for x in [y.lower() for y in header[0][1:]]])
+        else:
+            output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts]
         Cobalt.Util.printTabular(header + output)
