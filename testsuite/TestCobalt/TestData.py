@@ -164,6 +164,8 @@ class TestDataSet (object):
     
     CARGS = (object(), object())
     
+    
+    
     def test_data (self):
         data_set = Cobalt.Data.DataSet()
         assert data_set.data == []
@@ -209,24 +211,24 @@ class TestDataSet (object):
     
     def test_Add_callback (self):
         data_set = Cobalt.Data.DataSet()
-        cb_state = dict(data=[])
-        def callback (data):
-            cb_state['data'].append(data)
+        cb_state = dict(items=[])
+        def callback (item, cargs):
+            cb_state['items'].append(item)
         
         data_set.Add(self.CDATA, callback)
-        for cb_data, data in zip(cb_state['data'], data_set):
-            assert cb_data is data
+        for cb_item, item in zip(cb_state['items'], data_set):
+            assert cb_item is item
     
     def test_Add_cargs (self):
         data_set = Cobalt.Data.DataSet()
-        cb_state = dict(args=[])
-        def callback (data, *args):
-            cb_state['args'].append(args)
+        cb_state = dict(cargs=[])
+        def callback (item, cargs):
+            cb_state['cargs'].append(cargs)
         
         data_set.Add(self.CDATA, callback, self.CARGS)
-        for cb_args in cb_state['args']:
-            for cb_arg, carg in zip(cb_args, self.CARGS):
-                assert cb_arg is carg
+        for cb_cargs in cb_state['cargs']:
+            for cb_carg, carg in zip(cb_cargs, self.CARGS):
+                assert cb_carg is carg
     
     def test_Add_value (self):
         data_set = Cobalt.Data.DataSet()
@@ -261,25 +263,25 @@ class TestDataSet (object):
     
     def test_Get_callback (self):
         data_set = Cobalt.Data.DataSet()
-        cb_state = dict(data=[])
-        def callback (data):
-            cb_state['data'].append(data)
+        cb_state = dict(items=[])
+        def callback (item, cargs):
+            cb_state['items'].append(item)
         data_set.Add(self.CDATA)
         
         data_set.Get(self.CDATA, callback)
-        for cb_data, data in zip(cb_state['data'], data_set):
-            assert cb_data is data
+        for cb_item, item in zip(cb_state['items'], data_set):
+            assert cb_item is item
     
     def test_Get_cargs (self):
         data_set = Cobalt.Data.DataSet()
-        cb_state = dict(args=[])
-        def callback (data, *args):
-            cb_state['args'].append(args)
+        cb_state = dict(cargs=[])
+        def callback (item, cargs):
+            cb_state['cargs'].append(cargs)
         
         data_set.Get(self.CDATA, callback, self.CARGS)
-        for cb_args in cb_state['args']:
-            for cb_arg, carg in zip(cb_args, self.CARGS):
-                assert cb_arg is carg
+        for cb_cargs in cb_state['cargs']:
+            for cb_carg, carg in zip(cb_cargs, self.CARGS):
+                assert cb_carg is carg
     
     def test_Del_single (self):
         data_set = Cobalt.Data.DataSet()
@@ -298,22 +300,22 @@ class TestDataSet (object):
     
     def test_Del_callback (self):
         data_set = Cobalt.Data.DataSet()
-        cb_state = dict(data=[])
-        def callback (data):
-            cb_state['data'].append(data)
+        cb_state = dict(items=[])
+        def callback (item, cargs):
+            cb_state['items'].append(item)
         data_set.Add(self.CDATA)
         
         data_set.Del(self.CDATA, callback)
-        for cb_data, data in zip(cb_state['data'], data_set):
-            assert cb_data is data
+        for cb_item, item in zip(cb_state['items'], data_set):
+            assert cb_item is item
     
     def test_Del_cargs (self):
         data_set = Cobalt.Data.DataSet()
-        cb_state = dict(args=[])
-        def callback (data, *args):
-            cb_state['args'].append(args)
+        cb_state = dict(cargs=[])
+        def callback (item, cargs):
+            cb_state['cargs'].append(cargs)
         
         data_set.Del(self.CDATA, callback, self.CARGS)
-        for cb_args in cb_state['args']:
-            for cb_arg, carg in zip(cb_args, self.CARGS):
-                assert cb_arg is carg
+        for cb_cargs in cb_state['cargs']:
+            for cb_carg, carg in zip(cb_cargs, self.CARGS):
+                assert cb_carg is carg
