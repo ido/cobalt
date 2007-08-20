@@ -302,7 +302,7 @@ class Brooklyn(Cobalt.Component.Component):
 
             #check for valid user/group
             try:
-                userid, groupid = pwd.getpwnam(jobinfo.get('user'))[2:4]
+                userid, groupid = pwd.getpwnam(jobinfo.get('user', ""))[2:4]
             except KeyError:
                 raise ProcessGroupCreationError, "user/group"
 

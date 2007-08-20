@@ -49,59 +49,99 @@ class RandomID(object):
 
 
 class Data(object):
-    '''Data takes nested dictionaries and builds objects analogous to sss.restriction.data objects'''
-    required_fields = []
     
-    def _get_tag (self):
-        try:
-            return self.get('tag')
-        except KeyError, e:
-            return None
+    """A Cobalt entity manager.
     
-    def _set_tag (self, value):
-        self.set('tag', value)
+    Class attributes:
+    required_fields
+    """
     
-    tag = property(_get_tag, _set_tag)
-
-    def __init__(self, info):
-        missing = [field for field in self.required_fields if not info.has_key(field)]
-        if missing:
-            raise DataCreationError, missing
-        self._attrib = {}
+    fields = dict() # Fields expected to be set for the entity.
+    required_fields = [] # Fields that must be specified when the entity is created.
+    
+    def __init__(self, spec):
+        
+        """Initialize a new Data manager.
+        
+        Arguments:
+        spec -- A dictionary specifying the values of fields on the entity.
+        """
+        
+        missing_fields = [
+            field for field in self.required_fields
+            if not spec.has_key(field)
+        ]
+        if missing_fields:
+            raise DataCreationError, missing_fields
+        
+        self._attrib = self.fields.copy()
         self.set('stamp', time.time())
-        self._attrib.update(info)
+        self._attrib.update(spec)
 
     def get(self, field, default=None):
-        '''return attribute'''
-        try:
-            return self._attrib[field]
-        except KeyError:
-            if default is not None:
-                return default
-            raise
+        """Get the value of field from the entity.
+        
+        Arguments:
+        field -- The field to get the value of.
+        default -- Value to return if field is not set. (default None)
+        """
+        return self._attrib.get(field, default)
 
     def set(self, field, value):
-        '''set attribute'''
+        """Set the value of field on the entity.
+        
+        Arguments:
+        field -- The field to set the value of.
+        value -- Value to set on the field.
+        """
         self._attrib[field] = value
         self._attrib['stamp'] = time.time()
 
-    def update(self, attrdict):
-        '''update attributes based on attrdict'''
-        for item in attrdict.iteritems():
-            self.set(*item)
+    def update(self, spec):
+        """Updated the values of multiple field on an entity.
+        
+        Arguments:
+        spec -- A dictionary specifying the values of fields to set.
+        """
+        for key, value in spec.iteritems():
+            self.set(key, value)
+    
+    def _get_tag (self):
+        """Get the value of the tag field."""
+        return self.get('tag')
+    
+    def _set_tag (self, value):
+        """Set the value of the tag field.
+        
+        Arguments:
+        value -- New tag value.
+        """
+        self.set('tag', value)
+    
+    # Attribute-style access to tag, for backwards-compatibility.
+    tag = property(_get_tag, _set_tag)
             
     def match(self, spec):
-        '''Implement datatype matching'''
-        matching_fields = [field for field in spec.keys()
-            if spec[field] == '*'
-            or (self.get(field, False) and self.get(field) == spec[field])
-        ]
-        return len(matching_fields) == len(spec.keys())
+        """True if every field in spec == the same field on the entity.
         
-    def to_rx(self, spec):
-        '''return transmittable version of instance'''
-        return dict([(field, self.get(field)) for field in spec \
-                     if field in self._attrib])
+        Arguments:
+        spec -- Dictionary specifying fields and values to match against.
+        """
+        for field, value in spec.iteritems():
+            if value != "*" and self.get(field) != value:
+                return False
+        return True
+    
+    def to_rx(self, fields=None):
+        """Return a transmittable version of an entity.
+        
+        Arguments:
+        fields -- List of fields to include. (default self.fields.keys())
+        """
+        if fields is None:
+            fields = self.fields.keys()
+        return dict([(field, self.get(field)) for field in fields])
+
 
 class DataSet(object):
     '''DataSet provides storage, iteration, and matching across sets of Data instances'''

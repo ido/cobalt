@@ -96,16 +96,6 @@ class TestData (object):
         for key, value in self.FIELDS.items():
             assert data.get(key) == value
     
-    def test_get_undefined (self):
-        data = Cobalt.Data.Data(self.FIELDS)
-        for key, value in self.INVALID_FIELDS.items():
-            try:
-                data.get(key)
-            except KeyError:
-                pass
-            else:
-                assert not "Can't get undefined data."
-    
     def test_get_default (self):
         data = Cobalt.Data.Data(self.FIELDS)
         
@@ -113,6 +103,7 @@ class TestData (object):
             assert data.get(key, default) == value
         
         for key, value in self.INVALID_FIELDS.items():
+            assert data.get(key) is None
             assert data.get(key, value) == value
     
     def test_set (self):
@@ -146,9 +137,6 @@ class TestData (object):
         
         rx = data.to_rx(self.FIELDS)
         assert rx == self.FIELDS
-        
-        rx = data.to_rx(self.INVALID_FIELDS)
-        assert not rx
 
 
 class TestForeignData (TestData):
