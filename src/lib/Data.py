@@ -72,7 +72,7 @@ class Data(object):
     def update(self, attrdict):
         '''update attributes based on attrdict'''
         for item in attrdict.iteritems():
-            self.set(item[0], item[1])
+            self.set(*item)
             
     def match(self, spec):
         '''Implement datatype matching'''
@@ -84,11 +84,8 @@ class Data(object):
         
     def to_rx(self, spec):
         '''return transmittable version of instance'''
-        rxval = dict()
-        rx_fields = [field for field in spec.keys() if self._attrib.has_key(field)]
-        for field in rx_fields:
-            rxval[field] = self.get(field)
-        return rxval
+        return dict([(field, self.get(field)) for field in spec \
+                     if field in self._attrib])
 
 class DataSet(object):
     '''DataSet provides storage, iteration, and matching across sets of Data instances'''
