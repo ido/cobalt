@@ -3,8 +3,10 @@
 '''Super-Simple Scheduler for BG/L'''
 __revision__ = '$Revision$'
 
-import copy, logging, sys, time, xmlrpclib, ConfigParser
+import logging, math, sys, time
 import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+
+import Cobalt.SchedulerPolicies
 
 logger = logging.getLogger('bgsched')
 
@@ -86,19 +88,19 @@ class ReservationSet(Cobalt.Data.DataSet):
             spec = [{'tag':'queue', 'name': 'R.%s' % \
                      (reserv.get('name'))}]
             attrs = {'state':'running', 'users': reserv.get('users')}
-                try:
-                    comm['qm'].AddQueue(spec)
-                    comm['qm'].SetQueues(spec, attrs)
-                except Exception, e:
-                    logger.error("Queue setup for %s failed: %s" \
-                                 % ("R.%s" % reserv.get('name'), e))
+            try:
+                comm['qm'].AddQueue(spec)
+                comm['qm'].SetQueues(spec, attrs)
+            except Exception, e:
+                logger.error("Queue setup for %s failed: %s" \
+                             % ("R.%s" % reserv.get('name'), e))
 
     def DeleteRQueue(self, reserv):
         queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
         qnames = [q['name'] for q in queues]
         rqn = "R.%s" % reserv.get("name")
         if rqn in qnames:
-            logger.info("Disabling Rqueue %s" % (qn))
+            logger.info("Disabling Rqueue %s" % (rqn))
             try:
                 response = comm['qm'].SetQueues([{'tag':'queue',
                                                   'name':rqn}],
@@ -145,7 +147,7 @@ class PartitionSet(Cobalt.Data.DataSet):
 class Job(Cobalt.Data.ForeignData):
     '''This class represents User Jobs'''
     def __init__(self, element):
-        ForeignData.__init__(self, element)
+        Cobalt.Data.ForeignData.__init__(self, element)
         self.partition = 'none'
         logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
                                                   self.get('user')))
@@ -158,17 +160,26 @@ class JobSet(Cobalt.Data.ForeignDataSet):
                    ['nodes', 'location', 'jobid', 'state', 'index',
                     'walltime', 'queue', 'user'])
 
-    def Run(self, jobid, location):
-        # FIXME implement
-        pass
-
 class Queue(Cobalt.Data.ForeignData):
-    pass
+    def LoadPolicy(self):
+        '''Instantiate queue policy modules upon demand'''
+        if self.get('policy') not in Cobalt.SchedulerPolicies.names:
+            logger.error("Cannot load policy %s for queue %s" % \
+                         (self.get('policy'), self.get('name')))
+        else:
+            pclass = Cobalt.SchedulerPolicies.names[self.get('policy')]
+            self.policy = pclass()
 
 class QueueSet(Cobalt.Data.ForeignDataSet):
     __object__ = Queue
     __unique__ = 'name'
-    __osource__ = ('qm', 'GetQueues', ['name', 'status', 'policy']
+    __osource__ = ('qm', 'GetQueues', ['name', 'status', 'policy'])
+
+    def Sync(self):
+        qp = [(q.get('name'), q.get('policy')) for q in self]
+        Cobalt.Data.ForeignDataSet.Sync()
+        [q.LoadPolicy() for q in self \
+         if (q.get('name'), q.get('policy')) not in qp]
 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
@@ -215,7 +226,8 @@ class BGSched(Cobalt.Component.Component):
         activej = [j for j in self.jobs if j.get('queue') in activeq \
                    and j.get('state') == 'queued']
         print "activej:", activej
-        # need to perform search
+        potential = {}
+        # FIXME need to perform search
         # need to check reservation conflict
         # return self.ImplementPolicy(potential, depinfo)
         viable = []
@@ -226,7 +238,7 @@ class BGSched(Cobalt.Component.Component):
             potential[job] = []
             [potential[job].append(partition) for partition \
              in self.resources if partition.CanRun(job)]
-                    
+        placements = []
         # call all queue policies
         [q.policy.Prepare(viable, potential) for q in self.queues]
         # place all viable jobs

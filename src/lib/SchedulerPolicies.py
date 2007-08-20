@@ -35,4 +35,5 @@ class DeferAll(FirstFit):
                        not job.get('queue').startswith('R.'):
                     del potential[job]
 
-
+names = {'default': FirstFit,
+         'spruce': DeferAll}
