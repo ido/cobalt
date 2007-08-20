@@ -10,29 +10,43 @@ class DataCreationError(Exception):
     pass
 
 class IncrID(object):
-    '''Autoincrementing id generator'''
+    
+    """Generator for incrementing integer IDs."""
+    
     def __init__(self):
+        """Initialize a new IncrID."""
         self.idnum = 0
 
     def get(self):
-        '''Return new ID'''
+        """Get the next id."""
         self.idnum += 1
         return self.idnum
+    
+    def next (self):
+        """Iterator interface."""
+        return self.get()
 
 class RandomID(object):
-    '''Somewhat randomly selected unique ID pool'''
+    """Generator for non-repeating random integer IDs."""
+    
     def __init__(self):
+        """Initialize a new RandomID."""
         self.used = []
         self.rand = random.Random(int(time.time()))
 
     def get(self):
-        '''Return new random id'''
+        """Get the next id."""
         idnum = str(self.rand.randrange(0, 2147483639)) + str(self.rand.randrange(0, 2147483639))
         while idnum in self.used:
             idnum = str(self.rand.randrange(0, 2147483639)) + \
             str(self.rand.randrange(0, 2147483639))
         self.used.append(idnum)
         return idnum
+    
+    def next (self):
+        """Iterator interface."""
+        return self.get()
+
 
 class Data(object):
     '''Data takes nested dictionaries and builds objects analogous to sss.restriction.data objects'''

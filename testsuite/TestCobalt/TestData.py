@@ -3,19 +3,27 @@ import itertools
 
 import Cobalt.Data
 
+
 class TestIncrID (object):
     
     def test_get (self, max=100):
         generator = Cobalt.Data.IncrID()
-        for id in itertools.count(1):
-            assert generator.get() == id
-            if id >= max:
+        for count in itertools.count(1):
+            assert generator.get() == count
+            if count >= max:
+                break
+    
+    def test_next (self, max=100):
+        generator = Cobalt.Data.IncrID()
+        for count in itertools.count(1):
+            assert generator.next() == count
+            if count >= max:
                 break
 
 
 class TestRandomID (object):
     
-    def test_get (self, count=1000):
+    def test_get (self, count=100):
         generator = Cobalt.Data.RandomID()
         id_list = []
         while True:
@@ -24,7 +32,16 @@ class TestRandomID (object):
             id_list.append(id)
             if len(id_list) >= count:
                 break
-        assert len(id_list) == count
+    
+    def test_next (self, count=100):
+        generator = Cobalt.Data.RandomID()
+        id_list = []
+        while True:
+            id = generator.next()
+            assert id not in id_list
+            id_list.append(id)
+            if len(id_list) >= count:
+                break
 
 
 class TestData (object):
