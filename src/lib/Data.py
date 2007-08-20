@@ -37,11 +37,19 @@ class RandomID(object):
 class Data(object):
     '''Data takes nested dictionaries and builds objects analogous to sss.restriction.data objects'''
     required_fields = []
+    
+    def _get_tag (self):
+        try:
+            return self.get('tag')
+        except KeyError, e:
+            return None
+    
+    def _set_tag (self, value):
+        self.set('tag', value)
+    
+    tag = property(_get_tag, _set_tag)
 
     def __init__(self, info):
-        if info.has_key('tag'):
-            self.tag = info['tag']
-            del info['tag']
         missing = [field for field in self.required_fields if not info.has_key(field)]
         if missing:
             raise DataCreationError, missing
@@ -51,11 +59,12 @@ class Data(object):
 
     def get(self, field, default=None):
         '''return attribute'''
-        if self._attrib.has_key(field):
+        try:
             return self._attrib[field]
-        if default != None:
-            return default
-        raise KeyError, field
+        except KeyError:
+            if default:
+                return default
+            raise
 
     def set(self, field, value):
         '''set attribute'''
@@ -69,13 +78,17 @@ class Data(object):
             
     def match(self, spec):
         '''Implement datatype matching'''
-        fields = [field for field in spec if field != 'tag']
-        return self.tag == spec['tag'] and not [field for field in fields if spec[field] != '*' and (self.get(field) != spec[field])]
+        fields_delta = [field for field in spec
+            if spec[field] != '*'
+            and (self.get(field) != spec[field])
+        ]
+        return not fields_delta
         
     def to_rx(self, spec):
         '''return transmittable version of instance'''
-        rxval = {'tag':self.tag}
-        for field in [field for field in spec.keys() if field != 'tag' and self._attrib.has_key(field)]:
+        rxval = dict()
+        rx_fields = [field for field in spec.keys() if self._attrib.has_key(field)]
+        for field in rx_fields:
             rxval[field] = self.get(field)
         return rxval
 

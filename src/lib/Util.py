@@ -254,6 +254,18 @@ class PBSLog (object):
         self._last_date = None
         self._last_file = None
     
+    def _prep_key (self, key):
+        # replace __dot__ with '.'
+        key = str(key)
+        key = key.replace("__dot__", ".")
+        return key
+    
+    def _prep_value (self, value):
+        # automatically quote values containing spaces
+        if " " in str(value):
+            value = '"%s"' % value
+        return value
+    
     def log (self, record_type, id_string=None, datetime=datetime.now, **messages):
         
         """Add a log entry.
@@ -279,10 +291,10 @@ class PBSLog (object):
         
         assert id_string or self.id_string
         
-        message_text = " ".join((
-            "%s=%s" % (key.replace("__dot__", "."), value)
-            for key, value in messages.items()
-        ))
+        message_text = " ".join([
+            "%s=%s" % (self._prep_key(key), self._prep_value(value))
+            for key, value in messages.iteritems()
+        ])
         
         self.logfile.write("%s;%s;%s;%s\n" % (
             datetime.strftime(format),
