@@ -62,7 +62,7 @@ class Data(object):
         try:
             return self._attrib[field]
         except KeyError:
-            if default:
+            if default is not None:
                 return default
             raise
 
@@ -71,26 +71,23 @@ class Data(object):
         self._attrib[field] = value
         self._attrib['stamp'] = time.time()
 
-    def update(self, spec):
-        '''update attributes based on spec'''
-        for key, value in spec.iteritems():
-            self.set(key, value)
+    def update(self, attrdict):
+        '''update attributes based on attrdict'''
+        for item in attrdict.iteritems():
+            self.set(*item)
             
     def match(self, spec):
         '''Implement datatype matching'''
-        fields_delta = [field for field in spec
-            if spec[field] != '*'
-            and (self.get(field) != spec[field])
+        matching_fields = [field for field in spec.keys()
+            if spec[field] == '*'
+            or (self.get(field, False) and self.get(field) == spec[field])
         ]
-        return not fields_delta
+        return len(matching_fields) == len(spec.keys())
         
     def to_rx(self, spec):
         '''return transmittable version of instance'''
-        rxval = dict()
-        rx_fields = [field for field in spec.keys() if self._attrib.has_key(field)]
-        for field in rx_fields:
-            rxval[field] = self.get(field)
-        return rxval
+        return dict([(field, self.get(field)) for field in spec \
+                     if field in self._attrib])
 
 class DataSet(object):
     '''DataSet provides storage, iteration, and matching across sets of Data instances'''
@@ -131,9 +128,18 @@ class DataSet(object):
         self.data.remove(x)
 
     def Add(self, cdata, callback=None, cargs={}):
-        '''Implement semantics of operations that add new item(s) to the DataSet'''
+        """Construct new items of type self.__object__ in the dataset.
+        
+        Arguments:
+        cdata -- The first argument to be passed to the data constructor.
+            If cdata is a list, construct multiple items.
+        callback -- Applied to each new item after it is constructed. (optional)
+        cargs -- A tuple of arguments to pass to callback after the new object.
+        
+        Returns a list of transmittable representations of the new items.
+        """
         retval = []
-        if type(cdata) != types.ListType:
+        if not isinstance(cdata, types.ListType):
             cdata = [cdata]
         for item in cdata:
             try:
@@ -152,8 +158,17 @@ class DataSet(object):
         return retval
 
     def Get(self, cdata, callback=None, cargs={}):
-        '''Implement semantics of operations that get item(s) from the DataSet'''
+        """Return a list of transmittable representations of items.
+        
+        Arguments:
+        cdata -- A dictionary representing criteria to match.
+            If cdata is a list, match against multiple sets of criteria.
+        callback -- Applied to each matched item. (optional)
+        cargs -- A tuple of arguments to pass to callback after the item.
+        """
         retval = []
+        if not isinstance(cdata, types.ListType):
+            cdata = [cdata]
         for spec in cdata:
             for item in [datum for datum in self if datum.match(spec)]:
                 if callback:
@@ -162,7 +177,14 @@ class DataSet(object):
         return retval
 
     def Del(self, cdata, callback=None, cargs={}):
-        '''Implement semantics of operations that delete item(s) from the DataSet'''
+        """Delete items from the dataset.
+        
+        Arguments:
+        cdata -- A dictionary representing criteria to match.
+            If cdata is a list, match against multiple sets of criteria.
+        callback -- Applied to each matched item. (optional)
+        cargs -- A tuple of arguments to pass to callback after the item.
+        """
         retval = []
         if not isinstance(cdata, types.ListType):
             cdata = [cdata]
