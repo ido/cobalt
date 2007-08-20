@@ -6,6 +6,7 @@ __version__ = '$Version$'
 
 import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import getpass
 
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
@@ -80,11 +81,12 @@ if __name__ == '__main__':
     if opts['setjobid']:
         response = cqm.SetJobID(int(opts['setjobid']))
     elif kdata:
+        user = getpass.getuser()
         for cmd in kdata:
             if cmd == '--delete':
-                response = cqm.DelJobs(spec, True)
+                response = cqm.DelJobs(spec, user, True)
             else:
-                response = cqm.DelJobs(spec)
+                response = cqm.DelJobs(spec, user)
     elif opts['run']:
         location = opts['run']
         response = cqm.RunJobs(spec, location.split(':'))

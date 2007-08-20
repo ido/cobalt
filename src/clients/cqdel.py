@@ -36,7 +36,6 @@ if __name__ == '__main__':
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     jobs = cqm.DelJobs(spec)
     time.sleep(1)
-    print jobs
     if jobs:
         data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in jobs]
         print "      Deleted Jobs"

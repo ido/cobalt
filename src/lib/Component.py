@@ -216,7 +216,13 @@ class Component(SSLServer,
             except:
                 self.logger.info("Statefile load failed %s" % sys.exc_info()[1])
                 return
-            for field in self.__statefields__:
+            if len(loaddata) < len(self.__statefields__):
+                missing_fields = self.__statefields__[len(loaddata):]
+                self.logger.info("Statefile does not define %s fields: %s" % (
+                    len(missing_fields),
+                    ", ".join(missing_fields),
+                ))
+            for field in self.__statefields__[:len(loaddata)]:
                 setattr(self, field, loaddata[self.__statefields__.index(field)])
                 
     def addr_system_listMethods(self, address):

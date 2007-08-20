@@ -53,6 +53,8 @@ class Job(Cobalt.Data.Data):
             self.set('jobid', str(jobid))
         else:
             self.set('jobid', data.get('jobid'))
+        if not self.get('jobname', False):
+            self.set('jobname', 'N/A')
         if not self.get('state', False):
             self.set('state', 'queued')
         if not self.get('attribute', False):
@@ -71,6 +73,7 @@ class Job(Cobalt.Data.Data):
         self.killed = False
         self.timers = {}
         self.timers['queue'] = Timer()
+        self.timers['current_queue'] = Timer()
         self.timers['queue'].Start()
         #self.timers['/usr/sbin/prologue'] = Timer()
         self.timers['user'] = Timer()
@@ -89,11 +92,21 @@ class Job(Cobalt.Data.Data):
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
         self.SetPassive()
         # acctlog
+        self.pbslog = Cobalt.Util.PBSLog(self.get('jobid'))
         logger.info('Q;%s;%s;%s' % \
                     (self.get('jobid'), self.get('user'), self.get('queue')))
         self.acctlog.LogMessage('Q;%s;%s;%s' % \
                                 (self.get('jobid'), self.get('user'), self.get('queue')))
-
+    
+    def set (self, key, value, *args, **kwargs):
+        if key == "state":
+            if value == "hold":
+                self.timers['hold'] = Timer()
+                self.timers['hold'].Start()
+            elif self.get("state", "") == "hold":
+                self.timers['hold'].Stop()
+        return super(Job, self).set(key, value, *args, **kwargs)
+    
     def __getstate__(self):
         data = {}
         for key, value in self.__dict__.iteritems():
@@ -103,8 +116,54 @@ class Job(Cobalt.Data.Data):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.acctlog = Cobalt.Util.AccountingLog('qm')
+        # I don't think you really want to re-instantiate the AccountingLog?
+        # It's a class attribute, not an object attribute.
+        #self.acctlog = Cobalt.Util.AccountingLog('qm')
         self.comms = Cobalt.Proxy.CommDict()
+        self.pbslog = Cobalt.Util.PBSLog(self.get('jobid'))
+    
+    def _get_etime (self):
+        try:
+            return self.timers['hold'].stop # job became eligible at end of last hold
+        except KeyError:
+            return self.timers['queue'].start # job has always been eligible to run
+    etime = property(_get_etime)
+    
+    def LogStart (self):
+        def len2 (input):
+            input = str(input)
+            if len(input) == 1:
+                return "0" + input
+            else:
+                return input
+        
+        walltime_minutes = len2(int(self.get("walltime")) % 60)
+        walltime_hours = len2(int(self.get("walltime")) // 60)
+        
+        self.pbslog.log("S",
+            user = self.get("user"), # the user name under which the job will execute
+            #group = , # the group name under which the job will execute
+            jobname = self.get("jobname"), # the name of the job
+            queue = self.get("queue"), # the name of the queue in which the job resides
+            ctime = int(self.timers['queue'].start), # time in seconds when job was created (first submitted)
+            qtime = int(self.timers['current_queue'].start), # time in seconds when job was queued into current queue
+            etime = self.etime, # time in seconds when job became eligible to run; no holds, etc.
+            start = int(self.timers['user'].start), # time in seconds when job execution started
+            exec_host = self.get("location"), # name of host on which the job is being executed (location is a :-separated list of nodes)
+            #Resource_List__dot__RES = , # limit for use of RES
+            Resource_List__dot__ncpus = self.get("procs"), # max number of cpus
+            Resource_List__dot__nodect = self.get("nodes"), # max number of nodes
+            #Resource_List__dot__nodes = , # 6:ppn=4
+            #Resource_List__dot__place = , # scatter
+            #Resource_List__dot__select = , # 6:ncpus=4
+            Resource_List__dot__walltime = "%s:%s:00" % (walltime_hours, walltime_minutes),
+            #session = , # session number of job
+            #accountint_id = , # identifier associated with system-generated accounting data
+            mode = self.get("mode"),
+            cwd = self.get("cwd"),
+            exe = self.get("command"),
+            args = self.get("args").join(":"),
+        )
 
     def fail_job(self, state):
         '''Signal complete job failure, resulting in specified state'''
@@ -206,6 +265,7 @@ class Job(Cobalt.Data.Data):
             logger.info("Got multiple run commands for job %s" % self.get('jobid'))
             return
         self.timers['queue'].Stop()
+        self.timers['current_queue'].Stop()
         if self.get('reservation', False):
             # acctlog
             logger.info('R;%s;%s;%s' % \
@@ -350,6 +410,7 @@ class Job(Cobalt.Data.Data):
         '''Run the user job'''
         self.set('state', 'running')
         self.timers['user'].Start()
+        self.LogStart()
         args = []
         if self.get("host", False):
             args = ["-i", "-h", self.get('host'), "-p", self.get('port')]
@@ -518,6 +579,60 @@ class Job(Cobalt.Data.Data):
         self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit code %s" % \
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats()))
+        self.LogFinishPBS()
+        
+    def LogFinishPBS (self):
+        def len2 (input):
+            input = str(input)
+            if len(input) == 1:
+                return "0" + input
+            else:
+                return input
+        
+        req_walltime_minutes = len2(int(self.get("walltime")) % 60)
+        req_walltime_hours = len2(int(self.get("walltime")) // 60)
+        
+        runtime = int(self.timers['user'].Check())
+        walltime_seconds = len2(runtime % (60))
+        walltime_minutes = len2(runtime % (60 * 60) // 60)
+        walltime_hours = len2(runtime // (60 * 60))
+        
+        optional_pbs_data = dict()
+        try:
+            optional_pbs_data['account'] = self.get("project") # if job has an "account name" string
+        except KeyError:
+            pass
+        
+        self.pbslog.log("E",
+            user = self.get("user"), # the user name under which the job executed
+            #group = , # the group name under which the job executed
+            #account = , # if job has an "account name" string
+            jobname = self.get("jobname"), # the name of the job
+            queue = self.get("queue"), # the name of the queue in which the job executed
+            #resvname = , # the name of the resource reservation, if applicable
+            #resvID = , # the id of the resource reservation, if applicable
+            ctime = int(self.timers['queue'].start), # time in seconds when job was created (first submitted)
+            qtime = int(self.timers['current_queue'].start), # time in seconds when job was queued into current queue
+            etime = self.etime, # time in seconds when job became eligible to run
+            start = int(self.timers['user'].start), # time in seconds when job execution started
+            exec_host = self.get("location"), # name of host on which the job is being executed
+            #Resource_List__dot__RES = , # limit for use of RES
+            Resource_List__dot__ncpus = self.get("procs"), # max number of cpus
+            Resource_List__dot__nodect = self.get("nodes"), # max number of nodes
+            Resource_List__dot__walltime = "%s:%s:00" % (req_walltime_hours, req_walltime_minutes),
+            #session = , # session number of job
+            #alt_id = , # optional alternate job identifier
+            end = self.timers['user'].stop, # time in seconds when job ended execution
+            #Exit_status = , # the exit status of the top process of the job
+            #resources_used__dot__RES = , # total RES used for job
+            resources_used__dot__walltime = "%s:%s:%s" % (walltime_hours, walltime_minutes, walltime_seconds),
+            #accounting_id = , # CSA JID job id
+            mode = self.get("mode"),
+            cwd = self.get("cwd"),
+            exe = self.get("command"),
+            args = self.get("args").join(":"),
+            **optional_pbs_data
+        )
         
         #AddEvent("queue-manager", "job-done", self.get('jobid'))
 
@@ -619,6 +734,7 @@ class BGJob(Job):
         '''Run a Blue Gene Job'''
         self.set('state', 'running')
         self.timers['user'].Start()
+        self.LogStart()
         if not self.get('outputpath', False):
             self.set('outputpath', "%s/%s.output" % (self.get('outputdir'), self.get('jobid')))
         if not self.get('errorpath', False):
@@ -657,6 +773,8 @@ class BGJob(Job):
                                 (self.get('jobid'), self.get('user'),
                                  self.get('nodes'), self.GetStats(),
                                  str(exitstatus)))
+        self.LogFinishPBS()
+    
     def Finish(self):
         '''Finish up accounting for job, also adds postscript ability'''
         Job.Finish(self)
@@ -894,6 +1012,13 @@ class Queue(Cobalt.Data.Data, JobSet):
                 return self.get('state')
         else:
             return Cobalt.Data.Data.get(self, field, default)
+    
+    def append (self, job):
+        job.pbslog.log("Q",
+            queue = self.get("name"), # the queue into which the job was placed
+        )
+        job.timers['current_queue'].Start()
+        super(Queue, self).append(job)
 
 class QueueSet(Cobalt.Data.DataSet):
     '''Set of queues
@@ -1126,8 +1251,15 @@ class CQM(Cobalt.Component.Component):
     def progress(self):
         '''Process asynchronous job work'''
         [j.Progress() for j in [j for queue in self.Queues for j in queue] if j.active]
-        [j.Kill("Job %s Overtime, Killing") for j in [j for queue in self.Queues for j in queue] if j.over_time()]
-        [j.LogFinish() for j in [j for queue in self.Queues for j in queue] if j.get('state') == 'done']
+        overtime_jobs = (j for j in (j for queue in self.Queues for j in queue) if j.over_time() and not j.killed)
+        for job in overtime_jobs:
+            job.Kill("Job %s Overtime, Killing")
+            job.pbslog.log("A",
+                # No attributes.
+            )
+        finished_jobs = (j for j in (j for queue in self.Queues for j in queue) if j.get('state') == 'done')
+        for job in finished_jobs:
+            job.LogFinish()
         [queue.remove(j) for (j, queue) in [(j, queue) for queue in self.Queues for j in queue] if j.get('state') == 'done']
         [self.Queues.remove(q) for q in self.Queues.data[:]
          if q.get('state') == 'dead' and q.get('name').startswith('R.')
@@ -1144,7 +1276,7 @@ class CQM(Cobalt.Component.Component):
         response = thequeue.Add(data)
         return response
 
-    def handle_job_del(self, _, data, force=False):
+    def handle_job_del(self, _, data, force=False, user=None):
         '''Delete a job'''
         ret = []
         for spec in data:
@@ -1160,6 +1292,12 @@ class CQM(Cobalt.Component.Component):
                     q.Del(spec)
                 else:
                     job.Kill("Job %s killed based on user request")
+                # It's my understanding that the above code draws a distinction
+                # between killing a running job and killing a job that hasn't started yet.
+                # I don't think PBS logs draw this distionction.
+                job.pbslog.log("D",
+                    requester = user or job.get('user'), # who deleted the job
+                )
         return ret
 
     def handle_queue_del(self, _, data, force=False):

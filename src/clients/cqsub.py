@@ -212,7 +212,7 @@ if __name__ == '__main__':
         if not os.path.isfile(jobspec.get('inputfile')):
             logger.error("file %s not found, or is not a file" % jobspec.get('inputfile'))
             raise SystemExit, 1
-    jobspec.update({'command':command[0], 'args':command[1:]})
+    jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
     try:
         filters = CP.get('cqm', 'filters').split(':')

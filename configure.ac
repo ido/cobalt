@@ -1,6 +1,6 @@
 # Autoconf requirements
-AC_INIT(Cobalt,0.93pre1)
-AM_INIT_AUTOMAKE(Cobalt,0.93pre1)
+AC_INIT(Cobalt,0.97.1pre1)
+AM_INIT_AUTOMAKE(Cobalt,0.97.1pre1)
 
 AC_CONFIG_HEADER(config.h)
 
