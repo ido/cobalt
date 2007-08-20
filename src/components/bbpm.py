@@ -6,6 +6,9 @@ __revision__ = '$Revision$'
 import atexit, logging, os, pwd, signal, sys, tempfile, time
 import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
 
+import FTB
+from ctypes import *
+
 class ProcessGroup(Cobalt.Data.Data):
     '''Run a process on a bb system'''
     def __init__(self, data, pgid):
@@ -83,6 +86,7 @@ class BBProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     __name__ = 'process-manager'
     __object__ = ProcessGroup
     __id__ = Cobalt.Data.IncrID()
+    async_funcs = ['assert_location', 'manage_children', 'get_FTB_events']
 
     def __init__(self, setup):
         Cobalt.Component.Component.__init__(self, setup)
@@ -95,6 +99,12 @@ class BBProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
         self.register_function(self.signal_processgroup, "SignalProcessGroup")
         self.register_function(self.wait_processgroup, "WaitProcessGroup")
         self.register_function(self.kill_processgroup, "KillProcessGroup")
+        properties = FTB.component_properties(0x02, 0x200000000 | 0x15, \
+                                              'bbpm', 1, 20)
+        FTB.libftb.FTB_Init(byref(properties))
+        mask = FTB.event_mask(0xffffffff, 0xffffffff, 0xffffffff,
+                              0xffffffffffffffff)
+        FTB.libftb.FTB_Reg_catch_polling(byref(mask))
     
     def manage_children(self):
         if (time.time() - self.lastwait) > 6:
@@ -113,6 +123,18 @@ class BBProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
                     pgrps[0].FinishProcess(stat)
                 else:
                     self.logger.error("Got more than one match for pid %s" % (pid))
+
+    def get_FTB_events(self):
+        ret = 0
+        evt = FTB.event_inst()
+        while not ret:
+            ret = FTB.libftb.FTB_Catch(byref(evt))
+            if ret == 0:
+                print 'caught event id %d, name %s' % (evt.event_id, evt.name)
+    def start_shutdown(self, signum, frame):
+        '''Shutdown on unexpected signals'''
+        Cobalt.Component.Component.start_shutdown(self, signum, frame)
+        FTB.libftb.FTB_Finalize()
 
     def create_processgroup(self, address, data):
         '''Create new process group element'''
