@@ -3,7 +3,6 @@ __revision__ = '$Revision$'
 
 import time, types, xmlrpclib, random
 import Cobalt.Util
-import Cobalt.Proxy
 
 class DataCreationError(Exception):
     '''Used when a new object cannot be created'''
@@ -264,23 +263,20 @@ class ForeignData(Data):
 
 class ForeignDataSet(DataSet):
     __oserror__ = Cobalt.Util.FailureMode("ForeignData connection")
-    __component__ = None
+    __function__ = lambda x:[]
     __procedure__ = None
     __fields__ = []
     
     def Sync(self):
-        comm = Cobalt.Proxy.CommDict()
-        component = comm[self.__component__]
-        procedure = getattr(component, self.__procedure__)
         spec = dict([(field, "*") for field in self.__fields__])
         try:
-            foreign_data = procedure([spec])
+            foreign_data = self.__function__([spec])
         except xmlrpclib.Fault:
             self.__oserror__.Fail()
             return
         except:
-            self.logger.error("Unexpected fault during data sync",
-                              exc_info=1)
+            Cobalt.Util.logger.error("Unexpected fault during data sync",
+                                     exc_info=1)
             return
         self.__oserror__.Pass()
         

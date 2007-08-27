@@ -131,7 +131,8 @@ class Partition(Cobalt.Data.ForeignData):
 class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
     __failname__ = 'System Connection'
-    __osource__ = ('system', 'GetBlah', ['name', 'queue', 'nodecards'])
+    __function__ = comm['system'].GetBlah
+    __fields__ = ['name', 'queue', 'nodecards'])
     __unique__ = 'name'
 
     def GetOverlaps(self, partnames):
@@ -156,9 +157,9 @@ class JobSet(Cobalt.Data.ForeignDataSet):
     __object__ = Job
     __unique__ = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection")
-    __osource__ = ('qm', 'GetJobs',
-                   ['nodes', 'location', 'jobid', 'state', 'index',
-                    'walltime', 'queue', 'user'])
+    __function__ = comm['qm'].GetJobs
+    __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
+                  'walltime', 'queue', 'user'])
 
 class Queue(Cobalt.Data.ForeignData):
     def LoadPolicy(self):
@@ -173,7 +174,8 @@ class Queue(Cobalt.Data.ForeignData):
 class QueueSet(Cobalt.Data.ForeignDataSet):
     __object__ = Queue
     __unique__ = 'name'
-    __osource__ = ('qm', 'GetQueues', ['name', 'status', 'policy'])
+    __function__ = comm['qm'].GetQueues
+    __fields__ = ['name', 'status', 'policy'])
 
     def Sync(self):
         qp = [(q.get('name'), q.get('policy')) for q in self]

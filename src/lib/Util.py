@@ -4,6 +4,9 @@ __revision__ = '$Revision$'
 import os, types, smtplib, socket, time, ConfigParser, popen2
 from datetime import date, datetime
 from getopt import getopt, GetoptError
+import logging
+
+logger = logging.getLogger('Util')
 
 def dgetopt(arglist, opt, vopt, msg):
     '''parse options into a dictionary'''
