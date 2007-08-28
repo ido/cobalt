@@ -29,10 +29,10 @@ class DeferAll(FirstFit):
     def Prepare(self, idle, potential):
         '''If idle jobs in this queue exist, defer all others'''
         if [job for job in idle \
-            if self.qname in job.get('queue').split(':')]:
+            if self.qname in job.queue.split(':')]:
             for job in potential:
-                if job.get('queue') != self.qname and \
-                       not job.get('queue').startswith('R.'):
+                if job.queue != self.qname and \
+                       not job.queue.startswith('R.'):
                     del potential[job]
 
 names = {'default': FirstFit,

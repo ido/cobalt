@@ -2,11 +2,14 @@
 __revision__ = '$Revision$'
 
 import time, types, xmlrpclib, random
+import warnings
 import Cobalt.Util
+
 
 class DataCreationError(Exception):
     '''Used when a new object cannot be created'''
     pass
+
 
 class IncrID(object):
     
@@ -24,6 +27,7 @@ class IncrID(object):
     def next (self):
         """Iterator interface."""
         return self.get()
+
 
 class RandomID(object):
     """Generator for non-repeating random integer IDs."""
@@ -51,14 +55,30 @@ class Data(object):
     
     """A Cobalt entity manager.
     
+    Setting a field attribute on a data updates the timestamp automatically.
+    
     Class attributes:
-    required_fields
+    fields -- Public data fields for the entity.
+    required_fields -- Fields that must be specified at initialization.
+    
+    Fields:
+    tag -- Misc. label.
+    stamp -- Timestamp of last field change (or last touch call).
+    
+    Methods:
+    touch -- Update timestamp 'stamp'.
+    update -- Set the value of multiple fields at once.
+    match -- Test that a spec identifies a data.
+    to_rx -- Convert a data to an explicit spec.
     """
     
-    fields = dict() # Fields expected to be set for the entity.
-    required_fields = [] # Fields that must be specified when the entity is created.
+    fields = dict(
+        tag = None,
+        stamp = None,
+    )
+    required_fields = []
     
-    def __init__(self, spec):
+    def __init__(self, spec=None):
         
         """Initialize a new Data manager.
         
@@ -66,59 +86,76 @@ class Data(object):
         spec -- A dictionary specifying the values of fields on the entity.
         """
         
-        missing_fields = [
-            field for field in self.required_fields
-            if not spec.has_key(field)
-        ]
-        if missing_fields:
-            raise DataCreationError, missing_fields
+        for field, value in self.fields.iteritems():
+            setattr(self, field, value)
         
-        self._attrib = self.fields.copy()
-        self.set('stamp', time.time())
-        self._attrib.update(spec)
-
+        if spec is not None:
+            self.update(spec)
+        
+        for field in self.required_fields:
+            if getattr(self, field, None) is None:
+                raise DataCreationError, field
+        
+        self.touch()
+    
+    def __setstate__ (self, input_state):
+        
+        state = self.fields.copy()
+        state.update(input_state)
+        
+        if "_attrib" in state:
+            _attrib = state["_attrib"]
+            
+            for key, value in _attrib.iteritems():
+                key = key.replace("-", "_")
+                state[key] = value
+            del state["_attrib"]
+        
+        self.__dict__ = state
+    
+    def touch (self):
+        """Update the timestamp."""
+        self.stamp = time.time()
+    
     def get(self, field, default=None):
-        """Get the value of field from the entity.
+        """(deprecated) Get the value of field from the entity.
         
         Arguments:
         field -- The field to get the value of.
         default -- Value to return if field is not set. (default None)
         """
-        return self._attrib.get(field, default)
+        warnings.warn("Use of Cobalt.Data.Data.get is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
+        return getattr(self, field, default)
+    
+    def __setattr__ (self, name, value):
+        if name in self.fields:
+            object.__setattr__(self, "stamp", time.time())
+        object.__setattr__(self, name, value)
 
     def set(self, field, value):
-        """Set the value of field on the entity.
+        """(deprecated) Set the value of field on the entity.
         
         Arguments:
         field -- The field to set the value of.
         value -- Value to set on the field.
         """
-        self._attrib[field] = value
-        self._attrib['stamp'] = time.time()
+        warnings.warn("Use of Cobalt.Data.Data.set is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
+        if field not in self.fields:
+            warnings.warn("Creating new field '%s' on '%s' with set." % (field, self), RuntimeWarning, stacklevel=2)
+            self.fields[field] = None
+        setattr(self, field, value)
 
     def update(self, spec):
-        """Updated the values of multiple field on an entity.
+        """Update the values of multiple fields on an entity.
         
         Arguments:
         spec -- A dictionary specifying the values of fields to set.
         """
         for key, value in spec.iteritems():
-            self.set(key, value)
-    
-    def _get_tag (self):
-        """Get the value of the tag field."""
-        return self.get('tag')
-    
-    def _set_tag (self, value):
-        """Set the value of the tag field.
-        
-        Arguments:
-        value -- New tag value.
-        """
-        self.set('tag', value)
-    
-    # Attribute-style access to tag, for backwards-compatibility.
-    tag = property(_get_tag, _set_tag)
+            if key not in self.fields:
+                warnings.warn("Creating new field '%s' on '%s' with update." % (key, self), RuntimeWarning, stacklevel=2)
+                self.fields[key] = None
+            setattr(self, key, value)
             
     def match(self, spec):
         """True if every field in spec == the same field on the entity.
@@ -127,7 +164,7 @@ class Data(object):
         spec -- Dictionary specifying fields and values to match against.
         """
         for field, value in spec.iteritems():
-            if value != "*" and self.get(field) != value:
+            if not (value == "*" or (hasattr(self, field) and getattr(self, field) == value)):
                 return False
         return True
     
@@ -139,11 +176,31 @@ class Data(object):
         """
         if fields is None:
             fields = self.fields.keys()
-        return dict([(field, self.get(field)) for field in fields])
+        return dict([(field, getattr(self, field, None)) for field in fields])
 
 
 class DataSet(object):
-    '''DataSet provides storage, iteration, and matching across sets of Data instances'''
+    """A collection of datas.
+    
+    Class attributes:
+    __object__ -- The class used to construct new data instances.
+    __id__ --
+    __unique__ -- Data field to use as a unique identity. (like a primary key)
+    
+    A dataset behaves primarily like a list, providing iteration over the items
+    in the set. However, set[key] access is available when __unique__ is set.
+    
+    Methods:
+    keys -- The unique keys present in the collection.
+    append -- Add an item to the set.
+    remove -- Remove an item from the set.
+    
+    Strange methods:
+    Add -- Create new items in the set from a spec (or list of specs).
+    Get -- Return explicit specs that represent items in the set that match a spec (or list of specs).
+    Del -- Remove items from the set that match a spec (or list of specs).
+    Match -- Return items from the set that match a single spec.
+    """
     __object__ = Data
     __id__ = None
     __unique__ = None
@@ -151,7 +208,7 @@ class DataSet(object):
     def keys (self):
         if not self.__unique__:
             raise KeyError("No unique key is set.")
-        return [item.get(self.__unique__) for item in self.data]
+        return [getattr(item, self.__unique__) for item in self.data]
 
     def __init__(self):
         self.data = []
@@ -163,7 +220,7 @@ class DataSet(object):
         if not self.__unique__:
             raise KeyError("No unique key is set.")
         for item in self:
-            if item.get(self.__unique__) == key:
+            if getattr(item, self.__unique__) == key:
                 return item
         raise KeyError(key)
     
@@ -172,8 +229,8 @@ class DataSet(object):
 
     def append(self, item):
         '''add a new element to the set'''
-        if self.__unique__ and item.get(self.__unique__) in self.keys():
-            raise KeyError("duplicate: %s" % item.get(self.__unique__))
+        if self.__unique__ and getattr(item, self.__unique__) in self.keys():
+            raise KeyError("duplicate: %s" % getattr(item, self.__unique__))
         self.data.append(item)
 
     def remove(self, x):
@@ -250,16 +307,23 @@ class DataSet(object):
         return retval
 
     def Match(self, spec):
-        return [item for item in self.data if item.match(spec)]
+        return [item for item in self if item.match(spec)]
+
 
 class ForeignData(Data):
     
     def Sync (self, spec):
-        """directly update attributes based on spec.
+        """Update the values of multiple fields on an entity.
         
-        Specifically, this does not automatically update the stamp.
+        Ensures that any specified timestamp remains consistent.
+        
+        Arguments:
+        spec -- A dictionary specifying the values of fields to set.
         """
-        self._attrib.update(spec)
+        self.update(spec)
+        if "stamp" in spec:
+            self.stamp = spec['stamp']
+
 
 class ForeignDataSet(DataSet):
     __oserror__ = Cobalt.Util.FailureMode("ForeignData connection")
@@ -271,7 +335,7 @@ class ForeignDataSet(DataSet):
         spec = dict([(field, "*") for field in self.__fields__])
         try:
             foreign_data = self.__function__([spec])
-        except xmlrpclib.Fault:
+        except Exception:
             self.__oserror__.Fail()
             return
         except:
@@ -280,19 +344,20 @@ class ForeignDataSet(DataSet):
             return
         self.__oserror__.Pass()
         
-        local_ids = [item.get(self.__unique__) for item in self]
-        foreign_ids = [item_dict.get(self.__unique__) for item_dict in foreign_data]
+        local_ids = [getattr(item, self.__unique__) for item in self]
+        foreign_ids = [item_dict[self.__unique__] for item_dict in foreign_data]
         
         # sync removed items
         for item in self:
-            if item.get(self.__unique__) not in foreign_ids:
+            if getattr(item, self.__unique__) not in foreign_ids:
                 self.remove(item)
         
         # sync new items
         for item_dict in foreign_data:
-            if item_dict.get(self.__unique__) not in local_ids:
+            if item_dict[self.__unique__] not in local_ids:
                 self.Add(item_dict)
         
         # sync all items
         for item_dict in foreign_data:
-            self[item_dict.get(self.__unique__)].Sync(item_dict)
+            item_id = item_dict[self.__unique__]
+            self[item_id].Sync(item_dict)

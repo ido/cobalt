@@ -20,6 +20,20 @@ class ProcessGroupCreationError(Exception):
     '''ProcessGroupCreation Error is used when not enough information is specified'''
     pass
 
+class Partition (Cobalt.Data.Data):
+    fields = Cobalt.Data.Data.fields.copy()
+    fields.update(dict(
+        scheduled = False,
+        name = None,
+        functional = False,
+        queue = "default",
+        state = "idle",
+        size = None,
+    ))
+
+class PartitionSet (Cobalt.Data.DataSet):
+    __object__ = Partition
+
 class Brooklyn(Cobalt.Component.Component):
     '''Brooklyn is a bgl bridge simulator'''
     __implementation__ = 'brooklyn'
@@ -29,7 +43,7 @@ class Brooklyn(Cobalt.Component.Component):
         Cobalt.Component.Component.__init__(self, setup)
         self.log = logger
         self.partitions = {}        #dictionary of part:(parents, children, sizes, nodecards)
-        self.partitioninfo = Cobalt.Data.DataSet()
+        self.partitioninfo = PartitionSet()
         self.nodecards = set()      #set of nodecard names
         self.nodecardinfo = {}      #nested dictionary for nodecard info
         self.readConfigFile(setup.get('partconfig'))
@@ -312,13 +326,13 @@ class Brooklyn(Cobalt.Component.Component):
             mode = jobinfo.get('mode', 'co')
             args = " ".join(jobinfo.get('args', []))
             inputfile = jobinfo.get('inputfile', '')
-            kerneloptions = jobinfo.get('kerneloptions', '')
+            kerneloptions = jobinfo.get('kerneloptions') or ''
             # strip out BGLMPI_MAPPING until mpirun bug is fixed 
             mapfile = ''
             if jobinfo.get('env', {}).has_key('BGLMPI_MAPPING'):
                 mapfile = jobinfo.get('env')['BGLMPI_MAPPING']
                 del jobinfo.get('env')['BGLMPI_MAPPING']
-            envs = " ".join(["%s=%s" % envdata for envdata in jobinfo.get('envs', {}).iteritems()])
+            envs = " ".join(["%s=%s" % envdata for envdata in (jobinfo['envs'] or {}).iteritems()])
             atexit._atexit = []
 
             try:
@@ -335,7 +349,7 @@ class Brooklyn(Cobalt.Component.Component):
             os.environ["DB2INSTANCE"] = self.config.get('bgpm', 'db2_instance')
             os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
             os.environ["COBALT_JOBID"] = jobinfo.get('jobid')
-            if inputfile != '':
+            if inputfile:
                 infile = open(inputfile, 'r')
                 os.dup2(infile.fileno(), sys.__stdin__.fileno())
             else:

@@ -17,43 +17,62 @@ class ProcessGroupCreationError(Exception):
 
 class ProcessGroup(Cobalt.Data.Data):
     '''The ProcessGroup class implements all stages of running parallel processes'''
+    
+    fields = Cobalt.Data.Data.fields.copy()
+    fields.update(dict(
+        user = None,
+        size = None,
+        executable = None,
+        outputfile = None,
+        pgid = None,
+        envs = None,
+        kerneloptions = None,
+        args = None,
+        jobid = None,
+        location = None,
+        errorfile = None,
+        path = None,
+        inputfile = None,
+        cwd = None,
+        mode = None,
+        state = "initializing",
+        exitstatus = None,
+        pid = None,
+    ))
     def __init__(self, data, pgid):
 
         data['tag'] = 'process-group'
         Cobalt.Data.Data.__init__(self, data)
         self.comms = Cobalt.Proxy.CommDict()
         self.log = logging.getLogger('pg')
-        self.set('pgid', pgid)
-        self.set('state', 'initializing')
-        self.set('exit-status', False)
+        self.pgid = pgid
 
         result = self.comms['sys'].StartJob(data)
         #TODO sync from startjob to self
-        self.set('pid', result.get('pid'))
         self.pid = result.get('pid')
 
-        self.set('state', 'running')
+        self.state = 'running'
         self.log.info("Job %s/%s: ProcessGroup %s Started on partition %s. pid: %s" %
-                      (self.get('jobid'), self.get('user'), self.get('pgid'),
+                      (self.jobid, self.user, self.pgid,
                        result.get('location'), self.pid))
         #AddEvent("process-manager", "process_start", pgid)
 
     def FinishProcess(self, status):
         '''Handle cleanup for exited process'''
         # process has already been waited on
-        if self.get('state') == 'finished':
+        if self.state == 'finished':
             self.log.info("Job %s/%s: ProcessGroup %s Already finished" %
                            (self.get('jobid'), self.get('user'), self.get('pgid')))
-        self.set('state', 'finished')
+        self.state = 'finished'
         self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
-                      (self.get('jobid'), self.get('user'), self.get('pgid'),
+                      (self.jobid, self.user, self.pgid,
                        int(status)/256, self.pid))
         #AddEvent("process-manager", "process_end", self.element.get('pgid'))
-        if not self.get('outputfile', False):
-            self.set('output', open(self.outlog).read())
-        if not self.get('errorfile', False):
-            self.set('error', open(self.errlog).read())
-        self.set('exit-status', {'BG/L':status})
+        if not self.outputfile:
+            self.output = open(self.outlog).read()
+        if not self.errorfile:
+            self.error = open(self.errlog).read()
+        self.exit_status = {'BG/L':status}
 
     def Signal(self, signame):
         '''Send a signal to a process group'''
@@ -102,11 +121,11 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
             self.lastwait = time.time()
             #get existing jobs from system component and compare to local list
             print 'querying jobs', time.ctime()
-            result = self.comms['sys'].QueryJobs([pg.to_rx(pg._attrib) for pg in self.data])
+            result = self.comms['sys'].QueryJobs([pg.to_rx() for pg in self.data])
             result_pgs = [pg.get('pgid') for pg in result]
             for pg in self:
-                print pg.get('pgid'), pg.get('pid'), pg.get('state')
-                if pg.get('pgid') not in result_pgs and pg.get('state') != 'finished':
+                print pg.pgid, pg.pid, pg.state
+                if pg.pgid not in result_pgs and pg.state != 'finished':
                     #pid of pg is not present in system component, so finishprocess
                     pg.FinishProcess(False) 
     
@@ -125,7 +144,7 @@ class BGProcessManager(Cobalt.Component.Component, Cobalt.Data.DataSet):
     def signal_processgroup(self, address, data, sig):
         '''signal existing process group with specified signal'''
         for pg in self.data:
-            if pg.get('pgid') == data['pgid']:
+            if pg.pgid == data['pgid']:
                 return pg.Signal(sig)
         # could not find pg, so return False
         return False

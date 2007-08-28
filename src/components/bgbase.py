@@ -203,9 +203,9 @@ class PartitionSet(Cobalt.Data.DataSet):
                     if len(pionodes) == len([x for x in pionodes if x in block.get('ionodes')]) and len(pionodes) == len(block.get('ionodes')):
                         baseblock = block
                         print 'block matches', block.get('ionodes')
-                for x in baseblock._attrib:
-                    if not datum.has_key(x) and x != 'stamp':
-                        datum.update({x:baseblock._attrib[x]})
+                for field in baseblock.fields:
+                    if not datum.has_key(field) and field != 'stamp':
+                        datum.update({field:baseblock.get(field)})
                 #datum.tag = 'partition'
                 Cobalt.Data.DataSet.Add(self, [datum])
 

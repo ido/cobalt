@@ -32,7 +32,7 @@ class SafeProxy:
         else:
             address = self.__get_location(component)
         try:
-            self.proxy = xmlrpclib.ServerProxy(address)
+            self.proxy = xmlrpclib.ServerProxy(address, allow_none=True)
         except IOError, io_error:
             self.log.error("Invalid server URL %s: %s" % (address, io_error))
             raise CobaltComponentError

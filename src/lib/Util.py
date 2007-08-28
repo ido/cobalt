@@ -151,11 +151,14 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
     msgstr = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % ('cobalt@%s' % socket.getfqdn(), (',').join(toaddr), subj))
     try:
         server = smtplib.SMTP(smtpserver)
+    except Exception, e:
+        print "Problem sending mail", e
+        return
+    try:
         server.sendmail('cobalt@%s' % socket.getfqdn(), toaddr, msgstr + msg)
-        server.quit()
     except Exception, msg:
         print 'Problem sending mail', msg
-        server.quit()
+    server.quit()
     
 def runcommand(cmd):
     '''Execute command, returning rc, stdout, stderr'''

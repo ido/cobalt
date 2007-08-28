@@ -56,21 +56,12 @@ class TestData (object):
         five = 5,
     )
     
-    def test_tag (self):
-        data = Cobalt.Data.Data({})
-        assert data.tag is None
-        
-        data = Cobalt.Data.Data({
-            'tag': self.TAG,
-        })
-        assert data.tag == self.TAG
-    
     def test_required_fields (self):
         class NewData (Cobalt.Data.Data):
             required_fields = self.FIELDS.keys()
         
         try:
-            data = NewData({})
+            data = NewData()
         except Cobalt.Data.DataCreationError:
             pass
         else:
@@ -84,12 +75,12 @@ class TestData (object):
     def test_stamp (self):
         # __init__ uses Data.set() to set the stamp, which actually calls
         # time.time() twice: once to set, and another in Data.set()
-        data = Cobalt.Data.Data({})
+        data = Cobalt.Data.Data()
         for key, value in self.FIELDS.items():
-            last_stamp = data.get('stamp')
+            last_stamp = data.stamp
             assert time.time() - last_stamp < 1
-            data.set(key, value)
-            assert data.get('stamp') > last_stamp
+            setattr(data, key, value)
+            assert data.stamp > last_stamp
     
     def test_get (self):
         data = Cobalt.Data.Data(self.FIELDS)
@@ -107,18 +98,18 @@ class TestData (object):
             assert data.get(key, value) == value
     
     def test_set (self):
-        data = Cobalt.Data.Data({})
+        data = Cobalt.Data.Data()
         
         for key, value in self.FIELDS.items():
             data.set(key, value)
-            assert data.get(key) == value
+            assert getattr(data, key) == value
     
     def test_update (self):
-        data = Cobalt.Data.Data({})
+        data = Cobalt.Data.Data()
         
         data.update(self.FIELDS)
         for key, value in self.FIELDS.items():
-            assert data.get(key) == value
+            assert getattr(data, key) == value
     
     def test_match (self):
         data = Cobalt.Data.Data(self.FIELDS)
@@ -132,23 +123,120 @@ class TestData (object):
         
         assert not data.match(self.INVALID_FIELDS)
     
+    def test_setstate (self):
+        _attrib = dict(
+            one = 1,
+            two = 2,
+        )
+        special_cases = dict()
+        special_cases["exit-status"] = "exit_status" # special case
+        _attrib.update(special_cases)
+        
+        data = Cobalt.Data.Data(self.FIELDS)
+        state = data.__dict__.copy()
+        state["_attrib"] = _attrib # legacy value that setstate should change
+        data.__setstate__(state)
+        
+        assert not hasattr(data, "_attrib")
+        
+        for key in state:
+            if key != "_attrib":
+                assert hasattr(data, key)
+        
+        for key in _attrib:
+            if key in special_cases:
+                assert hasattr(data, special_cases[key])
+                assert not hasattr(data, key)
+            else:
+                assert hasattr(data, key)
+    
+    def test_setstate_defaults (self):
+        class ExtendedData (Cobalt.Data.Data):
+            fields = Cobalt.Data.Data.fields.copy()
+            fields.update(dict(
+                one = 1,
+                two = 2,
+            ))
+        
+        data = ExtendedData()
+        data.one = 3
+        data.two = 4
+        
+        state = data.__dict__.copy()
+        del state["one"]
+        del state["two"]
+        
+        data.__setstate__(state)
+        assert data.one == 1
+        assert data.two == 2
+    
     def test_to_rx (self):
         data = Cobalt.Data.Data(self.FIELDS)
         
         rx = data.to_rx(self.FIELDS)
         assert rx == self.FIELDS
+    
+    def test_to_rx_default (self):
+        class ExtendedData (Cobalt.Data.Data):
+            fields = Cobalt.Data.Data.fields.copy()
+            fields.update(dict(
+                self.FIELDS,
+            ))
+        data = ExtendedData()
+        rx = data.to_rx()
+        for field in self.FIELDS:
+            assert field in rx
+    
+    def test_not_keyed (self):
+        dataset = Cobalt.Data.DataSet()
+        assert dataset.__unique__ is None
+        try:
+            dataset["somevalue"]
+        except KeyError:
+            pass
+        else:
+            assert not "Didn't raise KeyError for non-keyed data."
+    
+    def test_keyed (self):
+        class ExtendedDataSet (Cobalt.Data.DataSet):
+            __unique__ = "tag"
+        
+        dataset = ExtendedDataSet()
+        data = Cobalt.Data.Data({'tag':"asdf"})
+        dataset.append(data)
+        assert dataset["asdf"] is data
+        try:
+            dataset["invalid"] is data
+        except KeyError:
+            pass
+        else:
+            assert not "Didn't raise KeyError for invalid key."
+    
+    def test_del_keyed (self):
+        class ExtendedDataSet (Cobalt.Data.DataSet):
+            __unique__ = "tag"
+        
+        dataset = ExtendedDataSet()
+        data = Cobalt.Data.Data({'tag':"asdf"})
+        dataset.append(data)
+        assert len(dataset.data) == 1
+        del dataset["asdf"]
+        assert len(dataset.data) == 0
 
 
 class TestForeignData (TestData):
     
     def test_Sync (self):
-        # argument 'data' should be 'spec'
-        # there should not be a reference to jobid here.
-        assert False
-        data = Cobalt.Data.Data(self.FIELDS)
-        upd_fields = self.FIELDS.copy()
-        for key, value in zip(upd_fields.keys(), self.INVALID_FIELDS.values()):
-            upd_fields[key] = value
+        data = Cobalt.Data.ForeignData()
+        
+        fields = self.FIELDS.copy()
+        fields['stamp'] = "a specific value"
+        
+        data.Sync(fields)
+        for key, value in self.FIELDS.items():
+            if key != "stamp":
+                assert getattr(data, key) == value
+        assert data.stamp == fields['stamp']
 
 
 class TestDataSet (object):
@@ -318,4 +406,57 @@ class TestDataSet (object):
         data_set.Del(self.CDATA, callback, self.CARGS)
         for cb_cargs in cb_state['cargs']:
             for cb_carg, carg in zip(cb_cargs, self.CARGS):
-                assert cb_carg is carg
+                assert cb_carg == carg
+
+
+class TestForeignDataSet (TestDataSet):
+    
+    def setup (self):
+        class ExtendedData (Cobalt.Data.Data):
+            fields = Cobalt.Data.Data.fields.copy()
+            fields.update(dict(
+                id = None,
+                attribute = 1,
+            ))
+            required_fields = ["id"]
+        
+        class ExtendedDataSet (Cobalt.Data.DataSet):
+            __object__ = ExtendedData
+        
+        self.dataset = ExtendedDataSet()
+        
+        class ExtendedForeignData (Cobalt.Data.ForeignData):
+            fields = Cobalt.Data.ForeignData.fields.copy()
+            fields.update(dict(
+                id = None,
+                attribute = 1,
+            ))
+        
+        def sync (cdata):
+            return self.dataset.Get(cdata)
+        
+        class ExtendedForeignDataSet (Cobalt.Data.ForeignDataSet):
+            __object__ = ExtendedForeignData
+            __fields__ = ["id", "attribute"]
+            __function__ = staticmethod(sync)
+            __unique__ = "id"
+        
+        self.foreigndataset = ExtendedForeignDataSet()
+    
+    def test_Sync (self):
+        assert not self.dataset.data
+        self.dataset.Add([{'id':1}])
+        assert self.dataset.data[-1].id == 1
+        
+        assert not self.foreigndataset.data
+        self.foreigndataset.Sync()
+        assert self.foreigndataset.data[-1].id == 1
+        assert self.foreigndataset.data[-1].attribute == 1
+        
+        self.dataset.data[-1].attribute = 2
+        self.foreigndataset.Sync()
+        assert self.foreigndataset.data[-1].attribute == 2
+        
+        self.dataset.remove(self.dataset.data[-1])
+        self.foreigndataset.Sync()
+        assert not self.foreigndataset.data
