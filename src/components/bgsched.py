@@ -28,44 +28,44 @@ class Reservation(Cobalt.Data.Data):
     '''Reservation\nHas attributes:\nname, start, stop, cycle, users, resources'''
     def Overlaps(self, location, start, duration):
         '''check job overlap with reservations'''
-        if location not in self.get('locations'):
+        if location not in self.locations:
             return False
-        if self.get('start') <= start <= self.get('stop'):
+        if self.start <= start <= self.stop:
             return True
-        elif self.get('start') <= (start + duration) <= self.get('stop'):
+        elif self.start <= (start + duration) <= self.stop:
             return True
-        if self.get('cycle') == 0:
+        if self.cycle == 0:
             return False
         # 3 cases, front, back and complete coverage of a cycle
-        cstart = math.floor((start - self.get('start')) / self.get('cycle'))
-        if cstart <= start <= (cstart + self.get('duration')):
+        cstart = math.floor((start - self.start) / self.cycle)
+        if cstart <= start <= (cstart + self.duration):
             return True
-        cend = math.floor(((start + duration) - self.get('start')) / self.get('cycle'))
-        if cend <= (start + duration) <= (cend + self.get('duration')):
+        cend = math.floor(((start + duration) - self.start) / self.cycle)
+        if cend <= (start + duration) <= (cend + self.duration):
             return True
-        if duration >= self.get('cycle'):
+        if duration >= self.cycle:
             return True
         return False
 
     def IsActive(self, stime=False):
         if not stime:
             stime = time.time()
-        if self.get('start') <= stime <= self.get('stop'):
+        if self.start <= stime <= self.stop:
             return True
 
     def FilterPlacements(self, placements, resources):
         '''Filter placements not allowed by reservation'''
-        overlaps = resources.GetOverlaps(self.get('location'))
+        overlaps = resources.GetOverlaps(self.location)
         now = time.time()
         # filter overlapping jobs not in reservation
         for job in placements:
-            if job.get('queue').startswith("R.%s" % self.get("name")):
-                if job.get('user') not in self.get('users'):
+            if job.queue.startswith("R.%s" % self.name):
+                if job.user not in self.users:
                     del placements[job]
                     continue
                 placements[job] = [location for location in \
                                    placements[job] if location in \
-                                   self.get('location')]
+                                   self.location]
             for location in placements[job][:]:
                 if location in overlaps:
                     if self.Overlaps(location, now,
@@ -73,8 +73,8 @@ class Reservation(Cobalt.Data.Data):
                         placements[job].remove(location)
         if not self.IsActive():
             # filter jobs in Rqueue if not active
-            if "R.%s" % self.get('name') in placements.keys():
-                del placements["R.%" % self.get('name')]
+            if "R.%s" % self.name in placements.keys():
+                del placements["R.%" % self.name]
 
 class ReservationSet(Cobalt.Data.DataSet):
     __object__ = Reservation
@@ -118,11 +118,11 @@ class Partition(Cobalt.Data.ForeignData):
     '''Partitions are allocatable chunks of the machine'''
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
-        basic = self.get('scheduled') and self.get('functional')
-        queue = job.get('queue').startswith('R.') or \
-                job.get('queue') in self.get('queue').split(':')
-        jsize = int(job.get('nodes')) # should this be 'size' instead?
-        psize = int(self.get('size'))
+        basic = self.scheduled and self.functional
+        queue = job.queue.startswith('R.') or \
+                job.queue in self.queue.split(':')
+        jsize = int(job.nodes) # should this be 'size' instead?
+        psize = int(self.size)
         size = (psize >= jsize) and ((psize == 32) or (jsize > psize/2))
         if not (basic and size):
             return False
@@ -132,7 +132,7 @@ class PartitionSet(Cobalt.Data.DataSet):
     __object__ = Partition
     __failname__ = 'System Connection'
     __function__ = comm['system'].GetBlah
-    __fields__ = ['name', 'queue', 'nodecards'])
+    __fields__ = ['name', 'queue', 'nodecards']
     __unique__ = 'name'
 
     def GetOverlaps(self, partnames):
@@ -150,8 +150,7 @@ class Job(Cobalt.Data.ForeignData):
     def __init__(self, element):
         Cobalt.Data.ForeignData.__init__(self, element)
         self.partition = 'none'
-        logger.info("Job %s/%s: Found new job" % (self.get('jobid'),
-                                                  self.get('user')))
+        logger.info("Job %s/%s: Found new job" % (self.jobid, self.user))
 
 class JobSet(Cobalt.Data.ForeignDataSet):
     __object__ = Job
@@ -159,23 +158,23 @@ class JobSet(Cobalt.Data.ForeignDataSet):
     __oserror__ = Cobalt.Util.FailureMode("QM Connection")
     __function__ = comm['qm'].GetJobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
-                  'walltime', 'queue', 'user'])
+                  'walltime', 'queue', 'user']
 
 class Queue(Cobalt.Data.ForeignData):
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
-        if self.get('policy') not in Cobalt.SchedulerPolicies.names:
+        if self.policy not in Cobalt.SchedulerPolicies.names:
             logger.error("Cannot load policy %s for queue %s" % \
-                         (self.get('policy'), self.get('name')))
+                         (self.policy, self.name))
         else:
-            pclass = Cobalt.SchedulerPolicies.names[self.get('policy')]
+            pclass = Cobalt.SchedulerPolicies.names[self.policy]
             self.policy = pclass()
 
 class QueueSet(Cobalt.Data.ForeignDataSet):
     __object__ = Queue
     __unique__ = 'name'
     __function__ = comm['qm'].GetQueues
-    __fields__ = ['name', 'status', 'policy'])
+    __fields__ = ['name', 'status', 'policy']
 
     def Sync(self):
         qp = [(q.get('name'), q.get('policy')) for q in self]
