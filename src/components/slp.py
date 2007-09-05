@@ -15,24 +15,18 @@ from Cobalt.Component import Component
 import Cobalt.Logging
 
 class Location(Data):
-    
-    """Location class for service assertions"""
-    
-    fields = Data.fields.copy()
-    fields.update(dict(
-        name = None,
-        url = None,
-    ))
+    '''Location class for service assertions'''
 
-    def __init__(self, spec):
-        Data.__init__(self, spec)
+    def __init__(self, data):
+        Data.__init__(self, data)
 
     def renew(self):
-        self.touch()
+        '''Reassert service'''
+        self.set('stamp', time())
 
     def expired(self):
         '''Detect expired service'''
-        return (time() - self.stamp) > 300
+        return (time() - self.get('stamp')) > 300
 
 class Slp(Component, DataSet):
     '''slp provides a simple service location protocol implementation'''
@@ -68,7 +62,7 @@ class Slp(Component, DataSet):
     def deassert_service(self, address, spec):
         '''Remove service registration'''
         retval = self.Del(spec, lambda item,dummy:self.logger.info("Removed service %s at %s" %
-                                                                   (item.name, item.url)))
+                                                                   (item.get('name'), item.get('url'))))
         if not retval:
             raise Fault(11, "No Matching Service")
         return retval
@@ -76,7 +70,7 @@ class Slp(Component, DataSet):
     def timeout_services(self):
         '''Remove services that havent asserted in __svctimeout__'''
         for srv in [service for service in self.data if service.expired()]:
-            self.logger.info("Flushing registration for component %s" % (srv.name))
+            self.logger.info("Flushing registration for component %s" % (srv.get('name')))
             self.data.remove(srv)
 
 if __name__ == '__main__':

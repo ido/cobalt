@@ -168,7 +168,7 @@ class Component(SSLServer,
             response = self._dispatch(method, (address, ) + params)
             # wrap response in a singleton tuple
             response = (response,)
-            response = xmlrpclib.dumps(response, methodresponse=1, allow_none=True)
+            response = xmlrpclib.dumps(response, methodresponse=1)
         except xmlrpclib.Fault, fault:
             response = xmlrpclib.dumps(fault)
         except TypeError, terror:

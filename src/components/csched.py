@@ -64,45 +64,38 @@ class FailureMode(object):
             self.status = False
 
 class ComputeNode(Cobalt.Data.Data):
-    
-    fields = Cobalt.Data.Data.fields.copy()
-    fields.update(dict(
-        attributes = ["compute"],
-        scheduled = None,
-        state = "idle",
-        reservation = None,
-        name = None,
-        jobid = None,
-        user = None,
-        nodes = None,
-        queue = "default",
-    ))
-    
-    """A node in the system."""
-    
-    def __init__(self, spec):
+    '''object for nodes in the system'''
+    def __init__(self, element):
         '''initialize the object with default values'''
-        Cobalt.Data.Data.__init__(self, spec)
+        Cobalt.Data.Data.__init__(self, element)
+        #name and attributes will have to be coded into the object that comes in.
+        #maybe even the queue will want to be determined ahead of time.
+        self.set('state', 'idle')
+        self.set('reservation', '')
+        #this may become optional. it depends on how the Nodelist is prebuilt?
+        self.set('queue', 'default')
+        #this is a temporary haxor to get things running without a ton of modification
+        self.set('attributes', ['compute'])
 
-    def isUsable(self, attribute, queue):
+    def isUsable( self, attribute, queue ):
         return self.isAvailable() and self.hasAttribute(attribute) and self.inQueue(queue)
 
     def hasAttribute(self, attribute):
         '''get the nodes attributes'''
-        return [attr for attr in self.attributes if attr == attribute]
+        return [ attr for attr in self.get('attributes') if attr == attribute ]
 
     def isAvailable(self):
         '''is the node currently available to be scheduled'''
-        return self.scheduled and self.state == "idle"
+        return self.get('scheduled') and self.get('state') == "idle"
 
     def isReserved(self, reservation):
-        return self.reservation == reservation
+        return self.get('reservation') == reservation
 
     def notReserved(self):
-        return self.reservation == ""
+        return self.get('reservation') == ""
         
     def inQueue(self, queue):
-        return self.queue == queue
+        return self.get('queue') == queue
 
 class NodeList(Cobalt.Data.DataSet):
     __object__ = ComputeNode
@@ -136,19 +129,19 @@ class NodeList(Cobalt.Data.DataSet):
     def setReservation(self, spec, name):
         '''this will find all node matching the spec and then assign name to the nodes reservation field'''
         for node in self.matchNodes(spec):
-            node.reservation = name
+            node.set('reservation', name)
         
     def matchNodes(self, regex):
         '''create a node list for the job from a regular expression'''
         noderegex = re.compile(regex)
-        return [ node for node in self.data if re.match(noderegex, node.name) ]
+        return [ node for node in self.data if re.match(noderegex, node.get('name')) ]
 
     def enoughNodes(self, numOfNodes, attribute, queue ):
         '''returns a list of nodes if there are enough nodes available to be scheduled'''
         listofnodes = []
         mynodelist = []
         #check for reservation first of all.. and also that there is enough nodes in the reservation to run
-        mynodelist = [node.name for node in self.data if node.isUsable(attribute, queue)]
+        mynodelist = [ node.get('name') for node in self.data if node.isUsable( attribute, queue ) ]
         if len(mynodelist) >= int(numOfNodes):
             listofnodes = mynodelist[:int(numOfNodes)]
         return listofnodes
@@ -156,14 +149,14 @@ class NodeList(Cobalt.Data.DataSet):
     def markUsed(self, job, nodelist):
         '''mark the node as used by a job or reservation'''
         for node in self.data:
-            if node.name in nodelist:
-                node.state = job
+            if node.get('name') in nodelist:
+                node.set('state', job)
 
     def markFree(self, jobid):
         '''mark the node as free or available to be scheduled'''
         for node in self.data:
-            if node.state == jobid:
-                node.state = "idle"
+            if node.get('state') == jobid:
+                node.set('state', "idle")
                                             
 class Scheduler(Cobalt.Component.Component):
     '''Core Object for the actual scheduler'''
@@ -218,15 +211,15 @@ class Scheduler(Cobalt.Component.Component):
             self.logger.error("Unexpected fault during queue fetch", exc_info=1)
             return 0
         self.qmconnect.Pass()
-        active = [job.jobid for job in jobs]
-        for job in [j for j in self.jobs if j.jobid not in active]:
-            logger.info("Job %s/%s: gone from qm" % (job.jobid, job.user))
-            self.nodes.markFree(job.jobid)
+        active = [job.get('jobid') for job in jobs]
+        for job in [j for j in self.jobs if j.get('jobid') not in active]:
+            logger.info("Job %s/%s: gone from qm" % (job.get('jobid'), job.get('user')))
+            self.nodes.markFree(job.get('jobid'))
             self.jobs.remove(job)
         # known is jobs that are already registered
-        known = [job.jobid for job in self.jobs]
+        known = [job.get('jobid') for job in self.jobs]
 
-        newjobs = [job for job in jobs if job.jobid not in known]
+        newjobs = [job for job in jobs if job.get('jobid') not in known]
         self.jobs += newjobs
 
         #this will have to change a bit due to the fact I don't have that structure currently.
@@ -247,11 +240,11 @@ class Scheduler(Cobalt.Component.Component):
         '''this will return a list of tuples of (jobid,[nodes]) that can run right now'''
         placements = []
         #get all the jobs not running
-        for job in [job for job in self.jobs if job.state == 'queued']:
-            nodes = self.nodes.enoughNodes(job.nodes, 'compute', job.queue)
+        for job in [ job for job in self.jobs if job.get('state') == 'queued' ]:
+            nodes = self.nodes.enoughNodes( job.get('nodes'), 'compute', job.get('queue') )
             if nodes:
-                placements.append((job.jobid, nodes))
-                self.nodes.markUsed(job.jobid, nodes)
+                placements.append((job.get('jobid'),nodes))
+                self.nodes.markUsed(job.get('jobid'), nodes)
         return placements
 
         

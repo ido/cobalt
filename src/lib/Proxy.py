@@ -32,7 +32,7 @@ class SafeProxy:
         else:
             address = self.__get_location(component)
         try:
-            self.proxy = xmlrpclib.ServerProxy(address, allow_none=True)
+            self.proxy = xmlrpclib.ServerProxy(address)
         except IOError, io_error:
             self.log.error("Invalid server URL %s: %s" % (address, io_error))
             raise CobaltComponentError
@@ -146,7 +146,7 @@ class queue_manager(ComponentProxy):
 class scheduler(ComponentProxy):
     '''scheduler proxy'''
     name = 'scheduler'
-    methods = ['AddReservation', 'DelReservation', 'SetReservation', 'Set']
+    methods = ['AddReservation', 'DelReservation', 'SetReservation', 'GetPartition', 'AddPartition', 'DelPartition', 'Set']
 
 class bcfg2(ComponentProxy):
     '''bcfg2 client code'''
@@ -156,21 +156,12 @@ class bcfg2(ComponentProxy):
 class simulator(ComponentProxy):
     '''bgl simulator client code'''
     name = 'simulator'
-    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2',
-               'GetPartition', 'ReserveNodecards', 'ReleaseNodecards']
-
-class system(ComponentProxy):
-    '''system component'''
-    name = 'system'
-    methods = ['StartJob', 'QueryJobs', 'KillJob', 'GetPartition', 'AddPartition',
-               'DelPartition', 'FullPartitionInfo', 'ReservePartition',
-               'ReleasePartition', 'ReserveNodecards', 'ReleaseNodecards',
-               'GetState', 'GetDB2State']
+    methods = ['ReservePartition', 'ReleasePartition', 'GetState', 'GetStateDB2']
 
 class CommDict(dict):
     '''CommDict is a dictionary that automatically instantiates a component proxy upon access'''
     commnames = {'pm':process_manager, 'fs':file_stager, 'am':allocation_manager,
-                 'sched':scheduler, 'qm':queue_manager, 'sys':system}
+                 'sched':scheduler, 'qm':queue_manager}
 
     def __getitem__(self, name):
         if not self.has_key(name):
