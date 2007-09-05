@@ -5,6 +5,12 @@ from getopt import getopt, GetoptError
 import Cobalt.Component, Cobalt.Logging, Cobalt.Data
 logger = logging.getLogger('bgsched')
 
+try:
+    set = set
+except NameError:
+    import sets
+    set = sets.Set
+    
 def checkpid(somepid):
     '''checks if the specified pid is still around'''
     process_list = os.popen('ps ax')
