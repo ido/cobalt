@@ -18,7 +18,7 @@ class ProcessGroup(Cobalt.Data.Data):
         self.set('pgid', pgid)
         self.set('state', 'initializing')
         try:
-            userid, groupid = pwd.getpwnam(self.get('user'))[2:4]
+            userid, groupid = pwd.getpwnam(self.get('user', ""))[2:4]
         except KeyError:
             raise ProcessGroupCreationError, "user/group"
         if self.get('outputfile', False):

@@ -4,6 +4,9 @@ __revision__ = '$Revision$'
 import os, types, smtplib, socket, time, ConfigParser, popen2
 from datetime import date, datetime
 from getopt import getopt, GetoptError
+import logging
+
+logger = logging.getLogger('Util')
 
 def dgetopt(arglist, opt, vopt, msg):
     '''parse options into a dictionary'''
@@ -148,11 +151,14 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
     msgstr = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" % ('cobalt@%s' % socket.getfqdn(), (',').join(toaddr), subj))
     try:
         server = smtplib.SMTP(smtpserver)
+    except Exception, e:
+        print "Problem sending mail", e
+        return
+    try:
         server.sendmail('cobalt@%s' % socket.getfqdn(), toaddr, msgstr + msg)
-        server.quit()
     except Exception, msg:
         print 'Problem sending mail', msg
-        server.quit()
+    server.quit()
     
 def runcommand(cmd):
     '''Execute command, returning rc, stdout, stderr'''
@@ -186,6 +192,24 @@ class AccountingLog:
         self.logfile.write("%s %s\n" % (timenow, message))
         self.logfile.flush()
 
+class FailureMode(object):
+    '''FailureModes are used to report (and supress) errors appropriately
+    call Pass() on success and Fail() on error'''
+    def __init__(self, name):
+        self.name = name
+        self.status = True
+
+    def Pass(self):
+        '''Check if status was previously failure and report OK status if needed'''
+        if not self.status:
+            logger.error("Failure %s cleared" % (self.name))
+            self.status = True
+
+    def Fail(self):
+        '''Check if status was previously success and report failed status if needed'''
+        if self.status:
+            logger.error("Failure %s occured" % (self.name))
+            self.status = False
 
 class PBSLog (object):
     

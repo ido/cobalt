@@ -49,7 +49,7 @@ if __name__ == '__main__':
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : Initializing MPIRUN"    
 
     try:
-        brooklyn = Cobalt.Proxy.simulator()
+        brooklyn = Cobalt.Proxy.system()
     except:
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): East River transit failure: bridge is missing"
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Terminating due to asphyxia"

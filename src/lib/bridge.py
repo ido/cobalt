@@ -36,7 +36,9 @@ class BGStub(object):
         if attr in self.__attrinfo__:
             # use local cache
             if attr not in self.attrcache:
+#                 print 'not using local cache', self.id, attr
                 return self.fetchattr(attr)
+#             print 'using cache for:', self.id, attr
             return self.attrcache[attr]
         else:
             return object.__getattribute__(self, attr)
@@ -67,14 +69,18 @@ class BGStub(object):
         return [item for item in self.__attrinfo__ \
                 if item not in self.hidden]
 
+    def reload(self):
+        '''reloads self from bridge data'''
+        pass
+
 class LazyRMSet(object):
     def __init__(self, object, sname, hname, tname, cclass):
         self.nocache = [tname]
-        self.object = object
-        self.sname = sname
-        self.hname = hname
-        self.tname = tname
-        self.cclass = cclass
+        self.object = object  #usually self
+        self.sname = sname    #size attribute
+        self.hname = hname    #head attribute
+        self.tname = tname    #tail attribute
+        self.cclass = cclass  #class for list members
         self.data = []
         if len(self) > 0:
             head = self.cclass(getattr(self.object, self.hname))
@@ -93,9 +99,9 @@ class LazyRMSet(object):
         return self.data.__getitem__(num)
 
 class PreStub(BGStub):
-    def __init__(self, pointer):
+    def __init__(self, mypointer):
         self.attrcache = {}
-        self.ptr = pointer
+        self.ptr = mypointer
 
 class BasePartition(PreStub):
     __attrinfo__ = {'id': \
@@ -126,9 +132,9 @@ class BasePartition(PreStub):
                      bgl_rm_api.rm_BP_computenode_memory_t,
                      bgl_rm_api.RM_ComputenodeMemoryEnum),
                     }
-    def __init__(self, pointer):
+    def __init__(self, mypointer):
         self.attrcache = {}
-        self.ptr = pointer
+        self.ptr = mypointer
         self.nodecards = NodeCardList(basepart=self.id)
 
 class NodeCard(PreStub):
@@ -153,6 +159,11 @@ class NodeCard(PreStub):
                     (bgl_rm_api.RM_NodeCardPartState, None,
                      bgl_rm_api.rm_partition_state_t, getvalue),
                     }
+
+    def reload(self):
+        '''reload nodecard from bridge
+        does not do anything because nodecards are not modified'''
+        pass
                     
 class Port(PreStub):
     __attrinfo__ = {'component': \
@@ -335,8 +346,8 @@ class Partition(PreStub):
                    bgl_rm_api.rm_element_t, passthru),
                   }
 
-    def __init__(self, pointer):
-        PreStub.__init__(self, pointer)
+    def __init__(self, mypointer):
+        PreStub.__init__(self, mypointer)
         self.basePartitions = LazyRMSet(self, 'BPnum', 'BPhead',
                                         'BPtail', BasePartition)
         self.switches = LazyRMSet(self, 'Switchnum', 'Switchhead',
@@ -357,6 +368,16 @@ class Partition(PreStub):
                 newnclist = NodeCardList(basepart=bp.id)
                 self.nodecards.extend([nc for nc in newnclist])
                 del newnclist  #is this necessary?
+
+    def reload(self):
+        '''clears the lookup cache, frees the pointer, and reloads the
+        bridge pointer using rm_get_partition() individually
+        '''
+        saveid = self.id
+        self.attrcache.clear()
+#         bridge.rm_free_partition(self.ptr)
+#         self.ptr = pointer(bgl_rm_api.rm_element_t())
+        bridge.rm_get_partition(c_char_p(saveid), byref(self.ptr))
 
 class BG(BGStub):
     __attrinfo__ = {'BPsize': \
@@ -426,6 +447,53 @@ class PartList(BGStub,LazyRMSet):
         bridge.rm_get_partitions(c_int(filter), byref(self.ptr))
         LazyRMSet.__init__(self, self, 'size', 'head', 'tail', Partition)
 
+    def __del__(self):
+        '''frees the partition_list_t pointer on delete'''
+        bridge.rm_free_partition_list(self.ptr)
+
+#     def refresh(self):
+#         '''refreshes the bridge pointers using part.reload() individually'''
+#         for part in self:
+#             print 'reloading part', part.id
+#             part.reload()
+
+    def reload(self):
+        '''loads the entire list again, updating pointers and clearing
+        attrcaches along the way
+        '''
+        # clear the lookup cache so the head pointer isn't cached
+        self.attrcache.clear()
+        
+        local_bridge = {}
+        for bridgepart in self:
+            local_bridge.update({bridgepart.id:bridgepart})
+#         print "reloading", type(self.ptr)
+        bridge.rm_free_partition_list(self.ptr)
+        self.ptr = pointer(bgl_rm_api.rm_partition_list_t())
+        bridge.rm_get_partitions(c_int(bgl_rm_api.PARTITION_ALL_FLAG),
+                                 byref(self.ptr))
+
+        # the class way
+        head_ptr = getattr(self.object, self.hname)
+        head = self.cclass(head_ptr)
+        if head.id in local_bridge.keys():
+            print 'updating ptr', local_bridge[head.id].ptr, head.ptr
+            local_bridge[head.id].attrcache.clear()
+            local_bridge[head.id].ptr = head.ptr
+        else:
+            self.data.append(head)
+
+        for x in range(getattr(self.object, self.sname) - 1):
+            # the class way
+            tail = self.cclass(getattr(self.object, self.tname))
+            print 'checking', tail.id
+            if tail.id in local_bridge.keys():
+                print 'updating ptr', local_bridge[tail.id].ptr, tail.ptr
+                local_bridge[tail.id].attrcache.clear()
+                local_bridge[tail.id].ptr = tail.ptr
+            else:
+                self.data.append(tail)
+
 class NodeCardList(BGStub,LazyRMSet):
     """Builds a list of NodeCards given a basepartition.
 
@@ -492,20 +560,41 @@ if __name__ == '__main__':
 #             print u.name
 
 #         print part.id, part.NCnum, len(part.nodecards)
-        print part.id
-        for nc in part.nodecards:
-            output.append([getattr(nc, name) for name in header])
-        Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
-        output = []
-        print
+#         print part.id
+#         for nc in part.nodecards:
+#             output.append([getattr(nc, name) for name in header])
+#         Cobalt.Util.print_tabular([tuple(x) for x in [header] + output])
+#         output = []
+#         print
 
 #         for bp in part.basePartitions:
 #             print [getattr(bp, name) for name in bp.__attrinfo__]
-#         if part.id == 'test32_R000_J102':
-# #             part.description = 'modified by PyBridge'
+        if part.id == 'test32_R000_J102':
+            print 'before modification', part.user, part.description
+            if part.user == 'nobody':
+                part.user = 'voran'
+            else:
+                part.user = 'nobody'
+            if part.description == 'changed by pyBridge':
+                part.description = 'modified by pyBridge'
+            else:
+                part.description = 'changed by pyBridge'
+            print 'user' in part.attrcache
+            print part.attrcache
+            partlist.__freepartlist__()
+            print 'after modification and inline flush "%s" "%s"' % (part.user, part.description)
 #             part.user = 'nobody'
 #             break
-    
+
+#     partlist.__freepartlist__()
+#     for part in partlist:
+#         if part.id == 'test32_R000_J102':
+#             if 'description' in part.attrcache:
+#                 print 'description in attrcache'
+#                 del part.attrcache['description']
+#             print 'after flush: checking if description cached', part.description
+#             print 'user says', part.user
+
     header = ['id', 'pid', 'user', 'partition', 'state']
     output = []
     for job in joblist:
