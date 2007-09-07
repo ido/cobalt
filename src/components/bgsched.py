@@ -158,7 +158,7 @@ class Job(Cobalt.Data.Data):
 
     def Sync(self, data):
         upd = [(k, v) for (k, v) in data.iteritems() \
-               if k != 'tag' and self.get(k) != v]
+               if k != 'tag' and self.get(k, '') != v]
         if upd:
             logger.info("Resetting job %s parameters %s" % \
                         (self.get('jobid'), ':'.join([u[0] for u in upd])))
