@@ -142,9 +142,9 @@ if __name__ == '__main__':
     except:
         sys_type = 'bgl'
     if sys_type == 'bgp':
-        job_types = ['smp', 'co', 'dual', 'vn']
+        job_types = ['smp', 'co', 'dual', 'vn', 'script']
     else:
-        job_types = ['co', 'vn']
+        job_types = ['co', 'vn', 'script']
         
     if not opts['mode']:
         opts['mode'] = 'co'

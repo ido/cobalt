@@ -10,7 +10,7 @@ try:
 except NameError:
     import sets
     set = sets.Set
-    
+
 def checkpid(somepid):
     '''checks if the specified pid is still around'''
     process_list = os.popen('ps ax')
@@ -56,6 +56,8 @@ class Brooklyn(Cobalt.Component.Component):
         self.used = []              #list of used partitions
         self.blocked = []           #list of blocked (overlapping) partitions
         self.usednodecards = set()  #set of used nodecard names
+        self.overtime_frac = 0.0    #fraction of simulated jobs that will run over their specified wall times
+        self.failed_release_frac = 0.0    #fraction of simulated jobs that will fail to cleanly release their partitions
 
         self.config = ConfigParser.ConfigParser()
         self.config.read(setup.get('configfile'))
@@ -70,6 +72,8 @@ class Brooklyn(Cobalt.Component.Component):
         self.register_function(self.StartJob, "StartJob")
         self.register_function(self.query_jobs, "QueryJobs")
         self.register_function(self.kill_job, "KillJob")
+        self.register_function(self.set_overtime_frac, "SetOvertimeFrac")
+        self.register_function(self.set_failed_release_frac, "SetFailedReleaseFrac")
 
 
     def readConfigFile(self, path):
@@ -391,6 +395,17 @@ class Brooklyn(Cobalt.Component.Component):
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), errlog))
 
+            # If this mpirun command originated from a user script, its arguments
+            # have been passed along in a special attribute.  These arguments have
+            # already been modified to include the partition that cobalt has selected
+            # for the job, and can just replace the arguments built above.
+            if jobinfo.has_key('true_mpi_args'):
+                cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(jobinfo['true_mpi_args'])
+            
+            # special stuff just for the simulator -- to make some jobs fail to behave nicely
+            os.environ["OVERTIME_FRAC"] = str(self.overtime_frac)
+            os.environ["FAILED_RELEASE_FRAC"] = str(self.failed_release_frac)
+            
             try:
                 apply(os.execl, cmd)
             except Exception, e:
@@ -429,7 +444,12 @@ class Brooklyn(Cobalt.Component.Component):
             self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
         return 0
 
-
+    def set_overtime_frac(self, _, val):
+        self.overtime_frac = float(val)
+        
+    def set_failed_release_frac(self, _, val):
+        self.failed_release_frac = float(val)
+        
 if __name__ == '__main__':
     try:
         (opts, arguments) = getopt(sys.argv[1:], 'C:D:dt:f:', [])

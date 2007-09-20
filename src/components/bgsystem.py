@@ -381,6 +381,13 @@ class System(Cobalt.Component.Component):
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (jobinfo.get('jobid'), jobinfo.get('user'), self.errlog))
 
+            # If this mpirun command originated from a user script, its arguments
+            # have been passed along in a special attribute.  These arguments have
+            # already been modified to include the partition that cobalt has selected
+            # for the job, and can just replace the arguments built above.
+            if jobinfo.has_key('true_mpi_args'):
+                cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(jobinfo['true_mpi_args'])
+
             try:
                 apply(os.execl, cmd)
             except Exception, e:
