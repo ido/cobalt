@@ -158,7 +158,7 @@ if __name__ == '__main__':
         if not opts[field]:
             opts[field] = 'default'
     if not opts['proccount']:
-        if opts.get('mode', 'co') == 'vn':
+        if opts.get('mode', 'co') in ['vn', 'dual']:
             # set procs to 2 x nodes
             if sys_type == 'bgl':
                 opts['proccount'] = str(2 * int(opts['nodecount']))
