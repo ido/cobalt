@@ -158,7 +158,7 @@ if __name__ == '__main__':
         if not opts[field]:
             opts[field] = 'default'
     if not opts['proccount']:
-        if opts.get('mode', 'co') in ['vn', 'dual']:
+        if opts.get('mode', 'co') == 'vn':
             # set procs to 2 x nodes
             if sys_type == 'bgl':
                 opts['proccount'] = str(2 * int(opts['nodecount']))
@@ -167,6 +167,8 @@ if __name__ == '__main__':
             else:
                 logger.error("Unknown bgtype %s" % (sys_type))
                 raise SystemExit, 1
+        elif opts.get('mode', 'co') == 'dual' and sys_type == 'bgp':
+            opts['proccount'] = str(2 * int(opts['nodecount']))
         else:
             opts['proccount'] = opts['nodecount']
     else:
