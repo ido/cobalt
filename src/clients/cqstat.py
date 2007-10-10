@@ -4,8 +4,9 @@
 __revision__ = '$Revision$'
 __version__ = '$Version$'
 
-import math, os, re, sys, time, types, ConfigParser
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import math, os, re, sys, time, types, ConfigParser, socket
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 __helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--header] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>\n" + \
@@ -105,10 +106,10 @@ if __name__ == '__main__':
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-    except Cobalt.Proxy.CobaltComponentError:
-        print "Failed to connect to queue manager"
-        raise SystemExit, 1
+        cqm = ComponentProxy("queue-manager")
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
 
     if opts['q']:  # querying for queues
         query = [{'tag':'queue', 'name':qname, 'users':'*', 
@@ -117,7 +118,7 @@ if __name__ == '__main__':
                   'totalnodes':'*', 'state':'*'} for qname in names]
         header = ['Name', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                   'MaxQueued', 'MaxUserNodes', 'TotalNodes', 'State']
-        response = cqm.GetQueues(query)
+        response = cqm.get_queues(query)
     else:
         if opts['full'] and not opts['long']:
             header = full_header
@@ -140,18 +141,18 @@ if __name__ == '__main__':
                     for x in query_dependencies[h]:
                         if x not in header:
                             q.update({x.lower():'*'})
-        response = cqm.GetJobs(query)
+        response = cqm.get_jobs(query)
 
     if opts['q']:
         for q in response:
-            if q.get('maxtime','*') != '*':
+            if q['maxtime'] is not None:
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q['maxtime']), 60))
-            if q.get('mintime', '*') != '*':
+            if q['mintime'] is not None:
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q['mintime']), 60))
-        output = [[q.get(x, '*') for x in [y.lower() for y in header]] for q in response]
+        output = [[q[x] for x in [y.lower() for y in header]] for q in response]
     else:
         if response:
-            maxjoblen = max([len(item.get('jobid')) for item in response])
+            maxjoblen = max([len(str(item.get('jobid'))) for item in response])
             jobidfmt = "%%%ss" % maxjoblen
         # calculate derived values
         for j in response:
@@ -187,8 +188,7 @@ if __name__ == '__main__':
                 if jobname != j['jobid'].split()[0]:
                     j['jobname'] = jobname
             # envs
-            envs = j.get('envs', False)
-            if not envs:
+            if j['envs'] is None:
                 j.update({'envs':''})
             else:
                 j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])

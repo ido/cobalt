@@ -2,7 +2,7 @@
 
 '''This script simulates the standard bridge mpirun for brooklyn'''
 
-import signal, sys, Cobalt.Proxy, time, datetime, math, os
+import signal, sys, Cobalt.Proxy, time, datetime, math, os, random
 
 def timestamp():
     now = datetime.datetime.now()
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : Initializing MPIRUN"    
 
     try:
-        brooklyn = Cobalt.Proxy.simulator()
+        brooklyn = Cobalt.Proxy.system()
     except:
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): East River transit failure: bridge is missing"
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Terminating due to asphyxia"
@@ -69,7 +69,11 @@ if __name__ == '__main__':
             query =  [{'tag':'job', 'user':'*', 'walltime':'*', 'jobid':jobid}]
             response = cqm.GetJobs(query)
             for j in response:
-                walltime = float(j['walltime']) * 60 * 0.9
+                pct = float(os.environ.get("OVERTIME_FRAC", 0))
+                if random.random() < pct:
+                    walltime = float(j['walltime']) * 60 * 2.0
+                else:
+                    walltime = float(j['walltime']) * 60 * 0.9
         except Cobalt.Proxy.CobaltComponentError:
             print >> sys.stderr, timestamp() + " FE_MPI (Info) : Failed to connect to queue manager"
             print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
@@ -77,9 +81,9 @@ if __name__ == '__main__':
             raise SystemExit, 1
     except:
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : COBALT_JOBID not found, can't determine runtime"
-	print >> sys.stderr, timestamp() + " FE_MPI (Info) : Using first argument of job instead"
-	
-	walltime = int(sys.argv[sys.argv.index('-args') + 1]) * 60
+        print >> sys.stderr, timestamp() + " FE_MPI (Info) : Using first argument of job instead"
+        
+        walltime = int(sys.argv[sys.argv.index('-args') + 1]) * 60
 
         bjobid = 99999  # Why not, indeed
         
@@ -99,7 +103,7 @@ if __name__ == '__main__':
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : Simulated job will terminate in " + str(walltime) + " seconds"
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : Waiting for job to terminate"
         # Some stuff for the stdout stream
-	print "Running job with args: " + str(sys.argv)
+        print "Running job with args: " + str(sys.argv)
         print "Sleeping for " + str(walltime) + " seconds"
         sys.stdout.flush()
         time.sleep(walltime)
@@ -109,16 +113,24 @@ if __name__ == '__main__':
     except:
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Job run failure of some sort; may have been killed"
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : Destroying partition " + partition
-        brooklyn.ReleasePartition(partition)
-        print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
+        pct = float(os.environ.get("FAILED_RELEASE_FRAC", 0))
+        if random.random() < pct:
+            pass
+        else:
+            brooklyn.ReleasePartition(partition)
+            print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
         raise SystemExit, 1
 
     print >> sys.stderr, timestamp() + " BE_MPI (Info) : Destroying partition " + partition
-    brooklyn.ReleasePartition(partition)
-    print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
+    pct = float(os.environ.get("FAILED_RELEASE_FRAC", 0))
+    if random.random() < pct:
+        pass
+    else:
+        brooklyn.ReleasePartition(partition)
+        print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
     print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   0 =="

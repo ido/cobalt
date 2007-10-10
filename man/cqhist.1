@@ -7,20 +7,6 @@ cqhist \- show info for completed jobs
 .SH DESCRIPTION
 .PP
 This program queries the queue manager for completed jobs stats.
-.TP
-.B ncpus
-The number of cpus in the job's partition that were used.
-.TP
-.B nodes
-The size of the job's partition.
-.TP
-.B walltime
-How long the job ran.
-.TP
-.B cpuh
-partition size * walltime
-.TP
-If the scheduler cannot be contacted, or the job's partition isn't found in the scheduler, nodes and cpuh will be 0.
 .SH OPTIONS
 .TP
 .B \-a
@@ -33,4 +19,4 @@ Print out version string
 .BR cqsub(1),
 .BR cqm(8)
 .SH BUGS
-Only shows jobs that have completed within the past 3 days.
+None are currently known.

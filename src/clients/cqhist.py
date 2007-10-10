@@ -26,7 +26,7 @@ from optparse import OptionParser
 
 # Application imports
 import Cobalt.Cqparse as cqparse
-import Cobalt.Proxy
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -79,40 +79,23 @@ if __name__ == '__main__':
     # Get all of the jobs
     #
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-        jobs = cqm.GetHistory([
+        cqm = ComponentProxy("queue-manager")
+        jobs = cqm.get_history([
             {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
-             'username':'*', 'processors':'*', 'mode':'*',
+             'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
-             'nodes':'*', 'usertime_formatted':'*', 'exitcode':'*',
+             'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
              'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
-    except Cobalt.Proxy.CobaltComponentError:
-        print >>sys.stderr, "Can't connect to queue manager, falling back to log files"
+    except ComponentLookupError:
+        print "Can't connect to queue manager, falling back to log files"
         cqp = cqparse.CobaltLogParser()
         cqp.perform_default_parse()
         jobs = cqp.Get([
             {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
-             'username':'*', 'processors':'*', 'mode':'*', 'nodes':'*',
+             'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
-             'usertime_formatted':'*', 'exitcode':'*',
+             'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
              'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
-
-    try:
-        sched = Cobalt.Proxy.scheduler()
-        partinfo = sched.GetPartition([{'tag':'partition', 'name':'*', 'size':'*'}])
-        partdict = {}
-        for part in partinfo:
-            partdict.update({part['name']:int(part['size'])})
-        for job in jobs:
-            try:
-                job.update({'partition_size':partdict[job.get('partition')]})
-            except KeyError:
-                job.update({'partition_size':0})
-    except Cobalt.Proxy.CobaltComponentError:
-        print >>sys.stderr, "WARNING: Can't connect to scheduler, partition sizes and cpuh will be disabled"
-        sched = None
-        for job in jobs:
-            job.update({'partition_size':0})
 
     #
     # Get the statistics

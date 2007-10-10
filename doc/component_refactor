@@ -1,0 +1,93 @@
+Component.py features
+
+A list of features present in system_component:src/lib/Component.py,
+annotated with their presence in the component refactor.
+
+
+ * daemonize a process: daemonize()
+Rather than daemonize an arbitrary process, the new xml-rpc server
+has serve_daemon(), which forks a daemon process running
+serve_forever(). This does not write the pid to a "pidfile", but writes
+it to the daemon's stderr, which (along with stdout) can be specified.
+
+
+= CobaltXMLRPCRequestHandler =
+
+ * finish HTTPS connections properly: finish()
+ 
+ * Overload do_POST to pass through client address information. do_POST()
+Client address information is never actually used in components, so
+we are removing this feature.
+ 
+ * support ssl connections as requests: setup()
+The request handler uses request.makefile() to get a file interface to the
+request connection. For a reason I do not understand (from the docstring:
+"since there is no dup semantics for SSL connections"), OpenSSL does not
+implement this method. To get around this, and the fact that we can't correct
+the ssl connection without modifying pyOpenSSL, the request handler must know
+how to get file interfaces for the connection.
+
+
+= SSLServer =
+
+Reimplemented as TCPServer, which more accurately replaces TCPServer
+as a mixin with XMLRPCDispatcher. The new TCPServer implements optional
+ssl encryption, dependent on whether a keyfile/certfile is specified.
+
+ * keyfile/certfile specification: __init__()
+Keyfile is, by default, used as the certfile, but certfile can now be
+specified separately.
+
+
+= Component =
+
+ * xml-rpc
+Decoupled as XMLRPCServer.
+
+ * name/implementation: __name__, __implementation__
+Renamed to name, implementation. (see PEP 8)
+ 
+ * configuration cfile, setup
+Configuration (as read from a file or the commandline) should take
+place in the script that extends component. Required configuration
+directives should be added to the extended __init__.
+
+ * signaling: __init__()
+Moved to serve_daemon().
+
+ * authentication: _authenticate_connection, password
+Moved to XMLRPCRequestHandler.handle_one_request as http basic
+authentication.
+
+ * pass through client address information: _cobalt_marshalled_dispatch
+Feature removed. Client address information is never used.
+
+ * event handling: HandleEvents
+Removed, since Cobalt doesn't use events.
+
+ * save/load state: __statefields__, loadstate(), savestate(), serve_forever(), start_shutdown()
+Self-saving state is supported, using the save() method. This pickles and saves
+the component, not an arbitrary tuple of state fields. (This makes more sense
+now that components are more refined.) Customization of the "state fields"
+is done by defining __getstate__ and/or __setstate__ on the component.
+
+ * static and dynamic addressing: static, location, port, url, assert_location, deassert_location
+The static attribute controls reporting to slp. assert_location and deassert_location are removed
+in favor of explicitly calling slp.register/slp.remove when necessary
+(specifically, before and after serve_forever).
+
+ * ssl encryption configuration: keyfile
+Again, the configuration of keyfile should be specified by whatever actually instantiates the
+component server, not by the server itself. The XML-RPC server can take an arbitrary keyfile/certfile,
+
+ * support SimpleXMLRPCDispatcher interface for Python <= 2.4 and >= 2.5
+Reimplemented, hopefully while supporting the functionality added.
+
+ * allow 'None' as an XML-RPC value
+Supported with a backport of the Python 2.5 library.
+
+ * asyncronous methods: get_request, async_funcs
+Callable members of components are called routinely when they have the attribute
+automatic = True.
+
+ * logging: logger
