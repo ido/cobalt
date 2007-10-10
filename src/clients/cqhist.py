@@ -26,7 +26,7 @@ from optparse import OptionParser
 
 # Application imports
 import Cobalt.Cqparse as cqparse
-import Cobalt.Proxy
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -79,14 +79,14 @@ if __name__ == '__main__':
     # Get all of the jobs
     #
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-        jobs = cqm.GetHistory([
+        cqm = ComponentProxy("queue-manager")
+        jobs = cqm.get_history([
             {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
              'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
              'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
              'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
              'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
-    except Cobalt.Proxy.CobaltComponentError:
+    except ComponentLookupError:
         print "Can't connect to queue manager, falling back to log files"
         cqp = cqparse.CobaltLogParser()
         cqp.perform_default_parse()

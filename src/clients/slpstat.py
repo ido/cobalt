@@ -6,38 +6,51 @@ __version__ = '$Version$'
 
 from Cobalt.Util import print_tabular
 
-import sys, time, xmlrpclib
-import Cobalt.Logging, Cobalt.Proxy
+import sys
+import time
+import xmlrpclib
+import socket
+
+import Cobalt.Logging
+from Cobalt.Proxy import ComponentProxy
 
 if __name__ == '__main__':
+    
     if '--version' in sys.argv:
         print "slpstat %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 0
-    level = 20
+        sys.exit()
+    
     if '-d' in sys.argv:
         level = 10
+    else:
+        level = 20
     Cobalt.Logging.setup_logging('cmd', to_syslog=False, level=level)
-    slp = Cobalt.Proxy.service_location()
-    try:
-        locations = slp.LookupService([{'tag':'location', 'name':'*', 'stamp':'*', 'url':'*'}])
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == 11:
-            print "No services registered"
-            raise SystemExit, 0
-        else:
-            print "Unknown Fault %s" % (flt.faultString)
-            raise SystemExit, 1
-    except Cobalt.Proxy.CobaltComponentError:
-        print "Failed to connect to service location component"
-        raise SystemExit, 1
-
-    fields = ['name', 'url', 'stamp']
-    header = [('Name', 'Location', 'Update Time')]
-    output = [[item[field] for field in fields] for item in locations]
     
-    for item in output:
-        item[2] = time.strftime("%c", time.localtime(item[2]))
-
-    print_tabular(header + [tuple(item) for item in output])
-
+    try:
+        slp = Cobalt.Proxy.ComponentProxy("service-location")
+    except ComponentLookupError:
+        print >> sys.stderr, "unable to find service-location"
+        sys.exit(1)
+    try:
+        services = slp.get_services([{'tag':'service', 'name':'*', 'stamp':'*', 'location':'*'}])
+    except socket.error, e:
+        print >> sys.stderr, "unable to connect to service-locator (%s)" % (e)
+        sys.exit(1)
+    except xmlrpclib.Fault, e:
+        print >> sys.stderr, "RPC fault (%s)" % (e)
+        sys.exit(1)
+    
+    if services:
+        header = [('Name', 'Location', 'Update Time')]
+        output = [
+            (
+                service['name'],
+                service['location'],
+                time.strftime("%c", time.localtime(service['stamp']))
+            )
+            for service in services
+        ]
+        print_tabular(header + [tuple(item) for item in output])
+    else:
+        print "no services registered"

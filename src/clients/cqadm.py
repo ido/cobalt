@@ -5,8 +5,10 @@ __revision__ = '$Revision$'
 __version__ = '$Version$'
 
 import sys, xmlrpclib
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
 import getpass
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+
 
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
@@ -20,7 +22,7 @@ def get_queues(cqm_conn):
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*',
              'adminemail':'*', 'totalnodes':'*', 'cron':'*', 'policy':'*'}]
-    return cqm_conn.GetQueues(info)
+    return cqm_conn.get_queues(info)
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -70,26 +72,34 @@ if __name__ == '__main__':
            or opts['killq'] or opts['policy']:
         spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
+        for i in range(len(args)):
+            try:
+                args[i] = int(args[i])
+            except:
+                print >> sys.stderr, "jobid must be an integer"
+                raise SystemExit, 1
+    
         spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
 
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-    except Cobalt.Proxy.CobaltComponentError:
-        print "Failed to connect to queue manager"
-        raise SystemExit, 1
+        cqm = ComponentProxy("queue-manager")
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
+    
     kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
     if opts['setjobid']:
-        response = cqm.SetJobID(int(opts['setjobid']))
+        response = cqm.set_jobid(int(opts['setjobid']))
     elif kdata:
         user = getpass.getuser()
         for cmd in kdata:
             if cmd == '--delete':
-                response = cqm.DelJobs(spec, user, True)
+                response = cqm.del_jobs(spec, user, True)
             else:
-                response = cqm.DelJobs(spec, user)
+                response = cqm.del_jobs(spec, user)
     elif opts['run']:
         location = opts['run']
-        response = cqm.RunJobs(spec, location.split(':'))
+        response = cqm.run_jobs(spec, location.split(':'))
     elif opts['addq']:
         existing_queues = get_queues(cqm)
         if [qname for qname in args if qname in
@@ -100,33 +110,33 @@ if __name__ == '__main__':
             print 'Must specify queue name'
             raise SystemExit, 1
         else:
-            response = cqm.AddQueue(spec)
+            response = cqm.add_queues(spec)
             datatoprint = [('Added Queues', )] + \
                           [(q.get('name'), ) for q in response]
             Cobalt.Util.print_tabular(datatoprint)
     elif opts['getq']:
         response = get_queues(cqm)
         for q in response:
-            if q.get('maxtime', '*') != '*':
+            if q['maxtime'] is not None:
                 q['maxtime'] = "%02d:%02d:00" % (divmod(int(q.get('maxtime')), 60))
-            if q.get('mintime', '*') != '*':
+            if q['mintime'] is not None:
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
         header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                    'MaxQueued', 'MaxUserNodes', 'TotalNodes',
                    'AdminEmail', 'State', 'Cron', 'Policy')]
-        datatoprint = [(q.get('name', '*'), q.get('users', '*'),
-                        q.get('mintime','*'), q.get('maxtime','*'),
-                        q.get('maxrunning','*'),q.get('maxqueued','*'),
-                        q.get('maxusernodes','*'),q.get('totalnodes','*'),
-                        q.get('adminemail', '*'),q.get('state'),
-                        q.get('cron'), q.get('policy'))
+        datatoprint = [(q['name'], q['users'],
+                        q['mintime'], q['maxtime'],
+                        q['maxrunning'], q['maxqueued'],
+                        q['maxusernodes'], q['totalnodes'],
+                        q['adminemail'], q['state'],
+                        q['cron'], q['policy'])
                        for q in response]
         datatoprint.sort()
         Cobalt.Util.print_tabular(header + datatoprint)
     elif opts['delq']:
         response = []
         try:
-            response = cqm.DelQueues(spec, opts['force'])
+            response = cqm.del_queues(spec, opts['force'])
             datatoprint = [('Deleted Queues', )] + \
                           [(q.get('name'), ) for q in response]
             Cobalt.Util.print_tabular(datatoprint)
@@ -154,17 +164,17 @@ if __name__ == '__main__':
                 else:
                     print 'Time for ' + prop + ' is not valid, must be in hh:mm:ss or mm format'
             updates.update({prop.lower():val})
-        response = cqm.SetQueues(spec, updates)
+        response = cqm.set_queues(spec, updates)
     elif opts['stopq']:
-        response = cqm.SetQueues(spec, {'state':'stopped'})
+        response = cqm.set_queues(spec, {'state':'stopped'})
     elif opts['startq']:
-        response = cqm.SetQueues(spec, {'state':'running'})
+        response = cqm.set_queues(spec, {'state':'running'})
     elif opts['drainq']:
-        response = cqm.SetQueues(spec, {'state':'draining'})
+        response = cqm.set_queues(spec, {'state':'draining'})
     elif opts['killq']:
-        response = cqm.SetQueues(spec, {'state':'dead'})
+        response = cqm.set_queues(spec, {'state':'dead'})
     elif opts['policy']:
-        response = cqm.SetQueues(spec, {'policy':opts['policy']})
+        response = cqm.set_queues(spec, {'policy':opts['policy']})
     else:
         updates = {}
         if opts['hold']:
@@ -198,7 +208,7 @@ if __name__ == '__main__':
                     raise SystemExit, 1
             updates['walltime'] = opts['time']
         try:
-            response = cqm.SetJobs(spec, updates)
+            response = cqm.set_jobs(spec, updates)
         except xmlrpclib.Fault, flt:
             response = []
             if flt.faultCode == 30:

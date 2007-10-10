@@ -3,7 +3,18 @@ __revision__ = '$Revision$'
 
 import time, types, xmlrpclib, random
 import warnings
+import sets
+
 import Cobalt.Util
+
+
+def get_spec_fields (specs):
+    """Given a list of specs, return the set of all fields used."""
+    fields = sets.Set()
+    for spec in specs:
+        for field in spec.keys():
+            fields.add(field)
+    return fields
 
 
 class DataCreationError(Exception):
@@ -51,7 +62,7 @@ class RandomID(object):
         return self.get()
 
 
-class Data(object):
+class Data (object):
     
     """A Cobalt entity manager.
     
@@ -78,7 +89,7 @@ class Data(object):
     )
     required_fields = []
     
-    def __init__(self, spec=None):
+    def __init__ (self, spec=None):
         
         """Initialize a new Data manager.
         
@@ -87,7 +98,8 @@ class Data(object):
         """
         
         for field, value in self.fields.iteritems():
-            setattr(self, field, value)
+            if not hasattr(self, field):
+                setattr(self, field, value)
         
         if spec is not None:
             self.update(spec)
@@ -97,6 +109,11 @@ class Data(object):
                 raise DataCreationError, field
         
         self.touch()
+    
+    def __setattr__ (self, name, value):
+        if name in self.fields:
+            object.__setattr__(self, "stamp", time.time())
+        object.__setattr__(self, name, value)
     
     def __setstate__ (self, input_state):
         
@@ -117,7 +134,45 @@ class Data(object):
         """Update the timestamp."""
         self.stamp = time.time()
     
-    def get(self, field, default=None):
+    def match (self, spec):
+        """True if every field in spec == the same field on the entity.
+        
+        Arguments:
+        spec -- Dictionary specifying fields and values to match against.
+        """
+        for field, value in spec.iteritems():
+            if not (value == "*" or (hasattr(self, field) and getattr(self, field) == value)):
+                return False
+        return True
+    
+    def to_rx (self, fields=None):
+        """Return a transmittable version of an entity.
+        
+        Arguments:
+        fields -- List of fields to include. (default self.fields.keys())
+        """
+        if fields is None:
+            fields = self.fields.keys()
+        return dict([(field, getattr(self, field, None)) for field in fields])
+    
+    # deprecated interface definition below here
+    # ==========================================
+    
+    def update (self, spec):
+        """Update the values of multiple fields on an entity.
+        
+        Though this method has not been officially deprecated, it should not
+        be used in new code.
+        
+        Arguments:
+        spec -- A dictionary specifying the values of fields to set.
+        """
+        for key, value in spec.iteritems():
+            if not hasattr(self, key):
+                warnings.warn("Creating new attribute '%s' on '%s' with update." % (key, self), RuntimeWarning, stacklevel=2)
+            setattr(self, key, value)
+    
+    def get (self, field, default=None):
         """(deprecated) Get the value of field from the entity.
         
         Arguments:
@@ -126,13 +181,8 @@ class Data(object):
         """
         warnings.warn("Use of Cobalt.Data.Data.get is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
         return getattr(self, field, default)
-    
-    def __setattr__ (self, name, value):
-        if name in self.fields:
-            object.__setattr__(self, "stamp", time.time())
-        object.__setattr__(self, name, value)
 
-    def set(self, field, value):
+    def set (self, field, value):
         """(deprecated) Set the value of field on the entity.
         
         Arguments:
@@ -145,38 +195,191 @@ class Data(object):
             self.fields[field] = None
         setattr(self, field, value)
 
-    def update(self, spec):
-        """Update the values of multiple fields on an entity.
-        
-        Arguments:
-        spec -- A dictionary specifying the values of fields to set.
-        """
-        for key, value in spec.iteritems():
-            if key not in self.fields:
-                warnings.warn("Creating new field '%s' on '%s' with update." % (key, self), RuntimeWarning, stacklevel=2)
-                self.fields[key] = None
-            setattr(self, key, value)
-            
-    def match(self, spec):
-        """True if every field in spec == the same field on the entity.
-        
-        Arguments:
-        spec -- Dictionary specifying fields and values to match against.
-        """
-        for field, value in spec.iteritems():
-            if not (value == "*" or (hasattr(self, field) and getattr(self, field) == value)):
-                return False
-        return True
+
+class Job (Data):
     
-    def to_rx(self, fields=None):
-        """Return a transmittable version of an entity.
+    """The canonical definition of a Cobalt job.
+    
+    Attributes:
+    tag -- "job"
+    id -- unique id
+    state -- current state of the job (queued, running, done)
+    executable -- file to execute
+    args -- arguments to pass to the executable
+    stdin -- file to use for stdin
+    stdout -- file to use for stdout
+    stderr -- file to use for stderr
+    cwd -- current working directory
+    env -- environment variables for the job
+    user -- user executing the job
+    exit -- exit status of the job
+    kerneloptions -- options to pass to the kernel
+    size -- number of nodes/processes in the job
+    location -- where to execute the job (partition?)
+    mode -- execution mode of the job
+    """
+    
+    fields = Data.fields.copy()
+    fields.update(dict(
+        tag = "job",
+        id = None,
+        state = None,
+        executable = None,
+        args = None,
+        stdin = "/dev/null",
+        stdout = "/dev/null",
+        stderr = "/dev/null",
+        cwd = None,
+        env = None,
+        user = None,
+        exit = None,
+        kerneloptions = None,
+        size = None,
+        location = None,
+        mode = None,
+    ))
+
+
+class DataList (list):
+    
+    """A Python list with the Cobalt query interface.
+    
+    Class attributes:
+    item_cls -- the class used to construct new items
+    
+    Methods:
+    q_add -- construct new items in the list
+    q_get -- retrieve items from the list
+    q_del -- remove items from the list
+    """
+    
+    item_cls = None
+    
+    def q_add (self, specs, callback=None, cargs={}):
+        """Construct new items of type self.item_cls in the list.
         
         Arguments:
-        fields -- List of fields to include. (default self.fields.keys())
+        specs -- a list of dictionaries specifying the objects to create
+        callback -- applied to each new item after it is constructed (optional)
+        cargs -- a tuple of arguments to pass to callback after the new item
+        
+        Returns a list of containing the new items.
         """
-        if fields is None:
-            fields = self.fields.keys()
-        return dict([(field, getattr(self, field, None)) for field in fields])
+        new_items = []
+        for spec in specs:
+            new_item = self.item_cls(spec)
+            new_items.append(new_item)
+        if callback:
+            for item in new_items:
+                callback(new_item, cargs)
+        self.extend(new_items)
+        return new_items
+
+    def q_get (self, specs, callback=None, cargs={}):
+        """Retrieve items from the list.
+        
+        Arguments:
+        specs -- a list of dictionaries specifying the objects to match
+        callback -- applied to each matched item (optional)
+        cargs -- a tuple of arguments to pass to callback after the item
+        """
+        matched_items = sets.Set()
+        for item in self:
+            for spec in specs:
+                if item.match(spec):
+                    matched_items.add(item)
+                    break
+        if callback:
+            for item in matched_items:
+                callback(item, cargs)
+        return list(matched_items)
+
+    def q_del (self, specs, callback=None, cargs={}):
+        """Remove items from the list.
+        
+        Arguments:
+        specs -- a list of dictionaries specifying the objects to delete
+        callback -- applied to each matched item (optional)
+        cargs -- a tuple of arguments to pass to callback after the item
+        """
+        matched_items = self.q_get(specs, callback, cargs)
+        for item in matched_items:
+            self.remove(item)
+        return matched_items
+
+
+class DataDict (dict):
+    
+    """A Python dict with the Cobalt query interface.
+    
+    Class attributes:
+    item_cls -- the class used to construct new items
+    key -- attribute name to use as a key in the dictionary
+    
+    Methods:
+    q_add -- construct new items in the dict
+    q_get -- retrieve items from the dict
+    q_del -- remove items from the dict
+    """
+    
+    item_cls = None
+    key = None
+    
+    def q_add (self, specs, callback=None, cargs={}):
+        """Construct new items of type self.item_cls in the dict.
+        
+        Arguments:
+        specs -- a list of dictionaries specifying the objects to create
+        callback -- applied to each new item after it is constructed (optional)
+        cargs -- a tuple of arguments to pass to callback after the new item
+        
+        Returns a list containing the new items.
+        """
+        new_items = {}
+        for spec in specs:
+            new_item = self.item_cls(spec)
+            key = getattr(new_item, self.key)
+            if key in self or key in new_items:
+                raise KeyError(key)
+            new_items[key] = new_item
+        if callback:
+            for item in new_items.itervalues():
+                callback(new_item, cargs)
+        self.update(new_items)
+        return new_items.values()
+
+    def q_get (self, specs, callback=None, cargs={}):
+        """Return a list of matching items.
+        
+        Arguments:
+        specs -- a list of dictionaries specifying the objects to match
+        callback -- applied to each matched item (optional)
+        cargs -- a tuple of arguments to pass to callback after the item
+        """
+        matched_items = sets.Set()
+        for item in self.itervalues():
+            for spec in specs:
+                if item.match(spec):
+                    matched_items.add(item)
+                    break
+        if callback:
+            for item in matched_items:
+                callback(item, cargs)
+        return list(matched_items)
+
+    def q_del (self, specs, callback=None, cargs={}):
+        """Remove items from the dict.
+        
+        Arguments:
+        specs -- a list of dictionaries specifying the objects to delete
+        callback -- applied to each matched item (optional)
+        cargs -- a tuple of arguments to pass to callback after the item
+        """
+        matched_items = self.q_get(specs, callback, cargs)
+        for item in matched_items:
+            key = getattr(item, self.key)
+            del self[key]
+        return matched_items
 
 
 class DataSet(object):
@@ -237,21 +440,20 @@ class DataSet(object):
         '''remove an element from the set'''
         self.data.remove(x)
 
-    def Add(self, cdata, callback=None, cargs={}):
+    def Add(self, specs, callback=None, cargs={}):
         """Construct new items of type self.__object__ in the dataset.
         
         Arguments:
-        cdata -- The first argument to be passed to the data constructor.
-            If cdata is a list, construct multiple items.
+        specs -- a dictionary (or list of dictionaries) specifying the object(s) to create
         callback -- Applied to each new item after it is constructed. (optional)
         cargs -- A tuple of arguments to pass to callback after the new object.
         
         Returns a list of transmittable representations of the new items.
         """
         retval = []
-        if not isinstance(cdata, types.ListType):
-            cdata = [cdata]
-        for item in cdata:
+        if not isinstance(specs, types.ListType):
+            specs = [specs]
+        for item in specs:
             try:
                 if self.__id__:
                     iobj = self.__object__(item, self.__id__.get())
@@ -267,38 +469,36 @@ class DataSet(object):
             retval.append(iobj.to_rx(item))
         return retval
 
-    def Get(self, cdata, callback=None, cargs={}):
+    def Get(self, specs, callback=None, cargs={}):
         """Return a list of transmittable representations of items.
         
         Arguments:
-        cdata -- A dictionary representing criteria to match.
-            If cdata is a list, match against multiple sets of criteria.
+        specs -- a dictionary (or list of dictionaries) specifying the objects to match
         callback -- Applied to each matched item. (optional)
         cargs -- A tuple of arguments to pass to callback after the item.
         """
         retval = []
-        if not isinstance(cdata, types.ListType):
-            cdata = [cdata]
-        for spec in cdata:
+        if not isinstance(specs, types.ListType):
+            specs = [specs]
+        for spec in specs:
             for item in [datum for datum in self if datum.match(spec)]:
                 if callback:
                     callback(item, cargs)
                 retval.append(item.to_rx(spec))
         return retval
 
-    def Del(self, cdata, callback=None, cargs={}):
+    def Del(self, specs, callback=None, cargs={}):
         """Delete items from the dataset.
         
         Arguments:
-        cdata -- A dictionary representing criteria to match.
-            If cdata is a list, match against multiple sets of criteria.
+        specs -- a dictionary (or list of dictionaries) specifying the object(s) to create
         callback -- Applied to each matched item. (optional)
         cargs -- A tuple of arguments to pass to callback after the item.
         """
         retval = []
-        if not isinstance(cdata, types.ListType):
-            cdata = [cdata]
-        for spec in cdata:
+        if not isinstance(specs, types.ListType):
+            specs = [specs]
+        for spec in specs:
             for item in [datum for datum in self.data if datum.match(spec)]:
                 self.data.remove(item)
                 if callback:

@@ -10,7 +10,12 @@ import Cobalt.SchedulerPolicies
 
 logger = logging.getLogger('bgsched')
 
-comm = Cobalt.Proxy.CommDict()
+def lazy_component_proxy (component_name, method_name):
+    def call_method ():
+        component = Cobalt.Proxy.ComponentProxy(component_name)
+        method = getattr(component, method_name)
+        return method()
+    return call_method
 
 def fifocmp(job1, job2):
     '''Compare 2 jobs for fifo mode'''
@@ -68,7 +73,8 @@ class Reservation(Cobalt.Data.Data):
                                    self.location]
             for location in placements[job][:]:
                 if location in overlaps:
-                    if self.Overlaps(location, now, job.duration):
+                    if self.Overlaps(location, now,
+                                     job.get('duration')):
                         placements[job].remove(location)
         if not self.IsActive():
             # filter jobs in Rqueue if not active
@@ -79,29 +85,33 @@ class ReservationSet(Cobalt.Data.DataSet):
     __object__ = Reservation
 
     def CreateRQueue(self, reserv):
-        queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
+        cqm = Cobalt.Proxy.ComponentProxy('queue-manager')
+        queues = cqm.GetQueues([{'tag':'queue', 'name':'*'}])
         qnames = [q['name'] for q in queues]
-        if "R.%s" % reserv.name not in qnames:
-            logger.info("Adding reservation queue R.%s" % (reserv.name))
-            spec = [{'tag':'queue', 'name': 'R.%s' % (reserv.name)}]
-            attrs = {'state':'running', 'users': reserv.users}
+        if "R.%s" % reserv.get('name') not in qnames:
+            logger.info("Adding reservation queue R.%s" % \
+                        (reserv.get('name')))
+            spec = [{'tag':'queue', 'name': 'R.%s' % \
+                     (reserv.get('name'))}]
+            attrs = {'state':'running', 'users': reserv.get('users')}
             try:
-                comm['qm'].AddQueue(spec)
-                comm['qm'].SetQueues(spec, attrs)
+                cqm.AddQueue(spec)
+                cqm.SetQueues(spec, attrs)
             except Exception, e:
                 logger.error("Queue setup for %s failed: %s" \
-                             % ("R.%s" % reserv.name, e))
+                             % ("R.%s" % reserv.get('name'), e))
 
     def DeleteRQueue(self, reserv):
-        queues = comm['qm'].GetQueues([{'tag':'queue', 'name':'*'}])
+        cqm = Cobalt.Proxy.ComponentProxy('queue-manager')
+        queues = cqm.GetQueues([{'tag':'queue', 'name':'*'}])
         qnames = [q['name'] for q in queues]
-        rqn = "R.%s" % reserv.name
+        rqn = "R.%s" % reserv.get("name")
         if rqn in qnames:
             logger.info("Disabling Rqueue %s" % (rqn))
             try:
-                response = comm['qm'].SetQueues([{'tag':'queue',
-                                                  'name':rqn}],
-                                                {'state':'dead'})
+                response = cqm.SetQueues([{'tag':'queue',
+                                           'name':rqn}],
+                                         {'state':'dead'})
             except Exception, e:
                 logger.error("Disable request failed: %s" % e)
 
@@ -118,17 +128,17 @@ class Partition(Cobalt.Data.ForeignData):
         basic = self.scheduled and self.functional
         queue = job.queue.startswith('R.') or \
                 job.queue in self.queue.split(':')
-        jsize = int(job.nodes) 
+        jsize = int(job.nodes) # should this be 'size' instead?
         psize = int(self.size)
         size = (psize >= jsize) and ((psize == 32) or (jsize > psize/2))
         if not (basic and size):
             return False
         return queue
 
-class PartitionSet(Cobalt.Data.DataSet):
+class PartitionSet(Cobalt.Data.ForeignDataSet):
     __object__ = Partition
     __failname__ = 'System Connection'
-    __function__ = comm['system'].GetPartitions
+    __function__ = lazy_component_proxy('system', 'GetBlah')
     __fields__ = ['name', 'queue', 'nodecards']
     __unique__ = 'name'
 
@@ -153,7 +163,7 @@ class JobSet(Cobalt.Data.ForeignDataSet):
     __object__ = Job
     __unique__ = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection")
-    __function__ = comm['qm'].GetJobs
+    __function__ = lazy_component_proxy('queue-manager', 'GetJobs')
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user']
 
@@ -165,18 +175,20 @@ class Queue(Cobalt.Data.ForeignData):
                          (self.policy, self.name))
         else:
             pclass = Cobalt.SchedulerPolicies.names[self.policy]
-            self.pcls = pclass()
+            self.policy = pclass()
+
 
 class QueueSet(Cobalt.Data.ForeignDataSet):
     __object__ = Queue
     __unique__ = 'name'
-    __function__ = comm['qm'].GetQueues
+    __function__ = lazy_component_proxy('queue-manager', 'GetQueues')
     __fields__ = ['name', 'status', 'policy']
 
     def Sync(self):
-        qp = [(q.name, q.policy) for q in self]
+        qp = [(q.get('name'), q.get('policy')) for q in self]
         Cobalt.Data.ForeignDataSet.Sync()
-        [q.LoadPolicy() for q in self if (q.name, q.policy) not in qp]
+        [q.LoadPolicy() for q in self \
+         if (q.get('name'), q.get('policy')) not in qp]
 
 class BGSched(Cobalt.Component.Component):
     '''This scheduler implements a fifo policy'''
@@ -184,8 +196,6 @@ class BGSched(Cobalt.Component.Component):
     __name__ = 'scheduler'
     __statefields__ = ['reservations']
     __schedcycle__ = 10
-    async_funcs = ['assert_location', 'RunQueue',
-                   'RemoveOldReservations', 'ResQueueSync']
 
     def __init__(self, setup):
         self.jobs = JobSet()
@@ -195,40 +205,51 @@ class BGSched(Cobalt.Component.Component):
         Cobalt.Component.Component.__init__(self, setup)
         self.executed = []
         self.lastrun = 0
-        self.register_function(self.reservations.Add, "AddReservation")
-        self.register_function(self.reservations.Del, "DelReservation")
-        self.register_function(
-            lambda a,d,u: \
-            self.reservations.Get(d, lambda r, na:r.update(na), u), 
-            "SetReservation")
+
+    def AddReservation(self, *args):
+        return self.reservations.Add(*args)
+    AddReservation = exposed(AddReservation)
+
+    def DelReservation(self, *args):
+        return self.reservations.Del(*args)
+    DelReservation = exposed(DelReservation)
+
+    def GetReservation(self, *args):
+        return self.reservations.Get(*args)
+    GetReservation = exposed(GetReservation)
+
+    def SetReservation(self, *args):
+        return self.reservations.Get(*args,
+                                     callback = \
+                                     lambda r, na:r.update(na))
+    SetReservation = exposed(SetReservation)
 
     def SyncData(self):
         for item in [self.resources, self.queues, self.jobs]:
             item.Sync()
+    SyncData = automatic(SyncData)
 
     def Schedule(self):
         # self queues contains queues
         activeq = []
         for q in self.queues:
-            if q.name.startswith('R.'):
+            if q.get('name').startswith('R.'):
                 if True in \
-                       [rm.Active() for rm in \
-                        self.reservations.Match({'name':q.name[2:]})]:
-                    activeq.append(q.name)
+                   [rm.Active() for rm in \
+                    self.reservations.Match({'name':q.get('name')[2:]})]:
+                    activeq.append(q.get('name'))
             else:
-                if q.state == 'running':
-                    activeq.append(q.name)
+                if q.get('state') == 'running':
+                    activeq.append(q.get('name'))
         print "activeq:", activeq
         # self.jobs contains jobs
-        activej = [j for j in self.jobs if j.queue in activeq \
-                   and j.state == 'queued']
+        activej = [j for j in self.jobs if j.get('queue') in activeq \
+                   and j.get('state') == 'queued']
         print "activej:", activej
         potential = {}
-        for job in activej:
-            potential[job] = []
-            for part in [part for part in self.resources if part.CanRun(job)]:
-                potential[job].append(part)
-        # FIXME need to check reservation conflict
+        # FIXME need to perform search
+        # need to check reservation conflict
+        # return self.ImplementPolicy(potential, depinfo)
         viable = []
         [viable.extend(queue.keys()) for queue in potential.values()]
         viable.sort(fifocmp)
@@ -242,22 +263,24 @@ class BGSched(Cobalt.Component.Component):
         [q.policy.Prepare(viable, potential) for q in self.queues]
         # place all viable jobs
         for job in viable:
-            QP = self.queues[job.queue].policy
+            QP = self.queues[job.get('queue')].policy
             place = QP.PlaceJob(job, potential)
             if place:
                 # clean up that job placement
-                del potential[job.queue][job.jobid]
+                del potential[job.get('queue')][job.get('jobid')]
                 # tidy other placements
                 self.TidyPlacements(potential, place[1])
                 placements.append(place)
         self.RunJobs(placements)
+    Schedule = automatic(Schedule)
 
     def TidyPlacements(self, potential, newlocation):
         '''Remove any potential spots that overlap with newlocation'''
         nodecards = [res for res in self.resources \
-                     if res.name in newlocation[0].nodecards]
-        overlap = [res.name for res in self.resources \
-                   if [nc for nc in res.nodecards if nc in nodecards]]
+                     if res.get('name') == newlocation][0].get('nodecards')
+        overlap = [res.get('name') for res in self.resources \
+                   if [nc for nc in res.get('nodecards') \
+                       if nc in nodecards]]
         for queue in potential:
             for job, locations in queue.iteritems():
                 [locations.remove(location) for location in locations \
@@ -267,27 +290,8 @@ class BGSched(Cobalt.Component.Component):
 
     def RunJobs(self, placements):
         '''Connect to cqm and run jobs'''
-        for job, part in placements.iteritems():
-            jspec = [{'tag':'job', 'jobid':job.id}]
-            comm['qm'].RunJobs(jspec, [part.name])
+        # FIXME
+        pass
 
-if __name__ == '__main__':
-    from getopt import getopt, GetoptError
-    try:
-        (opts, arguments) = getopt(sys.argv[1:], 'C:dD:t', ['nodb2'])
-    except GetoptError, msg:
-        print "%s\nUsage:\nbgsched.py [-t] [-C configfile] [-d] [-D <pidfile>] [--nodb2]" % (msg)
-        raise SystemExit, 1
-    try:
-        daemon = [x[1] for x in opts if x[0] == '-D'][0]
-    except:
-        daemon = False
-    if len([x for x in opts if x[0] == '-d']):
-        dlevel = logging.DEBUG
-    else:
-        dlevel = logging.INFO
-    Cobalt.Logging.setup_logging('bgsched', level=dlevel)
-    server = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
-    server.serve_forever()
     
 

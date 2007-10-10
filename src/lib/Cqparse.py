@@ -61,7 +61,7 @@ DEFAULT_DAYS = 3
 # # Get a logger for the main program
 # logger = logging.getLogger( "cqparse" )
 # logger.setLevel( logging.DEBUG )
-Cobalt.Logging.setup_logging('cqm', level=logging.INFO)
+#Cobalt.Logging.setup_logging('cqm', level=logging.INFO)
 logger = logging.getLogger('cqm')
 
 # ----------------------------------------------------------------------------
@@ -306,11 +306,11 @@ class CobaltJob(Cobalt.Data.Data):
         # the job as invalid
         #
         if self._start and self._run and (self._done or self._deleted):
-            self.state = done
+            self.state = "done"
         elif self._submit and self._start and self._run and (not self._done):
-            self.state = running
+            self.state = "running"
         elif self._submit and not self._start and not self._run and not self._done:
-            self.state = queued
+            self.state = "queued"
 
         # If we have only the tail end states, that means the job started before
         # our analysis period. Ignore those silently!
@@ -427,7 +427,7 @@ class CobaltLogParser(Cobalt.Data.DataSet):
         """
         Cobalt.Data.DataSet.__init__(self)
         self._jobs = {}
-        self.comms = Cobalt.Proxy.CommDict()
+        #self.comms = Cobalt.Proxy.CommDict()
     
     # ----------------------------------------
     # Generators
