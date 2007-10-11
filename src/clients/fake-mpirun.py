@@ -98,8 +98,7 @@ if __name__ == '__main__':
         
     user = pwd.getpwuid(os.getuid())[0]
 
-    print "here's my j : " + repr(j)
-    jobspec = {'jobid':os.environ["COBALT_JOBID"], 'user':user, 'true_mpi_args':arglist, 'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir']}
+    jobspec = {'jobid':int(os.environ["COBALT_JOBID"]), 'user':user, 'true_mpi_args':arglist, 'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir']}
     try:
         cqm = ComponentProxy("queue-manager")
         pm = ComponentProxy("process-manager")

@@ -805,6 +805,23 @@ class BGJob(Job):
 
 class ScriptMPIJob(Job):
     '''ScriptMPIJob is an mpirun command issued from a user script.'''
+    fields = Job.fields.copy()
+    fields.update(dict(
+        bgkernel = None,
+        kernel = "default",
+        notify = None,
+        adminemail = None,
+        location = None,
+        outputpath = None,
+        outputdir = None,
+        errorpath = None,
+        path = None,
+        mode = "co",
+        envs = None,
+        exit_status = None,
+        true_mpi_args = None,
+    ))
+
     _configfields = ['bgkernel']
     _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:
@@ -828,8 +845,8 @@ class ScriptMPIJob(Job):
 
     def __init__(self, data):
         Job.__init__(self, data)
-        if not self.get('kernel', False):
-            self.set('kernel', 'default')
+        if self.kernel is None:
+            self.kernel = 'default'
         #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
         self.SetPassive()
                 
@@ -862,27 +879,27 @@ class ScriptMPIJob(Job):
         if self.config.get('bgkernel', 'false') == 'true':
             SetBGKernel()
 
-        self.set('state', 'running')
+        self.state = 'running'
         self.timers['user'].Start()
         self.LogStart()
-        if not self.get('outputpath', False):
-            self.set('outputpath', "%s/%s.output" % (self.get('outputdir'), self.get('jobid')))
-        if not self.get('errorpath', False):
-            self.set('errorpath', "%s/%s.error" % (self.get('outputdir'), self.get('jobid')))
+        if self.outputpath is None:
+            self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
+        if self.errorpath is None:
+            self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
 
         try:
-            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.get('user'), 
-                                        'outputfile':self.get('outputpath', ''), 'errorfile':self.get('errorpath', ''), 
-                                        'path':self.get('path', ''), 'cwd':self.get('outputdir', ''), 
-                                        'location':[self.get('location')], 'id':self.get('jobid'), 
-                                        'inputfile':self.get('inputfile', ''), 'true_mpi_args':self.get('true_mpi_args'), 
+            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.user, 
+                                        'outputfile':self.outputpath, 'errorfile':self.errorpath, 
+                                        'path':self.path, 'cwd':self.outputdir, 
+                                        'location':[self.location], 'id':self.jobid, 
+                                        'inputfile':self.inputfile, 'true_mpi_args':self.true_mpi_args, 
                                         'envs':{}, 'size':0, 'executable':"this will be ignored"}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
 
         if not pgroup[0].has_key('id'):
-            logger.error("Process Group creation failed for Job %s" % self.get('jobid'))
+            logger.error("Process Group creation failed for Job %s" % self.jobid)
             self.set('state', 'sm-failure')
         else:
             self.pgid['user'] = pgroup[0]['id']
