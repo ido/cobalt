@@ -719,11 +719,11 @@ class BGJob(Job):
 
         if self.mode == 'script':
             try:
-                pgroup = ComponentProxy("script-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'pgid':'*', 'outputfile':self.outputpath,
+                pgroup = ComponentProxy("script-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'outputfile':self.outputpath,
                      'errorfile':self.errorpath, 'path':self.path, 'size':self.procs,
                      'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
                      'args':self.args, 'envs':self.envs, 'location':[self.location],
-                     'jobid':self.jobid, 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions}])
+                     'id':self.jobid, 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions}])
             except ComponentLookupError:
                 logger.error("Failed to communicate with script manager")
                 raise ScriptManagerError
@@ -871,18 +871,21 @@ class ScriptMPIJob(Job):
             self.set('errorpath', "%s/%s.error" % (self.get('outputdir'), self.get('jobid')))
 
         try:
-            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.get('user'), 'pgid':'*', 'outputfile':self.get('outputpath', ''),
-                 'errorfile':self.get('errorpath', ''), 'path':self.get('path', ''), 'cwd':self.get('outputdir', ''), 'location':[self.get('location')],
-                 'jobid':self.get('jobid'), 'inputfile':self.get('inputfile', ''), 'true_mpi_args':self.get('true_mpi_args'), 'envs':{}}])
+            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.get('user'), 
+                                        'outputfile':self.get('outputpath', ''), 'errorfile':self.get('errorpath', ''), 
+                                        'path':self.get('path', ''), 'cwd':self.get('outputdir', ''), 
+                                        'location':[self.get('location')], 'id':self.get('jobid'), 
+                                        'inputfile':self.get('inputfile', ''), 'true_mpi_args':self.get('true_mpi_args'), 
+                                        'envs':{}, 'size':0, 'executable':"this will be ignored"}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
 
-        if not pgroup[0].has_key('pgid'):
+        if not pgroup[0].has_key('id'):
             logger.error("Process Group creation failed for Job %s" % self.get('jobid'))
             self.set('state', 'sm-failure')
         else:
-            self.pgid['user'] = pgroup[0]['pgid']
+            self.pgid['user'] = pgroup[0]['id']
         self.SetPassive()
         self.LogFinish()
 
@@ -1319,11 +1322,11 @@ class QueueManager(Component):
                     job.CompletePG(pgid)
     sm_sync = automatic(sm_sync)
 
-    def invoke_mpi_from_script(self, data):
+    def invoke_mpi_from_script(self, spec):
         '''Invoke the real mpirun on behalf of a script being executed by the script manager.'''
         d = {'tag':'job', 'pgid':'*'}
-        d.update(data)
-        j = ScriptMPIJob(d, d.get('jobid'))
+        d.update(spec)
+        j = ScriptMPIJob(d)
         j.RunScriptMPIJob()
         
         return j.pgid['user']

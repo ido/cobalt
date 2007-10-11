@@ -29,19 +29,17 @@ class ProcessGroup(Data):
         tag = "process-group",
         name = None,
         location = None,
-        pgid = None,
         state = None,
         user = None,
         outputfile = None,
         errorfile = None,
         executable = None,
-        jobid = None,
+        id = None,
     ))
 
-    def __init__(self, data, pgid):
+    def __init__(self, data):
         Data.__init__(self, data)
         self.log = logging.getLogger('pg')
-        self.pgid = pgid
         self.state = 'running'
         try:
             userid, groupid = pwd.getpwnam(self.user)[2:4]
@@ -64,29 +62,29 @@ class ProcessGroup(Data):
             self.t.flush()
             # create a nodefile in /tmp
             os.environ['COBALT_NODEFILE'] = self.t.name
-            os.environ["COBALT_JOBID"] = self.jobid
+            os.environ["COBALT_JOBID"] = str(self.id)
             try:
                 os.setgid(groupid)
                 os.setuid(userid)
             except OSError:
-                self.log.error("Failed to change userid/groupid for PG %s" % (self.pgid))
+                self.log.error("Failed to change userid/groupid for PG %s" % (self.id))
                 sys.exit(0)
             try:
                 err = open(self.errlog, 'a')
                 os.chmod(self.errlog, 0600)
                 os.dup2(err.fileno(), sys.__stderr__.fileno())
             except IOError:
-                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.jobid, self.user, self.errlog))
+                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.id, self.user, self.errlog))
             except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.jobid, self.user, self.errlog))
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.id, self.user, self.errlog))
             try:
                 out = open(self.outlog, 'a')
                 os.chmod(self.outlog, 0600)
                 os.dup2(out.fileno(), sys.__stdout__.fileno())
             except IOError:
-                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.jobid, self.user, self.outlog))
+                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.id, self.user, self.outlog))
             except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.jobid, self.user, self.errlog))
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.id, self.user, self.errlog))
             os.execl(self.executable, self.executable)
 
     def FinishProcess(self, status):
@@ -94,14 +92,14 @@ class ProcessGroup(Data):
         # process has already been waited on
         self.state = 'finished'
         self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
-                      (self.jobid, self.user, self.pgid, int(status)/256, self.pid))
+                      (self.id, self.user, self.id, int(status)/256, self.pid))
 
     def Signal(self, signame):
         '''Send a signal to a process group'''
         try:
             os.kill(self.pid, getattr(signal, signame))
         except OSError, error:
-            self.log.error("Signal failure for pgid %s:%s" % (self.pgid, error.strerror))
+            self.log.error("Signal failure for pgid %s:%s" % (self.id, error.strerror))
         return 0
 
 class ProcessGroupList(DataList):
@@ -170,7 +168,7 @@ class ScriptManager(Component):
         for spec in specs:
             self.logger.info("signaling process group %r with signal %r" % (spec, sig))
             for pg in self.pgroups:
-                if pg.pgid == spec['pgid']:
+                if pg.id == spec['id']:
                     ret.append(pg.Signal(sig))
         # could not find pg, so return False
         return ret

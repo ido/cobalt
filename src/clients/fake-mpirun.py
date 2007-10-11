@@ -5,7 +5,8 @@ __revision__ = ''
 __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time, xmlrpclib, logging
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 usehelp = "Usage:\nfake-mpirun [--version] [-h] <mpirun arguments>"
 
@@ -57,9 +58,14 @@ if __name__ == '__main__':
     except KeyError:
         logger.error("fake-mpirun must be invoked by a script submitted to cobalt.")
         raise SystemExit, 1
+
+    try:
+        cqm = ComponentProxy("queue-manager")
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
         
-    cqm = Cobalt.Proxy.queue_manager()
-    response = cqm.GetJobs({'tag':'job', 'jobid':os.environ["COBALT_JOBID"], 'state':'*', 'procs':'*', 'location':'*', 'walltime':'*', 'outputdir':'*'})
+    response = cqm.get_jobs([{'tag':'job', 'jobid':int(os.environ["COBALT_JOBID"]), 'state':'*', 'procs':'*', 'location':'*', 'walltime':'*', 'outputdir':'*'}])
     if len(response) == 0:
         logger.error("Error: cqm did not find a job with id " + os.environ["COBALT_JOBID"])
         raise SystemExit, 1
@@ -91,17 +97,19 @@ if __name__ == '__main__':
             raise SystemExit, 1
         
     user = pwd.getpwuid(os.getuid())[0]
+
+    print "here's my j : " + repr(j)
     jobspec = {'jobid':os.environ["COBALT_JOBID"], 'user':user, 'true_mpi_args':arglist, 'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir']}
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-        pm = Cobalt.Proxy.process_manager()
+        cqm = ComponentProxy("queue-manager")
+        pm = ComponentProxy("process-manager")
 
         # try adding job to queue_manager
-        pgid = cqm.ScriptMPI(jobspec)
+        pgid = cqm.invoke_mpi_from_script(jobspec)
         print "i see pgid of : ", pgid
         
         while True:
-            r = pm.GetProcessGroup([{'tag':'process-group', 'pgid':pgid, 'state':'*'}])
+            r = pm.get_jobs([{'id':pgid, 'state':'*'}])
             state = r[0]['state']
             if state == 'running':
                 time.sleep(5)
@@ -109,26 +117,26 @@ if __name__ == '__main__':
             else:
                 break
         print "process group %s has completed" % (pgid)
-        pm.WaitProcessGroup([{'tag':'process-group', 'pgid':pgid, 'exit-status':'*'}])
+        pm.get_jobs([{'id':pgid, 'exit-status':'*'}])
         
 
-    except Cobalt.Proxy.CobaltComponentError:
-        logger.error("Can't connect to the queue manager")
+    except ComponentLookupError:
+        logger.error("Can't connect to the process manager")
         raise SystemExit, 1
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == 31:
-            logger.error("System draining. Try again later")
-            raise SystemExit, 1
-        elif flt.faultCode == 30:
-            logger.error("Job submission failed because: \n%s\nCheck 'cqstat -q' and the cqstat manpage for more details." % flt.faultString)
-            raise SystemExit, 1
-        elif flt.faultCode == 1:
-            logger.error("Job submission failed due to queue-manager failure")
-            raise SystemExit, 1
-        else:
-            logger.error("Job submission failed")
-            logger.error(flt)
-            raise SystemExit, 1
+#    except xmlrpclib.Fault, flt:
+#        if flt.faultCode == 31:
+#            logger.error("System draining. Try again later")
+#            raise SystemExit, 1
+#        elif flt.faultCode == 30:
+#            logger.error("Job submission failed because: \n%s\nCheck 'cqstat -q' and the cqstat manpage for more details." % flt.faultString)
+#            raise SystemExit, 1
+#        elif flt.faultCode == 1:
+#            logger.error("Job submission failed due to queue-manager failure")
+#            raise SystemExit, 1
+#        else:
+#            logger.error("Job submission failed")
+#            logger.error(flt)
+#            raise SystemExit, 1
 #     except:
 #         logger.error("Error submitting job")
 #         raise SystemExit, 1
