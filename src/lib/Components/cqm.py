@@ -402,9 +402,9 @@ class Job(Data):
         
         try:
             pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'pgid':'*', 'executable':'/usr/bin/mpish',
-                 'size':self.procs, 'args':args, 'envs':env, 'errorfile':errorfile,
-                 'outputfile':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin",
-                 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions}])
+                 'size':self.procs, 'args':args, 'envs':env, 'stderr':errorfile,
+                 'stdout':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin",
+                 'stdin':self.inputfile, 'kerneloptions':self.kerneloptions}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
@@ -451,7 +451,7 @@ class Job(Data):
         try:
             pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'pgid':'*', 'user':'root', 'size':self.nodes,
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
-                 'args':[self.user], 'location':location, 'inputfile':self.inputfile,
+                 'args':[self.user], 'location':location, 'stdin':self.inputfile,
                  'kerneloptions':self.kerneloptions}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
@@ -889,10 +889,10 @@ class ScriptMPIJob(Job):
 
         try:
             pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.user, 
-                                        'outputfile':self.outputpath, 'errorfile':self.errorpath, 
+                                        'stdout':self.outputpath, 'stderr':self.errorpath, 
                                         'path':self.path, 'cwd':self.outputdir, 
                                         'location':[self.location], 'id':self.jobid, 
-                                        'inputfile':self.inputfile, 'true_mpi_args':self.true_mpi_args, 
+                                        'stdin':self.inputfile, 'true_mpi_args':self.true_mpi_args, 
                                         'envs':{}, 'size':0, 'executable':"this will be ignored"}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
