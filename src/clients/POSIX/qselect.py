@@ -5,7 +5,8 @@ __revision__ = '$Revision: 559 $'
 __version__ = '$Version$'
 
 import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re, logging
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 helpmsg = """
 Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
@@ -103,13 +104,13 @@ if __name__ == '__main__':
         query['queue'] = '*'
 
     try:
-        cqm = Cobalt.Proxy.queue_manager()
+        cqm = ComponentProxy("queue-manager")
 
         query['tag'] = 'job'
         query['jobid'] = '*'
-        response = cqm.GetJobs([query])
+        response = cqm.get_jobs([query])
 
-    except Cobalt.Proxy.CobaltComponentError:
+    except ComponentLookupError:
         logger.error("Can't connect to the queue manager")
         raise SystemExit, 1
     #except:
@@ -123,4 +124,4 @@ if __name__ == '__main__':
         Cobalt.Logging.logging.debug(response)
         print "   The following jobs matched your query:"
         for job in response:
-            print "      " + job.get('jobid')
+            print "      %d" % job.get('jobid')

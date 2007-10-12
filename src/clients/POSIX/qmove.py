@@ -5,7 +5,8 @@ __revision__ = '$Revision: 345 $'
 __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time, xmlrpclib
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 usehelp = "Usage:\nqmove <queue name> <jobid> <jobid>"
 
@@ -33,16 +34,24 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qmove', to_syslog=False, level=level)
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-    except Cobalt.Proxy.CobaltComponentError:
-        print "Failed to connect to queue manager"
-        raise SystemExit, 1
+        cqm = ComponentProxy("queue-manager")
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
+
+    for i in range(len(args)):
+        try:
+            args[i] = int(args[i])
+        except:
+            logger.error("jobid must be an integer")
+            raise SystemExit, 1
+        
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     updates = {}
     updates['queue'] = queue
 
     try:
-        response = cqm.SetJobs(spec, updates)
+        response = cqm.set_jobs(spec, updates)
     except xmlrpclib.Fault, flt:
         response = []
         if flt.faultCode == 30:
@@ -54,7 +63,6 @@ if __name__ == '__main__':
     else:
         Cobalt.Logging.logging.debug(response)
         print "   Moved Jobs to queue: " + queue
-        data = [(job.get('jobid'), job.get('user')) for job in response]
         for job in response:
-            print "      " + job.get('jobid')
+            print "      %d" % job.get('jobid')
 

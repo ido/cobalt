@@ -5,7 +5,9 @@ __revision__ = '$Revision: 559 $'
 __version__ = '$Version$'
 
 import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re, logging
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+
 
 def processfilter(cmdstr, jobdict):
     '''Run a filter on the job, passing in all job args and processing all output'''
@@ -143,9 +145,9 @@ if __name__ == '__main__':
     except:
         sys_type = 'bgl'
     if sys_type == 'bgp':
-        job_types = ['smp', 'co', 'dual', 'vn']
+        job_types = ['smp', 'co', 'dual', 'vn', 'script']
     else:
-        job_types = ['co', 'vn']
+        job_types = ['co', 'vn', 'script']
         
     if not opts['mode']:
         opts['mode'] = 'co'
@@ -213,7 +215,7 @@ if __name__ == '__main__':
         if not os.path.isfile(jobspec.get('inputfile')):
             logger.error("file %s not found, or is not a file" % jobspec.get('inputfile'))
             raise SystemExit, 1
-    jobspec.update({'command':command[0], 'args':command[1:]})
+    jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
     try:
         filters = CP.get('cqm', 'filters').split(':')
@@ -221,19 +223,13 @@ if __name__ == '__main__':
         filters = []
     for filt in filters:
         processfilter(filt, jobspec)
-    
+
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-
-        # check if job can run in queue as specified
-        response = cqm.CanQueue(jobspec)
-
-        # try adding job to queue_manager
-        job = cqm.AddJob(jobspec)
-
-    except Cobalt.Proxy.CobaltComponentError:
-        logger.error("Can't connect to the queue manager")
-        raise SystemExit, 1
+        cqm = ComponentProxy("queue-manager")
+        job = cqm.add_jobs([jobspec])
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 31:
             logger.error("System draining. Try again later")
@@ -252,4 +248,7 @@ if __name__ == '__main__':
         logger.error("Error submitting job")
         raise SystemExit, 1
     # log jobid to stdout
-    print job[0]['jobid']
+    if job:
+        print job[0]['jobid']
+    else:
+        print "failed to create teh job.  maybe a queue isn't there"

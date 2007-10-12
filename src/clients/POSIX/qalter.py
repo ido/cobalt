@@ -5,7 +5,8 @@ __revision__ = '$Revision: 559 $'
 __version__ = '$Version$'
 
 import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re, logging
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 def processfilter(cmdstr, jobdict):
     '''Run a filter on the job, passing in all job args and processing all output'''
@@ -73,6 +74,12 @@ if __name__ == '__main__':
     CP.read(['/etc/cobalt.conf'])
 
     user = pwd.getpwuid(os.getuid())[0]
+    for i in range(len(args)):
+        try:
+            args[i] = int(args[i])
+        except:
+            logger.error("jobid must be an integer")
+            raise SystemExit, 1
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     updates = {}
     nc = 0
@@ -121,9 +128,9 @@ if __name__ == '__main__':
     except:
         sys_type = 'bgl'
     if sys_type == 'bgp':
-        job_types = ['smp', 'co', 'dual', 'vn']
+        job_types = ['smp', 'co', 'dual', 'vn', 'script']
     else:
-        job_types = ['co', 'vn']
+        job_types = ['co', 'vn', 'script']
         
     if opts['mode']:
         if opts['mode'] not in job_types:
@@ -174,10 +181,13 @@ if __name__ == '__main__':
         filters = []
     for filt in filters:
         processfilter(filt, updates)
-    
+
     try:
-        cqm = Cobalt.Proxy.queue_manager()
-        response = cqm.SetJobs(spec, updates)
+        cqm = ComponentProxy("queue-manager")
+        response = cqm.set_jobs(spec, updates)
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
     except xmlrpclib.Fault, flt:
         response = []
         if flt.faultCode == 30:
