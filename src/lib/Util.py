@@ -251,7 +251,10 @@ class PBSLog (object):
                 self.logdir,
                 self._last_date.strftime(format),
             )
-            self._last_file = file(filename, "a")
+            try:
+                self._last_file = open(filename, "a")
+            except IOError:
+                self._last_file = open(os.devnull, "a")
             return self._last_file
     logfile = property(_get_logfile)
     
