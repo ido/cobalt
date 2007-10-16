@@ -924,7 +924,6 @@ class ScriptMPIJob(Job):
         self.LogFinishPBS()
 
 
-# FIXME: this thing should extend DataList or something
 class JobList(DataList):
     item_cls = BGJob
     
@@ -1105,6 +1104,23 @@ class Queue(Data):
         else:
             return self.state
     smartstate = property(_get_smartstate)
+    
+    def can_queue(self, spec):
+        # check if queue is dead or draining
+        if self.state in ['draining', 'dead']:
+            raise xmlrpclib.Fault(30, "The '%s' queue is %s" % (self.name, self.state))
+
+        # test job against queue restrictions
+        probs = ''
+        for restriction in [r for r in self.restrictions if r.type == 'queue']:
+            result = restriction.CanAccept(spec)
+            if not result[0]:
+                probs = probs + result[1] + '\n'
+        if probs:
+            raise xmlrpclib.Fault(30, probs)
+        else:
+            return (True, probs)
+
 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -1163,21 +1179,7 @@ class QueueDict(DataDict):
 
         [testqueue] = [q for q in self.itervalues() if q.name == spec['queue']]
 
-        # check if queue is dead or draining
-        if testqueue.state in ['draining', 'dead']:
-            raise xmlrpclib.Fault(30, "The '%s' queue is %s" % (testqueue.name, testqueue.state))
-
-        # test job against queue restrictions
-        probs = ''
-        for restriction in [r for r in testqueue.restrictions if r.type == 'queue']:
-            result = restriction.CanAccept(spec)
-            if not result[0]:
-                probs = probs + result[1] + '\n'
-        if probs:
-            raise xmlrpclib.Fault(30, probs)
-        else:
-            return (True, probs)
-        
+        return testqueue.can_queue(spec)
 
 
 class QueueManager(Component):
@@ -1384,3 +1386,37 @@ class QueueManager(Component):
         return self.Queues.get_jobs(specs, _set_jobs, updates)
     set_jobs = exposed(query(set_jobs))
 
+    def move_jobs(self, specs, new_q_name):
+        if new_q_name not in self.Queues:
+            logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
+            raise xmlrpclib.Fault(30, "Error: queue '%s' does not exist" % new_q_name)
+        new_q = self.Queues[new_q_name]
+        
+        for job in self.Queues.get_jobs(specs):
+            if job.queue==new_q_name:
+                raise xmlrpclib.Fault(42, "job %d already in queue '%s'" % (job.jobid, new_q_name))   
+        
+        results = []
+        for q in self.Queues.itervalues():
+            # don't look in the target queue.  you'll go blind.
+            if q.name == new_q_name:
+                continue
+            
+            movelist = []
+            for job in q.jobs.q_get(specs):
+                if new_q.can_queue(job.to_rx()):
+                    movelist.append(job)
+                else:
+                    logger.error("attempted to move a job to queue'%s' which will not accept it" % new_q_name)
+                    raise xmlrpclib.Fault(42, "Error: queue '%s' will not accept job %r" % (new_q_name, job.to_rx()))
+                    
+            for job in movelist:
+                q.jobs.remove(job)
+                job.queue = new_q.name
+                results += new_q.jobs.q_add([job.to_rx()])
+        return results
+    move_jobs = exposed(query(move_jobs))
+                    
+            
+                
+        

@@ -177,6 +177,7 @@ if __name__ == '__main__':
         response = cqm.set_queues(spec, {'policy':opts['policy']})
     else:
         updates = {}
+        new_q_name = None
         if opts['hold']:
             updates['state'] = 'hold'
             spec[0]['state'] = 'queued'
@@ -184,8 +185,7 @@ if __name__ == '__main__':
             updates['state'] = 'queued'
             spec[0]['state'] = 'hold'
         if opts['queue']:
-            queue = opts['queue']
-            updates['queue'] = queue
+            new_q_name = opts['queue']
         if opts['index']:
             updates['index'] = opts['index']
         if opts['time']:
@@ -209,11 +209,15 @@ if __name__ == '__main__':
             updates['walltime'] = opts['time']
         try:
             response = cqm.set_jobs(spec, updates)
+            if new_q_name:
+                response += cqm.move_jobs(spec, new_q_name)
         except xmlrpclib.Fault, flt:
             response = []
             if flt.faultCode == 30:
                 print flt.faultString
                 raise SystemExit, 1
+            else:
+                print flt.faultString
     if not response:
         Cobalt.Logging.logging.error("Failed to match any jobs or queues")
     else:

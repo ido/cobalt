@@ -29,6 +29,7 @@ if __name__ == '__main__':
         level = 10
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qdel', to_syslog=False, level=level)
+    logger = Cobalt.Logging.logging.getLogger('qdel')
     try:
         cqm = ComponentProxy("queue-manager")
     except ComponentLookupError:

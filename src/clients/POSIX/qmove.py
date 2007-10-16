@@ -33,6 +33,7 @@ if __name__ == '__main__':
         level = 10
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qmove', to_syslog=False, level=level)
+    logger = Cobalt.Logging.logging.getLogger('qmove')
     try:
         cqm = ComponentProxy("queue-manager")
     except ComponentLookupError:
@@ -47,21 +48,17 @@ if __name__ == '__main__':
             raise SystemExit, 1
         
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
-    updates = {}
-    updates['queue'] = queue
 
     try:
-        response = cqm.set_jobs(spec, updates)
+        response = cqm.move_jobs(spec, queue)
     except xmlrpclib.Fault, flt:
-        response = []
-        if flt.faultCode == 30:
-            print flt.faultString
-            raise SystemExit, 1
+        print flt.faultString
+        raise SystemExit, 1
 
     if not response:
-        Cobalt.Logging.logging.error("Failed to match any jobs or queues")
+        logger.error("Failed to match any jobs or queues")
     else:
-        Cobalt.Logging.logging.debug(response)
+        logger.debug(response)
         print "   Moved Jobs to queue: " + queue
         for job in response:
             print "      %d" % job.get('jobid')

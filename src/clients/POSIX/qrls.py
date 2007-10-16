@@ -29,6 +29,7 @@ if __name__ == '__main__':
         level = 10
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qrls', to_syslog=False, level=level)
+    logger = Cobalt.Logging.logging.getLogger('qrls')
     try:
         cqm = ComponentProxy("queue-manager")
     except ComponentLookupError:
@@ -58,7 +59,7 @@ if __name__ == '__main__':
             raise SystemExit, 1
 
     if not response and not check_state:
-        Cobalt.Logging.logging.error("Failed to match any jobs or queues")
+        logger.error("Failed to match any jobs or queues")
     else:
         Cobalt.Logging.logging.debug(response)
         if check_state:

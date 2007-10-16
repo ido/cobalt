@@ -31,7 +31,8 @@ if __name__ == '__main__':
         print "cqwait %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
-    Cobalt.Logging.setup_logging('cqstat', to_syslog = False, level = level)
+    Cobalt.Logging.setup_logging('cqwait', to_syslog = False, level = level)
+    logger = Cobalt.Logging.logging.getLogger('cqwait')
     try:
         cqm = ComponentProxy("queue-manager")
     except ComponentLookupError:

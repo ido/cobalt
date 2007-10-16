@@ -29,6 +29,7 @@ if __name__ == '__main__':
         level = 10
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qhold', to_syslog=False, level=level)
+    logger = Cobalt.Logging.logging.getLogger('qhold')
     try:
         cqm = ComponentProxy("queue-manager")
     except ComponentLookupError:
@@ -58,9 +59,9 @@ if __name__ == '__main__':
             raise SystemExit, 1
 
     if not response and not check_state:
-        Cobalt.Logging.logging.error("Failed to match any jobs or queues")
+        logger.error("Failed to match any jobs or queues")
     else:
-        Cobalt.Logging.logging.debug(response)
+        logger.debug(response)
         if check_state:
             print "   Failed to place user hold on jobs: "
             for job in check_state:
