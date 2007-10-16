@@ -173,7 +173,7 @@ if __name__ == '__main__':
     if opts['output']:
         updates.update({'outputpath': opts['output']})
     if opts['held']:
-        updates.update({'state':'hold'})
+        updates.update({'state':'user hold'})
 
     try:
         filters = CP.get('cqm', 'filters').split(':')
