@@ -4,7 +4,11 @@
 __revision__ = '$Revision$'
 
 import logging, math, sys, time
-import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+
+from Cobalt.Data import Data, DataList
+from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 import Cobalt.SchedulerPolicies
 
@@ -29,33 +33,50 @@ def fifocmp(job1, job2):
         j2 = int(job2.get('jobid'))
     return cmp(j1, j2)
 
-class Reservation(Cobalt.Data.Data):
-    '''Reservation\nHas attributes:\nname, start, stop, cycle, users, resources'''
-    def Overlaps(self, location, start, duration):
+class Reservation(Data):
+    '''Reservation\nHas attributes:\nname, start, duration, cycle, users, locations'''
+    fields = Data.fields.copy()
+    fields.update(dict(
+        tag = "reservation",
+        name = None,
+        start = None,
+        duration = None,
+        cycle = None,
+        users = None,
+        locations = None,
+    ))
+    def overlaps(self, location, start, duration):
         '''check job overlap with reservations'''
+        if duration > self.cycle:
+            return True
+
+        my_stop = self.start + self.duration
         if location not in self.locations:
             return False
-        if self.start <= start <= self.stop:
+        if self.start <= start <= my_stop:
             return True
-        elif self.start <= (start + duration) <= self.stop:
+        elif self.start <= (start + duration) <= my_stop:
             return True
         if self.cycle == 0:
             return False
+        
         # 3 cases, front, back and complete coverage of a cycle
-        cstart = math.floor((start - self.start) / self.cycle)
-        if cstart <= start <= (cstart + self.duration):
+        cstart = (start - self.start) % self.cycle
+        cend = (start + duration - self.start) % self.cycle
+        if cstart <= self.duration:
             return True
-        cend = math.floor(((start + duration) - self.start) / self.cycle)
-        if cend <= (start + duration) <= (cend + self.duration):
+        if cend <= self.duration:
             return True
-        if duration >= self.cycle:
+        if cstart > cend:
             return True
+        
         return False
 
     def IsActive(self, stime=False):
         if not stime:
             stime = time.time()
-        if self.start <= stime <= self.stop:
+        now = (stime - self.start) % self.cycle    
+        if now <= self.duration:
             return True
 
     def FilterPlacements(self, placements, resources):
@@ -258,6 +279,7 @@ class BGSched(Cobalt.Component.Component):
             potential[job] = []
             [potential[job].append(partition) for partition \
              in self.resources if partition.CanRun(job)]
+
         placements = []
         # call all queue policies
         [q.policy.Prepare(viable, potential) for q in self.queues]
@@ -294,4 +316,3 @@ class BGSched(Cobalt.Component.Component):
         pass
 
     
-
