@@ -97,12 +97,16 @@ class Data (object):
         spec -- A dictionary specifying the values of fields on the entity.
         """
         
-        for field, value in self.fields.iteritems():
-            if not hasattr(self, field):
-                setattr(self, field, value)
+        if spec is None:
+            spec = self.fields.copy()
+        else:
+            _spec = self.fields.copy()
+            _spec.update(spec)
+            spec = _spec
         
-        if spec is not None:
-            self.update(spec)
+        for field, value in spec.iteritems():
+            if getattr(self, field, None) is None:
+                setattr(self, field, value)
         
         for field in self.required_fields:
             if getattr(self, field, None) is None:
