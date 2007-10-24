@@ -1,8 +1,6 @@
 import os
-import sets
 
 from Cobalt.Components.system import Simulator
-from Cobalt.Logging import log_to_stderr
 
 from test_base import TestComponent
 
@@ -15,7 +13,6 @@ class TestSimulator (TestComponent):
     def setup (self):
         TestComponent.setup(self)
         self.system = Simulator(config_file="simulator.xml")
-        log_to_stderr(self.system.logger)
     
     def test_init_configure (self):
         config_file = "simulator.xml"
