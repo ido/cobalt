@@ -184,8 +184,12 @@ class AccountingLog:
     def RotateLog(self):
         if self.date != time.localtime()[:3]:
             self.date = time.localtime()[:3]
-            self.logfile = open("%s/%s-%s_%02d_%02d.log" % \
-                                ((self.logdir, self.name,) + self.date), 'a+')
+            date_string = "%s_%02d_%02d" % self.date
+            logfile = "%s/%s-%s.log" % (self.logdir, self.name, date_string)
+            try:
+                self.logfile = open(logfile, 'a+')
+            except IOError:
+                self.logfile = open(os.devnull, 'a+')
     def LogMessage(self, message):
         self.RotateLog()
         timenow = time.strftime("%Y-%m-%d %T", time.localtime())
