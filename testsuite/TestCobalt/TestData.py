@@ -70,7 +70,10 @@ class TestData (object):
     
     def test_required_fields (self):
         class NewData (Data):
+            fields = Data.fields.copy()
             required_fields = self.FIELDS.keys()
+            for field in required_fields:
+                fields[field] = None
         
         try:
             data = NewData()
@@ -97,23 +100,34 @@ class TestData (object):
     def test_get (self):
         warnings.simplefilter("ignore", DeprecationWarning)
         warnings.simplefilter("ignore", RuntimeWarning)
-        data = Data(self.FIELDS)
+        
+        class NewData (Data):
+            fields = Data.fields.copy()
+            for field in self.FIELDS.iterkeys():
+                fields[field] = None
+        
+        data = NewData(self.FIELDS)
         for key, value in self.FIELDS.items():
             assert data.get(key) == value
     
     def test_get_default (self):
         warnings.simplefilter("ignore", DeprecationWarning)
-        data = Data(self.FIELDS)
         
+        class NewData (Data):
+            fields = Data.fields.copy()
+            for field in self.FIELDS.iterkeys():
+                fields[field] = None
+        
+        data = NewData(self.FIELDS)
         for key, value, default in zip(self.FIELDS.keys(), self.FIELDS.values(), self.INVALID_FIELDS.values()):
             assert data.get(key, default) == value
-        
         for key, value in self.INVALID_FIELDS.items():
             assert data.get(key) is None
             assert data.get(key, value) == value
     
     def test_set (self):
         warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
         data = Data()
         
         for key, value in self.FIELDS.items():
@@ -128,15 +142,18 @@ class TestData (object):
             assert getattr(data, key) == value
     
     def test_match (self):
-        data = Data(self.FIELDS)
+        class NewData (Data):
+            fields = Data.fields.copy()
+            for field in self.FIELDS.iterkeys():
+                fields[field] = None
         
+        data = NewData(self.FIELDS)
         assert data.match(self.FIELDS)
         
         fields = self.FIELDS.copy()
         for key, value in zip(fields.keys(), self.INVALID_FIELDS.values()):
             fields[key] = value
         assert not data.match(fields)
-        
         assert not data.match(self.INVALID_FIELDS)
     
     def test_setstate (self):
