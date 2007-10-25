@@ -18,6 +18,7 @@ from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
 logger = logging.getLogger('cqm')
+cqm_id_gen = IncrID()
 
 class ProcessManagerError(Exception):
     '''This error occurs when communications with the process manager fail'''
@@ -929,7 +930,7 @@ class JobList(DataList):
     
     def __init__(self, q):
         self.queue = q
-        self.id_gen = IncrID()
+        self.id_gen = cqm_id_gen
         
     def add_helper(self, job, *cargs):
         job.pbslog.log("Q",

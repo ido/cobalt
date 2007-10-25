@@ -6,20 +6,13 @@ __revision__ = '$Revision$'
 import logging, math, sys, time
 import Cobalt.Logging, Cobalt.Util
 
-from Cobalt.Data import Data, DataList
+from Cobalt.Data import Data, ForeignData, ForeignDataDict
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 import Cobalt.SchedulerPolicies
 
-logger = logging.getLogger('bgsched')
-
-def lazy_component_proxy (component_name, method_name):
-    def call_method ():
-        component = Cobalt.Proxy.ComponentProxy(component_name)
-        method = getattr(component, method_name)
-        return method()
-    return call_method
+logger = logging.getLogger('Cobalt.Components.BGSched')
 
 def fifocmp(job1, job2):
     '''Compare 2 jobs for fifo mode'''
@@ -142,8 +135,18 @@ class ReservationSet(Cobalt.Data.DataSet):
     def Del(self, cdata, callback=None, cargs={}):
         Cobalt.Data.DataSet.Del(self, cdata, self.DeleteRQueue, cargs)
 
-class Partition(Cobalt.Data.ForeignData):
+class Partition(ForeignData):
     '''Partitions are allocatable chunks of the machine'''
+    fields = Data.fields.copy()
+    fields.update(dict(
+        queue = None,
+        name = None,
+        nodecards = None,
+        scheduled = None,
+        functional = None,
+        size = None,
+    ))
+
     def CanRun(self, job):
         '''Check that job can run on partition with reservation constraints'''
         basic = self.scheduled and self.functional
@@ -156,12 +159,12 @@ class Partition(Cobalt.Data.ForeignData):
             return False
         return queue
 
-class PartitionSet(Cobalt.Data.ForeignDataSet):
-    __object__ = Partition
+class PartitionDict(ForeignDataDict):
+    item_cls = Partition
     __failname__ = 'System Connection'
-    __function__ = lazy_component_proxy('system', 'GetBlah')
-    __fields__ = ['name', 'queue', 'nodecards']
-    __unique__ = 'name'
+    __function__ = ComponentProxy("system").get_partitions
+    __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size']
+    key = 'name'
 
     def GetOverlaps(self, partnames):
         ncs = []
@@ -173,22 +176,41 @@ class PartitionSet(Cobalt.Data.ForeignDataSet):
                 ret.append(part)
         return ret
 
-class Job(Cobalt.Data.ForeignData):
+class Job(ForeignData):
     '''This class represents User Jobs'''
+    fields = Data.fields.copy()
+    fields.update(dict(
+        nodes = None,
+        location = None,
+        jobid = None,
+        state = None,
+        index = None,
+        walltime = None,
+        queue = None,
+        user = None,
+    ))
+
     def __init__(self, element):
         Cobalt.Data.ForeignData.__init__(self, element)
         self.partition = 'none'
         logger.info("Job %s/%s: Found new job" % (self.jobid, self.user))
 
-class JobSet(Cobalt.Data.ForeignDataSet):
-    __object__ = Job
-    __unique__ = 'jobid'
+class JobDict(ForeignDataDict):
+    item_cls = Job
+    key = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection")
-    __function__ = lazy_component_proxy('queue-manager', 'GetJobs')
+    __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user']
 
-class Queue(Cobalt.Data.ForeignData):
+class Queue(ForeignData):
+    fields = Data.fields.copy()
+    fields.update(dict(
+        name = None,
+        state = None,
+        policy = None,
+    ))
+
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
         if self.policy not in Cobalt.SchedulerPolicies.names:
@@ -196,34 +218,37 @@ class Queue(Cobalt.Data.ForeignData):
                          (self.policy, self.name))
         else:
             pclass = Cobalt.SchedulerPolicies.names[self.policy]
-            self.policy = pclass()
+            self.policy = pclass(self.name)
 
 
-class QueueSet(Cobalt.Data.ForeignDataSet):
-    __object__ = Queue
-    __unique__ = 'name'
-    __function__ = lazy_component_proxy('queue-manager', 'GetQueues')
-    __fields__ = ['name', 'status', 'policy']
+class QueueDict(ForeignDataDict):
+    item_cls = Queue
+    key = 'name'
+    __function__ = ComponentProxy("queue-manager").get_queues
+    __fields__ = ['name', 'state', 'policy']
 
     def Sync(self):
-        qp = [(q.get('name'), q.get('policy')) for q in self]
-        Cobalt.Data.ForeignDataSet.Sync()
-        [q.LoadPolicy() for q in self \
-         if (q.get('name'), q.get('policy')) not in qp]
+        qp = [(q.name, q.policy) for q in self.itervalues()]
+        Cobalt.Data.ForeignDataDict.Sync(self)
+        [q.LoadPolicy() for q in self.itervalues() \
+         if (q.name, q.policy) not in qp]
 
-class BGSched(Cobalt.Component.Component):
+class BGSched(Component):
     '''This scheduler implements a fifo policy'''
-    __implementation__ = 'bgsched'
-    __name__ = 'scheduler'
+    implementation = 'bgsched'
+    name = 'scheduler'
     __statefields__ = ['reservations']
     __schedcycle__ = 10
+    
+    logger = logging.getLogger("Cobalt.Components.BGSched")
 
-    def __init__(self, setup):
-        self.jobs = JobSet()
-        self.queues = QueueSet()
+
+    def __init__(self, *args, **kwargs):
+        self.jobs = JobDict()
+        self.queues = QueueDict()
         self.reservations = ReservationSet()
-        self.resources = PartitionSet()
-        Cobalt.Component.Component.__init__(self, setup)
+        self.resources = PartitionDict()
+        Component.__init__(self, *args, **kwargs)
         self.executed = []
         self.lastrun = 0
 
@@ -239,21 +264,30 @@ class BGSched(Cobalt.Component.Component):
         return self.reservations.Get(*args)
     GetReservation = exposed(GetReservation)
 
-    def SetReservation(self, *args):
-        return self.reservations.Get(*args,
-                                     callback = \
-                                     lambda r, na:r.update(na))
-    SetReservation = exposed(SetReservation)
+#    def SetReservation(self, *args):
+#        return self.reservations.Get(*args,
+#                                     callback = \
+#                                     lambda r, na:r.update(na))
+#    SetReservation = exposed(SetReservation)
 
     def SyncData(self):
-        for item in [self.resources, self.queues, self.jobs]:
+        for item in [self.jobs, self.queues, self.resources]:
             item.Sync()
+            if not item.__oserror__.status:
+                self.logger.error(item.__class__.__name__ + " unable to sync")
     SyncData = automatic(SyncData)
 
     def Schedule(self):
         # self queues contains queues
+        if not (self.resources.__oserror__.status and self.queues.__oserror__.status and self.jobs.__oserror__.status):
+            self.logger.error("foreign data scynchronization failed: disabling scheduling")
+            return
         activeq = []
-        for q in self.queues:
+        print "right then:"
+        print "    ", repr(self.queues)
+        print "        ", repr(self.queues.get('default', []))
+        print "    ", repr(self.jobs)
+        for q in self.queues.itervalues():
             if q.get('name').startswith('R.'):
                 if True in \
                    [rm.Active() for rm in \
@@ -264,25 +298,27 @@ class BGSched(Cobalt.Component.Component):
                     activeq.append(q.get('name'))
         print "activeq:", activeq
         # self.jobs contains jobs
-        activej = [j for j in self.jobs if j.get('queue') in activeq \
+        activej = [j for j in self.jobs.itervalues() if j.get('queue') in activeq \
                    and j.get('state') == 'queued']
         print "activej:", activej
         potential = {}
         # FIXME need to perform search
         # need to check reservation conflict
         # return self.ImplementPolicy(potential, depinfo)
-        viable = []
-        [viable.extend(queue.keys()) for queue in potential.values()]
+        
+#        viable = []
+#        [viable.extend(queue.keys()) for queue in potential.values()]
+        viable = activej[:]
         viable.sort(fifocmp)
         potential = {}
         for job in viable:
             potential[job] = []
             [potential[job].append(partition) for partition \
-             in self.resources if partition.CanRun(job)]
+             in self.resources.itervalues() if partition.CanRun(job)]
 
         placements = []
         # call all queue policies
-        [q.policy.Prepare(viable, potential) for q in self.queues]
+        [q.policy.Prepare(viable, potential) for q in self.queues.itervalues()]
         # place all viable jobs
         for job in viable:
             QP = self.queues[job.get('queue')].policy
@@ -298,9 +334,9 @@ class BGSched(Cobalt.Component.Component):
 
     def TidyPlacements(self, potential, newlocation):
         '''Remove any potential spots that overlap with newlocation'''
-        nodecards = [res for res in self.resources \
+        nodecards = [res for res in self.resources.itervalues() \
                      if res.get('name') == newlocation][0].get('nodecards')
-        overlap = [res.get('name') for res in self.resources \
+        overlap = [res.get('name') for res in self.resources.itervalues() \
                    if [nc for nc in res.get('nodecards') \
                        if nc in nodecards]]
         for queue in potential:
@@ -313,6 +349,7 @@ class BGSched(Cobalt.Component.Component):
     def RunJobs(self, placements):
         '''Connect to cqm and run jobs'''
         # FIXME
-        pass
+        print "trying to run a job"
+        print "    ", repr(placements)
 
     

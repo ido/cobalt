@@ -35,8 +35,8 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     try:
-        sched = Cobalt.Proxy.scheduler()
-    except Cobalt.Proxy.CobaltComponentError:
+        sched = ComponentProxy("scheduler")
+    except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
 

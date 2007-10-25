@@ -20,7 +20,6 @@ import logging, os, pwd, signal, sys, tempfile, time
 import Cobalt.Logging
 from Cobalt.Data import Data, DataList
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Server import XMLRPCServer, find_intended_location
 
 class ProcessGroup(Data):
     '''Run a script'''

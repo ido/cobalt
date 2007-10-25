@@ -4,11 +4,11 @@ __revision__ = '$Revision: $'
 class SchedulerPolicy(object):
     '''Null policy implementation'''
     __name__ = 'null'
-    def __init__(self, qname, resources, jobs, reservations):
+    def __init__(self, qname):
         self.qname = qname
-        self.resources = resources
-        self.jobs = jobs
-        self.reservations = reservations
+#        self.resources = resources
+#        self.jobs = jobs
+#        self.reservations = reservations
 
     def Prepare(self, idle, potential):
         '''Prepare scheduler policy for schedule interation'''

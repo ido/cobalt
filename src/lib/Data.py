@@ -529,7 +529,7 @@ class ForeignData(Data):
             self.stamp = spec['stamp']
 
 
-class ForeignDataSet(DataSet):
+class ForeignDataDict(DataDict):
     __oserror__ = Cobalt.Util.FailureMode("ForeignData connection")
     __function__ = lambda x:[]
     __procedure__ = None
@@ -541,6 +541,7 @@ class ForeignDataSet(DataSet):
             foreign_data = self.__function__([spec])
         except Exception:
             self.__oserror__.Fail()
+            raise 
             return
         except:
             Cobalt.Util.logger.error("Unexpected fault during data sync",
@@ -548,20 +549,20 @@ class ForeignDataSet(DataSet):
             return
         self.__oserror__.Pass()
         
-        local_ids = [getattr(item, self.__unique__) for item in self]
-        foreign_ids = [item_dict[self.__unique__] for item_dict in foreign_data]
+        local_ids = [getattr(item, self.key) for item in self.itervalues()]
+        foreign_ids = [item_dict[self.key] for item_dict in foreign_data]
         
         # sync removed items
-        for item in self:
-            if getattr(item, self.__unique__) not in foreign_ids:
+        for item in self.itervalues():
+            if getattr(item, self.key) not in foreign_ids:
                 self.remove(item)
         
         # sync new items
         for item_dict in foreign_data:
-            if item_dict[self.__unique__] not in local_ids:
-                self.Add(item_dict)
+            if item_dict[self.key] not in local_ids:
+                self.q_add([item_dict])
         
         # sync all items
         for item_dict in foreign_data:
-            item_id = item_dict[self.__unique__]
+            item_id = item_dict[self.key]
             self[item_id].Sync(item_dict)
