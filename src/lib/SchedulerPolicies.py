@@ -21,8 +21,8 @@ class SchedulerPolicy(object):
 class FirstFit(SchedulerPolicy):
     __name__ = 'FirstFit'
 
-    def PlaceJobs(self, job, potential):
-        return (jname, potential[job][0])
+    def PlaceJob(self, job, potential):
+        return (job, potential[job.jobid][0])
 
 class DeferAll(FirstFit):
     __name__ = 'DeferAll'

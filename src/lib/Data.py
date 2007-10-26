@@ -553,9 +553,9 @@ class ForeignDataDict(DataDict):
         foreign_ids = [item_dict[self.key] for item_dict in foreign_data]
         
         # sync removed items
-        for item in self.itervalues():
-            if getattr(item, self.key) not in foreign_ids:
-                self.remove(item)
+        for item in local_ids:
+            if item not in foreign_ids:
+                del self[item]
         
         # sync new items
         for item_dict in foreign_data:

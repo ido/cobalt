@@ -145,6 +145,8 @@ class Partition(ForeignData):
         scheduled = None,
         functional = None,
         size = None,
+        parents = None,
+        children = None,
     ))
 
     def CanRun(self, job):
@@ -163,7 +165,7 @@ class PartitionDict(ForeignDataDict):
     item_cls = Partition
     __failname__ = 'System Connection'
     __function__ = ComponentProxy("system").get_partitions
-    __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size']
+    __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children']
     key = 'name'
 
     def GetOverlaps(self, partnames):
@@ -283,10 +285,6 @@ class BGSched(Component):
             self.logger.error("foreign data scynchronization failed: disabling scheduling")
             return
         activeq = []
-        print "right then:"
-        print "    ", repr(self.queues)
-        print "        ", repr(self.queues.get('default', []))
-        print "    ", repr(self.jobs)
         for q in self.queues.itervalues():
             if q.get('name').startswith('R.'):
                 if True in \
@@ -301,31 +299,39 @@ class BGSched(Component):
         activej = [j for j in self.jobs.itervalues() if j.get('queue') in activeq \
                    and j.get('state') == 'queued']
         print "activej:", activej
-        potential = {}
-        # FIXME need to perform search
-        # need to check reservation conflict
-        # return self.ImplementPolicy(potential, depinfo)
+
+        #############################################
+        # FIXME need to check reservation conflict
+        #       somewhere in this function
+        #############################################
         
-#        viable = []
-#        [viable.extend(queue.keys()) for queue in potential.values()]
         viable = activej[:]
         viable.sort(fifocmp)
         potential = {}
-        for job in viable:
-            potential[job] = []
-            [potential[job].append(partition) for partition \
+        dead_to_me = []
+        for job in viable[:]:
+            tmp_list = []
+            [tmp_list.append(partition) for partition \
              in self.resources.itervalues() if partition.CanRun(job)]
-
+            
+            if tmp_list:
+                potential[job.jobid] = tmp_list
+            else:
+                viable.remove(job)
+            
         placements = []
         # call all queue policies
         [q.policy.Prepare(viable, potential) for q in self.queues.itervalues()]
         # place all viable jobs
         for job in viable:
+            # do something sensible when TidyPlacements yanked a job out from under us
+            if not potential.has_key(job.jobid):
+                continue
             QP = self.queues[job.get('queue')].policy
             place = QP.PlaceJob(job, potential)
             if place:
                 # clean up that job placement
-                del potential[job.get('queue')][job.get('jobid')]
+                del potential[job.jobid]
                 # tidy other placements
                 self.TidyPlacements(potential, place[1])
                 placements.append(place)
@@ -334,22 +340,40 @@ class BGSched(Component):
 
     def TidyPlacements(self, potential, newlocation):
         '''Remove any potential spots that overlap with newlocation'''
-        nodecards = [res for res in self.resources.itervalues() \
-                     if res.get('name') == newlocation][0].get('nodecards')
-        overlap = [res.get('name') for res in self.resources.itervalues() \
-                   if [nc for nc in res.get('nodecards') \
-                       if nc in nodecards]]
-        for queue in potential:
-            for job, locations in queue.iteritems():
-                [locations.remove(location) for location in locations \
-                 if location in overlap]
-                if not locations:
-                    del queue[job]
+        print "new location: %r" % newlocation
+        print "   %r" % newlocation.parents
+        print "   %r" % newlocation.children
+        cleanup = []
+        for job in potential.keys():
+            for location in potential[job][:]:
+                if location.name==newlocation.name or location.name in newlocation.parents or location.name in newlocation.children:
+                    potential[job].remove(location)
+            if not potential[job]:
+                del potential[job]
+
+#        for job in cleanup:
+#            del potential[job]
 
     def RunJobs(self, placements):
         '''Connect to cqm and run jobs'''
         # FIXME
         print "trying to run a job"
         print "    ", repr(placements)
+        
+        try:
+            cqm = ComponentProxy("queue-manager")
+        except ComponentLookupError:
+            print >> sys.stderr, "Failed to connect to queue manager"
+            sys.exit(1)
+        
+        for p in placements:
+            job = p[0]
+            location = p[1].name
+            print "location --> " + location
+            
+            spec = {'tag':"job", 'jobid':job.jobid}
+            cqm.run_jobs([spec], [location])
+        
+        
 
     
