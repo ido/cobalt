@@ -77,10 +77,26 @@ class Partition (Data):
     
     def __init__ (self, *args, **kwargs):
         """Initialize a new partition."""
-        self.parents = sets.Set()
-        self.children = sets.Set()
+        self._parents = sets.Set()
+        self._children = sets.Set()
         self._busy = False
         Data.__init__(self, *args, **kwargs)
+    
+    def _get_parents (self):
+        return [parent.name for parent in self._parents]
+    
+    def _set_parents (self, value):
+        pass
+    
+    parents = property(_get_parents, _set_parents)
+    
+    def _get_children (self):
+        return [child.name for child in self._children]
+    
+    def _set_children (self):
+        pass
+    
+    children = property(_get_children, _set_children)
     
     def __str__ (self):
         return self.name
@@ -89,7 +105,7 @@ class Partition (Data):
         return "<%s name=%r>" % (self.__class__.__name__, self.name)
     
     def _get_state (self):
-        for partition in self.parents | self.children:
+        for partition in self._parents | self._children:
             if partition._busy:
                 return "blocked"
         if self._busy:
@@ -213,13 +229,13 @@ class Simulator (Component):
         # parent/child relationships
         for partition_def in system_def.getiterator("Partition"):
             partition = partitions[partition_def.get("name")]
-            partition.children.update([
+            partition._children.update([
                 partitions[child_def.get("name")]
                 for child_def in partition_def.getiterator("Partition")
                 if child_def.get("name") != partition.name
             ])
-            for child in partition.children:
-                child.parents.add(partition)
+            for child in partition._children:
+                child._parents.add(partition)
         
         # update object state
         self.partitions.clear()
