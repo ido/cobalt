@@ -271,7 +271,7 @@ class Simulator (Component):
         self.logger.info("add_partitions(%r)" % (specs))
         specs = [{'name':spec.get("name")} for spec in specs]
         partitions = [
-            partition for partition in self._partitions.itervalues()
+            partition for partition in self._partitions.q_get(specs)
             if partition.name not in self._managed_partitions
         ]
         self._managed_partitions.update([

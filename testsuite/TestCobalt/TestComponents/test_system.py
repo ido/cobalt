@@ -31,7 +31,7 @@ class TestSimulator (TestComponent):
         assert system._partitions
     
     def test_reserve_partition (self):
-        self.system.add_partitions([{'name':self.system._partitions.values()[0]}])
+        self.system.add_partitions([{'name':self.system._partitions.keys()[0]}])
         idle_partitions = self.system.get_partitions([{'state':"idle"}])
         partition = idle_partitions[0]
         reserved = self.system.reserve_partition(partition.name)
@@ -43,7 +43,7 @@ class TestSimulator (TestComponent):
             assert child.state == "blocked"
     
     def test_release_partition (self):
-        self.system.add_partitions([{'name':self.system._partitions.values()[0]}])
+        self.system.add_partitions([{'name':self.system._partitions.keys()[0]}])
         idle_partitions_before = self.system.get_partitions([{'state':"idle"}])
         partition = idle_partitions_before[0]
         self.system.reserve_partition(partition.name)
