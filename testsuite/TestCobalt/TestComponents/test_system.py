@@ -20,34 +20,35 @@ class TestSimulator (TestComponent):
         system = Simulator()
         assert not system.partitions
         system = Simulator(config_file=config_file)
-        assert system.partitions
+        assert system._partitions
     
     def test_configure (self):
         config_file = "simulator.xml"
         assert os.path.exists(config_file)
         system = Simulator()
-        assert not system.partitions
+        assert not system._partitions
         system.configure(config_file)
-        assert system.partitions
+        assert system._partitions
     
     def test_reserve_partition (self):
-        idle_partitions = self.system.partitions.q_get([{'state':"idle"}])
+        self.system.add_partitions([{'name':self.system._partitions.values()[0]}])
+        idle_partitions = self.system.get_partitions([{'state':"idle"}])
         partition = idle_partitions[0]
         reserved = self.system.reserve_partition(partition.name)
         assert reserved
-        print partition.state
         assert partition.state == "busy"
-        for parent in partition.parents:
+        for parent in self.system._partitions.q_get([{'name':parent} for parent in partition.parents]):
             assert parent.state == "blocked"
-        for child in partition.children:
+        for child in self.system._partitions.q_get([{'name':child} for child in partition.children]):
             assert child.state == "blocked"
     
     def test_release_partition (self):
-        idle_partitions_before = self.system.partitions.q_get([{'state':"idle"}])
+        self.system.add_partitions([{'name':self.system._partitions.values()[0]}])
+        idle_partitions_before = self.system.get_partitions([{'state':"idle"}])
         partition = idle_partitions_before[0]
         self.system.reserve_partition(partition.name)
         self.system.release_partition(partition.name)
-        idle_partitions_after = self.system.partitions.q_get([{'state':"idle"}])
+        idle_partitions_after = self.system.get_partitions([{'state':"idle"}])
         assert idle_partitions_before == idle_partitions_after
     
     def test_add_jobs (self):

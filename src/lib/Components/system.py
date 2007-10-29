@@ -195,11 +195,20 @@ class Simulator (Component):
     def __init__ (self, *args, **kwargs):
         """Initialize a system simulator."""
         Component.__init__(self, *args, **kwargs)
-        self.partitions = PartitionDict()
+        self._partitions = PartitionDict()
+        self._managed_partitions = sets.Set()
         self.jobs = JobDict()
         config_file = kwargs.get("config_file", None)
         if config_file is not None:
             self.configure(config_file)
+    
+    def _get_partitions (self):
+        return PartitionDict([
+            (partition.name, partition) for partition in self._partitions.itervalues()
+            if partition.name in self._managed_partitions
+        ])
+    
+    partitions = property(_get_partitions)
     
     def configure (self, config_file):
         
@@ -238,8 +247,8 @@ class Simulator (Component):
                 child._parents.add(partition)
         
         # update object state
-        self.partitions.clear()
-        self.partitions.update(partitions)
+        self._partitions.clear()
+        self._partitions.update(partitions)
     
     def get_state (self):
         """Retrieve db2-like status list.
@@ -258,11 +267,34 @@ class Simulator (Component):
         ]
     get_state = exposed(get_state)
     
+    def add_partitions (self, specs):
+        self.logger.info("add_partitions(%r)" % (specs))
+        specs = [{'name':spec.get("name")} for spec in specs]
+        partitions = [
+            partition for partition in self._partitions.itervalues()
+            if partition.name not in self._managed_partitions
+        ]
+        self._managed_partitions.update([
+            partition.name for partition in partitions
+        ])
+        return partitions
+    add_partition = exposed(query(add_partitions))
+    
     def get_partitions (self, specs):
         """Query partitions on simulator."""
         self.logger.info("get_partitions(%r)" % (specs))
         return self.partitions.q_get(specs)
     get_partitions = exposed(query(get_partitions))
+    
+    def del_partitions (self, specs):
+        self.logger.info("del_partitions(%r)" % (specs))
+        partitions = [
+            partition for partition in self._partitions.q_get(specs)
+            if partition.name in self._managed_partitions
+        ]
+        self._managed_partitions -= [partition.name for partition in partitions]
+        return partitions
+    del_partitions = exposed(query(del_partitions))
     
     def reserve_partition (self, name, size=None):
         """Reserve a partition and block all related partitions.
