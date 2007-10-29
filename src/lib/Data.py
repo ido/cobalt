@@ -1,7 +1,11 @@
-'''Data builds up datatype definitions on top of XML-RPC serializable python types'''
+"""XML-transportable state objects."""
+
 __revision__ = '$Revision$'
 
-import time, types, xmlrpclib, random
+import time
+import types
+import xmlrpclib
+import random
 import warnings
 import sets
 
@@ -159,11 +163,8 @@ class Data (object):
             fields = self.fields.keys()
         return dict([(field, getattr(self, field, None)) for field in fields])
     
-    # deprecated interface definition below here
-    # ==========================================
-    
     def update (self, spec):
-        """Update the values of multiple fields on an entity.
+        """(deprecated) Update the values of multiple fields on an entity.
         
         Though this method has not been officially deprecated, it should not
         be used in new code.
@@ -171,6 +172,7 @@ class Data (object):
         Arguments:
         spec -- A dictionary specifying the values of fields to set.
         """
+        warnings.warn("Use of Cobalt.Data.Data.update is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
         for key, value in spec.iteritems():
             if not hasattr(self, key):
                 warnings.warn("Creating new attribute '%s' on '%s' with update." % (key, self), RuntimeWarning, stacklevel=2)
