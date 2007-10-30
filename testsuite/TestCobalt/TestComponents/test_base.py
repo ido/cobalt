@@ -2,7 +2,7 @@ import logging
 
 from Cobalt.Components.base import Component, exposed, automatic
 import Cobalt.Proxy
-
+from sets import Set as set
 
 class TestComponent (object):
     
@@ -16,13 +16,13 @@ class TestComponent (object):
         
         class TestComponent (Component):
             
-            @exposed
             def method1 (self):
                 return "return1"
+            method1 = exposed(method1)
             
-            @exposed
             def method2 (self):
                 return "return2"
+            method2 = exposed(method2)
             
             def method3 (self):
                 return "return3"
@@ -48,13 +48,13 @@ class TestComponent (object):
             
             runs = dict(method1=0, method2=0, method3=0)
             
-            @automatic
             def method1 (self):
                 self.runs['method1'] += 1
+            method1 = automatic(method1)
             
-            @automatic
             def method2 (self):
                 self.runs['method2'] += 1
+            method2 = automatic(method2)
             
             def method3 (self):
                 self.runs['method3'] += 1
