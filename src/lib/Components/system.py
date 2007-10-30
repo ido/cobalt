@@ -296,6 +296,12 @@ class Simulator (Component):
         return partitions
     del_partitions = exposed(query(del_partitions))
     
+    def set_partitions (self, specs, updates):
+        def _set_partitions(part, newattr):
+            part.update(newattr)
+        return self._partitions.q_get(specs, _set_partitions, updates)
+    set_partitions = exposed(query(set_partitions))
+    
     def reserve_partition (self, name, size=None):
         """Reserve a partition and block all related partitions.
         

@@ -35,13 +35,13 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     try:
-        sched = ComponentProxy("scheduler")
+        system = ComponentProxy("system")
     except ComponentLookupError:
-        print "Failed to connect to scheduler"
+        print "Failed to connect to system component"
         raise SystemExit, 1
 
     if '-r' in sys.argv:
-        partdata = sched.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*',
+        partdata = system.get_partitions([{'tag':'partition', 'name':'*', 'queue':'*',
                                         'state':'*', 'scheduled':'*', 'functional':'*',
                                         'deps':'*'}])
         partinfo = Cobalt.Util.buildRackTopology(partdata)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     else:
         parts = args
     if '-a' in sys.argv:
-        func = sched.AddPartition
+        func = system.add_partitions
         try:
             [size] = [opt[1] for opt in opts if opt[0] == '-s']
         except:
@@ -62,32 +62,32 @@ if __name__ == '__main__':
         args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False,
                   'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], )
     elif '-d' in sys.argv:
-        func = sched.DelPartition
+        func = system.del_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts], )
     elif '--enable' in sys.argv:
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'scheduled':True})
     elif '--disable' in sys.argv:
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'scheduled':False})
     elif '--activate' in sys.argv:
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'functional':True})
     elif '--deactivate' in sys.argv:
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'functional':False})
     elif '-l' in sys.argv:
-        func = sched.GetPartition
+        func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
-                  'queue':'*', 'deps':'*'}], )
+                  'queue':'*', 'parents':'*', 'children':'*'}], )
     elif '--queue' in [opt for (opt, arg)  in opts]:
         try:
-            cqm = Cobalt.Proxy.queue_manager()
-            existing_queues = [q.get('name') for q in cqm.GetQueues([ \
+            cqm = ComponentProxy("queue-manager")
+            existing_queues = [q.get('name') for q in cqm.get_queues([ \
                 {'tag':'queue', 'name':'*'}])]
         except:
             print "Error getting queues from queue_manager"
@@ -95,18 +95,18 @@ if __name__ == '__main__':
         if queue.split(':') != [q for q in queue.split(':') if q in existing_queues]:
             print '\'' + queue + '\' is not an existing queue'
             raise SystemExit, 1
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'queue':queue})
     elif '--deps' in [opt for (opt, arg) in opts]:
         deps = [arg for (opt, arg) in opts if opt == '--deps'][0]
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts], {'deps':deps.split(':')})
     elif '--free' in [opt for (opt, arg) in opts]:
-        func = sched.Set
+        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts], {'state':'idle'})
     elif '--dump' in [opt for (opt, arg) in opts]:
-        func = sched.GetPartition
+        func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
     else:
@@ -122,20 +122,23 @@ if __name__ == '__main__':
 
     if '-l' in sys.argv:
         # need to cascade up busy and non-functional flags
-        partinfo = Cobalt.Util.buildRackTopology(parts)
+#        print "buildRackTopology sees : " + repr(parts)
+#
+#        partinfo = Cobalt.Util.buildRackTopology(parts)
         busy = [part['name'] for part in parts if part['state'] == 'busy']
         for part in parts:
             for pname in busy:
-                if pname in partinfo[part['name']][0] + partinfo[part['name']][1] and pname != part['name']:
+                if pname in part['children'] + part['parent'] and pname != part['name']:
                     part.__setitem__('state', 'blocked')
         offline = [part['name'] for part in parts if not part['functional']]
         forced = [part for part in parts \
                   if [down for down in offline \
-                      if down in partinfo[part['name']][0] + partinfo[part['name']][1]]]
+                      if down in part['children'] + part['parents']]]
         [part.__setitem__('functional', '-') for part in forced]
         data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+        # FIXME find something useful to output in the 'deps' column, since the deps have vanished
         data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
-                  part['state'], ','.join(part['deps'])] for part in parts]
+                  part['state'], ','.join([])] for part in parts]
         Cobalt.Util.printTabular(data, centered=[3, 4])
     else:
         print parts

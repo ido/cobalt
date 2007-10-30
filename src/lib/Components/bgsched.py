@@ -356,9 +356,6 @@ class BGSched(Component):
 
     def RunJobs(self, placements):
         '''Connect to cqm and run jobs'''
-        # FIXME
-        print "trying to run a job"
-        print "    ", repr(placements)
         
         try:
             cqm = ComponentProxy("queue-manager")
