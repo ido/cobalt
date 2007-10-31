@@ -34,9 +34,7 @@ class ComponentLookupError (Exception):
 
 
 def ComponentProxy (component_name, **kwargs):
-    """ServerProxy factory function.
-    
-    Returns proxies to components.
+    """Constructs proxies to components.
     
     Arguments:
     component_name -- name of the component to connect to
@@ -44,8 +42,8 @@ def ComponentProxy (component_name, **kwargs):
     Additional arguments are passed to the ServerProxy constructor.
     """
     
-    if kwargs.get("refresh", True):
-        return RefreshingProxy(component_name)
+    if kwargs.get("defer", True):
+        return DeferredProxy(component_name)
     
     if component_name in local_components:
         return LocalProxy(local_components[component_name])
@@ -96,38 +94,30 @@ class LocalProxyMethod (object):
         return self._proxy._component._dispatch(self._func_name, args)
 
 
-class RefreshingProxy (object):
+class DeferredProxy (object):
     
-    """Auto-refreshing proxy object.
+    """Defering proxy object.
     
     Gets a new proxy when it can't connect to a component.
     """
     
     def __init__ (self, component_name):
         self._component_name = component_name
-        self.refresh()
     
     def __getattr__ (self, attribute):
-        return RefreshingProxyMethod(self, attribute)
-    
-    def refresh (self):
-        self._proxy = ComponentProxy(self._component_name, refresh=False)
+        return DeferredProxyMethod(self, attribute)
 
 
-class RefreshingProxyMethod (object):
+class DeferredProxyMethod (object):
     
     def __init__ (self, proxy, func_name):
         self._proxy = proxy
         self._func_name = func_name
     
     def __call__ (self, *args):
-        func = getattr(self._proxy._proxy, self._func_name)
-        try:
-            return func(*args)
-        except socket.error:
-            self._proxy.refresh()
-            func = getattr(self._proxy._proxy, self._func_name)
-            return func(*args)
+        proxy = ComponentProxy(self._proxy._component_name, defer=False)
+        func = getattr(proxy, self._func_name)
+        return func(*args)
 
 
 def find_configured_servers (config_files=None):
