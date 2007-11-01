@@ -257,12 +257,12 @@ class BGSched (Component):
     #                                 lambda r, na:r.update(na))
     #SetReservation = exposed(SetReservation)
 
-    #def SyncData(self):
-    #    for item in [self.jobs, self.queues, self.partitions]:
-    #        item.Sync()
-    #        if not item.__oserror__.status:
-    #            self.logger.error(item.__class__.__name__ + " unable to sync")
-    #SyncData = automatic(SyncData)
+    def SyncData(self):
+        for item in [self.jobs, self.queues, self.partitions]:
+            item.Sync()
+            if not item.__oserror__.status:
+                self.logger.error(item.__class__.__name__ + " unable to sync")
+    SyncData = automatic(SyncData)
 
     def schedule_jobs (self):
         
@@ -281,6 +281,9 @@ class BGSched (Component):
         
         active_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues])
         
+        print "active_queues : %r" % active_queues
+        print "active_jobs : %r" % active_jobs
+        
         #############################################
         # FIXME need to check reservation conflict
         #       somewhere in this function
@@ -298,7 +301,7 @@ class BGSched (Component):
                 viable.remove(job)
         
         for queue in self.queues.itervalues():
-            q.policy.Prepare(viable, potential)
+            queue.policy.Prepare(viable, potential)
         
         placements = []
         for job in viable:
