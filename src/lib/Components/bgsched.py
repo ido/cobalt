@@ -113,21 +113,13 @@ class ReservationDict (Cobalt.Data.DataDict):
                     logger.error("unable to add reservation queue %s (%s)" % (reservation_queue, e))
                 else:
                     logger.info("added reservation queue %s" % reservation_queue)
-#                try:
-#                    part_list = system.get_partitions([{'name':p, 'queue':'*'} for p in reservation.partitions.split(":")])
-#                    for part in part_list:
-#                        system.set_partitions([{'name':part['name']}], {'queue':part['queue']+":R.%s" % reservation.name})
-#                except Exception, e:
-#                    logger.error("unable to update partition information for reservation %s (%s)" % (reservation.name, e))
-#                else:
-#                    logger.info("updated queue information for locations %s" % reservation.partitions)
     
         return reservations
         
     def q_del (self, *args, **kwargs):
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
         qm = ComponentProxy('queue-manager')
-        queues = [spec['name'] for spec in cqm.GetQueues([{'name':"*"}])]
+        queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         for reservation in reservations:
             reservation_queue = "R.%s" % reservation.name
             if reservation_queue in queues:
@@ -138,6 +130,7 @@ class ReservationDict (Cobalt.Data.DataDict):
                 else:
                     logger.info("reservation queue %s disabled" % reservation_queue)
 
+        return reservations
 
 class Partition (ForeignData):
     """Partitions are allocatable chunks of the machine"""
