@@ -18,52 +18,26 @@ if __name__ == '__main__':
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
-    reservations = {}
-    partitions = scheduler.get_partitions([{'size':'*', 'tag':'partition', 'name':'*', 'reservations':'*', 'deps':'*'}])
-    npart = {}
-    [npart.__setitem__(partition.get('name'), partition) for partition in partitions]
-    depinfo = Cobalt.Util.buildRackTopology(partitions)
-    for partition in partitions:
-        for reservation in partition['reservations']:
-            if reservations.has_key(tuple(reservation)):
-                reservations[tuple(reservation)].append(partition['name'])
-            else:
-                reservations[tuple(reservation)] = [partition['name']]
+    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 'start':'*', 'duration':'*', 'partitions':'*'}])
     output = []
     if '-l' in sys.argv:
+        verbose = True
         header = [('Reservation', 'User', 'Start', 'Duration', 'End Time', 'Partitions')]
-        for ((name, user, start, duration), partitions) in reservations.iteritems():
-            maxsize = max([npart[part].get('size') for part in partitions])
-            topparts = [npart[part] for part in partitions if npart[part].get('size') == maxsize]
-            for tp in topparts:
-                if len([part for part in partitions if part in depinfo[tp.get('name')][1]]) == len(depinfo[tp.get('name')][1]):
-                    # remove names of parts in depinfo of tp
-                    for p in partitions[:]:
-                        if p in depinfo[tp.get('name')][1] or p == tp.get('name'):
-                            partitions.remove(p)
-                    partitions.append(tp.get('name') + '*')
-#             if len([part for part in partitions if part in depinfo[toppart][1]]) == len(depinfo[toppart][1]):
-#                 partitions = toppart + '*'
-            dmin = (duration/60)%60
-            dhour = duration/3600
-            output.append((name, user, time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), str(' '.join(partitions))))
     else:
+        verbose = False
         header = [('Reservation', 'User', 'Start', 'Duration', 'Partitions')]
-        for ((name, user, start, duration), partitions) in reservations.iteritems():
-            maxsize = max([npart[part].get('size') for part in partitions])
-            topparts = [npart[part] for part in partitions if npart[part].get('size') == maxsize]
-            for tp in topparts:
-                if len([part for part in partitions if part in depinfo[tp.get('name')][1]]) == len(depinfo[tp.get('name')][1]):
-                    # remove names of parts in depinfo of tp
-                    for p in partitions[:]:
-                        if p in depinfo[tp.get('name')][1] or p == tp.get('name'):
-                            partitions.remove(p)
-                    partitions.append(tp.get('name') + '*')
-            dmin = (duration/60)%60
-            dhour = duration/3600
-            output.append((name, user, time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin), str(' '.join(partitions))))
+
+    for res in reservations:
+        start = float(res['start'])
+        duration = float(res['duration'])
+        dmin = (duration/60)%60
+        dhour = duration/3600
+        if verbose:
+            output.append((res['name'], res['users'], time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), res['partitions']))
+        else:
+            output.append((res['name'], res['users'], time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin), res['partitions']))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[2], "%c")), time.mktime(time.strptime(y[2], "%c"))) ) )
     Cobalt.Util.print_tabular(header + output)
