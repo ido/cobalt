@@ -15,7 +15,7 @@ from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 import Cobalt.SchedulerPolicies
 
-logger = logging.getLogger('Cobalt.Components.BGSched')
+logger = logging.getLogger("Cobalt.Components.scheduler")
 
 
 class Reservation (Data):
@@ -113,6 +113,14 @@ class ReservationDict (Cobalt.Data.DataDict):
                     logger.error("unable to add reservation queue %s (%s)" % (reservation_queue, e))
                 else:
                     logger.info("added reservation queue %s" % reservation_queue)
+            else:
+                try:
+                    qm.set_queues([{'name':reservation_queue}], {'state':"running", 'users':reservation.users})
+                except Exception, e:
+                    logger.error("unable to update reservation queue %s (%s)" % (reservation_queue, e))
+                else:
+                    logger.info("updated reservation queue %s" % reservation_queue)
+                
     
         return reservations
         
@@ -276,11 +284,16 @@ class BGSched (Component):
     sync_data = automatic(sync_data)
 
     def schedule_jobs (self):
+        '''look at the queued jobs, and decide which ones to start'''
         
+        # if we're missing information, don't bother trying to schedule jobs
         if not (self.partitions.__oserror__.status and self.queues.__oserror__.status and self.jobs.__oserror__.status):
             self.logger.error("foreign data scynchronization failed: disabling scheduling")
             return
         
+        # grab a snapshot of the currently active reservations to reduce the chance of
+        # problems with reservations starting and stopping while we're in the middle
+        # of scheduling
         active_reservations = []
         for res in self.reservations.itervalues():
             if res.is_active():
@@ -301,19 +314,32 @@ class BGSched (Component):
         viable.sort(fifocmp)
         potential = {}
         for job in viable[:]:
-            tmp_list = []   # [partition for partition in self.partitions.itervalues() if partition.can_run(job)]
+            tmp_list = []   
             for partition in self.partitions.itervalues():
+                # check if the current partition is linked to the job's queue or reservation
                 if job.queue.startswith('R.'):
+                    part_in_res = False
                     for part_name in self.reservations[job.queue[2:]].partitions.split(":"):
+                        if not part_name in self.partitions:
+                            self.logger.error("reservation '%s' refers to non-existant partition '%s'" % (job.queue[2:], part_name))
+                            continue
                         if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
                             continue
-                elif job.queue not in partition.queue.split(':'):
+                        # if we got here, then the partition is part of the reservation
+                        part_in_res = True
+                    
+                    if not part_in_res:
                         continue
+                    
+                elif job.queue not in partition.queue.split(':'):
+                    continue
+                    
                 if partition.can_run(job):
                     if active_reservations:
                         for res_name in active_reservations:
-                            res = self.reservations[res_name]
-                            if not res.overlaps(partition, time.time(), 60 * float(job.walltime)):
+                            # if the proposed job overlaps an active reservation, don't run it -- unless the job
+                            # belongs to the active reservation
+                            if not self.reservations[res_name].overlaps(partition, time.time(), 60 * float(job.walltime)):
                                 tmp_list.append(partition)
                             elif job.queue=="R.%s" % res_name:
                                 tmp_list.append(partition)
@@ -330,20 +356,20 @@ class BGSched (Component):
         
         placements = []
         for job in viable:
-            # do something sensible when TidyPlacements yanked a job out from under us
+            # do something sensible when tidy_placements yanked a job out from under us
             if not potential.has_key(job.jobid):
                 continue
             queue = self.queues[job.queue]
             place = queue.policy.PlaceJob(job, potential)
             if place:
                 del potential[job.jobid]
-                self.TidyPlacements(potential, place[1])
+                self.tidy_placements(potential, place[1])
                 placements.append(place)
         
         self.run_jobs(placements)
     schedule_jobs = automatic(schedule_jobs)
 
-    def TidyPlacements(self, potential, newlocation):
+    def tidy_placements(self, potential, newlocation):
         '''Remove any potential spots that overlap with newlocation'''
         cleanup = []
         for job in potential.keys():
