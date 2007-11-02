@@ -6,7 +6,7 @@ __version__ = '$Version$'
 
 import getpass
 import getopt, sys
-import Cobalt.Proxy
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -22,8 +22,8 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     try:
-        scheduler = Cobalt.Proxy.scheduler()
-    except Cobalt.Proxy.CobaltComponentError:
+        scheduler = ComponentProxy("scheduler")
+    except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     if opts:

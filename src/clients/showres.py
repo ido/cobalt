@@ -4,7 +4,8 @@ __revision__ = '$Revision$'
 __version__ = '$Version$'
 
 import sys, time
-import Cobalt.Proxy, Cobalt.Logging, Cobalt.Util
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -13,12 +14,12 @@ if __name__ == '__main__':
         raise SystemExit, 0
     Cobalt.Logging.setup_logging('showres', to_syslog=False, level=20)
     try:
-        scheduler = Cobalt.Proxy.scheduler()
-    except Cobalt.Proxy.CobaltComponentError:
+        scheduler = ComponentProxy("scheduler")
+    except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     reservations = {}
-    partitions = scheduler.GetPartition([{'size':'*', 'tag':'partition', 'name':'*', 'reservations':'*', 'deps':'*'}])
+    partitions = scheduler.get_partitions([{'size':'*', 'tag':'partition', 'name':'*', 'reservations':'*', 'deps':'*'}])
     npart = {}
     [npart.__setitem__(partition.get('name'), partition) for partition in partitions]
     depinfo = Cobalt.Util.buildRackTopology(partitions)

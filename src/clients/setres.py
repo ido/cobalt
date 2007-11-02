@@ -5,7 +5,8 @@ __revision__ = '$Id$'
 __version__ = '$Version$'
 
 import getopt, pwd, sys, time
-import Cobalt.Proxy, Cobalt.Util
+import Cobalt.Util
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 helpmsg = '''Usage: setres.py [--version] [-a] [-x] [-m] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
@@ -22,8 +23,8 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 0
     try:
-        scheduler = Cobalt.Proxy.scheduler()
-    except Cobalt.Proxy.CobaltComponentError:
+        scheduler = ComponentProxy("scheduler")
+    except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
@@ -82,39 +83,39 @@ if __name__ == '__main__':
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']
     else:
         nameinfo = 'system'
-    if '-a' in sys.argv[1:] or '-x' in sys.argv[1:]:
-        allparts = []
-        spec = []
-        rspec = []
-        extra_inclusive = []
-        extra_exclusive = []
-        parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
-                                     'scheduled':'*', 'functional':'*', 'deps':'*'}])
-        partinfo = Cobalt.Util.buildRackTopology(parts)
-        try:
-            for part in partitions:
-                allparts.append(part)
-                spec.append({'tag':'partition', 'name':part})
-                if '-x' in sys.argv[1:]:
-                    if '-a' in sys.argv[1:]:
-                        extra_exclusive = partinfo[part][0]
-                    else:
-                        extra_exclusive = partinfo[part][0] + partinfo[part][1]
-                if '-a' in sys.argv[1:]:
-                    extra_inclusive = partinfo[part][1]
-                for relative in extra_inclusive:
-                    if relative not in allparts:
-                        allparts.append(relative)
-                        spec.append({'tag':'partition', 'name':relative})
-                for relative in extra_exclusive:
-                    if relative not in allparts:
-                        allparts.append(relative)
-                        rspec.append({'tag':'partition', 'name':relative})
-        except:
-            print "Invalid partition(s)"
-            print helpmsg
-            raise SystemExit, 1
-    elif '-m' in sys.argv[1:]:
+#    if '-a' in sys.argv[1:] or '-x' in sys.argv[1:]:
+#        allparts = []
+#        spec = []
+#        rspec = []
+#        extra_inclusive = []
+#        extra_exclusive = []
+#        parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
+#                                     'scheduled':'*', 'functional':'*', 'deps':'*'}])
+#        partinfo = Cobalt.Util.buildRackTopology(parts)
+#        try:
+#            for part in partitions:
+#                allparts.append(part)
+#                spec.append({'tag':'partition', 'name':part})
+#                if '-x' in sys.argv[1:]:
+#                    if '-a' in sys.argv[1:]:
+#                        extra_exclusive = partinfo[part][0]
+#                    else:
+#                        extra_exclusive = partinfo[part][0] + partinfo[part][1]
+#                if '-a' in sys.argv[1:]:
+#                    extra_inclusive = partinfo[part][1]
+#                for relative in extra_inclusive:
+#                    if relative not in allparts:
+#                        allparts.append(relative)
+#                        spec.append({'tag':'partition', 'name':relative})
+#                for relative in extra_exclusive:
+#                    if relative not in allparts:
+#                        allparts.append(relative)
+#                        rspec.append({'tag':'partition', 'name':relative})
+#        except:
+#            print "Invalid partition(s)"
+#            print helpmsg
+#            raise SystemExit, 1
+    if '-m' in sys.argv[1:]:
         if '-n' not in sys.argv[1:]:
             print "-m must by called with -n <reservation name>"
             raise SystemExit
@@ -142,12 +143,11 @@ if __name__ == '__main__':
         # set reservation n2 with new args
         scheduler.SetReservation([{'tag':'partition', 'name':n['name']} for n in parts], rname, nuser, nstart, ndur)
         raise SystemExit, 0
-    else:
-        spec = [{'tag':'partition', 'name':p} for p in partitions]
+
+    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec }
     try:
-        print scheduler.AddReservation(spec, nameinfo, user, starttime, dsec)
-        if '-x' in sys.argv[1:]:
-            print scheduler.AddReservation(rspec, nameinfo, '', starttime, dsec)
+        print scheduler.add_reservations([spec])
     except:
         print "Couldn't contact the scheduler"
+        raise
         

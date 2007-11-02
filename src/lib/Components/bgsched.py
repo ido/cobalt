@@ -42,20 +42,24 @@ class Reservation (Data):
         if self.users is None:
             self.users = []
     
-    def overlaps(self, location, start, duration):
+    def overlaps(self, partition, start, duration):
         '''check job overlap with reservations'''
         if start + duration < self.start:
             return False
-        
+
+        part_list = self.partitions.split(":")
+        no_overlap = True
+        for part_name in part_list:
+            if part_name==partition.name or part_name in partition.children or part_name in partition.parents:
+                no_overlap = False
+                break
+        if no_overlap:
+            return False
 
         if self.cycle and duration >= self.cycle:
             return True
 
         my_stop = self.start + self.duration
-        print "my_stop : " + `my_stop`
-        if location is not None and location not in self.locations:
-            print "here"
-            return False
         if self.start <= start < my_stop:
             return True
         elif self.start <= (start + duration) < my_stop:
@@ -66,7 +70,6 @@ class Reservation (Data):
         # 3 cases, front, back and complete coverage of a cycle
         cstart = (start - self.start) % self.cycle
         cend = (start + duration - self.start) % self.cycle
-        print "[%d, %d)" % (cstart, cend)
         if cstart < self.duration:
             return True
         if cend < self.duration:
@@ -75,6 +78,20 @@ class Reservation (Data):
             return True
         
         return False
+
+    def is_active(self, stime=False):
+        if not stime:
+            stime = time.time()
+            
+        if stime < self.start:
+            return False
+        
+        if self.cycle:
+            now = (stime - self.start) % self.cycle
+        else:
+            now = stime - self.start    
+        if now <= self.duration:
+            return True
 
 
 class ReservationDict (Cobalt.Data.DataDict):
@@ -85,6 +102,7 @@ class ReservationDict (Cobalt.Data.DataDict):
     def q_add (self, *args, **kwargs):
         reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)
         qm = ComponentProxy("queue-manager")
+        system = ComponentProxy("system")
         queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         for reservation in reservations:
             reservation_queue = "R.%s" % reservation.name
@@ -95,7 +113,17 @@ class ReservationDict (Cobalt.Data.DataDict):
                     logger.error("unable to add reservation queue %s (%s)" % (reservation_queue, e))
                 else:
                     logger.info("added reservation queue %s" % reservation_queue)
+#                try:
+#                    part_list = system.get_partitions([{'name':p, 'queue':'*'} for p in reservation.partitions.split(":")])
+#                    for part in part_list:
+#                        system.set_partitions([{'name':part['name']}], {'queue':part['queue']+":R.%s" % reservation.name})
+#                except Exception, e:
+#                    logger.error("unable to update partition information for reservation %s (%s)" % (reservation.name, e))
+#                else:
+#                    logger.info("updated queue information for locations %s" % reservation.partitions)
     
+        return reservations
+        
     def q_del (self, *args, **kwargs):
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
         qm = ComponentProxy('queue-manager')
@@ -126,17 +154,16 @@ class Partition (ForeignData):
         children = None,
     ))
     
-    def CanRun (self, job):
+    def can_run (self, job):
         """Check that job can run on partition with reservation constraints"""
         basic = self.scheduled and self.functional
-        queue = job.queue.startswith('R.') or \
-                job.queue in self.queue.split(':')
         jsize = int(job.nodes) # should this be 'size' instead?
         psize = int(self.size)
         size = (psize >= jsize) and ((psize == 32) or (jsize > psize/2))
         if not (basic and size):
             return False
-        return queue
+        else:
+            return True
 
 
 class PartitionDict (ForeignDataDict):
@@ -145,16 +172,6 @@ class PartitionDict (ForeignDataDict):
     __function__ = ComponentProxy("system").get_partitions
     __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children']
     key = 'name'
-
-    def GetOverlaps(self, partnames):
-        ncs = []
-        for part in partnames:
-            [ncs.append(nc) for nc in part.nodecards if nc not in ncs]
-        ret = []
-        for part in self:
-            if [nc for nc in part.nodecards if nc in ncs]:
-                ret.append(part)
-        return ret
 
 
 class Job (ForeignData):
@@ -182,7 +199,7 @@ def fifocmp (job1, job2):
     """Compare 2 jobs for first-in, first-out."""
     
     def fifo_value (job):
-        return job.index or job.id
+        return job.index or job.jobid
     
     return cmp(fifo_value(job1), fifo_value(job2))
 
@@ -257,12 +274,13 @@ class BGSched (Component):
     #                                 lambda r, na:r.update(na))
     #SetReservation = exposed(SetReservation)
 
-    def SyncData(self):
+    def sync_data(self):
         for item in [self.jobs, self.queues, self.partitions]:
-            item.Sync()
-            if not item.__oserror__.status:
+            try:
+                item.Sync()
+            except ComponentLookupError:
                 self.logger.error(item.__class__.__name__ + " unable to sync")
-    SyncData = automatic(SyncData)
+    sync_data = automatic(sync_data)
 
     def schedule_jobs (self):
         
@@ -270,10 +288,15 @@ class BGSched (Component):
             self.logger.error("foreign data scynchronization failed: disabling scheduling")
             return
         
+        active_reservations = []
+        for res in self.reservations.itervalues():
+            if res.is_active():
+                active_reservations.append(res.name)
+            
         active_queues = []
         for queue in self.queues.itervalues():
             if queue.name.startswith("R."):
-                if self.reservations.q_get([{'name':queue.name[2:]}]):
+                if queue.name[2:] in active_reservations:
                     active_queues.append(queue)
             else:
                 if queue.state == "running":
@@ -281,19 +304,28 @@ class BGSched (Component):
         
         active_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues])
         
-        print "active_queues : %r" % active_queues
-        print "active_jobs : %r" % active_jobs
-        
-        #############################################
-        # FIXME need to check reservation conflict
-        #       somewhere in this function
-        #############################################
-        
         viable = active_jobs[:]
         viable.sort(fifocmp)
         potential = {}
         for job in viable[:]:
-            tmp_list = [partition for partition in self.partitions.itervalues() if partition.CanRun(job)]
+            tmp_list = []   # [partition for partition in self.partitions.itervalues() if partition.can_run(job)]
+            for partition in self.partitions.itervalues():
+                if job.queue.startswith('R.'):
+                    for part_name in self.reservations[job.queue[2:]].partitions.split(":"):
+                        if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
+                            continue
+                elif job.queue not in partition.queue.split(':'):
+                        continue
+                if partition.can_run(job):
+                    if active_reservations:
+                        for res_name in active_reservations:
+                            res = self.reservations[res_name]
+                            if not res.overlaps(partition, time.time(), 60 * float(job.walltime)):
+                                tmp_list.append(partition)
+                            elif job.queue=="R.%s" % res_name:
+                                tmp_list.append(partition)
+                    else:
+                        tmp_list.append(partition)
             
             if tmp_list:
                 potential[job.jobid] = tmp_list
@@ -320,9 +352,6 @@ class BGSched (Component):
 
     def TidyPlacements(self, potential, newlocation):
         '''Remove any potential spots that overlap with newlocation'''
-        print "new location: %r" % newlocation
-        print "   %r" % newlocation.parents
-        print "   %r" % newlocation.children
         cleanup = []
         for job in potential.keys():
             for location in potential[job][:]:
