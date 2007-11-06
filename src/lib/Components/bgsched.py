@@ -155,7 +155,7 @@ class Partition (ForeignData):
         children = None,
     ))
     
-    def can_run (self, job):
+    def _can_run (self, job):
         """Check that job can run on partition with reservation constraints"""
         basic = self.scheduled and self.functional
         jsize = int(job.nodes) # should this be 'size' instead?
@@ -174,6 +174,14 @@ class PartitionDict (ForeignDataDict):
     __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children']
     key = 'name'
 
+    def can_run(self, target_partition, job):
+        for part in self.itervalues():
+            if not part.functional:
+                if target_partition.name in part.children or target_partition.name in part.parents:
+                    return False
+        
+        return target_partition._can_run(job)
+                
 
 class Job (ForeignData):
     
@@ -334,7 +342,7 @@ class BGSched (Component):
                 elif job.queue not in partition.queue.split(':'):
                     continue
                     
-                if partition.can_run(job):
+                if self.partitions.can_run(partition, job):
                     if active_reservations:
                         for res_name in active_reservations:
                             # if the proposed job overlaps an active reservation, don't run it -- unless the job
