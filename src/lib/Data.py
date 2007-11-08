@@ -223,6 +223,7 @@ class Job (Data):
     size -- number of nodes/processes in the job
     location -- where to execute the job (partition?)
     mode -- execution mode of the job
+    walltime -- the amount of time requested for the job
     """
     
     fields = Data.fields.copy()
@@ -243,6 +244,7 @@ class Job (Data):
         size = None,
         location = None,
         mode = None,
+        walltime = None,
     ))
 
 

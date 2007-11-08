@@ -320,9 +320,9 @@ class Job(Data):
             try:
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
                 if self.mode == 'script':
-                    result = ComponentProxy("script-manager").wait_jobs([{'tag':'process-group', 'pgid':self.spgid['user'], 'exit_status':'*'}])
+                    result = ComponentProxy("script-manager").wait_jobs([{'pgid':self.spgid['user'], 'exit_status':'*'}])
                 else:
-                    result = ComponentProxy("process-manager").wait_jobs([{'tag':'process-group', 'pgid':self.spgid['user'], 'exit_status':'*'}])
+                    result = ComponentProxy("process-manager").wait_jobs([{'id':self.spgid['user'], 'exit_status':'*'}])
                 if result:
                     self.exit_status = result[0].get('exit_status')
                 #this seems needed to get the info back into the object so it can be handed back to the filestager.
@@ -402,14 +402,14 @@ class Job(Data):
         env = self.envs['data']
         
         try:
-            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'pgid':'*', 'executable':'/usr/bin/mpish',
+            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'id':'*', 'executable':'/usr/bin/mpish',
                  'size':self.procs, 'args':args, 'envs':env, 'stderr':errorfile,
                  'stdout':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin",
                  'stdin':self.inputfile, 'kerneloptions':self.kerneloptions}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
-        self.pgid['user'] = pgroup[0]['pgid']
+        self.pgid['user'] = pgroup[0]['id']
         self.SetPassive()
 
     def Kill(self, killmsg):
@@ -450,7 +450,7 @@ class Job(Data):
         location = self.location.split(':')
         
         try:
-            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'pgid':'*', 'user':'root', 'size':self.nodes,
+            pgroup = ComponentProxy("process-manager").add_jobs([{'tag':'process-group', 'id':'*', 'user':'root', 'size':self.nodes,
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
                  'args':[self.user], 'location':location, 'stdin':self.inputfile,
                  'kerneloptions':self.kerneloptions}])
@@ -458,7 +458,7 @@ class Job(Data):
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
         
-        self.pgid[cmd] = pgrp[0]['pgid']
+        self.pgid[cmd] = pgrp[0]['id']
 
     def CompletePG(self, pgid):
         '''Finish accounting for a completed jobid'''
@@ -475,7 +475,7 @@ class Job(Data):
         '''Kill a process group'''
         
         try:
-            pgroup = ComponentProxy("process-manager").signal_jobs([{'tag':'process-group', 'pgid':pgid}], "SIGKILL")
+            pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGKILL")
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
@@ -750,6 +750,7 @@ class BGJob(Job):
                     location = [self.location],
                     id = self.jobid,
                     kerneloptions = self.kerneloptions,
+                    walltime = self.walltime,
                 )])
             except ComponentLookupError:
                 logger.error("Failed to communicate with process manager")
@@ -1313,11 +1314,11 @@ class QueueManager(Component):
         '''Resynchronize with the process manager'''
         
         try:
-            pgroups = ComponentProxy("process-manager").get_jobs([{'tag':'process-group', 'pgid':'*', 'state':'running'}])
+            pgroups = ComponentProxy("process-manager").get_jobs([{'id':'*', 'state':'running'}])
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             return
-        live = [item['pgid'] for item in pgroups]
+        live = [item['id'] for item in pgroups]
         for job in [j for queue in self.Queues.itervalues() for j in queue.jobs if j.mode!='script']:
             for pgtype in job.pgid.keys():
                 pgid = job.pgid[pgtype]
@@ -1329,7 +1330,7 @@ class QueueManager(Component):
     def sm_sync(self):
         '''Resynchronize with the script manager'''
         try:
-            pgroups = ComponentProxy("script-manager").get_jobs([{'tag':'process-group', 'pgid':'*', 'state':'running'}])
+            pgroups = ComponentProxy("script-manager").get_jobs([{'pgid':'*', 'state':'running'}])
         except ComponentLookupError:
             logger.error("Failed to communicate with script manager")
             return

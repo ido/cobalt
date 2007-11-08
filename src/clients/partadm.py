@@ -128,7 +128,7 @@ if __name__ == '__main__':
         busy = [part['name'] for part in parts if part['state'] == 'busy']
         for part in parts:
             for pname in busy:
-                if pname in part['children'] + part['parent'] and pname != part['name']:
+                if pname in part['children'] + part['parents'] and pname != part['name']:
                     part.__setitem__('state', 'blocked')
         offline = [part['name'] for part in parts if not part['functional']]
         forced = [part for part in parts \

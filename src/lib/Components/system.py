@@ -18,6 +18,8 @@ import sys
 import os
 import operator
 import random
+import time
+import thread
 from datetime import datetime
 from ConfigParser import ConfigParser
 
@@ -145,7 +147,6 @@ class Job (Cobalt.Data.Job):
     gid -- group id of the running process
     cmd -- commandline executed
     pid -- process id
-    runtime -- number of heartbeats before the process ends
     """
     
     id_gen = IncrID()
@@ -155,7 +156,6 @@ class Job (Cobalt.Data.Job):
         self.gid = None
         self.cmd = None
         self.pid = self.id_gen.next()
-        self.runtime = random.randrange(1, 5)
         Data.__init__(self, *args, **kwargs)
 
 
@@ -440,11 +440,20 @@ class Simulator (Component):
                 gid = gid,
                 env = self._get_env(spec),
                 cmd = self._get_cmd(spec),
+                walltime = spec.get("walltime", '1'),
             )
             return jobspec
         
         jobspecs = [jobspec(spec) for spec in specs]
-        return self.jobs.q_add(jobspecs)
+        new_jobs = self.jobs.q_add(jobspecs)
+        for job in new_jobs:
+            stdout = open(job.stdout, "w")
+            stderr = open(job.stderr, "w")
+            env = os.environ.copy()
+            env.update(job.env)
+            thread.start_new_thread(self.mpirun, (job.cmd.split(), ), {'stdout':stdout, 'stderr':stderr, 'env':env, 'walltime':int(job.walltime)})
+            
+        return new_jobs
     add_jobs = exposed(query(all_fields=True)(add_jobs))
     
     def get_jobs (self, specs):
@@ -467,25 +476,6 @@ class Simulator (Component):
         else:
             return self.get_jobs(specs)
     signal_jobs = exposed(query(signal_jobs))
-    
-    def run_jobs (self):
-        """Run all jobs on the simulator.
-        
-        Jobs remain running for job.runtime calls of this method.
-        At the end of a jobs execution, this method calls simulator.mpirun
-        to product appropriate output.
-        """
-        self.logger.info("run_jobs()")
-        for job in self.jobs.values():
-            job.runtime -= 1
-        finished_jobs = self.jobs.q_del([{'runtime':0}])
-        for job in finished_jobs:
-            stdout = open(job.stdout, "w")
-            stderr = open(job.stderr, "w")
-            env = os.environ.copy()
-            env.update(job.env)
-            self.mpirun(job.cmd.split(), stdout=stdout, stderr=stderr, env=env)
-    run_jobs = automatic(run_jobs)
     
     def mpirun (self, argv, **kwargs):
         
@@ -575,8 +565,20 @@ class Simulator (Component):
         
         print >> stdout, "Running job with args:", argv
         
-        print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
-        print >> stderr, "FE_MPI (Info) : Job sucessfully terminated"
+        start_time = time.time()
+        run_time = 0.7 * 60 * kwargs.get("walltime", 1)
+        print "running for about %f seconds" % run_time
+        while True:
+            if time.time() > (start_time + run_time):
+                print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
+                print >> stderr, "FE_MPI (Info) : Job sucessfully terminated"
+                break
+            elif jobid not in [job.id for job in self.jobs.itervalues()]:
+                print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
+                print >> stderr, "FE_MPI (Info) : Job killed before finished"
+                break
+            time.sleep(5)
+            
         print >> stderr, "BE_MPI (Info) : Releasing partition", partition
         released = self.release_partition(partition)
         if not released:
@@ -589,3 +591,5 @@ class Simulator (Component):
         print >> stderr, "BE_MPI (Info) : BE completed"
         print >> stderr, "FE_MPI (Info) : FE completed"
         print >> stderr, "FE_MPI (Info) : Exit status: 0"
+        
+        self.jobs.q_del([{'id':jobid}])
