@@ -153,6 +153,7 @@ class Partition (ForeignData):
         size = None,
         parents = None,
         children = None,
+        state = None,
     ))
     
     def _can_run (self, job):
@@ -171,10 +172,12 @@ class PartitionDict (ForeignDataDict):
     item_cls = Partition
     __failname__ = 'System Connection'
     __function__ = ComponentProxy("system").get_partitions
-    __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children']
+    __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children', 'state']
     key = 'name'
 
     def can_run(self, target_partition, job):
+        if target_partition.state != "idle":
+            return False
         for part in self.itervalues():
             if not part.functional:
                 if target_partition.name in part.children or target_partition.name in part.parents:
@@ -264,6 +267,7 @@ class BGSched (Component):
         self.queues = QueueDict()
         self.jobs = JobDict()
         self.partitions = PartitionDict()
+        self.assigned_partitions = {}
     
     def add_reservations (self, specs):
         return self.reservations.q_add(specs)
@@ -299,6 +303,29 @@ class BGSched (Component):
             self.logger.error("foreign data scynchronization failed: disabling scheduling")
             return
         
+        # clean up the assigned_partitions cached data
+        now = time.time()
+        for part_name in self.assigned_partitions.keys():
+            if (now - self.assigned_partitions[part_name]) > 300:
+                del self.assigned_partitions[part_name]
+        
+        available_partitions = []
+        for partition in self.partitions.itervalues():
+            if partition.state != "idle":
+                # if the system component finally knows that the partition isn't idle, we don't need to keep
+                # track of it any longer
+                if self.assigned_partitions.has_key(partition.name):
+                    del self.assigned_partitions[partition.name]
+            elif not self.assigned_partitions:
+                # the dictionary of assigned partitions is empty
+                available_partitions.append(partition)
+            elif not self.assigned_partitions.has_key(partition.name):
+                # walk the assigned_partitions and see if the current partition belongs to the parents or children of 
+                # an assigned partition
+                for key in self.assigned_partitions:
+                    if not (partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children):
+                        available_partitions.append(partition)
+        
         # grab a snapshot of the currently active reservations to reduce the chance of
         # problems with reservations starting and stopping while we're in the middle
         # of scheduling
@@ -323,7 +350,7 @@ class BGSched (Component):
         potential = {}
         for job in viable[:]:
             tmp_list = []   
-            for partition in self.partitions.itervalues():
+            for partition in available_partitions:
                 # check if the current partition is linked to the job's queue or reservation
                 if job.queue.startswith('R.'):
                     part_in_res = False
@@ -403,3 +430,4 @@ class BGSched (Component):
             job = placement[0]
             location = placement[1].name
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [location])
+            self.assigned_partitions[location] = time.time()
