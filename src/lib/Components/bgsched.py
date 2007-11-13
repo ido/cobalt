@@ -280,6 +280,12 @@ class BGSched (Component):
         return self.reservations.q_get(specs)
     get_reservations = exposed(query(get_reservations))
 
+    def set_reservations(self, specs, updates):
+        def _set_reservations(res, newattr):
+            res.update(newattr)
+        return self.reservations.q_get(specs, _set_reservations, updates)
+    set_reservations = exposed(query(set_reservations))
+
     #def SetReservation(self, *args):
     #    return self.reservations.Get(*args,
     #                                 callback = \
