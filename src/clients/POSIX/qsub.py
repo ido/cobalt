@@ -121,7 +121,11 @@ if __name__ == '__main__':
         if len(units) > 3:
             logger.error("time too large")
             raise SystemExit, 1
-        totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
+        try:
+            totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
+        except ValueError:
+            logger.error("invalid time specification")
+            raise SystemExit, 1
         logger.error("submitting walltime=%s minutes" % str(totaltime))
         opts['time'] = str(totaltime)
     try:
