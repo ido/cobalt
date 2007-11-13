@@ -9,7 +9,6 @@ import Cobalt.Logging, Cobalt.Util
 import getpass
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
-
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
@@ -89,7 +88,14 @@ if __name__ == '__main__':
     
     kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
     if opts['setjobid']:
-        response = cqm.set_jobid(int(opts['setjobid']))
+        try:
+            response = cqm.set_jobid(int(opts['setjobid']))
+        except ValueError:
+            print "The new jobid must be an integer"
+            raise SystemExit, 1
+        except xmlrpclib.Fault, flt:
+            print flt.faultString
+            raise SystemExit, 1
     elif kdata:
         user = getpass.getuser()
         for cmd in kdata:
@@ -144,6 +150,10 @@ if __name__ == '__main__':
             print flt.faultString
     elif opts['setq']:
         props = [p.split('=') for p in opts['setq'].split(' ')]
+        for p in props:
+            if len(p) != 2:
+                print "Improperly formatted argument to setq : %r" % p
+                raise SystemExit, 1
         updates = {}
         for prop, val in props:
             if prop.lower() in ['maxtime', 'mintime']:
@@ -180,9 +190,15 @@ if __name__ == '__main__':
         new_q_name = None
         if opts['hold']:
             updates['state'] = 'hold'
+            if not spec:
+                print "you must specify a jobid to hold"
+                raise SystemExit, 1
             spec[0]['state'] = 'queued'
         elif opts['release']:
             updates['state'] = 'queued'
+            if not spec:
+                print "you must specify a jobid to release"
+                raise SystemExit, 1
             spec[0]['state'] = 'hold'
         if opts['queue']:
             new_q_name = opts['queue']
@@ -202,7 +218,10 @@ if __name__ == '__main__':
                 opts['time'] = str(totaltime)
             else:
                 try:
-                    int(opts['time'])
+                    t = int(opts['time'])
+                    if t < 0:
+                        print "time can't be negative"
+                        raise Exception("time can't be negative")
                 except:
                     print "Invalid value for time"
                     raise SystemExit, 1
@@ -213,7 +232,7 @@ if __name__ == '__main__':
                 response += cqm.move_jobs(spec, new_q_name)
         except xmlrpclib.Fault, flt:
             response = []
-            if flt.faultCode == 30:
+            if flt.faultCode == 30 or flt.faultCode == 42:
                 print flt.faultString
                 raise SystemExit, 1
             else:

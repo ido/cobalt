@@ -130,7 +130,16 @@ if __name__ == '__main__':
             header = default_header
 
         # build query from long_header (all fields) and fetch response
-        query = [{'tag':'job', 'jobid':n} for n in names]
+        try:
+            query = []
+            for n in names:
+                if n=='*':
+                    query.append({'tag':'job', 'jobid':n})
+                else:
+                    query.append({'tag':'job', 'jobid':int(n)})
+        except ValueError:
+            print "jobids must be integers"
+            raise SystemExit, 1
         for q in query:
             for h in long_header:
                 if h == 'JobName':

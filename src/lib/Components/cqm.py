@@ -1203,14 +1203,9 @@ class QueueManager(Component):
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
 
-    def get_jobid(self):
-        '''Get next jobid'''
-        return self.Queues.__id__.idnum + 1
-    get_jobid = exposed(get_jobid)
-
     def set_jobid(self, jobid):
         '''Set next jobid for new job'''
-        self.Queues.__id__.idnum = jobid-1
+        cqm_id_gen.set(jobid)
         return True
     set_jobid = exposed(set_jobid)
 
@@ -1248,11 +1243,11 @@ class QueueManager(Component):
             if spec['queue'] in self.Queues:
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
             else:
-                logger.error("trying to add job to non-existant queue %s" % spec['queue'])
+                failure_msg = "trying to add job to non-existant queue '%s'" % spec['queue']
+                logger.error(failure_msg)
                 failed = True
         if failed:
-            # FIXME : throw an exception instead and pass back the same data that got
-            # stuck in the logs
+            raise xmlrpclib.Fault(42, failure_msg)
             return []
         
         response = self.Queues.add_jobs(specs)

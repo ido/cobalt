@@ -92,7 +92,7 @@ if __name__ == '__main__':
     try:
         nc = int(opts['nodecount'])
     except:
-        logger.error("non-integer node count specified")
+        logger.error("Error: non-integer node count specified with -n option")
         raise SystemExit, 1
 
     if opts['kerneloptions']:
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         try:
             int(opts['proccount'])
         except:
-            logger.error("non-integer node count specified")
+            logger.error("Error: non-integer node count specified with -c option")
             raise SystemExit, 1
 
     if opts['project']:
@@ -198,15 +198,32 @@ if __name__ == '__main__':
                                                            opts['outputprefix']),
                             'errorpath':"%s/%s.error" % (opts['cwd'], opts['outputprefix'])})
     if opts['error']:
-        jobspec.update({'errorpath': opts['error']})
+        if not opts['error'].startswith('/'):
+            jobspec.update({'errorpath':"%s/%s" % (opts['cwd'], opts['error'])})
+        else:
+            jobspec.update({'errorpath':opts['error']})
+        if not os.path.isdir(jobspec.get('errorpath')):
+            logger.error("directory %s does not exist" % jobspec.get('errorpath'))
+            raise SystemExit, 1
     if opts['output']:
-        jobspec.update({'outputpath': opts['output']})
+        if not opts['output'].startswith('/'):
+            jobspec.update({'outputpath':"%s/%s" % (opts['cwd'], opts['output'])})
+        else:
+            jobspec.update({'outputpath':opts['output']})
+        if not os.path.isdir(jobspec.get('outputpath')):
+            logger.error("directory %s does not exist" % jobspec.get('outputpath'))
+            raise SystemExit, 1
     if opts['held']:
         jobspec.update({'state':'user hold'})
     if opts['env']:
         jobspec['envs'] = {}
-        [jobspec['envs'].update({key:value}) for key, value
-         in [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]]
+        key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]
+        for kv in key_value_pairs:
+            if len(kv) != 2:
+                print "Improperly formatted argument to env : %r" % kv
+                raise SystemExit, 1
+        for key, value in key_value_pairs:
+            jobspec['envs'].update({key:value})
     if opts['inputfile']:
         if not opts['inputfile'].startswith('/'):
             jobspec.update({'inputfile':"%s/%s" % (opts['cwd'], opts['inputfile'])})

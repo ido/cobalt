@@ -25,6 +25,9 @@ class DataCreationError(Exception):
     '''Used when a new object cannot be created'''
     pass
 
+class IncrIDError(Exception):
+    '''Used when trying to set the IncrID counter to a value that has already been used'''
+    pass
 
 class IncrID(object):
     
@@ -43,6 +46,12 @@ class IncrID(object):
         """Iterator interface."""
         return self.get()
 
+    def set(self, val):
+        """Set the next id.  val cannot be less than the current value of idnum."""
+        if val - 1 < self.idnum:
+            raise IncrIDError("The new jobid must be greater than the next jobid (%d)" % (self.idnum + 1))
+        else:
+            self.idnum = val - 1
 
 class RandomID(object):
     """Generator for non-repeating random integer IDs."""
