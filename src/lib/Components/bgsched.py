@@ -102,7 +102,6 @@ class ReservationDict (Cobalt.Data.DataDict):
     def q_add (self, *args, **kwargs):
         reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)
         qm = ComponentProxy("queue-manager")
-        system = ComponentProxy("system")
         queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         for reservation in reservations:
             reservation_queue = "R.%s" % reservation.name

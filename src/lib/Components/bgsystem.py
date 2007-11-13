@@ -415,16 +415,17 @@ class System(Component):
         return ret
     add_jobs = exposed(query(add_jobs))
 
-    def _kill_job(self, jobinfo):
+    def signal_jobs(self, specs, signame='SIGINT'):
         '''kills a job using via signal to pid'''
         # status_t jm_signal_job(db_job_id_t jid, rm_signal_t signal);
-        print 'bgsystem got a kill_job call'
-        pid = jobinfo.get('pid')
-        signame = 'SIGINT'
-        try:
-            os.kill(int(pid), getattr(signal, signame))
-        except OSError, error:
-            self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+        print 'bgsystem got a signal_jobs call with signal %s' % signame
+        for spec in specs:
+            pid = spec.get('pid')
+            try:
+                os.kill(int(pid), getattr(signal, signame))
+            except OSError, error:
+                self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+            
         return 0
 #         signal = bgl_rm_api.rm_signal_t(15)
 #         jobid = jobinfo.get('dbjobid')
