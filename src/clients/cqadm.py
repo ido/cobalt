@@ -105,6 +105,10 @@ if __name__ == '__main__':
                 response = cqm.del_jobs(spec, user)
     elif opts['run']:
         location = opts['run']
+        part_list = ComponentProxy("system").get_partitions([{'name': location}])
+        if len(part_list) != 1:
+            print "Error: cannot find partition named '%s'" % location
+            raise SystemExit, 1
         response = cqm.run_jobs(spec, location.split(':'))
     elif opts['addq']:
         existing_queues = get_queues(cqm)
