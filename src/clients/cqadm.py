@@ -197,13 +197,25 @@ if __name__ == '__main__':
             if not spec:
                 print "you must specify a jobid to hold"
                 raise SystemExit, 1
-            spec[0]['state'] = 'queued'
+            copy = []
+            for s in spec:
+                s['state'] = 'queued'
+                copy.append(s.copy())
+            for c in copy:
+                c['state'] = 'user hold'
+            spec += copy
         elif opts['release']:
             updates['state'] = 'queued'
             if not spec:
                 print "you must specify a jobid to release"
                 raise SystemExit, 1
-            spec[0]['state'] = 'hold'
+            copy = []
+            for s in spec:
+                s['state'] = 'hold'
+                copy.append(s.copy())
+            for c in copy:
+                c['state'] = 'user hold'
+            spec += copy
         if opts['queue']:
             new_q_name = opts['queue']
         if opts['index']:

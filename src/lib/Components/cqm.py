@@ -1260,7 +1260,7 @@ class QueueManager(Component):
         for spec in data:
             for job, q in [(job, queue) for queue in self.Queues.itervalues() for job in queue.jobs if job.match(spec)]:
                 ret.append(job)
-                if job.state in ['queued', 'ready'] or (job.state == 'hold' and not job.pgid):
+                if job.state in ['queued', 'ready', 'user hold'] or (job.state == 'hold' and not job.pgid):
                     #q.remove(job)
                     q.jobs.q_del([spec])
                 elif force:
