@@ -978,31 +978,31 @@ class Restriction(Data):
 
     def maxwalltime(self, job, _=None):
         '''checks walltime of job against maxtime of queue'''
-        if float(job.walltime) <= float(self.value):
+        if float(job['walltime']) <= float(self.value):
             return (True, "")
         else:
-            return (False, "Walltime greater than the '%s' queue max walltime of %s" % (job.queue, "%02d:%02d:00" % (divmod(int(self.value), 60))))
+            return (False, "Walltime greater than the '%s' queue max walltime of %s" % (job['queue'], "%02d:%02d:00" % (divmod(int(self.value), 60))))
 
     def minwalltime(self, job, _=None):
         '''limits minimum walltime for job'''
-        if float(job.walltime) >= float(self.value):
+        if float(job['walltime']) >= float(self.value):
             return (True, "")
         else:
-            return (False, "Walltime less than the '%s' queue min walltime of %s" % (job.queue, "%02d:%02d:00" % (divmod(int(self.value), 60))))
+            return (False, "Walltime less than the '%s' queue min walltime of %s" % (job['queue'], "%02d:%02d:00" % (divmod(int(self.value), 60))))
 
     def usercheck(self, job, _=None):
         '''checks if job owner is in approved user list'''
         #qusers = self.queue.users.split(':')
         qusers = self.value.split(':')
-        if '*' in qusers or job.user in qusers:
+        if '*' in qusers or job['user'] in qusers:
             return (True, "")
         else:
-            return (False, "You are not allowed to submit to the '%s' queue" % job.queue)
+            return (False, "You are not allowed to submit to the '%s' queue" % self.queue.name)
 
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
         with potential job added'''
-        userjobs = [j for j in queuestate if j.user == job.user and j.state == 'running' and j.queue == job.queue]
+        userjobs = [j for j in queuestate if j.user == job.user and j.state == 'running' and j.queue == job['queue']]
         if len(userjobs) >= int(self.value):
             return (False, "Maxuserjobs limit reached")
         else:
@@ -1010,20 +1010,20 @@ class Restriction(Data):
 
     def maxqueuedjobs(self, job, _=None):
         '''limits how many jobs a user can have in the queue at a time'''
-        userjobs = [j for j in self.queue if j.user == job.user]
+        userjobs = [j for j in self.queue if j.user == job['user']]
         if len(userjobs) >= int(self.value):
-            return (False, "The limit of %s jobs per user in the '%s' queue has been reached" % (self.value, job.queue))
+            return (False, "The limit of %s jobs per user in the '%s' queue has been reached" % (self.value, job['queue']))
         else:
             return (True, "")
 
     def maxusernodes(self, job, queuestate=None):
         '''limits how many nodes a single user can have running'''
         usernodes = 0
-        for j in [qs for qs in queuestate if qs.user == job.user
+        for j in [qs for qs in queuestate if qs.user == job['user']
                   and qs.state == 'running'
                   and qs.queue == job.queue]:
             usernodes = usernodes + int(j.nodes)
-        if usernodes + int(job.nodes) > int(self.value):
+        if usernodes + int(job['nodes']) > int(self.value):
             return (False, "Job exceeds MaxUserNodes limit")
         else:
             return (True, "")
@@ -1033,9 +1033,9 @@ class Restriction(Data):
         this queue'''
         totalnodes = 0
         for j in [qs for qs in queuestate if qs.state == 'running'
-                  and qs.queue == job.queue]:
+                  and qs.queue == job['queue']]:
             totalnodes = totalnodes + int(j.nodes)
-        if totalnodes + int(job.nodes) > int(self.value):
+        if totalnodes + int(job['nodes']) > int(self.value):
             return (False, "Job exceeds MaxTotalNodes limit")
         else:
             return (True, "")
@@ -1114,7 +1114,7 @@ class Queue(Data):
 
         # test job against queue restrictions
         probs = ''
-        for restriction in [r for r in self.restrictions if r.type == 'queue']:
+        for restriction in [r for r in self.restrictions.itervalues() if r.type == 'queue']:
             result = restriction.CanAccept(spec)
             if not result[0]:
                 probs = probs + result[1] + '\n'
@@ -1366,7 +1366,11 @@ class QueueManager(Component):
 
     def set_queues(self, specs, updates):
         def _setQueues(queue, newattr):
+            # FIXME : fix this so we don't add "restriction" fields to the queue
             queue.update(newattr)
+            for key in newattr:
+                if key in Restriction.__checks__:
+                    queue.restrictions[key] = Restriction({'name':key, 'value':newattr[key]}, queue)
         return self.Queues.get_queues(specs, _setQueues, updates)
     set_queues = exposed(query(set_queues))
         
@@ -1379,7 +1383,10 @@ class QueueManager(Component):
 
     def set_jobs(self, specs, updates):
         def _set_jobs(job, newattr):
-            job.update(newattr)
+            test = job.to_rx()
+            test.update(newattr)
+            if self.Queues[job.queue].can_queue(test):
+                job.update(newattr)
         return self.Queues.get_jobs(specs, _set_jobs, updates)
     set_jobs = exposed(query(set_jobs))
 
@@ -1391,7 +1398,9 @@ class QueueManager(Component):
         
         for job in self.Queues.get_jobs(specs):
             if job.queue==new_q_name:
-                raise xmlrpclib.Fault(42, "job %d already in queue '%s'" % (job.jobid, new_q_name))   
+                raise xmlrpclib.Fault(42, "job %d already in queue '%s'" % (job.jobid, new_q_name))
+            if job.state != "queued":
+                raise xmlrpclib.Fault(43, "jobs must be in state 'queued' to move.  job %d is in state '%s'." % (job.jobid, job.state))   
         
         results = []
         for q in self.Queues.itervalues():
