@@ -79,6 +79,27 @@ class Reservation (Data):
         
         return False
 
+    def job_within_reservation(self, job):
+        if job.queue=="R.%s" % self.name:
+            job_end = time.time() + 60 * float(job.walltime)
+            if not self.cycle:
+                res_end = self.start + self.duration
+                if job_end < res_end:
+                    return True
+                else:
+                    return False
+            else:
+                if 60 * float(job.walltime) > self.duration:
+                    return False
+                
+                if ((job_end - self.start) % self.cycle) < self.duration:
+                    return True
+                else:
+                    return False
+        else:
+            return False
+
+    
     def is_active(self, stime=False):
         if not stime:
             stime = time.time()
@@ -331,18 +352,11 @@ class BGSched (Component):
                     if not (partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children):
                         available_partitions.append(partition)
         
-        # grab a snapshot of the currently active reservations to reduce the chance of
-        # problems with reservations starting and stopping while we're in the middle
-        # of scheduling
-        active_reservations = []
-        for res in self.reservations.itervalues():
-            if res.is_active():
-                active_reservations.append(res.name)
             
         active_queues = []
         for queue in self.queues.itervalues():
             if queue.name.startswith("R."):
-                if queue.name[2:] in active_reservations:
+                if self.reservations[queue.name[2:]].is_active():
                     active_queues.append(queue)
             else:
                 if queue.state == "running":
@@ -375,15 +389,18 @@ class BGSched (Component):
                     continue
                     
                 if self.partitions.can_run(partition, job):
-                    if active_reservations:
-                        for res_name in active_reservations:
-                            # if the proposed job overlaps an active reservation, don't run it -- unless the job
-                            # belongs to the active reservation
-                            if not self.reservations[res_name].overlaps(partition, time.time(), 60 * float(job.walltime)):
-                                tmp_list.append(partition)
-                            elif job.queue=="R.%s" % res_name:
-                                tmp_list.append(partition)
-                    else:
+                    really_okay = True
+                    for res in self.reservations.itervalues():
+                        # if the proposed job falls inside the reservation, it's okay to try running the job here
+                        if res.job_within_reservation(job):
+                            break
+                        
+                        # if the proposed job overlaps an active reservation, don't run it
+                        if res.overlaps(partition, time.time(), 60 * float(job.walltime)):
+                            really_okay = False
+                            break
+                            
+                    if really_okay:
                         tmp_list.append(partition)
             
             if tmp_list:
