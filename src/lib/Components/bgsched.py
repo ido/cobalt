@@ -31,6 +31,7 @@ class Reservation (Data):
         cycle = None,
         users = None,
         partitions = None,
+        active = None,
     ))
     
     required_fields = ["name", "start", "duration"]
@@ -41,6 +42,14 @@ class Reservation (Data):
             self.partitions = []
         if self.users is None:
             self.users = []
+    
+    def _get_active(self):
+        return self.is_active()
+    
+    def _set_active(self):
+        pass
+    
+    active = property(_get_active, _set_active)
     
     def overlaps(self, partition, start, duration):
         '''check job overlap with reservations'''
@@ -288,6 +297,7 @@ class BGSched (Component):
         self.jobs = JobDict()
         self.partitions = PartitionDict()
         self.assigned_partitions = {}
+        self.sched_info = {}
     
     def add_reservations (self, specs):
         return self.reservations.q_add(specs)
@@ -356,13 +366,18 @@ class BGSched (Component):
         active_queues = []
         for queue in self.queues.itervalues():
             if queue.name.startswith("R."):
-                if self.reservations[queue.name[2:]].is_active():
+                if self.reservations.has_key(queue.name[2:]) and self.reservations[queue.name[2:]].is_active():
                     active_queues.append(queue)
             else:
                 if queue.state == "running":
                     active_queues.append(queue)
         
         active_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues])
+        # cleanup the sched_info information if a job is no longer listed as "active"
+        active_job_ids = [job.jobid for job in active_jobs]
+        for jobid in self.sched_info.keys():
+            if jobid not in active_job_ids:
+                del self.sched_info[jobid]
         
         viable = active_jobs[:]
         viable.sort(fifocmp)
@@ -398,6 +413,10 @@ class BGSched (Component):
                         # if the proposed job overlaps an active reservation, don't run it
                         if res.overlaps(partition, time.time(), 60 * float(job.walltime)):
                             really_okay = False
+                            if job.queue=="R.%s" % res.name:
+                                self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % res.name
+                            else:
+                                self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
                             break
                             
                     if really_okay:
@@ -407,6 +426,8 @@ class BGSched (Component):
                 potential[job.jobid] = tmp_list
             else:
                 viable.remove(job)
+                if not self.sched_info.has_key(job.jobid):
+                    self.sched_info[job.jobid] = "probably blocked by running jobs\n     but maybe queue '%s' isn't associated with any partitions\n     or maybe a reservation is also blocking the job" % job.queue
         
         for queue in self.queues.itervalues():
             queue.policy.Prepare(viable, potential)
@@ -435,6 +456,7 @@ class BGSched (Component):
                     potential[job].remove(location)
             if not potential[job]:
                 del potential[job]
+                self.sched_info[job] = "blocked by running jobs"
 
 #        for job in cleanup:
 #            del potential[job]
@@ -453,3 +475,11 @@ class BGSched (Component):
             location = placement[1].name
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [location])
             self.assigned_partitions[location] = time.time()
+
+    def get_sched_info(self):
+        """Get information about why jobs aren't running."""
+        ret = {}
+        for k in self.sched_info:
+            ret[str(k)] = self.sched_info[k]
+        return ret
+    get_sched_info = exposed(get_sched_info)
