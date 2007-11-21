@@ -790,11 +790,11 @@ class BGJob(Job):
             extra = []
             for field in self.fields:
                 if isinstance(self.get(field), list):
-                    extra.append("%s=%s" % (field, ':'.join(self.get(field))))
+                    extra.append('%s="%s"' % (field, ':'.join(self.get(field))))
                 elif isinstance(self.get(field), dict):
-                    extra.append("%s={%s}" % (field, str(self.get(field))))
+                    extra.append('%s="{%s}"' % (field, str(self.get(field))))
                 else:
-                    extra.append("%s=%s" % (field, self.get(field)))
+                    extra.append('%s="%s"' % (field, self.get(field)))
             for p in postscripts:
                 try:
                     rc, out, err = Cobalt.Util.runcommand("%s %s" % (p, " ".join(extra)))

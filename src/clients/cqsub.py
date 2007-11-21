@@ -14,11 +14,11 @@ def processfilter(cmdstr, jobdict):
     extra = []
     for key, value in jobdict.iteritems():
         if isinstance(value, list):
-            extra.append("%s=%s" % (key, ':'.join(value)))
+            extra.append('%s="%s"' % (key, ':'.join(value)))
         elif isinstance(value, dict):
-            extra.append("%s={%s}" % (key, str(value)))
+            extra.append('%s="{%s}"' % (key, str(value)))
         else:
-            extra.append("%s=%s" % (key, value))
+            extra.append('%s="%s"' % (key, value))
     rc, out, err = Cobalt.Util.runcommand(" ".join([cmdstr] + extra))
     if err:
         # strip \n from last line of stderr to make sure only
