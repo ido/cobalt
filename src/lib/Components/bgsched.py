@@ -345,22 +345,48 @@ class BGSched (Component):
             if (now - self.assigned_partitions[part_name]) > 300:
                 del self.assigned_partitions[part_name]
         
+        try:
+            cqm = ComponentProxy("queue-manager")
+        except ComponentLookupError:
+            self.logger.error("failed to connect to queue manager")
+            return
+
+        locations_with_jobs = [job['location'] for job in cqm.get_jobs([{'state':"running", 'location':"*"}])]
         available_partitions = []
         for partition in self.partitions.itervalues():
+            okay_to_add = True
+            
+            if partition.name in locations_with_jobs:
+                continue
+            
+            for loc in locations_with_jobs:
+                if partition.name in self.partitions[loc].parents or partition.name in self.partitions[loc].children:
+                    okay_to_add = False
+                    break
+            
+            if not okay_to_add:
+                continue
+                
             if partition.state != "idle":
                 # if the system component finally knows that the partition isn't idle, we don't need to keep
                 # track of it any longer
                 if self.assigned_partitions.has_key(partition.name):
                     del self.assigned_partitions[partition.name]
-            elif not self.assigned_partitions:
+                continue
+            
+            if not self.assigned_partitions:
                 # the dictionary of assigned partitions is empty
-                available_partitions.append(partition)
+                pass
             elif not self.assigned_partitions.has_key(partition.name):
                 # walk the assigned_partitions and see if the current partition belongs to the parents or children of 
                 # an assigned partition
                 for key in self.assigned_partitions:
-                    if not (partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children):
-                        available_partitions.append(partition)
+                    if partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children:
+                        okay_to_add = False
+                        break
+
+            if okay_to_add:
+                available_partitions.append(partition)
         
             
         active_queues = []

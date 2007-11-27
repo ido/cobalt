@@ -254,6 +254,7 @@ class Job (Data):
         location = None,
         mode = None,
         walltime = None,
+        true_mpi_args = None,
     ))
 
 

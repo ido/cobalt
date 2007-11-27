@@ -906,7 +906,7 @@ class ScriptMPIJob(Job):
         else:
             self.pgid['user'] = pgroup[0]['id']
         self.SetPassive()
-        self.LogFinish()
+        # self.LogFinish()
 
     def LogFinish(self):
         '''Log end of job data, specific for BG/L exit status'''
@@ -1325,11 +1325,11 @@ class QueueManager(Component):
     def sm_sync(self):
         '''Resynchronize with the script manager'''
         try:
-            pgroups = ComponentProxy("script-manager").get_jobs([{'pgid':'*', 'state':'running'}])
+            pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
         except ComponentLookupError:
             logger.error("Failed to communicate with script manager")
             return
-        live = [item['pgid'] for item in pgroups]
+        live = [item['id'] for item in pgroups]
         for job in [j for queue in self.Queues.itervalues() for j in queue.jobs if j.mode=='script']:
             for pgtype in job.pgid.keys():
                 pgid = job.pgid[pgtype]

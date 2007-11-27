@@ -380,7 +380,7 @@ class Simulator (Component):
             os.path.basename(config.get("bgpm", "mpirun")),
         ]
         
-        if "true_mpi_args" in spec:
+        if "true_mpi_args" in spec and spec['true_mpi_args'] is not None:
             # arguments have been passed along in a special attribute.  These arguments have
             # already been modified to include the partition that cobalt has selected
             # for the job.
@@ -442,13 +442,15 @@ class Simulator (Component):
                 cmd = self._get_cmd(spec),
                 walltime = spec.get("walltime", '1'),
             )
+            if not jobspec['walltime']:
+                jobspec['walltime'] = '1'
             return jobspec
         
         jobspecs = [jobspec(spec) for spec in specs]
         new_jobs = self.jobs.q_add(jobspecs)
         for job in new_jobs:
-            stdout = open(job.stdout, "w")
-            stderr = open(job.stderr, "w")
+            stdout = open(job.stdout, "a")
+            stderr = open(job.stderr, "a")
             env = os.environ.copy()
             env.update(job.env)
             thread.start_new_thread(self.mpirun, (job.cmd.split(), ), {'stdout':stdout, 'stderr':stderr, 'env':env, 'walltime':int(job.walltime)})

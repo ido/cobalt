@@ -105,8 +105,9 @@ if __name__ == '__main__':
 
         # try adding job to queue_manager
         pgid = cqm.invoke_mpi_from_script(jobspec)
-        print "i see pgid of : ", pgid
         
+        # give the process a chance to get started before we check for it
+        time.sleep(10)
         while True:
             r = pm.get_jobs([{'id':pgid, 'state':'*'}])
             state = r[0]['state']
@@ -116,7 +117,9 @@ if __name__ == '__main__':
             else:
                 break
         print "process group %s has completed" % (pgid)
-        pm.get_jobs([{'id':pgid, 'exit-status':'*'}])
+        result = pm.wait_jobs([{'id':pgid, 'exit_status':'*'}])
+        
+        raise SystemExit, result[0].get('exit_status')
         
 
     except ComponentLookupError:
@@ -141,4 +144,3 @@ if __name__ == '__main__':
 #         raise SystemExit, 1
 
 
-    print "all done!"
