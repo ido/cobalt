@@ -474,6 +474,12 @@ class Job(Data):
     def KillPGID(self, pgid):
         '''Kill a process group'''
         
+        if self.mode == 'script':
+            try:
+                pgroup = ComponentProxy("script-manager").signal_jobs([{'id':pgid}], "SIGKILL")
+            except ComponentLookupError:
+                logger.error("Failed to communicate with script manager")
+                raise ScriptManagerError
         try:
             pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGKILL")
         except ComponentLookupError:
