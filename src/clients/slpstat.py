@@ -12,7 +12,8 @@ import xmlrpclib
 import socket
 
 import Cobalt.Logging
-from Cobalt.Proxy import ComponentProxy
+from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+
 
 if __name__ == '__main__':
     

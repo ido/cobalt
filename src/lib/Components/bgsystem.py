@@ -10,7 +10,7 @@ import logging, random, sys, ConfigParser, xmlrpclib, pwd, atexit, os
 #import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
 import Cobalt.bridge
 import Cobalt.Util
-from Cobalt.Data import Data, DataList
+from Cobalt.Data import Data, DataList, DataDict
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Server import XMLRPCServer, find_intended_location
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
@@ -85,7 +85,7 @@ class BridgeDataList(DataList):
         have been modified via the callback
         TODO: the result returned does not contain the updates from cargs
         '''
-        result = DataDict.q_get(self, cdata, callback, cargs)
+        result = DataList.q_get(self, cdata, callback, cargs)
         if callback and cargs:
             self.bridge_reload()
             for part in result:
@@ -111,7 +111,7 @@ class BridgeDataList(DataList):
         '''
         data_objects = {}  # local object lookup (to avoid nxn looping)
 
-        for local_datum in self.itervalues:
+        for local_datum in self:
             data_objects.update({local_datum.get('name'):local_datum})
 
         for datum in somedata:
@@ -138,6 +138,7 @@ class BaseSystem(BridgeDataList):
         bg = Cobalt.bridge.BG()
         nodecardlist = []
         query = []
+        self.bridge_objects = dict()
         # initializes self with nodecard blocks
         for bp in bg.basePartitions:
             for nc in bp.nodecards:
@@ -265,6 +266,7 @@ class System(Component):
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.log = logging.getLogger('sys')
+        self.logger = self.log
 
         logger.info('getting partitions')
         self.partitions = PartitionList()
