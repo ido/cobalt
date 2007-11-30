@@ -112,7 +112,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if opts['Q']:  # querying for queues
-        query = [{'tag':'queue', 'name':qname, 'users':'*', 
+        query = [{'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
                   'maxqueued':'*', 'maxusernodes':'*',
                   'totalnodes':'*', 'state':'*'} for qname in names]
