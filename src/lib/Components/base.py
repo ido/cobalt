@@ -131,6 +131,7 @@ class Component (object):
         self.statefile = kwargs.get("statefile", None)
         if kwargs.get("register", True):
             Cobalt.Proxy.register_component(self)
+        self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
         
     def save (self, statefile=None):
         """Pickle the component.
@@ -181,7 +182,11 @@ class Component (object):
                 margs = args[:1]
             else:
                 margs = []
-            result = marshal_query_result(result, *margs)
+            try:
+                result = marshal_query_result(result, *margs)
+            except Exception, e:
+                self.logger.error(e, exc_info=True)
+                raise
         return result
     
     def _listMethods (self):
