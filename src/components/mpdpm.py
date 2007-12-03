@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 
-import logging, os, sys, tempfile, time, xml.dom.minidom
-import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
+import logging
+import os
+import sys
+import tempfile
+import time
+import xml.dom.minidom
+import ConfigParser
+
+import Cobalt
+import Cobalt.Component
+import Cobalt.Data
+import Cobalt.Logging
 
 '''mpdpm api:
 CreateProcessGroup({user: 'user', executable:'executable', args:['arg1', 'arg2'], location:['location'],
@@ -44,15 +54,15 @@ class ProcessGroup(Cobalt.Data.Data):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('mpdpm'):
         print '''"mpdpm" section missing from cobalt config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     config = _config._sections['mpdpm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
 
     def __init__(self, data, pgid):
         print "I am initializing a process group"
@@ -247,7 +257,7 @@ if __name__ == '__main__':
         (opts, arg) = getopt(sys.argv[1:], 'dC:D:m:')
     except GetoptError, msg:
         print "%s\nUsage:\nmpdpm.py [-d] [-C config file] [-D <pidfile>] [-m </path/to/mpd> ]" % (msg)
-        raise SystemExit, 1
+        sys.exit(1)
     Cobalt.Logging.setup_logging('mpdpm', level = 0)
     try:
         daemon = [item[1] for item in opts if item[0] == '-D'][0]
@@ -258,6 +268,6 @@ if __name__ == '__main__':
     except:
         mpdpath = False
     ldebug = len([item for item in opts if item[0] == '-d'])
-    s = MPDProcessManager({'configfile':'/etc/cobalt.conf', 'daemon':daemon, 'mpdpath':mpdpath})
+    s = MPDProcessManager({'configfile':Cobalt.CONFIG_FILES, 'daemon':daemon, 'mpdpath':mpdpath})
     s.serve_forever()
     

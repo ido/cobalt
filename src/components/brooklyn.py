@@ -4,6 +4,7 @@ import sys
 import logging
 from getopt import getopt, GetoptError
 
+import Cobalt
 from Cobalt.Components.system import Simulator
 from Cobalt.Server import XMLRPCServer, find_intended_location
 import Cobalt.Logging
@@ -24,7 +25,7 @@ def run (argv=None):
     daemon = False
     pidfile = ""
     log_level = logging.INFO
-    config_file = "/etc/cobalt.conf"
+    config_files = Cobalt.CONFIG_FILES
     for item in opts:
         if item[0] == "-D":
             daemon = True
@@ -32,7 +33,7 @@ def run (argv=None):
         elif item[0] == "-d":
             log_level = logging.DEBUG
         if item[0] == '-C':
-            config_file = item[1]
+            config_files = [item[1]]
     
     Cobalt.Logging.setup_logging('brooklyn', level=log_level)
     simulator = Simulator()
@@ -42,7 +43,7 @@ def run (argv=None):
         print >> sys.stderr, "unable to load simulator.xml from the current directory"
         return
     
-    location = find_intended_location(simulator, config_files=[config_file])
+    location = find_intended_location(simulator, config_files=config_files)
     server = XMLRPCServer(location, keyfile="/etc/cobalt.key", certfile="/etc/cobalt.key")
     server.register_instance(simulator)
     

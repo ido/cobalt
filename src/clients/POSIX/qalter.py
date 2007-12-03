@@ -4,7 +4,17 @@
 __revision__ = '$Revision: 559 $'
 __version__ = '$Version$'
 
-import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re, logging
+import os
+import sys
+import pwd
+import os.path
+import popen2
+import xmlrpclib
+import ConfigParser
+import re
+import logging
+
+import Cobalt
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
@@ -27,7 +37,7 @@ def processfilter(cmdstr, jobdict):
         print >>sys.stderr, ''.join(err)
     if rc != 0:
         print >>sys.stderr, "Filter %s failed" % (cmdstr)
-        raise SystemExit, 1
+        sys.exit(1)
     if out:
         for line in out:
             key, value = line.strip().split('=', 1)
@@ -57,11 +67,11 @@ if __name__ == '__main__':
     if opts['version']:
         print "qalter %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 1
+        sys.exit(1)
 
     if len(sys.argv) < 2:
         print helpmsg
-        raise SystemExit, 1
+        sys.exit(1)
  
     # setup logging
     level = 30
@@ -71,7 +81,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('qalter')
 
     CP = ConfigParser.ConfigParser()
-    CP.read(['/etc/cobalt.conf'])
+    CP.read(Cobalt.CONFIG_FILES)
 
     user = pwd.getpwuid(os.getuid())[0]
     for i in range(len(args)):
@@ -79,7 +89,7 @@ if __name__ == '__main__':
             args[i] = int(args[i])
         except:
             logger.error("jobid must be an integer")
-            raise SystemExit, 1
+            sys.exit(1)
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     updates = {}
     nc = 0
@@ -88,7 +98,7 @@ if __name__ == '__main__':
             nc = int(opts['nodecount'])
         except:
             logger.error("non-integer node count specified")
-            raise SystemExit, 1
+            sys.exit(1)
 
         try:
             sys_size = int(CP.get('cqm', 'size'))
@@ -96,7 +106,7 @@ if __name__ == '__main__':
             sys_size = 1024
         if not 0 < nc <= sys_size:
             logger.error("node count out of realistic range")
-            raise SystemExit, 1
+            sys.exit(1)
         updates['nodes'] = opts['nodecount']
     # ensure time is actually in minutes
     if opts['time']:
@@ -109,7 +119,7 @@ if __name__ == '__main__':
             mults = [0, 1, 60]
             if len(units) > 3:
                 logger.error("time too large")
-                raise SystemExit, 1
+                sys.exit(1)
             totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
             logger.error("submitting walltime=%s minutes" % str(totaltime))
             opts['time'] = str(totaltime)
@@ -117,10 +127,10 @@ if __name__ == '__main__':
             numtime = float(opts['time'])
         except:
             logger.error("invalid time specification")
-            raise SystemExit, 1
+            sys.exit(1)
         if numtime <= 0:
             logger.error("invalid time specification")
-            raise SystemExit, 1
+            sys.exit(1)
         updates['walltime'] = opts['time']
 
     try:
@@ -136,7 +146,7 @@ if __name__ == '__main__':
         if opts['mode'] not in job_types:
             logger.error("Specifed mode '%s' not valid, valid modes are\n%s" % \
                   (opts['mode'], "\n".join(job_types)))
-            raise SystemExit, 1
+            sys.exit(1)
         if opts['mode'] == 'co' and sys_type == 'bgp':
             opts['mode'] = 'SMP'
         updates['mode'] = opts['mode']
@@ -150,7 +160,7 @@ if __name__ == '__main__':
                 opts['proccount'] = str(4 * int(opts['nodecount']))
             else:
                 logger.error("Unknown bgtype %s" % (sys_type))
-                raise SystemExit, 1
+                sys.exit(1)
         else:
             opts['proccount'] = opts['nodecount']
         updates['procs'] = opts['proccount']
@@ -159,7 +169,7 @@ if __name__ == '__main__':
             int(opts['proccount'])
         except:
             logger.error("non-integer node count specified")
-            raise SystemExit, 1
+            sys.exit(1)
         updates['procs'] = opts['proccount']
 
     if opts['project']:
@@ -192,7 +202,7 @@ if __name__ == '__main__':
         response = []
         if flt.faultCode == 30:
             print flt.faultString
-            raise SystemExit, 1
+            sys.exit(1)
     if not response:
         Cobalt.Logging.logging.error("Failed to match any jobs or queues")
     else:

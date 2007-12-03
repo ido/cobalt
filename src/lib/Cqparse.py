@@ -14,8 +14,21 @@
 #
 __revision__ = '$Revision$'
 
-import commands, datetime, os, re, logging, string, sys, time, ConfigParser, math
-import Cobalt.Proxy, Cobalt.Data, Cobalt.Logging
+import commands
+import datetime
+import os
+import re
+import logging
+import string
+import sys
+import time
+import ConfigParser
+import math
+
+import Cobalt
+import Cobalt.Proxy
+import Cobalt.Data
+import Cobalt.Logging
 
 #
 # Configuration
@@ -26,7 +39,7 @@ import Cobalt.Proxy, Cobalt.Data, Cobalt.Logging
 # Otherwise, panic!
 # read log_dir from [cqm] in cobalt.conf
 CP = ConfigParser.ConfigParser()
-CP.read(['/etc/cobalt.conf'])
+CP.read(Cobalt.CONFIG_FILES)
 try:
     DEFAULT_LOG_DIRECTORY = CP.get('cqm', 'log_dir')
 except ConfigParser.NoOptionError:

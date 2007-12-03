@@ -12,6 +12,7 @@ import sys
 import getopt
 import logging
 
+import Cobalt
 import Cobalt.Proxy
 import Cobalt.Logging
 from Cobalt.Server import XMLRPCServer, find_intended_location
@@ -29,13 +30,12 @@ def run_component (component, argv=None, register=True):
         sys.exit(1)
     
     # default settings
-    config_file = "/etc/cobalt.conf"
     daemon = False
     pidfile = ""
     # get user input
     for item in opts:
         if item[0] == '-C':
-            config_file = item[1]
+            Cobalt.CONFIG_FILES = (item[1], )
         elif item[0] == '-D':
             daemon = True
             pidfile = item[1]
@@ -43,7 +43,7 @@ def run_component (component, argv=None, register=True):
     component.logger.setLevel(logging.INFO)
     Cobalt.Logging.log_to_stderr(component.logger)
 
-    location = find_intended_location(component, config_files=[config_file])
+    location = find_intended_location(component)
     server = XMLRPCServer(location, keyfile="/etc/cobalt.key", certfile="/etc/cobalt.key", register=register)
     server.logger.setLevel(logging.INFO)
     Cobalt.Logging.log_to_stderr(server.logger)

@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 
 import pprint
-import sys, re, ConfigParser
+import sys
+import re
+import ConfigParser
 import DB2
+
+import Cobalt
 import Cobalt.Data
 
 class Base(Cobalt.Data.Data):
@@ -23,15 +27,15 @@ class BaseSet(Cobalt.Data.DataSet):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsched'):
         print '''"bgsched" section missing from cobalt config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     config = _config._sections['bgsched']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
 
     def __init__(self, racks, psetsize):
         Cobalt.Data.DataSet.__init__(self)

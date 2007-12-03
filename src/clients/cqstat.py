@@ -4,8 +4,18 @@
 __revision__ = '$Revision$'
 __version__ = '$Version$'
 
-import math, os, re, sys, time, types, ConfigParser, socket
-import Cobalt.Logging, Cobalt.Util
+import math
+import os
+import re
+import sys
+import time
+import types
+import ConfigParser
+import socket
+
+import Cobalt
+import Cobalt.Logging
+import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 __helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--header] [--schedinfo] <jobid> <jobid>\n" + \
@@ -52,10 +62,10 @@ if __name__ == '__main__':
     if '--version' in sys.argv:
         print "cqstat %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 0
+        sys.exit()
     if '-h' in sys.argv or '--help' in sys.argv:
         print __helpmsg__
-        raise SystemExit, 1
+        sys.exit(1)
 
     options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
                'q':'q', 'schedinfo':'schedinfo'}
@@ -67,7 +77,7 @@ if __name__ == '__main__':
     custom_header = None
     try:
         CP = ConfigParser.ConfigParser()
-        CP.read(['/etc/cobalt.conf'])
+        CP.read(Cobalt.CONFIG_FILES)
         custom_header = CP.get('cqm', 'cqstat_header').split(':')
     except:
         pass
@@ -82,7 +92,7 @@ if __name__ == '__main__':
 
     if opts['version']:
         print "cqstat %s" % __revision__
-        raise SystemExit, 0
+        sys.exit()
     
     if opts['schedinfo']:
         print "The most recent scheduling attempt reports:\n"
@@ -116,7 +126,7 @@ if __name__ == '__main__':
             else:
                 print "maybe the scheduler hasn't seen the job yet?"
             
-        raise SystemExit, 0
+        sys.exit()
     
     Cobalt.Logging.setup_logging('cqstat', to_syslog=False, level=level)
 
@@ -174,7 +184,7 @@ if __name__ == '__main__':
                     query.append({'tag':'job', 'jobid':int(n)})
         except ValueError:
             print "jobids must be integers"
-            raise SystemExit, 1
+            sys.exit(1)
         for q in query:
             for h in long_header:
                 if h == 'JobName':

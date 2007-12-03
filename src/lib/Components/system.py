@@ -26,6 +26,7 @@ from ConfigParser import ConfigParser
 import lxml
 import lxml.etree
 
+import Cobalt
 import Cobalt.Data
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
@@ -357,8 +358,10 @@ class Simulator (Component):
             raise JobCreationError("user")
         return (uid, gid)
     
-    def _get_env (self, spec, config_files=["/etc/cobalt.conf"]):
+    def _get_env (self, spec, config_files=None):
         """Get intended environment dict for a job from a job spec."""
+        if config_files is None:
+            config_files = Cobalt.CONFIG_FILES
         config = ConfigParser()
         config.read(config_files)
         env = dict()
@@ -370,8 +373,10 @@ class Simulator (Component):
         env["COBALT_JOBID"] = spec['id']
         return env
     
-    def _get_cmd (self, spec, config_files=["/etc/cobalt.conf"]):
+    def _get_cmd (self, spec, config_files=None):
         """Get a command string for a job from a job spec."""
+        if config_files is None:
+            config_files = Cobalt.CONFIG_FILES
         config = ConfigParser()
         config.read(config_files)
         

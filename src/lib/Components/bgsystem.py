@@ -6,8 +6,16 @@ __revision__ = '$Revision$'
 
 from optparse import OptionParser
 
-import logging, random, sys, ConfigParser, xmlrpclib, pwd, atexit, os
-#import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import logging
+import random
+import sys
+import ConfigParser
+import xmlrpclib
+import pwd
+import atexit
+import os
+
+import Cobalt
 import Cobalt.bridge
 import Cobalt.Util
 from Cobalt.Data import Data, DataList, DataDict
@@ -245,15 +253,14 @@ class System(Component):
 
     # read in config from cobalt.conf
     
-    # what the heck are the required_fields supposed to do???
-    # only Data is supposed to have required_fields !!!!
+    # I can't find where required_fields is used. Remove?
     required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
     _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
     _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgpm'):
         print '''"system" section missing from cobalt config file'''
         raise SystemExit, 1
@@ -261,7 +268,7 @@ class System(Component):
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
 
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)

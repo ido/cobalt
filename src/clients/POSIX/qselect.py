@@ -4,8 +4,19 @@
 __revision__ = '$Revision: 559 $'
 __version__ = '$Version$'
 
-import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re, logging
-import Cobalt.Logging, Cobalt.Util
+import os
+import sys
+import pwd
+import os.path
+import popen2
+import xmlrpclib
+import ConfigParser
+import re
+import logging
+
+import Cobalt
+import Cobalt.Logging
+import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 helpmsg = """
@@ -24,11 +35,11 @@ if __name__ == '__main__':
     if opts['version']:
         print "qselect %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 1
+        sys.exit(1)
 
     if len(sys.argv) < 2:
         print helpmsg
-        raise SystemExit, 1
+        sys.exit(1)
 
     # setup logging
     level = 30
@@ -38,7 +49,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('qselect')
 
     CP = ConfigParser.ConfigParser()
-    CP.read(['/etc/cobalt.conf'])
+    CP.read(Cobalt.CONFIG_FILES)
     
     failed = False
 
@@ -49,7 +60,7 @@ if __name__ == '__main__':
             nc = int(opts['nodecount'])
         except:
             logger.error("non-integer node count specified")
-            raise SystemExit, 1
+            sys.exit(1)
         query['nodes'] = opts['nodecount']
     else:
         query['nodes'] = '*'
@@ -65,7 +76,7 @@ if __name__ == '__main__':
             mults = [0, 1, 60]
             if len(units) > 3:
                 logger.error("time too large")
-                raise SystemExit, 1
+                sys.exit(1)
             totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
             logger.error("submitting walltime=%s minutes" % str(totaltime))
             opts['time'] = str(totaltime)
@@ -73,10 +84,10 @@ if __name__ == '__main__':
             numtime = float(opts['time'])
         except:
             logger.error("invalid time specification")
-            raise SystemExit, 1
+            sys.exit(1)
         if numtime <= 0:
             logger.error("invalid time specification")
-            raise SystemExit, 1
+            sys.exit(1)
         query['walltime'] = opts['time']
     else:
         query['walltime'] = '*'
@@ -112,10 +123,10 @@ if __name__ == '__main__':
 
     except ComponentLookupError:
         logger.error("Can't connect to the queue manager")
-        raise SystemExit, 1
+        sys.exit(1)
     #except:
         #$logger.error("Error querying jobs")
-        #raise SystemExit, 1
+        #sys.exit(1)
     # log jobid to stdout
 
     if not response:

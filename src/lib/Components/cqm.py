@@ -4,12 +4,20 @@
 '''Cobalt Queue Manager'''
 __revision__ = '$Revision: 768 $'
 
+import logging
 from logging import getLogger, FileHandler, Formatter
+import os
+import sys
+import time
+import xml.sax.saxutils
+import xmlrpclib
+import ConfigParser
+import copy
+import types
 
-import logging, os, sys, time, xml.sax.saxutils, xmlrpclib, ConfigParser, copy, types
-
-#import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util, Cobalt.Cqparse
-import Cobalt.Util, Cobalt.Cqparse
+import Cobalt
+import Cobalt.Util
+import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, get_spec_fields, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Server import XMLRPCServer, find_intended_location
@@ -629,15 +637,15 @@ class BGJob(Job):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
         if not _config._sections.has_key('cqm'):
             print '''"cqm" section missing from cobalt config file'''
-            raise SystemExit, 1
+            sys.exit(1)
     config = _config._sections['cqm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
     if config.get("bgkernel") == 'true':
         for param in ['partitionboot', 'bootprofiles']:
             if config.get(param, 'nothere') == 'nothere':
@@ -835,15 +843,15 @@ class ScriptMPIJob(Job):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
         if not _config._sections.has_key('cqm'):
             print '''"cqm" section missing from cobalt config file'''
-            raise SystemExit, 1
+            sys.exit(1)
     config = _config._sections['cqm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
     if config.get('bgkernel') == 'true':
         for param in ['partitionboot', 'bootprofiles']:
             if config.get(param, 'nothere') == 'nothere':

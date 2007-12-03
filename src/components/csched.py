@@ -1,10 +1,22 @@
 #!/usr/bin/env python
 
 '''this is the simple cluster scheduler'''
+
 __revision__ = '$Revision'
 
-import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy
-import re, time, signal, logging, sys, xmlrpclib, ConfigParser
+import re
+import time
+import signal
+import logging
+import sys
+import xmlrpclib
+import ConfigParser
+
+import Cobalt
+import Cobalt.Component
+import Cobalt.Data
+import Cobalt.Logging
+import Cobalt.Proxy
 
 MAX_DATE = 2147483647
 logger = logging.getLogger('csched')
@@ -111,18 +123,18 @@ class NodeList(Cobalt.Data.DataSet):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('csched'):
         print '''"csched" section missing from cobalt config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     config = _config._sections['csched']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
     if not _config._sections.has_key('csched-queue'):
         print '''csched-queue section missing from config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     qconfig = _config._sections['csched-queue']
     qpolicy = {'default':'PlaceFIFO', 'short':'PlaceShort'}
 
@@ -261,7 +273,7 @@ if __name__ == '__main__':
         opts = getopt(sys.argv[1:], 'dC:D:', [])[0]
     except GetoptError, msg:
         print "%s\nUsage:\ncsched.py [-d] [-C <configfile>] [-D <pidfile>]" % (msg)
-        raise SystemExit, 1
+        sys.exit(1)
     try:
         daemon = [x[1] for x in opts if x[0] == '-D'][0]
     except:
@@ -270,5 +282,5 @@ if __name__ == '__main__':
     if len([x for x in opts if x[0] == '-d']):
         level = 0
     Cobalt.Logging.setup_logging('cqm', level=20)
-    server = Scheduler({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
+    server = Scheduler({'configfile':Cobalt.CONFIG_FILES, 'daemon':daemon})
     server.serve_forever()

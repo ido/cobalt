@@ -3,8 +3,20 @@
 '''Scheduler for BG/L'''
 __revision__ = '$Revision$'
 
-import copy, logging, sys, time, xmlrpclib, ConfigParser, re
-import Cobalt.Component, Cobalt.Data, Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import copy
+import logging
+import sys
+import time
+import xmlrpclib
+import ConfigParser
+import re
+
+import Cobalt
+import Cobalt.Component
+import Cobalt.Data
+import Cobalt.Logging
+import Cobalt.Proxy
+import Cobalt.Util
 
 if '--nodb2' not in sys.argv:
     import DB2
@@ -308,15 +320,15 @@ class BaseSet(Cobalt.Data.DataSet):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsched'):
         print '''"bgsched" section missing from cobalt config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     config = _config._sections['bgsched']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
 
     def __init__(self, racks, psetsize):
         Cobalt.Data.DataSet.__init__(self)
@@ -475,18 +487,18 @@ class PartitionSet(Cobalt.Data.DataSet):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsched'):
         print '''"bgsched" section missing from cobalt config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     config = _config._sections['bgsched']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        sys.exit(1)
     if not _config._sections.has_key('bgsched-queue'):
         print '''bgsched-queue section missing from config file'''
-        raise SystemExit, 1
+        sys.exit(1)
     qconfig = _config._sections['bgsched-queue']
     qpolicy = {'default':'PlaceFIFO', 'scavenger':'PlaceScavenger'}
 
@@ -500,7 +512,7 @@ class PartitionSet(Cobalt.Data.DataSet):
                 self.db2 = conn.cursor()
             except:
                 print "Failed to connect to DB2"
-                raise SystemExit, 1
+                sys.exit(1)
         self.qmconnect = FailureMode("QM Connection")
         #TODO read racks and pset size from conf file
         self.basemachine = BaseSet(racks, psetsize)
@@ -848,7 +860,7 @@ if __name__ == '__main__':
     else:
         DLEVEL = logging.INFO
     Cobalt.Logging.setup_logging('bgsched', level=DLEVEL)
-    SERVER = BGSched({'configfile':'/etc/cobalt.conf', 'daemon':DAEMON})
+    SERVER = BGSched({'configfile':Cobalt.CONFIG_FILES, 'daemon':DAEMON})
     SERVER.serve_forever()
     
 

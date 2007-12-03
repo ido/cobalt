@@ -3,8 +3,20 @@
 '''Process manager for the breadboard'''
 __revision__ = '$Revision$'
 
-import atexit, logging, os, pwd, signal, sys, tempfile, time
-import ConfigParser, Cobalt.Component, Cobalt.Data, Cobalt.Logging
+import atexit
+import logging
+import os
+import pwd
+import signal
+import sys
+import tempfile
+import time
+import ConfigParser
+
+import Cobalt
+import Cobalt.Component
+import Cobalt.Data
+import Cobalt.Logging
 
 import FTB
 from ctypes import *
@@ -170,7 +182,7 @@ if __name__ == '__main__':
         (opts, arg) = getopt(sys.argv[1:], 'dC:D:', ['notbgl'])
     except GetoptError,msg:
         print "%s\nUsage:\nbbpm.py [-d] [-C config file] [-D <pidfile>]" % (msg)
-        raise SystemExit, 1
+        sys.exit(1)
     try:
         daemon = [item[1] for item in opts if item[0] == '-D'][0]
     except:
@@ -180,5 +192,5 @@ if __name__ == '__main__':
     else:
         dlevel=logging.INFO
     Cobalt.Logging.setup_logging('bbpm', level=dlevel)
-    s = BBProcessManager({'configfile':'/etc/cobalt.conf', 'daemon':daemon})
+    s = BBProcessManager({'configfile':Cobalt.CONFIG_FILES, 'daemon':daemon})
     s.serve_forever()

@@ -13,6 +13,8 @@ import socket
 from xmlrpclib import ServerProxy, Fault
 from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 
+import Cobalt
+
 __all__ = [
     "ComponentProxy", "ComponentLookupError",
     "register_component", "find_configured_servers",
@@ -127,7 +129,7 @@ def find_configured_servers (config_files=None):
     config_files -- a list of paths to config files.
     """
     if not config_files:
-        config_files = ["/etc/cobalt.conf"]
+        config_files = Cobalt.CONFIG_FILES
     config = SafeConfigParser()
     config.read(config_files)
     try:

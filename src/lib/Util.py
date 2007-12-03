@@ -1,10 +1,18 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
-import os, types, smtplib, socket, time, ConfigParser, popen2
+import os
+import types
+import smtplib
+import socket
+import time
+import ConfigParser
+import popen2
 from datetime import date, datetime
 from getopt import getopt, GetoptError
 import logging
+
+import Cobalt
 
 logger = logging.getLogger('Util')
 
@@ -173,7 +181,7 @@ def runcommand(cmd):
 class AccountingLog:
     def __init__(self, name):
         CP = ConfigParser.ConfigParser()
-        CP.read(['/etc/cobalt.conf'])
+        CP.read(Cobalt.CONFIG_FILES)
         try:
             self.logdir = CP.get('cqm', 'log_dir')
         except ConfigParser.NoOptionError:
@@ -230,7 +238,7 @@ class PBSLog (object):
         self.id_string = id_string
         # Get the log directory from a config file.
         config = ConfigParser.ConfigParser()
-        config.read(['/etc/cobalt.conf'])
+        config.read(Cobalt.CONFIG_FILES)
         try:
             self.logdir = config.get('cqm', 'log_dir')
         except ConfigParser.NoOptionError:

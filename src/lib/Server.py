@@ -27,6 +27,7 @@ from tlslite.api import \
     TLSSocketServerMixIn, parsePrivateKey, \
     X509, X509CertChain, SessionCache, TLSError
 
+import Cobalt
 from Cobalt.Proxy import ComponentProxy
 
 
@@ -37,10 +38,10 @@ def find_intended_location (component, config_files=None):
     component -- component to find records for
     
     Keyword arguments:
-    config_files -- list of configuration files to use (default ["/etc/cobalt.conf"])
+    config_files -- list of configuration files to use
     """
     if not config_files:
-        config_files = ["/etc/cobalt.conf"]
+        config_files = Cobalt.CONFIG_FILES
     config = SafeConfigParser()
     config.read(config_files)
     try:

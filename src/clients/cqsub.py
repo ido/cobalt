@@ -1,11 +1,23 @@
 #!/usr/bin/env python
 
 '''Cobalt qsub command'''
+
 __revision__ = '$Revision$'
 __version__ = '$Version$'
 
-import os, sys, pwd, os.path, popen2, xmlrpclib, ConfigParser, re, logging
-import Cobalt.Logging, Cobalt.Util
+import os
+import sys
+import pwd
+import os.path
+import popen2
+import xmlrpclib
+import ConfigParser
+import re
+import logging
+
+import Cobalt
+import Cobalt.Logging
+import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
@@ -28,7 +40,7 @@ def processfilter(cmdstr, jobdict):
         print >>sys.stderr, ''.join(err)
     if rc != 0:
         print >>sys.stderr, "Filter %s failed" % (cmdstr)
-        raise SystemExit, 1
+        sys.exit(1)
     if out:
         for line in out:
             key, value = line.strip().split('=', 1)
@@ -62,7 +74,7 @@ if __name__ == '__main__':
     if opts['version']:
         print "cqsub %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 1
+        sys.exit(1)
 
     # setup logging
     level = 30
@@ -72,7 +84,7 @@ if __name__ == '__main__':
     logger = logging.getLogger('cqsub')
 
     CP = ConfigParser.ConfigParser()
-    CP.read(['/etc/cobalt.conf'])
+    CP.read(Cobalt.CONFIG_FILES)
     
     failed = False
     needed = ['time', 'nodecount'] #, 'project']
@@ -85,14 +97,14 @@ if __name__ == '__main__':
         else:
             logger.error("Command required")
         logger.error(helpmsg)
-        raise SystemExit, 1
+        sys.exit(1)
 
     jobspec = {'tag':'job'}
     try:
         nc = int(opts['nodecount'])
     except:
         logger.error("Error: non-integer node count specified with -n option")
-        raise SystemExit, 1
+        sys.exit(1)
 
     if opts['kerneloptions']:
         jobspec['kerneloptions'] = opts['kerneloptions']
@@ -103,12 +115,12 @@ if __name__ == '__main__':
         sys_size = 1024
     if not 0 < nc <= sys_size:
         logger.error("node count out of realistic range")
-        raise SystemExit, 1
+        sys.exit(1)
     if opts['cwd'] == False:
         opts['cwd'] = os.getcwd()
     if not os.path.isdir(opts['cwd']):
         logger.error("Error: dir '%s' is not a directory" % opts['cwd'])
-        raise SystemExit, 1
+        sys.exit(1)
     # ensure time is actually in minutes
     if opts['time'].count(':') > 0:
         # process as a time
@@ -119,29 +131,29 @@ if __name__ == '__main__':
         mults = [0, 1, 60]
         if len(units) > 3:
             logger.error("time too large")
-            raise SystemExit, 1
+            sys.exit(1)
         try:
             totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
         except ValueError:
             logger.error("invalid time specification")
-            raise SystemExit, 1
+            sys.exit(1)
         logger.error("submitting walltime=%s minutes" % str(totaltime))
         opts['time'] = str(totaltime)
     try:
         numtime = float(opts['time'])
     except:
         logger.error("invalid time specification")
-        raise SystemExit, 1
+        sys.exit(1)
     if numtime <= 0:
         logger.error("invalid time specification")
-        raise SystemExit, 1
+        sys.exit(1)
     user = pwd.getpwuid(os.getuid())[0]
     if command[0][0] != '/':
         command[0] = opts['cwd'] + '/' + command[0]
 
     if not os.path.isfile(command[0]):
         logger.error("command %s not found, or is not a file" % command[0])
-        raise SystemExit, 1
+        sys.exit(1)
 
     try:
         sys_type = CP.get('cqm', 'bgtype')
@@ -157,7 +169,7 @@ if __name__ == '__main__':
     elif opts['mode'] not in job_types:
         logger.error("Specifed mode '%s' not valid, valid modes are\n%s" % \
               (opts['mode'], "\n".join(job_types)))
-        raise SystemExit, 1
+        sys.exit(1)
     if opts['mode'] == 'co' and sys_type == 'bgp':
         opts['mode'] = 'SMP'
     for field in ['kernel', 'queue']:
@@ -172,7 +184,7 @@ if __name__ == '__main__':
                 opts['proccount'] = str(4 * int(opts['nodecount']))
             else:
                 logger.error("Unknown bgtype %s" % (sys_type))
-                raise SystemExit, 1
+                sys.exit(1)
         else:
             opts['proccount'] = opts['nodecount']
     else:
@@ -180,7 +192,7 @@ if __name__ == '__main__':
             int(opts['proccount'])
         except:
             logger.error("Error: non-integer node count specified with -c option")
-            raise SystemExit, 1
+            sys.exit(1)
 
     if opts['project']:
         jobspec['project'] = opts['project']
@@ -207,7 +219,7 @@ if __name__ == '__main__':
             jobspec.update({'errorpath':opts['error']})
         if not os.path.isdir(jobspec.get('errorpath')):
             logger.error("directory %s does not exist" % jobspec.get('errorpath'))
-            raise SystemExit, 1
+            sys.exit(1)
     if opts['output']:
         if not opts['output'].startswith('/'):
             jobspec.update({'outputpath':"%s/%s" % (opts['cwd'], opts['output'])})
@@ -215,7 +227,7 @@ if __name__ == '__main__':
             jobspec.update({'outputpath':opts['output']})
         if not os.path.isdir(jobspec.get('outputpath')):
             logger.error("directory %s does not exist" % jobspec.get('outputpath'))
-            raise SystemExit, 1
+            sys.exit(1)
     if opts['held']:
         jobspec.update({'state':'hold'})
     if opts['env']:
@@ -224,7 +236,7 @@ if __name__ == '__main__':
         for kv in key_value_pairs:
             if len(kv) != 2:
                 print "Improperly formatted argument to env : %r" % kv
-                raise SystemExit, 1
+                sys.exit(1)
         for key, value in key_value_pairs:
             jobspec['envs'].update({key:value})
     if opts['inputfile']:
@@ -234,7 +246,7 @@ if __name__ == '__main__':
             jobspec.update({'inputfile':opts['inputfile']})
         if not os.path.isfile(jobspec.get('inputfile')):
             logger.error("file %s not found, or is not a file" % jobspec.get('inputfile'))
-            raise SystemExit, 1
+            sys.exit(1)
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
     try:
@@ -253,20 +265,20 @@ if __name__ == '__main__':
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 31:
             logger.error("System draining. Try again later")
-            raise SystemExit, 1
+            sys.exit(1)
         elif flt.faultCode == 30:
             logger.error("Job submission failed because: \n%s\nCheck 'cqstat -q' and the cqstat manpage for more details." % flt.faultString)
-            raise SystemExit, 1
+            sys.exit(1)
         elif flt.faultCode == 1:
             logger.error("Job submission failed due to queue-manager failure")
-            raise SystemExit, 1
+            sys.exit(1)
         else:
             logger.error("Job submission failed")
             logger.error(flt)
-            raise SystemExit, 1
+            sys.exit(1)
     except:
         logger.error("Error submitting job")
-        raise SystemExit, 1
+        sys.exit(1)
     # log jobid to stdout
     if job:
         print job[0]['jobid']
