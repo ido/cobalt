@@ -1164,7 +1164,6 @@ class QueueDict(DataDict):
             return results
         
         # we know all of the queues exist, so add the jobs to the appropriate JobList
-        # FIXME: add stuff for can_queue
         for spec in specs:
             results += self[spec['queue']].jobs.q_add([spec], callback, cargs)
             
@@ -1262,7 +1261,6 @@ class QueueManager(Component):
                 failed = True
         if failed:
             raise xmlrpclib.Fault(42, failure_msg)
-            return []
         
         response = self.Queues.add_jobs(specs)
         return response

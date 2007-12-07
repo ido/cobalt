@@ -1,6 +1,9 @@
 import time
+import xmlrpclib
 
 from Cobalt.Components.cqm import QueueManager
+from Cobalt.Data import IncrID
+import Cobalt.Components.cqm
 
 from test_base import TestComponent
 
@@ -11,7 +14,10 @@ class TestQueueManager (TestComponent):
     def setup(self):
         TestComponent.setup(self)
         self.cqm = QueueManager()
-    
+
+    def teardown(self):
+        Cobalt.Components.cqm.cqm_id_gen = IncrID()
+        
     def test_add_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         
@@ -42,6 +48,7 @@ class TestQueueManager (TestComponent):
     def test_del_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
+        self.cqm.add_queues([{'name':"empty"}])
      
         self.cqm.add_jobs([{'tag':"job", 'queue':"default", 'user':"dilbert"}])
         self.cqm.add_jobs([{'tag':"job", 'queue':"default", 'user':"wally"}])
@@ -75,6 +82,10 @@ class TestQueueManager (TestComponent):
         results = self.cqm.get_jobs([{'tag':"job", 'queue':"foo"}])
         assert len(results) == 0
         
+        self.cqm.del_queues([{'name':"empty"}])
+        r = self.cqm.get_queues([{'name':"empty"}])
+        assert len(r) == 0
+        
     
     def test_set_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
@@ -95,6 +106,13 @@ class TestQueueManager (TestComponent):
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"bar"}])
 
+        try:
+            self.cqm.add_jobs([{'queue':"not a valid name"}])
+        except xmlrpclib.Fault:
+            pass
+        else:
+            assert not "trying to add a job to a non-existent queue should raise an Exception"
+        
         self.cqm.add_jobs([{'tag':"job", 'queue':"default"}])
         
         results = self.cqm.get_queues([{'tag':"queue", 'name':"default"}])
@@ -127,7 +145,7 @@ class TestQueueManager (TestComponent):
         results = self.cqm.get_jobs([{'tag':"job", 'jobid':"*", 'queue':"bar"}])
         assert len(results) == 0
     
-    def test_del_job(self):
+    def test_del_jobs(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
      
@@ -150,6 +168,7 @@ class TestQueueManager (TestComponent):
         results = self.cqm.get_jobs([{'tag':"job", 'user':"wally"}])
         assert len(results) == 0
 
+
     def test_set_jobs(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
@@ -164,3 +183,47 @@ class TestQueueManager (TestComponent):
         self.cqm.set_jobs([{'tag':"job", 'queue':"foo"}], {'jobname':"goodbye"})
         results = self.cqm.get_jobs([{'tag':"job", 'jobname':"hello"}])
         assert len(results) == 1
+
+    def test_set_jobid(self):
+        # create a local QueueManager so that we can be sure no jobids have been used
+        self.cqm.add_queues([{'name':"default"}])
+        self.cqm.set_jobid(10)
+        self.cqm.add_jobs([{'queue':"default"}])
+        r = self.cqm.get_jobs([{'jobid':10}])
+        assert len(r) == 1
+    
+    def test_move_jobs(self):
+        self.cqm.add_queues([{'name':"default"}])
+        self.cqm.add_queues([{'name':"foo"}])
+        self.cqm.add_queues([{'name':"restricted"}])
+        self.cqm.set_queues([{'name':"restricted"}], {'users':"alice"})
+        
+        self.cqm.add_jobs([{'queue':"default", 'jobname':"hello"}])
+        
+        try:
+            self.cqm.move_jobs([{'jobname':"hello"}], "default")
+        except xmlrpclib.Fault:
+            pass
+        else:
+            assert not "moving a job to the same queue should cause an exception"
+            
+        try:
+            self.cqm.move_jobs([{'jobname':"hello"}], "jonx")
+        except xmlrpclib.Fault:
+            pass
+        else:
+            assert not "moving a job to a non-existent queue should cause an exception"
+                                 
+
+        self.cqm.move_jobs([{'jobname':"hello"}], "foo")
+        r = self.cqm.get_jobs([{'jobname':"hello", 'queue':"*"}])
+        assert len(r) == 1
+        assert r[0].queue == "foo"
+        
+        try:
+            self.cqm.move_jobs([{'jobname':"hello"}], "restricted")
+        except xmlrpclib.Fault:
+            pass
+        else:
+            assert not "a job failing can_queue should prevent the move_jobs from succeeding"
+            
