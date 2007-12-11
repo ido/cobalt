@@ -485,7 +485,7 @@ class Wire (BGDevice):
     state = property(_get_state)
     
     def _get_src (self):
-        src = self._get_bridge_field((header.RM_WireFromPort, header.rm_element_t)
+        src = self._get_bridge_field((header.RM_WireFromPort, header.rm_element_t))
         return Port(src)
     
     src = property(_get_src)
@@ -614,7 +614,7 @@ class Job (BGDevice):
     stderr = property(_get_stderr)
     
     def _get_starttime (self):
-        starttime = self._get_bridge_field((header.RM_JobStartTime, c_char_p)
+        starttime = self._get_bridge_field((header.RM_JobStartTime, c_char_p))
         return starttime.value
     
     starttime = property(_get_starttime)
