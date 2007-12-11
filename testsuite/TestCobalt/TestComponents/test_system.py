@@ -105,16 +105,13 @@ class TestSimulator (TestComponent):
             id = "1",
             size = "32",
             executable = "/bin/ls",
-            location = "ANLR00",
+            location = ["ANLR00"],
             cwd = os.getcwd(),
             inputfile = "infile",
             outputfile = "outfile",
             errorfile = "errfile",
             user = os.getlogin(),
         )])
-        runtime = self.system.jobs.values()[0].runtime
-        for each in range(runtime):
-            self.system.run_jobs()
     
     def test_signal_jobs (self):
         self.system.add_jobs([dict(

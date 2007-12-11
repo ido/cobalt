@@ -1,4 +1,6 @@
 import os
+import time
+import logging
 
 from Cobalt.Components.cpm import ProcessManager
 from Cobalt.Components.system import Simulator
@@ -17,6 +19,8 @@ class TestProcessManager (TestComponent):
         TestComponent.setup(self)
         self.cpm = ProcessManager()
         self.system = Simulator(config_file="simulator.xml")
+        self.system.add_partitions([{'name':"ANLR00"}])
+        logging.basicConfig()
     
     def test_add_jobs (self):
         assert not self.cpm.jobs
@@ -27,7 +31,7 @@ class TestProcessManager (TestComponent):
             user = os.getlogin(),
             id = 1,
             size = partition.size,
-            location = partition.name,
+            location = [partition.name],
         )
         jobs = self.cpm.add_jobs([spec])
         assert len(jobs) == len(self.cpm.jobs) == 1
@@ -38,7 +42,7 @@ class TestProcessManager (TestComponent):
         assert job.user == os.getlogin()
         assert job.id == 1
         assert job.size == partition.size
-        assert job.location == partition.name
+        assert job.location == [partition.name]
     
     def test_get_jobs (self):
         jobs = self.cpm.get_jobs([{'jobid':"*"}])
@@ -50,7 +54,7 @@ class TestProcessManager (TestComponent):
             user = os.getlogin(),
             id = 1,
             size = partition.size,
-            location = partition.name,
+            location = [partition.name],
         )
         self.cpm.add_jobs([spec])
         jobs = self.cpm.get_jobs([{'jobid':"*"}])
@@ -62,7 +66,7 @@ class TestProcessManager (TestComponent):
         assert job.user == os.getlogin()
         assert job.id == 1
         assert job.size == partition.size
-        assert job.location == partition.name
+        assert job.location == [partition.name]
     
     def test_check_jobs (self):
         partition = self.system.partitions.values()[0]
@@ -72,15 +76,13 @@ class TestProcessManager (TestComponent):
             user = os.getlogin(),
             id = 1,
             size = partition.size,
-            location = partition.name,
+            location = [partition.name],
         )
         jobs = self.cpm.add_jobs([spec])
         job = jobs[0]
-        for each in range(self.system.jobs[1].runtime):
-            self.cpm.check_jobs()
-            assert job.state != "finished"
-            self.system.do_tasks()
+        time.sleep(60)
         self.cpm.check_jobs()
+        
         assert job.state == "finished"
     
     def test_wait_jobs (self):
@@ -91,15 +93,12 @@ class TestProcessManager (TestComponent):
             user = os.getlogin(),
             id = 1,
             size = partition.size,
-            location = partition.name,
+            location = [partition.name],
         )
         jobs = self.cpm.add_jobs([spec])
         job = jobs[0]
-        for each in range(self.system.jobs[1].runtime):
-            jobs = self.cpm.wait_jobs([{'id':"*"}])
-            assert not jobs
-            self.system.do_tasks()
-            self.cpm.check_jobs()
+        time.sleep(60)
+        self.cpm.check_jobs()
         jobs = self.cpm.wait_jobs([{'id':"*"}])
         assert jobs
         for job in jobs:
@@ -114,7 +113,7 @@ class TestProcessManager (TestComponent):
             user = os.getlogin(),
             id = 1,
             size = partition.size,
-            location = partition.name,
+            location = [partition.name],
         )
         jobs = self.cpm.add_jobs([spec])
         job = jobs[0]

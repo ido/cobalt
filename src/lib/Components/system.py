@@ -44,6 +44,8 @@ logger = logging.getLogger(__name__)
 class JobCreationError (Exception):
     """An error occured when creation a job."""
 
+class ExitEarlyError (Exception):
+    """simulate a goto!!!"""
 
 class Partition (Data):
     
@@ -506,97 +508,102 @@ class Simulator (Component):
         environ = kwargs.get("env", {})
         
         try:
-            partition = argv[argv.index("-partition") + 1]
-        except ValueError:
-            print >> stderr, "ERROR: '-partition' is a required flag"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        except IndexError:
-            print >> stderr, "ERROR: '-partition' requires a value"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        
-        try:
-            mode = argv[argv.index("-mode") + 1]
-        except ValueError:
-            print >> stderr, "ERROR: '-mode' is a required flag"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        except IndexError:
-            print >> stderr, "ERROR: '-mode' requires a value"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        
-        try:
-            size = argv[argv.index("-np") + 1]
-        except ValueError:
-            print >> stderr, "ERROR: '-np' is a required flag"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        except IndexError:
-            print >> stderr, "ERROR: '-np' requires a value"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        try:
-            size = int(size)
-        except ValueError:
-            print >> stderr, "ERROR: '-np' got invalid value %r" % (size)
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-        
-        print >> stdout, "ENVIRONMENT"
-        print >> stdout, "-----------"
-        for key, value in environ.iteritems():
-            print >> stdout, "%s=%s" % (key, value)
-        print >> stdout
-        
-        print >> stderr, "FE_MPI (Info) : Initializing MPIRUN"
-        try:
-            jobid = environ["COBALT_JOBID"]
-        except KeyError:
-            print >> stderr, "FE_MPI (Info) : COBALT_JOBID not found"
-            print >> stderr, "FE_MPI (Info) : Exit status:   1"
-            return
-        bjobid = int(jobid) + 1024
-        reserved = self.reserve_partition(partition, size)
-        if not reserved:
-            print >> stderr, "BE_MPI (ERROR): Failed to run process on partition"
-            print >> stderr, "BE_MPI (Info) : BE completed"
-            print >> stderr, "FE_MPI (ERROR): Failure list:"
-            print >> stderr, "FE_MPI (ERROR): - 1. Job execution failed - unable to reserve partition", partition
-            print >> stderr, "FE_MPI (Info) : FE completed"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        print >> stderr, "FE_MPI (Info) : Adding job"
-        print >> stderr, "FE_MPI (Info) : Job added with id", bjobid
-        print >> stderr, "FE_MPI (Info) : Waiting for job to terminate"
-        
-        print >> stdout, "Running job with args:", argv
-        
-        start_time = time.time()
-        run_time = 0.7 * 60 * kwargs.get("walltime", 1)
-        print "running for about %f seconds" % run_time
-        while True:
-            if time.time() > (start_time + run_time):
-                print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
-                print >> stderr, "FE_MPI (Info) : Job sucessfully terminated"
-                break
-            elif jobid not in [job.id for job in self.jobs.itervalues()]:
-                print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
-                print >> stderr, "FE_MPI (Info) : Job killed before finished"
-                break
-            time.sleep(5)
+            try:
+                partition = argv[argv.index("-partition") + 1]
+            except ValueError:
+                print >> stderr, "ERROR: '-partition' is a required flag"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            except IndexError:
+                print >> stderr, "ERROR: '-partition' requires a value"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
             
-        print >> stderr, "BE_MPI (Info) : Releasing partition", partition
-        released = self.release_partition(partition)
-        if not released:
-            print >> stderr, "BE_MPI (ERROR): Partition", partition, "could not switch to state FREE ('F')"
+            try:
+                mode = argv[argv.index("-mode") + 1]
+            except ValueError:
+                print >> stderr, "ERROR: '-mode' is a required flag"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            except IndexError:
+                print >> stderr, "ERROR: '-mode' requires a value"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            
+            try:
+                size = argv[argv.index("-np") + 1]
+            except ValueError:
+                print >> stderr, "ERROR: '-np' is a required flag"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            except IndexError:
+                print >> stderr, "ERROR: '-np' requires a value"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            try:
+                size = int(size)
+            except ValueError:
+                print >> stderr, "ERROR: '-np' got invalid value %r" % (size)
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+            
+            print >> stdout, "ENVIRONMENT"
+            print >> stdout, "-----------"
+            for key, value in environ.iteritems():
+                print >> stdout, "%s=%s" % (key, value)
+            print >> stdout
+            
+            print >> stderr, "FE_MPI (Info) : Initializing MPIRUN"
+            try:
+                jobid = environ["COBALT_JOBID"]
+            except KeyError:
+                print >> stderr, "FE_MPI (Info) : COBALT_JOBID not found"
+                print >> stderr, "FE_MPI (Info) : Exit status:   1"
+                raise ExitEarlyError
+            bjobid = int(jobid) + 1024
+            reserved = self.reserve_partition(partition, size)
+            if not reserved:
+                print >> stderr, "BE_MPI (ERROR): Failed to run process on partition"
+                print >> stderr, "BE_MPI (Info) : BE completed"
+                print >> stderr, "FE_MPI (ERROR): Failure list:"
+                print >> stderr, "FE_MPI (ERROR): - 1. Job execution failed - unable to reserve partition", partition
+                print >> stderr, "FE_MPI (Info) : FE completed"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            print >> stderr, "FE_MPI (Info) : Adding job"
+            print >> stderr, "FE_MPI (Info) : Job added with id", bjobid
+            print >> stderr, "FE_MPI (Info) : Waiting for job to terminate"
+            
+            print >> stdout, "Running job with args:", argv
+            
+            start_time = time.time()
+            run_time = 0.7 * 60 * kwargs.get("walltime", 1)
+            print "running for about %f seconds" % run_time
+            while True:
+                if time.time() > (start_time + run_time):
+                    print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
+                    print >> stderr, "FE_MPI (Info) : Job sucessfully terminated"
+                    break
+                elif jobid not in [job.id for job in self.jobs.itervalues()]:
+                    print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
+                    print >> stderr, "FE_MPI (Info) : Job killed before finished"
+                    break
+                time.sleep(5)
+                
+            print >> stderr, "BE_MPI (Info) : Releasing partition", partition
+            released = self.release_partition(partition)
+            if not released:
+                print >> stderr, "BE_MPI (ERROR): Partition", partition, "could not switch to state FREE ('F')"
+                print >> stderr, "BE_MPI (Info) : BE completed"
+                print >> stderr, "FE_MPI (Info) : FE completed"
+                print >> stderr, "FE_MPI (Info) : Exit status: 1"
+                raise ExitEarlyError
+            print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
             print >> stderr, "BE_MPI (Info) : BE completed"
             print >> stderr, "FE_MPI (Info) : FE completed"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            return
-        print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
-        print >> stderr, "BE_MPI (Info) : BE completed"
-        print >> stderr, "FE_MPI (Info) : FE completed"
-        print >> stderr, "FE_MPI (Info) : Exit status: 0"
+            print >> stderr, "FE_MPI (Info) : Exit status: 0"
+
+        except ExitEarlyError:
+            # yay goto!!!
+            pass
         
         self.jobs.q_del([{'id':jobid}])

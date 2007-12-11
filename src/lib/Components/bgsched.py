@@ -39,14 +39,14 @@ class Reservation (Data):
     def __init__ (self, *args, **kwargs):
         Data.__init__(self, *args, **kwargs)
         if self.partitions is None:
-            self.partitions = []
+            self.partitions = ""
         if self.users is None:
-            self.users = []
+            self.users = ""
     
     def _get_active(self):
         return self.is_active()
     
-    def _set_active(self):
+    def _set_active(self, val):
         pass
     
     active = property(_get_active, _set_active)
