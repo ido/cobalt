@@ -1,75 +1,157 @@
 from ctypes import *
 
+__all__ = ['RM_PartitionPsetsPerBP', 'rm_port_id',
+           'RM_PartitionOptions', 'RM_JobRunTime',
+           'RM_PartListFirstPart', 'RM_JobExecutable',
+           'RM_JobErrText', 'RM_PartitionFirstNodeCard',
+           'rm_job_strace_t', 'JOB_STARTING_FLAG', 'RM_NextWire',
+           'rm_partition_state_t',
+           'rm_modify_op', 'rm_job_list_t',
+           'RM_NodeCardPartState', 'RM_JobStateEnum',
+           'JOB_DYING_FLAG', 'INCOMPATIBLE_STATE', 'rm_switch_t',
+           'PARTITION_BUSY_FLAG', 'RM_SwitchNextConnection',
+           'rm_connection_type_t', 
+           'RM_JobListFirstJob', 'rm_partition_state', 'RM_SwitchNum',
+           'RM_SwitchState', 
+           'rm_job_state_t', 'rm_partition_list',
+           'rm_port_t', 'rm_nodecard', 
+           'RM_FirstSwitch', 'JOB_IDLE_FLAG',
+           'RM_NodeCardID', 'rm_nodecard_list_t',
+           'RM_PartitionDescription', 'RM_PartitionNextBP',
+           'rm_BP_computenode_memory', 'RM_JobListSize',
+           'rm_job_t', 'INCONSISTENT_DATA',
+           'MPIR_DEBUG_ABORTING', 'rm_specification',
+           'rm_partition_t', 'RM_NodeCardState',
+           'RM_WireNum', 'RM_WireID', 'rm_nodecard_list',
+           'RM_JobStartTime', 'status', 'rm_size3D_t',
+           'rm_nodecard_state', 'RM_SwitchFirstConnection',
+           'MPIR_PROCDESC', 'rm_job_state_flag_t', 'rm_dimension_t',
+           'rm_port_id_t', 'RM_NodeCardListFirst',
+           'rm_partition_state_flag_t', 'RM_JobMode', 'rm_wire_id_t', 
+           'status_t', 'rm_port', 'JOB_LOAD_FLAG', 'RM_WireToPort',
+           'JOB_NOT_FOUND', 'RM_JobErrFile', 'RM_Msize', 'RM_SwitchDim',
+           'rm_BP_computenode_memory_t', 'rm_nodecard_id_t',
+           'RM_JobDBJobID', 'RM_JobEndTime', 'rm_partition_list_t',
+           'RM_PartitionBlrtsImg', 'rm_component_id_t', 'RM_BPPartState', 
+           'rm_job_runtime_t', 'RM_MODIFY_MloaderImg', 'RM_SwitchID',
+           'RM_PortComponentID', 'RM_PartitionNodeCardNum', 
+           'rm_job_stdin_info_t', 'INTERNAL_ERROR', 'RM_PartitionFirstBP', 
+           'INVALID_INPUT', 'RM_JobStderrInfo', 'rm_location_t', 
+           'RM_PartitionMode', 'rm_connection_t', 'rm_partition_mode',
+           'RM_JobComputeNodesUsed', 'RM_BPID', 'RM_JobState',
+           'RM_PartitionSmall', 'RM_PartitionConnection', 
+           'RM_JobStdinInfo', 'rm_job_mode', 'JOB_RUNNING_FLAG',
+           'RM_PartitionState', 'RM_NodeCardPartID',
+           'rm_job_exitstatus_t', 
+           'RM_MODIFY_BlrtsImg', 'RM_NodeCardIONodes',
+           'pm_partition_id_t', 'RM_PartitionLinuxImg',
+           'rm_partition_mode_t', 'rm_BP', 'RM_MODIFY_Description',
+           'rm_wire_state_t', 'RM_BPPartID', 'rm_quarter',
+           'PARTITION_ERROR_FLAG', 'RM_JobArgs', 'RM_PortID',
+           'JOB_ATTACH_FLAG', 'PARTITION_ALL_FLAG',
+           'RM_JobOutFile', 'rm_switch_state_t', 'MPIR_DEBUG_SPAWNED',
+           'RM_FirstWire', 'RM_NodeCardListNext', 'RM_BPState',
+           'RM_PartitionMloaderImg',
+           'rm_serial_t', 'rm_partition', 'SN_LENGTH',
+           'RM_PartitionUsersNum', 'JOB_ERROR_FLAG',
+           'SWITCH_NOT_FOUND', 'rm_switch', 'RM_JobPartitionID',
+           'RM_NextSwitch', 'PARTITION_NOT_FOUND', 'RM_SwitchBPID',
+           'RM_MODIFY_Owner', 'RM_WireState', 'RM_JobEnvs',
+           'RM_BPNum', 'rm_job', 'JOB_BEGIN_FLAG',
+           'RM_MODIFY_RamdiskImg', 'RM_FirstBP', 'rm_job_list',
+           'RM_MODIFY_LinuxImg', 'JOB_KILLED_FLAG', 'rm_BGL_t',
+           'RM_PartitionRamdiskImg', 'rm_BGL', 'RM_PartitionID',
+           'RM_JobOutDir', 'RM_BPSD', 'JOB_LOADED_FLAG',
+           'RM_WirePartState', 'PARTITION_READY_FLAG', 'rm_job_state',
+           'rm_BP_state_t', 'RM_PartitionFirstSwitch', 'RM_WirePartID',
+           'db_job_id_t', 'RM_JobUserName', 'RM_JobInHist',
+           'RM_PartitionNextNodeCard', 'rm_job_stderr_info_t',
+           'RM_PartitionNextUser', 'rm_nodecard_t', 'RM_PartListSize',
+           'RM_PartListNextPart', 'CONNECTION_ERROR', 'rm_wire_state',
+           'JOB_ALL_FLAG', 'rm_signal_t', 'RM_BPLoc',
+           'RM_BPSDB', 'BP_NOT_FOUND', 'RM_JobStdoutInfo',
+           'PARTITION_FREE_FLAG', 'RM_JobExitStatus', 'rm_element_t',
+           'rm_BP_state', 'RM_BPsize', 'rm_switch_state',
+           'RM_JobListNextJob', 'rm_quarter_t', 'RM_WireFromPort',
+           'JOB_DEBUG_FLAG', 'rm_job_stdout_info_t', 'STATUS_OK',
+           'RM_NodeCardQuarter', 'PARTITION_DEALLOCATING_FLAG',
+           'RM_JobID', 'RM_PartitionStateEnum', 'RM_PartitionModeEnum',
+           'RM_JobStrace', 'JOB_TERMINATED_FLAG', 'RM_PartitionUserName',
+           'RM_NextBP',
+           'RM_PartitionBPNum', 'rm_nodecard_state_t', 'RM_JobInFile',
+           'JOB_ALREADY_DEFINED', 'RM_MODIFY_Options',
+           'RM_PartitionNextSwitch',
+           'rm_switch_id_t', 'RM_NodeCardListSize', 'rm_bp_id_t',
+           'RM_PartitionFirstUser', 'rm_wire', 'rm_connection_type', 
+           'RM_BPComputeNodeMemory', 'rm_job_computenodes_used_t',
+           'rm_wire_t', 'rm_BP_t', 'RM_PartitionSwitchNum', 
+           'PARTITION_CONFIGURING_FLAG', 'RM_SwitchConnNum', 
+           'rm_dimension', 'jm_job_id_t', 'rm_job_mode_t']
+
 STRING = c_char_p
 
-class enum(object):
-    def __init__(self, fields):
-        self.fields = fields
-    def __call__(self, item):
-        return self.fields[item.value]
-
 # enum rm_port_id
-RM_PortIDEnum = enum(['RM_PORT_PLUS_X', 'RM_PORT_MINUS_X',
+RM_PortIDEnum = ['RM_PORT_PLUS_X', 'RM_PORT_MINUS_X',
                       'RM_PORT_PLUS_Y', 'RM_PORT_MINUS_Y',
                       'RM_PORT_PLUS_Z', 'RM_PORT_MINUS_Z',
                       'RM_PORT_S0', 'RM_PORT_S1', 'RM_PORT_S2',
                       'RM_PORT_S3', 'RM_PORT_S4', 'RM_PORT_S5',
-                      'RM_PORT_NAV'])
+                      'RM_PORT_NAV']
 
 # enum rm_BP_state
-RM_BPStateEnum = enum(['RM_BP_UP', 'RM_BP_DOWN', 'RM_BP_MISSING',
-                       'RM_BP_ERROR', 'RM_BP_NAV'])
+RM_BPStateEnum = ['RM_BP_UP', 'RM_BP_DOWN', 'RM_BP_MISSING',
+                       'RM_BP_ERROR', 'RM_BP_NAV']
 
 # enum rm_switch_state
-RM_SwitchStateEnum = enum(['RM_SWITCH_UP', 'RM_SWITCH_DOWN',
+RM_SwitchStateEnum = ['RM_SWITCH_UP', 'RM_SWITCH_DOWN',
                            'RM_SWITCH_MISSING', 'RM_SWITCH_ERROR',
-                           'RM_SWITCH_NAV'])
+                           'RM_SWITCH_NAV']
 
 # enum rm_dimension
-RM_DimensionEnum = enum(['RM_DIM_X', 'RM_DIM_Y', 'RM_DIM_Z', 'RM_DIM_NAV'])
+RM_DimensionEnum = ['RM_DIM_X', 'RM_DIM_Y', 'RM_DIM_Z', 'RM_DIM_NAV']
 
 # enum rm_wire_state
-RM_WireStateEnum = enum(['RM_WIRE_UP', 'RM_WIRE_DOWN', 'RM_WIRE_MISSING',
-                         'RM_WIRE_ERROR', 'RM_WIRE_NAV'])
+RM_WireStateEnum = ['RM_WIRE_UP', 'RM_WIRE_DOWN', 'RM_WIRE_MISSING',
+                         'RM_WIRE_ERROR', 'RM_WIRE_NAV']
 
 # enum rm_partition_state
-RM_PartitionStateEnum = enum( \
+RM_PartitionStateEnum =  \
     ['RM_PARTITION_FREE', 'RM_PARTITION_CONFIGURING', 'RM_PARTITION_READY',
      'RM_PARTITION_BUSY', 'RM_PARTITION_DEALLOCATING', 'RM_PARTITION_ERROR',
-     'RM_PARTITION_NAV'])
+     'RM_PARTITION_NAV']
 
 # enum rm_partition_mode
-RM_PartitionModeEnum = enum(['RM_PARTITION_COPROCESSOR_MODE',
-                             'RM_PARTITION_VIRTUAL_NODE_MODE'])
+RM_PartitionModeEnum = ['RM_PARTITION_COPROCESSOR_MODE',
+                             'RM_PARTITION_VIRTUAL_NODE_MODE']
 
 # enum rm_job_mode
-RM_JobModeEnum = enum(['RM_COPROCESSOR_MODE', 'RM_VIRTUAL_NODE_MODE'])
+RM_JobModeEnum = ['RM_COPROCESSOR_MODE', 'RM_VIRTUAL_NODE_MODE']
 
 # enum rm_job_state
-RM_JobStateEnum = enum(['RM_JOB_IDLE', 'RM_JOB_STARTING', 'RM_JOB_RUNNING',
+RM_JobStateEnum = ['RM_JOB_IDLE', 'RM_JOB_STARTING', 'RM_JOB_RUNNING',
                         'RM_JOB_TERMINATED', 'RM_JOB_KILLED',
                         'RM_JOB_ERROR', 'RM_JOB_DYING', 'RM_JOB_DEBUG',
                         'RM_JOB_LOAD', 'RM_JOB_LOADED', 'RM_JOB_BEGIN',
-                        'RM_JOB_ATTACH', 'RM_JOB_NAV'])
+                        'RM_JOB_ATTACH', 'RM_JOB_NAV']
 
 # enum rm_connection_type
-RM_ConnectionTypeEnum = enum(['RM_MESH', 'RM_TORUS', 'RM_NAV'])
+RM_ConnectionTypeEnum = ['RM_MESH', 'RM_TORUS', 'RM_NAV']
   
 # enum rm_nodecard_state
-RM_NodeCardStateEnum = enum(['RM_NODECARD_UP', 'RM_NODECARD_DOWN',
+RM_NodeCardStateEnum = ['RM_NODECARD_UP', 'RM_NODECARD_DOWN',
                              'RM_NODECARD_MISSING', 'RM_NODECARD_ERROR',
-                             'RM_NODECARD_NAV'])
+                             'RM_NODECARD_NAV']
 
 # enum rm_quarter
-RM_QuarterEnum = enum(['RM_Q1', 'RM_Q2', 'RM_Q3', 'RM_Q4', 'RM_Q_NAV'])
+RM_QuarterEnum = ['RM_Q1', 'RM_Q2', 'RM_Q3', 'RM_Q4', 'RM_Q_NAV']
 
 # enum rm_BP_computenode_memory
-RM_ComputenodeMemoryEnum = enum(['RM_BP_COMPUTENODE_MEMORY_256M',
+RM_ComputenodeMemoryEnum = ['RM_BP_COMPUTENODE_MEMORY_256M',
                                  'RM_BP_COMPUTENODE_MEMORY_512M',
                                  'RM_BP_COMPUTENODE_MEMORY_1G',
                                  'RM_BP_COMPUTENODE_MEMORY_2G',
                                  'RM_BP_COMPUTENODE_MEMORY_4G',
-                                 'RM_BP_COMPUTENODE_MEMORY_NAV'])
+                                 'RM_BP_COMPUTENODE_MEMORY_NAV']
 
 RM_BPLoc = 13
 RM_JobStderrInfo = 92
@@ -376,91 +458,3 @@ PARTITION_READY_FLAG = 4 # Variable c_int
 PARTITION_FREE_FLAG = 1 # Variable c_int
 JOB_LOAD_FLAG = 128 # Variable c_int
 JOB_RUNNING_FLAG = 4 # Variable c_int
-
-__all__ = ['RM_PartitionPsetsPerBP', 'rm_port_id',
-           'RM_PartitionOptions', 'RM_JobRunTime',
-           'RM_PartListFirstPart', 'RM_JobExecutable',
-           'RM_JobErrText', 'RM_PartitionFirstNodeCard',
-           'rm_job_strace_t', 'JOB_STARTING_FLAG', 'RM_NextWire',
-           'rm_partition_state_t',
-           'rm_modify_op', 'rm_job_list_t',
-           'RM_NodeCardPartState', 'RM_JobStateEnum',
-           'JOB_DYING_FLAG', 'INCOMPATIBLE_STATE', 'rm_switch_t',
-           'PARTITION_BUSY_FLAG', 'RM_SwitchNextConnection',
-           'rm_connection_type_t', 
-           'RM_JobListFirstJob', 'rm_partition_state', 'RM_SwitchNum',
-           'RM_SwitchState', 
-           'rm_job_state_t', 'rm_partition_list',
-           'rm_port_t', 'rm_nodecard', 
-           'RM_FirstSwitch', 'JOB_IDLE_FLAG',
-           'RM_NodeCardID', 'rm_nodecard_list_t',
-           'RM_PartitionDescription', 'RM_PartitionNextBP',
-           'rm_BP_computenode_memory', 'RM_JobListSize',
-           'rm_job_t', 'INCONSISTENT_DATA',
-           'MPIR_DEBUG_ABORTING', 'rm_specification',
-           'rm_partition_t', 'RM_NodeCardState',
-           'RM_WireNum', 'RM_WireID', 'rm_nodecard_list',
-           'RM_JobStartTime', 'status', 'rm_size3D_t',
-           'rm_nodecard_state', 'RM_SwitchFirstConnection',
-           'MPIR_PROCDESC', 'rm_job_state_flag_t', 'rm_dimension_t',
-           'rm_port_id_t', 'RM_NodeCardListFirst',
-           'rm_partition_state_flag_t', 'RM_JobMode', 'rm_wire_id_t', 
-           'status_t', 'rm_port', 'JOB_LOAD_FLAG', 'RM_WireToPort',
-           'JOB_NOT_FOUND', 'RM_JobErrFile', 'RM_Msize', 'RM_SwitchDim',
-           'rm_BP_computenode_memory_t', 'rm_nodecard_id_t',
-           'RM_JobDBJobID', 'RM_JobEndTime', 'rm_partition_list_t',
-           'RM_PartitionBlrtsImg', 'rm_component_id_t', 'RM_BPPartState', 
-           'rm_job_runtime_t', 'RM_MODIFY_MloaderImg', 'RM_SwitchID',
-           'RM_PortComponentID', 'RM_PartitionNodeCardNum', 
-           'rm_job_stdin_info_t', 'INTERNAL_ERROR', 'RM_PartitionFirstBP', 
-           'INVALID_INPUT', 'RM_JobStderrInfo', 'rm_location_t', 
-           'RM_PartitionMode', 'rm_connection_t', 'rm_partition_mode',
-           'RM_JobComputeNodesUsed', 'RM_BPID', 'RM_JobState',
-           'RM_PartitionSmall', 'RM_PartitionConnection', 
-           'RM_JobStdinInfo', 'rm_job_mode', 'JOB_RUNNING_FLAG',
-           'RM_PartitionState', 'RM_NodeCardPartID',
-           'rm_job_exitstatus_t', 
-           'RM_MODIFY_BlrtsImg', 'RM_NodeCardIONodes',
-           'pm_partition_id_t', 'RM_PartitionLinuxImg',
-           'rm_partition_mode_t', 'rm_BP', 'RM_MODIFY_Description',
-           'rm_wire_state_t', 'RM_BPPartID', 'rm_quarter',
-           'PARTITION_ERROR_FLAG', 'RM_JobArgs', 'RM_PortID',
-           'JOB_ATTACH_FLAG', 'PARTITION_ALL_FLAG',
-           'RM_JobOutFile', 'rm_switch_state_t', 'MPIR_DEBUG_SPAWNED',
-           'RM_FirstWire', 'RM_NodeCardListNext', 'RM_BPState',
-           'RM_PartitionMloaderImg',
-           'rm_serial_t', 'rm_partition', 'SN_LENGTH',
-           'RM_PartitionUsersNum', 'JOB_ERROR_FLAG',
-           'SWITCH_NOT_FOUND', 'rm_switch', 'RM_JobPartitionID',
-           'RM_NextSwitch', 'PARTITION_NOT_FOUND', 'RM_SwitchBPID',
-           'RM_MODIFY_Owner', 'RM_WireState', 'RM_JobEnvs',
-           'RM_BPNum', 'rm_job', 'JOB_BEGIN_FLAG',
-           'RM_MODIFY_RamdiskImg', 'RM_FirstBP', 'rm_job_list',
-           'RM_MODIFY_LinuxImg', 'JOB_KILLED_FLAG', 'rm_BGL_t',
-           'RM_PartitionRamdiskImg', 'rm_BGL', 'RM_PartitionID',
-           'RM_JobOutDir', 'RM_BPSD', 'JOB_LOADED_FLAG',
-           'RM_WirePartState', 'PARTITION_READY_FLAG', 'rm_job_state',
-           'rm_BP_state_t', 'RM_PartitionFirstSwitch', 'RM_WirePartID',
-           'db_job_id_t', 'RM_JobUserName', 'RM_JobInHist',
-           'RM_PartitionNextNodeCard', 'rm_job_stderr_info_t',
-           'RM_PartitionNextUser', 'rm_nodecard_t', 'RM_PartListSize',
-           'RM_PartListNextPart', 'CONNECTION_ERROR', 'rm_wire_state',
-           'JOB_ALL_FLAG', 'rm_signal_t', 'RM_BPLoc',
-           'RM_BPSDB', 'BP_NOT_FOUND', 'RM_JobStdoutInfo',
-           'PARTITION_FREE_FLAG', 'RM_JobExitStatus', 'rm_element_t',
-           'rm_BP_state', 'RM_BPsize', 'rm_switch_state',
-           'RM_JobListNextJob', 'rm_quarter_t', 'RM_WireFromPort',
-           'JOB_DEBUG_FLAG', 'rm_job_stdout_info_t', 'STATUS_OK',
-           'RM_NodeCardQuarter', 'PARTITION_DEALLOCATING_FLAG',
-           'RM_JobID', 'RM_PartitionStateEnum', 'RM_PartitionModeEnum',
-           'RM_JobStrace', 'JOB_TERMINATED_FLAG', 'RM_PartitionUserName',
-           'RM_NextBP',
-           'RM_PartitionBPNum', 'rm_nodecard_state_t', 'RM_JobInFile',
-           'JOB_ALREADY_DEFINED', 'RM_MODIFY_Options',
-           'RM_PartitionNextSwitch',
-           'rm_switch_id_t', 'RM_NodeCardListSize', 'rm_bp_id_t',
-           'RM_PartitionFirstUser', 'rm_wire', 'rm_connection_type', 
-           'RM_BPComputeNodeMemory', 'rm_job_computenodes_used_t',
-           'rm_wire_t', 'rm_BP_t', 'RM_PartitionSwitchNum', 
-           'PARTITION_CONFIGURING_FLAG', 'RM_SwitchConnNum', 
-           'rm_dimension', 'jm_job_id_t', 'rm_job_mode_t']
