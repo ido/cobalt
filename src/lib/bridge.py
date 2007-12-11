@@ -3,12 +3,18 @@ from ctypes import cdll, byref, c_int, c_char_p, pointer
 from Cobalt import bgl_rm_api
 import Cobalt.Util
 
+__all__ = [
+    "BlueGene", "NodeCardList", "Partition", "BasePartition", "PSet",
+    "PartitionUsers", "NodeCard", "Switch", "Port", "Wire", "Job",
+]
+
 bridge = cdll.LoadLibrary("libbglbridge.so.1")
 
 bridge.rm_get_serial.restype = bgl_rm_api.status_t
 bridge.rm_set_serial.restype = bgl_rm_api.status_t
 bridge.rm_get_BGL.restype = bgl_rm_api.status_t
 bridge.rm_get_data.restype = bgl_rm_api.status_t
+
 bridge.rm_set_serial(c_char_p("BGL"))
 
 
