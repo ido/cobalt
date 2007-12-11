@@ -9,9 +9,8 @@ load_config -- read configuration files
 
 __revision__ = '$Revision$'
 
-import socket
 from xmlrpclib import ServerProxy, Fault
-from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
+from ConfigParser import SafeConfigParser, NoSectionError
 
 import Cobalt
 
@@ -26,14 +25,21 @@ known_servers = dict()
 def register_component (component):
     local_components[component.name] = component
 
+class ComponentError (Exception):
+    '''Component error baseclass'''
+    pass
 
-class ComponentLookupError (Exception):
+class ComponentLookupError (ComponentError):
     """Unable to locate an address for the given component.
     
     Class attributes:
     components -- dictionary of known components to addresses
     """
+    pass
 
+class ComponentOperationError (ComponentError):
+    '''Component Failure during operation'''
+    pass
 
 def ComponentProxy (component_name, **kwargs):
     """Constructs proxies to components.
@@ -93,7 +99,12 @@ class LocalProxyMethod (object):
         self._func_name = func_name
     
     def __call__ (self, *args):
-        return self._proxy._component._dispatch(self._func_name, args)
+        try:
+            return self._proxy._component._dispatch(self._func_name, args)
+        except Fault:
+            raise
+        except:
+            raise ComponentOperationError
 
 
 class DeferredProxy (object):
@@ -117,9 +128,14 @@ class DeferredProxyMethod (object):
         self._func_name = func_name
     
     def __call__ (self, *args):
-        proxy = ComponentProxy(self._proxy._component_name, defer=False)
-        func = getattr(proxy, self._func_name)
-        return func(*args)
+        try:
+            proxy = ComponentProxy(self._proxy._component_name, defer=False)
+            func = getattr(proxy, self._func_name)
+            return func(*args)
+        except Fault:
+            raise
+        except:
+            raise ComponentOperationError
 
 
 def find_configured_servers (config_files=None):
