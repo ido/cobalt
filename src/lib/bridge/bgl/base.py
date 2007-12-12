@@ -5,6 +5,7 @@ from Cobalt.bridge.bgl import header
 __all__ = [
     "BlueGene", "NodeCardList", "Partition", "BasePartition", "PSet",
     "PartitionUsers", "NodeCard", "Switch", "Port", "Wire", "Job",
+    "JobList", "PartList",
 ]
 
 bridge = cdll.LoadLibrary("libbglbridge.so.1")
@@ -640,3 +641,61 @@ class Job (BGDevice):
         return exitstatus.value
     
     exitstatus = property(_get_exitstatus)
+
+
+class JobList (BGStub, RMGenerator):
+    
+    def _get_size (self):
+        size = self._get_bridge_field(header.RM_JobListSize, c_int)
+        return size.value
+    
+    size = property(_get_size)
+    
+    def _get_head (self):
+        return self._get_bridge_field(header.RM_JobListFirstJob, header.rm_element_t)
+    
+    head = property(_get_head)
+    
+    def _get_tail (self):
+        return self._get_bridge_field(header.RM_JobListNextJob, header.rm_element_t)
+
+    def __init__(self, flags=4095):
+        pointer = pointer(header.rm_job_list_t())
+        bridge.rm_get_jobs(c_int(flags), byref(pointer))
+        BGDevice.__init__(self, pointer)
+        RMGenerator.__init__(self, self, "size", "head", "tail", Job)
+
+
+class PartList (BGDevice, RMGenerator):
+    
+    def _get_size (self):
+        size = self._get_bridge_field(header.RM_PartListSize, c_int)
+        return size.value
+    
+    size = property(_get_size)
+    
+    def _get_head (self):
+        return self._get_bridge_field(header.RM_PartListFirstPart, header.rm_element_t)
+    
+    head = property(_get_head)
+    
+    def _get_tail (self):
+        return self._get_bridge_field(header.RM_PartListNextPart, header.rm_element_t)
+
+    def __init__ (self, filter=header.PARTITION_ALL_FLAG):
+        self._filter = filter
+        pointer = pointer(header.rm_partition_list_t())
+        bridge.rm_get_partitions(c_int(self._filter), byref(pointer))
+        BGDevice.__init__(self, pointer)
+        RMGenerator.__init__(self, self, "size", "head", "tail", Partition)
+
+    def __del__ (self):
+        bridge.rm_free_partition_list(self._pointer)
+
+    def reload (self):
+        bridge.rm_free_partition_list(self._pointer)
+        bridge.rm_get_partitions(c_int(self._filter), byref(self._pointer))
+        
+        local_bridge = {}
+        for bridgepart in self:
+            local_bridge.update({bridgepart.id:bridgepart})
