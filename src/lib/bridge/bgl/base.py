@@ -305,7 +305,7 @@ class Partition (BGDevice):
         psetsPerBP = self._get_bridge_field(header.RM_PartitionPsetsPerBP, c_int)
         return psetsPerBP.value
     
-    psetsPerBP = property(_get_psets_PerBP)
+    psetsPerBP = property(_get_psetsPerBP)
     
     def _get_Usersnum (self):
         Usersnum = self._get_bridge_field(header.RM_PartitionUsersNum, c_int)
