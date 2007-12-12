@@ -403,9 +403,7 @@ class PartitionUsers (BGDevice):
     def _get_name (self):
         name = _get_bridge_field(header.RM_PartitionUserName, c_char_p)
         return name.value
-    
-    return name.value
-    
+
     name = property(_get_name)
 
 
