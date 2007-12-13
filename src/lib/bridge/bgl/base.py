@@ -42,9 +42,9 @@ class RMGenerator (object):
     def __iter__ (self):
         for x in xrange(getattr(self._container, self._sizeattr)):
             if x == 0:
-                yield cls(getattr(self._container, self._headattr))
+                yield self._cls(getattr(self._container, self._headattr))
             else:
-                yield cls(getattr(self._container, self._tailattr))
+                yield self._cls(getattr(self._container, self._tailattr))
 
     def __getitem__ (self, index):
         return list(self)[index]
