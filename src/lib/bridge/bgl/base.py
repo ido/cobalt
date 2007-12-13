@@ -643,7 +643,7 @@ class Job (BGDevice):
     exitstatus = property(_get_exitstatus)
 
 
-class JobList (BGStub, RMGenerator):
+class JobList (BGDevice, RMGenerator):
     
     def _get_size (self):
         size = self._get_bridge_field(header.RM_JobListSize, c_int)
