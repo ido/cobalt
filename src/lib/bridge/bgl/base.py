@@ -75,9 +75,9 @@ class BGDevice (object):
 class BlueGene (BGDevice):
     
     def __init__ (self):
-        pointer = pointer(header.rm_BGL_t())
-        bridge.rm_get_BGL(byref(pointer))
-        BGDevice.__init__(self, pointer)
+        my_pointer = pointer(header.rm_BGL_t())
+        bridge.rm_get_BGL(byref(my_pointer))
+        BGDevice.__init__(self, my_pointer)
         self.basePartitions = RMGenerator(self, "BPnum", "BPhead", "BPtail", BasePartition)
         self.wires = RMGenerator(self, "WireNum", "FirstWire", "NextWire", Wire)
     
@@ -134,9 +134,9 @@ class NodeCardList (BGDevice, RMGenerator):
     """Builds a list of NodeCards given a basepartition."""
     
     def __init__(self, basepart_id):
-        pointer = pointer(header.rm_nodecard_list_t())
-        bridge.rm_get_nodecards(basepart_id, byref(pointer))
-        BGDevice.__init__(self, pointer)
+        my_pointer = pointer(header.rm_nodecard_list_t())
+        bridge.rm_get_nodecards(basepart_id, byref(my_pointer))
+        BGDevice.__init__(self, my_pointer)
         RMGenerator.__init__(self, self, "size", "head", "tail", NodeCard)
         for nodecard in self:
             nodecard.basepart = basepart_id
@@ -660,9 +660,9 @@ class JobList (BGDevice, RMGenerator):
         return self._get_bridge_field(header.RM_JobListNextJob, header.rm_element_t)
 
     def __init__(self, flags=4095):
-        pointer = pointer(header.rm_job_list_t())
-        bridge.rm_get_jobs(c_int(flags), byref(pointer))
-        BGDevice.__init__(self, pointer)
+        my_pointer = pointer(header.rm_job_list_t())
+        bridge.rm_get_jobs(c_int(flags), byref(my_pointer))
+        BGDevice.__init__(self, my_pointer)
         RMGenerator.__init__(self, self, "size", "head", "tail", Job)
 
 
@@ -684,9 +684,9 @@ class PartList (BGDevice, RMGenerator):
 
     def __init__ (self, filter=header.PARTITION_ALL_FLAG):
         self._filter = filter
-        pointer = pointer(header.rm_partition_list_t())
-        bridge.rm_get_partitions(c_int(self._filter), byref(pointer))
-        BGDevice.__init__(self, pointer)
+        my_pointer = pointer(header.rm_partition_list_t())
+        bridge.rm_get_partitions(c_int(self._filter), byref(my_pointer))
+        BGDevice.__init__(self, my_pointer)
         RMGenerator.__init__(self, self, "size", "head", "tail", Partition)
 
     def __del__ (self):
