@@ -300,7 +300,7 @@ class Partition (BGDevice):
     
     def _get_small (self):
         small = self._get_bridge_field(header.RM_PartitionSmall, c_int)
-        return boolean(small)
+        return small.value != 0
     
     small = property(_get_small)
     
@@ -380,13 +380,13 @@ class BasePartition (BGDevice):
     
     def _get_sdb (self):
         sdb = self._get_bridge_field(header.RM_BPSDB, c_int)
-        return boolean(sdb)
+        return sdb.value != 0
     
     sdb = property(_get_sdb)
     
     def _get_sd (self):
         sd = self._get_bridge_field(header.RM_BPSD, c_int)
-        return boolean(sd)
+        return sd.value != 0
     
     sd = property(_get_sd)
     
@@ -580,7 +580,7 @@ class Job (BGDevice):
     
     def _get_inhist (self):
         inhist = self._get_bridge_field(header.RM_JobInHist, c_int)
-        return boolean(inhist)
+        return inhist.value != 0
     
     inhist = property(_get_inhist)
     
