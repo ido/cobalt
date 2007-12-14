@@ -8,14 +8,16 @@ __all__ = [
     "JobList", "PartList",
 ]
 
-bridge = cdll.LoadLibrary("libbglbridge.so.1")
+bridge = None
 
-bridge.rm_get_serial.restype = header.status_t
-bridge.rm_set_serial.restype = header.status_t
-bridge.rm_get_BGL.restype = header.status_t
-bridge.rm_get_data.restype = header.status_t
-
-bridge.rm_set_serial(c_char_p("BGL"))
+def configure ():
+    global bridge
+    bridge = cdll.LoadLibrary("libbglbridge.so.1")
+    bridge.rm_get_serial.restype = header.status_t
+    bridge.rm_set_serial.restype = header.status_t
+    bridge.rm_get_BGL.restype = header.status_t
+    bridge.rm_get_data.restype = header.status_t
+    bridge.rm_set_serial(c_char_p("BGL"))
 
 
 class RMGenerator (object):

@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import Structure, c_char_p, c_int, c_void_p
 
 __all__ = ['RM_PartitionPsetsPerBP', 'rm_port_id',
            'RM_PartitionOptions', 'RM_JobRunTime',

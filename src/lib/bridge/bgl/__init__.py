@@ -1,3 +1,5 @@
 from Cobalt.bridge.bgl.base import *
 
-__all__ = Cobalt.bridge.bgl.base.__all__
+__all__ = base.__all__
+
+base.configure()
