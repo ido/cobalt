@@ -67,39 +67,34 @@ class Partition (Data):
     state -- "idle", "busy", or "blocked"
     """
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        tag = "partition",
-        scheduled = False,
-        name = None,
-        functional = False,
-        queue = "default",
-        size = None,
-        parents = None,
-        children = None,
-        state = None,
-    ))
+    fields = Data.fields + [
+        "tag", "scheduled", "name", "functional",
+        "queue", "size", "parents", "children", "state",
+    ]
     
-    def __init__ (self, *args, **kwargs):
+    def __init__ (self, spec):
         """Initialize a new partition."""
+        spec = spec.copy()
+        self.scheduled = spec.pop("scheduled", False)
+        self.name = spec.pop("name", None)
+        self.functional = spec.pop("functional", False)
+        self.queue = spec.pop("queue", "default")
+        self.size = spec.pop("size", None)
         self._parents = sets.Set()
         self._children = sets.Set()
         self._busy = False
-        Data.__init__(self, *args, **kwargs)
+        self.state = spec.pop("state", None)
+        
+        spec['tag'] = spec.get("tag", "partition")
+        Data.__init__(self, spec)
     
     def _get_parents (self):
         return [parent.name for parent in self._parents]
-    
-    def _set_parents (self, value):
-        pass
     
     parents = property(_get_parents, _set_parents)
     
     def _get_children (self):
         return [child.name for child in self._children]
-    
-    def _set_children (self):
-        pass
     
     children = property(_get_children, _set_children)
     

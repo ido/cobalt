@@ -253,8 +253,6 @@ class System(Component):
 
     # read in config from cobalt.conf
     
-    # I can't find where required_fields is used. Remove?
-    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
     _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
     _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:

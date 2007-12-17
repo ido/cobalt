@@ -7,29 +7,29 @@ import types
 import xmlrpclib
 import random
 import warnings
-import sets
+import sets.Set as set
 
 import Cobalt.Util
 
 
 def get_spec_fields (specs):
     """Given a list of specs, return the set of all fields used."""
-    fields = sets.Set()
+    fields = set()
     for spec in specs:
         for field in spec.keys():
             fields.add(field)
     return fields
 
 
-class DataCreationError(Exception):
+class DataCreationError (Exception):
     '''Used when a new object cannot be created'''
     pass
 
-class IncrIDError(Exception):
+class IncrIDError (Exception):
     '''Used when trying to set the IncrID counter to a value that has already been used'''
     pass
 
-class IncrID(object):
+class IncrID (object):
     
     """Generator for incrementing integer IDs."""
     
@@ -53,7 +53,7 @@ class IncrID(object):
         else:
             self.idnum = val - 1
 
-class RandomID(object):
+class RandomID (object):
     """Generator for non-repeating random integer IDs."""
     
     def __init__(self):
@@ -82,74 +82,29 @@ class Data (object):
     Setting a field attribute on a data updates the timestamp automatically.
     
     Class attributes:
-    fields -- Public data fields for the entity.
-    required_fields -- Fields that must be specified at initialization.
+    spec_fields -- list of public data fields for the entity
     
-    Fields:
+    Attributes:
     tag -- Misc. label.
-    stamp -- Timestamp of last field change (or last touch call).
     
     Methods:
-    touch -- Update timestamp 'stamp'.
     update -- Set the value of multiple fields at once.
     match -- Test that a spec identifies a data.
     to_rx -- Convert a data to an explicit spec.
     """
     
-    fields = dict(
-        tag = None,
-        stamp = None,
-    )
-    required_fields = []
+    fields = ["tag"]
     
     def __init__ (self, spec=None):
         
-        """Initialize a new Data manager.
+        """Initialize a Data item.
         
         Arguments:
         spec -- A dictionary specifying the values of fields on the entity.
         """
         
-        if spec is None:
-            spec = self.fields.copy()
-        else:
-            _spec = self.fields.copy()
-            _spec.update(spec)
-            spec = _spec
-        
-        for field, value in spec.iteritems():
-            if getattr(self, field, None) is None:
-                setattr(self, field, value)
-        
-        for field in self.required_fields:
-            if getattr(self, field, None) is None:
-                raise DataCreationError, field
-        
-        self.touch()
-    
-    def __setattr__ (self, name, value):
-        if name in self.fields:
-            object.__setattr__(self, "stamp", time.time())
-        object.__setattr__(self, name, value)
-    
-    def __setstate__ (self, input_state):
-        
-        state = self.fields.copy()
-        state.update(input_state)
-        
-        if "_attrib" in state:
-            _attrib = state["_attrib"]
-            
-            for key, value in _attrib.iteritems():
-                key = key.replace("-", "_")
-                state[key] = value
-            del state["_attrib"]
-        
-        self.__dict__ = state
-    
-    def touch (self):
-        """Update the timestamp."""
-        self.stamp = time.time()
+        if "tag" in spec:
+            self.tag = spec.get("tag", "unknown")
     
     def match (self, spec):
         """True if every field in spec == the same field on the entity.
@@ -158,7 +113,7 @@ class Data (object):
         spec -- Dictionary specifying fields and values to match against.
         """
         for field, value in spec.iteritems():
-            if not (value == "*" or (hasattr(self, field) and getattr(self, field) == value)):
+            if not (value == "*" or (field in self.fields and getattr(self, field) == value)):
                 return False
         return True
     
@@ -169,7 +124,7 @@ class Data (object):
         fields -- List of fields to include. (default self.fields.keys())
         """
         if fields is None:
-            fields = self.fields.keys()
+            fields = self.fields
         return dict([(field, getattr(self, field, None)) for field in fields])
     
     def update (self, spec):
@@ -206,8 +161,7 @@ class Data (object):
         """
         warnings.warn("Use of Cobalt.Data.Data.set is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
         if field not in self.fields:
-            warnings.warn("Creating new field '%s' on '%s' with set." % (field, self), RuntimeWarning, stacklevel=2)
-            self.fields[field] = None
+            warnings.warn("Creating new attribute '%s' on '%s' with set." % (field, self), RuntimeWarning, stacklevel=2)
         setattr(self, field, value)
 
 
@@ -235,27 +189,35 @@ class Job (Data):
     walltime -- the amount of time requested for the job
     """
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        tag = "job",
-        id = None,
-        state = None,
-        executable = None,
-        args = None,
-        stdin = "/dev/null",
-        stdout = "/dev/null",
-        stderr = "/dev/null",
-        cwd = None,
-        env = None,
-        user = None,
-        exit = None,
-        kerneloptions = None,
-        size = None,
-        location = None,
-        mode = None,
-        walltime = None,
-        true_mpi_args = None,
-    ))
+    fields = Data.fields + [
+        "id", "state", "executable", "args", "stdin",
+        "stdout", "stderr", "cwd", "env", "user", "exit",
+        "kerneloptions", "size", "location", "mode", "walltime",
+        "true_mpi_args",
+    ]
+    
+    def __init__ (self, spec):
+        spec = spec.copy()
+        self.id = spec.pop("id")
+        self.state = spec.pop("state", None)
+        self.executable = spec.pop("executable")
+        self.args = spec.pop("args", None)
+        self.stdin = spec.pop("stdin", "/dev/null")
+        self.stdout = spec.pop("stdout", "/dev/null")
+        self.stderr = spec.pop("stderr", "/dev/null")
+        self.cwd = spec.pop("cwd")
+        self.env = spec.pop("env", None)
+        self.user = spec.pop("user")
+        self.exit = spec.pop("exit", None)
+        self.kerneloptions = spec.pop("kerneloptions", None)
+        self.size = spec.pop("size")
+        self.location = spec.pop("location", None)
+        self.mode = spec.pop("mode", None)
+        self.walltime = spec.pop("walltime", None)
+        self.true_mpi_args = spec.pop("true_mpi_args", None)
+        
+        spec['tag'] = spec.get("tag", "job")
+        Data.__init__(self, spec)
 
 
 class DataList (list):
@@ -301,7 +263,7 @@ class DataList (list):
         callback -- applied to each matched item (optional)
         cargs -- a tuple of arguments to pass to callback after the item
         """
-        matched_items = sets.Set()
+        matched_items = set()
         for item in self:
             for spec in specs:
                 if item.match(spec):
@@ -374,7 +336,7 @@ class DataDict (dict):
         callback -- applied to each matched item (optional)
         cargs -- a tuple of arguments to pass to callback after the item
         """
-        matched_items = sets.Set()
+        matched_items = set()
         for item in self.itervalues():
             for spec in specs:
                 if item.match(spec):
@@ -539,8 +501,6 @@ class ForeignData(Data):
         spec -- A dictionary specifying the values of fields to set.
         """
         self.update(spec)
-        if "stamp" in spec:
-            self.stamp = spec['stamp']
 
 
 class ForeignDataDict(DataDict):

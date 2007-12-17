@@ -18,7 +18,7 @@ import types
 import Cobalt
 import Cobalt.Util
 import Cobalt.Cqparse
-from Cobalt.Data import Data, DataList, DataDict, get_spec_fields, IncrID
+from Cobalt.Data import Data, DataList, DataDict, get_spec_fields, IncrID, DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Server import XMLRPCServer, find_intended_location
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
@@ -62,48 +62,58 @@ class Timer(object):
             return time.time() - self.start
         return self.stop - self.start
 
-class Job(Data):
+class Job (Data):
     '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
 
     acctlog = Cobalt.Util.AccountingLog('qm')
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        jobid = None,
-        jobname = "N/A",
-        state = "queued",
-        attribute = "compute",
-        location = "N/A",
-        starttime = "-1",
-        submittime = None,
-        endtime = "-1",
-        queue = "default",
-        type = "mpish",
-        user = None,
-        walltime = None,
-        procs = None,
-        nodes = None,
-        mode = None,
-        cwd = None,
-        command = None,
-        args = None,
-        outputdir = None,
-        project = None,
-        lienID = None,
-        exit_status = None,
-        stagein = None,
-        stageout = None,
-        reservation = None,
-        host = None,
-        port = None,
-        url = None,
-        stageid = None,
-        envs = None,
-        inputfile = None,
-        kerneloptions = None,
-    ))
+    fields = Data.fields + [
+        "jobid", "jobname", "state", "attribute", "location", "starttime",
+        "submittime", "endtime", "queue", "type", "user", "walltime",
+        "procs", "nodes", "mode", "cwd", "command", "args", "outputdir",
+        "project", "lienID", "exit_status", "stagein", "stageout",
+        "reservation", "host", "port", "url", "stageid", "envs", "inputfile",
+        "kerneloptions",
+    ]
 
-    def __init__(self, data):
+    def __init__(self, spec):
+        spec = spec.copy()
+        self.jobid = spec.pop("jobid", None)
+        self.jobname = spec.pop("jobname", "N/A")
+        self.state = spec.pop("state", "queued")
+        self.attribute = spec.pop("attribute", "compute")
+        self.location = spec.pop("location", "N/A")
+        self.starttime = spec.pop("starttime", "-1")
+        self.submittime = spec.pop("submittime", time.time())
+        self.endtime = spec.pop("endtime", "-1")
+        self.queue = spec.pop("queue", "default")
+        self.type = spec.pop("type", "mpish")
+        self.user = spec.pop("user", None)
+        self.walltime = spec.pop("walltime", None)
+        self.procs = spec.pop("procs", None)
+        self.nodes = spec.pop("nodes", None)
+        self.mode = spec.pop("mode", None)
+        self.cwd = spec.pop("cwd", None)
+        self.command = spec.pop("command", None)
+        self.args = spec.pop("args", None)
+        self.outputdir = spec.pop("outputdir", None)
+        self.project = spec.pop("project", None)
+        self.lienID = spec.pop("lienID", None)
+        self.exit_status = spec.pop("exit_status", None)
+        self.stagein = spec.pop("stagein", None)
+        self.stageout = spec.pop("stageout", None)
+        self.reservation = spec.pop("reservation", False)
+        self.host = spec.pop("host", None)
+        self.port = spec.pop("port", None)
+        self.url = spec.pop("url", None)
+        self.stageid = spec.pop("stageid", None)
+        self.envs = spec.pop("envs", None)
+        self.inputfile = spec.pop("inputfile", None)
+        self.kerneloptions = spec.pop("kerneloptions", None)
+        
+        spec['tag'] = spec.get("tag", "job")
+        Data.__init__(self, spec)
+        
         self.timers = dict(
             queue = Timer(),
             current_queue = Timer(),
@@ -111,23 +121,11 @@ class Job(Data):
         )
         self.timers['queue'].Start()
         self.timers['current_queue'].Start()
-        
-        Data.__init__(self, data)
-        
-        if self.submittime is None:
-            self.submittime = time.time()
         self.staged = 0
         self.killed = False
         self.pgid = {}
         self.spgid = {}
-        #self.steps = ['StageInit', 'FinishStage', 'RunPrologue', 'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'FinalizeStage', 'Finish']
-        #self.steps = ['StageInit', 'FinishStage', 'RunPrologue',
-        #              'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'FinalizeStage', 'Finish']
-        #self.steps=['StageInit','FinishStage','RunPrologue','RunUserJob','RunEpilogue','FinalizeStage','Finish']
         self.steps = ['RunPrologue', 'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'Finish']
-        self.stageid = None
-        self.reservation = False
-        #AddEvent("queue-manager", "job-submitted", self.jobid)
         self.SetPassive()
         # acctlog
         self.pbslog = Cobalt.Util.PBSLog(self.jobid)
@@ -616,21 +614,11 @@ class BGJob(Job):
     
     '''BG Job is a Blue Gene/L job'''
     
-    fields = Job.fields.copy()
-    fields.update(dict(
-        bgkernel = None,
-        kernel = "default",
-        notify = None,
-        adminemail = None,
-        location = None,
-        outputpath = None,
-        outputdir = None,
-        errorpath = None,
-        path = None,
-        mode = "co",
-        envs = None,
-        exit_status = None,
-    ))
+    fields = Job.fields + [
+        "bgkernel", "kernel", "notify", "adminemail", "location",
+        "outputpath", "outputdir", "errorpath", "path", "mode", "envs",
+        "exit_status",
+    ]
     
     _configfields = ['bgkernel']
     _config = ConfigParser.ConfigParser()
@@ -653,9 +641,23 @@ class BGJob(Job):
                 print "This is required only if dynamic kernel support is enabled"
                 raise SystemExit, 1
 
-    def __init__(self, data):
-        Job.__init__(self, data)
-        #AddEvent("queue-manager", "job-submitted", self.jobid)
+    def __init__(self, spec):
+        spec = spec.copy()
+        self.bgkernel = spec.pop("bgkernel", None)
+        self.kernel = spec.pop("kernel", "default")
+        self.notify = spec.pop("notify", None)
+        self.adminemail = spec.pop("adminemail", None)
+        self.location = spec.pop("location", None)
+        self.outputpath = spec.pop("outputpath", None)
+        self.outputdir = spec.pop("outputdir", None)
+        self.errorpath = spec.pop("errorpath", None)
+        self.path = spec.pop("path", None)
+        self.mode = spec.pop("mode", "co")
+        self.envs = spec.pop("envs", None)
+        self.exit_status = spec.pop("exit_status", None)
+        
+        Job.__init__(self, spec)
+        
         if self.notify or self.adminemail:
             self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
         else:
@@ -663,8 +665,6 @@ class BGJob(Job):
         if self.config.get('bgkernel'):
             self.steps.insert(0, 'SetBGKernel')
         self.SetPassive()
-#         self.acctlog.LogMessage('Q;%s;%s;%s' % \
-#                                 (self.jobid, self.user, self.queue))
         
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
@@ -819,24 +819,13 @@ class BGJob(Job):
                     logger.info("Job %s/%s: exception with postscript %s, error is %s" %
                                  (self.jobid, self.user, p, e))
 
-class ScriptMPIJob(Job):
+class ScriptMPIJob (Job):
     '''ScriptMPIJob is an mpirun command issued from a user script.'''
-    fields = Job.fields.copy()
-    fields.update(dict(
-        bgkernel = None,
-        kernel = "default",
-        notify = None,
-        adminemail = None,
-        location = None,
-        outputpath = None,
-        outputdir = None,
-        errorpath = None,
-        path = None,
-        mode = "co",
-        envs = None,
-        exit_status = None,
-        true_mpi_args = None,
-    ))
+    fields = Job.fields + [
+        "bgkernel", "kernel", "notify", "adminemail", "location", "outputpath",
+        "outputdir", "errorpath", "path", "mode", "envs", "exit_status",
+        "true_mpi_args",
+    ]
 
     _configfields = ['bgkernel']
     _config = ConfigParser.ConfigParser()
@@ -859,11 +848,21 @@ class ScriptMPIJob(Job):
                 print "This is required only if dynamic kernel support is enabled"
                 raise SystemExit, 1
 
-    def __init__(self, data):
-        Job.__init__(self, data)
-        if self.kernel is None:
-            self.kernel = 'default'
-        #AddEvent("queue-manager", "job-submitted", self.get('jobid'))
+    def __init__(self, spec):
+        spec = spec.copy()
+        self.bgkernel = spec.pop("bgkernel", None)
+        self.kernel = spec.pop("kernel", "default")
+        self.notify = spec.pop("notify", None)
+        self.adminemail = spec.pop("adminemail", None)
+        self.location = spec.pop("location", None)
+        self.outputpath = spec.pop("outputpath", None)
+        self.outputdir = spec.pop("outputdir", None)
+        self.errorpath = spec.pop("errorpath", None)
+        self.path = spec.pop("path", None)
+        self.mode = spec.pop("mode", "co")
+        self.envs = spec.pop("envs", None)
+        self.exit_status = spec.pop("exit_status", None)
+        self.true_mpi_args = spec.pop("true_mpi_args", None)
         self.SetPassive()
                 
     def SetBGKernel(self):
@@ -959,23 +958,18 @@ class JobList(DataList):
                 spec['jobid'] = self.id_gen.next()
         return DataList.q_add(self, specs, self.add_helper)
 
-class Restriction(Data):
+class Restriction (Data):
     
     '''Restriction object'''
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        name = None,
-        type = "queue",
-        value = None,
-    ))
+    fields = Data.fields + ["name", "type", "value"]
 
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
                   'maxrunning':'maxuserjobs', 'mintime':'minwalltime',
                   'maxqueued':'maxqueuedjobs', 'maxusernodes':'maxusernodes',
                   'totalnodes':'maxtotalnodes'}
 
-    def __init__(self, info, myqueue=None):
+    def __init__(self, spec, queue=None):
         '''info could be like
         {tag:restriction, jparam:walltime, qparam:maxusertime,
         value:x, operator:op}
@@ -983,11 +977,14 @@ class Restriction(Data):
         myqueue is a reference to the queue that this restriction is associated
         with
         '''
-        Data.__init__(self, info)
-        self.queue = myqueue
-
-        if info.get('name') in ['maxrunning', 'maxusernodes', 'totalnodes']:
+        self.name = spec.pop("name", None)
+        if self.name in ['maxrunning', 'maxusernodes', 'totalnodes']:
             self.type = 'run'
+        else:
+            self.type = spec.pop("type", "queue")
+        self.value = spec.pop("value", None)
+        Data.__init__(self, spec)
+        self.queue = queue
         logger.debug('created restriction %s with type %s' % (self.name, self.type))
 
     def maxwalltime(self, job, _=None):
@@ -1091,23 +1088,24 @@ def cronmatch(pattern):
     else:
         return False
 
-class Queue(Data):
+class Queue (Data):
     '''queue object, subs JobSet and Data, which gives us:
        self is a Queue object (with restrictions and stuff)
        self.data is a list of BGJob objects'''
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        cron = None,
-        name = None,
-        state = "stopped",
-        adminemail = "*",
-        policy = "default",
-        maxuserjobs = None,
-    ))
+    fields = Data.fields + [
+        "cron", "name", "state", "adminemail",
+        "policy", "maxuserjobs",
+    ]
     
-    def __init__(self, info, _=None):
-        Data.__init__(self, info)
+    def __init__(self, spec):
+        self.cron = spec.pop("cron", None)
+        self.name = spec.pop("name", None)
+        self.state = spec.pop("state", "stopped")
+        self.adminemail = spec.pop("adminemail", "*")
+        self.policy = spec.pop("policy", "default")
+        self.maxuserjobs = spec.pop("maxuserjobs", None)
+        Data.__init__(self, spec)
         self.jobs = JobList(self)
         self.restrictions = RestrictionDict()
     

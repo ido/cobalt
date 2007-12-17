@@ -47,14 +47,14 @@ __all__ = [
 
 class Service (Data):
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        tag = "service",
-        name = None,
-        location = None,
-    ))
+    fields = Data.fields + ["tag", "name", "location"]
     
-    required_fields = ["name", "location"]
+    def __init__ (self, spec):
+        self.name = spec.pop("name")
+        self.location = spec.pop("location")
+        
+        spec['tag'] = spec.get("tag", "service")
+        Data.__init__(self, spec)
 
 
 class ServiceDict (DataDict):
