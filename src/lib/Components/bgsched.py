@@ -7,8 +7,9 @@ import logging
 import math
 import sys
 import time
-import Cobalt.Logging, Cobalt.Util
+from sets import Set as set
 
+import Cobalt.Logging, Cobalt.Util
 from Cobalt.Data import Data, ForeignData, ForeignDataDict
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
@@ -346,6 +347,18 @@ class BGSched (Component):
                 del self.assigned_partitions[part_name]
         
         try:
+            scriptm = ComponentProxy("script-manager")
+        except ComponentLookupError:
+            self.logger.error("failed to connect to script manager")
+            return
+        
+        script_locations = [job['location'][0] for job in scriptm.get_jobs([{'location':"*"}])]
+        for name in script_locations:
+            # once the partition can be found from the script manager, the scheduler doesn't need to keep track of it
+            if self.assigned_partitions.has_key(name):
+                del self.assigned_partitions[name]
+                
+        try:
             cqm = ComponentProxy("queue-manager")
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
@@ -355,18 +368,7 @@ class BGSched (Component):
         available_partitions = []
         for partition in self.partitions.itervalues():
             okay_to_add = True
-            
-            if partition.name in locations_with_jobs:
-                continue
-            
-            for loc in locations_with_jobs:
-                if partition.name in self.partitions[loc].parents or partition.name in self.partitions[loc].children:
-                    okay_to_add = False
-                    break
-            
-            if not okay_to_add:
-                continue
-                
+
             if partition.state != "idle":
                 # if the system component finally knows that the partition isn't idle, we don't need to keep
                 # track of it any longer
@@ -374,17 +376,22 @@ class BGSched (Component):
                     del self.assigned_partitions[partition.name]
                 continue
             
-            if not self.assigned_partitions:
-                # the dictionary of assigned partitions is empty
-                pass
-            elif not self.assigned_partitions.has_key(partition.name):
-                # walk the assigned_partitions and see if the current partition belongs to the parents or children of 
-                # an assigned partition
-                for key in self.assigned_partitions:
-                    if partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children:
-                        okay_to_add = False
-                        break
+            if partition.name in locations_with_jobs:
+                continue
+            
+            if partition.name in self.assigned_partitions:
+                continue
+            
+            if partition.name in script_locations:
+                continue
 
+            # walk the various lists of partitions and see if the current partition belongs to the parents or children of 
+            # a partition which is in use
+            for key in set(locations_with_jobs + self.assigned_partitions.keys() + script_locations):
+                if partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children:
+                    okay_to_add = False
+                    break
+            
             if okay_to_add:
                 available_partitions.append(partition)
         

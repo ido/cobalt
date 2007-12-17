@@ -328,7 +328,7 @@ class Job(Data):
             try:
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
                 if self.mode == 'script':
-                    result = ComponentProxy("script-manager").wait_jobs([{'pgid':self.spgid['user'], 'exit_status':'*'}])
+                    result = ComponentProxy("script-manager").wait_jobs([{'id':self.spgid['user'], 'exit_status':'*'}])
                 else:
                     result = ComponentProxy("process-manager").wait_jobs([{'id':self.spgid['user'], 'exit_status':'*'}])
                 if result:
