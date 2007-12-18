@@ -1095,7 +1095,7 @@ class Queue (Data):
     
     fields = Data.fields + [
         "cron", "name", "state", "adminemail",
-        "policy", "maxuserjobs",
+        "policy", "maxuserjobs", "users",
     ]
     
     def __init__(self, spec):
@@ -1105,6 +1105,7 @@ class Queue (Data):
         self.adminemail = spec.pop("adminemail", "*")
         self.policy = spec.pop("policy", "default")
         self.maxuserjobs = spec.pop("maxuserjobs", None)
+        self.users = spec.pop("users", '*')
         Data.__init__(self, spec)
         self.jobs = JobList(self)
         self.restrictions = RestrictionDict()
