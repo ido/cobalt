@@ -10,7 +10,7 @@ import time
 from sets import Set as set
 
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict
+from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
@@ -34,13 +34,19 @@ class Reservation (Data):
         
         spec = spec.copy()
         
-        spec['tag'] = spec.get("tag", "reservation")
-        self.name = spec.pop("name")
-        self.start = spec.pop("start")
+        self.tag = spec.get("tag", "reservation")
         self.duration = spec.pop("duration")
         self.cycle = spec.pop("cycle", None)
         self.users = spec.pop("users", "")
         self.partitions = spec.pop("partitions", "")
+        try:
+            self.name = spec.pop("name")
+        except:
+            raise DataCreationError("required key name missing")
+        try:
+            self.start = spec.pop("start")
+        except:
+            raise DataCreationError("required key start missing")
         
     def _get_active(self):
         return self.is_active()
