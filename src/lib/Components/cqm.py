@@ -17,7 +17,7 @@ import types
 
 import Cobalt
 import Cobalt.Util
-import Cobalt.Cqparse
+#import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, get_spec_fields, IncrID, DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Server import XMLRPCServer, find_intended_location
@@ -1212,7 +1212,7 @@ class QueueManager(Component):
 #             self.Queues.Add([{'tag':'queue', 'name':'default'}])
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
-        self.cqp = Cobalt.Cqparse.CobaltLogParser()
+        #self.cqp = Cobalt.Cqparse.CobaltLogParser()
 
     def set_jobid(self, jobid):
         '''Set next jobid for new job'''
@@ -1309,11 +1309,11 @@ class QueueManager(Component):
             return response
     del_queues = exposed(query(del_queues))
 
-    def get_history(self, data):
-        '''Fetches queue history from acct log'''
-        self.cqp.perform_default_parse()
-        return self.cqp.Get(data)
-    get_history = exposed(get_history)
+    #def get_history(self, data):
+    #    '''Fetches queue history from acct log'''
+    #    self.cqp.perform_default_parse()
+    #    return self.cqp.Get(data)
+    #get_history = exposed(get_history)
 
     def pm_sync(self):
         '''Resynchronize with the process manager'''
