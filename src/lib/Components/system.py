@@ -83,7 +83,7 @@ class Partition (Data):
         self._parents = sets.Set()
         self._children = sets.Set()
         self._busy = False
-        self.state = spec.pop("state", None)
+        self.state = spec.pop("state", "idle")
         
         spec['tag'] = spec.get("tag", "partition")
         Data.__init__(self, spec)
