@@ -23,23 +23,23 @@ from Cobalt.Components.base import Component, exposed, automatic, query
 
 class ProcessGroup(Data):
     '''Run a script'''
-    fields = Data.fields.copy()
-    fields.update(dict(
-        tag = "process-group",
-        name = None,
-        location = None,
-        state = None,
-        user = None,
-        outputfile = None,
-        errorfile = None,
-        executable = None,
-        id = None,
-    ))
 
-    def __init__(self, data):
-        Data.__init__(self, data)
+    fields = Data.fields + [
+        "tag", "name", "location", "state", "user", "outputfile", "errorfile", "executable", 
+    ]
+
+    def __init__(self, spec):
+        spec['tag'] = spec.get("tag", "process-group")
+        self.name = spec.pop("name", None)
+        self.location = spec.pop("location", None)
+        self.state = spec.pop("state", 'running')
+        self.user = spec.pop("user", None)
+        self.outputfile = spec.pop("outputfile", None)
+        self.errorfile = spec.pop("errorfile", None)
+        self.executable = spec.pop("executable", None)
+        Data.__init__(self, spec)
+        
         self.log = logging.getLogger('pg')
-        self.state = 'running'
         try:
             userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:

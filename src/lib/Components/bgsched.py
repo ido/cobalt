@@ -10,7 +10,7 @@ import time
 from sets import Set as set
 
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Data import Data, ForeignData, ForeignDataDict
+from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
@@ -23,34 +23,29 @@ class Reservation (Data):
     
     """Cobalt scheduler reservation."""
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        tag = "reservation",
-        name = None,
-        start = None,
-        duration = None,
-        cycle = None,
-        users = None,
-        partitions = None,
-        active = None,
-    ))
+    fields = Data.fields + [
+        "tag", "name", "start", "duration", "cycle", "users", "partitions", "active",
+    ]
     
     required_fields = ["name", "start", "duration"]
     
-    def __init__ (self, *args, **kwargs):
-        Data.__init__(self, *args, **kwargs)
-        if self.partitions is None:
-            self.partitions = ""
-        if self.users is None:
-            self.users = ""
+    def __init__ (self, spec):
+        spec = spec.copy()
+        
+        spec['tag'] = spec.get("tag", "reservation")
+        self.name = spec.pop("name")
+        self.start = spec.pop("start")
+        self.duration = spec.pop("duration")
+        self.cycle = spec.pop("cycle", None)
+        self.users = spec.pop("users", "")
+        self.partitions = spec.pop("partitions", "")
     
+        Data.__init__(self, spec)
+        
     def _get_active(self):
         return self.is_active()
     
-    def _set_active(self, val):
-        pass
-    
-    active = property(_get_active, _set_active)
+    active = property(_get_active)
     
     def overlaps(self, partition, start, duration):
         '''check job overlap with reservations'''
@@ -125,7 +120,7 @@ class Reservation (Data):
             return True
 
 
-class ReservationDict (Cobalt.Data.DataDict):
+class ReservationDict (DataDict):
     
     item_cls = Reservation
     key = "name"
@@ -173,19 +168,24 @@ class ReservationDict (Cobalt.Data.DataDict):
 class Partition (ForeignData):
     """Partitions are allocatable chunks of the machine"""
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        queue = None,
-        name = None,
-        nodecards = None,
-        scheduled = None,
-        functional = None,
-        size = None,
-        parents = None,
-        children = None,
-        state = None,
-    ))
-    
+    fields = ForeignData.fields + [
+        "queue", "name", "nodecards", "scheduled", "functional", "size", "parents", "children", "state"
+    ]
+
+    def __init__(self, spec):
+        spec = spec.copy()
+        self.queue = spec.pop("queue", None)
+        self.name = spec.pop("name", None)
+        self.nodecards = spec.pop("nodecards", None)
+        self.scheduled = spec.pop("scheduled", None)
+        self.functional = spec.pop("functional", None)
+        self.size = spec.pop("size", None)
+        self.parents = spec.pop("parents", None)
+        self.children = spec.pop("children", None)
+        self.state = spec.pop("state", None)
+        
+        ForeignData.__init__(self, spec)
+        
     def _can_run (self, job):
         """Check that job can run on partition with reservation constraints"""
         basic = self.scheduled and self.functional
@@ -220,21 +220,24 @@ class Job (ForeignData):
     
     """A cobalt job."""
     
-    fields = Data.fields.copy()
-    fields.update(dict(
-        nodes = None,
-        location = None,
-        jobid = None,
-        state = None,
-        index = None,
-        walltime = None,
-        queue = None,
-        user = None,
-    ))
+    fields = ForeignData.fields + [
+        "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user",
+    ]
     
     def __init__ (self, spec):
-        Cobalt.Data.ForeignData.__init__(self, spec)
+        spec = spec.copy()
         self.partition = "none"
+        self.nodes = spec.pop("nodes", None)
+        self.location = spec.pop("location", None)
+        self.jobid = spec.pop("jobid", None)
+        self.state = spec.pop("state", None)
+        self.index = spec.pop("index", None)
+        self.walltime = spec.pop("walltime", None)
+        self.queue = spec.pop("queue", None)
+        self.user = spec.pop("user", None)
+        
+        ForeignData.__init__(self, spec)
+        
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
 def fifocmp (job1, job2):
@@ -255,12 +258,17 @@ class JobDict(ForeignDataDict):
                   'walltime', 'queue', 'user']
 
 class Queue(ForeignData):
-    fields = Data.fields.copy()
-    fields.update(dict(
-        name = None,
-        state = None,
-        policy = None,
-    ))
+    fields = ForeignData.fields + [
+        "name", "state", "policy"
+    ]
+
+    def __init__(self, spec):
+        spec = spec.copy()
+        self.name = spec.pop("name", None)
+        self.state = spec.pop("state", None)
+        self.state = spec.pop("policy", None)
+        
+        ForeignData.__init__(self, spec)
 
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
