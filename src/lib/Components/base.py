@@ -178,7 +178,11 @@ class Component (object):
         args -- tuple of paramaters to method
         """
         func = self._resolve_exposed_method(method)
-        result = func(*args)
+        try:
+            result = func(*args)
+        except Exception, e:
+            self.logger.error(e, exc_info=True)
+            raise
         if getattr(func, "query", False):
             if not getattr(func, "query_all_methods", False):
                 margs = args[:1]
