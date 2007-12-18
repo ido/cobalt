@@ -55,6 +55,10 @@ class Service (Data):
         
         spec['tag'] = spec.get("tag", "service")
         Data.__init__(self, spec)
+        self.stamp = time.time()
+
+    def touch(self):
+        self.stamp = time.time()
 
 
 class ServiceDict (DataDict):
