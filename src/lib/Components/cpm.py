@@ -26,6 +26,15 @@ class JobDict (DataDict):
     item_cls = Job
     key = "id"
 
+    def __init__(self):
+        self.id_gen = IncrID()
+        
+    def q_add (self, specs, callback=None, cargs={}):
+        for spec in specs:
+            if "id" not in spec or spec['id'] == "*":
+                spec['id'] = self.id_gen.next()
+        return DataList.q_add(self, specs)
+
 
 class ProcessManager (Component):
     
