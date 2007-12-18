@@ -4,6 +4,7 @@ import logging
 
 import Cobalt.Data
 from Cobalt.Data import Data, DataDict, IncrID, DataCreationError
+import Cobalt.Data
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query
 
@@ -21,7 +22,6 @@ class Job (Cobalt.Data.Job):
                 raise DataCreationError("required key '%s' missing" % key)
         Cobalt.Data.Job.__init__(self, spec)
 
-
 class JobDict (DataDict):
     
     item_cls = Job
@@ -34,8 +34,7 @@ class JobDict (DataDict):
         for spec in specs:
             if "id" not in spec or spec['id'] == "*":
                 spec['id'] = self.id_gen.next()
-        return DataList.q_add(self, specs)
-
+        return DataDict.q_add(self, specs)
 
 class ProcessManager (Component):
     
