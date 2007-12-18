@@ -96,7 +96,7 @@ class Data (object):
     
     fields = ["tag"]
     
-    def __init__ (self, spec=None):
+    def __init__ (self, spec):
         
         """Initialize a Data item.
         
@@ -104,8 +104,7 @@ class Data (object):
         spec -- A dictionary specifying the values of fields on the entity.
         """
         
-        if "tag" in spec:
-            self.tag = spec.get("tag", "unknown")
+        self.tag = spec.get("tag", "unknown")
     
     def match (self, spec):
         """True if every field in spec == the same field on the entity.
@@ -491,7 +490,7 @@ class DataSet(object):
         return [item for item in self if item.match(spec)]
 
 
-class ForeignData(Data):
+class ForeignData (Data):
     
     def Sync (self, spec):
         """Update the values of multiple fields on an entity.
@@ -501,7 +500,9 @@ class ForeignData(Data):
         Arguments:
         spec -- A dictionary specifying the values of fields to set.
         """
-        self.update(spec)
+        for key, value in spec.iteritems():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
 
 class ForeignDataDict(DataDict):
