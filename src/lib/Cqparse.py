@@ -27,9 +27,9 @@ import math
 
 import Cobalt
 import Cobalt.Proxy
-import Cobalt.Data
+#import Cobalt.Data
 import Cobalt.Logging
-
+from Cobalt.Data import Data
 #
 # Configuration
 #
@@ -229,52 +229,25 @@ re_kernel = re.compile("""
 # Cobalt Job Object
 #
 # ----------------------------------------------------------------------------
+def _time_property(time_field):
+    return property(lambda s: time.mktime(getattr(s,time_field).timetuple()))
 
-class CobaltJob(Cobalt.Data.Data):
+class CobaltJob (Data):
     
     """A single job run through the Cobalt scheduling system."""
     
-    fields = Cobalt.Data.Data.fields.copy()
-    fields.update(dict(
-        
-        jobid = None,
-        
-        # Job submission
-        submit_time = None,
-        
-        # User and job info
-        username = None,
-        nodes = None,
-        processors = None,
-        mode = None,
-        walltime = None,
-        start_time = None,
-        
-        # Job assignment
-        queue = None,
-        partition = None,
-        partition_size = None,
-        
-        # Final job times
-        finish_time = None,
-        queue_time = None,
-        user_time = None,
-        deleted_time = None,
-        
-        # Job state and misc.
-        state = None, # queued, running, done, None (invalid)
-        usertime_formatted = None,
-        queuetime_formatted = None,
-        finishtime_formatted = None,
-        exitcode = None,
-        kernel = "default",
-    ))
-    
+    fields = Data.fields + [
+        "jobid", "submit_time", 
+        "username", "nodes", "processors", "mode", "walltime", "start_time", 
+        "queue", "partition", "partition_size",
+        "finish_time", "queue_time", "user_time", "deleted_time", 
+        "state", "usertime_formatted", "queuetime_formatted", "finishtime_formatted", "exitcode", "kernel",
+    ]
+
     def __init__(self, jobid):
         
         """Initialize a new empty CobaltJob."""
         
-        Cobalt.Data.Data.__init__(self)
         self.tag = "job"
         self.jobid = long(jobid)
         
@@ -290,20 +263,48 @@ class CobaltJob(Cobalt.Data.Data):
         # Final job times
         self._done = False
         self._deleted = False
+        
+        # Job submission
+        self._submit_time = None,
+        
+        # User and job info
+        self.username = None,
+        self.nodes = None,
+        self.processors = None,
+        self.mode = None,
+        self.walltime = None,
+        self._start_time = None,
+        
+        # Job assignment
+        self.queue = None,
+        self.partition = None,
+        self.partition_size = None,
+        
+        # Final job times
+        self._finish_time = None,
+        self._queue_time = None,
+        self._user_time = None,
+        self._deleted_time = None,
+        
+        # Job state and misc.
+        self.state = None, # queued, running, done, None (invalid)
+        self.usertime_formatted = None,
+        self.queuetime_formatted = None,
+        self.finishtime_formatted = None,
+        self.exitcode = None,
+        self.kernel = "default",
+ 
 
     def __str__(self):
         return "<CobaltJob %i>" % (self.jobid)
     
-    def get(self, *args, **kwargs):
-        """Extend Cobalt.Data.Data.get.
-        
-        Automatically convert datetime values to a corresponding
-        timestamp value.
-        """
-        value = Cobalt.Data.Data.get(self, *args, **kwargs)
-        if isinstance(value, datetime.datetime):
-            return time.mktime(value.timetuple())
-        return value
+    submit_time = _time_property('_submit_time')
+    start_time = _time_property('_start_time')
+    finish_time = _time_property('_finish_time')
+    queue_time = _time_property('_queue_time')
+    user_time = _time_property('_user_time')
+    deleted_time = _time_property('_deleted_time')
+    
 
     def finalize(self):
         """
