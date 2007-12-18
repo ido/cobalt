@@ -29,6 +29,7 @@ class ProcessGroup(Data):
     ]
 
     def __init__(self, spec):
+        Data.__init__(self, spec)
         spec['tag'] = spec.get("tag", "process-group")
         self.name = spec.pop("name", None)
         self.location = spec.pop("location", None)
@@ -37,7 +38,6 @@ class ProcessGroup(Data):
         self.outputfile = spec.pop("outputfile", None)
         self.errorfile = spec.pop("errorfile", None)
         self.executable = spec.pop("executable", None)
-        Data.__init__(self, spec)
         
         self.log = logging.getLogger('pg')
         try:

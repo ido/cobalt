@@ -17,7 +17,7 @@ import types
 
 import Cobalt
 import Cobalt.Util
-#import Cobalt.Cqparse
+import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, get_spec_fields, IncrID, DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Server import XMLRPCServer, find_intended_location
@@ -77,6 +77,7 @@ class Job (Data):
     ]
 
     def __init__(self, spec):
+        Data.__init__(self, spec)
         spec = spec.copy()
         self.jobid = spec.pop("jobid", None)
         self.jobname = spec.pop("jobname", "N/A")
@@ -112,7 +113,6 @@ class Job (Data):
         self.kerneloptions = spec.pop("kerneloptions", None)
         
         spec['tag'] = spec.get("tag", "job")
-        Data.__init__(self, spec)
         
         self.timers = dict(
             queue = Timer(),
@@ -642,6 +642,7 @@ class BGJob(Job):
                 raise SystemExit, 1
 
     def __init__(self, spec):
+        Job.__init__(self, spec)
         spec = spec.copy()
         self.bgkernel = spec.pop("bgkernel", None)
         self.kernel = spec.pop("kernel", "default")
@@ -656,7 +657,6 @@ class BGJob(Job):
         self.envs = spec.pop("envs", None)
         self.exit_status = spec.pop("exit_status", None)
         
-        Job.__init__(self, spec)
         
         if self.notify or self.adminemail:
             self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
@@ -977,13 +977,13 @@ class Restriction (Data):
         myqueue is a reference to the queue that this restriction is associated
         with
         '''
+        Data.__init__(self, spec)
         self.name = spec.pop("name", None)
         if self.name in ['maxrunning', 'maxusernodes', 'totalnodes']:
             self.type = 'run'
         else:
             self.type = spec.pop("type", "queue")
         self.value = spec.pop("value", None)
-        Data.__init__(self, spec)
         self.queue = queue
         logger.debug('created restriction %s with type %s' % (self.name, self.type))
 
@@ -1095,7 +1095,7 @@ class Queue (Data):
     
     fields = Data.fields + [
         "cron", "name", "state", "adminemail",
-        "policy", "maxuserjobs", "users",
+        "policy", "maxuserjobs",
     ]
     
     def __init__(self, spec):
@@ -1105,7 +1105,6 @@ class Queue (Data):
         self.adminemail = spec.pop("adminemail", "*")
         self.policy = spec.pop("policy", "default")
         self.maxuserjobs = spec.pop("maxuserjobs", None)
-        self.users = spec.pop("users", '*')
         Data.__init__(self, spec)
         self.jobs = JobList(self)
         self.restrictions = RestrictionDict()
@@ -1213,7 +1212,7 @@ class QueueManager(Component):
 #             self.Queues.Add([{'tag':'queue', 'name':'default'}])
 
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
-        #self.cqp = Cobalt.Cqparse.CobaltLogParser()
+        self.cqp = Cobalt.Cqparse.CobaltLogParser()
 
     def set_jobid(self, jobid):
         '''Set next jobid for new job'''
@@ -1310,11 +1309,11 @@ class QueueManager(Component):
             return response
     del_queues = exposed(query(del_queues))
 
-    #def get_history(self, data):
-    #    '''Fetches queue history from acct log'''
-    #    self.cqp.perform_default_parse()
-    #    return self.cqp.Get(data)
-    #get_history = exposed(get_history)
+    def get_history(self, data):
+        '''Fetches queue history from acct log'''
+        self.cqp.perform_default_parse()
+        return self.cqp.Get(data)
+    get_history = exposed(get_history)
 
     def pm_sync(self):
         '''Resynchronize with the process manager'''

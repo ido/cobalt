@@ -50,11 +50,12 @@ class Service (Data):
     fields = Data.fields + ["tag", "name", "location"]
     
     def __init__ (self, spec):
+        Data.__init__(self, spec)
         self.name = spec.pop("name")
         self.location = spec.pop("location")
         
         spec['tag'] = spec.get("tag", "service")
-        Data.__init__(self, spec)
+
         self.stamp = time.time()
 
     def touch(self):

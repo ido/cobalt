@@ -197,6 +197,7 @@ class Job (Data):
     ]
     
     def __init__ (self, spec):
+        Data.__init__(self, spec)
         spec = spec.copy()
         self.id = spec.pop("id")
         self.state = spec.pop("state", None)
@@ -217,7 +218,7 @@ class Job (Data):
         self.true_mpi_args = spec.pop("true_mpi_args", None)
         
         spec['tag'] = spec.get("tag", "job")
-        Data.__init__(self, spec)
+        
 
 
 class DataList (list):

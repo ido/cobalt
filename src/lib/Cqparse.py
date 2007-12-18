@@ -230,7 +230,23 @@ re_kernel = re.compile("""
 #
 # ----------------------------------------------------------------------------
 def _time_property(time_field):
-    return property(lambda s: time.mktime(getattr(s,time_field).timetuple()))
+    """
+    The "private" time_field attribute of an object may contain some sort of time object.
+    Or maybe a string.  Or a flaot.  Who knows?  
+    
+    Whatever it is, you're not getting a time object from the "public" attribute.
+    """
+    def _get_helper(self):
+        value = getattr(self, time_field)
+        if isinstance(value, datetime.datetime):
+            return time.mktime(value.timetuple())
+        else:
+            return value
+    
+    def _set_helper(self, value):
+        setattr(self, time_field, value)
+        
+    return property(_get_helper, _set_helper)
 
 class CobaltJob (Data):
     

@@ -74,6 +74,7 @@ class Partition (Data):
     
     def __init__ (self, spec):
         """Initialize a new partition."""
+        Data.__init__(self, spec)
         spec = spec.copy()
         self.scheduled = spec.pop("scheduled", False)
         self.name = spec.pop("name", None)
@@ -86,7 +87,7 @@ class Partition (Data):
         self.state = spec.pop("state", "idle")
         
         spec['tag'] = spec.get("tag", "partition")
-        Data.__init__(self, spec)
+        
     
     def _get_parents (self):
         return [parent.name for parent in self._parents]
@@ -149,12 +150,12 @@ class Job (Cobalt.Data.Job):
     
     id_gen = IncrID()
     
-    def __init__ (self, *args, **kwargs):
-        self.uid = None
-        self.gid = None
-        self.cmd = None
+    def __init__ (self, spec):
+        Cobalt.Data.Job.__init__(self, spec)
+        self.uid = spec.get('uid')
+        self.gid = spec.get('gid')
+        self.cmd = spec.get('cmd')
         self.pid = self.id_gen.next()
-        Data.__init__(self, *args, **kwargs)
 
 
 class JobDict (DataDict):
@@ -443,6 +444,10 @@ class Simulator (Component):
                 env = self._get_env(spec),
                 cmd = self._get_cmd(spec),
                 walltime = spec.get("walltime", '1'),
+                executable = spec.get("executable"),
+                cwd = spec.get("cwd"),
+                user = spec.get("user"),
+                size = spec.get("size"),
             )
             if not jobspec['walltime']:
                 jobspec['walltime'] = '1'

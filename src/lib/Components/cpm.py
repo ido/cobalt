@@ -2,7 +2,8 @@
 
 import logging
 
-from Cobalt.Data import Job, Data, DataDict, IncrID, DataCreationError
+import Cobalt.Data
+from Cobalt.Data import Data, DataDict, IncrID, DataCreationError
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query
 
@@ -12,13 +13,13 @@ __all__ = ["Job", "JobDict", "ProcessManager"]
 logger = logging.getLogger(__name__)
 
 
-class Job (Job):
+class Job (Cobalt.Data.Job):
     
     def __init__ (self, spec):
         for key in ["id", "user", "size", "executable", "cwd", "location"]:
-            if "key" not in spec:
+            if key not in spec:
                 raise DataCreationError("required key '%s' missing" % key)
-        Data.__init__(self, spec)
+        Cobalt.Data.Job.__init__(self, spec)
 
 
 class JobDict (DataDict):

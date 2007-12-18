@@ -30,6 +30,8 @@ class Reservation (Data):
     required_fields = ["name", "start", "duration"]
     
     def __init__ (self, spec):
+        Data.__init__(self, spec)
+        
         spec = spec.copy()
         
         spec['tag'] = spec.get("tag", "reservation")
@@ -39,8 +41,6 @@ class Reservation (Data):
         self.cycle = spec.pop("cycle", None)
         self.users = spec.pop("users", "")
         self.partitions = spec.pop("partitions", "")
-    
-        Data.__init__(self, spec)
         
     def _get_active(self):
         return self.is_active()
@@ -173,6 +173,7 @@ class Partition (ForeignData):
     ]
 
     def __init__(self, spec):
+        ForeignData.__init__(self, spec)
         spec = spec.copy()
         self.queue = spec.pop("queue", None)
         self.name = spec.pop("name", None)
@@ -184,7 +185,6 @@ class Partition (ForeignData):
         self.children = spec.pop("children", None)
         self.state = spec.pop("state", None)
         
-        ForeignData.__init__(self, spec)
         
     def _can_run (self, job):
         """Check that job can run on partition with reservation constraints"""
@@ -225,6 +225,7 @@ class Job (ForeignData):
     ]
     
     def __init__ (self, spec):
+        ForeignData.__init__(self, spec)
         spec = spec.copy()
         self.partition = "none"
         self.nodes = spec.pop("nodes", None)
@@ -235,8 +236,6 @@ class Job (ForeignData):
         self.walltime = spec.pop("walltime", None)
         self.queue = spec.pop("queue", None)
         self.user = spec.pop("user", None)
-        
-        ForeignData.__init__(self, spec)
         
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -263,12 +262,13 @@ class Queue(ForeignData):
     ]
 
     def __init__(self, spec):
+        ForeignData.__init__(self, spec)
         spec = spec.copy()
         self.name = spec.pop("name", None)
         self.state = spec.pop("state", None)
         self.state = spec.pop("policy", None)
         
-        ForeignData.__init__(self, spec)
+        
 
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
