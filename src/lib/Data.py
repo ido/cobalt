@@ -7,7 +7,8 @@ import types
 import xmlrpclib
 import random
 import warnings
-import sets.Set as set
+
+from sets import Set as set
 
 import Cobalt.Util
 
