@@ -194,11 +194,11 @@ class Partition (BGDevice):
     
     state = property(_get_state)
     
-    def _get_BGnum (self):
-        BGnum = self._get_bridge_field(header.RM_PartitionBPNum, c_int)
-        return BGnum.value
+    def _get_BPnum (self):
+        BPnum = self._get_bridge_field(header.RM_PartitionBPNum, c_int)
+        return BPnum.value
     
-    BGnum = property(_get_BGnum)
+    BPnum = property(_get_BPnum)
     
     def _get_BPhead (self):
         return self._get_bridge_field(header.RM_PartitionFirstBP, header.rm_element_t)
