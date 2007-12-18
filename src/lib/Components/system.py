@@ -91,12 +91,12 @@ class Partition (Data):
     def _get_parents (self):
         return [parent.name for parent in self._parents]
     
-    parents = property(_get_parents, _set_parents)
+    parents = property(_get_parents)
     
     def _get_children (self):
         return [child.name for child in self._children]
     
-    children = property(_get_children, _set_children)
+    children = property(_get_children)
     
     def __str__ (self):
         return self.name
