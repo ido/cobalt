@@ -25,23 +25,24 @@ known_servers = dict()
 def register_component (component):
     local_components[component.name] = component
 
+
 class ComponentError (Exception):
-    '''Component error baseclass'''
-    pass
+    
+    """Component error baseclass"""
+
 
 class ComponentLookupError (ComponentError):
-    """Unable to locate an address for the given component.
-    
-    Class attributes:
-    components -- dictionary of known components to addresses
-    """
-    pass
+
+    """Unable to locate an address for the given component."""
+
 
 class ComponentOperationError (ComponentError):
-    '''Component Failure during operation'''
-    pass
+    
+    """Component Failure during operation"""
+
 
 def ComponentProxy (component_name, **kwargs):
+    
     """Constructs proxies to components.
     
     Arguments:
@@ -99,12 +100,7 @@ class LocalProxyMethod (object):
         self._func_name = func_name
     
     def __call__ (self, *args):
-        try:
-            return self._proxy._component._dispatch(self._func_name, args)
-        except Fault:
-            raise
-        except:
-            raise ComponentOperationError
+        return self._proxy._component._dispatch(self._func_name, args)
 
 
 class DeferredProxy (object):
@@ -128,14 +124,9 @@ class DeferredProxyMethod (object):
         self._func_name = func_name
     
     def __call__ (self, *args):
-        try:
-            proxy = ComponentProxy(self._proxy._component_name, defer=False)
-            func = getattr(proxy, self._func_name)
-            return func(*args)
-        except Fault:
-            raise
-        except:
-            raise ComponentOperationError
+        proxy = ComponentProxy(self._proxy._component_name, defer=False)
+        func = getattr(proxy, self._func_name)
+        return func(*args)
 
 
 def find_configured_servers (config_files=None):
