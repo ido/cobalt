@@ -26,7 +26,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     try:
-        scheduler = ComponentProxy("scheduler")
+        scheduler = ComponentProxy("scheduler", defer=False)
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1

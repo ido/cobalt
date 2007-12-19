@@ -60,7 +60,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     try:
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(1)
@@ -100,8 +100,8 @@ if __name__ == '__main__':
 
     jobspec = {'jobid':int(os.environ["COBALT_JOBID"]), 'user':user, 'true_mpi_args':arglist, 'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir']}
     try:
-        cqm = ComponentProxy("queue-manager")
-        pm = ComponentProxy("process-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
+        pm = ComponentProxy("process-manager", defer=False)
 
         # try adding job to queue_manager
         pgid = cqm.invoke_mpi_from_script(jobspec)

@@ -24,7 +24,7 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 0
     try:
-        scheduler = ComponentProxy("scheduler")
+        scheduler = ComponentProxy("scheduler", defer=False)
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         
     
     # we best check that the partitions are valid
-    system = ComponentProxy("system")
+    system = ComponentProxy("system", defer=False)
     for p in partitions:
         test_parts = system.get_partitions([{'name':p}])
         if len(test_parts) != 1:

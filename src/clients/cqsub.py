@@ -257,7 +257,7 @@ if __name__ == '__main__':
         processfilter(filt, jobspec)
 
     try:
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
         job = cqm.add_jobs([jobspec])
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"

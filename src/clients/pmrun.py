@@ -12,7 +12,7 @@ if __name__ == '__main__':
         level = 10
     Cobalt.Logging.setup_logging('cmd', to_syslog=False, level=0)
     try:
-        pm = ComponentProxy("process-manager")
+        pm = ComponentProxy("process-manager", defer=False)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to process manager"
         sys.exit(1)

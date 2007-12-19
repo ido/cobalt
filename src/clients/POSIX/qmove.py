@@ -35,7 +35,7 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('qmove', to_syslog=False, level=level)
     logger = Cobalt.Logging.logging.getLogger('qmove')
     try:
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(1)

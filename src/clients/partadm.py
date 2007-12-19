@@ -35,7 +35,7 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     try:
-        system = ComponentProxy("system")
+        system = ComponentProxy("system", defer=False)
     except ComponentLookupError:
         print "Failed to connect to system component"
         raise SystemExit, 1
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                   'queue':'*', 'parents':'*', 'children':'*'}], )
     elif '--queue' in [opt for (opt, arg)  in opts]:
         try:
-            cqm = ComponentProxy("queue-manager")
+            cqm = ComponentProxy("queue-manager", defer=False)
             existing_queues = [q.get('name') for q in cqm.get_queues([ \
                 {'tag':'queue', 'name':'*'}])]
         except:

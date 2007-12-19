@@ -29,7 +29,7 @@ if __name__ == '__main__':
     Cobalt.Logging.setup_logging('cmd', to_syslog=False, level=level)
     
     try:
-        slp = Cobalt.Proxy.ComponentProxy("service-location")
+        slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
     except ComponentLookupError:
         print >> sys.stderr, "unable to find service-location"
         sys.exit(1)

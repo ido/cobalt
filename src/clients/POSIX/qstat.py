@@ -117,7 +117,7 @@ if __name__ == '__main__':
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
     try:
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(1)

@@ -115,7 +115,7 @@ if __name__ == '__main__':
         query['queue'] = '*'
 
     try:
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
 
         query['tag'] = 'job'
         query['jobid'] = '*'

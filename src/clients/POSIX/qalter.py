@@ -193,7 +193,7 @@ if __name__ == '__main__':
         processfilter(filt, updates)
 
     try:
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy("queue-manager", defer=False)
         response = cqm.set_jobs(spec, updates)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"

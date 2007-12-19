@@ -14,7 +14,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
     Cobalt.Logging.setup_logging('showres', to_syslog=False, level=20)
     try:
-        scheduler = ComponentProxy("scheduler")
+        scheduler = ComponentProxy("scheduler", defer=False)
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
