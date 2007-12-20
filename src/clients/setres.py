@@ -143,6 +143,9 @@ if __name__ == '__main__':
         if flt.faultCode==1:
             print "Error: a reservation named '%s' already exists" % nameinfo
             raise SystemExit, 1
+        if flt.faultCode==ComponentLookupError.fault_code:
+            print "Couldn't contact the queue manager"
+            sys.exit(1)
     except:
         print "Couldn't contact the scheduler"
         raise

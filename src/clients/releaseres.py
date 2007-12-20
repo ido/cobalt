@@ -6,6 +6,8 @@ __version__ = '$Version$'
 
 import getpass
 import getopt, sys
+import xmlrpclib
+
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 if __name__ == '__main__':
@@ -32,12 +34,24 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     # Check if reservation exists
-    result = scheduler.get_reservations([{'name':args[0]}])
+    try:
+        result = scheduler.get_reservations([{'name':args[0]}])
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode==1:
+            print "Error communicating with queue manager"
+            sys.exit(1)
+
     if not result:
         print "Reservation '%s' not found" % args[0]
         raise SystemExit, 1
 
     user = getpass.getuser()
-    result = scheduler.del_reservations([{'name':args[0]}])
+    try:
+        result = scheduler.del_reservations([{'name':args[0]}])
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode==1:
+            print "Error communicating with queue manager"
+            sys.exit(1)
+
     print "Released reservation '%s', matched on %d partitions" % \
           (args[0], len(result))
