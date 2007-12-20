@@ -56,22 +56,11 @@ class BGDevice (object):
     
     def __init__(self, pointer):
         self._pointer = pointer
-        self._cache = {}
     
     def _get_bridge_field (self, field, ctype):
         value = ctype()
         bridge.rm_get_data(self._pointer, field, byref(value))
         return value
-    
-    def clear_cache (self, field=None):
-        if field is not None:
-            self._cache[field] = None
-        else:
-            for field in self._cache:
-                self._cache[field] = None
-
-    def reload (self):
-        raise NotImplementedError()
 
 
 class BlueGene (BGDevice):
@@ -140,8 +129,6 @@ class NodeCardList (BGDevice, RMGenerator):
         bridge.rm_get_nodecards(basepart_id, byref(my_pointer))
         BGDevice.__init__(self, my_pointer)
         RMGenerator.__init__(self, self, "size", "head", "tail", NodeCard)
-        for nodecard in self:
-            nodecard.basepart = basepart_id
     
     def _get_size (self):
         size = self._get_bridge_field(header.RM_NodeCardListSize, None, c_int)
@@ -172,8 +159,6 @@ class Partition (BGDevice):
             assert len(self.basePartitions) == 1
             bpid = self.basePartitions[0].id
             self.nodecards = RMGenerator(self, "NCnum", "NChead", "NCtail", NodeCard)
-            for nodecard in self.nodecards:
-                nodecard.basepart = bpid
         else:
             self.nodecards = []
             for bp in self.basePartitions:
