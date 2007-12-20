@@ -111,8 +111,7 @@ class Job (Data):
         self.envs = spec.pop("envs", None)
         self.inputfile = spec.pop("inputfile", None)
         self.kerneloptions = spec.pop("kerneloptions", None)
-        
-        spec['tag'] = spec.get("tag", "job")
+        self.tag = spec.get("tag", "job")
         
         self.timers = dict(
             queue = Timer(),

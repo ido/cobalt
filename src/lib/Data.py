@@ -216,8 +216,7 @@ class Job (Data):
         self.mode = spec.pop("mode", None)
         self.walltime = spec.pop("walltime", None)
         self.true_mpi_args = spec.pop("true_mpi_args", None)
-        
-        spec['tag'] = spec.get("tag", "job")
+        self.tag = spec.get("tag", "job")
         
 
 

@@ -132,9 +132,14 @@ class ReservationDict (DataDict):
     key = "name"
     
     def q_add (self, *args, **kwargs):
-        reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)
         qm = ComponentProxy("queue-manager")
-        queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
+        try:
+            queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
+        except ComponentLookupError:
+            logger.error("unable to contact queue manager when adding reservation")
+            raise
+
+        reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)        
         for reservation in reservations:
             reservation_queue = "R.%s" % reservation.name
             if reservation_queue not in queues:
@@ -206,6 +211,7 @@ class Partition (ForeignData):
 
 class PartitionDict (ForeignDataDict):
     item_cls = Partition
+    __oserror__ = Cobalt.Util.FailureMode("QM Connection (partition)")
     __failname__ = 'System Connection'
     __function__ = ComponentProxy("system").get_partitions
     __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children', 'state']
@@ -257,7 +263,7 @@ def fifocmp (job1, job2):
 class JobDict(ForeignDataDict):
     item_cls = Job
     key = 'jobid'
-    __oserror__ = Cobalt.Util.FailureMode("QM Connection")
+    __oserror__ = Cobalt.Util.FailureMode("QM Connection (job)")
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user']
@@ -272,7 +278,7 @@ class Queue(ForeignData):
         spec = spec.copy()
         self.name = spec.pop("name", None)
         self.state = spec.pop("state", None)
-        self.state = spec.pop("policy", None)
+        self.policy = spec.pop("policy", None)
         
         
 
@@ -289,6 +295,7 @@ class Queue(ForeignData):
 class QueueDict(ForeignDataDict):
     item_cls = Queue
     key = 'name'
+    __oserror__ = Cobalt.Util.FailureMode("QM Connection (queue)")
     __function__ = ComponentProxy("queue-manager").get_queues
     __fields__ = ['name', 'state', 'policy']
 
@@ -316,7 +323,7 @@ class BGSched (Component):
     
     def add_reservations (self, specs):
         return self.reservations.q_add(specs)
-    add_reservation = exposed(query(add_reservations))
+    add_reservations = exposed(query(add_reservations))
 
     def del_reservations (self, specs):
         return self.reservations.q_del(specs)
@@ -343,7 +350,8 @@ class BGSched (Component):
             try:
                 item.Sync()
             except ComponentLookupError:
-                self.logger.error(item.__class__.__name__ + " unable to sync")
+                # the ForeignDataDicts already include FailureMode stuff
+                pass
     sync_data = automatic(sync_data)
 
     def schedule_jobs (self):
@@ -360,25 +368,27 @@ class BGSched (Component):
             if (now - self.assigned_partitions[part_name]) > 300:
                 del self.assigned_partitions[part_name]
         
+        scriptm = ComponentProxy("script-manager")
+        
         try:
-            scriptm = ComponentProxy("script-manager")
+            script_locations = [job['location'][0] for job in scriptm.get_jobs([{'location':"*"}])]
         except ComponentLookupError:
             self.logger.error("failed to connect to script manager")
             return
-        
-        script_locations = [job['location'][0] for job in scriptm.get_jobs([{'location':"*"}])]
+
         for name in script_locations:
             # once the partition can be found from the script manager, the scheduler doesn't need to keep track of it
             if self.assigned_partitions.has_key(name):
                 del self.assigned_partitions[name]
                 
+        cqm = ComponentProxy("queue-manager")
+
         try:
-            cqm = ComponentProxy("queue-manager")
+            locations_with_jobs = [job['location'] for job in cqm.get_jobs([{'state':"running", 'location':"*"}])]
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
             return
 
-        locations_with_jobs = [job['location'] for job in cqm.get_jobs([{'state':"running", 'location':"*"}])]
         available_partitions = []
         for partition in self.partitions.itervalues():
             okay_to_add = True
@@ -409,7 +419,7 @@ class BGSched (Component):
             if okay_to_add:
                 available_partitions.append(partition)
         
-            
+
         active_queues = []
         for queue in self.queues.itervalues():
             if queue.name.startswith("R."):
@@ -511,16 +521,17 @@ class BGSched (Component):
     def run_jobs (self, placements):
         """Connect to cqm and run jobs."""
         
-        try:
-            cqm = ComponentProxy("queue-manager")
-        except ComponentLookupError:
-            self.logger.error("failed to connect to queue manager")
-            return
+        cqm = ComponentProxy("queue-manager")
         
         for placement in placements:
             job = placement[0]
             location = placement[1].name
-            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [location])
+            try:
+                cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [location])
+            except ComponentLookupError:
+                self.logger.error("failed to connect to queue manager")
+                return
+
             self.assigned_partitions[location] = time.time()
 
     def get_sched_info(self):

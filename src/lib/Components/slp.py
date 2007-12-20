@@ -53,8 +53,7 @@ class Service (Data):
         Data.__init__(self, spec)
         self.name = spec.pop("name")
         self.location = spec.pop("location")
-        
-        spec['tag'] = spec.get("tag", "service")
+        self.tag = spec.get("tag", "service")
 
         self.stamp = time.time()
 
