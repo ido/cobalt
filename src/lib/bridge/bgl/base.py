@@ -131,7 +131,7 @@ class NodeCardList (BGDevice, RMGenerator):
         RMGenerator.__init__(self, self, "size", "head", "tail", NodeCard)
     
     def _get_size (self):
-        size = self._get_bridge_field(header.RM_NodeCardListSize, None, c_int)
+        size = self._get_bridge_field(header.RM_NodeCardListSize, c_int)
         return size.value
     
     size = property(_get_size)
@@ -162,7 +162,7 @@ class Partition (BGDevice):
         else:
             self.nodecards = []
             for bp in self.basePartitions:
-                self.nodecards.extend([nodecard for nodecard in NodeCardList(basepart=bp.id)])
+                self.nodecards.extend([nodecard for nodecard in NodeCardList(bp.id)])
 
     def reload (self):
         bridge.rm_get_partition(c_char_p(self.id), byref(self._pointer))
@@ -668,6 +668,8 @@ class PartList (BGDevice, RMGenerator):
     
     def _get_tail (self):
         return self._get_bridge_field(header.RM_PartListNextPart, header.rm_element_t)
+    
+    tail = property(_get_tail)
 
     def __init__ (self, filter=header.PARTITION_ALL_FLAG):
         self._filter = filter
