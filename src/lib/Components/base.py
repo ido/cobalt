@@ -11,6 +11,7 @@ import pydoc
 import sys
 import getopt
 import logging
+import xmlrpclib
 
 import Cobalt
 import Cobalt.Proxy
@@ -177,23 +178,19 @@ class Component (object):
         method -- XML-RPC method name
         args -- tuple of paramaters to method
         """
-        func = self._resolve_exposed_method(method)
         try:
+            func = self._resolve_exposed_method(method)
             result = func(*args)
+            if getattr(func, "query", False):
+                if not getattr(func, "query_all_methods", False):
+                    margs = args[:1]
+                else:
+                    margs = []
+                result = marshal_query_result(result, *margs)
+            return result
         except Exception, e:
             self.logger.error(e, exc_info=True)
-            raise
-        if getattr(func, "query", False):
-            if not getattr(func, "query_all_methods", False):
-                margs = args[:1]
-            else:
-                margs = []
-            try:
-                result = marshal_query_result(result, *margs)
-            except Exception, e:
-                self.logger.error(e, exc_info=True)
-                raise
-        return result
+            raise xmlrpclib.Fault(getattr(e, "fault_code", 1), "%s:%s" % (sys.exc_type, sys.exc_value))
     
     def _listMethods (self):
         """Custom XML-RPC introspective method list."""
