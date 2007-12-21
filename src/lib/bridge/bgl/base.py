@@ -149,6 +149,12 @@ class NodeCardList (BGDevice, RMGenerator):
 
 class Partition (BGDevice):
     
+    def by_id (cls, id):
+        mypointer = pointer(header.rm_partition_t())
+        bridge.rm_get_partition(c_char_p(id), byref(mypointer))
+        return Partition(mypointer)
+    by_id = classmethod(by_id)
+    
     def __init__ (self, pointer):
         BGDevice.__init__(self, pointer)
         self.basePartitions = RMGenerator(self, "BPnum", "BPhead", "BPtail", BasePartition)
