@@ -70,6 +70,7 @@ class BlueGene (BGDevice):
         bridge.rm_get_BGL(byref(my_pointer))
         BGDevice.__init__(self, my_pointer)
         self.basePartitions = RMGenerator(self, "BPnum", "BPhead", "BPtail", BasePartition)
+        self.switches = RMGenerator(self, "SwitchNum", "FirstSwitch", "NextSwitch", Switch)
         self.wires = RMGenerator(self, "WireNum", "FirstWire", "NextWire", Wire)
     
     def reload (self):
@@ -102,6 +103,16 @@ class BlueGene (BGDevice):
         return SwitchNum.value
     
     SwitchNum = property(_get_SwitchNum)
+    
+    def _get_FirstSwitch (self):
+        return self._get_bridge_field(header.RM_FirstSwitch, header.rm_switch_t)
+    
+    FirstSwitch = property(_get_FirstSwitch)
+    
+    def _get_NextSwitch (self):
+        return self._get_bridge_field(header.RM_NextSwitch, header.rm_switch_t)
+    
+    NextSwitch = property(_get_NextSwitch)
     
     def _get_WireNum (self):
         WireNum = self._get_bridge_field(header.RM_WireNum, c_int)
