@@ -175,7 +175,7 @@ class Partition (BGDevice):
     
     def _get_state (self):
         state = self._get_bridge_field(header.RM_PartitionState, header.rm_partition_state_t)
-        return header.RM_PartitionStateEnum[state]
+        return header.RM_PartitionStateEnum[state.value]
     
     state = property(_get_state)
     
@@ -213,7 +213,7 @@ class Partition (BGDevice):
     
     def _get_connection (self):
         connection = self._get_bridge_field(header.RM_PartitionConnection, header.rm_connection_type_t)
-        return header.RM_ConnectionTypeEnum[connection]
+        return header.RM_ConnectionTypeEnum[connection.value]
     
     connection = property(_get_connection)
     
@@ -269,7 +269,7 @@ class Partition (BGDevice):
     
     def _get_mode (self):
         mode = self._get_bridge_field(header.RM_PartitionMode, header.rm_partition_mode_t)
-        return header.RM_PartitionModeEnum[mode]
+        return header.RM_PartitionModeEnum[mode.value]
     
     mode = property(_get_mode)
     
@@ -341,7 +341,7 @@ class BasePartition (BGDevice):
     
     def _get_state (self):
         state = self._get_bridge_field(header.RM_BPState, header.rm_BP_state_t)
-        return header.RM_BPStateEnum[state]
+        return header.RM_BPStateEnum[state.value]
     
     state = property(_get_state)
     
@@ -359,7 +359,7 @@ class BasePartition (BGDevice):
     
     def _get_partstate (self):
         partstate = self._get_bridge_field(header.RM_BPPartState, header.rm_partition_state_t)
-        return header.RM_PartitionStateEnum[partstate]
+        return header.RM_PartitionStateEnum[partstate.value]
     
     partstate = property(_get_partstate)
     
@@ -377,7 +377,7 @@ class BasePartition (BGDevice):
     
     def _get_computenodememory (self):
         sd = self._get_bridge_field(header.RM_BPComputeNodeMemory, header.rm_BP_computenode_memory_t)
-        return header.RM_ComputenodeMemoryEnum[sd]
+        return header.RM_ComputenodeMemoryEnum[sd.value]
     
     computenodememory = property(_get_computenodememory)
 
@@ -405,13 +405,13 @@ class NodeCard (BGDevice):
     
     def _get_quarter (self):
         quarter = self._get_bridge_field(header.RM_NodeCardQuarter, header.rm_quarter_t)
-        return header.RM_QuarterEnum[quarter]
+        return header.RM_QuarterEnum[quarter.value]
     
     quarter = property(_get_quarter)
     
     def _get_cardstate (self):
         cardstate = self._get_bridge_field(header.RM_NodeCardState, header.rm_nodecard_state_t)
-        return header.RM_NodeCardStateEnum[cardstate]
+        return header.RM_NodeCardStateEnum[cardstate.value]
     
     cardstate = property(_get_cardstate)
     
@@ -505,7 +505,7 @@ class Job (BGDevice):
     
     def _get_state (self):
         state = self._get_bridge_field(header.RM_JobState, header.rm_job_state_t)
-        return header.RM_JobStateEnum[state]
+        return header.RM_JobStateEnum[state.value]
     
     state = property(_get_state)
     
