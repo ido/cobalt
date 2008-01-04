@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # $Id$
 
-from Cobalt.Components.bgsystem import System
+from Cobalt.Components.bgsystem import BGSystem
 from Cobalt.Components.base import run_component
 
 try:
-    system = System()
+    system = BGSystem()
     run_component(system, register=True)
 except KeyboardInterrupt:
     pass
