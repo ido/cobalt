@@ -24,9 +24,6 @@ import thread
 from datetime import datetime
 from ConfigParser import ConfigParser
 
-import lxml
-import lxml.etree
-
 import Cobalt
 import Cobalt.Data
 from Cobalt.Data import Data, DataDict, IncrID
@@ -171,10 +168,8 @@ class BGSystem (Component):
         Component.__init__(self, *args, **kwargs)
         self._partitions = PartitionDict()
         self._managed_partitions = sets.Set()
-        self.jobs = JobDict()
-        config_file = kwargs.get("config_file", None)
-        if config_file is not None:
-            self.configure(config_file)
+        #self.jobs = JobDict()
+        self.configure()
     
     def _get_partitions (self):
         return PartitionDict([
