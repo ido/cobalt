@@ -91,6 +91,7 @@ if __name__ == '__main__':
                 {'tag':'queue', 'name':'*'}])]
         except:
             print "Error getting queues from queue_manager"
+            raise SystemExit, 1
         queue = [arg for (opt, arg) in opts if opt == '--queue'][0]
         if queue.split(':') != [q for q in queue.split(':') if q in existing_queues]:
             print '\'' + queue + '\' is not an existing queue'
