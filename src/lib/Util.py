@@ -197,7 +197,7 @@ class AccountingLog:
             try:
                 self.logfile = open(logfile, 'a+')
             except IOError:
-                self.logfile = open(os.devnull, 'a+')
+                self.logfile = open("/dev/null", 'a+')
     def LogMessage(self, message):
         self.RotateLog()
         timenow = time.strftime("%Y-%m-%d %T", time.localtime())
@@ -266,7 +266,7 @@ class PBSLog (object):
             try:
                 self._last_file = open(filename, "a")
             except IOError:
-                self._last_file = open(os.devnull, "a")
+                self._last_file = open("/dev/null", "a")
             return self._last_file
     logfile = property(_get_logfile)
     

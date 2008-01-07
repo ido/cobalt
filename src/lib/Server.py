@@ -403,7 +403,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
         if child_pid != 0:
             os._exit(0)
         
-        redirect_file = open(os.devnull, "w+")
+        redirect_file = open("/dev/null", "w+")
         os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
         os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
         os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
@@ -411,7 +411,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
         os.chdir(os.sep)
         os.umask(0)
         
-        pidfile = open(pidfile_name or os.devnull, "w")
+        pidfile = open(pidfile_name or "/dev/null", "w")
         print >> pidfile, os.getpid()
         pidfile.close()
         
