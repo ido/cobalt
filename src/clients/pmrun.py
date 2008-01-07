@@ -20,7 +20,7 @@ if __name__ == '__main__':
         print >> sys.stderr, "Failed to connect to process manager"
         sys.exit(1)
 
-    r = pm.add_jobs([{'tag':'process-group', 'user':user, 'args':[],
+    r = pm.add_jobs([{'tag':'process-group', 'user':user, 'args':[], 'env':{}, 
                                 'executable':'/tmp/testscript', 'size':700, 'cwd':'/tmp', 'location':['ANLR00'],
                                 'outputfile':'/tmp/test1-output', 'errorfile':'/tmp/test1-error', 'id': '*'}])
     print "jobs : " + `len(r)`
