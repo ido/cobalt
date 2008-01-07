@@ -5,22 +5,17 @@
 __revision__ = '$Revision: 768 $'
 
 import logging
-from logging import getLogger, FileHandler, Formatter
 import os
 import sys
 import time
-import xml.sax.saxutils
 import xmlrpclib
 import ConfigParser
-import copy
-import types
 
 import Cobalt
 import Cobalt.Util
 import Cobalt.Cqparse
-from Cobalt.Data import Data, DataList, DataDict, get_spec_fields, IncrID, DataCreationError
+from Cobalt.Data import Data, DataList, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Server import XMLRPCServer, find_intended_location
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
@@ -463,7 +458,7 @@ class Job (Data):
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
         
-        self.pgid[cmd] = pgrp[0]['id']
+        self.pgid[cmd] = pgroup[0]['id']
 
     def CompletePG(self, pgid):
         '''Finish accounting for a completed jobid'''
@@ -891,7 +886,7 @@ class ScriptMPIJob (Job):
     def RunScriptMPIJob(self):
         '''Run an mpirun job that was invoked by a script.'''
         if self.config.get('bgkernel', 'false') == 'true':
-            SetBGKernel()
+            self.SetBGKernel()
 
         self.state = 'running'
         self.timers['user'].Start()
