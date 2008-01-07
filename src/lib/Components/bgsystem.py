@@ -11,7 +11,7 @@ Exceptions:
 JobCreationError -- error when creating a job
 """
 
-
+import atexit
 import pwd
 import sets
 import logging
@@ -19,6 +19,7 @@ import sys
 import os
 import operator
 import random
+import tempfile
 import time
 import thread
 from datetime import datetime
@@ -258,7 +259,7 @@ class BGSystem (Component):
         daemonizes the mpirun process, passing the mpirun pid back to the
         parent process via a pipe'''
 
-#         self.log.info("Job %s/%s: Running %s" % (spec.get('id'), spec.get('user'), " ".join(cmd)))
+#         self.logger.info("Job %s/%s: Running %s" % (spec.get('id'), spec.get('user'), " ".join(cmd)))
 
         # make pipe for daemon mpirun to talk to bgsystem
         newpipe_r, newpipe_w = os.pipe()
@@ -351,18 +352,18 @@ class BGSystem (Component):
                 os.chmod(self.errlog, 0600)
                 os.dup2(err.fileno(), sys.__stderr__.fileno())
             except IOError:
-                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
+                self.logger.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
             except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
+                self.logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
 
             try:
                 out = open(self.outlog, 'a')
                 os.chmod(self.outlog, 0600)
                 os.dup2(out.fileno(), sys.__stdout__.fileno())
             except IOError:
-                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.outlog))
+                self.logger.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.outlog))
             except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
+                self.logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
 
             # If this mpirun command originated from a user script, its arguments
             # have been passed along in a special attribute.  These arguments have
@@ -386,7 +387,7 @@ class BGSystem (Component):
             childpid = newpipe_r.read()
             newpipe_r.close()
             rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
-            self.log.info('rc from waitpid was (%d, %d)' % rc)
+            self.logger.info('rc from waitpid was (%d, %d)' % rc)
             spec['pid'] = childpid
             return spec
     
@@ -441,7 +442,7 @@ class BGSystem (Component):
             try:
                 os.kill(int(pid), getattr(signal, signame))
             except OSError, error:
-                self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+                self.logger.error("Signal failure for pid %s:%s" % (pid, error.strerror))
             
         return 0
     signal_jobs = exposed(query(signal_jobs))
