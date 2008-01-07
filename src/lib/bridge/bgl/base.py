@@ -406,7 +406,7 @@ class PSet (BGDevice):
 class PartitionUsers (BGDevice):
     
     def _get_name (self):
-        name = _get_bridge_field(header.RM_PartitionUserName, c_char_p)
+        name = self._get_bridge_field(header.RM_PartitionUserName, c_char_p)
         return name.value
 
     name = property(_get_name)
@@ -445,7 +445,7 @@ class NodeCard (BGDevice):
     cardpartid = property(_get_cardionodes)
     
     def _get_cardpartstate (self):
-        cardpartstate = self._get_bridge_field(header.RM_NodeCardPartState, header.pm_partition_state_t)
+        cardpartstate = self._get_bridge_field(header.RM_NodeCardPartState, header.rm_partition_state_t)
         return cardpartstate.value
     
     cardpartid = property(_get_cardionodes)
@@ -546,7 +546,7 @@ class Job (BGDevice):
     
     def _get_infile (self):
         infile = self._get_bridge_field(header.RM_JobInFile, c_char_p)
-        return invile.value
+        return infile.value
     
     infile = property(_get_infile)
     
