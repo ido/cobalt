@@ -142,6 +142,173 @@ class PartitionDict (DataDict):
     key = "name"
 
 
+class Job (Data):
+    def __init__(self, spec):
+        self.system_id = spec['system_id']
+        self.outputfile = spec.get('outputfile', False)
+        self.errorfile = spec.get('errorfile', False)
+        self.location = spec.get('location', False)
+        self.user = spec.get('user', "")
+        self.executable = spec.get('executable')
+        self.cwd = spec.get('cwd')
+        self.size = str(spec.get('size'))
+        self.mode = spec.get('mode', 'co')
+        self.args = " ".join(spec.get('args', []))
+        self.inputfile = spec.get('inputfile', '')
+        self.kerneloptions = spec.get('kerneloptions', '')
+        self.env = spec.get('env', {})
+        self.true_mpi_args = spec.get('true_mpi_args')
+        self.id = spec.get('id')
+        
+        self.start()
+
+    def start(self):
+        '''starts a job
+        daemonizes the mpirun process, passing the mpirun pid back to the
+        parent process via a pipe'''
+
+#         self.log.info("Job %s/%s: Running %s" % (spec.get('id'), spec.get('user'), " ".join(cmd)))
+
+        # make pipe for daemon mpirun to talk to bgsystem
+        newpipe_r, newpipe_w = os.pipe()
+
+        pid = os.fork()
+        print 'pid is', pid
+        if not pid:
+            os.close(newpipe_r)
+            os.setsid()
+            pid2 = os.fork()
+            if pid2 != 0:
+                newpipe_w = os.fdopen(newpipe_w, 'w')
+                newpipe_w.write(str(pid2))
+                newpipe_w.close()
+                os._exit(0)
+
+            #start daemonized child
+            os.close(newpipe_w)
+
+            #setup output and error files
+            outlog = self.outputfile or tempfile.mktemp()
+            errlog = self.errorfile or tempfile.mktemp()
+
+            #check for location to run
+            if not self.location:
+                raise ProcessGroupCreationError, "location"
+            partition = self.location[0]
+
+            #check for valid user/group
+            try:
+                userid, groupid = pwd.getpwnam(self.user)[2:4]
+            except KeyError:
+                raise ProcessGroupCreationError, "user/group"
+
+            program = self.executable
+            cwd = self.cwd
+            pnum = self.size
+            mode = self.mode
+            args = self.args
+            inputfile = self.inputfile
+            kerneloptions = self.kerneloptions
+            # strip out BGLMPI_MAPPING until mpirun bug is fixed 
+            mapfile = ''
+            if self.env.has_key('BGLMPI_MAPPING'):
+                mapfile = self.env['BGLMPI_MAPPING']
+                del self.env['BGLMPI_MAPPING']
+            envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems()])
+            atexit._atexit = []
+
+            try:
+                os.setgid(groupid)
+                os.setuid(userid)
+            except OSError:
+                logger.error("Failed to change userid/groupid for PG %s" % (spec.get("pgid")))
+                sys.exit(0)
+
+            #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
+            os.environ["DB_PROPERTY"] = self.config['db2_properties']
+            os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
+            os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
+            os.environ["DB2INSTANCE"] = self.config['db2_instance']
+            os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
+            os.environ["COBALT_JOBID"] = self.id
+            if inputfile != '':
+                infile = open(inputfile, 'r')
+                os.dup2(infile.fileno(), sys.__stdin__.fileno())
+            else:
+                null = open('/dev/null', 'r')
+                os.dup2(null.fileno(), sys.__stdin__.fileno())
+            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
+                   '-np', pnum, '-partition', partition,
+                   '-mode', mode, '-cwd', cwd, '-exe', program)
+            if args != '':
+                cmd = cmd + ('-args', args)
+            if envs != '':
+                cmd = cmd + ('-env',  envs)
+            if kerneloptions != '':
+                cmd = cmd + ('-kernel_options', kerneloptions)
+            if mapfile != '':
+                cmd = cmd + ('-mapfile', mapfile)
+
+            try:
+                err = open(errlog, 'a')
+                os.chmod(errlog, 0600)
+                os.dup2(err.fileno(), sys.__stderr__.fileno())
+            except IOError:
+                logger.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.id, self.user, errlog))
+            except OSError:
+                logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.id, self.user, errlog))
+
+            try:
+                out = open(outlog, 'a')
+                os.chmod(outlog, 0600)
+                os.dup2(out.fileno(), sys.__stdout__.fileno())
+            except IOError:
+                logger.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.id, self.user, outlog))
+            except OSError:
+                logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.id, self.user, errlog))
+
+            # If this mpirun command originated from a user script, its arguments
+            # have been passed along in a special attribute.  These arguments have
+            # already been modified to include the partition that cobalt has selected
+            # for the job, and can just replace the arguments built above.
+            if self.true_mpi_args:
+                cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(self.true_mpi_args)
+
+            try:
+                apply(os.execl, cmd)
+            except Exception, e:
+                print 'got exception when trying to exec mpirun', e
+                raise SystemExit, 1
+
+            sys.exit(0)
+
+        else:
+            #parent process reads daemon child's pid through pipe
+            os.close(newpipe_w)
+            newpipe_r = os.fdopen(newpipe_r, 'r')
+            childpid = newpipe_r.read()
+            newpipe_r.close()
+            rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
+            logger.info('rc from waitpid was (%d, %d)' % rc)
+            spec['pid'] = childpid
+            
+            return spec
+        
+        
+        
+        
+
+class JobList (DataList):
+    item_cls = Job
+    def __init__(self, q):
+        self.id_gen = IncrID()
+ 
+    def q_add (self, specs, callback=None, cargs={}):
+        for spec in specs:
+            if "system_id" not in spec or spec['system_id'] == "*":
+                spec['system_id'] = self.id_gen.next()
+        return DataList.q_add(self, specs)
+
 
 
 class BGSystem (Component):
@@ -164,7 +331,7 @@ class BGSystem (Component):
     implementation = "simulator"
     
     logger = logger
-
+    
     # read in config from cobalt.conf
     required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
     _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
@@ -181,13 +348,14 @@ class BGSystem (Component):
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
         raise SystemExit, 1
+    
 
     def __init__ (self, *args, **kwargs):
         """Initialize a system simulator."""
         Component.__init__(self, *args, **kwargs)
         self._partitions = PartitionDict()
         self._managed_partitions = sets.Set()
-        #self.jobs = JobDict()
+        self.jobs = JobList()
         self.configure()
     
     def _get_partitions (self):
@@ -261,153 +429,6 @@ class BGSystem (Component):
     set_partitions = exposed(query(set_partitions))
     
     
-    def _get_owner (self, spec):
-        """Get intended uid, gid for a job from a job spec."""
-        user_name = spec.get("user", None)
-        if not user_name:
-            raise JobCreationError("user")
-        try:
-            uid, gid = pwd.getpwnam(user_name)[2:4]
-        except KeyError:
-            raise JobCreationError("user")
-        return (uid, gid)
-
-    def _start_job(self, spec):
-        '''starts a job
-        daemonizes the mpirun process, passing the mpirun pid back to the
-        parent process via a pipe'''
-
-#         self.logger.info("Job %s/%s: Running %s" % (spec.get('id'), spec.get('user'), " ".join(cmd)))
-
-        # make pipe for daemon mpirun to talk to bgsystem
-        newpipe_r, newpipe_w = os.pipe()
-
-        pid = os.fork()
-        print 'pid is', pid
-        if not pid:
-            os.close(newpipe_r)
-            os.setsid()
-            pid2 = os.fork()
-            if pid2 != 0:
-                newpipe_w = os.fdopen(newpipe_w, 'w')
-                newpipe_w.write(str(pid2))
-                newpipe_w.close()
-                os._exit(0)
-
-            #start daemonized child
-            os.close(newpipe_w)
-
-            #setup output and error files
-            if spec.get('outputfile', False):
-                self.outlog = spec.get('outputfile')
-            else:
-                self.outlog = tempfile.mktemp()            
-            if spec.get('errorfile', False):
-                self.errlog = spec.get('errorfile')
-            else:
-                self.errlog = tempfile.mktemp()
-
-            #check for location to run
-            if not spec.get('location', False):
-                raise ProcessGroupCreationError, "location"
-            partition = spec.get('location')[0]
-
-            #check for valid user/group
-            try:
-                userid, groupid = pwd.getpwnam(spec.get('user', ""))[2:4]
-            except KeyError:
-                raise ProcessGroupCreationError, "user/group"
-
-            program = spec.get('executable')
-            cwd = spec.get('cwd')
-            pnum = str(spec.get('size'))
-            mode = spec.get('mode', 'co')
-            args = " ".join(spec.get('args', []))
-            inputfile = spec.get('inputfile', '')
-            kerneloptions = spec.get('kerneloptions', '')
-            # strip out BGLMPI_MAPPING until mpirun bug is fixed 
-            mapfile = ''
-            if spec.get('env', {}).has_key('BGLMPI_MAPPING'):
-                mapfile = spec.get('env')['BGLMPI_MAPPING']
-                del spec.get('env')['BGLMPI_MAPPING']
-            envs = " ".join(["%s=%s" % envdata for envdata in spec.get('envs', {}).iteritems()])
-            atexit._atexit = []
-
-            try:
-                os.setgid(groupid)
-                os.setuid(userid)
-            except OSError:
-                logger.error("Failed to change userid/groupid for PG %s" % (spec.get("pgid")))
-                sys.exit(0)
-
-            #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
-            os.environ["DB_PROPERTY"] = self.config['db2_properties']
-            os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
-            os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
-            os.environ["DB2INSTANCE"] = self.config['db2_instance']
-            os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
-            os.environ["COBALT_JOBID"] = spec.get('id')
-            if inputfile != '':
-                infile = open(inputfile, 'r')
-                os.dup2(infile.fileno(), sys.__stdin__.fileno())
-            else:
-                null = open('/dev/null', 'r')
-                os.dup2(null.fileno(), sys.__stdin__.fileno())
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
-                   '-np', pnum, '-partition', partition,
-                   '-mode', mode, '-cwd', cwd, '-exe', program)
-            if args != '':
-                cmd = cmd + ('-args', args)
-            if envs != '':
-                cmd = cmd + ('-env',  envs)
-            if kerneloptions != '':
-                cmd = cmd + ('-kernel_options', kerneloptions)
-            if mapfile != '':
-                cmd = cmd + ('-mapfile', mapfile)
-
-            try:
-                err = open(self.errlog, 'a')
-                os.chmod(self.errlog, 0600)
-                os.dup2(err.fileno(), sys.__stderr__.fileno())
-            except IOError:
-                self.logger.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
-            except OSError:
-                self.logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
-
-            try:
-                out = open(self.outlog, 'a')
-                os.chmod(self.outlog, 0600)
-                os.dup2(out.fileno(), sys.__stdout__.fileno())
-            except IOError:
-                self.logger.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.outlog))
-            except OSError:
-                self.logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
-
-            # If this mpirun command originated from a user script, its arguments
-            # have been passed along in a special attribute.  These arguments have
-            # already been modified to include the partition that cobalt has selected
-            # for the job, and can just replace the arguments built above.
-            if spec.has_key('true_mpi_args'):
-                cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(spec['true_mpi_args'])
-
-            try:
-                apply(os.execl, cmd)
-            except Exception, e:
-                print 'got exception when trying to exec mpirun', e
-                raise SystemExit, 1
-
-            sys.exit(0)
-
-        else:
-            #parent process reads daemon child's pid through pipe
-            os.close(newpipe_w)
-            newpipe_r = os.fdopen(newpipe_r, 'r')
-            childpid = newpipe_r.read()
-            newpipe_r.close()
-            rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
-            self.logger.info('rc from waitpid was (%d, %d)' % rc)
-            spec['pid'] = childpid
-            return spec
     
     
     def add_jobs (self, specs):
@@ -417,12 +438,7 @@ class BGSystem (Component):
         Arguments:
         spec -- dictionary hash specifying a job to start
         """
-        ret = []
-        for spec in specs:
-            ret.append(self._start_job(spec))
-            
-        return ret
-        
+        return self.jobs.q_add(specs)
     add_jobs = exposed(query(all_fields=True)(add_jobs))
     
     def get_jobs (self, specs):
@@ -460,7 +476,7 @@ class BGSystem (Component):
             try:
                 os.kill(int(pid), getattr(signal, signame))
             except OSError, error:
-                self.logger.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+                self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
             
         return 0
     signal_jobs = exposed(query(signal_jobs))
