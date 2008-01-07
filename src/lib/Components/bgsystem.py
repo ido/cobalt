@@ -19,11 +19,12 @@ import sys
 import os
 import operator
 import random
+import signal
 import tempfile
 import time
 import thread
+import ConfigParser
 from datetime import datetime
-from ConfigParser import ConfigParser
 
 import Cobalt
 import Cobalt.Data
@@ -163,6 +164,23 @@ class BGSystem (Component):
     implementation = "simulator"
     
     logger = logger
+
+    # read in config from cobalt.conf
+    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
+    _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
+    _config = ConfigParser.ConfigParser()
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
+    else:
+        _config.read('/etc/cobalt.conf')
+    if not _config._sections.has_key('bgpm'):
+        print '''"bgpm" section missing from cobalt config file'''
+        raise SystemExit, 1
+    config = _config._sections['bgpm']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
+        raise SystemExit, 1
 
     def __init__ (self, *args, **kwargs):
         """Initialize a system simulator."""
