@@ -252,255 +252,197 @@ class BGSystem (Component):
         except KeyError:
             raise JobCreationError("user")
         return (uid, gid)
-    
-    def _get_env (self, spec, config_files=None):
-        """Get intended environment dict for a job from a job spec."""
-        if config_files is None:
-            config_files = Cobalt.CONFIG_FILES
-        config = ConfigParser()
-        config.read(config_files)
-        env = dict()
-        env["DB_PROPERTY"] = config.get("bgpm", "db2_properties")
-        env["BRIDGE_CONFIG_FILE"] = config.get("bgpm", "bridge_config")
-        env["MMCS_SERVER_IP"] = config.get("bgpm", "mmcs_server_ip")
-        env["DB2INSTANCE"] = config.get("bgpm", "db2_instance")
-        env["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
-        env["COBALT_JOBID"] = spec['id']
-        return env
-    
-    def _get_cmd (self, spec, config_files=None):
-        """Get a command string for a job from a job spec."""
-        if config_files is None:
-            config_files = Cobalt.CONFIG_FILES
-        config = ConfigParser()
-        config.read(config_files)
-        
-        argv = [
-            config.get("bgpm", "mpirun"),
-            os.path.basename(config.get("bgpm", "mpirun")),
-        ]
-        
-        if "true_mpi_args" in spec and spec['true_mpi_args'] is not None:
-            # arguments have been passed along in a special attribute.  These arguments have
+
+    def _start_job(self, spec):
+        '''starts a job
+        daemonizes the mpirun process, passing the mpirun pid back to the
+        parent process via a pipe'''
+
+#         self.log.info("Job %s/%s: Running %s" % (spec.get('id'), spec.get('user'), " ".join(cmd)))
+
+        # make pipe for daemon mpirun to talk to bgsystem
+        newpipe_r, newpipe_w = os.pipe()
+
+        pid = os.fork()
+        print 'pid is', pid
+        if not pid:
+            os.close(newpipe_r)
+            os.setsid()
+            pid2 = os.fork()
+            if pid2 != 0:
+                newpipe_w = os.fdopen(newpipe_w, 'w')
+                newpipe_w.write(str(pid2))
+                newpipe_w.close()
+                os._exit(0)
+
+            #start daemonized child
+            os.close(newpipe_w)
+
+            #setup output and error files
+            if spec.get('outputfile', False):
+                self.outlog = spec.get('outputfile')
+            else:
+                self.outlog = tempfile.mktemp()            
+            if spec.get('errorfile', False):
+                self.errlog = spec.get('errorfile')
+            else:
+                self.errlog = tempfile.mktemp()
+
+            #check for location to run
+            if not spec.get('location', False):
+                raise ProcessGroupCreationError, "location"
+            partition = spec.get('location')[0]
+
+            #check for valid user/group
+            try:
+                userid, groupid = pwd.getpwnam(spec.get('user', ""))[2:4]
+            except KeyError:
+                raise ProcessGroupCreationError, "user/group"
+
+            program = spec.get('executable')
+            cwd = spec.get('cwd')
+            pnum = str(spec.get('size'))
+            mode = spec.get('mode', 'co')
+            args = " ".join(spec.get('args', []))
+            inputfile = spec.get('inputfile', '')
+            kerneloptions = spec.get('kerneloptions', '')
+            # strip out BGLMPI_MAPPING until mpirun bug is fixed 
+            mapfile = ''
+            if spec.get('env', {}).has_key('BGLMPI_MAPPING'):
+                mapfile = spec.get('env')['BGLMPI_MAPPING']
+                del spec.get('env')['BGLMPI_MAPPING']
+            envs = " ".join(["%s=%s" % envdata for envdata in spec.get('envs', {}).iteritems()])
+            atexit._atexit = []
+
+            try:
+                os.setgid(groupid)
+                os.setuid(userid)
+            except OSError:
+                logger.error("Failed to change userid/groupid for PG %s" % (spec.get("pgid")))
+                sys.exit(0)
+
+            #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
+            os.environ["DB_PROPERTY"] = self.config['db2_properties']
+            os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
+            os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
+            os.environ["DB2INSTANCE"] = self.config['db2_instance']
+            os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
+            os.environ["COBALT_JOBID"] = spec.get('id')
+            if inputfile != '':
+                infile = open(inputfile, 'r')
+                os.dup2(infile.fileno(), sys.__stdin__.fileno())
+            else:
+                null = open('/dev/null', 'r')
+                os.dup2(null.fileno(), sys.__stdin__.fileno())
+            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
+                   '-np', pnum, '-partition', partition,
+                   '-mode', mode, '-cwd', cwd, '-exe', program)
+            if args != '':
+                cmd = cmd + ('-args', args)
+            if envs != '':
+                cmd = cmd + ('-env',  envs)
+            if kerneloptions != '':
+                cmd = cmd + ('-kernel_options', kerneloptions)
+            if mapfile != '':
+                cmd = cmd + ('-mapfile', mapfile)
+
+            try:
+                err = open(self.errlog, 'a')
+                os.chmod(self.errlog, 0600)
+                os.dup2(err.fileno(), sys.__stderr__.fileno())
+            except IOError:
+                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
+            except OSError:
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
+
+            try:
+                out = open(self.outlog, 'a')
+                os.chmod(self.outlog, 0600)
+                os.dup2(out.fileno(), sys.__stdout__.fileno())
+            except IOError:
+                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.outlog))
+            except OSError:
+                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (spec.get('id'), spec.get('user'), self.errlog))
+
+            # If this mpirun command originated from a user script, its arguments
+            # have been passed along in a special attribute.  These arguments have
             # already been modified to include the partition that cobalt has selected
-            # for the job.
-            argv.extend(spec['true_mpi_args'])
-            return " ".join(argv)
+            # for the job, and can just replace the arguments built above.
+            if spec.has_key('true_mpi_args'):
+                cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(spec['true_mpi_args'])
+
+            try:
+                apply(os.execl, cmd)
+            except Exception, e:
+                print 'got exception when trying to exec mpirun', e
+                raise SystemExit, 1
+
+            sys.exit(0)
+
+        else:
+            #parent process reads daemon child's pid through pipe
+            os.close(newpipe_w)
+            newpipe_r = os.fdopen(newpipe_r, 'r')
+            childpid = newpipe_r.read()
+            newpipe_r.close()
+            rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
+            self.log.info('rc from waitpid was (%d, %d)' % rc)
+            spec['pid'] = childpid
+            return spec
     
-        argv.extend([
-            "-np", str(spec['size']),
-            "-mode", spec.get("mode", None) or "co",
-            "-cwd", spec['cwd'],
-            "-exe", spec['executable'],
-        ])
-        
-        try:
-            partition = spec["location"][0]
-        except (KeyError, IndexError):
-            raise JobCreationError("location")
-        argv.extend(["-partition", partition])
-        
-        kerneloptions = spec.get("kerneloptions", None)
-        if kerneloptions:
-            argv.extend(['-kernel_options', kerneloptions])
-        
-        args = spec.get('args', [])
-        if args:
-            argv.extend(["-args", " ".join(args)])
-        
-        envs = spec.get("envs", None)
-        if envs:
-            env_kvstring = " ".join(["%s=%s" % (key, value) for key, value in envs.iteritems()])
-            argv.extend(["-env",  env_kvstring])
-        
-        if "BGLMPI_MAPPING" in (spec.get("env", None) or {}):
-            # strip out BGLMPI_MAPPING until mpirun bug is fixed
-            mapfile = spec['env']['BGLMPI_MAPPING']
-            del spec['env']['BGLMPI_MAPPING']
-            argv.extend(["-mapfile", mapfile])
-        return " ".join(argv)
     
     def add_jobs (self, specs):
         
-        """Create a simulated job.
+        """Create a job.
         
         Arguments:
         spec -- dictionary hash specifying a job to start
         """
-        
-        self.logger.info("add_jobs(%r)" % (specs))
-        def jobspec (spec):
-            uid, gid = self._get_owner(spec)
-            jobspec = dict(
-                id = spec.get("id"),
-                stdin = spec.get("stdin", "/dev/null"),
-                stdout = spec.get("stdout", "/dev/null"),
-                stderr = spec.get("stderr", "/dev/null"),
-                uid = uid,
-                gid = gid,
-                env = self._get_env(spec),
-                cmd = self._get_cmd(spec),
-                walltime = spec.get("walltime", '1'),
-                executable = spec.get("executable"),
-                cwd = spec.get("cwd"),
-                user = spec.get("user"),
-                size = spec.get("size"),
-            )
-            if not jobspec['walltime']:
-                jobspec['walltime'] = '1'
-            return jobspec
-        
-        jobspecs = [jobspec(spec) for spec in specs]
-        new_jobs = self.jobs.q_add(jobspecs)
-        for job in new_jobs:
-            stdout = open(job.stdout, "a")
-            stderr = open(job.stderr, "a")
-            env = os.environ.copy()
-            env.update(job.env)
-            thread.start_new_thread(self.mpirun, (job.cmd.split(), ), {'stdout':stdout, 'stderr':stderr, 'env':env, 'walltime':int(job.walltime)})
+        ret = []
+        for spec in specs:
+            ret.append(self._start_job(spec))
             
-        return new_jobs
+        return ret
+        
     add_jobs = exposed(query(all_fields=True)(add_jobs))
     
     def get_jobs (self, specs):
-        """Query jobs running on the simulator."""
-        self.logger.info("get_jobs(%r)" % (specs))
-        return self.jobs.q_get(specs)
+        '''queries jobs via pid or PyBridge
+        returns those jobs that are running'''
+        return [job for job in specs
+                if self.checkpid(job.get('pid'))]
     get_jobs = exposed(query(get_jobs))
+
+    def checkpid(self, somepid):
+        '''checks if the specified pid is still around'''
+        ps = os.popen('ps ax')
+        pids = ps.readlines()
+        ps.close()
+        pidlist = [p.split()[0] for p in pids]
+        if str(somepid) in pidlist:
+            return True
+        else:
+            return False
     
     def del_jobs (self, specs):
-        """Delete jobs running on the simulator."""
-        self.logger.info("del_jobs(%r)" % (specs))
-        return self.jobs.q_del(specs)
+        ret = []
+        for spec in specs:
+            ret.append(self.signal_jobs(spec))
+        
+        return ret
     del_jobs = exposed(query(del_jobs))
     
     def signal_jobs (self, specs, signame="SIGINT"):
-        """Simulate the signaling of a job."""
-        self.logger.info("signal_jobs(%r, %r)" % (specs, signame))
-        if signame == "SIGKILL":
-            return self.del_jobs(specs)
-        else:
-            return self.get_jobs(specs)
+        '''kills a job using via signal to pid'''
+        # status_t jm_signal_job(db_job_id_t jid, rm_signal_t signal);
+        print 'bgsystem got a signal_jobs call with signal %s' % signame
+        for spec in specs:
+            pid = spec.get('pid')
+            try:
+                os.kill(int(pid), getattr(signal, signame))
+            except OSError, error:
+                self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+            
+        return 0
     signal_jobs = exposed(query(signal_jobs))
     
-    def mpirun (self, argv, **kwargs):
-        
-        """Produce appropriate output on stdout, stderr for a job.
-        
-        Arguments:
-        argv -- argv for the command to run (command.split())
-        
-        Keyword arguments:
-        stdin -- file to read from as stdin (not used)
-        stdout -- file to write to as stdout
-        stderr -- file to write to as stderr
-        environ -- environment dictionary for job
-        
-        stdin, stdout, stderr expect file-like objects (not file names)
-        """
-        
-        stdin = kwargs.get("stdin", sys.stdin)
-        stdout = kwargs.get("stdout", sys.stdout)
-        stderr = kwargs.get("stderr", sys.stderr)
-        environ = kwargs.get("env", {})
-        
-        try:
-            try:
-                partition = argv[argv.index("-partition") + 1]
-            except ValueError:
-                print >> stderr, "ERROR: '-partition' is a required flag"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            except IndexError:
-                print >> stderr, "ERROR: '-partition' requires a value"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            
-            try:
-                mode = argv[argv.index("-mode") + 1]
-            except ValueError:
-                print >> stderr, "ERROR: '-mode' is a required flag"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            except IndexError:
-                print >> stderr, "ERROR: '-mode' requires a value"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            
-            try:
-                size = argv[argv.index("-np") + 1]
-            except ValueError:
-                print >> stderr, "ERROR: '-np' is a required flag"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            except IndexError:
-                print >> stderr, "ERROR: '-np' requires a value"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            try:
-                size = int(size)
-            except ValueError:
-                print >> stderr, "ERROR: '-np' got invalid value %r" % (size)
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            
-            print >> stdout, "ENVIRONMENT"
-            print >> stdout, "-----------"
-            for key, value in environ.iteritems():
-                print >> stdout, "%s=%s" % (key, value)
-            print >> stdout
-            
-            print >> stderr, "FE_MPI (Info) : Initializing MPIRUN"
-            try:
-                jobid = environ["COBALT_JOBID"]
-            except KeyError:
-                print >> stderr, "FE_MPI (Info) : COBALT_JOBID not found"
-                print >> stderr, "FE_MPI (Info) : Exit status:   1"
-                raise ExitEarlyError
-            bjobid = int(jobid) + 1024
-            reserved = self.reserve_partition(partition, size)
-            if not reserved:
-                print >> stderr, "BE_MPI (ERROR): Failed to run process on partition"
-                print >> stderr, "BE_MPI (Info) : BE completed"
-                print >> stderr, "FE_MPI (ERROR): Failure list:"
-                print >> stderr, "FE_MPI (ERROR): - 1. Job execution failed - unable to reserve partition", partition
-                print >> stderr, "FE_MPI (Info) : FE completed"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            print >> stderr, "FE_MPI (Info) : Adding job"
-            print >> stderr, "FE_MPI (Info) : Job added with id", bjobid
-            print >> stderr, "FE_MPI (Info) : Waiting for job to terminate"
-            
-            print >> stdout, "Running job with args:", argv
-            
-            start_time = time.time()
-            run_time = 0.7 * 60 * kwargs.get("walltime", 1)
-            print "running for about %f seconds" % run_time
-            while True:
-                if time.time() > (start_time + run_time):
-                    print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
-                    print >> stderr, "FE_MPI (Info) : Job sucessfully terminated"
-                    break
-                elif jobid not in [job.id for job in self.jobs.itervalues()]:
-                    print >> stderr, "FE_MPI (Info) : Job", bjobid, "switched to state TERMINATED ('T')"
-                    print >> stderr, "FE_MPI (Info) : Job killed before finished"
-                    break
-                time.sleep(5)
-                
-            print >> stderr, "BE_MPI (Info) : Releasing partition", partition
-            released = self.release_partition(partition)
-            if not released:
-                print >> stderr, "BE_MPI (ERROR): Partition", partition, "could not switch to state FREE ('F')"
-                print >> stderr, "BE_MPI (Info) : BE completed"
-                print >> stderr, "FE_MPI (Info) : FE completed"
-                print >> stderr, "FE_MPI (Info) : Exit status: 1"
-                raise ExitEarlyError
-            print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
-            print >> stderr, "BE_MPI (Info) : BE completed"
-            print >> stderr, "FE_MPI (Info) : FE completed"
-            print >> stderr, "FE_MPI (Info) : Exit status: 0"
-
-        except ExitEarlyError:
-            # yay goto!!!
-            pass
-        
-        self.jobs.q_del([{'id':jobid}])
