@@ -37,8 +37,7 @@ if __name__ == '__main__':
     try:
         system = ComponentProxy("system", defer=False)
     except ComponentLookupError:
-        print "Failed to connect to sy
-        stem component"
+        print "Failed to connect to system component"
         raise SystemExit, 1
 
     if '-r' in sys.argv:
