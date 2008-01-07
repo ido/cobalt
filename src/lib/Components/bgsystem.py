@@ -28,7 +28,7 @@ from datetime import datetime
 
 import Cobalt
 import Cobalt.Data
-from Cobalt.Data import Data, DataDict, IncrID
+from Cobalt.Data import Data, DataDict, DataList, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge.bgl as bgl
 
@@ -143,6 +143,23 @@ class PartitionDict (DataDict):
 
 
 class Job (Data):
+    # read in config from cobalt.conf
+    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
+    _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
+    _config = ConfigParser.ConfigParser()
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
+    else:
+        _config.read('/etc/cobalt.conf')
+    if not _config._sections.has_key('bgpm'):
+        print '''"bgpm" section missing from cobalt config file'''
+        raise SystemExit, 1
+    config = _config._sections['bgpm']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
+        raise SystemExit, 1
+
     def __init__(self, spec):
         self.system_id = spec['system_id']
         self.outputfile = spec.get('outputfile', False)
@@ -159,6 +176,7 @@ class Job (Data):
         self.env = spec.get('env', {})
         self.true_mpi_args = spec.get('true_mpi_args')
         self.id = spec.get('id')
+        self.pid = -1
         
         self.start()
 
@@ -221,7 +239,7 @@ class Job (Data):
                 os.setgid(groupid)
                 os.setuid(userid)
             except OSError:
-                logger.error("Failed to change userid/groupid for PG %s" % (spec.get("pgid")))
+                logger.error("Failed to change userid/groupid for PG %s" % (self.id))
                 sys.exit(0)
 
             #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
@@ -290,13 +308,7 @@ class Job (Data):
             newpipe_r.close()
             rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
             logger.info('rc from waitpid was (%d, %d)' % rc)
-            spec['pid'] = childpid
-            
-            return spec
-        
-        
-        
-        
+            self.pid = childpid
 
 class JobList (DataList):
     item_cls = Job
@@ -332,24 +344,6 @@ class BGSystem (Component):
     
     logger = logger
     
-    # read in config from cobalt.conf
-    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
-    _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
-    _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read('/etc/cobalt.conf')
-    if not _config._sections.has_key('bgpm'):
-        print '''"bgpm" section missing from cobalt config file'''
-        raise SystemExit, 1
-    config = _config._sections['bgpm']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
-    
-
     def __init__ (self, *args, **kwargs):
         """Initialize a system simulator."""
         Component.__init__(self, *args, **kwargs)
@@ -476,7 +470,7 @@ class BGSystem (Component):
             try:
                 os.kill(int(pid), getattr(signal, signame))
             except OSError, error:
-                self.log.error("Signal failure for pid %s:%s" % (pid, error.strerror))
+                self.logger.error("Signal failure for pid %s:%s" % (pid, error.strerror))
             
         return 0
     signal_jobs = exposed(query(signal_jobs))
