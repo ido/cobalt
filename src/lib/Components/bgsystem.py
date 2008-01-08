@@ -30,7 +30,7 @@ import Cobalt
 import Cobalt.Data
 from Cobalt.Data import Data, DataDict, DataList, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-import Cobalt.bridge.bgl as bgl
+import Cobalt.bridge as bgl
 
 __all__ = [
     "JobCreationError",
@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
+bgl.set_serial("BGL")
 
 class JobCreationError (Exception):
     """An error occured when creation a job."""
