@@ -530,9 +530,20 @@ class Port (Resource):
 class rm_partition_list_t (Structure):
     _fields_ = []
 
+bridge.rm_get_partitions.argtypes = [c_int, POINTER(POINTER(rm_partition_list_t))]
+bridge.rm_get_partitions.restype = check_status
+
 RM_PartListSize = 80
 RM_PartListFirstPart = 81
 RM_PartListNextPart = 82
+
+PARTITION_FREE_FLAG = 0x1
+PARTITION_CONFIGURING_FLAG = 0x2
+PARTITION_READY_FLAG = 0x4
+PARTITION_BUSY_FLAG = 0x8
+PARTITION_DEALLOCATING_FLAG = 0x10
+PARTITION_ERROR_FLAG = 0x20
+PARTITION_ALL_FLAG = 0xFF
 
 class PartitionList (Resource, ElementGenerator):
     
@@ -541,7 +552,12 @@ class PartitionList (Resource, ElementGenerator):
     def __init__ (self, element_pointer):
         Resource.__init__(self, element_pointer)
         ElementGenerator.__init__(self, self, Partition, RM_PartListSize, RM_PartListFirstPart, RM_PartListNextPart)
-
+    
+    @classmethod
+    def by_filter (cls, filter=PARTITION_ALL_FLAG):
+        element_pointer = cls._ctype()
+        bridge.rm_get_partitions(c_int(self._filter), byref(element_pointer))
+        return cls(element_pointer)
 
 class rm_partition_t (Structure):
     _fields_ = []
