@@ -150,7 +150,7 @@ class Job (Data):
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
     else:
-        _config.read('/etc/cobalt.conf')
+        _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgpm'):
         print '''"bgpm" section missing from cobalt config file'''
         raise SystemExit, 1
@@ -312,7 +312,7 @@ class Job (Data):
 
 class JobList (DataList):
     item_cls = Job
-    def __init__(self, q):
+    def __init__(self):
         self.id_gen = IncrID()
  
     def q_add (self, specs, callback=None, cargs={}):
@@ -366,7 +366,7 @@ class BGSystem (Component):
         """
         
         self.logger.info("configure()")
-        system_def = bgl.PartList()
+        system_def = bgl.PartitionList()
 
         # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
         NODES_PER_NODECARD = 32
@@ -378,7 +378,7 @@ class BGSystem (Component):
             dict(
                 name = partition_def.id,
                 queue = "default",
-                size = NODES_PER_NODECARD * len(partition_def.nodecards),
+                size = NODES_PER_NODECARD * len(partition_def.node_cards),
             )
             for partition_def in system_def
         ])
