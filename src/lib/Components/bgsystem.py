@@ -49,6 +49,16 @@ class JobCreationError (Exception):
 class ExitEarlyError (Exception):
     """simulate a goto!!!"""
 
+
+class NodeCard (object):
+    def __init__(self, name):
+        self.id = name
+        self.busy = False
+        
+    def __eq__(self, other):
+        return self.id == other.id
+        
+
 class Partition (Data):
     
     """An atomic set of nodes.
@@ -85,10 +95,13 @@ class Partition (Data):
         self.size = spec.pop("size", None)
         self._parents = sets.Set()
         self._children = sets.Set()
-        self._busy = False
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
+        self.node_cards = spec.get("node_cards", [])
         
+        if self.state == "busy":
+            for nc in self.node_cards:
+                nc.busy = True
     
     def _get_parents (self):
         return [parent.name for parent in self._parents]
@@ -106,30 +119,7 @@ class Partition (Data):
     def __repr__ (self):
         return "<%s name=%r>" % (self.__class__.__name__, self.name)
     
-    def _get_state (self):
-        for partition in self._parents | self._children:
-            if partition._busy:
-                return "blocked"
-        if self._busy:
-            return "busy"
-        return "idle"
     
-    def _set_state (self, value):
-        if self.state == "blocked":
-            raise ValueError("blocked")
-        if value == "idle":
-            self._busy = False
-        elif value == "busy":
-            self._busy = True
-        else:
-            raise ValueError(value)
-    
-    def mutex(self, other_part):
-        """Returns a boolean that indicates whether two partitions are mutually exclusive in their use"""
-        val = bool(self.nodecards & other_part.nodecards)
-        return val
-    
-    state = property(_get_state, _set_state)
     
 
 class PartitionDict (DataDict):
@@ -376,7 +366,12 @@ class BGSystem (Component):
         
         """Read partition data from the bridge.
         """
-        
+        def _get_state(bridge_partition):
+            if bridge_partition.state == "RM_PARTITION_FREE":
+                return "idle"
+            else:
+                return "busy"
+            
         self.logger.info("configure()")
         system_def = bgl.PartitionList.by_filter()
 
@@ -390,10 +385,19 @@ class BGSystem (Component):
             dict(
                 name = partition_def.id,
                 queue = "default",
-                size = NODES_PER_NODECARD * len(partition_def.node_cards),
+                size = NODES_PER_NODECARD * len(partition_def.node_cards), 
+                node_cards = [ NodeCard(nc.id) for nc in partition_def.node_cards ],
+                state = _get_state(partition_def),
             )
             for partition_def in system_def
         ])
+        
+        for p in partitions:
+            if p.state != "busy":
+                for nc in p.node_cards:
+                    if nc.busy:
+                        p.state = "blocked"
+                        break
         
         # update object state
         self._partitions.clear()
