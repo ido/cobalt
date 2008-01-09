@@ -375,7 +375,7 @@ class BGSystem (Component):
         """
         
         self.logger.info("configure()")
-        system_def = bgl.PartitionList()
+        system_def = bgl.PartitionList.by_filter()
 
         # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
         NODES_PER_NODECARD = 32

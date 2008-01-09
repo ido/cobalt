@@ -556,7 +556,7 @@ class PartitionList (Resource, ElementGenerator):
     @classmethod
     def by_filter (cls, filter=PARTITION_ALL_FLAG):
         element_pointer = cls._ctype()
-        bridge.rm_get_partitions(c_int(self._filter), byref(element_pointer))
+        bridge.rm_get_partitions(c_int(filter), byref(element_pointer))
         return cls(element_pointer)
 
 class rm_partition_t (Structure):
