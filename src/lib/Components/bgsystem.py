@@ -145,6 +145,11 @@ class PartitionDict (DataDict):
 class Job (Data):
     # read in config from cobalt.conf
     required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
+    fields = Data.fields + [
+        "system_id", "outputfile", "errorfile", "location", "user", "executable", "cwd", "size",
+        "mode", "args", "inputfile", "kerneloptions", "env", "true_mpi_args", "id", "pid", 
+    ]
+    
     _configfields = ['mmcs_server_ip', 'db2_instance', 'bridge_config', 'mpirun', 'db2_properties', 'db2_connect']
     _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:
@@ -191,125 +196,129 @@ class Job (Data):
         newpipe_r, newpipe_w = os.pipe()
 
         pid = os.fork()
-        print 'pid is', pid
-        if not pid:
-            os.close(newpipe_r)
-            os.setsid()
-            pid2 = os.fork()
-            if pid2 != 0:
-                newpipe_w = os.fdopen(newpipe_w, 'w')
-                newpipe_w.write(str(pid2))
-                newpipe_w.close()
-                os._exit(0)
-
-            #start daemonized child
-            os.close(newpipe_w)
-
-            #setup output and error files
-            outlog = self.outputfile or tempfile.mktemp()
-            errlog = self.errorfile or tempfile.mktemp()
-
-            #check for location to run
-            if not self.location:
-                raise ProcessGroupCreationError, "location"
-            partition = self.location[0]
-
-            #check for valid user/group
-            try:
-                userid, groupid = pwd.getpwnam(self.user)[2:4]
-            except KeyError:
-                raise ProcessGroupCreationError, "user/group"
-
-            program = self.executable
-            cwd = self.cwd
-            pnum = self.size
-            mode = self.mode
-            args = self.args
-            inputfile = self.inputfile
-            kerneloptions = self.kerneloptions
-            # strip out BGLMPI_MAPPING until mpirun bug is fixed 
-            mapfile = ''
-            if self.env.has_key('BGLMPI_MAPPING'):
-                mapfile = self.env['BGLMPI_MAPPING']
-                del self.env['BGLMPI_MAPPING']
-            envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems()])
-            atexit._atexit = []
-
-            try:
-                os.setgid(groupid)
-                os.setuid(userid)
-            except OSError:
-                logger.error("Failed to change userid/groupid for PG %s" % (self.id))
+        try:
+            print 'pid is', pid
+            if not pid:
+                os.close(newpipe_r)
+                os.setsid()
+                pid2 = os.fork()
+                if pid2 != 0:
+                    newpipe_w = os.fdopen(newpipe_w, 'w')
+                    newpipe_w.write(str(pid2))
+                    newpipe_w.close()
+                    os._exit(0)
+    
+                #start daemonized child
+                os.close(newpipe_w)
+    
+                #setup output and error files
+                outlog = self.outputfile or tempfile.mktemp()
+                errlog = self.errorfile or tempfile.mktemp()
+    
+                #check for location to run
+                if not self.location:
+                    raise ProcessGroupCreationError, "location"
+                partition = self.location[0]
+    
+                #check for valid user/group
+                try:
+                    userid, groupid = pwd.getpwnam(self.user)[2:4]
+                except KeyError:
+                    raise ProcessGroupCreationError, "user/group"
+    
+                program = self.executable
+                cwd = self.cwd
+                pnum = self.size
+                mode = self.mode
+                args = self.args
+                inputfile = self.inputfile
+                kerneloptions = self.kerneloptions
+                # strip out BGLMPI_MAPPING until mpirun bug is fixed 
+                mapfile = ''
+                if self.env.has_key('BGLMPI_MAPPING'):
+                    mapfile = self.env['BGLMPI_MAPPING']
+                    del self.env['BGLMPI_MAPPING']
+                envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems()])
+                atexit._atexit = []
+    
+                try:
+                    os.setgid(groupid)
+                    os.setuid(userid)
+                except OSError:
+                    logger.error("Failed to change userid/groupid for PG %s" % (self.id))
+                    sys.exit(0)
+    
+                #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
+                os.environ["DB_PROPERTY"] = self.config['db2_properties']
+                os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
+                os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
+                os.environ["DB2INSTANCE"] = self.config['db2_instance']
+                os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
+                os.environ["COBALT_JOBID"] = self.id
+                if inputfile != '':
+                    infile = open(inputfile, 'r')
+                    os.dup2(infile.fileno(), sys.__stdin__.fileno())
+                else:
+                    null = open('/dev/null', 'r')
+                    os.dup2(null.fileno(), sys.__stdin__.fileno())
+                cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
+                       '-np', pnum, '-partition', partition,
+                       '-mode', mode, '-cwd', cwd, '-exe', program)
+                if args != '':
+                    cmd = cmd + ('-args', args)
+                if envs != '':
+                    cmd = cmd + ('-env',  envs)
+                if kerneloptions != '':
+                    cmd = cmd + ('-kernel_options', kerneloptions)
+                if mapfile != '':
+                    cmd = cmd + ('-mapfile', mapfile)
+    
+                try:
+                    err = open(errlog, 'a')
+                    os.chmod(errlog, 0600)
+                    os.dup2(err.fileno(), sys.__stderr__.fileno())
+                except IOError:
+                    logger.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.id, self.user, errlog))
+                except OSError:
+                    logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.id, self.user, errlog))
+    
+                try:
+                    out = open(outlog, 'a')
+                    os.chmod(outlog, 0600)
+                    os.dup2(out.fileno(), sys.__stdout__.fileno())
+                except IOError:
+                    logger.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.id, self.user, outlog))
+                except OSError:
+                    logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.id, self.user, errlog))
+    
+                # If this mpirun command originated from a user script, its arguments
+                # have been passed along in a special attribute.  These arguments have
+                # already been modified to include the partition that cobalt has selected
+                # for the job, and can just replace the arguments built above.
+                if self.true_mpi_args:
+                    cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(self.true_mpi_args)
+    
+                try:
+                    apply(os.execl, cmd)
+                except Exception, e:
+                    print 'got exception when trying to exec mpirun', e
+                    raise SystemExit, 1
+    
                 sys.exit(0)
-
-            #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
-            os.environ["DB_PROPERTY"] = self.config['db2_properties']
-            os.environ["BRIDGE_CONFIG_FILE"] = self.config['bridge_config']
-            os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
-            os.environ["DB2INSTANCE"] = self.config['db2_instance']
-            os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
-            os.environ["COBALT_JOBID"] = self.id
-            if inputfile != '':
-                infile = open(inputfile, 'r')
-                os.dup2(infile.fileno(), sys.__stdin__.fileno())
+    
             else:
-                null = open('/dev/null', 'r')
-                os.dup2(null.fileno(), sys.__stdin__.fileno())
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
-                   '-np', pnum, '-partition', partition,
-                   '-mode', mode, '-cwd', cwd, '-exe', program)
-            if args != '':
-                cmd = cmd + ('-args', args)
-            if envs != '':
-                cmd = cmd + ('-env',  envs)
-            if kerneloptions != '':
-                cmd = cmd + ('-kernel_options', kerneloptions)
-            if mapfile != '':
-                cmd = cmd + ('-mapfile', mapfile)
+                #parent process reads daemon child's pid through pipe
+                os.close(newpipe_w)
+                newpipe_r = os.fdopen(newpipe_r, 'r')
+                childpid = newpipe_r.read()
+                newpipe_r.close()
+                rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
+                logger.info('rc from waitpid was (%d, %d)' % rc)
+                self.pid = childpid
 
-            try:
-                err = open(errlog, 'a')
-                os.chmod(errlog, 0600)
-                os.dup2(err.fileno(), sys.__stderr__.fileno())
-            except IOError:
-                logger.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.id, self.user, errlog))
-            except OSError:
-                logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.id, self.user, errlog))
-
-            try:
-                out = open(outlog, 'a')
-                os.chmod(outlog, 0600)
-                os.dup2(out.fileno(), sys.__stdout__.fileno())
-            except IOError:
-                logger.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.id, self.user, outlog))
-            except OSError:
-                logger.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.id, self.user, errlog))
-
-            # If this mpirun command originated from a user script, its arguments
-            # have been passed along in a special attribute.  These arguments have
-            # already been modified to include the partition that cobalt has selected
-            # for the job, and can just replace the arguments built above.
-            if self.true_mpi_args:
-                cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(self.true_mpi_args)
-
-            try:
-                apply(os.execl, cmd)
-            except Exception, e:
-                print 'got exception when trying to exec mpirun', e
-                raise SystemExit, 1
-
-            sys.exit(0)
-
-        else:
-            #parent process reads daemon child's pid through pipe
-            os.close(newpipe_w)
-            newpipe_r = os.fdopen(newpipe_r, 'r')
-            childpid = newpipe_r.read()
-            newpipe_r.close()
-            rc = os.waitpid(pid, 0)  #wait for 1st fork'ed child to quit
-            logger.info('rc from waitpid was (%d, %d)' % rc)
-            self.pid = childpid
-
+        except:
+            sys.exit(1)
+            
 class JobList (DataList):
     item_cls = Job
     def __init__(self):
