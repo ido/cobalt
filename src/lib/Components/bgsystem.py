@@ -202,6 +202,7 @@ class Job (Data):
                 os.close(newpipe_r)
                 os.setsid()
                 pid2 = os.fork()
+                print "next pid is", pid2
                 if pid2 != 0:
                     newpipe_w = os.fdopen(newpipe_w, 'w')
                     newpipe_w.write(str(pid2))
@@ -211,6 +212,9 @@ class Job (Data):
                 #start daemonized child
                 os.close(newpipe_w)
     
+                f = open("/tmp/out.txt", "w", 1)
+                f.write("forked\n")
+                
                 #setup output and error files
                 outlog = self.outputfile or tempfile.mktemp()
                 errlog = self.errorfile or tempfile.mktemp()
@@ -298,6 +302,8 @@ class Job (Data):
                 if self.true_mpi_args:
                     cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(self.true_mpi_args)
     
+                f.write("here we go : %s\n" %  cmd)
+                f.close()
                 try:
                     apply(os.execl, cmd)
                 except Exception, e:
@@ -316,7 +322,8 @@ class Job (Data):
                 logger.info('rc from waitpid was (%d, %d)' % rc)
                 self.pid = childpid
 
-        except:
+        except Exception, e:
+            print "something has gone dreadfully wrong: ", e
             sys.exit(1)
             
 class JobList (DataList):
