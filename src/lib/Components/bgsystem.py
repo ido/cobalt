@@ -441,7 +441,9 @@ class BGSystem (Component):
         Arguments:
         spec -- dictionary hash specifying a job to start
         """
-        return self.jobs.q_add(specs)
+        jobs = self.jobs.q_add(specs)
+        print repr(jobs)
+        return jobs
     add_jobs = exposed(query(all_fields=True)(add_jobs))
     
     def get_jobs (self, specs):
