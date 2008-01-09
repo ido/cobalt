@@ -24,6 +24,7 @@ import tempfile
 import time
 import thread
 import ConfigParser
+import posix
 from datetime import datetime
 
 import Cobalt
@@ -212,9 +213,6 @@ class Job (Data):
                 #start daemonized child
                 os.close(newpipe_w)
     
-                f = open("/tmp/out.txt", "w", 1)
-                f.write("forked\n")
-                
                 #setup output and error files
                 outlog = self.outputfile or tempfile.mktemp()
                 errlog = self.errorfile or tempfile.mktemp()
@@ -258,8 +256,8 @@ class Job (Data):
                 os.environ["MMCS_SERVER_IP"] = self.config['mmcs_server_ip']
                 os.environ["DB2INSTANCE"] = self.config['db2_instance']
                 os.environ["LD_LIBRARY_PATH"] = "/u/bgdb2cli/sqllib/lib"
-                os.environ["COBALT_JOBID"] = self.id
-                if inputfile != '':
+                os.environ["COBALT_JOBID"] = str(self.id)
+                if inputfile:
                     infile = open(inputfile, 'r')
                     os.dup2(infile.fileno(), sys.__stdin__.fileno())
                 else:
@@ -268,13 +266,13 @@ class Job (Data):
                 cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
                        '-np', pnum, '-partition', partition,
                        '-mode', mode, '-cwd', cwd, '-exe', program)
-                if args != '':
+                if args:
                     cmd = cmd + ('-args', args)
-                if envs != '':
+                if envs:
                     cmd = cmd + ('-env',  envs)
-                if kerneloptions != '':
+                if kerneloptions:
                     cmd = cmd + ('-kernel_options', kerneloptions)
-                if mapfile != '':
+                if mapfile:
                     cmd = cmd + ('-mapfile', mapfile)
     
                 try:
@@ -302,8 +300,6 @@ class Job (Data):
                 if self.true_mpi_args:
                     cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(self.true_mpi_args)
     
-                f.write("here we go : %s\n" %  cmd)
-                f.close()
                 try:
                     apply(os.execl, cmd)
                 except Exception, e:
@@ -324,7 +320,7 @@ class Job (Data):
 
         except Exception, e:
             print "something has gone dreadfully wrong: ", e
-            sys.exit(1)
+            posix._exit(1)
             
 class JobList (DataList):
     item_cls = Job
@@ -448,9 +444,7 @@ class BGSystem (Component):
         Arguments:
         spec -- dictionary hash specifying a job to start
         """
-        jobs = self.jobs.q_add(specs)
-        print repr(jobs)
-        return jobs
+        return self.jobs.q_add(specs)
     add_jobs = exposed(query(all_fields=True)(add_jobs))
     
     def get_jobs (self, specs):
