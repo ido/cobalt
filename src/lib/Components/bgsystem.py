@@ -316,8 +316,10 @@ class Job (Data):
             traceback.print_exc(file=sys.stdout)
             posix._exit(1)
             
-class JobList (DataList):
+class JobDict (DataDict):
     item_cls = Job
+    key = "id"
+    
     def __init__(self):
         self.id_gen = IncrID()
  
@@ -325,7 +327,7 @@ class JobList (DataList):
         for spec in specs:
             if "system_id" not in spec or spec['system_id'] == "*":
                 spec['system_id'] = self.id_gen.next()
-        return DataList.q_add(self, specs)
+        return DataDict.q_add(self, specs)
 
 
 
@@ -355,7 +357,7 @@ class BGSystem (Component):
         Component.__init__(self, *args, **kwargs)
         self._partitions = PartitionDict()
         self._managed_partitions = sets.Set()
-        self.jobs = JobList()
+        self.jobs = JobDict()
         self.configure()
         self.node_card_cache = dict()
     
@@ -466,8 +468,12 @@ class BGSystem (Component):
     def get_jobs (self, specs):
         '''queries jobs via pid or PyBridge
         returns those jobs that are running'''
-        return [job for job in specs
-                if self.checkpid(job.get('pid'))]
+        self.logger.info("get_jobs(%r)" % (specs))
+        my_jobs = self.job.q_get(specs)
+        self.logger.info("my_jobs(%r)" % (my_jobs))
+        ret = [job for job in my_jobs
+                if self.checkpid(job.pid)]
+        return ret
     get_jobs = exposed(query(get_jobs))
 
     def checkpid(self, somepid):
@@ -493,10 +499,12 @@ class BGSystem (Component):
         '''kills a job using via signal to pid'''
         # status_t jm_signal_job(db_job_id_t jid, rm_signal_t signal);
         print 'bgsystem got a signal_jobs call with signal %s' % signame
-        for spec in specs:
-            pid = spec.get('pid')
+        my_jobs = self.jobs.q_get(specs)
+        for job in my_jobs:
+            pid = job.pid
             try:
                 os.kill(int(pid), getattr(signal, signame))
+                del self.jobs[job.id]
             except OSError, error:
                 self.logger.error("Signal failure for pid %s:%s" % (pid, error.strerror))
             
