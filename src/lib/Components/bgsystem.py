@@ -51,12 +51,9 @@ class ExitEarlyError (Exception):
 
 
 class NodeCard (object):
-    def __init__(self, name, partition_state):
+    def __init__(self, name):
         self.id = name
-        if partition_state == "RM_PARTITION_FREE":
-            self.busy = False
-        else:
-            self.busy = True
+        self.busy = False
         
     def __eq__(self, other):
         return self.id == other.id
@@ -389,7 +386,7 @@ class BGSystem (Component):
                 name = partition_def.id,
                 queue = "default",
                 size = NODES_PER_NODECARD * len(partition_def.node_cards), 
-                node_cards = [ NodeCard(nc.id, partition_def.state) for nc in partition_def.node_cards ],
+                node_cards = [ NodeCard(nc.id) for nc in partition_def.node_cards ],
                 state = _get_state(partition_def),
             )
             for partition_def in system_def
