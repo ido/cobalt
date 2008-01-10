@@ -624,7 +624,7 @@ class Partition (Resource):
     
     def _get_state (self):
         state = self._get_data(RM_PartitionState, rm_partition_state_t)
-        return rm_partition_states_values[state.value]
+        return rm_partition_state_values[state.value]
     
     state = property(_get_state)
     

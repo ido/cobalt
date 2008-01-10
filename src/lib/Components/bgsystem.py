@@ -25,6 +25,7 @@ import time
 import thread
 import ConfigParser
 import posix
+import traceback
 from datetime import datetime
 
 import Cobalt
@@ -158,8 +159,8 @@ class Job (Data):
 
     def __init__(self, spec):
         self.system_id = spec['system_id']
-        self.outputfile = spec.get('outputfile', False)
-        self.errorfile = spec.get('errorfile', False)
+        self.outputfile = spec.get('stdout', False)
+        self.errorfile = spec.get('stderr', False)
         self.location = spec.get('location', False)
         self.user = spec.get('user', "")
         self.executable = spec.get('executable')
@@ -227,6 +228,8 @@ class Job (Data):
                 kerneloptions = self.kerneloptions
                 # strip out BGLMPI_MAPPING until mpirun bug is fixed 
                 mapfile = ''
+                if self.env is None:
+                    self.env = {}
                 if self.env.has_key('BGLMPI_MAPPING'):
                     mapfile = self.env['BGLMPI_MAPPING']
                     del self.env['BGLMPI_MAPPING']
@@ -310,6 +313,7 @@ class Job (Data):
 
         except Exception, e:
             print "something has gone dreadfully wrong: ", e
+            traceback.print_exc(file=sys.stdout)
             posix._exit(1)
             
 class JobList (DataList):
@@ -400,7 +404,7 @@ class BGSystem (Component):
             for partition_def in system_def
         ])
         
-        for p in partitions:
+        for p in partitions.values():
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.busy:
