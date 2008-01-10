@@ -353,6 +353,7 @@ class BGSystem (Component):
         self._managed_partitions = sets.Set()
         self.jobs = JobList()
         self.configure()
+        self.node_card_cache = dict()
     
     def _get_partitions (self):
         return PartitionDict([
@@ -371,6 +372,12 @@ class BGSystem (Component):
                 return "idle"
             else:
                 return "busy"
+        
+        def _get_node_card(name):
+            if not self.node_card_cache.has_key(name):
+                self.node_card_cache[name] = NodeCard(nc.id)
+                
+            return self.node_card_cache[name]
             
         self.logger.info("configure()")
         system_def = bgl.PartitionList.by_filter()
@@ -381,12 +388,13 @@ class BGSystem (Component):
         # initialize a new partition dict with all partitions
         #
         partitions = PartitionDict()
+        self.node_card_cache = dict()
         partitions.q_add([
             dict(
                 name = partition_def.id,
                 queue = "default",
                 size = NODES_PER_NODECARD * len(partition_def.node_cards), 
-                node_cards = [ NodeCard(nc.id) for nc in partition_def.node_cards ],
+                node_cards = [ _get_node_card(nc.id) for nc in partition_def.node_cards ],
                 state = _get_state(partition_def),
             )
             for partition_def in system_def
