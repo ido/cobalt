@@ -469,7 +469,7 @@ class BGSystem (Component):
         '''queries jobs via pid or PyBridge
         returns those jobs that are running'''
         self.logger.info("get_jobs(%r)" % (specs))
-        my_jobs = self.job.q_get(specs)
+        my_jobs = self.jobs.q_get(specs)
         self.logger.info("my_jobs(%r)" % (my_jobs))
         ret = [job for job in my_jobs
                 if self.checkpid(job.pid)]
@@ -507,7 +507,7 @@ class BGSystem (Component):
                 del self.jobs[job.id]
             except OSError, error:
                 self.logger.error("Signal failure for pid %s:%s" % (pid, error.strerror))
-            
-        return 0
+
+        return my_jobs
     signal_jobs = exposed(query(signal_jobs))
     
