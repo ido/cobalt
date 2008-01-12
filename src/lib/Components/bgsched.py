@@ -320,6 +320,7 @@ class BGSched (Component):
         self.partitions = PartitionDict()
         self.assigned_partitions = {}
         self.sched_info = {}
+        self.started_jobs = {}
     
     def add_reservations (self, specs):
         return self.reservations.q_add(specs)
@@ -354,6 +355,58 @@ class BGSched (Component):
                 pass
     sync_data = automatic(sync_data)
 
+    def _run_reservation_jobs (self, available_partitions, res_queues):
+        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in res_queues])
+        active_jobs = []
+        for j in temp_jobs:
+            if not self.started_jobs.has_key(j.jobid):
+                active_jobs.append(j)
+
+        active_jobs.sort(fifocmp)
+            
+        for job in active_jobs:
+            cur_res = self.reservations[job.queue[2:]]
+            if not cur_res.job_within_reservation(job):
+                continue
+            
+            for partition in available_partitions:
+                # check if the current partition is linked to the job's reservation
+                part_in_res = False
+                for part_name in cur_res.partitions.split(":"):
+                    if not part_name in self.partitions:
+                        self.logger.error("reservation '%s' refers to non-existant partition '%s'" % (cur_res.name, part_name))
+                        continue
+                    if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
+                        continue
+                    # if we got here, then the partition is part of the reservation
+                    part_in_res = True
+                
+                if not part_in_res:
+                    continue
+                    
+                if not self.partitions.can_run(partition, job):
+                    continue
+                
+                # let's run this thing!
+                self._start_job(job, partition)
+                return
+
+
+    def _start_job(self, job, partition):
+        cqm = ComponentProxy("queue-manager")
+        
+        try:
+            print "trying to start job %d on partition %s" % (job.jobid, partition.name)
+            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition.name])
+        except ComponentLookupError:
+            self.logger.error("failed to connect to queue manager")
+            return
+
+        self.assigned_partitions[partition.name] = time.time()
+        self.started_jobs[job.jobid] = time.time()
+
+        
+
     def schedule_jobs (self):
         '''look at the queued jobs, and decide which ones to start'''
         
@@ -362,12 +415,16 @@ class BGSched (Component):
             self.logger.error("foreign data scynchronization failed: disabling scheduling")
             return
         
-        # clean up the assigned_partitions cached data
+        # clean up the assigned_partitions cached data, and the started_jobs cached data
         now = time.time()
         for part_name in self.assigned_partitions.keys():
-            if (now - self.assigned_partitions[part_name]) > 300:
+            if (now - self.assigned_partitions[part_name]) > 5*60:
                 del self.assigned_partitions[part_name]
         
+        for job_name in self.started_jobs.keys():
+            if (now - self.started_jobs[job_name]) > 60:
+                del self.started_jobs[job_name]
+                
         scriptm = ComponentProxy("script-manager")
         
         try:
@@ -381,14 +438,6 @@ class BGSched (Component):
             if self.assigned_partitions.has_key(name):
                 del self.assigned_partitions[name]
                 
-        cqm = ComponentProxy("queue-manager")
-
-        try:
-            locations_with_jobs = [job['location'] for job in cqm.get_jobs([{'state':"running", 'location':"*"}])]
-        except ComponentLookupError:
-            self.logger.error("failed to connect to queue manager")
-            return
-
         available_partitions = []
         for partition in self.partitions.itervalues():
             okay_to_add = True
@@ -400,9 +449,6 @@ class BGSched (Component):
                     del self.assigned_partitions[partition.name]
                 continue
             
-            if partition.name in locations_with_jobs:
-                continue
-            
             if partition.name in self.assigned_partitions:
                 continue
             
@@ -411,7 +457,7 @@ class BGSched (Component):
 
             # walk the various lists of partitions and see if the current partition belongs to the parents or children of 
             # a partition which is in use
-            for key in set(locations_with_jobs + self.assigned_partitions.keys() + script_locations):
+            for key in set(self.assigned_partitions.keys() + script_locations):
                 if partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children:
                     okay_to_add = False
                     break
@@ -421,52 +467,42 @@ class BGSched (Component):
         
 
         active_queues = []
+        res_queues = []
         for queue in self.queues.itervalues():
             if queue.name.startswith("R."):
                 if self.reservations.has_key(queue.name[2:]) and self.reservations[queue.name[2:]].is_active():
-                    active_queues.append(queue)
+                    res_queues.append(queue)
             else:
                 if queue.state == "running":
                     active_queues.append(queue)
         
-        active_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues])
+        # handle the reservation jobs that might be ready to go
+        self._run_reservation_jobs(available_partitions, res_queues)
+        
+        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues])
+        active_jobs = []
+        for j in temp_jobs:
+            if not self.started_jobs.has_key(j.jobid):
+                active_jobs.append(j)
+                
         # cleanup the sched_info information if a job is no longer listed as "active"
         active_job_ids = [job.jobid for job in active_jobs]
         for jobid in self.sched_info.keys():
             if jobid not in active_job_ids:
                 del self.sched_info[jobid]
         
-        viable = active_jobs[:]
-        viable.sort(fifocmp)
-        potential = {}
-        for job in viable[:]:
-            tmp_list = []   
+        active_jobs.sort(fifocmp)
+        
+        # this is the bit that actually picks which job to run
+        for job in active_jobs:
             for partition in available_partitions:
-                # check if the current partition is linked to the job's queue or reservation
-                if job.queue.startswith('R.'):
-                    part_in_res = False
-                    for part_name in self.reservations[job.queue[2:]].partitions.split(":"):
-                        if not part_name in self.partitions:
-                            self.logger.error("reservation '%s' refers to non-existant partition '%s'" % (job.queue[2:], part_name))
-                            continue
-                        if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
-                            continue
-                        # if we got here, then the partition is part of the reservation
-                        part_in_res = True
-                    
-                    if not part_in_res:
-                        continue
-                    
-                elif job.queue not in partition.queue.split(':'):
+                # check if the current partition is linked to the job's queue
+                if job.queue not in partition.queue.split(':'):
                     continue
                     
                 if self.partitions.can_run(partition, job):
                     really_okay = True
                     for res in self.reservations.itervalues():
-                        # if the proposed job falls inside the reservation, it's okay to try running the job here
-                        if res.job_within_reservation(job):
-                            break
-                        
                         # if the proposed job overlaps an active reservation, don't run it
                         if res.overlaps(partition, time.time(), 60 * float(job.walltime)):
                             really_okay = False
@@ -477,63 +513,13 @@ class BGSched (Component):
                             break
                             
                     if really_okay:
-                        tmp_list.append(partition)
-            
-            if tmp_list:
-                potential[job.jobid] = tmp_list
-            else:
-                viable.remove(job)
-                if not self.sched_info.has_key(job.jobid):
-                    self.sched_info[job.jobid] = "probably blocked by running jobs\n     but maybe queue '%s' isn't associated with any partitions\n     or maybe a reservation is also blocking the job" % job.queue
-        
-        for queue in self.queues.itervalues():
-            queue.policy.Prepare(viable, potential)
-        
-        placements = []
-        for job in viable:
-            # do something sensible when tidy_placements yanked a job out from under us
-            if not potential.has_key(job.jobid):
-                continue
-            queue = self.queues[job.queue]
-            place = queue.policy.PlaceJob(job, potential)
-            if place:
-                del potential[job.jobid]
-                self.tidy_placements(potential, place[1])
-                placements.append(place)
-        
-        self.run_jobs(placements)
+                        # let's run this thing!
+                        self._start_job(job, partition)
+                        return
+
     schedule_jobs = automatic(schedule_jobs)
 
-    def tidy_placements(self, potential, newlocation):
-        '''Remove any potential spots that overlap with newlocation'''
-        cleanup = []
-        for job in potential.keys():
-            for location in potential[job][:]:
-                if location.name==newlocation.name or location.name in newlocation.parents or location.name in newlocation.children:
-                    potential[job].remove(location)
-            if not potential[job]:
-                del potential[job]
-                self.sched_info[job] = "blocked by running jobs"
-
-#        for job in cleanup:
-#            del potential[job]
-
-    def run_jobs (self, placements):
-        """Connect to cqm and run jobs."""
-        
-        cqm = ComponentProxy("queue-manager")
-        
-        for placement in placements:
-            job = placement[0]
-            location = placement[1].name
-            try:
-                cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [location])
-            except ComponentLookupError:
-                self.logger.error("failed to connect to queue manager")
-                return
-
-            self.assigned_partitions[location] = time.time()
-
+    
     def get_sched_info(self):
         """Get information about why jobs aren't running."""
         ret = {}
