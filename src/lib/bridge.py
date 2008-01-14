@@ -698,7 +698,16 @@ PARTITION_DEALLOCATING_FLAG = 0x10
 PARTITION_ERROR_FLAG = 0x20
 PARTITION_ALL_FLAG = 0xFF
 
+bridge.rm_get_partitions.argtypes = [rm_partition_state_t, POINTER(POINTER(rm_partition_list_t))]
+bridge.rm_get_partitions.restype = check_status
+
 class PartitionList (Resource, ElementGenerator):
+    
+    @classmethod
+    def by_filter (cls, filter=PARTITION_ALL_FLAG):
+        element_pointer = cls._ctype()
+        bridge.rm_get_partitions(c_int(filter), byref(element_pointer))
+        return cls(element_pointer)
     
     _ctype = POINTER(rm_partition_list_t)
 
