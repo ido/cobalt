@@ -406,6 +406,7 @@ class BGSystem (Component):
             for partition_def in system_def
         ])
         
+        # update state information
         for p in partitions.values():
             if p.state != "busy":
                 for nc in p.node_cards:
@@ -417,6 +418,30 @@ class BGSystem (Component):
         self._partitions.clear()
         self._partitions.update(partitions)
     
+    def update_relatives(self):
+        """Call this method after changing the contents of self._managed_partitions"""
+        for p_name in self._managed_partitions:
+            self._partitions[p_name]._parents = sets.Set()
+            self._partitions[p_name]._children = sets.Set()
+
+        for p_name in self._managed_partitions:
+            p = self._partitions[p_name]
+            
+            for other_name in self._managed_partitions:
+                if p.name == other_name:
+                    break
+                
+                other = self._partitions[other_name]
+                
+                # if p is a subset of other, then p is a child
+                if p.node_cards.intersection(other.nodecards)==p.node_cards:
+                    p._parents.add(other)
+                    other._children.add(p)
+                # if p contains other, then p is a parent
+                elif p.node_cards.union(other.nodecards)==p.node_cards:
+                    p._children.add(other)
+                    other._parents.add(p)
+    
     def add_partitions (self, specs):
         self.logger.info("add_partitions(%r)" % (specs))
         specs = [{'name':spec.get("name")} for spec in specs]
@@ -427,6 +452,7 @@ class BGSystem (Component):
         self._managed_partitions.update([
             partition.name for partition in partitions
         ])
+        self.update_relatives()
         return partitions
     add_partition = exposed(query(add_partitions))
     
@@ -443,6 +469,7 @@ class BGSystem (Component):
             if partition.name in self._managed_partitions
         ]
         self._managed_partitions -= [partition.name for partition in partitions]
+        self.update_relatives()
         return partitions
     del_partitions = exposed(query(del_partitions))
     
