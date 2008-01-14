@@ -432,13 +432,15 @@ class BGSystem (Component):
                     break
                 
                 other = self._partitions[other_name]
+                p_set = sets.Set(p.node_cards)
+                other_set = sets.Set(other.node_cards)
                 
                 # if p is a subset of other, then p is a child
-                if p.node_cards.intersection(other.nodecards)==p.node_cards:
+                if p_set.intersection(other_set)==p_set:
                     p._parents.add(other)
                     other._children.add(p)
                 # if p contains other, then p is a parent
-                elif p.node_cards.union(other.nodecards)==p.node_cards:
+                elif p_set.union(other_set)==p_set:
                     p._children.add(other)
                     other._parents.add(p)
     
