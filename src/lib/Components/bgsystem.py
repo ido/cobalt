@@ -395,16 +395,39 @@ class BGSystem (Component):
         #
         partitions = PartitionDict()
         self.node_card_cache = dict()
-        partitions.q_add([
-            dict(
+        
+        tmp_list = []
+        for partition_def in system_def:
+            node_list = []
+            if partition_def.small:
+                bp_name = partition_def.base_partition[0].id
+                for nc in partition_def._node_cards:
+                    node_list.append(_get_node_card(bp_name + "-" + nc.id))
+            else:
+                for bp in partition_def.base_partitions:
+                    bp_name = bp.id
+                    for node_card in bg.NodeCardList.by_base_partition(bp):
+                        node_list.append(_get_node_card(bp_name + "-" + nc.id))
+            tmp_list.append( dict(
                 name = partition_def.id,
                 queue = "default",
                 size = NODES_PER_NODECARD * len(partition_def.node_cards), 
-                node_cards = [ _get_node_card(nc.id) for nc in partition_def.node_cards ],
+                node_cards = node_list,
                 state = _get_state(partition_def),
-            )
-            for partition_def in system_def
-        ])
+            ))
+        
+        partitions.q_add(tmp_list)
+                                         
+#        partitions.q_add([
+#            dict(
+#                name = partition_def.id,
+#                queue = "default",
+#                size = NODES_PER_NODECARD * len(partition_def.node_cards), 
+#                node_cards = [ _get_node_card(nc.id) for nc in partition_def.node_cards ],
+#                state = _get_state(partition_def),
+#            )
+#            for partition_def in system_def
+#        ])
         
         # update state information
         for p in partitions.values():
