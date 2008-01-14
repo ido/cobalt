@@ -232,6 +232,158 @@ class BlueGene (Resource):
 
 
 ##
+# Partition
+
+class rm_partition_t (Structure):
+    _fields_ = []
+
+pm_partition_id_t = c_char_p
+rm_partition_state_t = c_int
+rm_partition_state_values = ("RM_PARTITION_FREE", "RM_PARTITION_CONFIGURING", "RM_PARTITION_READY", "RM_PARTITION_BUSY", "RM_PARTITION_DEALLOCATING", "RM_PARTITION_ERROR", "RM_PARTITION_NAV")
+rm_connection_type_t = c_int
+rm_connection_type_values = ("RM_MESH", "RM_TORUS", "RM_NAV")
+rm_partition_mode_t = c_int
+rm_partition_mode_values = ("RM_PARTITION_COPROCESSOR_MODE", "RM_PARTITION_VIRTUAL_NODE_MODE")
+
+bridge.rm_get_partition.argtypes = [pm_partition_id_t, POINTER(POINTER(rm_partition_t))]
+bridge.rm_get_partition.restype = check_status
+
+RM_PartitionID = 39
+RM_PartitionState = 40
+RM_PartitionConnection = 41
+RM_PartitionUserName = 42
+RM_PartitionBPNum = 43
+RM_PartitionFirstBP = 44
+RM_PartitionNextBP = 45
+RM_PartitionSwitchNum = 46
+RM_PartitionFirstSwitch = 47
+RM_PartitionNextSwitch = 48
+RM_PartitionMloaderImg = 49
+RM_PartitionBlrtsImg = 50
+RM_PartitionLinuxImg = 51
+RM_PartitionRamdiskImg = 52
+RM_PartitionOptions = 53
+RM_PartitionMode = 54
+RM_PartitionDescription = 55
+RM_PartitionSmall = 56
+RM_PartitionNodeCardNum = 57
+RM_PartitionFirstNodeCard = 58
+RM_PartitionNextNodeCard = 59
+RM_PartitionPsetsPerBP = 60
+RM_PartitionUsersNum = 61
+RM_PartitionFirstUser = 62
+RM_PartitionNextUser = 63
+
+class Partition (Resource):
+    
+    _ctype = POINTER(rm_partition_t)
+    
+    @classmethod
+    def by_id (cls, id):
+        element_pointer = cls._ctype()
+        bridge.rm_get_partition(pm_partition_id_t(id), byref(element_pointer))
+        return cls(element_pointer)
+    
+    def __init__ (self, element_pointer):
+        Resource.__init__(self, element_pointer)
+        self.base_partitions = ElementGenerator(self, BasePartition, RM_PartitionBPNum, RM_PartitionFirstBP, RM_PartitionNextBP)
+        self.switches = ElementGenerator(self, Switch, RM_PartitionSwitchNum, RM_PartitionFirstSwitch, RM_PartitionNextSwitch)
+        self._node_cards = ElementGenerator(self, NodeCard, RM_PartitionNodeCardNum, RM_PartitionFirstNodeCard, RM_PartitionNextNodeCard)
+        # self.users = ElementGenerator(self, PartitionUsers, RM_PartitionUsersNum, RM_PartitionFirstUser, RM_PartitionNextUser)
+    
+    def _get_node_cards (self):
+        if self.small:
+            return self._node_cards
+        else:
+            return self._get_base_partition_node_cards()
+    
+    node_cards = property(_get_node_cards)
+    
+    def _get_base_partition_node_cards (self):
+        for base_partition in self.base_partitions:
+            for node_card in NodeCardList.by_base_partition(base_partition):
+                yield node_card
+    
+    def _get_id (self):
+        id = self._get_data(RM_PartitionID, pm_partition_id_t)
+        return id.value
+    
+    id = property(_get_id)
+    
+    def _get_state (self):
+        state = self._get_data(RM_PartitionState, rm_partition_state_t)
+        return rm_partition_state_values[state.value]
+    
+    state = property(_get_state)
+    
+    def _get_connection (self):
+        connection_type = self._get_data(RM_PartitionConnection, rm_connection_type_t)
+        return rm_connection_type_values[connection_type.value]
+    
+    connection = property(_get_connection)
+    
+    def _get_user_name (self):
+        name = self._get_data(RM_PartitionUserName, c_char_p)
+        return name.value
+    
+    user_name = property(_get_user_name)
+    
+    def _get_machine_loader_image (self):
+        image = self._get_data(RM_PartitionMloaderImg, c_char_p)
+        return image.value
+    
+    machine_loader_image = property(_get_machine_loader_image)
+    
+    def _get_compute_node_kernel_image (self):
+        image = self._get_data(RM_PartitionBlrtsImg, c_char_p)
+        return image.value
+    
+    compute_node_kernel_image = property(_get_compute_node_kernel_image)
+    
+    def _get_io_node_kernel_image (self):
+        image = self._get_data(RM_PartitionLinuxImg, c_char_p)
+        return image.value
+    
+    io_node_kernel_image = property(_get_io_node_kernel_image)
+    
+    def _get_ramdisk_image (self):
+        image = self._get_data(RM_PartitionRamdiskImg, c_char_p)
+        return image.value
+    
+    ramdisk_image = property(_get_ramdisk_image)
+    
+    def _get_description (self):
+        description = self._get_data(RM_PartitionDescription, c_char_p)
+        return description.value
+    
+    description = property(_get_description)
+    
+    def _get_small (self):
+        small = self._get_data(RM_PartitionSmall, c_int)
+        return small.value != 0
+    
+    small = property(_get_small)
+    
+    def _get_psets_per_base_partition (self):
+        psets = self._get_data(RM_PartitionPsetsPerBP, c_int)
+        return psets.value
+    
+    psets_per_base_partition = property(_get_psets_per_base_partition)
+    
+    def _get_options (self):
+        options = self._get_data(RM_PartitionOptions, c_char_p)
+        return options.value
+    
+    options = property(_get_options)
+    
+    def _get_mode (self):
+        mode = self._get_data(RM_PartitionMode, rm_partition_mode_t)
+        return rm_partition_mode_values[mode.value]
+    
+    mode = property(_get_mode)
+
+
+##
 # Base Partition
 
 class rm_BP_t (Structure):
@@ -381,9 +533,13 @@ class NodeCardList (Resource, ElementGenerator):
     _ctype = POINTER(rm_nodecard_list_t)
     
     @classmethod
-    def by_base_partition_id (cls, base_partition_id):
+    def by_base_partition (cls, base_partition):
+        try:
+            base_partition_id = base_partition.id # accepts a BasePartition...
+        except AttributeError:
+            base_partition_id = base_partition # or a bpid
         element_pointer = cls._ctype()
-        bridge.rm_get_nodecards(base_partition_id, byref(element_pointer))
+        bridge.rm_get_nodecards(c_char_p(base_partition_id), byref(element_pointer))
         return cls(element_pointer)
     
     def __init__ (self, element_pointer):
@@ -530,9 +686,6 @@ class Port (Resource):
 class rm_partition_list_t (Structure):
     _fields_ = []
 
-bridge.rm_get_partitions.argtypes = [c_int, POINTER(POINTER(rm_partition_list_t))]
-bridge.rm_get_partitions.restype = check_status
-
 RM_PartListSize = 80
 RM_PartListFirstPart = 81
 RM_PartListNextPart = 82
@@ -552,147 +705,6 @@ class PartitionList (Resource, ElementGenerator):
     def __init__ (self, element_pointer):
         Resource.__init__(self, element_pointer)
         ElementGenerator.__init__(self, self, Partition, RM_PartListSize, RM_PartListFirstPart, RM_PartListNextPart)
-    
-    @classmethod
-    def by_filter (cls, filter=PARTITION_ALL_FLAG):
-        element_pointer = cls._ctype()
-        bridge.rm_get_partitions(c_int(filter), byref(element_pointer))
-        return cls(element_pointer)
-
-class rm_partition_t (Structure):
-    _fields_ = []
-
-pm_partition_id_t = c_char_p
-rm_partition_state_t = c_int
-rm_partition_state_values = ("RM_PARTITION_FREE", "RM_PARTITION_CONFIGURING", "RM_PARTITION_READY", "RM_PARTITION_BUSY", "RM_PARTITION_DEALLOCATING", "RM_PARTITION_ERROR", "RM_PARTITION_NAV")
-rm_connection_type_t = c_int
-rm_connection_type_values = ("RM_MESH", "RM_TORUS", "RM_NAV")
-rm_partition_mode_t = c_int
-rm_partition_mode_values = ("RM_PARTITION_COPROCESSOR_MODE", "RM_PARTITION_VIRTUAL_NODE_MODE")
-
-bridge.rm_get_partition.argtypes = [pm_partition_id_t, POINTER(POINTER(rm_partition_t))]
-bridge.rm_get_partition.restype = check_status
-
-RM_PartitionID = 39
-RM_PartitionState = 40
-RM_PartitionConnection = 41
-RM_PartitionUserName = 42
-RM_PartitionBPNum = 43
-RM_PartitionFirstBP = 44
-RM_PartitionNextBP = 45
-RM_PartitionSwitchNum = 46
-RM_PartitionFirstSwitch = 47
-RM_PartitionNextSwitch = 48
-RM_PartitionMloaderImg = 49
-RM_PartitionBlrtsImg = 50
-RM_PartitionLinuxImg = 51
-RM_PartitionRamdiskImg = 52
-RM_PartitionOptions = 53
-RM_PartitionMode = 54
-RM_PartitionDescription = 55
-RM_PartitionSmall = 56
-RM_PartitionNodeCardNum = 57
-RM_PartitionFirstNodeCard = 58
-RM_PartitionNextNodeCard = 59
-RM_PartitionPsetsPerBP = 60
-RM_PartitionUsersNum = 61
-RM_PartitionFirstUser = 62
-RM_PartitionNextUser = 63
-
-class Partition (Resource):
-    
-    _ctype = POINTER(rm_partition_t)
-    
-    @classmethod
-    def by_id (cls, id):
-        element_pointer = cls._ctype()
-        bridge.rm_get_partition(pm_partition_id_t(id), byref(element_pointer))
-        return cls(element_pointer)
-    
-    def __init__ (self, element_pointer):
-        Resource.__init__(self, element_pointer)
-        self.base_partitions = ElementGenerator(self, BasePartition, RM_PartitionBPNum, RM_PartitionFirstBP, RM_PartitionNextBP)
-        self.switches = ElementGenerator(self, Switch, RM_PartitionSwitchNum, RM_PartitionFirstSwitch, RM_PartitionNextSwitch)
-        self.node_cards = ElementGenerator(self, NodeCard, RM_PartitionNodeCardNum, RM_PartitionFirstNodeCard, RM_PartitionNextNodeCard)
-        # self.users = ElementGenerator(self, PartitionUsers, RM_PartitionUsersNum, RM_PartitionFirstUser, RM_PartitionNextUser) # remove PartitionUsers, and use a string
-    
-    def _get_id (self):
-        id = self._get_data(RM_PartitionID, pm_partition_id_t)
-        return id.value
-    
-    id = property(_get_id)
-    
-    def _get_state (self):
-        state = self._get_data(RM_PartitionState, rm_partition_state_t)
-        return rm_partition_state_values[state.value]
-    
-    state = property(_get_state)
-    
-    def _get_connection (self):
-        connection_type = self._get_data(RM_PartitionConnection, rm_connection_type_t)
-        return rm_connection_type_values[connection_type.value]
-    
-    connection = property(_get_connection)
-    
-    def _get_user_name (self):
-        name = self._get_data(RM_PartitionUserName, c_char_p)
-        return name.value
-    
-    user_name = property(_get_user_name)
-    
-    def _get_machine_loader_image (self):
-        image = self._get_data(RM_PartitionMloaderImg, c_char_p)
-        return image.value
-    
-    machine_loader_image = property(_get_machine_loader_image)
-    
-    def _get_compute_node_kernel_image (self):
-        image = self._get_data(RM_PartitionBlrtsImg, c_char_p)
-        return image.value
-    
-    compute_node_kernel_image = property(_get_compute_node_kernel_image)
-    
-    def _get_io_node_kernel_image (self):
-        image = self._get_data(RM_PartitionLinuxImg, c_char_p)
-        return image.value
-    
-    io_node_kernel_image = property(_get_io_node_kernel_image)
-    
-    def _get_ramdisk_image (self):
-        image = self._get_data(RM_PartitionRamdiskImg, c_char_p)
-        return image.value
-    
-    ramdisk_image = property(_get_ramdisk_image)
-    
-    def _get_description (self):
-        description = self._get_data(RM_PartitionDescription, c_char_p)
-        return description.value
-    
-    description = property(_get_description)
-    
-    def _get_small (self):
-        small = self._get_data(RM_PartitionSmall, c_int)
-        return small.value != 0
-    
-    small = property(_get_small)
-    
-    def _get_psets_per_base_partition (self):
-        psets = self._get_data(RM_PartitionPsetsPerBP, c_int)
-        return psets.value
-    
-    psets_per_base_partition = property(_get_psets_per_base_partition)
-    
-    def _get_options (self):
-        options = self._get_data(RM_PartitionOptions, c_char_p)
-        return options.value
-    
-    options = property(_get_options)
-    
-    def _get_mode (self):
-        mode = self._get_data(RM_PartitionMode, rm_partition_mode_t)
-        return rm_partition_mode_values[mode.value]
-    
-    mode = property(_get_mode)
 
 
 class rm_job_list_t (Structure):
