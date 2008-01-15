@@ -371,17 +371,17 @@ class BGSystem (Component):
     
     partitions = property(_get_partitions)
 
-    def _get_state(bridge_partition):
-        if bridge_partition.state == "RM_PARTITION_FREE":
-            return "idle"
-        else:
-            return "busy"
-    
     def configure (self):
         
         """Read partition data from the bridge.
         """
         
+        def _get_state(bridge_partition):
+            if bridge_partition.state == "RM_PARTITION_FREE":
+                return "idle"
+            else:
+                return "busy"
+    
         def _get_node_card(name):
             if not self.node_card_cache.has_key(name):
                 self.node_card_cache[name] = NodeCard(name)
@@ -447,6 +447,12 @@ class BGSystem (Component):
     def update_partition_state(self):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
         
+        def _get_state(bridge_partition):
+            if bridge_partition.state == "RM_PARTITION_FREE":
+                return "idle"
+            else:
+                return "busy"
+
         # first, set all of the nodecards to not busy
         for nc in self.node_card_cache.values():
             nc.busy = False
