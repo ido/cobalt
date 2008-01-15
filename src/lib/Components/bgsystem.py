@@ -400,18 +400,18 @@ class BGSystem (Component):
         for partition_def in system_def:
             node_list = []
             if partition_def.small:
-                bp_name = partition_def.base_partition[0].id
+                bp_name = partition_def.base_partitions[0].id
                 for nc in partition_def._node_cards:
                     node_list.append(_get_node_card(bp_name + "-" + nc.id))
             else:
                 for bp in partition_def.base_partitions:
                     bp_name = bp.id
-                    for node_card in bg.NodeCardList.by_base_partition(bp):
+                    for nc in bgl.NodeCardList.by_base_partition(bp):
                         node_list.append(_get_node_card(bp_name + "-" + nc.id))
             tmp_list.append( dict(
                 name = partition_def.id,
                 queue = "default",
-                size = NODES_PER_NODECARD * len(partition_def.node_cards), 
+                size = NODES_PER_NODECARD * len(list(partition_def.node_cards)), 
                 node_cards = node_list,
                 state = _get_state(partition_def),
             ))
@@ -455,9 +455,17 @@ class BGSystem (Component):
                     break
                 
                 other = self._partitions[other_name]
+                print "len p as list : ", len(list(p.node_cards))
                 p_set = sets.Set(p.node_cards)
+                print "len p as set : ", len(p_set)
                 other_set = sets.Set(other.node_cards)
                 
+                iset = p_set.intersection(other_set)
+                uset = p_set.union(other_set)
+
+                print "iset (%d)" % len(iset)
+                print "uset (%d)" % len(uset)
+
                 # if p is a subset of other, then p is a child
                 if p_set.intersection(other_set)==p_set:
                     p._parents.add(other)
@@ -466,6 +474,14 @@ class BGSystem (Component):
                 elif p_set.union(other_set)==p_set:
                     p._children.add(other)
                     other._parents.add(p)
+
+        for p_name in self._managed_partitions:
+            p = self._partitions[p_name]
+
+            print "%s (%d)" % (p.name, p.size)
+            print "   p : ",  p.parents
+            print "   c : ",  p.children
+
     
     def add_partitions (self, specs):
         self.logger.info("add_partitions(%r)" % (specs))
