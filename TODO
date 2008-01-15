@@ -1,10 +1,8 @@
-XMLRPC Rewrite
- - infrastructure (slp) (done)
- - bgpm (done)
- - cqm (done)
- - bgsched
- - cam
- - implement data persistence
-
-
+= 0.98 =
+    * update partition info in system component
+    * save component state
+    * statefile migration script
+    * more testing
+    * remove the process manager
+    * fix job ids
 
