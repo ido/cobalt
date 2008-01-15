@@ -6,7 +6,12 @@ __all__ = [
     "Wire", "Port", "PartitionList", "Partition", "JobList", "Job",
 ]
 
-bridge = CDLL("libbglbridge.so")
+try:
+    bridge = CDLL("libbglbridge.so")
+    systype = 'bgl'
+except:
+    bridge = CDLL("libbgpbridge.so")
+    systype = 'bgp'
 
 status_t = c_int
 
@@ -157,17 +162,30 @@ bridge.rm_get_BGL.restype = check_status
 bridge.rm_free_BGL.argtypes = [POINTER(rm_BGL_t)]
 bridge.rm_free_BGL.restype = check_status
 
-RM_BPsize = 0
-RM_Msize = 1
-RM_BPNum = 2
-RM_FirstBP = 3
-RM_NextBP = 4
-RM_SwitchNum = 5
-RM_FirstSwitch = 6
-RM_NextSwitch = 7
-RM_WireNum = 8
-RM_FirstWire = 9
-RM_NextWire = 10
+if systype == 'bgl':
+    RM_BPsize = 0
+    RM_Msize = 1
+    RM_BPNum = 2
+    RM_FirstBP = 3
+    RM_NextBP = 4
+    RM_SwitchNum = 5
+    RM_FirstSwitch = 6
+    RM_NextSwitch = 7
+    RM_WireNum = 8
+    RM_FirstWire = 9
+    RM_NextWire = 10
+elif systype == 'bgp':
+    RM_BPsize = 1000
+    RM_Msize = 1001
+    RM_BPNum = 1002
+    RM_FirstBP = 1003
+    RM_NextBP = 1004
+    RM_SwitchNum = 1005
+    RM_FirstSwitch = 1006
+    RM_NextSwitch = 1007
+    RM_WireNum = 1008
+    RM_FirstWire = 1009
+    RM_NextWire = 1010
 
 def to_size_tuple (c_data):
     return (c_data.X, c_data.Y, c_data.Z)
@@ -248,31 +266,54 @@ rm_partition_mode_values = ("RM_PARTITION_COPROCESSOR_MODE", "RM_PARTITION_VIRTU
 bridge.rm_get_partition.argtypes = [pm_partition_id_t, POINTER(POINTER(rm_partition_t))]
 bridge.rm_get_partition.restype = check_status
 
-RM_PartitionID = 39
-RM_PartitionState = 40
-RM_PartitionConnection = 41
-RM_PartitionUserName = 42
-RM_PartitionBPNum = 43
-RM_PartitionFirstBP = 44
-RM_PartitionNextBP = 45
-RM_PartitionSwitchNum = 46
-RM_PartitionFirstSwitch = 47
-RM_PartitionNextSwitch = 48
-RM_PartitionMloaderImg = 49
-RM_PartitionBlrtsImg = 50
-RM_PartitionLinuxImg = 51
-RM_PartitionRamdiskImg = 52
-RM_PartitionOptions = 53
-RM_PartitionMode = 54
-RM_PartitionDescription = 55
-RM_PartitionSmall = 56
-RM_PartitionNodeCardNum = 57
-RM_PartitionFirstNodeCard = 58
-RM_PartitionNextNodeCard = 59
-RM_PartitionPsetsPerBP = 60
-RM_PartitionUsersNum = 61
-RM_PartitionFirstUser = 62
-RM_PartitionNextUser = 63
+if systype == 'bgl':
+    RM_PartitionID = 39
+    RM_PartitionState = 40
+    RM_PartitionConnection = 41
+    RM_PartitionUserName = 42
+    RM_PartitionBPNum = 43
+    RM_PartitionFirstBP = 44
+    RM_PartitionNextBP = 45
+    RM_PartitionSwitchNum = 46
+    RM_PartitionFirstSwitch = 47
+    RM_PartitionNextSwitch = 48
+    RM_PartitionMloaderImg = 49
+    RM_PartitionBlrtsImg = 50
+    RM_PartitionLinuxImg = 51
+    RM_PartitionRamdiskImg = 52
+    RM_PartitionOptions = 53
+    RM_PartitionMode = 54
+    RM_PartitionDescription = 55
+    RM_PartitionSmall = 56
+    RM_PartitionNodeCardNum = 57
+    RM_PartitionFirstNodeCard = 58
+    RM_PartitionNextNodeCard = 59
+    RM_PartitionPsetsPerBP = 60
+    RM_PartitionUsersNum = 61
+    RM_PartitionFirstUser = 62
+    RM_PartitionNextUser = 63
+elif systype == 'bgp':
+    RM_PartitionID = 10000
+    RM_PartitionState = 10001
+    RM_PartitionConnection = 10003
+    RM_PartitionUserName = 10008
+    RM_PartitionBPNum = 10013
+    RM_PartitionFirstBP = 10014
+    RM_PartitionNextBP = 10015
+    RM_PartitionSwitchNum = 10016
+    RM_PartitionFirstSwitch = 10017
+    RM_PartitionNextSwitch = 10018
+    RM_PartitionMloaderImg = 10010
+    RM_PartitionOptions = 10009
+    RM_PartitionDescription = 10004
+    RM_PartitionSmall = 1005
+    RM_PartitionNodeCardNum = 10019
+    RM_PartitionFirstNodeCard = 10020
+    RM_PartitionNextNodeCard = 10021
+    RM_PartitionPsetsPerBP = 10006
+    RM_PartitionUsersNum = 10022
+    RM_PartitionFirstUser = 10017
+    RM_PartitionNextUser = 10018
 
 class Partition (Resource):
     
@@ -337,20 +378,23 @@ class Partition (Resource):
     def _get_compute_node_kernel_image (self):
         image = self._get_data(RM_PartitionBlrtsImg, c_char_p)
         return image.value
-    
-    compute_node_kernel_image = property(_get_compute_node_kernel_image)
+
+    if systype == 'bgl':
+        compute_node_kernel_image = property(_get_compute_node_kernel_image)
     
     def _get_io_node_kernel_image (self):
         image = self._get_data(RM_PartitionLinuxImg, c_char_p)
         return image.value
-    
-    io_node_kernel_image = property(_get_io_node_kernel_image)
+
+    if systype == 'bgl':
+        io_node_kernel_image = property(_get_io_node_kernel_image)
     
     def _get_ramdisk_image (self):
         image = self._get_data(RM_PartitionRamdiskImg, c_char_p)
         return image.value
-    
-    ramdisk_image = property(_get_ramdisk_image)
+
+    if systype == 'bgl':
+        ramdisk_image = property(_get_ramdisk_image)
     
     def _get_description (self):
         description = self._get_data(RM_PartitionDescription, c_char_p)
@@ -379,8 +423,9 @@ class Partition (Resource):
     def _get_mode (self):
         mode = self._get_data(RM_PartitionMode, rm_partition_mode_t)
         return rm_partition_mode_values[mode.value]
-    
-    mode = property(_get_mode)
+
+    if systype == 'bgl':
+        mode = property(_get_mode)
 
 
 ##
@@ -398,16 +443,26 @@ rm_BP_computenode_memory_values = ("RM_BP_COMPUTENODE_MEMORY_256M", "RM_BP_COMPU
 class rm_location_t (Structure):
     _fields_ = [('X', c_int), ('Y', c_int), ('Z', c_int)]
 
-RM_BPID = 11
-RM_BPState = 12
-RM_BPLoc = 13
-RM_BPPartID = 14
-RM_BPPartState = 15
-RM_BPSDB = 16
-RM_BPSD = 17
-# Revision 2
-RM_BPComputeNodeMemory = 93
-
+if systype == 'bgl':
+    RM_BPID = 11
+    RM_BPState = 12
+    RM_BPLoc = 13
+    RM_BPPartID = 14
+    RM_BPPartState = 15
+    RM_BPSDB = 16
+    RM_BPSD = 17
+    # Revision 2
+    RM_BPComputeNodeMemory = 93
+elif systype == 'bgp':
+    RM_BPID = 2000
+    RM_BPState = 2001
+    RM_BPLoc = 2003
+    RM_BPPartID = 2004
+    RM_BPPartState = 2005
+    RM_BPSDB = 2007
+    RM_BPSD = 2008
+    RM_BPComputeNodeMemory = 2009
+    
 class BasePartition (Resource):
     
     _ctype = POINTER(rm_BP_t)
@@ -470,12 +525,20 @@ rm_quarter_values = ("RM_Q1", "RM_Q2", "RM_Q3", "RM_Q4", "RM_Q_NAV")
 rm_nodecard_state_t = c_int
 rm_nodecard_state_values = ("RM_NODECARD_UP", "RM_NODECARD_DOWN", "RM_NODECARD_MISSING", "RM_NODECARD_ERROR", "RM_NODECARD_NAV")
 
-RM_NodeCardID = 18
-RM_NodeCardQuarter = 19
-RM_NodeCardState = 20
-RM_NodeCardIONodes = 21
-RM_NodeCardPartID = 22
-RM_NodeCardPartState = 23
+if systype == 'bgl':
+    RM_NodeCardID = 18
+    RM_NodeCardQuarter = 19
+    RM_NodeCardState = 20
+    RM_NodeCardIONodes = 21
+    RM_NodeCardPartID = 22
+    RM_NodeCardPartState = 23
+elif systype == 'bgp':
+    RM_NodeCardID = 4000
+    RM_NodeCardQuarter = 4001
+    RM_NodeCardState = 4002
+    RM_NodeCardIONodes = 4004
+    RM_NodeCardPartID = 4005
+    RM_NodeCardPartState = 4006
 
 class NodeCard (Resource):
     
@@ -524,9 +587,14 @@ class rm_nodecard_list_t (Structure):
 bridge.rm_get_nodecards.argtypes = [rm_bp_id_t, POINTER(POINTER(rm_nodecard_list_t))]
 bridge.rm_get_nodecards.restype = check_status
 
-RM_NodeCardListSize = 86
-RM_NodeCardListFirst = 87
-RM_NodeCardListNext = 88
+if systype == 'bgl':
+    RM_NodeCardListSize = 86
+    RM_NodeCardListFirst = 87
+    RM_NodeCardListNext = 88
+elif systype == 'bgp':
+    RM_NodeCardListSize = 3000
+    RM_NodeCardListFirst = 3001
+    RM_NodeCardListNext = 3002
 
 class NodeCardList (Resource, ElementGenerator):
     
@@ -559,14 +627,23 @@ rm_switch_state_values = ("RM_SWITCH_UP", "RM_SWITCH_DOWN", "RM_SWITCH_MISSING",
 rm_dimension_t = c_int
 rm_dimension_values = ("RM_DIM_X", "RM_DIM_Y", "RM_DIM_Z")
 
-RM_SwitchID = 24
-RM_SwitchBPID = 25
-RM_SwitchState = 26
-RM_SwitchDim = 27
-RM_SwitchFirstConnection = 28
-RM_SwitchNextConnection = 29
-RM_SwitchConnNum = 30
-
+if systype == 'bgl':
+    RM_SwitchID = 24
+    RM_SwitchBPID = 25
+    RM_SwitchState = 26
+    RM_SwitchDim = 27
+    RM_SwitchFirstConnection = 28
+    RM_SwitchNextConnection = 29
+    RM_SwitchConnNum = 30
+elif systype == 'bgp':
+    RM_SwitchID = 6000
+    RM_SwitchBPID = 6001
+    RM_SwitchState = 6002
+    RM_SwitchDim = 6004
+    RM_SwitchFirstConnection = 6006
+    RM_SwitchNextConnection = 6007
+    RM_SwitchConnNum = 6005
+    
 class Switch (Resource):
     
     _ctype = POINTER(rm_switch_t)
@@ -607,12 +684,20 @@ rm_wire_id_t = rm_component_id_t
 rm_wire_state_t = c_int
 rm_wire_state_values = ("UP", "DOWN")
 
-RM_WireID = 31
-RM_WireState = 32
-RM_WireFromPort = 33
-RM_WireToPort = 34
-RM_WirePartID = 35
-RM_WirePartState = 36
+if systype == 'bgl':
+    RM_WireID = 31
+    RM_WireState = 32
+    RM_WireFromPort = 33
+    RM_WireToPort = 34
+    RM_WirePartID = 35
+    RM_WirePartState = 36
+elif systype == 'bgp':
+    RM_WireID = 7000
+    RM_WireState = 7001
+    RM_WireFromPort = 7002
+    RM_WireToPort = 7003
+    RM_WirePartID = 7004
+    RM_WirePartState = 7005
 
 class Wire (Resource):
     
@@ -660,9 +745,13 @@ class rm_port_t (Structure):
 
 rm_port_id_t = c_int
 
-RM_PortComponentID = 37
-RM_PortID = 38
-
+if systype == 'bgl':
+    RM_PortComponentID = 37
+    RM_PortID = 38
+elif systype == 'bgp':
+    RM_PortComponentID = 8000
+    RM_PortID = 8001
+    
 class Port (Resource):
     
     _ctype = POINTER(rm_port_t)
@@ -686,9 +775,14 @@ class Port (Resource):
 class rm_partition_list_t (Structure):
     _fields_ = []
 
-RM_PartListSize = 80
-RM_PartListFirstPart = 81
-RM_PartListNextPart = 82
+if systype == 'bgl':
+    RM_PartListSize = 80
+    RM_PartListFirstPart = 81
+    RM_PartListNextPart = 82
+elif systype == 'bgp':
+    RM_PartListSize = 9000
+    RM_PartListFirstPart = 9001
+    RM_PartListNextPart = 9002
 
 PARTITION_FREE_FLAG = 0x1
 PARTITION_CONFIGURING_FLAG = 0x2
@@ -723,9 +817,14 @@ rm_job_state_flag_t = c_int
 bridge.rm_get_jobs.argtypes = [rm_job_state_flag_t, POINTER(POINTER(rm_job_list_t))]
 bridge.rm_get_jobs.restype = check_status
 
-RM_JobListSize = 83
-RM_JobListFirstJob = 84
-RM_JobListNextJob = 85
+if systype == 'bgl':
+    RM_JobListSize = 83
+    RM_JobListFirstJob = 84
+    RM_JobListNextJob = 85
+elif systype == 'bgp':
+    RM_JobListSize = 11000
+    RM_JobListFirstJob = 11001
+    RM_JobListNextJob = 11002
 
 class JobList (Resource, ElementGenerator):
     
@@ -759,32 +858,54 @@ rm_job_runtime_t = c_int
 rm_job_computenodes_used_t = c_int
 rm_job_exitstatus_t = c_int
 
-RM_JobState = 64
-RM_JobExecutable = 65
-RM_JobID = 66
-RM_JobPartitionID = 67
-RM_JobUserName = 68
-RM_JobDBJobID = 69
-RM_JobOutFile = 70
-RM_JobInFile = 71
-RM_JobErrFile = 72
-RM_JobOutDir = 73
-RM_JobErrText = 74
-RM_JobArgs = 75
-RM_JobEnvs = 76
-RM_JobInHist = 77
-RM_JobExitStatus = 78
-RM_JobMode = 79
-# Revision 2
-RM_JobStrace = 89
-RM_JobStdinInfo = 90
-RM_JobStdoutInfo = 91
-RM_JobStderrInfo = 92
-# Revision 3
-RM_JobStartTime = 94
-RM_JobEndTime = 95
-RM_JobRunTime = 96
-RM_JobComputeNodesUsed = 97
+if systype == 'bgl':
+    RM_JobState = 64
+    RM_JobExecutable = 65
+    RM_JobID = 66
+    RM_JobPartitionID = 67
+    RM_JobUserName = 68
+    RM_JobDBJobID = 69
+    RM_JobOutFile = 70
+    RM_JobInFile = 71
+    RM_JobErrFile = 72
+    RM_JobOutDir = 73
+    RM_JobErrText = 74
+    RM_JobArgs = 75
+    RM_JobEnvs = 76
+    RM_JobInHist = 77
+    RM_JobExitStatus = 78
+    RM_JobMode = 79
+    # Revision 2
+    RM_JobStrace = 89
+    RM_JobStdinInfo = 90
+    RM_JobStdoutInfo = 91
+    RM_JobStderrInfo = 92
+    # Revision 3
+    RM_JobStartTime = 94
+    RM_JobEndTime = 95
+    RM_JobRunTime = 96
+    RM_JobComputeNodesUsed = 97
+elif systype == 'bgp':
+    RM_JobState = 12002
+    RM_JobExecutable = 12004
+    RM_JobID = 12000
+    RM_JobPartitionID = 12001
+    RM_JobUserName = 12005
+    RM_JobDBJobID = 12006
+    RM_JobOutFile = 12007
+    RM_JobErrFile = 12008
+    RM_JobOutDir = 12009
+    RM_JobErrText = 12010
+    RM_JobArgs = 12011
+    RM_JobEnvs = 12012
+    RM_JobInHist = 12013
+    RM_JobExitStatus = 12020
+    RM_JobMode = 12014
+    RM_JobStrace = 12015
+    RM_JobStartTime = 12016
+    RM_JobEndTime = 12017
+    RM_JobRunTime = 12018
+    RM_JobComputeNodesUsed = 12019
 
 class Job (Resource):
     
@@ -835,8 +956,9 @@ class Job (Resource):
     def _get_infile (self):
         infile = self._get_data(RM_JobInFile, c_char_p)
         return infile.value
-    
-    infile = property(_get_infile)
+
+    if systype == 'bgl':
+        infile = property(_get_infile)
     
     def _get_errfile (self):
         errfile = self._get_data(RM_JobErrFile, c_char_p)
@@ -889,20 +1011,23 @@ class Job (Resource):
     def _get_stdin_info (self):
         stdin_info = self._get_data(RM_JobStdinInfo, rm_job_stdin_info_t)
         return stdin_info.value
-    
-    stdin_info = property(_get_stdin_info)
+
+    if systype == 'bgl':
+        stdin_info = property(_get_stdin_info)
     
     def _get_stdout_info (self):
         stdout_info = self._get_data(RM_JobStdoutInfo, rm_job_stdout_info_t)
         return stdout_info.value
-    
-    stdout_info = property(_get_stdout_info)
+
+    if systype == 'bgl':
+        stdout_info = property(_get_stdout_info)
     
     def _get_stderr_info (self):
         stderr_info = self._get_data(RM_JobStderrInfo, rm_job_stderr_info_t)
         return stderr_info.value
-    
-    stderr_info = property(_get_stderr_info)
+
+    if systype == 'bgl':
+        stderr_info = property(_get_stderr_info)
     
     def _get_starttime (self):
         starttime = self._get_data((RM_JobStartTime, c_char_p))
