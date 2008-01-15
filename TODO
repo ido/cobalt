@@ -1,8 +1,8 @@
 = 0.98 =
     * update partition info in system component
+    * examine the modes available for bgp and make sure they do... whatever they should do
     * save component state
     * statefile migration script
     * more testing
     * remove the process manager
     * fix job ids
-
