@@ -9,11 +9,17 @@ __all__ = [
 try:
     bridge = CDLL("libbglbridge.so")
     systype = 'bgl'
-except:
+except OSError:
     bridge = CDLL("libbgpbridge.so")
     systype = 'bgp'
+libc = CDLL("libc.so.6")
 
 status_t = c_int
+
+def free_value (cdata):
+    value = cdata.value
+    libc.free(cdata)
+    return value
 
 def check_status (status, **kwargs):
     if status == 0:
@@ -101,7 +107,7 @@ class Resource (object):
     
     def __init__ (self, element_pointer, **kwargs):
         self._as_parameter_ = element_pointer
-        self._free_on_del = kwargs.get("free_on_del", True)
+        self._free = kwargs.get("free")
     
     def _get_data (self, field, ctype):
         data = ctype()
@@ -148,7 +154,7 @@ def get_serial ():
 
 
 ##
-# Blue Gene machine
+# Blue Gene system
 
 class rm_BGL_t (Structure):
     _fields_ = []
@@ -217,18 +223,22 @@ class BlueGene (Resource):
         """Retrieve a BlueGene object based on the global serial id."""
         element_pointer = cls._ctype()
         bridge.rm_get_BGL(byref(element_pointer))
-        return cls(element_pointer)
+        return cls(element_pointer, free=True)
     
-    def __init__ (self, element_pointer):
+    def __init__ (self, element_pointer, **kwargs):
         """Create a BlueGene object based on existing memory.
         
         arguments:
         element_pointer -- memory address for machine in bridge
         """
-        Resource.__init__(self, element_pointer)
+        Resource.__init__(self, element_pointer, **kwargs)
         self.base_partitions = ElementGenerator(self, BasePartition, RM_BPNum, RM_FirstBP, RM_NextBP)
         self.switches = ElementGenerator(self, Switch, RM_SwitchNum, RM_FirstSwitch, RM_NextSwitch)
         self.wires = ElementGenerator(self, Wire, RM_WireNum, RM_FirstWire, RM_NextWire)
+    
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_BGL(self)
     
     def _get_base_partition_size (self):
         size = self._get_data(RM_BPsize, rm_size3D_t)
@@ -243,10 +253,6 @@ class BlueGene (Resource):
     
     machine_size = property(_get_machine_size,
         doc="The size of the machine in base partition units.")
-    
-    def __del__ (self):
-        if self._free_on_del:
-            bridge.rm_free_BGL(self)
 
 
 ##
@@ -265,6 +271,9 @@ rm_partition_mode_values = ("RM_PARTITION_COPROCESSOR_MODE", "RM_PARTITION_VIRTU
 
 bridge.rm_get_partition.argtypes = [pm_partition_id_t, POINTER(POINTER(rm_partition_t))]
 bridge.rm_get_partition.restype = check_status
+
+bridge.rm_free_partition.argtypes = [POINTER(rm_partition_t)]
+bridge.rm_free_partition.restype = check_status
 
 if systype == 'bgl':
     RM_PartitionID = 39
@@ -323,14 +332,18 @@ class Partition (Resource):
     def by_id (cls, id):
         element_pointer = cls._ctype()
         bridge.rm_get_partition(pm_partition_id_t(id), byref(element_pointer))
-        return cls(element_pointer)
+        return cls(element_pointer, free=True)
     
-    def __init__ (self, element_pointer):
-        Resource.__init__(self, element_pointer)
+    def __init__ (self, element_pointer, **kwargs):
+        Resource.__init__(self, element_pointer, **kwargs)
         self.base_partitions = ElementGenerator(self, BasePartition, RM_PartitionBPNum, RM_PartitionFirstBP, RM_PartitionNextBP)
         self.switches = ElementGenerator(self, Switch, RM_PartitionSwitchNum, RM_PartitionFirstSwitch, RM_PartitionNextSwitch)
         self._node_cards = ElementGenerator(self, NodeCard, RM_PartitionNodeCardNum, RM_PartitionFirstNodeCard, RM_PartitionNextNodeCard)
         # self.users = ElementGenerator(self, PartitionUsers, RM_PartitionUsersNum, RM_PartitionFirstUser, RM_PartitionNextUser)
+    
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_partition(self)
     
     def _get_node_cards (self):
         if self.small:
@@ -347,7 +360,7 @@ class Partition (Resource):
     
     def _get_id (self):
         id = self._get_data(RM_PartitionID, pm_partition_id_t)
-        return id.value
+        return free_value(id)
     
     id = property(_get_id)
     
@@ -365,19 +378,19 @@ class Partition (Resource):
     
     def _get_user_name (self):
         name = self._get_data(RM_PartitionUserName, c_char_p)
-        return name.value
+        return free_value(name)
     
     user_name = property(_get_user_name)
     
     def _get_machine_loader_image (self):
         image = self._get_data(RM_PartitionMloaderImg, c_char_p)
-        return image.value
+        return free_value(image)
     
     machine_loader_image = property(_get_machine_loader_image)
     
     def _get_compute_node_kernel_image (self):
         image = self._get_data(RM_PartitionBlrtsImg, c_char_p)
-        return image.value
+        return free_value(image)
 
     if systype == 'bgl':
         compute_node_kernel_image = property(_get_compute_node_kernel_image)
@@ -391,14 +404,14 @@ class Partition (Resource):
     
     def _get_ramdisk_image (self):
         image = self._get_data(RM_PartitionRamdiskImg, c_char_p)
-        return image.value
+        return free_value(image)
 
     if systype == 'bgl':
         ramdisk_image = property(_get_ramdisk_image)
     
     def _get_description (self):
         description = self._get_data(RM_PartitionDescription, c_char_p)
-        return description.value
+        return free_value(description)
     
     description = property(_get_description)
     
@@ -463,13 +476,20 @@ elif systype == 'bgp':
     RM_BPSD = 2008
     RM_BPComputeNodeMemory = 2009
     
+bridge.rm_free_BP.argtypes = [POINTER(rm_BP_t)]
+bridge.rm_free_BP.restype = check_status
+
 class BasePartition (Resource):
     
     _ctype = POINTER(rm_BP_t)
     
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_BP(self)
+    
     def _get_id (self):
         id = self._get_data(RM_BPID, rm_bp_id_t)
-        return id.value
+        return free_value(id)
     
     id = property(_get_id)
     
@@ -487,7 +507,7 @@ class BasePartition (Resource):
     
     def _get_partition_id (self):
         partition_id = self._get_data(RM_BPPartID, pm_partition_id_t)
-        return partition_id.value
+        return free_value(partition_id)
     
     partition_id = property(_get_partition_id)
     
@@ -540,13 +560,20 @@ elif systype == 'bgp':
     RM_NodeCardPartID = 4005
     RM_NodeCardPartState = 4006
 
+bridge.rm_free_nodecard.argtypes = [POINTER(rm_nodecard_t)]
+bridge.rm_free_nodecard.restype = check_status
+
 class NodeCard (Resource):
     
     _ctype = POINTER(rm_nodecard_t)
     
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_nodecard(self)
+    
     def _get_id (self):
         id = self._get_data(RM_NodeCardID, rm_nodecard_id_t)
-        return id.value
+        return free_value(id)
     
     id = property(_get_id)
     
@@ -570,7 +597,7 @@ class NodeCard (Resource):
     
     def _get_partition_id (self):
         partition_id = self._get_data(RM_NodeCardPartID, pm_partition_id_t)
-        return partition_id.value
+        return free_value(partition_id)
     
     partition_id = property(_get_partition_id)
     
@@ -596,6 +623,9 @@ elif systype == 'bgp':
     RM_NodeCardListFirst = 3001
     RM_NodeCardListNext = 3002
 
+bridge.rm_free_nodecard_list.argtypes = [POINTER(rm_nodecard_list_t)]
+bridge.rm_free_nodecard_list.restype = check_status
+
 class NodeCardList (Resource, ElementGenerator):
     
     _ctype = POINTER(rm_nodecard_list_t)
@@ -608,11 +638,15 @@ class NodeCardList (Resource, ElementGenerator):
             base_partition_id = base_partition # or a bpid
         element_pointer = cls._ctype()
         bridge.rm_get_nodecards(c_char_p(base_partition_id), byref(element_pointer))
-        return cls(element_pointer)
+        return cls(element_pointer, free=True)
     
-    def __init__ (self, element_pointer):
-        Resource.__init__(self, element_pointer)
+    def __init__ (self, element_pointer, **kwargs):
+        Resource.__init__(self, element_pointer, **kwargs)
         ElementGenerator.__init__(self, self, NodeCard, RM_NodeCardListSize, RM_NodeCardListFirst, RM_NodeCardListNext)
+    
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_nodecard_list(self)
     
     def __repr__ (self):
         return "<%s %i>" % (self.__class__.__name__, len(self))
@@ -644,23 +678,30 @@ elif systype == 'bgp':
     RM_SwitchNextConnection = 6007
     RM_SwitchConnNum = 6005
     
+bridge.rm_free_switch.argtypes = [POINTER(rm_switch_t)]
+bridge.rm_free_switch.restype = check_status
+
 class Switch (Resource):
     
     _ctype = POINTER(rm_switch_t)
     
-    def __init__ (self, element_pointer):
-        Resource.__init__(self, element_pointer)
+    def __init__ (self, element_pointer, **kwargs):
+        Resource.__init__(self, element_pointer, **kwargs)
         # self.connections = ElementGenerator(self, ?...) # requires a connection object, and implementation of class-level ctype
+    
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_switch(self)
     
     def _get_id (self):
         id = self._get_data(RM_SwitchID, rm_switch_id_t)
-        return id.value
+        return free_value(id)
     
     id = property(_get_id)
     
     def _get_base_partition_id (self):
         id = self._get_data(RM_SwitchBPID, rm_bp_id_t)
-        return id.value
+        return free_value(id)
     
     base_partition_id = property(_get_base_partition_id)
     
@@ -705,7 +746,7 @@ class Wire (Resource):
     
     def _get_id (self):
         id = self._get_data(RM_WireID, rm_wire_id_t)
-        return id.value
+        return free_value(id)
     
     id = property(_get_id)
     
@@ -729,7 +770,7 @@ class Wire (Resource):
     
     def _get_partition_id (self):
         id = self._get_data(RM_WirePartID, pm_partition_id_t)
-        return id.value
+        return free_value(id)
     
     partition_id = property(_get_partition_id)
     
@@ -761,7 +802,7 @@ class Port (Resource):
     
     def _get_component_id (self):
         id = self._get_data(RM_PortComponentID, rm_component_id_t)
-        return id.value
+        return free_value(id)
     
     component_id = property(_get_component_id)
     
@@ -795,18 +836,30 @@ PARTITION_ALL_FLAG = 0xFF
 bridge.rm_get_partitions.argtypes = [rm_partition_state_t, POINTER(POINTER(rm_partition_list_t))]
 bridge.rm_get_partitions.restype = check_status
 
+bridge.rm_get_partitions_info.argtypes = [rm_partition_state_t, POINTER(POINTER(rm_partition_list_t))]
+bridge.rm_get_partitions_info.restype = check_status
+
+bridge.rm_free_partition_list.argtypes = [POINTER(rm_partition_t)]
+bridge.rm_free_partition_list.restype = check_status
+
 class PartitionList (Resource, ElementGenerator):
+    
+    _ctype = POINTER(rm_partition_list_t)
     
     @classmethod
     def by_filter (cls, filter=PARTITION_ALL_FLAG):
         element_pointer = cls._ctype()
         bridge.rm_get_partitions(c_int(filter), byref(element_pointer))
-        return cls(element_pointer)
+        return cls(element_pointer, free=True)
     
-    _ctype = POINTER(rm_partition_list_t)
+    @classmethod
+    def info_by_filter (cls, filter=PARTITION_ALL_FLAG):
+        element_pointer = cls._ctype()
+        bridge.rm_get_partitions_info(c_int(filter), byref(element_pointer))
+        return cls(element_pointer, free=True)
 
-    def __init__ (self, element_pointer):
-        Resource.__init__(self, element_pointer)
+    def __init__ (self, element_pointer, **kwargs):
+        Resource.__init__(self, element_pointer, **kwargs)
         ElementGenerator.__init__(self, self, Partition, RM_PartListSize, RM_PartListFirstPart, RM_PartListNextPart)
 
 
@@ -826,6 +879,9 @@ elif systype == 'bgp':
     RM_JobListFirstJob = 11001
     RM_JobListNextJob = 11002
 
+bridge.rm_free_job_list.argtypes = [POINTER(rm_job_list_t)]
+bridge.rm_free_job_list.restype = check_status
+
 class JobList (Resource, ElementGenerator):
     
     _ctype = POINTER(rm_job_list_t)
@@ -834,11 +890,15 @@ class JobList (Resource, ElementGenerator):
     def by_flag (cls, flag):
         element_pointer = cls._ctype()
         bridge.rm_get_jobs(c_int(flag), byref(element_pointer))
-        return cls(pointer)
+        return cls(pointer, free=True)
     
-    def __init__ (self, element_pointer):
-        Resource.__init__(self, element_pointer)
+    def __init__ (self, element_pointer, **kwargs):
+        Resource.__init__(self, element_pointer, **kwargs)
         ElementGenerator.__init__(self, self, Job, RM_JobListSize, RM_JobListFirstJob, RM_JobListNextJob)
+    
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_job_list(self)
 
 
 class rm_job_t (Structure):
@@ -907,19 +967,29 @@ elif systype == 'bgp':
     RM_JobRunTime = 12018
     RM_JobComputeNodesUsed = 12019
 
+bridge.rm_get_job.argtypes = [db_job_id_t, POINTER(POINTER(rm_job_t))]
+bridge.rm_get_job.restype = check_status
+
+bridge.rm_free_job.argtypes = [POINTER(rm_job_t)]
+bridge.rm_free_job.restype = check_status
+
 class Job (Resource):
     
     _ctype = POINTER(rm_job_t)
     
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_job(self)
+    
     def _get_id (self):
         id = self._get_data(RM_JobID, rm_job_id_t)
-        return id.value
+        return free_value(id)
     
     id = property(_get_id)
     
     def _get_partition_id (self):
         id = self._get_data(RM_JobPartitionID, pm_partition_id_t)
-        return id.value
+        return free_value(id)
     
     partition_id = property(_get_partition_id)
     
@@ -931,13 +1001,13 @@ class Job (Resource):
     
     def _get_executable (self):
         executable = self._get_data(RM_JobExecutable, c_char_p)
-        return executable.value
+        return free_value(executable)
     
     executable = property(_get_executable)
     
     def _get_user_name (self):
         user_name = self._get_data(RM_JobUserName, c_char_p)
-        return user_name.value
+        return free_value(user_name)
     
     user_name = property(_get_user_name)
     
@@ -949,44 +1019,45 @@ class Job (Resource):
     
     def _get_outfile (self):
         outfile = self._get_data(RM_JobOutFile, c_char_p)
-        return outfile.value
+        return free_value(outfile)
     
     outfile = property(_get_outfile)
     
     def _get_infile (self):
+        # deprecated. add a DeprecationWarning
         infile = self._get_data(RM_JobInFile, c_char_p)
-        return infile.value
+        return free_value(infile)
 
     if systype == 'bgl':
         infile = property(_get_infile)
     
     def _get_errfile (self):
         errfile = self._get_data(RM_JobErrFile, c_char_p)
-        return errfile.value
+        return free_value(errfile)
     
     errfile = property(_get_errfile)
     
     def _get_outdir (self):
         outdir = self._get_data(RM_JobOutDir, c_char_p)
-        return outdir.value
+        return free_value(outdir)
     
     outdir = property(_get_outdir)
     
     def _get_errtext (self):
         errtext = self._get_data(RM_JobErrText, c_char_p)
-        return errtext.value
+        return free_value(errtext)
     
     errtext = property(_get_errtext)
     
     def _get_args (self):
         args = self._get_data(RM_JobArgs, c_char_p)
-        return args.value
+        return free_value(args)
     
     args = property(_get_args)
     
     def _get_envs (self):
         envs = self._get_data(RM_JobEnvs, c_char_p)
-        return envs.value
+        return free_value(envs)
     
     envs = property(_get_envs)
     
@@ -1030,14 +1101,14 @@ class Job (Resource):
         stderr_info = property(_get_stderr_info)
     
     def _get_starttime (self):
-        starttime = self._get_data((RM_JobStartTime, c_char_p))
-        return starttime.value
+        starttime = self._get_data(RM_JobStartTime, c_char_p)
+        return free_value(starttime)
     
     starttime = property(_get_starttime)
     
     def _get_endtime (self):
         endtime = self._get_data(RM_JobEndTime, c_char_p)
-        return endtime.value
+        return free_value(endtime)
     
     endtime = property(_get_endtime)
     
