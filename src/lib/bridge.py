@@ -315,7 +315,7 @@ elif systype == 'bgp':
     RM_PartitionMloaderImg = 10010
     RM_PartitionOptions = 10009
     RM_PartitionDescription = 10004
-    RM_PartitionSmall = 1005
+    RM_PartitionSmall = 10005
     RM_PartitionNodeCardNum = 10019
     RM_PartitionFirstNodeCard = 10020
     RM_PartitionNextNodeCard = 10021
@@ -338,6 +338,7 @@ class Partition (Resource):
         Resource.__init__(self, element_pointer, **kwargs)
         self.base_partitions = ElementGenerator(self, BasePartition, RM_PartitionBPNum, RM_PartitionFirstBP, RM_PartitionNextBP)
         self.switches = ElementGenerator(self, Switch, RM_PartitionSwitchNum, RM_PartitionFirstSwitch, RM_PartitionNextSwitch)
+        
         self._node_cards = ElementGenerator(self, NodeCard, RM_PartitionNodeCardNum, RM_PartitionFirstNodeCard, RM_PartitionNextNodeCard)
         # self.users = ElementGenerator(self, PartitionUsers, RM_PartitionUsersNum, RM_PartitionFirstUser, RM_PartitionNextUser)
     
