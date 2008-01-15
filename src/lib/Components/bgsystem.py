@@ -99,7 +99,10 @@ class Partition (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.node_cards = spec.get("node_cards", [])
-        
+
+        self._update_node_cards()
+
+    def _update_node_cards(self):
         if self.state == "busy":
             for nc in self.node_cards:
                 nc.busy = True
@@ -194,7 +197,6 @@ class Job (Data):
                 os.close(newpipe_r)
                 os.setsid()
                 pid2 = os.fork()
-                print "next pid is", pid2
                 if pid2 != 0:
                     newpipe_w = os.fdopen(newpipe_w, 'w')
                     newpipe_w.write(str(pid2))
@@ -368,20 +370,21 @@ class BGSystem (Component):
         ])
     
     partitions = property(_get_partitions)
+
+    def _get_state(bridge_partition):
+        if bridge_partition.state == "RM_PARTITION_FREE":
+            return "idle"
+        else:
+            return "busy"
     
     def configure (self):
         
         """Read partition data from the bridge.
         """
-        def _get_state(bridge_partition):
-            if bridge_partition.state == "RM_PARTITION_FREE":
-                return "idle"
-            else:
-                return "busy"
         
         def _get_node_card(name):
             if not self.node_card_cache.has_key(name):
-                self.node_card_cache[name] = NodeCard(nc.id)
+                self.node_card_cache[name] = NodeCard(name)
                 
             return self.node_card_cache[name]
             
@@ -440,6 +443,27 @@ class BGSystem (Component):
         # update object state
         self._partitions.clear()
         self._partitions.update(partitions)
+    
+    def update_partition_state(self):
+        """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
+        
+        # first, set all of the nodecards to not busy
+        for nc in self.node_card_cache.values():
+            nc.busy = False
+            
+        system_def = bgl.PartitionList.info_by_filter()
+        for partition in system_def:
+            self._partitions[partition.id].state = _get_state(partition)
+            self._partitions[partition.id]._update_node_cards()
+            
+        for p in self._partitions.values():
+            if p.state != "busy":
+                for nc in p.node_cards:
+                    if nc.busy:
+                        p.state = "blocked"
+                        break
+    update_partition_state = automatic(update_partition_state)
+
     
     def update_relatives(self):
         """Call this method after changing the contents of self._managed_partitions"""
