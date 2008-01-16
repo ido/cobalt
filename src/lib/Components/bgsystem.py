@@ -24,7 +24,6 @@ import tempfile
 import time
 import thread
 import ConfigParser
-import posix
 import traceback
 from datetime import datetime
 
@@ -153,12 +152,12 @@ class Job (Data):
         _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgpm'):
         print '''"bgpm" section missing from cobalt config file'''
-        raise SystemExit, 1
+        os.exit(1)
     config = _config._sections['bgpm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        raise SystemExit, 1
+        os.exit(1)
 
     def __init__(self, spec):
         self.system_id = spec['system_id']
@@ -243,7 +242,7 @@ class Job (Data):
                     os.setuid(userid)
                 except OSError:
                     logger.error("Failed to change userid/groupid for PG %s" % (self.id))
-                    sys.exit(0)
+                    os._exit(0)
     
                 #os.system("%s > /dev/null 2>&1" % (self.config['db2_connect']))
                 os.environ["DB_PROPERTY"] = self.config['db2_properties']
@@ -299,9 +298,9 @@ class Job (Data):
                     apply(os.execl, cmd)
                 except Exception, e:
                     print 'got exception when trying to exec mpirun', e
-                    raise SystemExit, 1
+                    os._exit(1)
     
-                sys.exit(0)
+                os._exit(0)
     
             else:
                 #parent process reads daemon child's pid through pipe
@@ -316,7 +315,7 @@ class Job (Data):
         except Exception, e:
             print "something has gone dreadfully wrong starting a job: ", e
             traceback.print_exc(file=sys.stdout)
-            posix._exit(1)
+            os._exit(1)
             
 class JobDict (DataDict):
     item_cls = Job
