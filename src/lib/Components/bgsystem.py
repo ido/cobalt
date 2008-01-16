@@ -98,6 +98,7 @@ class Partition (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.node_cards = spec.get("node_cards", [])
+        self._wiring_conflicts = sets.Set()
 
         self._update_node_cards()
 
@@ -432,12 +433,30 @@ class BGSystem (Component):
 #            for partition_def in system_def
 #        ])
         
+        # find the wiring deps
+        for p in partitions.values:
+            s1 = sets.Set( [s.id for s in p.switches] )
+            for other in partitions.values:
+                if other.size != p.size:
+                    continue
+                
+                s2 = sets.Set( [s.id for s in other.switches] )
+                
+                if s1.intersection(s2):
+                    print "%s and %s have a wiring conflict" % (p.name, other.name)
+                    p._wiring_conflicts.add(other)
+        
+        
         # update state information
         for p in partitions.values():
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.busy:
                         p.state = "blocked"
+                        break
+                for dep in p._wiring_conflicts:
+                    if dep.state == "busy":
+                        p.state = "blocked-wiring"
                         break
         
         # update object state
@@ -468,6 +487,11 @@ class BGSystem (Component):
                     if nc.busy:
                         p.state = "blocked"
                         break
+                for dep in p._wiring_conflicts:
+                    if dep.state == "busy":
+                        p.state = "blocked-wiring"
+                        break
+    
     update_partition_state = automatic(update_partition_state)
 
     
@@ -480,10 +504,15 @@ class BGSystem (Component):
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
             
+            # toss the wiring dependencies in with the parents
+            for dep in p._wiring_conflicts:
+                if dep.name in self._managed_partitions:
+                    p._parents.add(dep)
+            
             for other_name in self._managed_partitions:
                 if p.name == other_name:
                     break
-                
+
                 other = self._partitions[other_name]
                 p_set = sets.Set(p.node_cards)
                 other_set = sets.Set(other.node_cards)
@@ -496,6 +525,8 @@ class BGSystem (Component):
                 elif p_set.union(other_set)==p_set:
                     p._children.add(other)
                     other._parents.add(p)
+                    
+            
 
     
     def add_partitions (self, specs):
