@@ -434,17 +434,17 @@ class BGSystem (Component):
 #        ])
         
         # find the wiring deps
-        for p in partitions.values:
+        for p in system_def:
             s1 = sets.Set( [s.id for s in p.switches] )
-            for other in partitions.values:
-                if other.size != p.size:
+            for other in system_def:
+                if len(list(other.node_cards)) != len(list(p.node_cards)):
                     continue
                 
                 s2 = sets.Set( [s.id for s in other.switches] )
                 
                 if s1.intersection(s2):
-                    print "%s and %s have a wiring conflict" % (p.name, other.name)
-                    p._wiring_conflicts.add(other)
+                    print "%s and %s have a wiring conflict" % (p.id, other.id)
+                    partitions[p.id]._wiring_conflicts.add(other)
         
         
         # update state information
