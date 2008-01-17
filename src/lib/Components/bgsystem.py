@@ -401,8 +401,14 @@ class BGSystem (Component):
         partitions = PartitionDict()
         
         tmp_list = []
+        wiring_cache = {}
         for partition_def in system_def:
             node_list = []
+            nc_count = len(list(partition_def.node_cards))
+            if not wiring_cache.has_key(nc_count):
+                wiring_cache[nc_count] = []
+            wiring_cache[nc_count].append(partition_def)
+
             if partition_def.small:
                 bp_name = partition_def.base_partitions[0].id
                 for nc in partition_def._node_cards:
@@ -415,7 +421,7 @@ class BGSystem (Component):
             tmp_list.append( dict(
                 name = partition_def.id,
                 queue = "default",
-                size = NODES_PER_NODECARD * len(list(partition_def.node_cards)), 
+                size = NODES_PER_NODECARD * nc_count,
                 node_cards = node_list,
                 state = _get_state(partition_def),
             ))
@@ -434,19 +440,23 @@ class BGSystem (Component):
 #        ])
         
         # find the wiring deps
-        for p in system_def:
-            s1 = sets.Set( [s.id for s in p.switches] )
-            for other in system_def:
-                if len(list(other.node_cards)) != len(list(p.node_cards)):
-                    continue
-                
-                s2 = sets.Set( [s.id for s in other.switches] )
-                
-                if s1.intersection(s2):
-                    print "%s and %s have a wiring conflict" % (p.id, other.id)
-                    partitions[p.id]._wiring_conflicts.add(other)
+        start = time.time()
+        for size in wiring_cache:
+            for p in wiring_cache[size]:
+                s1 = sets.Set( [s.id for s in p.switches] )
+                for other in wiring_cache[size]:
+                    if (p.id == other.id):
+                        continue
+
+                    s2 = sets.Set( [s.id for s in other.switches] )
+                    
+                    if s1.intersection(s2):
+                        print "%s and %s have a wiring conflict" % (p.id, other.id)
+                        partitions[p.id]._wiring_conflicts.add(other)
         
-        
+        end = time.time()
+        print "took %f seconds to find wiring deps" % (end - start)
+ 
         # update state information
         for p in partitions.values():
             if p.state != "busy":
