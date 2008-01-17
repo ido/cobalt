@@ -972,6 +972,7 @@ class Restriction (Data):
         with
         '''
         Data.__init__(self, spec)
+        spec = spec.copy()
         self.name = spec.pop("name", None)
         if self.name in ['maxrunning', 'maxusernodes', 'totalnodes']:
             self.type = 'run'
@@ -1093,13 +1094,14 @@ class Queue (Data):
     ]
     
     def __init__(self, spec):
+        Data.__init__(self, spec)
+        spec = spec.copy()
         self.cron = spec.pop("cron", None)
         self.name = spec.pop("name", None)
         self.state = spec.pop("state", "stopped")
         self.adminemail = spec.pop("adminemail", "*")
         self.policy = spec.pop("policy", "default")
         self.maxuserjobs = spec.pop("maxuserjobs", None)
-        Data.__init__(self, spec)
         self.jobs = JobList(self)
         self.restrictions = RestrictionDict()
     

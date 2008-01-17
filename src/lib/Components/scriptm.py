@@ -30,6 +30,7 @@ class ProcessGroup(Data):
 
     def __init__(self, spec):
         Data.__init__(self, spec)
+        spec = spec.copy()
         self.tag = spec.get("tag", "process-group")
         self.name = spec.pop("name", None)
         self.location = spec.pop("location", None)

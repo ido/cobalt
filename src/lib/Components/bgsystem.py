@@ -161,6 +161,8 @@ class Job (Data):
         os.exit(1)
 
     def __init__(self, spec):
+        Data.__init__(self, spec)
+        spec = spec.copy()
         self.system_id = spec['system_id']
         self.outputfile = spec.get('stdout', False)
         self.errorfile = spec.get('stderr', False)

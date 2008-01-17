@@ -31,9 +31,7 @@ class Reservation (Data):
     
     def __init__ (self, spec):
         Data.__init__(self, spec)
-        
         spec = spec.copy()
-        
         self.tag = spec.get("tag", "reservation")
         self.duration = spec.pop("duration")
         self.cycle = spec.pop("cycle", None)
