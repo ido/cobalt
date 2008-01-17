@@ -51,6 +51,7 @@ class Service (Data):
     
     def __init__ (self, spec):
         Data.__init__(self, spec)
+        spec = spec.copy()
         self.name = spec.pop("name")
         self.location = spec.pop("location")
         self.tag = spec.get("tag", "service")
