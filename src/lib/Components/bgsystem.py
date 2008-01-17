@@ -489,8 +489,9 @@ class BGSystem (Component):
             
         system_def = bgl.PartitionList.info_by_filter()
         for partition in system_def:
-            self._partitions[partition.id].state = _get_state(partition)
-            self._partitions[partition.id]._update_node_cards()
+            if self._partitions.has_key(partition.id):
+                self._partitions[partition.id].state = _get_state(partition)
+                self._partitions[partition.id]._update_node_cards()
             
         for p in self._partitions.values():
             if p.state != "busy":
@@ -517,7 +518,7 @@ class BGSystem (Component):
             
             # toss the wiring dependencies in with the parents
             for dep in p._wiring_conflicts:
-                if dep.name in self._managed_partitions:
+                if dep.id in self._managed_partitions:
                     p._parents.add(dep)
             
             for other_name in self._managed_partitions:
@@ -566,7 +567,7 @@ class BGSystem (Component):
             partition for partition in self._partitions.q_get(specs)
             if partition.name in self._managed_partitions
         ]
-        self._managed_partitions -= [partition.name for partition in partitions]
+        self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
         self.update_relatives()
         return partitions
     del_partitions = exposed(query(del_partitions))
