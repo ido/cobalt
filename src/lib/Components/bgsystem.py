@@ -93,11 +93,13 @@ class Partition (Data):
         self.functional = spec.pop("functional", False)
         self.queue = spec.pop("queue", "default")
         self.size = spec.pop("size", None)
+        # these hold Partition objects
         self._parents = sets.Set()
         self._children = sets.Set()
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.node_cards = spec.get("node_cards", [])
+        # this holds partition names
         self._wiring_conflicts = sets.Set()
 
         self._update_node_cards()
@@ -403,7 +405,10 @@ class BGSystem (Component):
         partitions = PartitionDict()
         
         tmp_list = []
+
+        # this is going to hold partition objects from the bridge (not our own Partition)
         wiring_cache = {}
+        
         for partition_def in system_def:
             node_list = []
             nc_count = len(list(partition_def.node_cards))
@@ -455,7 +460,7 @@ class BGSystem (Component):
                     
                     if s1.intersection(s2):
                         print "%s and %s have a wiring conflict" % (p.id, other.id)
-                        partitions[p.id]._wiring_conflicts.add(other)
+                        partitions[p.id]._wiring_conflicts.add(other.id)
         
         end = time.time()
         print "took %f seconds to find wiring deps" % (end - start)
@@ -467,8 +472,8 @@ class BGSystem (Component):
                     if nc.busy:
                         p.state = "blocked"
                         break
-                for dep in p._wiring_conflicts:
-                    if dep.state == "busy":
+                for dep_name in p._wiring_conflicts:
+                    if partitions[dep_name].state == "busy":
                         p.state = "blocked-wiring"
                         break
         
@@ -501,8 +506,8 @@ class BGSystem (Component):
                     if nc.busy:
                         p.state = "blocked"
                         break
-                for dep in p._wiring_conflicts:
-                    if dep.state == "busy":
+                for dep_name in p._wiring_conflicts:
+                    if self._partitions[dep_name].state == "busy":
                         p.state = "blocked-wiring"
                         break
     
@@ -519,9 +524,9 @@ class BGSystem (Component):
             p = self._partitions[p_name]
             
             # toss the wiring dependencies in with the parents
-            for dep in p._wiring_conflicts:
-                if dep.id in self._managed_partitions:
-                    p._parents.add(self._partitions[dep.id])
+            for dep_name in p._wiring_conflicts:
+                if dep_name in self._managed_partitions:
+                    p._parents.add(self._partitions[dep_name])
             
             for other_name in self._managed_partitions:
                 if p.name == other_name:
