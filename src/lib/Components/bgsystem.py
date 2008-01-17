@@ -519,7 +519,7 @@ class BGSystem (Component):
             # toss the wiring dependencies in with the parents
             for dep in p._wiring_conflicts:
                 if dep.id in self._managed_partitions:
-                    p._parents.add(dep)
+                    p._parents.add(self._partitions[dep.id])
             
             for other_name in self._managed_partitions:
                 if p.name == other_name:
