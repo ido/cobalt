@@ -9,7 +9,7 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
-helpmsg = '''Usage: partadm.py [-a] [-d] [-s size] part1 part2 (add or del)
+helpmsg = '''Usage: partadm.py [-a] [-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -54,12 +54,7 @@ if __name__ == '__main__':
         parts = args
     if '-a' in sys.argv:
         func = system.add_partitions
-        try:
-            [size] = [opt[1] for opt in opts if opt[0] == '-s']
-        except:
-            print "Must supply partition size with -s"
-            raise SystemExit, 1
-        args = ([{'tag':'partition', 'name':partname, 'size':int(size), 'functional':False,
+        args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
                   'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], )
     elif '-d' in sys.argv:
         func = system.del_partitions
