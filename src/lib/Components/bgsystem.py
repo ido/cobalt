@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-bgl.set_serial("BGL")
+bgl.set_serial("BGP")
 
 class JobCreationError (Exception):
     """An error occured when creation a job."""
@@ -405,9 +405,10 @@ class BGSystem (Component):
         for partition_def in system_def:
             node_list = []
             nc_count = len(list(partition_def.node_cards))
-            if not wiring_cache.has_key(nc_count):
-                wiring_cache[nc_count] = []
-            wiring_cache[nc_count].append(partition_def)
+            if partition_def.connection == "RM_TORUS":
+                if not wiring_cache.has_key(nc_count):
+                    wiring_cache[nc_count] = []
+                wiring_cache[nc_count].append(partition_def)
 
             if partition_def.small:
                 bp_name = partition_def.base_partitions[0].id
