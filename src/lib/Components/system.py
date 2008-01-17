@@ -290,7 +290,7 @@ class Simulator (Component):
             partition for partition in self._partitions.q_get(specs)
             if partition.name in self._managed_partitions
         ]
-        self._managed_partitions -= [partition.name for partition in partitions]
+        self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
         return partitions
     del_partitions = exposed(query(del_partitions))
     
