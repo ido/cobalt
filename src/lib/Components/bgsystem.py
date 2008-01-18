@@ -54,7 +54,7 @@ class ExitEarlyError (Exception):
 class NodeCard (object):
     def __init__(self, name):
         self.id = name
-        self.busy = False
+        self.used_by = ''
         
     def __eq__(self, other):
         return self.id == other.id
@@ -108,7 +108,7 @@ class Partition (Data):
     def _update_node_cards(self):
         if self.state == "busy":
             for nc in self.node_cards:
-                nc.busy = True
+                nc.used_by = self.name
     
     def _get_parents (self):
         return [parent.name for parent in self._parents]
@@ -475,12 +475,12 @@ class BGSystem (Component):
         for p in partitions.values():
             if p.state != "busy":
                 for nc in p.node_cards:
-                    if nc.busy:
-                        p.state = "blocked"
+                    if nc.used_by:
+                        p.state = "blocked (%s)" % p.name
                         break
                 for dep_name in p._wiring_conflicts:
                     if partitions[dep_name].state == "busy":
-                        p.state = "blocked-wiring"
+                        p.state = "blocked-wiring (%s)" % dep_name
                         break
         
         # update object state
@@ -504,7 +504,7 @@ class BGSystem (Component):
 
         # first, set all of the nodecards to not busy
         for nc in self.node_card_cache.values():
-            nc.busy = False
+            nc.used_by = ''
             
         for partition in system_def:
             if self._partitions.has_key(partition.id):
@@ -514,12 +514,12 @@ class BGSystem (Component):
         for p in self._partitions.values():
             if p.state != "busy":
                 for nc in p.node_cards:
-                    if nc.busy:
-                        p.state = "blocked"
+                    if nc.used_by:
+                        p.state = "blocked (%s)" % p.name
                         break
                 for dep_name in p._wiring_conflicts:
                     if self._partitions[dep_name].state == "busy":
-                        p.state = "blocked-wiring"
+                        p.state = "blocked-wiring (%s)" % dep_name
                         break
     
     update_partition_state = automatic(update_partition_state)
