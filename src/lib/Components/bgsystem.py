@@ -31,7 +31,8 @@ import Cobalt
 import Cobalt.Data
 from Cobalt.Data import Data, DataDict, DataList, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-import Cobalt.bridge as bgl
+import Cobalt.bridge
+from Cobalt.bridge import BridgeException
 
 __all__ = [
     "JobCreationError",
@@ -41,7 +42,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-bgl.set_serial("BGP")
+Cobalt.bridge.set_serial("BGP")
 
 class JobCreationError (Exception):
     """An error occured when creation a job."""
@@ -155,12 +156,12 @@ class Job (Data):
         _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgpm'):
         print '''"bgpm" section missing from cobalt config file'''
-        os.exit(1)
+        sys.exit(1)
     config = _config._sections['bgpm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        os.exit(1)
+        sys.exit(1)
 
     def __init__(self, spec):
         Data.__init__(self, spec)
@@ -342,15 +343,11 @@ class BGSystem (Component):
     """Generic system simulator.
     
     Methods:
-    configure -- load partitions from an xml file
-    get_partitions -- retrieve partitions in the simulator (exposed, query)
-    reserve_partition -- lock a partition for use by a job (exposed)
-    release_partition -- release a locked (busy) partition (exposed)
+    configure -- load partitions from the bridge API
+    get_partitions -- retrieve partitions managed by cobalt (exposed, query)
     add_jobs -- add (start) a job on the system (exposed, ~query)
     get_jobs -- retrieve running jobs (exposed, query)
     del_jobs -- delete jobs (exposed, query)
-    run_jobs -- run all jobs (automatic)
-    mpirun -- produce mpirun-like output
     """
     
     name = "system"
@@ -395,7 +392,11 @@ class BGSystem (Component):
             return self.node_card_cache[name]
             
         self.logger.info("configure()")
-        system_def = bgl.PartitionList.by_filter()
+        try:
+            system_def = Cobalt.bridge.PartitionList.by_filter()
+        except BridgeException:
+            print "Error communicating with the bridge during initial config.  Terminating."
+            sys.exit(1)
 
         # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
         NODES_PER_NODECARD = 32
@@ -422,10 +423,15 @@ class BGSystem (Component):
                 for nc in partition_def._node_cards:
                     node_list.append(_get_node_card(bp_name + "-" + nc.id))
             else:
-                for bp in partition_def.base_partitions:
-                    bp_name = bp.id
-                    for nc in bgl.NodeCardList.by_base_partition(bp):
-                        node_list.append(_get_node_card(bp_name + "-" + nc.id))
+                try:
+                    for bp in partition_def.base_partitions:
+                        bp_name = bp.id
+                        for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
+                            node_list.append(_get_node_card(bp_name + "-" + nc.id))
+                except BridgeException:
+                    print "Error communicating with the bridge during initial config.  Terminating."
+                    sys.exit(1)
+
             tmp_list.append( dict(
                 name = partition_def.id,
                 queue = "default",
@@ -490,11 +496,16 @@ class BGSystem (Component):
             else:
                 return "busy"
 
+        try:
+            system_def = Cobalt.bridge.PartitionList.info_by_filter()
+        except BridgeException:
+            self.logger.error("Error communicating with the bridge to update partition state information.")
+            return
+
         # first, set all of the nodecards to not busy
         for nc in self.node_card_cache.values():
             nc.busy = False
             
-        system_def = bgl.PartitionList.info_by_filter()
         for partition in system_def:
             if self._partitions.has_key(partition.id):
                 self._partitions[partition.id].state = _get_state(partition)
