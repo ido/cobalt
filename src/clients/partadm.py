@@ -88,8 +88,13 @@ if __name__ == '__main__':
             print "Error getting queues from queue_manager"
             raise SystemExit, 1
         queue = [arg for (opt, arg) in opts if opt == '--queue'][0]
-        if queue.split(':') != [q for q in queue.split(':') if q in existing_queues]:
-            print '\'' + queue + '\' is not an existing queue'
+        error_messages = []
+        for q in queue.split(':'):
+            if not q in existing_queues:
+                error_messages.append('\'' + q + '\' is not an existing queue')
+        if error_messages:
+            for e in error_messages:
+                print e
             raise SystemExit, 1
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
