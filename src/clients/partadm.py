@@ -126,11 +126,6 @@ if __name__ == '__main__':
 #        print "buildRackTopology sees : " + repr(parts)
 #
 #        partinfo = Cobalt.Util.buildRackTopology(parts)
-        busy = [part['name'] for part in parts if part['state'] == 'busy']
-        for part in parts:
-            for pname in busy:
-                if pname in part['children'] + part['parents'] and pname != part['name']:
-                    part.__setitem__('state', 'blocked')
         offline = [part['name'] for part in parts if not part['functional']]
         forced = [part for part in parts \
                   if [down for down in offline \
