@@ -476,7 +476,7 @@ class BGSystem (Component):
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.used_by:
-                        p.state = "blocked (%s)" % p.name
+                        p.state = "blocked (%s)" % nc.used_by
                         break
                 for dep_name in p._wiring_conflicts:
                     if partitions[dep_name].state == "busy":
@@ -515,7 +515,7 @@ class BGSystem (Component):
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.used_by:
-                        p.state = "blocked (%s)" % p.name
+                        p.state = "blocked (%s)" % nc.used_by
                         break
                 for dep_name in p._wiring_conflicts:
                     if self._partitions[dep_name].state == "busy":
