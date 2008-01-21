@@ -208,6 +208,20 @@ class Simulator (Component):
     
     partitions = property(_get_partitions)
     
+    def __getstate__(self):
+        return self._managed_partitions
+    
+    def __setstate__(self, state):
+        self._managed_partitions = state
+        self._partitions = PartitionDict()
+        self.jobs = JobDict()
+
+        
+    def save_me(self):
+        Component.save(self, '/var/spool/cobalt/brooklyn')
+    save_me = automatic(save_me)
+        
+    
     def configure (self, config_file):
         
         """Configure simulated partitions.

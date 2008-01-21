@@ -320,6 +320,24 @@ class BGSched (Component):
         self.sched_info = {}
         self.started_jobs = {}
     
+    def __getstate__(self):
+        return self.reservations
+    
+    def __setstate__(self, state):
+        self.reservations = state
+        
+        self.queues = QueueDict()
+        self.jobs = JobDict()
+        self.partitions = PartitionDict()
+        self.assigned_partitions = {}
+        self.sched_info = {}
+        self.started_jobs = {}
+
+        
+    def save_me(self):
+        Component.save(self, '/var/spool/cobalt/bgsched')
+    save_me = automatic(save_me)
+
     def add_reservations (self, specs):
         return self.reservations.q_add(specs)
     add_reservations = exposed(query(add_reservations))

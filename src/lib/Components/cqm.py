@@ -145,7 +145,7 @@ class Job (Data):
         return data
 
     def __setstate__(self, state):
-        Cobalt.Data.Data.__setstate__(self, state)
+        self.__dict__.update(state)
         if not self.timers.has_key('current_queue'):
             self.timers['current_queue'] = Timer()
             self.timers['current_queue'].Start()
@@ -1210,6 +1210,20 @@ class QueueManager(Component):
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
 
+    def __getstate__(self):
+        return self.Queues
+                
+    def __setstate__(self, state):
+        self.Queues = state
+        
+        self.prevdate = time.strftime("%m-%d-%y", time.localtime())
+        self.cqp = Cobalt.Cqparse.CobaltLogParser()
+
+    def save_me(self):
+        Component.save(self, '/var/spool/cobalt/cqm')
+    save_me = automatic(save_me)
+        
+        
     def set_jobid(self, jobid):
         '''Set next jobid for new job'''
         cqm_id_gen.set(jobid)

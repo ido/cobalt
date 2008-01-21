@@ -2,6 +2,7 @@
 
 import sys
 import logging
+import cPickle
 from getopt import getopt, GetoptError
 
 import Cobalt
@@ -36,7 +37,12 @@ def run (argv=None):
             config_files = [item[1]]
     
     Cobalt.Logging.setup_logging('brooklyn', level=log_level)
-    simulator = Simulator()
+    try:
+        simulator = cPickle.load(open('/var/spool/cobalt/brooklyn'))
+    except:
+        print "failed to restore state, creating new simulator object"
+        simulator = Simulator()
+        
     try:
         simulator.configure("simulator.xml")
     except IOError:
