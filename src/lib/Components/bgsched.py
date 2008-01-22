@@ -4,10 +4,11 @@
 __revision__ = '$Revision$'
 
 import logging
-import math
-import sys
 import time
-from sets import Set as set
+try:
+    set()
+except:
+    from sets import Set as set
 
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, DataCreationError
@@ -24,25 +25,26 @@ class Reservation (Data):
     """Cobalt scheduler reservation."""
     
     fields = Data.fields + [
-        "tag", "name", "start", "duration", "cycle", "users", "partitions", "active",
+        "tag", "name", "start", "duration", "cycle", "users", "partitions",
+        "active", "queue", 
     ]
     
     required_fields = ["name", "start", "duration"]
     
     def __init__ (self, spec):
         Data.__init__(self, spec)
-        spec = spec.copy()
         self.tag = spec.get("tag", "reservation")
-        self.duration = spec.pop("duration")
-        self.cycle = spec.pop("cycle", None)
-        self.users = spec.pop("users", "")
-        self.partitions = spec.pop("partitions", "")
+        self.duration = spec.get("duration")
+        self.cycle = spec.get("cycle")
+        self.users = spec.get("users", "")
+        self.partitions = spec.get("partitions", "")
         try:
-            self.name = spec.pop("name")
+            self.name = spec.get("name")
         except:
             raise DataCreationError("required key name missing")
+        self.queue = spec.get("queue", "R.%s" % self.name)
         try:
-            self.start = spec.pop("start")
+            self.start = spec.get("start")
         except:
             raise DataCreationError("required key start missing")
         
@@ -89,7 +91,7 @@ class Reservation (Data):
         return False
 
     def job_within_reservation(self, job):
-        if job.queue=="R.%s" % self.name:
+        if job.queue == self.queue:
             job_end = time.time() + 60 * float(job.walltime)
             if not self.cycle:
                 res_end = self.start + self.duration
@@ -139,22 +141,24 @@ class ReservationDict (DataDict):
 
         reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)        
         for reservation in reservations:
-            reservation_queue = "R.%s" % reservation.name
-            if reservation_queue not in queues:
+            if reservation.queue not in queues:
                 try:
-                    qm.add_queues([{'name':reservation_queue, 'state':"running", 'users':reservation.users}])
+                    qm.add_queues([{'name':reservation.queue, 'state':"running",
+                                    'users':reservation.users}])
                 except Exception, e:
-                    logger.error("unable to add reservation queue %s (%s)" % (reservation_queue, e))
+                    logger.error("unable to add reservation queue %s (%s)" % \
+                                 (reservation.queue, e))
                 else:
-                    logger.info("added reservation queue %s" % reservation_queue)
+                    logger.info("added reservation queue %s" % (reservation.queue))
             else:
                 try:
-                    qm.set_queues([{'name':reservation_queue}], {'state':"running", 'users':reservation.users})
+                    qm.set_queues([{'name':reservation.queue}],
+                                  {'state':"running", 'users':reservation.users})
                 except Exception, e:
-                    logger.error("unable to update reservation queue %s (%s)" % (reservation_queue, e))
+                    logger.error("unable to update reservation queue %s (%s)" % \
+                                 (reservation.queue, e))
                 else:
-                    logger.info("updated reservation queue %s" % reservation_queue)
-                
+                    logger.info("updated reservation queue %s" % reservation.queue)
     
         return reservations
         
@@ -162,16 +166,13 @@ class ReservationDict (DataDict):
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
         qm = ComponentProxy('queue-manager')
         queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
-        for reservation in reservations:
-            reservation_queue = "R.%s" % reservation.name
-            if reservation_queue in queues:
-                try:
-                    qm.set_queues([{'name':reservation_queue}], {'state':"dead"})
-                except Exception, e:
-                    logger.error("problem disabling reservation queue (%s)" % e)
-                else:
-                    logger.info("reservation queue %s disabled" % reservation_queue)
-
+        spec = [{'name': reservation.queue} for reservation in reservations \
+                if reservation.queue in queues and \
+                not self.q_get([{'queue':reservation.queue}])]
+        try:
+            qm.set_queues(spec, {'state':"dead"})
+        except Exception, e:
+            logger.error("problem disabling reservation queue (%s)" % e)
         return reservations
 
 class Partition (ForeignData):
@@ -483,14 +484,11 @@ class BGSched (Component):
         
 
         active_queues = []
-        res_queues = []
+        res_queues = set(item['queue'] for item \
+                         in self.reservations.q_get([{'queue':'*'}]))
         for queue in self.queues.itervalues():
-            if queue.name.startswith("R."):
-                if self.reservations.has_key(queue.name[2:]) and self.reservations[queue.name[2:]].is_active():
-                    res_queues.append(queue)
-            else:
-                if queue.state == "running":
-                    active_queues.append(queue)
+            if queue.name not in res_queues and queue.state == 'running':
+                active_queues.append(queue)
         
         # handle the reservation jobs that might be ready to go
         self._run_reservation_jobs(available_partitions, res_queues)
@@ -522,7 +520,7 @@ class BGSched (Component):
                         # if the proposed job overlaps an active reservation, don't run it
                         if res.overlaps(partition, time.time(), 60 * float(job.walltime)):
                             really_okay = False
-                            if job.queue=="R.%s" % res.name:
+                            if job.queue == res.queue:
                                 self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % res.name
                             else:
                                 self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name

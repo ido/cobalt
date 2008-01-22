@@ -29,7 +29,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:mn:p:u:ax', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:mn:p:q:u:ax', [])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -137,6 +137,8 @@ if __name__ == '__main__':
         raise SystemExit, 0
 
     spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec }
+    if '-q' in sys.argv:
+        spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:
         print scheduler.add_reservations([spec])
     except xmlrpclib.Fault, flt:
