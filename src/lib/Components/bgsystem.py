@@ -386,6 +386,7 @@ class BGSystem (Component):
         self._partitions = PartitionDict()
         self.jobs = JobDict()
         self.node_card_cache = dict()
+        self._partitions_lock = thread.allocate_lock()
 
         self.configure()
         
