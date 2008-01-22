@@ -25,6 +25,7 @@ import time
 import thread
 import ConfigParser
 import traceback
+import thread
 from datetime import datetime
 
 import Cobalt
@@ -362,9 +363,12 @@ class BGSystem (Component):
         self._managed_partitions = sets.Set()
         self.jobs = JobDict()
         self.node_card_cache = dict()
+        self._partitions_lock = thread.allocate_lock()
 
         # do this last
         self.configure()
+        
+        thread.start_new_thread(self.update_partition_state)
     
     def _get_partitions (self):
         return PartitionDict([
@@ -384,6 +388,8 @@ class BGSystem (Component):
         self.node_card_cache = dict()
 
         self.configure()
+        
+        thread.start_new_thread(self.update_partition_state)
         
     def save_me(self):
         Component.save(self, '/var/spool/cobalt/bgsystem')
@@ -511,33 +517,38 @@ class BGSystem (Component):
             else:
                 return "busy"
 
-        try:
-            system_def = Cobalt.bridge.PartitionList.info_by_filter()
-        except BridgeException:
-            self.logger.error("Error communicating with the bridge to update partition state information.")
-            return
-
-        # first, set all of the nodecards to not busy
-        for nc in self.node_card_cache.values():
-            nc.used_by = ''
-            
-        for partition in system_def:
-            if self._partitions.has_key(partition.id):
-                self._partitions[partition.id].state = _get_state(partition)
-                self._partitions[partition.id]._update_node_cards()
-            
-        for p in self._partitions.values():
-            if p.state != "busy":
-                for nc in p.node_cards:
-                    if nc.used_by:
-                        p.state = "blocked (%s)" % nc.used_by
-                        break
-                for dep_name in p._wiring_conflicts:
-                    if self._partitions[dep_name].state == "busy":
-                        p.state = "blocked-wiring (%s)" % dep_name
-                        break
+        while True:
+            try:
+                system_def = Cobalt.bridge.PartitionList.info_by_filter()
+            except BridgeException:
+                self.logger.error("Error communicating with the bridge to update partition state information.")
+                return
     
-    update_partition_state = automatic(update_partition_state)
+            # first, set all of the nodecards to not busy
+            for nc in self.node_card_cache.values():
+                nc.used_by = ''
+                
+            self._partitions_lock.acquire()
+
+            for partition in system_def:
+                if self._partitions.has_key(partition.id):
+                    self._partitions[partition.id].state = _get_state(partition)
+                    self._partitions[partition.id]._update_node_cards()
+                
+            for p in self._partitions.values():
+                if p.state != "busy":
+                    for nc in p.node_cards:
+                        if nc.used_by:
+                            p.state = "blocked (%s)" % nc.used_by
+                            break
+                    for dep_name in p._wiring_conflicts:
+                        if self._partitions[dep_name].state == "busy":
+                            p.state = "blocked-wiring (%s)" % dep_name
+                            break
+                        
+            self._partitions_lock.release()
+            
+            time.sleep(10)
 
     
     def update_relatives(self):
@@ -577,10 +588,14 @@ class BGSystem (Component):
     def add_partitions (self, specs):
         self.logger.info("add_partitions(%r)" % (specs))
         specs = [{'name':spec.get("name")} for spec in specs]
+        
+        self._partitions_lock.acquire()
         partitions = [
             partition for partition in self._partitions.q_get(specs)
             if partition.name not in self._managed_partitions
         ]
+        self._partitions_lock.release()
+        
         self._managed_partitions.update([
             partition.name for partition in partitions
         ])
@@ -591,15 +606,24 @@ class BGSystem (Component):
     def get_partitions (self, specs):
         """Query partitions on simulator."""
         self.logger.info("get_partitions(%r)" % (specs))
-        return self.partitions.q_get(specs)
+        
+        self._partitions_lock.acquire()
+        partitions = self.partitions.q_get(specs)
+        self._partitions_lock.release()
+        
+        return partitions
     get_partitions = exposed(query(get_partitions))
     
     def del_partitions (self, specs):
         self.logger.info("del_partitions(%r)" % (specs))
+        
+        self._partitions_lock.acquire()
         partitions = [
             partition for partition in self._partitions.q_get(specs)
             if partition.name in self._managed_partitions
         ]
+        self._partitions_lock.release()
+        
         self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
         self.update_relatives()
         return partitions
@@ -608,7 +632,12 @@ class BGSystem (Component):
     def set_partitions (self, specs, updates):
         def _set_partitions(part, newattr):
             part.update(newattr)
-        return self._partitions.q_get(specs, _set_partitions, updates)
+            
+        self._partitions_lock.acquire()
+        partitions = self._partitions.q_get(specs, _set_partitions, updates)
+        self._partitions_lock.release()
+        
+        return partitions
     set_partitions = exposed(query(set_partitions))
     
     
