@@ -189,7 +189,8 @@ class Component (object):
                 result = marshal_query_result(result, *margs)
             return result
         except Exception, e:
-            self.logger.error(e, exc_info=True)
+            if getattr(e, "log", True):
+                self.logger.error(e, exc_info=True)
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
     
     def _listMethods (self):

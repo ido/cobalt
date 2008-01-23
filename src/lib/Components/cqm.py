@@ -36,6 +36,7 @@ class ScriptManagerError(Exception):
     pass
 
 class QueueError(Exception):
+    log = False
     fault_code = hash("QueueError")
 
 class Timer(object):
