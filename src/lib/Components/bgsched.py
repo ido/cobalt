@@ -324,10 +324,10 @@ class BGSched (Component):
         self.started_jobs = {}
     
     def __getstate__(self):
-        return self.reservations
+        return {'reservations':self.reservations, 'version':1}
     
     def __setstate__(self, state):
-        self.reservations = state
+        self.reservations = state['reservations']
         
         self.queues = QueueDict()
         self.jobs = JobDict()
@@ -375,7 +375,7 @@ class BGSched (Component):
     sync_data = automatic(sync_data)
 
     def _run_reservation_jobs (self, available_partitions, res_queues):
-        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in res_queues])
+        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue} for queue in res_queues])
         active_jobs = []
         for j in temp_jobs:
             if not self.started_jobs.has_key(j.jobid):
@@ -486,7 +486,7 @@ class BGSched (Component):
         
 
         active_queues = []
-        res_queues = set(item['queue'] for item \
+        res_queues = set(item.queue for item \
                          in self.reservations.q_get([{'queue':'*'}]))
         for queue in self.queues.itervalues():
             if queue.name not in res_queues and queue.state == 'running':

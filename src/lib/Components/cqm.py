@@ -21,7 +21,7 @@ from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
 logger = logging.getLogger('cqm')
-cqm_id_gen = IncrID()
+cqm_id_gen = None
 
 class ProcessManagerError(Exception):
     '''This error occurs when communications with the process manager fail'''
@@ -936,6 +936,8 @@ class JobList(DataList):
     def __init__(self, q):
         self.queue = q
         self.id_gen = cqm_id_gen
+        print "creating a JobList"
+        print "next id", self.id_gen.idnum
         
     def add_helper(self, job, *cargs):
         job.pbslog.log("Q",
@@ -948,7 +950,7 @@ class JobList(DataList):
             if "jobid" not in spec or spec['jobid'] == "*":
                 spec['jobid'] = self.id_gen.next()
         return DataList.q_add(self, specs, self.add_helper)
-
+    
 class Restriction (Data):
     
     '''Restriction object'''
@@ -1202,14 +1204,25 @@ class QueueManager(Component):
 #         if not [q for q in self.Queues if q.name == 'default']:
 #             self.Queues.Add([{'tag':'queue', 'name':'default'}])
 
+        print "i'm in __init__"
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
+        self.id_gen = IncrID()
+        global cqm_id_gen
+        cqm_id_gen = self.id_gen
 
     def __getstate__(self):
-        return self.Queues
+        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':1}
                 
     def __setstate__(self, state):
-        self.Queues = state
+        self.Queues = state['Queues']
+        self.id_gen = IncrID()
+        self.id_gen.set(state['next_job_id'])
+        global cqm_id_gen
+        cqm_id_gen = self.id_gen
+        
+        for q in self.Queues.values():
+            q.jobs.id_gen = self.id_gen
         
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
@@ -1221,7 +1234,9 @@ class QueueManager(Component):
         
     def set_jobid(self, jobid):
         '''Set next jobid for new job'''
-        cqm_id_gen.set(jobid)
+        self.id_gen.set(jobid)
+        print "self : ", self.id_gen.idnum
+        print "module : ", cqm_id_gen.idnum
         return True
     set_jobid = exposed(set_jobid)
 
