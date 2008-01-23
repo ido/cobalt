@@ -37,6 +37,7 @@ class Reservation (Data):
         self.duration = spec.get("duration")
         self.cycle = spec.get("cycle")
         self.users = spec.get("users", "")
+        self.createdQueue = False
         self.partitions = spec.get("partitions", "")
         try:
             self.name = spec.get("name")
@@ -158,6 +159,7 @@ class ReservationDict (DataDict):
                     logger.error("unable to update reservation queue %s (%s)" % \
                                  (reservation.queue, e))
                 else:
+                    reservation.createdQueue = True
                     logger.info("updated reservation queue %s" % reservation.queue)
     
         return reservations
@@ -167,7 +169,7 @@ class ReservationDict (DataDict):
         qm = ComponentProxy('queue-manager')
         queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         spec = [{'name': reservation.queue} for reservation in reservations \
-                if reservation.queue in queues and \
+                if reservation.createdQueue and reservation.queue in queues and \
                 not self.q_get([{'queue':reservation.queue}])]
         try:
             qm.set_queues(spec, {'state':"dead"})
