@@ -469,8 +469,18 @@ class Simulator (Component):
         jobspecs = [jobspec(spec) for spec in specs]
         new_jobs = self.jobs.q_add(jobspecs)
         for job in new_jobs:
-            stdout = open(job.stdout, "a")
-            stderr = open(job.stderr, "a")
+            try:
+                stdout = open(job.stdout, "a")
+            except IOError:
+                logger.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (job.id, job.user, job.stdout))
+                stdout = open("/dev/null", "w")
+
+            try:
+                stderr = open(job.stderr, "a")
+            except IOError:
+                logger.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (job.id, job.user, job.stderr))
+                stderr = open("/dev/null", "w")
+                
             env = os.environ.copy()
             env.update(job.env)
             thread.start_new_thread(self.mpirun, (job.cmd.split(), ), {'stdout':stdout, 'stderr':stderr, 'env':env, 'walltime':int(job.walltime)})
