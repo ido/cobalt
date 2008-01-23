@@ -35,6 +35,9 @@ class ScriptManagerError(Exception):
     '''This error occurs when communications with the script manager fail'''
     pass
 
+class QueueError(Exception):
+    fault_code = hash("QueueError")
+
 class Timer(object):
     '''The timer object keeps track of elapsed times for jobs'''
     def __init__(self):
@@ -1014,7 +1017,7 @@ class Restriction (Data):
 
     def maxqueuedjobs(self, job, _=None):
         '''limits how many jobs a user can have in the queue at a time'''
-        userjobs = [j for j in self.queue if j.user == job['user']]
+        userjobs = [j for j in self.queue.jobs if j.user == job['user']]
         if len(userjobs) >= int(self.value):
             return (False, "The limit of %s jobs per user in the '%s' queue has been reached" % (self.value, job['queue']))
         else:
@@ -1115,7 +1118,7 @@ class Queue (Data):
     def can_queue(self, spec):
         # check if queue is dead or draining
         if self.state in ['draining', 'dead']:
-            raise xmlrpclib.Fault(30, "The '%s' queue is %s" % (self.name, self.state))
+            raise QueueError, "The '%s' queue is %s" % (self.name, self.state)
 
         # test job against queue restrictions
         probs = ''
@@ -1124,7 +1127,7 @@ class Queue (Data):
             if not result[0]:
                 probs = probs + result[1] + '\n'
         if probs:
-            raise xmlrpclib.Fault(30, probs)
+            raise QueueError, probs
         else:
             return (True, probs)
 
@@ -1181,7 +1184,7 @@ class QueueDict(DataDict):
         '''Check that job meets criteria of the specified queue'''
         # if queue doesn't exist, don't check other restrictions
         if spec['queue'] not in [q.name for q in self.itervalues()]:
-            raise xmlrpclib.Fault(30, "Queue '%s' does not exist" % spec['queue'])
+            raise QueueError, "Queue '%s' does not exist" % spec['queue']
 
         [testqueue] = [q for q in self.itervalues() if q.name == spec['queue']]
 
@@ -1278,7 +1281,7 @@ class QueueManager(Component):
                 logger.error(failure_msg)
                 failed = True
         if failed:
-            raise xmlrpclib.Fault(42, failure_msg)
+            raise QueueError, failure_msg
         
         response = self.Queues.add_jobs(specs)
         return response
@@ -1324,7 +1327,7 @@ class QueueManager(Component):
                 queues.remove(queue)
         response = self.Queues.del_queues([queue.to_rx() for queue in queues])
         if failed:
-            raise xmlrpclib.Fault(31, "The %s queue(s) contains jobs. Either move the jobs to another queue, or \nuse 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s" % (",".join(failed), "\n".join([q.name for q in response])))
+            raise QueueError, "The %s queue(s) contains jobs. Either move the jobs to another queue, or \nuse 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s" % (",".join(failed), "\n".join([q.name for q in response]))
         else:
             return response
     del_queues = exposed(query(del_queues))
@@ -1423,14 +1426,14 @@ class QueueManager(Component):
     def move_jobs(self, specs, new_q_name):
         if new_q_name not in self.Queues:
             logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
-            raise xmlrpclib.Fault(30, "Error: queue '%s' does not exist" % new_q_name)
+            raise QueueError, "Error: queue '%s' does not exist" % new_q_name
         new_q = self.Queues[new_q_name]
         
         for job in self.Queues.get_jobs(specs):
             if job.queue==new_q_name:
-                raise xmlrpclib.Fault(42, "job %d already in queue '%s'" % (job.jobid, new_q_name))
+                raise QueueError, "job %d already in queue '%s'" % (job.jobid, new_q_name)
             if job.state != "queued":
-                raise xmlrpclib.Fault(43, "jobs must be in state 'queued' to move.  job %d is in state '%s'." % (job.jobid, job.state))   
+                raise QueueError, "jobs must be in state 'queued' to move.  job %d is in state '%s'." % (job.jobid, job.state)   
         
         results = []
         for q in self.Queues.itervalues():
@@ -1444,7 +1447,7 @@ class QueueManager(Component):
                     movelist.append(job)
                 else:
                     logger.error("attempted to move a job to queue'%s' which will not accept it" % new_q_name)
-                    raise xmlrpclib.Fault(42, "Error: queue '%s' will not accept job %r" % (new_q_name, job.to_rx()))
+                    raise QueueError, "Error: queue '%s' will not accept job %r" % (new_q_name, job.to_rx())
                     
             for job in movelist:
                 q.jobs.remove(job)

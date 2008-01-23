@@ -19,6 +19,7 @@ import Cobalt
 import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Components.cqm import QueueError
 
 
 def processfilter(cmdstr, jobdict):
@@ -263,17 +264,13 @@ if __name__ == '__main__':
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(1)
     except xmlrpclib.Fault, flt:
-        if flt.faultCode == 31:
-            logger.error("System draining. Try again later")
-            sys.exit(1)
-        elif flt.faultCode == 30:
-            logger.error("Job submission failed because: \n%s\nCheck 'cqstat -q' and the cqstat manpage for more details." % flt.faultString)
-            sys.exit(1)
-        elif flt.faultCode == 1:
-            logger.error("Job submission failed due to queue-manager failure")
+        if flt.faultCode == QueueError.fault_code:
+            logger.error(flt.faultString)
             sys.exit(1)
         else:
             logger.error("Job submission failed")
+            print repr(flt.faultCode)
+            print repr(QueueError.fault_code)
             logger.error(flt)
             sys.exit(1)
     except:

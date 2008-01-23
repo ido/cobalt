@@ -190,7 +190,7 @@ class Component (object):
             return result
         except Exception, e:
             self.logger.error(e, exc_info=True)
-            raise xmlrpclib.Fault(getattr(e, "fault_code", 1), "%s:%s" % (sys.exc_type, sys.exc_value))
+            raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
     
     def _listMethods (self):
         """Custom XML-RPC introspective method list."""
