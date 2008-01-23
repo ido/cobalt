@@ -996,6 +996,12 @@ class Job (Resource):
     
     _ctype = POINTER(rm_job_t)
     
+    @classmethod
+    def by_id (cls, id):
+        element_pointer = cls._ctype()
+        bridge.rm_get_job(db_job_id_t(id), byref(element_pointer))
+        return cls(element_pointer, free=True)
+    
     def __del__ (self):
         if self._free:
             bridge.rm_free_job(self)
