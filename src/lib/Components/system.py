@@ -209,10 +209,10 @@ class Simulator (Component):
     partitions = property(_get_partitions)
     
     def __getstate__(self):
-        return self._managed_partitions
+        return {'managed_partitions':self._managed_partitions, 'version':1}
     
     def __setstate__(self, state):
-        self._managed_partitions = state
+        self._managed_partitions = state['managed_partitions']
         self._partitions = PartitionDict()
         self.jobs = JobDict()
 
