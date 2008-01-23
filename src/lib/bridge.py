@@ -834,6 +834,20 @@ PARTITION_DEALLOCATING_FLAG = 0x10
 PARTITION_ERROR_FLAG = 0x20
 PARTITION_ALL_FLAG = 0xFF
 
+JOB_IDLE_FLAG = 0x1
+JOB_STARTING_FLAG = 0x2
+JOB_RUNNING_FLAG = 0x4
+JOB_TERMINATED_FLAG = 0x8
+JOB_ERROR_FLAG = 0x10
+JOB_DYING_FLAG = 0x20
+JOB_DEBUG_FLAG = 0x40
+JOB_LOAD_FLAG = 0x80
+JOB_LOADED_FLAG = 0x100
+JOB_BEGIN_FLAG = 0x200
+JOB_ATTACH_FLAG = 0x400
+JOB_KILLED_FLAG = 0x800
+JOB_ALL_FLAG = 0xFFF
+
 bridge.rm_get_partitions.argtypes = [rm_partition_state_t, POINTER(POINTER(rm_partition_list_t))]
 bridge.rm_get_partitions.restype = check_status
 
@@ -848,16 +862,20 @@ class PartitionList (Resource, ElementGenerator):
     _ctype = POINTER(rm_partition_list_t)
     
     @classmethod
-    def by_filter (cls, filter=PARTITION_ALL_FLAG):
+    def by_flag (cls, flag=PARTITION_ALL_FLAG):
         element_pointer = cls._ctype()
-        bridge.rm_get_partitions(c_int(filter), byref(element_pointer))
+        bridge.rm_get_partitions(c_int(flag), byref(element_pointer))
         return cls(element_pointer, free=True)
     
+    by_filter = by_flag # backwards-compatibility
+    
     @classmethod
-    def info_by_filter (cls, filter=PARTITION_ALL_FLAG):
+    def info_by_flag (cls, flag=PARTITION_ALL_FLAG):
         element_pointer = cls._ctype()
-        bridge.rm_get_partitions_info(c_int(filter), byref(element_pointer))
+        bridge.rm_get_partitions_info(c_int(flag), byref(element_pointer))
         return cls(element_pointer, free=True)
+    
+    info_by_flag = info_by_filter # backwards-compatibility
 
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
@@ -888,10 +906,10 @@ class JobList (Resource, ElementGenerator):
     _ctype = POINTER(rm_job_list_t)
     
     @classmethod
-    def by_flag (cls, flag):
+    def by_flag (cls, flag=JOB_ALL_FLAG):
         element_pointer = cls._ctype()
         bridge.rm_get_jobs(c_int(flag), byref(element_pointer))
-        return cls(pointer, free=True)
+        return cls(element_pointer, free=True)
     
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
