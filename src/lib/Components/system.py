@@ -503,7 +503,7 @@ class Simulator (Component):
     def signal_jobs (self, specs, signame="SIGINT"):
         """Simulate the signaling of a job."""
         self.logger.info("signal_jobs(%r, %r)" % (specs, signame))
-        if signame == "SIGKILL":
+        if signame == "SIGKILL" or signame == "SIGTERM":
             return self.del_jobs(specs)
         else:
             return self.get_jobs(specs)

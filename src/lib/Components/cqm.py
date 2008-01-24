@@ -479,12 +479,12 @@ class Job (Data):
         
         if self.mode == 'script':
             try:
-                pgroup = ComponentProxy("script-manager").signal_jobs([{'id':pgid}], "SIGKILL")
+                pgroup = ComponentProxy("script-manager").signal_jobs([{'id':pgid}], "SIGTERM")
             except ComponentLookupError:
                 logger.error("Failed to communicate with script manager")
                 raise ScriptManagerError
         try:
-            pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGKILL")
+            pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGTERM")
         except ComponentLookupError:
             logger.error("Failed to communicate with process manager")
             raise ProcessManagerError
