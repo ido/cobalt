@@ -875,7 +875,7 @@ class PartitionList (Resource, ElementGenerator):
         bridge.rm_get_partitions_info(c_int(flag), byref(element_pointer))
         return cls(element_pointer, free=True)
     
-    info_by_flag = info_by_filter # backwards-compatibility
+    info_by_filter = info_by_flag # backwards-compatibility
 
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)

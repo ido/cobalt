@@ -368,7 +368,7 @@ class BGSystem (Component):
         # do this last
         self.configure()
         
-        thread.start_new_thread(self.update_partition_state)
+        thread.start_new_thread(self.update_partition_state, tuple())
     
     def _get_partitions (self):
         return PartitionDict([
