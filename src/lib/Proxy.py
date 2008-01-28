@@ -9,18 +9,57 @@ load_config -- read configuration files
 
 __revision__ = '$Revision$'
 
-from xmlrpclib import ServerProxy, Fault
+from xmlrpclib import ServerProxy, Fault, _Method
 from ConfigParser import SafeConfigParser, NoSectionError
+import logging
+import socket
+import time
+import xmlrpclib
+import tlslite.errors
 
 import Cobalt
 
 __all__ = [
-    "ComponentProxy", "ComponentLookupError",
+    "ComponentProxy", "ComponentLookupError", "RetryMethod",
     "register_component", "find_configured_servers",
 ]
 
 local_components = dict()
 known_servers = dict()
+
+log = logging.getLogger("Proxy")
+
+class RetryMethod(_Method):
+    """Method with error handling and retries built in"""
+    log = logging.getLogger('xmlrpc')
+    def __call__(self, *args):
+        max_retries = 4
+        for retry in range(max_retries):
+            try:
+                return _Method.__call__(self, *args)
+            except xmlrpclib.ProtocolError:
+                log.error("Server failure: Protocol Error")
+                raise xmlrpclib.Fault(20, "Server Failure")
+            except socket.error, (err, msg):
+                if retry == 3:
+                    log.error("Server failure: %s" % msg)
+                    raise xmlrpclib.Fault(20, msg)
+            except tlslite.errors.TLSFingerprintError, err:
+                log.error("Server fingerprint did not match")
+                errmsg = err.message.split()
+                log.error("Got %s expected %s" % (errmsg[3], errmsg[4]))
+                raise SystemExit, 1
+            except tlslite.errors.TLSError, err:
+                log.error("Unexpected TLS Error: %s. Retrying" % \
+                          (err.message))
+            except:
+                log.error("Unknown failure", exc_info=1)
+                break
+            time.sleep(0.5)
+        raise xmlrpclib.Fault(20, "Server Failure")
+
+# sorry jon
+xmlrpclib._Method = RetryMethod
 
 def register_component (component):
     local_components[component.name] = component
