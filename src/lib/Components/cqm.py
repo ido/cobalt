@@ -77,6 +77,14 @@ class Job (Data):
 
     def __init__(self, spec):
         Data.__init__(self, spec)
+        
+        # __setattr__ is going to try to refer to this, so we better build it first
+        self.timers = dict(
+            queue = Timer(),
+            current_queue = Timer(),
+            user = Timer(),
+        )
+
         self.jobid = spec.get("jobid")
         self.jobname = spec.get("jobname", "N/A")
         self.state = spec.get("state", "queued")
@@ -111,11 +119,6 @@ class Job (Data):
         self.kerneloptions = spec.get("kerneloptions")
         self.tag = spec.get("tag", "job")
         
-        self.timers = dict(
-            queue = Timer(),
-            current_queue = Timer(),
-            user = Timer(),
-        )
         self.timers['queue'].Start()
         self.timers['current_queue'].Start()
         self.staged = 0
@@ -483,11 +486,12 @@ class Job (Data):
             except ComponentLookupError:
                 logger.error("Failed to communicate with script manager")
                 raise ScriptManagerError
-        try:
-            pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGTERM")
-        except ComponentLookupError:
-            logger.error("Failed to communicate with process manager")
-            raise ProcessManagerError
+        else:
+            try:
+                pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGTERM")
+            except ComponentLookupError:
+                logger.error("Failed to communicate with process manager")
+                raise ProcessManagerError
 
     def over_time(self):
         '''Check if a job has run over its time'''
@@ -940,8 +944,6 @@ class JobList(DataList):
     def __init__(self, q):
         self.queue = q
         self.id_gen = cqm_id_gen
-        print "creating a JobList"
-        print "next id", self.id_gen.idnum
         
     def add_helper(self, job, *cargs):
         job.pbslog.log("Q",
@@ -1208,7 +1210,6 @@ class QueueManager(Component):
 #         if not [q for q in self.Queues if q.name == 'default']:
 #             self.Queues.Add([{'tag':'queue', 'name':'default'}])
 
-        print "i'm in __init__"
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
         self.id_gen = IncrID()
@@ -1301,6 +1302,9 @@ class QueueManager(Component):
                     # Need acct log message for forced delete, 
                     # otherwise can't tell if job ever ended
                     job.Kill("Job %s killed based on admin request")
+                    
+                    # FIXME
+                    # i think the below *shouldn't* be there -- it seems like job.Kill will eventually make it happen
                     q.jobs.q_del([spec])
                 else:
                     job.Kill("Job %s killed based on user request")
