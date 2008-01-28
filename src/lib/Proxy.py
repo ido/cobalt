@@ -44,11 +44,6 @@ class RetryMethod(_Method):
                 if retry == 3:
                     log.error("Server failure: %s" % msg)
                     raise xmlrpclib.Fault(20, msg)
-            except tlslite.errors.TLSFingerprintError, err:
-                log.error("Server fingerprint did not match")
-                errmsg = err.message.split()
-                log.error("Got %s expected %s" % (errmsg[3], errmsg[4]))
-                raise SystemExit, 1
             except tlslite.errors.TLSError, err:
                 log.error("Unexpected TLS Error: %s. Retrying" % \
                           (err.message))
