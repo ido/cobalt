@@ -430,7 +430,7 @@ class BGSystem (Component):
 
         # this is going to hold partition objects from the bridge (not our own Partition)
         wiring_cache = {}
-        
+        bp_cache = {}
         for partition_def in system_def:
             node_list = []
             nc_count = len(list(partition_def.node_cards))
@@ -446,9 +446,11 @@ class BGSystem (Component):
             else:
                 try:
                     for bp in partition_def.base_partitions:
-                        bp_name = bp.id
-                        for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
-                            node_list.append(_get_node_card(bp_name + "-" + nc.id))
+                        if bp.id not in bp_cache:
+                            bp_cache[bp.id] = []
+                            for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
+                                bp_cache[bp.id].append(_get_node_card(bp.id + "-" + nc.id))
+                        node_list += bp_cache[bp.id]
                 except BridgeException:
                     print "Error communicating with the bridge during initial config.  Terminating."
                     sys.exit(1)
