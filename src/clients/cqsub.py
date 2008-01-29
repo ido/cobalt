@@ -232,6 +232,9 @@ if __name__ == '__main__':
     if opts['held']:
         jobspec.update({'state':'hold'})
     if opts['env']:
+        if sys.argv.count('-e') > 1:
+            logger.error("Use of multiple -e options is not supported. Specify multiple environment variables with -e FOO=1:BAR=2")
+            raise SystemExit(1)
         jobspec['envs'] = {}
         key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]
         for kv in key_value_pairs:
