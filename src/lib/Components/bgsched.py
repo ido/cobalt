@@ -92,6 +92,9 @@ class Reservation (Data):
         return False
 
     def job_within_reservation(self, job):
+        if not self.is_active():
+            return False
+        
         if job.queue == self.queue:
             job_end = time.time() + 60 * float(job.walltime)
             if not self.cycle:
