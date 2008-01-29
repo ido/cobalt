@@ -92,7 +92,10 @@ def print_tabular(rows):
     print fstring % rows[0]
     print ((-1 * sum(cmax))  + (len(cmax) * 2)) * '='
     for row in rows[1:]:
-        print fstring % row
+        try:
+            print fstring % row
+        except IOError:
+            return
 
 def printTabular(rows, centered = []):
     '''print data in tabular format'''
@@ -112,10 +115,13 @@ def printTabular(rows, centered = []):
             else:
                 row[column] = str(row[column]).ljust(width)
         total += width + 2
-    print '  '.join(rows[0])
-    print total * '='
-    for row in rows[1:]:
-        print '  '.join(row)
+    try:
+        print '  '.join(rows[0])
+        print total * '='
+        for row in rows[1:]:
+            print '  '.join(row)
+    except IOError:
+        return
 
 def print_dtab(dtab, fields = []):
     '''print dictionary data in tabular format'''
