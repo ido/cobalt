@@ -159,11 +159,11 @@ if __name__ == '__main__':
     if opts['q']:  # querying for queues
         query = [{'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
-                  'maxqueued':'*', 'maxusernodes':'*', 'notify':'*',
+                  'maxqueued':'*', 'maxusernodes':'*',
                   'totalnodes':'*', 'state':'*'} for qname in names]
         header = ['Name', 'State', 'Users', 'MinTime', 'MaxTime',
                   'MaxRunning', 'MaxQueued', 'MaxUserNodes',
-                  'TotalNodes', 'Notify']
+                  'TotalNodes']
         response = cqm.get_queues(query)
     else:
         if opts['full'] and not opts['long']:
