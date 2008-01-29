@@ -19,7 +19,7 @@ import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
-__helpmsg__ = "Usage: qstat [-d] [-f] [-l] [--header] <jobid> <jobid>\n" + \
+__helpmsg__ = "Usage: qstat [-d] [-f] [-l] [--header] [--schedinfo] <jobid> <jobid>\n" + \
               "       qstat [-d] -Q <queue> <queue>\n" + \
               "       qstat [--version]"
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
-               'Q':'Q'}
+               'Q':'Q', 'schedinfo':'schedinfo'}
     doptions = {'header':'header'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
@@ -94,6 +94,41 @@ if __name__ == '__main__':
     if opts['version']:
         print "qstat %s" % __revision__
         sys.exit(0)
+        
+    if opts['schedinfo']:
+        print "The most recent scheduling attempt reports:\n"
+        cqm = ComponentProxy("queue-manager", defer=False)
+        sched = ComponentProxy("scheduler", defer=False)
+        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'state':"*"}])
+        queues = cqm.get_queues([{'name':"*", 'state':"*"}])
+        sched_info = sched.get_sched_info()
+        
+        for job in jobs:
+            if len(args) > 0:
+                if str(job['jobid']) not in args:
+                    continue
+                
+            print "job", job['jobid'], ":"
+            print "    ",
+            if job['state'] == 'running':
+                print "the job is running"
+            elif [q['state'] for q in queues if q['name']==job['queue']][0] != 'running':
+                print "the queue '%s' isn't running" % job['queue']
+            elif sched_info.has_key(str(job['jobid'])):
+                print sched_info[str(job['jobid'])]
+            elif job['queue'].startswith("R."):
+                res_name = job['queue'][2:]
+                res_list = sched.get_reservations([{'name':res_name, 'active':"*"}])
+                if res_list and not res_list[0]['active']:
+                    print "the reservation '%s' is not active" % res_name
+                else:
+                    print "the job is waiting in an active reservation '%s'" % res_name
+                
+            else:
+                print "maybe the potential locations for the job are blocked or busy?"
+            
+        sys.exit()
+        
     Cobalt.Logging.setup_logging('qstat', to_syslog=False, level=level)
 
     jobid = None

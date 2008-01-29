@@ -389,6 +389,10 @@ class BGSched (Component):
         for job in active_jobs:
             cur_res = self.reservations[job.queue[2:]]
             if not cur_res.job_within_reservation(job):
+                if cur_res.is_active():
+                    self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % cur_res.name
+                else:
+                    self.sched_info[job.jobid] = "reservation '%s' is not active yet" % cur_res.name
                 continue
             
             for partition in available_partitions:
@@ -446,6 +450,9 @@ class BGSched (Component):
         for job_name in self.started_jobs.keys():
             if (now - self.started_jobs[job_name]) > 60:
                 del self.started_jobs[job_name]
+
+        # cleanup the sched_info information if a job is no longer listed as "active"
+        self.sched_info = {}
                 
         scriptm = ComponentProxy("script-manager")
         
@@ -504,12 +511,6 @@ class BGSched (Component):
             if not self.started_jobs.has_key(j.jobid):
                 active_jobs.append(j)
                 
-        # cleanup the sched_info information if a job is no longer listed as "active"
-        active_job_ids = [job.jobid for job in active_jobs]
-        for jobid in self.sched_info.keys():
-            if jobid not in active_job_ids:
-                del self.sched_info[jobid]
-        
         active_jobs.sort(fifocmp)
         
         # this is the bit that actually picks which job to run
@@ -525,10 +526,7 @@ class BGSched (Component):
                         # if the proposed job overlaps an active reservation, don't run it
                         if res.overlaps(partition, time.time(), 60 * float(job.walltime)):
                             really_okay = False
-                            if job.queue == res.queue:
-                                self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % res.name
-                            else:
-                                self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
+                            self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
                             break
                             
                     if really_okay:

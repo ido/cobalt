@@ -124,7 +124,7 @@ if __name__ == '__main__':
                     print "the job is waiting in an active reservation '%s'" % res_name
                 
             else:
-                print "maybe the scheduler hasn't seen the job yet?"
+                print "maybe the potential locations for the job are blocked or busy?"
             
         sys.exit()
     
