@@ -54,6 +54,18 @@ class Reservation (Data):
     
     active = property(_get_active)
     
+    def update (self, spec):
+        if spec.has_key("users"):
+            qm = ComponentProxy("queue-manager")
+            try:
+                qm.set_queues([{'name':self.queue,}], {'users':spec['users']})
+            except ComponentLookupError:
+                logger.error("unable to contact queue manager when updating reservation users")
+                raise
+        # try the above first -- if we can't contact the queue-manager, don't update the users
+        Data.update(self, spec)
+
+    
     def overlaps(self, partition, start, duration):
         '''check job overlap with reservations'''
         if start + duration < self.start:
