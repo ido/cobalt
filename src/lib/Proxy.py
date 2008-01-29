@@ -47,6 +47,8 @@ class RetryMethod(_Method):
             except tlslite.errors.TLSError, err:
                 log.error("Unexpected TLS Error: %s. Retrying" % \
                           (err.message))
+            except xmlrpclib.Fault:
+                raise
             except:
                 log.error("Unknown failure", exc_info=1)
                 break
