@@ -118,6 +118,7 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     """
     
     allow_reuse_address = True
+    logger = logging.getLogger("Cobalt.Server.TCPServer")
     
     def __init__ (self, server_address, RequestHandlerClass, keyfile=None, certfile=None, reqCert=False, timeout=None):
         
@@ -175,9 +176,13 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     def finish_request (self, *args, **kwargs):
         """Support optional ssl/tls handshaking."""
         if self.private_key and self.certificate_chain:
-            TLSSocketServerMixIn.finish_request(self, *args, **kwargs)
+            cls = TLSSocketServerMixIn
         else:
-            SocketServer.TCPServer.finish_request(self, *args, **kwargs)
+            cls = SocketServer.TCPServer
+        try:
+            cls.finish_request(self, *args, **kwargs)
+        except socket.error:
+            self.logger.error("Socket error occurred in send")
     
     def _get_secure (self):
         return self.private_key and self.certificate_chain
@@ -270,8 +275,6 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
     require_auth -- the request handler is requiring authorization
     credentials -- valid credentials being used for authentication
     """
-    
-    logger = logging.getLogger("Cobalt.Server.XMLRPCServer")
     
     def __init__ (self, server_address, RequestHandlerClass=None,
                   keyfile=None, certfile=None,
