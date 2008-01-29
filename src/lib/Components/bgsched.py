@@ -141,6 +141,18 @@ class Reservation (Data):
         if now <= self.duration:
             return True
 
+    def is_over(self):
+        # reservations with a cycle time are never "over"
+        if self.cycle:
+            return False
+        
+        stime = time.time()
+        if (self.start + self.duration) <= stime:
+            return True
+        else:
+            return False
+        
+        
 
 class ReservationDict (DataDict):
     
@@ -465,6 +477,12 @@ class BGSched (Component):
 
         # cleanup the sched_info information if a job is no longer listed as "active"
         self.sched_info = {}
+        
+        # cleanup any reservations which have expired
+        for res in self.reservations.values():
+            if res.is_over():
+                self.logger.info("reservation %s has ended; removing" % res.name)
+                self.reservations.q_del([{'name': res.name}])
                 
         scriptm = ComponentProxy("script-manager")
         
