@@ -803,12 +803,13 @@ class BGJob(Job):
             postscripts = self.config.get('postscript').split(':')
             extra = []
             for field in self.fields:
-                if isinstance(self.get(field), list):
-                    extra.append('%s="%s"' % (field, ':'.join(self.get(field))))
-                elif isinstance(self.get(field), dict):
-                    extra.append('%s="{%s}"' % (field, str(self.get(field))))
+                fdata = getattr(self, field)
+                if isinstance(fdata, list):
+                    extra.append('%s="%s"' % (field, ':'.join(fdata)))
+                elif isinstance(fdata, dict):
+                    extra.append('%s="{%s}"' % (field, str(fdata)))
                 else:
-                    extra.append('%s="%s"' % (field, self.get(field)))
+                    extra.append('%s="%s"' % (field, fdata))
             for p in postscripts:
                 try:
                     rc, out, err = Cobalt.Util.runcommand("%s %s" % (p, " ".join(extra)))
