@@ -732,6 +732,28 @@ class BGJob(Job):
         if not self.errorpath:
             self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
 
+        if self.config.get('prescript'):
+            prescripts = self.config.get('prescript').split(':')
+            extra = []
+            for key in self.fields:
+                value = getattr(self, key)
+                if isinstance(value, list):
+                    extra.append("%s=%s" % (key, ':'.join(value)))
+                elif isinstance(value, dict):
+                    extra.append("%s={%s}" % (key, str(value)))
+                else:
+                    extra.append("%s=%s" % (key, value))
+            for p in prescripts:
+                try:
+                    rc, out, err = Cobalt.Util.runcommand("%s %s" % \
+                                                          (p, " ".join(extra)))
+                    if rc != 0:
+                        logger.info("Job %s/%s: return of prescript %s was %d, error is %s" %
+                                    (self.jobid, self.user, p, rc, "\n".join(err)))
+                except Exception, e:
+                    logger.info("Job %s/%s: exception with prescript %s, error is %s" %
+                                (self.jobid, self.user, p, e))
+
         if self.mode == 'script':
             try:
                 pgroup = ComponentProxy("script-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'outputfile':self.outputpath,
