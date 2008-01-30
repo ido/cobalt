@@ -193,6 +193,8 @@ if __name__ == '__main__':
             else:
                 logger.error("Unknown bgtype %s" % (sys_type))
                 sys.exit(1)
+        elif opts.get('mode', 'co') == 'dual':
+            opts['proccount'] = str(2 * int(opts['nodecount']))
         else:
             opts['proccount'] = opts['nodecount']
     else:
