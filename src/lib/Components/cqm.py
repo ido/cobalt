@@ -700,7 +700,7 @@ class BGJob(Job):
         subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.jobid, self.user, self.queue, self.location)
         mmsg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.jobid, self.user, self.location, self.queue, time.strftime('%c', time.localtime()))
         toaddr = []
-        if self.adminemail != '*':
+        if self.adminemail:
             toaddr = toaddr + self.adminemail.split(':')
         if self.notify:
             toaddr = toaddr + self.notify.split(':')
@@ -716,7 +716,7 @@ class BGJob(Job):
         subj = 'Cobalt: Job %s/%s finished - %s/%s %s' % (self.jobid, self.user, self.queue, self.location, self.GetStats())
         mmsg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.jobid, self.user, self.location, self.queue, time.strftime('%c', time.localtime()), self.GetStats())
         toaddr = []
-        if self.adminemail != '*':
+        if self.adminemail:
             toaddr = toaddr + self.adminemail.split(':')
         if self.notify:
             toaddr = toaddr + self.notify.split(':')
@@ -1103,7 +1103,7 @@ class Queue (Data):
         self.cron = spec.get("cron")
         self.name = spec.get("name")
         self.state = spec.get("state", "stopped")
-        self.adminemail = spec.get("adminemail", "*")
+        self.adminemail = spec.get("adminemail", None)
         self.policy = spec.get("policy", "default")
         self.maxuserjobs = spec.get("maxuserjobs")
         self.jobs = JobList(self)
