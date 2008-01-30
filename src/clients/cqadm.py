@@ -12,7 +12,7 @@ from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
-              '[--drainq] [--killq] [--setq property=value:property=value] --policy=<qpolicy> <queue> <queue>\n' + \
+              '[--drainq] [--killq] [--setq "property=value property=value"] [--unsetq "property property"] --policy=<qpolicy> <queue> <queue>\n' + \
               '       cqadm [-j <next jobid>]'
 
 def get_queues(cqm_conn):
@@ -35,7 +35,7 @@ if __name__ == '__main__':
                'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
                 'i':'index', 'policy':'policy', 'run':'run',
-                'setq':'setq', 'time':'time'}
+                'setq':'setq', 'time':'time', 'unsetq':'unsetq', }
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # set the spec whether working with queues or jobs
     if opts['addq'] or opts['delq'] or opts['getq'] or opts['setq'] \
            or opts['startq'] or opts['stopq'] or opts['drainq'] \
-           or opts['killq'] or opts['policy']:
+           or opts['killq'] or opts['policy'] or opts['unsetq']:
         spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
         for i in range(len(args)):
@@ -178,6 +178,12 @@ if __name__ == '__main__':
                 else:
                     print 'Time for ' + prop + ' is not valid, must be in hh:mm:ss or mm format'
             updates.update({prop.lower():val})
+        response = cqm.set_queues(spec, updates)
+    elif opts['unsetq']:
+        updates = {}
+        for prop in opts['unsetq'].split(' '):
+            updates[prop.lower()] = None
+
         response = cqm.set_queues(spec, updates)
     elif opts['stopq']:
         response = cqm.set_queues(spec, {'state':'stopped'})

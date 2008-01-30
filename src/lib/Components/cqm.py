@@ -1427,11 +1427,13 @@ class QueueManager(Component):
 
     def set_queues(self, specs, updates):
         def _setQueues(queue, newattr):
-            # FIXME : fix this so we don't add "restriction" fields to the queue
             queue.update(newattr)
             for key in newattr:
                 if key in Restriction.__checks__:
-                    queue.restrictions[key] = Restriction({'name':key, 'value':newattr[key]}, queue)
+                    if newattr[key] is None and queue.restrictions.has_key(key):
+                        del queue.restrictions[key]
+                    else:
+                        queue.restrictions[key] = Restriction({'name':key, 'value':newattr[key]}, queue)
         return self.Queues.get_queues(specs, _setQueues, updates)
     set_queues = exposed(query(set_queues))
         
