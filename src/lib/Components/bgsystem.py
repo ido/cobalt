@@ -379,7 +379,11 @@ class BGSystem (Component):
     partitions = property(_get_partitions)
 
     def __getstate__(self):
-        return {'managed_partitions':self._managed_partitions, 'version':1}
+        return {'managed_partitions':self._managed_partitions, 'version':1,
+                'partition_flags': dict([(p.name, (p.scheduled, p.functional))
+                                          for p in self._partitions \
+                                          if p.scheduled != None
+                                          or p.functional != None])}
     
     def __setstate__(self, state):
         self._managed_partitions = state['managed_partitions']
@@ -389,6 +393,13 @@ class BGSystem (Component):
         self._partitions_lock = thread.allocate_lock()
 
         self.configure()
+        if 'partition_flags' in state:
+            for pname, flags in state['partition_flags']:
+                if pname in self._partitions:
+                    self._partitions[pname].scheduled = flags[0]
+                    self._partitions[pname].functional = flags[1]
+                else:
+                    logger.info("Partition %s is no longer defined" % pname)
         
         thread.start_new_thread(self.update_partition_state, tuple())
     def save_me(self):
