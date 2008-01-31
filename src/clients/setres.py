@@ -9,11 +9,12 @@ import xmlrpclib
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
-helpmsg = '''Usage: setres.py [--version] [-a] [-x] [-m] -n name -s <starttime> -d <duration> -p <partition> -u <user> [partion1] .. [partionN]
+helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
+                  -c <cycle time> -p <partition> -u <user> [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
-user and name are optional
--a automatically find all dependancies of the partion(s) listed'''
+cycle time may be in minutes or DD:HH:MM:SS
+user, name and cycle time are optional'''
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
