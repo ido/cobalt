@@ -326,7 +326,7 @@ class BGSystem (Component):
 
     def __getstate__(self):
         return {'managed_partitions':self._managed_partitions, 'version':1,
-                'partition_flags': dict([(p.name, (p.scheduled, p.functional))
+                'partition_flags': dict([(p.name, (p.scheduled, p.functional, p.queue))
                                           for p in self._partitions \
                                           if p.scheduled != None
                                           or p.functional != None])}
@@ -344,6 +344,7 @@ class BGSystem (Component):
                 if pname in self._partitions:
                     self._partitions[pname].scheduled = flags[0]
                     self._partitions[pname].functional = flags[1]
+                    self._partitions[pname].queue = flags[2]
                 else:
                     logger.info("Partition %s is no longer defined" % pname)
         
