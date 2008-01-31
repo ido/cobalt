@@ -23,8 +23,8 @@ from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 logger = logging.getLogger('cqm')
 cqm_id_gen = None
 
-class ProcessManagerError(Exception):
-    '''This error occurs when communications with the process manager fail'''
+class SystemError(Exception):
+    '''This error occurs when communications with the system fail'''
     pass
 
 class TimerException(Exception):
@@ -335,7 +335,7 @@ class Job (Data):
                 #self.output = pgroups[0]['output']
                 #self.error = pgroups[0]['error']
             except xmlrpclib.Fault:
-                logger.error("Error contacting process manager for finalize, requeueing")
+                logger.error("Error contacting the system for finalize, requeueing")
                 self.steps = ['FinalizeStage'] + self.steps
                 self.SetActive()
                 return
@@ -413,8 +413,8 @@ class Job (Data):
                  'stdout':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin",
                  'stdin':self.inputfile, 'kerneloptions':self.kerneloptions}])
         except ComponentLookupError:
-            logger.error("Failed to communicate with process manager")
-            raise ProcessManagerError
+            logger.error("Failed to communicate with the system")
+            raise SystemError()
         self.pgid['user'] = pgroup[0]['id']
         self.SetPassive()
 
@@ -461,8 +461,8 @@ class Job (Data):
                  'args':[self.user], 'location':location, 'stdin':self.inputfile,
                  'kerneloptions':self.kerneloptions}])
         except ComponentLookupError:
-            logger.error("Failed to communicate with process manager")
-            raise ProcessManagerError
+            logger.error("Failed to communicate with the system")
+            raise SystemError()
         
         self.pgid[cmd] = pgroup[0]['id']
 
@@ -492,6 +492,12 @@ class Job (Data):
             except ComponentLookupError:
                 logger.error("Failed to communicate with process manager")
                 raise ProcessManagerError
+        else:
+            try:
+                pgroup = ComponentProxy("system").signal_process_groups([{'id':pgid}], "SIGTERM")
+            except ComponentLookupError:
+                logger.error("Failed to communicate with the system")
+                raise SystemError()
 
     def over_time(self):
         '''Check if a job has run over its time'''
@@ -640,7 +646,7 @@ class BGJob(Job):
             if config.get(param, 'nothere') == 'nothere':
                 print "Missing option in cobalt config file: %s." % (param)
                 print "This is required only if dynamic kernel support is enabled"
-                raise SystemExit, 1
+                sys.exit(1)
 
     def __init__(self, spec):
         Job.__init__(self, spec)
@@ -793,8 +799,8 @@ class BGJob(Job):
                     walltime = self.walltime,
                 )])
             except ComponentLookupError:
-                logger.error("Failed to communicate with process manager")
-                raise ProcessManagerError
+                logger.error("Failed to communicate with the system")
+                raise SystemError()
             
             if not pgroup[0].has_key('id'):
                 logger.error("Process Group creation failed for Job %s" % self.jobid)
@@ -873,7 +879,7 @@ class ScriptMPIJob (Job):
             if config.get(param, 'nothere') == 'nothere':
                 print "Missing option in cobalt config file: %s." % (param)
                 print "This is required only if dynamic kernel support is enabled"
-                raise SystemExit, 1
+                sys.exit(1)
 
     def __init__(self, spec):
         self.bgkernel = spec.get("bgkernel")
@@ -936,8 +942,8 @@ class ScriptMPIJob (Job):
                                         'stdin':self.inputfile, 'true_mpi_args':self.true_mpi_args, 
                                         'envs':{}, 'size':0, 'executable':"this will be ignored"}])
         except ComponentLookupError:
-            logger.error("Failed to communicate with process manager")
-            raise ProcessManagerError
+            logger.error("Failed to communicate with the system")
+            raise SystemError()
 
         if not pgroup[0].has_key('id'):
             logger.error("Process Group creation failed for Job %s" % self.jobid)
@@ -1232,11 +1238,6 @@ class QueueManager(Component):
     def __init__(self, *args, **kwargs):
         self.Queues = QueueDict()
         Component.__init__(self, *args, **kwargs)
-        
-        # make sure default queue exists
-#         if not [q for q in self.Queues if q.name == 'default']:
-#             self.Queues.Add([{'tag':'queue', 'name':'default'}])
-
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
         self.id_gen = IncrID()
@@ -1370,13 +1371,13 @@ class QueueManager(Component):
         return self.cqp.Get(data)
     get_history = exposed(get_history)
 
-    def pm_sync(self):
-        '''Resynchronize with the process manager'''
+    def poll_process_groups (self):
+        '''Resynchronize with the system'''
         
         try:
             pgroups = ComponentProxy("process-manager").get_jobs([{'id':'*', 'state':'running'}])
         except ComponentLookupError:
-            logger.error("Failed to communicate with process manager")
+            logger.error("Failed to communicate with the system")
             return
         live = [item['id'] for item in pgroups]
         for job in [j for queue in self.Queues.itervalues() for j in queue.jobs if j.mode!='script']:
@@ -1385,7 +1386,7 @@ class QueueManager(Component):
                 if pgid not in live:
                     self.logger.info("Found dead pg for job %s" % (job.jobid))
                     job.CompletePG(pgid)
-    pm_sync = automatic(pm_sync)
+    poll_process_groups = automatic(poll_process_groups)
 
     def sm_sync(self):
         '''Resynchronize with the script manager'''

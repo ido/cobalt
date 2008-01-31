@@ -41,15 +41,11 @@ def run_component (component, argv=None, register=True):
             daemon = True
             pidfile = item[1]
     
-    component.logger.setLevel(logging.INFO)
-    #Cobalt.Logging.log_to_stderr(component.logger)
     logging.getLogger().setLevel(logging.INFO)
     Cobalt.Logging.log_to_stderr(logging.getLogger())
 
     location = find_intended_location(component)
     server = XMLRPCServer(location, keyfile="/etc/cobalt.key", certfile="/etc/cobalt.key", register=register)
-    server.logger.setLevel(logging.INFO)
-    Cobalt.Logging.log_to_stderr(server.logger)
     server.register_instance(component)
     
     if daemon:

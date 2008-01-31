@@ -2,11 +2,17 @@
 
 __revision__ = '$Revision$'
 
+import sys
+
 from Cobalt.Components.slp import TimingServiceLocator
 from Cobalt.Components.base import run_component
 
-try:
+def main ():
     slp = TimingServiceLocator()
     run_component(slp, register=False)
-except KeyboardInterrupt:
-    pass
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(1)

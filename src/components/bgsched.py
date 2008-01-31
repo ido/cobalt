@@ -2,18 +2,22 @@
 
 __revision__ = '$Revision: $'
 
-import cPickle
+import sys
+import cPickle as pickle
 
 from Cobalt.Components.bgsched import BGSched
 from Cobalt.Components.base import run_component
 
-try:
+def main ():
     try:
-        scheduler = cPickle.load(open('/var/spool/cobalt/bgsched'))
+        scheduler = pickle.load(open('/var/spool/cobalt/bgsched'))
     except:
-        print "failed to restore state, creating new bgsched object"
+        print >> sys.stderr, "failed to restore state, creating new bgsched object"
         scheduler = BGSched()
-
     run_component(scheduler)
-except KeyboardInterrupt:
-    pass
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(1)

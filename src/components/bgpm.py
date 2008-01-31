@@ -4,11 +4,17 @@
 
 __revision__ = '$Revision$'
 
+import sys
+
 from Cobalt.Components.cpm import ProcessManager
 from Cobalt.Components.base import run_component
 
-try:
+def main ():
     cpm = ProcessManager()
     run_component(cpm)
-except KeyboardInterrupt:
-    pass
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(1)
