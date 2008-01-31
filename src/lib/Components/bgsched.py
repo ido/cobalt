@@ -257,7 +257,7 @@ class PartitionDict (ForeignDataDict):
                     return False
             else:
                 if part.scheduled:
-                    if int(job.size) <= part.size < desired:
+                    if int(job.nodes) <= int(part.size) < desired:
                         desired = part.size
         return target_partition._can_run(job) and target_partition.size == desired
                 
@@ -304,7 +304,7 @@ class JobDict(ForeignDataDict):
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
-        "name", "state", "policy"
+        "name", "state", "policy", "priority"
     ]
 
     def __init__(self, spec):
@@ -313,6 +313,7 @@ class Queue(ForeignData):
         self.name = spec.pop("name", None)
         self.state = spec.pop("state", None)
         self.policy = spec.pop("policy", None)
+        self.priority = spec.pop("priority", 0)
         
         
 
@@ -331,7 +332,7 @@ class QueueDict(ForeignDataDict):
     key = 'name'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (queue)")
     __function__ = ComponentProxy("queue-manager").get_queues
-    __fields__ = ['name', 'state', 'policy']
+    __fields__ = ['name', 'state', 'policy', 'priority']
 
     def Sync(self):
         qp = [(q.name, q.policy) for q in self.itervalues()]
@@ -368,6 +369,16 @@ class BGSched (Component):
         self.assigned_partitions = {}
         self.sched_info = {}
         self.started_jobs = {}
+
+    def prioritycmp(self, job1, job2):
+        """Compare 2 jobs first using queue priority and then first-in, first-out."""
+        
+        val = cmp(self.queues[job1.queue].priority, self.queues[job2.queue].priority)
+        if val == 0:
+            return cmp(job1.jobid, job2.jobid)
+        else:
+            # we want the higher priority first
+            return -val
 
         
     def save_me(self):
@@ -414,7 +425,7 @@ class BGSched (Component):
             if not self.started_jobs.has_key(j.jobid):
                 active_jobs.append(j)
 
-        active_jobs.sort(fifocmp)
+        active_jobs.sort(self.prioritycmp)
             
         for job in active_jobs:
             cur_res = self.reservations[job.queue[2:]]
@@ -547,7 +558,7 @@ class BGSched (Component):
             if not self.started_jobs.has_key(j.jobid):
                 active_jobs.append(j)
                 
-        active_jobs.sort(fifocmp)
+        active_jobs.sort(self.prioritycmp)
         
         # this is the bit that actually picks which job to run
         for job in active_jobs:

@@ -8,6 +8,7 @@ import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Util
 import getpass
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Components.cqm import QueueError
 
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
@@ -20,7 +21,7 @@ def get_queues(cqm_conn):
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*',
-             'adminemail':'*', 'totalnodes':'*', 'cron':'*', 'policy':'*'}]
+             'adminemail':'*', 'totalnodes':'*', 'cron':'*', 'policy':'*', 'priority':'*'}]
     return cqm_conn.get_queues(info)
 
 if __name__ == '__main__':
@@ -133,13 +134,13 @@ if __name__ == '__main__':
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
         header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                    'MaxQueued', 'MaxUserNodes', 'TotalNodes',
-                   'AdminEmail', 'State', 'Cron', 'Policy')]
+                   'AdminEmail', 'State', 'Cron', 'Policy', 'Priority')]
         datatoprint = [(q['name'], q['users'],
                         q['mintime'], q['maxtime'],
                         q['maxrunning'], q['maxqueued'],
                         q['maxusernodes'], q['totalnodes'],
                         q['adminemail'], q['state'],
-                        q['cron'], q['policy'])
+                        q['cron'], q['policy'], q['priority'])
                        for q in response]
         datatoprint.sort()
         Cobalt.Util.print_tabular(header + datatoprint)
@@ -178,7 +179,12 @@ if __name__ == '__main__':
                 else:
                     print 'Time for ' + prop + ' is not valid, must be in hh:mm:ss or mm format'
             updates.update({prop.lower():val})
-        response = cqm.set_queues(spec, updates)
+        try:
+            response = cqm.set_queues(spec, updates)
+        except xmlrpclib.Fault, flt:
+            if flt.faultCode == QueueError.fault_code:
+                print flt.faultString
+                sys.exit(1)
     elif opts['unsetq']:
         updates = {}
         for prop in opts['unsetq'].split(' '):

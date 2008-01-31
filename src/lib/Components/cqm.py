@@ -488,12 +488,6 @@ class Job (Data):
                 raise ScriptManagerError
         else:
             try:
-                pgroup = ComponentProxy("process-manager").signal_jobs([{'id':pgid}], "SIGTERM")
-            except ComponentLookupError:
-                logger.error("Failed to communicate with process manager")
-                raise ProcessManagerError
-        else:
-            try:
                 pgroup = ComponentProxy("system").signal_process_groups([{'id':pgid}], "SIGTERM")
             except ComponentLookupError:
                 logger.error("Failed to communicate with the system")
@@ -1138,6 +1132,7 @@ class Queue (Data):
         self.adminemail = spec.get("adminemail", None)
         self.policy = spec.get("policy", "default")
         self.maxuserjobs = spec.get("maxuserjobs")
+        self.priority = spec.get("priority", 0)
         self.jobs = JobList(self)
         self.restrictions = RestrictionDict()
     
@@ -1432,6 +1427,14 @@ class QueueManager(Component):
 
     def set_queues(self, specs, updates):
         def _setQueues(queue, newattr):
+            if 'priority' in newattr:
+                if newattr['priority'] is None:
+                    newattr['priority'] = 0
+                else:
+                    try:
+                        newattr['priority'] = int(newattr['priority'])
+                    except ValueError:
+                        raise QueueError("%s is not a valid queue priority" % newattr['priority'])
             queue.update(newattr)
             for key in newattr:
                 if key in Restriction.__checks__:
