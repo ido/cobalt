@@ -650,6 +650,10 @@ class BGJob(Job):
         self.adminemail = spec.get("adminemail")
         self.location = spec.get("location")
         self.outputpath = spec.get("outputpath")
+        if self.outputpath:
+            jname = self.outputpath.split('/')[-1].split('.output')[0]
+            if jname and jname != str(self.jobid):
+                self.jobname = jname
         self.outputdir = spec.get("outputdir")
         self.errorpath = spec.get("errorpath")
         self.path = spec.get("path")
