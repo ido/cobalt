@@ -4,6 +4,7 @@
 __revision__ = '$Revision$'
 
 import logging
+import sys
 import time
 try:
     set()
@@ -236,15 +237,7 @@ class Partition (ForeignData):
         
     def _can_run (self, job):
         """Check that job can run on partition with reservation constraints"""
-        basic = self.scheduled and self.functional
-        jsize = int(job.nodes) # should this be 'size' instead?
-        psize = int(self.size)
-        size = (psize >= jsize) and ((psize == 32) or (jsize > psize/2))
-        if not (basic and size):
-            return False
-        else:
-            return True
-
+        return self.scheduled and self.functional
 
 class PartitionDict (ForeignDataDict):
     item_cls = Partition
@@ -257,12 +250,16 @@ class PartitionDict (ForeignDataDict):
     def can_run(self, target_partition, job):
         if target_partition.state != "idle":
             return False
+        desired = sys.maxint
         for part in self.itervalues():
             if not part.functional:
                 if target_partition.name in part.children or target_partition.name in part.parents:
                     return False
-        
-        return target_partition._can_run(job)
+            else:
+                if part.scheduled:
+                    if int(job.size) <= part.size < desired:
+                        desired = part.size
+        return target_partition._can_run(job) and target_partition.size == desired
                 
 
 class Job (ForeignData):
