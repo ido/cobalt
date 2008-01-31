@@ -20,6 +20,11 @@ import Cobalt.SchedulerPolicies
 logger = logging.getLogger("Cobalt.Components.scheduler")
 
 
+class ReservationError(Exception):
+    log = False
+    fault_code = hash("ReservationError")
+
+
 class Reservation (Data):
     
     """Cobalt scheduler reservation."""
@@ -166,8 +171,12 @@ class ReservationDict (DataDict):
         except ComponentLookupError:
             logger.error("unable to contact queue manager when adding reservation")
             raise
-
-        reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)        
+        
+        try:
+            reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)
+        except KeyError, e:
+            raise ReservationError("Error: a reservation named %s already exists" % e)
+                
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:

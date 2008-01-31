@@ -71,6 +71,7 @@ class ComponentLookupError (ComponentError):
 
     """Unable to locate an address for the given component."""
 
+    fault_code = hash("ComponentLookupError")
 
 class ComponentOperationError (ComponentError):
     

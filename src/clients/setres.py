@@ -29,7 +29,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:mn:p:q:u:ax', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:ax', [])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -107,10 +107,36 @@ if __name__ == '__main__':
                 print "User %s does not exist" % (usr)
     else:
         user = ''
+    
     if '-n' in sys.argv[1:]:
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']
     else:
         nameinfo = 'system'
+    
+    if '-c' in sys.argv[1:]:
+        cycle_time = [opt[1] for opt in opts if opt[0] == '-c'][0]
+    else:
+        cycle_time = None
+    
+    if cycle_time:    
+        try:
+            if cycle_time.count(':') == 0:
+                cycle_time = int(cycle_time) * 60
+            else:
+                units = cycle_time.split(':')
+                units.reverse()
+                totaltime = 0
+                mults = [1, 60, 3600, 86400]
+                if len(units) > 4:
+                    print "time too large"
+                    raise SystemExit, 1
+                cycle_time = sum([mults[index] * float(units[index]) for index in range(len(units))])
+        except ValueError:
+            print "Error: cycle time '%s' is invalid" % duration
+            print "cycle time may be in minutes or DD:HH:MM:SS"
+            raise SystemExit, 1
+
+        
 
     # modify the existing reservation instead of creating a new one
     if '-m' in sys.argv[1:]:
@@ -129,24 +155,25 @@ if __name__ == '__main__':
             updates['start'] = starttime
         if duration:
             updates['duration'] = dsec
-
+        if cycle_time:
+            updates['cycle'] = cycle_time
         if partitions:
             updates['partitions'] = ":".join(partitions)
                 
         scheduler.set_reservations([{'name':rname}], updates)
         raise SystemExit, 0
 
-    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec }
+    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time }
     if '-q' in sys.argv:
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:
         print scheduler.add_reservations([spec])
     except xmlrpclib.Fault, flt:
-        if flt.faultCode==1:
-            print "Error: a reservation named '%s' already exists" % nameinfo
-            raise SystemExit, 1
         if flt.faultCode==ComponentLookupError.fault_code:
             print "Couldn't contact the queue manager"
+            sys.exit(1)
+        else:
+            print flt.faultString
             sys.exit(1)
     except:
         print "Couldn't contact the scheduler"
