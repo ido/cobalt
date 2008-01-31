@@ -10,11 +10,13 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -u <user> [partion1] .. [partionN]
+                  -c <cycle time> -p <partition> -q <queue name> 
+                  -u <user> [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 cycle time may be in minutes or DD:HH:MM:SS
-user, name and cycle time are optional'''
+queue name is only needed to specify a name other than the default
+cycle time, queue name, and user are optional'''
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
