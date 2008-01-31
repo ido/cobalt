@@ -106,7 +106,7 @@ if __name__ == '__main__':
             except KeyError:
                 print "User %s does not exist" % (usr)
     else:
-        user = ''
+        user = None
     
     if '-n' in sys.argv[1:]:
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']

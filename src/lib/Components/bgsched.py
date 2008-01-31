@@ -180,12 +180,13 @@ class ReservationDict (DataDict):
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:
-                    qm.add_queues([{'name':reservation.queue, 'state':"running",
+                    qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'state':"running",
                                     'users':reservation.users}])
                 except Exception, e:
                     logger.error("unable to add reservation queue %s (%s)" % \
                                  (reservation.queue, e))
                 else:
+                    reservation.createdQueue = True
                     logger.info("added reservation queue %s" % (reservation.queue))
             else:
                 try:
@@ -195,7 +196,6 @@ class ReservationDict (DataDict):
                     logger.error("unable to update reservation queue %s (%s)" % \
                                  (reservation.queue, e))
                 else:
-                    reservation.createdQueue = True
                     logger.info("updated reservation queue %s" % reservation.queue)
     
         return reservations

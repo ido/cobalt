@@ -19,14 +19,14 @@ if __name__ == '__main__':
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
-    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*'}])
+    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 'queue': '*'}])
     output = []
     if '-l' in sys.argv:
         verbose = True
-        header = [('Reservation', 'User', 'Start', 'Duration', 'End Time', 'Cycle Time', 'Partitions')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 'End Time', 'Cycle Time', 'Partitions')]
     else:
         verbose = False
-        header = [('Reservation', 'User', 'Start', 'Duration', 'Cycle Time', 'Partitions')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 'Partitions')]
 
     for res in reservations:
         start = float(res['start'])
@@ -54,12 +54,12 @@ if __name__ == '__main__':
         dmin = (duration/60)%60
         dhour = duration/3600
         if verbose:
-            output.append((res['name'], res['users'], time.strftime("%c", time.localtime(start)),
+            output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
                            "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), cycle, res['partitions']))
         else:
-            output.append((res['name'], res['users'], time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin), cycle, res['partitions']))
+            output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin), res['partitions']))
 
-    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[2], "%c")), time.mktime(time.strptime(y[2], "%c"))) ) )
+    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3], "%c")), time.mktime(time.strptime(y[3], "%c"))) ) )
     Cobalt.Util.print_tabular(header + output)
                      

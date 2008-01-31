@@ -1285,7 +1285,7 @@ class QueueManager(Component):
                 queue.jobs.q_del([{'jobid':j.jobid}])
         
         for (name, q) in self.Queues.items():
-            if q.state == 'dead' and q.name.startswith('R.') and not q:
+            if q.state == 'dead' and q.name.startswith('R.') and not q.jobs:
                 del self.Queues[name]
         #newdate = time.strftime("%m-%d-%y", time.localtime())
         #[j.acctlog.ChangeLog() for j in [j for queue in self.Queues for j in queue] if newdate != self.prevdate]
