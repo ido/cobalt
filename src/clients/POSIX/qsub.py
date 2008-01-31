@@ -19,6 +19,7 @@ import Cobalt
 import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Components.cqm import QueueError
 
 
 def processfilter(cmdstr, jobdict):
