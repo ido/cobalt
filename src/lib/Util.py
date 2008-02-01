@@ -251,9 +251,11 @@ class PBSLog (object):
         # Get the log directory from a config file.
         config = ConfigParser.ConfigParser()
         config.read(Cobalt.CONFIG_FILES)
+        logger.error("config files are:")
+        logger.error(Cobalt.CONFIG_FILES)
         try:
             self.logdir = config.get('cqm', 'log_dir')
-        except ConfigParser.NoOptionError:
+        except:
             self.logdir = "/var/log/cobalt-accounting"
         # The date of the last log entry.
         self._last_date = None
