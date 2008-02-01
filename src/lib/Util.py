@@ -22,6 +22,7 @@ def dgetopt(arglist, opt, vopt, msg):
     for optname in opt.values() + vopt.values():
         ret[optname] = False
     gstr = "".join(opt.keys()) + "".join([longopt+':' for longopt in vopt.keys()])
+    gstr += 'C:'
     try:
         (opts, args) = getopt(arglist, gstr)
     except GetoptError, gerr:
@@ -57,6 +58,7 @@ def dgetopt_long(arglist, opt, vopt, msg):
         else:
             gstr = gstr + o + ':'
 
+    gstr += 'C:'
     try:
         (opts, args) = getopt(arglist, gstr, long_opts)
     except GetoptError, gerr:
