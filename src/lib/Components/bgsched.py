@@ -15,6 +15,7 @@ import Cobalt.Logging, Cobalt.Util
 from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+import xmlrpclib
 
 import Cobalt.SchedulerPolicies
 
