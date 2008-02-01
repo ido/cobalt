@@ -413,7 +413,7 @@ class BGSched (Component):
         for item in [self.jobs, self.queues, self.partitions]:
             try:
                 item.Sync()
-            except ComponentLookupError:
+            except (ComponentLookupError, xmlrpclib.Fault):
                 # the ForeignDataDicts already include FailureMode stuff
                 pass
     sync_data = automatic(sync_data)
