@@ -325,11 +325,20 @@ class BGSystem (Component):
     partitions = property(_get_partitions)
 
     def __getstate__(self):
+        flags = {}
+        for part in self._partitions:
+            sched = None
+            func = None
+            queue = None
+            if hasattr(part, 'scheduled'):
+                sched = part.scheduled
+            if hasattr(part, 'functional'):
+                func = part.functional
+            if hasattr(part, 'queue'):
+                queue = part.queue
+            flags[part.name] =  (sched, func, queue)
         return {'managed_partitions':self._managed_partitions, 'version':1,
-                'partition_flags': dict([(p.name, (p.scheduled, p.functional, p.queue))
-                                          for p in self._partitions \
-                                          if p.scheduled != None
-                                          or p.functional != None])}
+                'partition_flags': flags}
     
     def __setstate__(self, state):
         self._managed_partitions = state['managed_partitions']
