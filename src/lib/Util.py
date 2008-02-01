@@ -70,6 +70,8 @@ def dgetopt_long(arglist, opt, vopt, msg):
         option = gopt.split('-')[-1]
         if opt.has_key(option):
             ret[opt[option]] = True
+        elif option == 'C':
+            continue
         else:
             ret[vopt[option]] = garg
 
