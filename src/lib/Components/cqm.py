@@ -334,9 +334,9 @@ class Job (Data):
                 #this seems needed to get the info back into the object so it can be handed back to the filestager.
                 #self.output = pgroups[0]['output']
                 #self.error = pgroups[0]['error']
-            except xmlrpclib.Fault:
+            except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Error contacting the system for finalize, requeueing")
-                self.steps = ['FinalizeStage'] + self.steps
+                self.steps = ['FinishUserPgrp'] + self.steps
                 self.SetActive()
                 return
             except:
@@ -412,9 +412,12 @@ class Job (Data):
                  'size':self.procs, 'args':args, 'envs':env, 'stderr':errorfile,
                  'stdout':outputfile, 'location':location, 'cwd':cwd, 'path':"/bin:/usr/bin:/usr/local/bin",
                  'stdin':self.inputfile, 'kerneloptions':self.kerneloptions}])
-        except ComponentLookupError:
-            logger.error("Failed to communicate with the system")
-            raise SystemError()
+        except (ComponentLookupError, xmlrpclib.Fault):
+                logger.error("Job %s: Failed to start up user job; requeueing" \
+                             % (self.jobid))
+                self.steps = ['RunUserJob'] + self.steps
+                return
+        
         self.pgid['user'] = pgroup[0]['id']
         self.SetPassive()
 
@@ -441,9 +444,9 @@ class Job (Data):
             if not self.pgid.has_key('user'):
                 logger.error("Job %s has no pgroup associated with it" % self.jobid)
             else:
-                self.KillPGID(self.pgid['user'])
+                self.killed = self.KillPGID(self.pgid['user'])
         elif self.state == 'hold':  #job in 'hold' and running
-            self.KillPGID(self.pgid['user'])
+            self.killed = self.KillPGID(self.pgid['user'])
         else:
             logger.error("Got qdel for job %s in unexpected state %s" % (self.jobid, self.state))
  
@@ -460,9 +463,12 @@ class Job (Data):
                  'path':"/bin:/usr/bin:/usr/local/bin", 'cwd':'/', 'executable':cmd, 'envs':{},
                  'args':[self.user], 'location':location, 'stdin':self.inputfile,
                  'kerneloptions':self.kerneloptions}])
-        except ComponentLookupError:
-            logger.error("Failed to communicate with the system")
-            raise SystemError()
+        except (ComponentLookupError, xmlrpclib.Fault):
+            logger.error("Job %s: Failed to start up user job in AdminStart; requeueing" \
+                         % (self.jobid))
+            self.steps = ['AdminStart'] + self.steps
+            return
+
         
         self.pgid[cmd] = pgroup[0]['id']
 
@@ -483,15 +489,17 @@ class Job (Data):
         if self.mode == 'script':
             try:
                 pgroup = ComponentProxy("script-manager").signal_jobs([{'id':pgid}], "SIGTERM")
-            except ComponentLookupError:
-                logger.error("Failed to communicate with script manager")
-                raise ScriptManagerError
+            except (ComponentLookupError, xmlrpclib.Fault):
+                logger.error("Failed to communicate with script manager when killing job")
+                return False
         else:
             try:
                 pgroup = ComponentProxy("system").signal_process_groups([{'id':pgid}], "SIGTERM")
             except ComponentLookupError:
-                logger.error("Failed to communicate with the system")
-                raise SystemError()
+                logger.error("Failed to communicate with the system when killing job")
+                return False
+
+        return True
 
     def over_time(self):
         '''Check if a job has run over its time'''
@@ -765,9 +773,12 @@ class BGJob(Job):
                      'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
                      'args':self.args, 'envs':self.envs, 'location':[self.location],
                      'id':self.jobid, 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions}])
-            except ComponentLookupError:
-                logger.error("Failed to communicate with script manager")
-                raise ScriptManagerError
+            except (ComponentLookupError, xmlrpclib.Fault):
+                logger.error("Job %s: Failed to start up user script job; requeueing" \
+                             % (self.jobid))
+                self.steps = ['RunBGUserJob'] + self.steps
+                return
+
             
             if not pgroup[0].has_key('id'):
                 logger.error("Process Group creation failed for Job %s" % self.jobid)
@@ -795,7 +806,7 @@ class BGJob(Job):
             except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Job %s: Failed to start up user job; requeueing" \
                              % (self.jobid))
-                self.steps = 'RunBGUserJob' + self.steps
+                self.steps = ['RunBGUserJob'] + self.steps
                 return
             
             if not pgroup[0].has_key('id'):
@@ -892,6 +903,8 @@ class ScriptMPIJob (Job):
         self.exit_status = spec.get("exit_status")
         self.true_mpi_args = spec.get("true_mpi_args")
         self.SetPassive()
+
+        self.steps = ['RunScriptMPIJob', 'FinishUserPgrp']
                 
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
@@ -937,9 +950,12 @@ class ScriptMPIJob (Job):
                                         'location':[self.location], 'id':self.jobid, 
                                         'stdin':self.inputfile, 'true_mpi_args':self.true_mpi_args, 
                                         'envs':{}, 'size':0, 'executable':"this will be ignored"}])
-        except ComponentLookupError:
-            logger.error("Failed to communicate with the system")
-            raise SystemError()
+        except (ComponentLookupError, xmlrpclib.Fault):
+                logger.error("Job %s: Failed to start up user script job; requeueing" \
+                             % (self.jobid))
+                self.steps = ['RunScriptMPIJob'] + self.steps
+                return
+
 
         if not pgroup[0].has_key('id'):
             logger.error("Process Group creation failed for Job %s" % self.jobid)
@@ -1373,9 +1389,10 @@ class QueueManager(Component):
         
         try:
             pgroups = ComponentProxy("process-manager").get_jobs([{'id':'*', 'state':'running'}])
-        except ComponentLookupError:
+        except (ComponentLookupError, xmlrpclib.Fault):
             logger.error("Failed to communicate with the system")
             return
+        
         live = [item['id'] for item in pgroups]
         for job in [j for queue in self.Queues.itervalues() for j in queue.jobs if j.mode!='script']:
             for pgtype in job.pgid.keys():
@@ -1389,7 +1406,7 @@ class QueueManager(Component):
         '''Resynchronize with the script manager'''
         try:
             pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
-        except ComponentLookupError:
+        except (ComponentLookupError, xmlrpclib.Fault):
             logger.error("Failed to communicate with script manager")
             return
         live = [item['id'] for item in pgroups]
