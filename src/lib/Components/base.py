@@ -7,6 +7,7 @@ __all__ = ["Component", "exposed", "automatic", "run_component"]
 import inspect
 import os
 import cPickle
+import ConfigParser
 import pydoc
 import sys
 import getopt
@@ -45,7 +46,15 @@ def run_component (component, argv=None, register=True):
     Cobalt.Logging.log_to_stderr(logging.getLogger())
 
     location = find_intended_location(component)
-    server = XMLRPCServer(location, keyfile="/etc/cobalt.key", certfile="/etc/cobalt.key", register=register)
+    try:
+        cp = ConfigParser.ConfigParser()
+        cp.read([Cobalt.CONFIG_FILES[0]])
+        keypath = cp.get('communication', 'key')
+    except:
+        keypath = '/etc/cobalt.key'
+
+    server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
+                          register=register)
     server.register_instance(component)
     
     if daemon:
