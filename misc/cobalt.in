@@ -46,22 +46,29 @@ stop_component () {
 # Configure DB2 environment
 . /discovery/db.src
 
+umask 077
+
 case "$1" in
   start)
-    for component in slp bgpm cqm bgsched; do
+    for component in slp bgsystem cqm bgsched; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   start-debug)
-    start_component slp
-    start_component bgpm --notbgl
-    start_component cqm
-    start_component bgsched --nodb2
+    for component in slp brooklyn cqm bgsched; do
+	start_component $component
+    done
     touch /var/lock/subsys/cobalt
     ;;
   stop)
-    for component in bgsched cqm bgpm slp; do
+    for component in bgsched cqm bgsystem slp; do
+	stop_component $component
+    done
+    rm -f /var/lock/subsys/cobalt
+    ;;
+  stop-debug) 
+    for component in bgsched cqm brooklyn slp; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
