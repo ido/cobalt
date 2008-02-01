@@ -50,25 +50,25 @@ umask 077
 
 case "$1" in
   start)
-    for component in slp bgsystem cqm bgsched; do
+    for component in slp bgsystem cqm scriptm bgsched; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   start-debug)
-    for component in slp brooklyn cqm bgsched; do
+    for component in slp brooklyn cqm scriptm bgsched; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   stop)
-    for component in bgsched cqm bgsystem slp; do
+    for component in bgsched cqm bgsystem scriptm slp; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
     ;;
   stop-debug) 
-    for component in bgsched cqm brooklyn slp; do
+    for component in bgsched cqm brooklyn scriptm slp; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
