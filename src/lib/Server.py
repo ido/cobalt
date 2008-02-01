@@ -308,7 +308,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
             timeout=timeout, keyfile=keyfile, certfile=certfile)
         self.logRequests = logRequests
         self.serve = False
-        self.register = register
+        self.should_register = register
         self.register_introspection_functions()
         self.register_function(self.ping)
         self.logger.info("service available at %s" % self.url)
@@ -432,6 +432,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
     def serve_forever (self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
+        self.register = self.should_register
         self.logger.info("serve_forever() [start]")
         #sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
         #sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
