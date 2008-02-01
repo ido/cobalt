@@ -44,7 +44,7 @@ def run_component (component, argv=None, register=True):
     
     logging.getLogger().setLevel(logging.INFO)
     Cobalt.Logging.log_to_stderr(logging.getLogger())
-    Cobalt.Logging.setup_logging('base', True, True)
+    Cobalt.Logging.setup_logging(component.implementation, True, True)
 
     location = find_intended_location(component)
     try:
