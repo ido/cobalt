@@ -183,6 +183,7 @@ re_stats = re.compile( """
     nodes\s+done\.\s+                       # nodes done.
     queue:(?P<queuetime>\d+\.\d+)s\s+       # queue:_.__s
     user:(?P<usertime>\d+\.\d+)s\s+         # user:_.__s
+    (current_queue:(?P<current_queuetime>\d+\.\d+)s\s+)?  # current_queue:_.__s
     (exit:(?P<exitcode>\d+)\s+)?
     """, re.VERBOSE )
 
@@ -494,22 +495,12 @@ class CobaltLogParser(Cobalt.Data.DataSet):
     # ----------------------------------------
     # Logfile parsing
     # ----------------------------------------
-    def __prepare_time(self, year_hint, log_time_string):
+    def __prepare_time(self, log_time_string):
         """
-        Given a year hint and a log time string, return a complete date.
-        
-        We use this procedure when parsing syslog log files. The log events
-        do not include the year, but the filenames are named with the year.
-        This procedure turns a time string from the logfile, adds the year,
-        and returns a valid Python time.
+        Given a log time string, return a Python date.
         """
-        if str(year_hint) in log_time_string:
-            return datetime.datetime(
-                *time.strptime(log_time_string, "%Y-%m-%d %H:%M:%S")[0:6])
-        else:
-            return datetime.datetime(
-                *time.strptime(
-                    "%s %i" % (log_time_string, year_hint),"%b %d %H:%M:%S %Y")[0:6])
+        return datetime.datetime(
+            *time.strptime(log_time_string, "%Y-%m-%d %H:%M:%S")[0:6])
     
 
     def parse_file(self, filename):
@@ -521,26 +512,14 @@ class CobaltLogParser(Cobalt.Data.DataSet):
         # Verify that the specified log file exists
         if not os.path.exists(filename):
             raise IOError("Log file %s not found" % (filename))      
-        
-        # Based on the log filename, guess the year. We need the years for the
-        # complete database specification! :-/        
+
+        # Verify that the filename is named in the format produced by
+        # the logging utility. If not, we don't want to bother parsing it.
         basename = os.path.basename( filename )
-        if basename == "cobalt.log":
-            year_hint = datetime.datetime.now().year
-        else:
-            # Get the year, month, and day from the logfile
-            m = re_filename.match(basename)
-            if not m:
-                assert False, \
-                    "Filename %s was not 'cobalt.log' or 'cobalt.log-yyyymmdd'" % \
-                    (filename)
-            filetime = datetime.date(int(m.group("year")),
-                int(m.group("month")), int(m.group("day")))
-            
-            # The file times are one day in advance; that is, the logfile for
-            # 01 Nov is really 31 Oct. Subtract a single day and save the year.
-            filetime = filetime - datetime.timedelta(days=1)
-            year_hint = filetime.year
+        m = re_filename.match(basename)
+        assert m is not None, \
+            "Filename %s was not in format 'qm-yyyy_mm_dd'" % \
+            (filename)
         
         # Read the log file        
         file = open( filename, "r" )
@@ -597,11 +576,11 @@ class CobaltLogParser(Cobalt.Data.DataSet):
             if m_submit:
                 job._submit = True
                 job.submit_time = self.__prepare_time(
-                    year_hint, m_submit.group("submit_time"))
+                    m_submit.group("submit_time"))
             if m_start:
                 job._start = True
                 job.start_time = self.__prepare_time(
-                    year_hint, m_start.group("start_time"))
+                    m_start.group("start_time"))
                 job.username = m_start.group("username")
                 job.nodes = int(m_start.group("nodes"))
                 job.processors = int(m_start.group("processors"))
@@ -635,7 +614,7 @@ class CobaltLogParser(Cobalt.Data.DataSet):
 #                 job.freed_partitions.append(m_freeing.group("partition"))
 #                 if not job.finish_time:
 #                     job.finish_time = self.__prepare_time(
-#                         year_hint, m_freeing.group("finish_time"))
+#                         m_freeing.group("finish_time"))
 #                 if not job.queuetime:
 #                     job.queuetime = 0
 #                 if not job.usertime:
@@ -650,13 +629,13 @@ class CobaltLogParser(Cobalt.Data.DataSet):
             if m_done:
                 job._done = True
                 job.finish_time = self.__prepare_time(
-                    year_hint, m_done.group("finish_time"))
+                    m_done.group("finish_time"))
                 job.user_time = float(m_done.group("usertime"))
 
             if m_deleted:
                 job._deleted = True
                 job.deleted_time = self.__prepare_time(
-                    year_hint, m_deleted.group("finish_time"))
+                    m_deleted.group("finish_time"))
 
             if m_kernel:
                 job.kernel = m_kernel.group("kernel")
