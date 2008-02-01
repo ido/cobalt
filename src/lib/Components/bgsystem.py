@@ -301,7 +301,7 @@ class BGSystem (Component):
     """
     
     name = "system"
-    implementation = "bluegene"
+    implementation = "bgsystem"
     
     logger = logger
     

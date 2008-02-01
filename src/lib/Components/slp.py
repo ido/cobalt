@@ -188,7 +188,7 @@ class TimingServiceLocator (ServiceLocator):
     expire_services -- check service timestamps (automatic)
     """
     
-    implementation = "timing"
+    implementation = "slp"
     
     logger = logging.getLogger("Cobalt.Components.TimingServiceLocator")
     

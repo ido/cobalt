@@ -114,6 +114,7 @@ class ScriptManager(Component):
     # Assigning an instance-level logger is supported,
     # and expected in the case of multiple instances.
     logger = logging.getLogger("Cobalt.Components.ScriptManager")
+    implementation = 'scriptm'
 
     def __init__ (self, *args, **kwargs):
         """Initialize a new ServiceLocator.
