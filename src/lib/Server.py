@@ -211,6 +211,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     authenticate -- prompt a check of a client's provided username and password
     handle_one_request -- handle a single rpc (optionally authenticating)
     """
+    logger = logging.getLogger("Cobalt.Server.XMLRPCRequestHandler")
     
     class CouldNotAuthenticate (Exception):
         """Client did not present acceptible authentication information."""
@@ -229,6 +230,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         try:
             header = self.headers['Authorization']
         except KeyError:
+            self.logger.error("No authentication data presented")
             print >> file("outfile", "w"), self.headers
             raise self.CouldNotAuthenticate("client did not present credentials")
         auth_type, auth_content = header.split()
@@ -254,7 +256,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         if self.require_auth:
             try:
                 self.authenticate()
-            except self.CouldNotAuthenticate:
+            except self.CouldNotAuthenticate, cae:
+                self.logger.error("Authentication failed: %s" % cae.message)
                 code = 401
                 message, explanation = self.responses[401]
                 self.send_error(code, message)
