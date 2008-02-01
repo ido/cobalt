@@ -6,7 +6,7 @@ import cPickle
 from getopt import getopt, GetoptError
 
 import Cobalt
-from Cobalt.Components.system import Simulator
+from Cobalt.Components.simulator import Simulator
 from Cobalt.Server import XMLRPCServer, find_intended_location
 import Cobalt.Logging
 

@@ -163,8 +163,6 @@ class ProcessGroup (Data):
         print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
         sys.exit(1)
     
-    logger = logger
-    
     def __init__(self, spec):
         Data.__init__(self, spec)
         self.id = spec.get("id")
@@ -177,7 +175,7 @@ class ProcessGroup (Data):
         self.user = spec.get('user', "")
         self.executable = spec.get('executable')
         self.cwd = spec.get('cwd')
-        self.size = str(spec.get('size'))
+        self.size = spec.get('size')
         self.mode = spec.get('mode', 'co')
         self.args = " ".join(spec.get('args') or [])
         self.kerneloptions = spec.get('kerneloptions')
@@ -236,7 +234,7 @@ class ProcessGroup (Data):
             os._exit(1)
         
         cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
-               '-np', self.size, '-partition', partition,
+               '-np', str(self.size), '-partition', partition,
                '-mode', self.mode, '-cwd', self.cwd, '-exe', self.executable)
         if self.args:
             cmd = cmd + ('-args', self.args)
@@ -268,7 +266,7 @@ class ProcessGroup (Data):
                 self._mpirun()
             except:
                 traceback.print_exc(file=sys.stderr)
-                self.logger.error("unable to start mpirun")
+                logger.error("unable to start mpirun")
                 os._exit(1)
         else:
             self.head_pid = child_pid
@@ -297,7 +295,7 @@ class BGSystem (Component):
     configure -- load partitions from the bridge API
     get_partitions -- retrieve partitions managed by cobalt (exposed, query)
     add_process_groups -- add (start) an mpirun process on the system (exposed, ~query)
-    get_process_groups -- retrieve running mpirun processes (exposed, query)
+    get_process_groups -- retrieve mpirun processes (exposed, query)
     """
     
     name = "system"
@@ -589,7 +587,6 @@ class BGSystem (Component):
         self._partitions_lock.acquire()
         partitions = self._partitions.q_get(specs, _set_partitions, updates)
         self._partitions_lock.release()
-        
         return partitions
     set_partitions = exposed(query(set_partitions))
     
@@ -603,7 +600,7 @@ class BGSystem (Component):
         
         return self.process_groups.q_add(specs)
     
-    add_process_groups = exposed(query(all_fields=True)(add_process_groups))
+    add_process_groups = exposed(query(add_process_groups))
     
     def get_process_groups (self, specs):
         self._get_exit_status()
