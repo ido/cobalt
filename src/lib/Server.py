@@ -215,8 +215,14 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     class CouldNotAuthenticate (Exception):
         """Client did not present acceptible authentication information."""
     
-    require_auth = False
-    credentials = None
+    require_auth = True
+    credentials = {'root':'default'}
+    try:
+        config = SafeConfigParser()
+        config.read(Cobalt.CONFIG_FILES)
+        credentials['root'] = config.get('communication', 'password')
+    except:
+        pass
     
     def authenticate (self):
         """Authenticate the credentials of the latest client."""
