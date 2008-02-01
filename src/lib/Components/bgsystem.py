@@ -326,7 +326,7 @@ class BGSystem (Component):
 
     def __getstate__(self):
         flags = {}
-        for part in self._partitions:
+        for part in self._partitions.values():
             sched = None
             func = None
             queue = None
