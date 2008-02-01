@@ -792,9 +792,11 @@ class BGJob(Job):
                     kerneloptions = self.kerneloptions,
                     walltime = self.walltime,
                 )])
-            except ComponentLookupError:
-                logger.error("Failed to communicate with the system")
-                raise SystemError()
+            except (ComponentLookupError, xmlrpclib.Fault):
+                logger.error("Job %s: Failed to start up user job; requeueing" \
+                             % (self.jobid))
+                self.steps = 'RunBGUserJob' + self.steps
+                return
             
             if not pgroup[0].has_key('id'):
                 logger.error("Process Group creation failed for Job %s" % self.jobid)
