@@ -15,6 +15,7 @@ import logging
 import socket
 import time
 import xmlrpclib
+import urlparse
 import tlslite.errors
 
 import Cobalt
@@ -87,9 +88,16 @@ def ComponentProxy (component_name, **kwargs):
     
     Additional arguments are passed to the ServerProxy constructor.
     """
-    
     if kwargs.get("defer", True):
         return DeferredProxy(component_name)
+
+    user = 'root'
+    try:
+        config = SafeConfigParser()
+        config.read(Cobalt.CONFIG_FILES)
+        passwd = config.get('communication', 'password')
+    except:
+        passwd = 'default'
     
     if component_name in local_components:
         return LocalProxy(local_components[component_name])
@@ -106,7 +114,9 @@ def ComponentProxy (component_name, **kwargs):
             raise ComponentLookupError(component_name)
         if not address:
             raise ComponentLookupError(component_name)
-        return ServerProxy(address, allow_none=True)
+        method, path = urlparse.urlparse(address)[:2]
+        newurl = "%s://%s:%s@%s" % (method, user, passwd, path)
+        return ServerProxy(newurl, allow_none=True)
     else:
         raise ComponentLookupError(component_name)
 
