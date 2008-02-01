@@ -27,7 +27,7 @@ if __name__ == '__main__':
         print "cobalt %s" % __version__
         raise SystemExit, 0
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:',
+        (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:C:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
                                       'queue=', 'deps='])
     except getopt.GetoptError, msg:
