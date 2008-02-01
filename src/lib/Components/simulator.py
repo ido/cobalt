@@ -418,7 +418,7 @@ class Simulator (Component):
         self.logger.info("add_process_groups(%r)" % (specs))
         process_groups = self.process_groups.q_add(specs)
         for process_group in process_groups:
-            thread.start_new_thread(self.run, (process_group, ))
+            self.start(process_group)
         return  process_groups
     add_process_groups = exposed(query(all_fields=True)(add_process_groups))
     
@@ -446,7 +446,10 @@ class Simulator (Component):
         return process_groups
     signal_process_groups = exposed(query(signal_process_groups))
     
-    def run (self, process_group):
+    def start (self, process_group):
+        thread.start_new_thread(self._mpirun, (process_group, ))
+    
+    def _mpirun (self, process_group):
         argv = process_group._get_argv()
         stdout = open(process_group.stdout or "/dev/null", "a")
         stderr = open(process_group.stderr or "/dev/null", "a")
