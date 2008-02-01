@@ -332,7 +332,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
             name = instance.name
         except AttributeError:
             name = "unknown"
-        if self.register:
+        if self.should_register:
             self.register_with_slp()
         self.logger.info("serving %s at %s" % (name, self.url))
     
