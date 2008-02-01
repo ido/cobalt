@@ -102,7 +102,9 @@ def ComponentProxy (component_name, **kwargs):
     if component_name in local_components:
         return LocalProxy(local_components[component_name])
     elif component_name in known_servers:
-        return ServerProxy(known_servers[component_name], allow_none=True)
+        method, path = urlparse.urlparse(known_servers[component_name])[:2]
+        newurl = "%s://%s:%s@%s" % (method, user, passwd, path)
+        return ServerProxy(newurl, allow_none=True)
     elif component_name != "service-location":
         try:
             slp = ComponentProxy("service-location")
