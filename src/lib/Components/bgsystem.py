@@ -252,7 +252,7 @@ class ProcessGroup (Data):
         # already been modified to include the partition that cobalt has selected
         # for the job, and can just replace the arguments built above.
         if self.true_mpi_args:
-            cmd = (self.config.get('bgpm', 'mpirun'), os.path.basename(self.config.get('bgpm', 'mpirun'))) + tuple(self.true_mpi_args)
+            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
         os.execl(*cmd)
     
     def start (self):
@@ -444,7 +444,6 @@ class BGSystem (Component):
                     s2 = sets.Set( [s.id for s in other.switches] )
                     
                     if s1.intersection(s2):
-                        print "%s and %s have a wiring conflict" % (p.id, other.id)
                         partitions[p.id]._wiring_conflicts.add(other.id)
         
         end = time.time()

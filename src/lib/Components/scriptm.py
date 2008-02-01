@@ -25,7 +25,7 @@ class ProcessGroup(Data):
     '''Run a script'''
 
     fields = Data.fields + [
-        "tag", "name", "location", "state", "user", "outputfile", "errorfile", "executable", 
+        "tag", "name", "location", "state", "user", "outputfile", "errorfile", "executable", "id" 
     ]
 
     def __init__(self, spec):
@@ -39,6 +39,7 @@ class ProcessGroup(Data):
         self.outputfile = spec.pop("outputfile", None)
         self.errorfile = spec.pop("errorfile", None)
         self.executable = spec.pop("executable", None)
+        self.id = spec.pop("id", None)
         
         self.log = logging.getLogger('pg')
         try:

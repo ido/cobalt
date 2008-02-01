@@ -902,6 +902,7 @@ class ScriptMPIJob (Job):
                 sys.exit(1)
 
     def __init__(self, spec):
+        Job.__init__(self, spec)
         self.bgkernel = spec.get("bgkernel")
         self.kernel = spec.get("kernel", "default")
         self.notify = spec.get("notify")

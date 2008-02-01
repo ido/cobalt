@@ -370,10 +370,8 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
     def _slp_thread (self, frequency=120):
         try:
             while self.register:
-                self.logger.info("Calling slp_register")
                 self.register_with_slp()
                 time.sleep(frequency)
-            self.logger.error("slp_thread ended!")
         except:
             self.logger.error("slp_thread failed", exc_info=1)
     
