@@ -12,7 +12,7 @@ ProcessGroupCreationError -- error when creating a process group
 """
 
 import pwd
-import sets
+from sets import Set as set
 import logging
 import sys
 import os
@@ -78,22 +78,13 @@ class Partition (Data):
         self.functional = spec.pop("functional", False)
         self.queue = spec.pop("queue", "default")
         self.size = spec.pop("size", None)
-        self._parents = sets.Set()
-        self._children = sets.Set()
+        self._parents = set()
+        self.parents = set()
+        self._children = set()
+        self.children = set()
         self._busy = False
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
-        
-    
-    def _get_parents (self):
-        return [parent.name for parent in self._parents]
-    
-    parents = property(_get_parents)
-    
-    def _get_children (self):
-        return [child.name for child in self._children]
-    
-    children = property(_get_children)
     
     def __str__ (self):
         return self.name
@@ -260,7 +251,7 @@ class Simulator (Component):
         """Initialize a system simulator."""
         Component.__init__(self, *args, **kwargs)
         self._partitions = PartitionDict()
-        self._managed_partitions = sets.Set()
+        self._managed_partitions = set()
         self.process_groups = ProcessGroupDict()
         config_file = kwargs.get("config_file", None)
         if config_file is not None:
@@ -338,6 +329,7 @@ class Simulator (Component):
         self._managed_partitions.update([
             partition.name for partition in partitions
         ])
+        self.update_relatives()
         return partitions
     add_partition = exposed(query(add_partitions))
     
@@ -353,7 +345,8 @@ class Simulator (Component):
             partition for partition in self._partitions.q_get(specs)
             if partition.name in self._managed_partitions
         ]
-        self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
+        self._managed_partitions -= set( [partition.name for partition in partitions] )
+        self.update_relatives()
         return partitions
     del_partitions = exposed(query(del_partitions))
     
@@ -549,3 +542,10 @@ class Simulator (Component):
         print >> stderr, "FE_MPI (Info) : Exit status: 0"
         
         process_group.exit_status = 0
+    
+    def update_relatives(self):
+        """Call this method after changing the contents of self._managed_partitions"""
+        for p_name in self._managed_partitions:
+            p = self._partitions[p_name]
+            p.parents = set([parent.name for parent in p._parents if parent.name in self._managed_partitions])
+            p.children = set([child.name for child in p._children if child.name in self._managed_partitions])
