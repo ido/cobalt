@@ -47,7 +47,7 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-Cobalt.bridge.set_serial("BGL")
+Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
 class ProcessGroupCreationError (Exception):
     """An error occured when creation a process group."""

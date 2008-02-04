@@ -8,10 +8,10 @@ __all__ = [
 
 try:
     bridge = CDLL("libbglbridge.so")
-    systype = 'bgl'
+    systype = 'BGL'
 except OSError:
     bridge = CDLL("libbgpbridge.so")
-    systype = 'bgp'
+    systype = 'BGP'
 libc = CDLL("libc.so.6")
 
 status_t = c_int
