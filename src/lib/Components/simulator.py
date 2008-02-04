@@ -79,9 +79,9 @@ class Partition (Data):
         self.queue = spec.pop("queue", "default")
         self.size = spec.pop("size", None)
         self._parents = set()
-        self.parents = set()
+        self.parents = list()
         self._children = set()
-        self.children = set()
+        self.children = list()
         self._busy = False
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
@@ -547,5 +547,5 @@ class Simulator (Component):
         """Call this method after changing the contents of self._managed_partitions"""
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
-            p.parents = set([parent.name for parent in p._parents if parent.name in self._managed_partitions])
-            p.children = set([child.name for child in p._children if child.name in self._managed_partitions])
+            p.parents = [parent.name for parent in p._parents if parent.name in self._managed_partitions]
+            p.children = [child.name for child in p._children if child.name in self._managed_partitions]
