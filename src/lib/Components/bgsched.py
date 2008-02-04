@@ -259,8 +259,8 @@ class PartitionDict (ForeignDataDict):
             else:
                 if part.scheduled:
                     if int(job.nodes) <= int(part.size) < desired:
-                        desired = part.size
-        return target_partition._can_run(job) and target_partition.size == desired
+                        desired = int(part.size)
+        return target_partition._can_run(job) and int(target_partition.size) == desired
                 
 
 class Job (ForeignData):
@@ -563,6 +563,8 @@ class BGSched (Component):
         
         # this is the bit that actually picks which job to run
         for job in active_jobs:
+            best_score = sys.maxint
+            best_partition = None
             for partition in available_partitions:
                 # check if the current partition is linked to the job's queue
                 if job.queue not in partition.queue.split(':'):
@@ -578,9 +580,20 @@ class BGSched (Component):
                             break
                             
                     if really_okay:
-                        # let's run this thing!
-                        self._start_job(job, partition)
-                        return
+                        # let's check the impact on partitions that would become blocked
+                        score = 0
+                        for p in partition.parents:
+                            if self.partitions[p].state == "idle":
+                                score += 1
+                        
+                        # the lower the score, the fewer new partitions will be blocked by this selection
+                        if score < best_score:
+                            best_score = score
+                            best_partition = partition        
+
+            if best_partition is not None:
+                self._start_job(job, best_partition)
+                return
 
     schedule_jobs = automatic(schedule_jobs)
 
