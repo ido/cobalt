@@ -25,7 +25,6 @@ import time
 import thread
 import ConfigParser
 import thread
-import traceback
 from datetime import datetime
 try:
     set = set
@@ -265,8 +264,7 @@ class ProcessGroup (Data):
             try:
                 self._mpirun()
             except:
-                traceback.print_exc(file=sys.stderr)
-                logger.error("unable to start mpirun")
+                logger.error("unable to start mpirun", exc_info=1)
                 os._exit(1)
         else:
             self.head_pid = child_pid
