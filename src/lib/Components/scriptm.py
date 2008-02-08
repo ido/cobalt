@@ -13,7 +13,7 @@ variable COBALT_JOBID so that the custom mpirun command can look up job
 specific information like the partition to run on and the maximum number of
 nodes that can be requested.
 '''
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 import logging, os, pwd, signal, sys, tempfile, time
 import xmlrpclib
