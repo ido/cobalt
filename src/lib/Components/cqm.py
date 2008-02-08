@@ -206,16 +206,6 @@ class Job (Data):
         self.state = None
         self.steps = []
 
-    def WriteOutput(self):
-        '''Write user output to the file system'''
-        try:
-            open("%s/%s.output" % (self.outputdir, self.jobid), 'w').write(self.output)
-            open("%s/%s.error" % (self.outputdir, self.jobid), 'w').write(self.error)
-        except IOError:
-            logger.error("Failed to write to userdir for job %s writing to /tmp instead" % self.jobid)
-            open("%s/%s.output" % ('/tmp', self.jobid), 'w').write(self.output)
-            open("%s/%s.error" % ('/tmp', self.jobid), 'w').write(self.error)
-
     def SetActive(self):
         '''set job info active mode'''
         self.active = True
@@ -484,7 +474,7 @@ class Job (Data):
                          % (self.jobid))
             self.steps = ['AdminStart'] + self.steps
             return
-        self.pgid[cmd] = pgroup[0]['id']
+        self.pgid[cmd] = process_groups[0]['id']
 
     def CompletePG(self, pgid):
         '''Finish accounting for a completed jobid'''
