@@ -34,7 +34,7 @@ def dgetopt(arglist, opt, vopt, msg):
         if opt.has_key(option):
             ret[opt[option]] = True
         elif option == 'C':
-            contine
+            continue
         else:
             ret[vopt[option]] = garg
     return ret, list(args)

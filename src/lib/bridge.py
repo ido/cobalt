@@ -580,7 +580,7 @@ class NodeCard (Resource):
     
     def _get_quarter (self):
         quarter = self._get_data(RM_NodeCardQuarter, rm_quarter_t)
-        return rm_querter_values[quarter.value]
+        return rm_quarter_values[quarter.value]
     
     quarter = property(_get_quarter)
     
