@@ -786,7 +786,8 @@ class BGJob(Job):
                      'errorfile':self.errorpath, 'path':self.path, 'size':self.procs,
                      'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
                      'args':self.args, 'envs':self.envs, 'location':[self.location],
-                     'id':self.jobid, 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions}])
+                     'id':"*", 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions,
+                     'jobid':self.jobid, }])
             except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Job %s: Failed to start up user script job; requeueing" \
                              % (self.jobid))
@@ -871,136 +872,6 @@ class BGJob(Job):
                 except Exception, e:
                     logger.info("Job %s/%s: exception with postscript %s, error is %s" %
                                  (self.jobid, self.user, p, e))
-
-class ScriptMPIJob (Job):
-    '''ScriptMPIJob is an mpirun command issued from a user script.'''
-    fields = Job.fields + [
-        "bgkernel", "kernel", "notify", "adminemail", "location", "outputpath",
-        "outputdir", "errorpath", "path", "mode", "envs", "exit_status",
-        "true_mpi_args",
-    ]
-
-    _configfields = ['bgkernel']
-    _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read(Cobalt.CONFIG_FILES)
-        if not _config._sections.has_key('cqm'):
-            print '''"cqm" section missing from cobalt config file'''
-            sys.exit(1)
-    config = _config._sections['cqm']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        sys.exit(1)
-    if config.get('bgkernel') == 'true':
-        for param in ['partitionboot', 'bootprofiles']:
-            if config.get(param, 'nothere') == 'nothere':
-                print "Missing option in cobalt config file: %s." % (param)
-                print "This is required only if dynamic kernel support is enabled"
-                sys.exit(1)
-
-    def __init__(self, spec):
-        Job.__init__(self, spec)
-        self.bgkernel = spec.get("bgkernel")
-        self.kernel = spec.get("kernel", "default")
-        self.notify = spec.get("notify")
-        self.adminemail = spec.get("adminemail")
-        self.location = spec.get("location")
-        self.outputpath = spec.get("outputpath")
-        self.outputdir = spec.get("outputdir")
-        self.errorpath = spec.get("errorpath")
-        self.path = spec.get("path")
-        self.mode = spec.get("mode", "co")
-        self.envs = spec.get("envs")
-        self.exit_status = spec.get("exit_status")
-        self.true_mpi_args = spec.get("true_mpi_args")
-        self.SetPassive()
-
-        self.steps = ['RunScriptMPIJob', 'FinishUserPgrp']
-                
-    def SetBGKernel(self):
-        '''Ensure that the kernel is set properly prior to job launch'''
-        try:
-            current = os.readlink('%s/%s' % (self.config.get('partitionboot'), self.get('location')))
-        except OSError:
-            logger.error("Failed to read partitionboot location %s/%s" % (self.config.get('partitionboot'), self.get('location')))
-            logger.info("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), 'N/A'))
-            self.acctlog.LogMessage("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), 'N/A'))
-            return
-        switched = current.split('/')[-1]
-        if current != "%s/%s" % (self.config.get('bootprofiles'), self.get('kernel')):
-            logger.info("Updating boot image for %s" % (self.get('location')))
-            logger.info("Set to %s should be %s" % (current.split('/')[-1], self.get('kernel')))
-            try:
-                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.get('location')))
-                os.symlink('%s/%s' % (self.config.get('bootprofiles'), self.get('kernel')),
-                           '%s/%s' % (self.config.get('partitionboot'), self.get('location')))
-                switched = self.get('kernel')
-            except OSError:
-                logger.error("Failed to reset boot location for partition for %s" % (self.get('location')))
-
-        logger.info("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), switched))
-        self.acctlog.LogMessage("Job %s/%s using kernel %s" % (self.get('jobid'), self.get('user'), switched))
-
-    def RunScriptMPIJob(self):
-        '''Run an mpirun job that was invoked by a script.'''
-        if self.config.get('bgkernel', 'false') == 'true':
-            self.SetBGKernel()
-
-        self.state = 'running'
-        self.timers['user'].Start()
-        self.LogStart()
-        if self.outputpath is None:
-            self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
-        if self.errorpath is None:
-            self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
-
-        try:
-            pgroup = ComponentProxy("system").add_process_groups([{
-                'tag':'process-group',
-                'user':self.user, 
-                'stdout':self.outputpath,
-                'stderr':self.errorpath,
-                'cwd':self.outputdir, 
-                'location':[self.location],
-                'stdin':self.inputfile,
-                'true_mpi_args':self.true_mpi_args, 
-                'envs':{'path':self.path},
-                'size':0,
-                'executable':"this will be ignored"}])
-        except (ComponentLookupError, xmlrpclib.Fault):
-                logger.error("Job %s: Failed to start up user script job; requeueing" \
-                             % (self.jobid))
-                self.steps = ['RunScriptMPIJob'] + self.steps
-                return
-
-
-        if not pgroup[0].has_key('id'):
-            logger.error("Process Group creation failed for Job %s" % self.jobid)
-            self.set('state', 'sm-failure')
-        else:
-            self.pgid['user'] = pgroup[0]['id']
-        self.SetPassive()
-        # self.LogFinish()
-
-    def LogFinish(self):
-        '''Log end of job data, specific for BG/L exit status'''
-        exitstatus = self.get('exit-status', 'N/A')
-        try:
-            exitstatus = exitstatus.get('BG/L')
-            exitstatus = int(exitstatus)/256
-        except:
-            pass
-        logger.info("Job %s/%s on %s nodes done. %s" % \
-                    (self.get('jobid'), self.get('user'),
-                     self.get('nodes'), self.GetStats()))
-        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
-                                (self.get('jobid'), self.get('user'),
-                                 self.get('nodes'), self.GetStats(),
-                                 str(exitstatus)))
-        self.LogFinishPBS()
 
 
 class JobList(DataList):
@@ -1437,16 +1308,6 @@ class QueueManager(Component):
                     self.logger.info("Found dead pg for job %s" % (job.jobid))
                     job.CompletePG(pgid)
     sm_sync = automatic(sm_sync)
-
-    def invoke_mpi_from_script(self, spec):
-        '''Invoke the real mpirun on behalf of a script being executed by the script manager.'''
-        d = {'tag':'job', 'pgid':'*'}
-        d.update(spec)
-        j = ScriptMPIJob(d)
-        j.RunScriptMPIJob()
-        
-        return j.pgid['user']
-    invoke_mpi_from_script = exposed(invoke_mpi_from_script)
 
     def get_jobs(self, specs):
         return self.Queues.get_jobs(specs)

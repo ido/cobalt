@@ -100,11 +100,11 @@ if __name__ == '__main__':
 
     jobspec = {'jobid':int(os.environ["COBALT_JOBID"]), 'user':user, 'true_mpi_args':arglist, 'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir']}
     try:
-        cqm = ComponentProxy("queue-manager", defer=False)
+        scriptm = ComponentProxy("script-manager", defer=False)
         system = ComponentProxy("system", defer=False)
 
         # try adding job to queue_manager
-        pgid = cqm.invoke_mpi_from_script(jobspec)
+        pgid = int(scriptm.invoke_mpi_from_script(jobspec))
         
         # give the process a chance to get started before we check for it
         time.sleep(10)
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         
 
     except ComponentLookupError:
-        logger.error("Can't connect to the process manager")
+        logger.error("Trouble communicating with Cobalt components")
         raise SystemExit, 1
 #    except xmlrpclib.Fault, flt:
 #        if flt.faultCode == 31:

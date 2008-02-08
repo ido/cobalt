@@ -177,7 +177,7 @@ class ProcessGroup (Cobalt.Data.Data):
             # already been modified to include the partition that cobalt has selected
             # for the process group.
             argv.extend(self.true_mpi_args)
-            return " ".join(argv)
+            return argv
     
         argv.extend([
             "-np", str(self.size),
@@ -424,9 +424,9 @@ class Simulator (Component):
     def wait_process_groups (self, specs):
         """get process groups that have finished running."""
         self.logger.info("wait_process_groups(%r)" % (specs))
-        process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is None]
+        process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            del self.process_group[process_group.id]
+            del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
     
