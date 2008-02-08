@@ -345,7 +345,7 @@ class BGSystem (Component):
 
         self.configure()
         if 'partition_flags' in state:
-            for pname, flags in state['partition_flags']:
+            for pname, flags in state['partition_flags'].items():
                 if pname in self._partitions:
                     self._partitions[pname].scheduled = flags[0]
                     self._partitions[pname].functional = flags[1]
