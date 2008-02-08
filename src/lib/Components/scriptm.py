@@ -144,12 +144,12 @@ class ProcessGroup(Data):
                 'size':0,
                 'executable':"this will be ignored"}])
         except (ComponentLookupError, xmlrpclib.Fault):
-                logger.error("Job %s: Failed to start up user script job" % (self.jobid))
+                self.log.error("Job %s: Failed to start up user script job" % (self.jobid))
                 return
 
 
         if not pgroup[0].has_key('id'):
-            logger.error("Process Group creation failed for Job %s" % self.jobid)
+            self.log.error("Process Group creation failed for Job %s" % self.jobid)
             self.set('state', 'sm-failure')
         else:
             self.mpi_system_id = pgroup[0]['id']
