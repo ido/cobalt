@@ -1165,7 +1165,7 @@ class QueueManager(Component):
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
 
     def save_me(self):
-        Component.save(self, '/var/spool/cobalt/cqm')
+        Component.save(self)
     save_me = automatic(save_me)
         
         

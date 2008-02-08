@@ -8,6 +8,7 @@ from getopt import getopt, GetoptError
 import Cobalt
 from Cobalt.Components.simulator import Simulator
 from Cobalt.Server import XMLRPCServer, find_intended_location
+from Cobalt.Components.base import state_file_location
 import Cobalt.Logging
 
 def run (argv=None):
@@ -37,12 +38,14 @@ def run (argv=None):
             config_files = [item[1]]
     
     Cobalt.Logging.setup_logging('brooklyn', level=log_level)
+    state_file = state_file_location() + "/brooklyn"
     try:
-        simulator = cPickle.load(open('/var/spool/cobalt/brooklyn'))
+        simulator = cPickle.load(open(state_file))
     except:
         print "failed to restore state, creating new simulator object"
         simulator = Simulator()
-        
+    simulator.statefile = state_file
+    
     try:
         simulator.configure("simulator.xml")
     except IOError:

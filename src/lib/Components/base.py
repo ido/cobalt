@@ -13,12 +13,27 @@ import sys
 import getopt
 import logging
 import xmlrpclib
+import ConfigParser
 
 import Cobalt
 import Cobalt.Proxy
 import Cobalt.Logging
 from Cobalt.Server import XMLRPCServer, find_intended_location
 from Cobalt.Data import get_spec_fields
+
+
+def state_file_location():
+    _config = ConfigParser.ConfigParser()
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
+    else:
+        _config.read(Cobalt.CONFIG_FILES)
+    if _config._sections.has_key("statefiles"):
+        state_dir = _config._sections['statefiles'].get("location", "/var/spool/cobalt")
+    else:
+        state_dir = "/var/spool/cobalt"
+
+    return state_dir
 
 def run_component (component, argv=None, register=True):
     if argv is None:

@@ -355,7 +355,7 @@ class BGSystem (Component):
         
         thread.start_new_thread(self.update_partition_state, tuple())
     def save_me(self):
-        Component.save(self, '/var/spool/cobalt/bgsystem')
+        Component.save(self)
     save_me = automatic(save_me)
 
     def configure (self):

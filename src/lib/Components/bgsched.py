@@ -383,7 +383,7 @@ class BGSched (Component):
 
         
     def save_me(self):
-        Component.save(self, '/var/spool/cobalt/bgsched')
+        Component.save(self)
     save_me = automatic(save_me)
 
     def add_reservations (self, specs):

@@ -275,7 +275,7 @@ class Simulator (Component):
 
         
     def save_me(self):
-        Component.save(self, '/var/spool/cobalt/brooklyn')
+        Component.save(self)
     save_me = automatic(save_me)
         
     
