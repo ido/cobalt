@@ -24,6 +24,9 @@ from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
+class ProcessGroupCreationError (Exception):
+    """An error occured when creation a process group."""
+
 class ProcessGroup(Data):
     '''Run a script'''
 
@@ -126,9 +129,9 @@ class ProcessGroup(Data):
         '''Run an mpirun job that was invoked by a script.'''
         self.state = 'running'
         if self.outputfile is None:
-            self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
+            self.outputpath = "%s/%s.output" % (self.cwd, self.jobid)
         if self.errorfile is None:
-            self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
+            self.errorpath = "%s/%s.error" % (self.cwd, self.jobid)
 
         try:
             pgroup = ComponentProxy("system").add_process_groups([{
