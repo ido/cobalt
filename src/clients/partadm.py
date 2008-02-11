@@ -5,6 +5,7 @@ __revision__ = '$Revision$'
 __version__ = '$Version$'
 
 import sys, getopt, xmlrpclib
+
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
@@ -38,15 +39,13 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     if '-r' in sys.argv:
-        partdata = system.get_partitions([{'tag':'partition', 'name':'*', 'queue':'*',
-                                        'state':'*', 'scheduled':'*', 'functional':'*',
-                                        'deps':'*'}])
-        partinfo = Cobalt.Util.buildRackTopology(partdata)
+        partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children':'*'} for name in args])
         parts = args
-        for part in args:
-            for relative in partinfo[part][1]:
-                if relative not in parts:
-                    parts.append(relative)
+        
+        for part in partdata:
+            for child in part['children']:
+                if child not in parts:
+                    parts.append(child)
     else:
         parts = args
     if '-a' in sys.argv:
