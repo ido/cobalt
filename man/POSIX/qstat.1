@@ -1,15 +1,15 @@
-.TH "cqstat" 1
+.TH "qstat" 1
 .SH NAME
-cqstat \- query the queue manager for jobs
+qstat \- query the queue manager for jobs
 .SH SYNOPSIS
-.B cqstat
+.B qstat
 .I [--version] [-d] [-f] [-l] <jobid> <jobid>
 .TP
-.B cqstat
+.B qstat
 .I [-d] -q <queue> <queue>
 .SH DESCRIPTION
 .PP
-.B cqstat
+.B qstat
 query the queue manager for all queued and active jobs. 
 .SH OPTIONS
 .TP
@@ -23,15 +23,15 @@ Show more verbose information.
 Show job info in vertical format. Use with '-f' to get all job info.
 .TP
 .B \-\-header <header fields>
-Specify custom header for cqstat display with a colon-separated list. (See cqstat -lf for the possible fields.) The custom header may also be specified setting CQSTAT_HEADER in the environment or a cqstat_header entry under [cqm] in /etc/cobalt.conf. The header is taken from /etc/cobalt.conf first, then $CQSTAT_HEADER, and finally cqstat --header.
+Specify custom header for qstat display with a colon-separated list. (See qstat -lf for the possible fields.) The custom header may also be specified setting QSTAT_HEADER in the environment or a cqstat_header entry under [cqm] in /etc/cobalt.conf. The header is taken from /etc/cobalt.conf first, then $QSTAT_HEADER, and finally qstat --header.
 .IP
 .B Example:
 .RS
 .TP
-cqstat --header JobId:State:RunTime
+qstat --header JobId:State:RunTime
 .RE
 .TP
-.B \-q
+.B \-Q
 Show queues and properties.
 .IP
 .B Properties:
@@ -69,13 +69,13 @@ The priority of the queue.  Higher numbers have higher priority.
 Displays client revision and Cobalt version
 .PP
 .SH "ENIRONMENT VARIABLES"
-The following environment variables affect cqstat:
+The following environment variables affect qstat:
 .TP
-.B CQSTAT_HEADER
+.B QSTAT_HEADER
 Specifies custom header for job queries (See --header).
 .SH "SEE ALSO"
-.BR cqdel(1),
-.BR cqsub(1),
+.BR qdel(1),
+.BR qsub(1),
 .BR cqm(1)
 .SH BUGS
 None are currently known.

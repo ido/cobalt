@@ -1,0 +1,49 @@
+.TH "qalter" 1
+.SH "NAME"
+qalter \- change properties of jobs already submitted to the queue manager
+.SH "SYNOPSIS"
+.B qalter 
+.I [--version] [-d] [-A project] [-t time] [-n number of nodes] [--mode mode] [--procccount process count] <jobid1> <jobid2>
+.SH "DESCRIPTION"
+.PP
+.B qalter
+changes properties of jobs already submitted to the queue manager
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-\-version
+Print out version string
+.TP
+.B \-\-mode "mode"
+Either co (for coprocessor mode) or vn (for virtual node mode) or script (for script jobs)
+.TP
+.B \-n "node count"
+Specifies the node count for a job
+.TP
+.B \-\-proccount "process count"
+Specify the number of processes to start
+.TP
+.B \-A "project"
+Associate the job with the allocation for project project. This is
+used to properly account for machine usage. 
+.TP
+.B \-t "wall clock time" 
+Specify the runtime for a job. The time specified is the full amount in minutes
+allotted to the job for execution. If the job runs over this limit, it
+will be killed. If colon-delimited time is specified, the format is HH:MM:SS. 
+.TP
+.B \-M "email address"
+Send an email notification at the start and stop of the job to the
+specified email address.
+.TP
+.B \-e "stderr file path"
+Send job stderr to file specified.
+.TP
+.B \-o "stdout file path"
+Send job stdout to file specified.
+.SH "SEE ALSO"
+.BR qsub(1),
+.BR qstat(1)
+.SH "BUGS"
