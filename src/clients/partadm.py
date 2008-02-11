@@ -14,10 +14,7 @@ Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
-Usage: partadm.py --deps=dep1:dep2 part1 part2
-Usage: partadm.py --free part1 part2
 Usage: partadm.py --dump
-Usage: partadm.py --load <filename>
 Usage: partadm.py --version
 Must supply one of -a or -d or -l or -start or -stop or --queue'''
 
@@ -99,13 +96,6 @@ if __name__ == '__main__':
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'queue':queue})
-    elif '--deps' in [opt for (opt, arg) in opts]:
-        deps = [arg for (opt, arg) in opts if opt == '--deps'][0]
-        func = system.set_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in parts], {'deps':deps.split(':')})
-    elif '--free' in [opt for (opt, arg) in opts]:
-        func = system.set_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in parts], {'state':'idle'})
     elif '--dump' in [opt for (opt, arg) in opts]:
         func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',

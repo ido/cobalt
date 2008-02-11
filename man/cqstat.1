@@ -17,7 +17,7 @@ query the queue manager for all queued and active jobs.
 Turn on communication debugging
 .TP
 .B \-f
-Query a particular jobid. 
+Show more verbose information. 
 .TP
 .B \-l
 Show job info in vertical format. Use with '-f' to get all job info.
@@ -60,6 +60,9 @@ The maximum number of nodes a user is allowed to have allocated with running job
 .TP
 .B TotalNodes
 The maximum number of nodes any jobs in the queue are allowed to have allocated with running jobs.
+.TP
+.B Priority
+The priority of the queue.  Higher numbers have higher priority.
 .RE
 .TP
 .B \-\-version

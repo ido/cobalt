@@ -4,7 +4,7 @@ cqadm \- queue manager administration tool
 .SH "SYNOPSIS"
 .B cqadm [-d] [--hold] [--release] [--run=<location>] [--kill] [--delete] [--queue=newqueue] <jobid> <jobid>
 
-.B cqadm [-d] [-f] [--addq] [--delq] [--getq] [--setq 'prop:value prop:value'] <queue> <queue>
+.B cqadm [-d] [-f] [--addq] [--delq] [--getq] [--setq 'prop=value prop=value'] [--unsetq 'property property'] <queue> <queue>
 
 .B cqadm [--version]
 
@@ -72,8 +72,11 @@ Drain queue(s). No new jobs can be submitted, and jobs already in the queue will
 .B \-\-killq queue
 Kill the queue(s). No new jobs can be submitted, and no jobs in the queue will run. Queue state is set to 'dead'.
 .TP
-.B \-\-setq 'prop:value prop:value' queue
-Set properties for one or more queues. The prop:value pairs are separated by whitespace. A value of '*' effectively disables the property.
+.B \-\-setq 'prop=value prop=value' queue
+Set properties for one or more queues. The prop=value pairs are separated by whitespace.
+.TP
+.B \-\-unsetq 'property property' queue
+Move a property back to its unset state.  Used for example, to remove a queue restriction.
 .TP
 .SH "Properties"
 .RS
@@ -106,12 +109,17 @@ The maximum number of nodes a user is allowed to have allocated with running job
 .TP
 .B totalnodes=x
 The maximum number of nodes any jobs in the queue are allowed to have allocated with running jobs.
+.TP
+.B priority=x
+The priority that should be set for the queue.  The default priority for a queue is 0, and larger numbers indicate higher priority.
 
 .SH "EXAMPLE"
 \" .IP
 Set no minimum walltime, a max walltime of 30 minutes, and only users 'mike, john, and george' can submit to someq:
 .IP
-.B cqadm --setq 'mintime=* maxtime=30 users=mike:john:george' someq
+.B cqadm --unsetq mintime someq
+.IP
+.B cqadm --setq 'maxtime=30 users=mike:john:george' someq
 
 
 .RE

@@ -10,15 +10,11 @@ partadm \- partition administration tool
 .TP
 .B partadm [--enable|--disable] part1 part2
 .TP
-.B partadm [--deps=dep1:dep2] part1 part2
-.TP
-.B partadm --free part1 part2
-.TP
 .B partadm --version
 .SH "DESCRIPTION"
 .TP
 .B \-a
-Add new partitions (of specified size) into the scheduler
+Add new partitions into the scheduler
 .TP
 .B \-d 
 Delete partitions from the scheduler
@@ -40,18 +36,8 @@ Allow partition(s) to have jobs scheduled on them
 Do not run jobs on this partition(s). (Jobs can run on larger or
 smaller overlapping partitions)
 .TP
-.B \-\-deps
-Set partition(s) dependencies
-.TP
-.B \-\-free
-Forceably free partition (set state to idle)
-.TP
 .B \-\-dump
 Dump partition state
-.TP
-.B \-\-load <filename>
-Load partition state from file. Note that this is not exclusive;
-existing partitions will continue to exist.
 .TP
 .B \-r
 Activate recursive mode. All child partitions of all specified

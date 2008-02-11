@@ -1,20 +1,17 @@
 .TH "bgsched" 8
 .SH NAME
-bgsched \- Blue Gene/L Scheduler
+bgsched \- Blue Gene Scheduler
 .SH SYNOPSIS
 .B bgsched
-.I [-d] [--nodb2] [-C <configfile>] [-D=<pidfile>]
+.I [-d] [-C <configfile>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B bgsched
-Blue Gene/L Scheduler
+Blue Gene Scheduler
 .SH "OPTIONS"
 .TP
 .B \-d
 Turn on communication debugging.
-.TP
-.B \-\-nodb2
-Partition states are not checked against the BGL db2 database.
 .TP
 .B \-C <configfile>
 Specify path to cobalt.conf.
@@ -23,14 +20,7 @@ Specify path to cobalt.conf.
 Daemonize, and write pid to pidfile.
 .SH "CONFIGURATION FILE PARAMETERS"
 .TP
-.B db2uid
-DB2 user
-.TP
-.B db2pwd
-DB2 password
-.TP
-.B db2dsn
-DB2 database name
+none
 .SH "SEE ALSO"
 .BR partadm(8),
 .BR partlist(1)

@@ -2,7 +2,7 @@
 .SH "NAME"
 setres \- Create a new cobalt scheduler reservation
 .SH "SYNOPSIS"
-.B setres [--version] [-a] [-x] [-m] [-p partition] [-s starttime] [-d duration] [-u user] [-n name] [partion1 partion2 ... partitionN]
+.B setres [--version] [-m] [-p partition] [-s starttime] [-d duration] [-u user] [-c cycle time] [-q queue name] [-n name] [partion1 partion2 ... partitionN]
 .SH "DESCRIPTION"
 .TP
 This program creates new scheduler reservations.
@@ -11,7 +11,7 @@ This program creates new scheduler reservations.
 Modify an existing reservation, specified with -n.
 .TP
 .B \-p
-Set use partition (or quoted "*" as a wildcard). Now optional
+Set use partition. Now optional
 .TP
 .B \-n
 Set reservation name
@@ -20,16 +20,16 @@ Set reservation name
 Set start time (in format YYYY_MM_DD-HH:MM)
 .TP
 .B \-d
-Set duration (in minutes or DD:HH:MM)
+Set duration (in minutes or HH:MM:SS)
 .TP
 .B \-u
 Set user for reservation
 .TP
-.B \-a 
-Enable auto dependancy generation for listed partition(s)
+.B \-c
+Set the cycle time (in minutes or DD:HH:MM:SS).  This is the amount of time from reservation start until it is automatically renewed.  This can be used to create repeating reservations.
 .TP
-.B \-x 
-Reserve the partition for exclusive access (also reserves all client and parent partitions)
+.B \-q
+Set the queue name, if something other than the standard reservation naming convention is desired.
 .TP
 .B \-\-version
 Displays client revision and Cobalt version
