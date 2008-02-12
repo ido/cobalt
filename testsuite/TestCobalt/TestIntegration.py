@@ -8,8 +8,7 @@ import logging
 
 from Cobalt.Components.cqm import QueueManager
 from Cobalt.Components.slp import TimingServiceLocator
-from Cobalt.Components.cpm import ProcessManager
-from Cobalt.Components.system import Simulator
+from Cobalt.Components.simulator import Simulator
 from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 import Cobalt.Proxy
@@ -18,8 +17,7 @@ class TestIntegration (object):
     def setup (self):
         self.slp = TimingServiceLocator()
         self.qm = QueueManager()
-        self.pm = ProcessManager()
-        self.sys = Simulator()
+        self.sys = Simulator(config_file="simulator.xml")
         self.sm = ScriptManager()
         
     def teardown (self):
@@ -28,7 +26,6 @@ class TestIntegration (object):
     def test_something(self):
         logging.basicConfig()
         def my_do_tasks():
-            self.pm.do_tasks()
             self.sys.do_tasks()
             self.qm.do_tasks()
         
@@ -49,6 +46,15 @@ class TestIntegration (object):
             pass
         else:
             assert not "Adding job to non-existent queue should raise xmlrpclib.Fault"
+            
+        # add a partition to manage
+        try:
+            simulator = ComponentProxy("system")
+        except ComponentLookupError:
+            assert not "failed to connect to simulator"
+
+        simulator.add_partitions([{'name':"ANLR00"}])
+
             
         # now add a real job
         # we will
@@ -79,7 +85,7 @@ class TestIntegration (object):
         if len(r) != 1:
             assert not "the job has stopped running prematurely"
 
-        time.sleep(60)
+        time.sleep(180)
 
         # finish stepping through the ... uh ... steps, to the point where the job
         # finishes and is removed from the queue.
@@ -118,6 +124,9 @@ class TestIntegration (object):
             assert not "the job has stopped running prematurely"
 
         cqm.del_jobs([{'jobid':2}])
+        
+        # give the thread in the simulator a chance to die
+        time.sleep(2)
         
         for i in range(4):
             my_do_tasks()
