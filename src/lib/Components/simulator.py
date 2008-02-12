@@ -23,8 +23,7 @@ import thread
 from datetime import datetime
 from ConfigParser import ConfigParser
 
-import lxml
-import lxml.etree
+import xml.etree.ElementTree
 
 import Cobalt
 import Cobalt.Data
@@ -288,7 +287,7 @@ class Simulator (Component):
         """
         
         self.logger.info("configure()")
-        system_doc = lxml.etree.parse(config_file)
+        system_doc = xml.etree.ElementTree.parse(config_file)
         system_def = system_doc.getroot()
         
         # initialize a new partition dict with all partitions
