@@ -65,13 +65,13 @@ class XMLRPCServerTester (object):
     
     def test_require_auth (self):
         assert self.server.require_auth == \
+            self.server.RequestHandlerClass.require_auth == True
+        self.server.RequestHandlerClass.require_auth = False
+        assert self.server.require_auth == \
             self.server.RequestHandlerClass.require_auth == False
-        self.server.RequestHandlerClass.require_auth = True
+        self.server.require_auth = True
         assert self.server.require_auth == \
             self.server.RequestHandlerClass.require_auth == True
-        self.server.require_auth = False
-        assert self.server.require_auth == \
-            self.server.RequestHandlerClass.require_auth == False
     
     def test_credentials (self):
         assert self.server.credentials == \
