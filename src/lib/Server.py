@@ -317,6 +317,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
             timeout=timeout, keyfile=keyfile, certfile=certfile)
         self.logRequests = logRequests
         self.serve = False
+        self._register = False
         self.should_register = register
         self.register_introspection_functions()
         self.register_function(self.ping)
