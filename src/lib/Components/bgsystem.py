@@ -191,12 +191,32 @@ class ProcessGroup (Data):
     state = property(_get_state)
     
     def _mpirun (self):
+        #check for valid user/group
+        try:
+            userid, groupid = pwd.getpwnam(self.user)[2:4]
+        except KeyError:
+            raise ProcessGroupCreationError("error getting uid/gid")
+        
         try:
             os.setgid(groupid)
             os.setuid(userid)
         except OSError:
             logger.error("failed to change userid/groupid for process group %s" % (self.id))
             os._exit(1)
+
+        try:
+            partition = self.location[0]
+        except IndexError:
+            raise ProcessGroupCreationError("no location")
+
+        kerneloptions = self.kerneloptions
+        # strip out BGLMPI_MAPPING until mpirun bug is fixed 
+        mapfile = ''
+        outerenv = ("BGLMPI_MAPPING", )
+        if self.env.has_key('BGLMPI_MAPPING'):
+            mapfile = self.env['BGLMPI_MAPPING']
+        envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems() if not envdata[0] in outerenv])
+        atexit._atexit = []
 
         stdin = open(self.stdin or "/dev/null", 'r')
         os.dup2(stdin.fileno(), sys.__stdin__.fileno())
@@ -212,25 +232,6 @@ class ProcessGroup (Data):
             os.dup2(stderr.fileno(), sys.__stderr__.fileno())
         except (IOError, OSError), e:
             logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, stderr, e))
-        
-        try:
-            partition = self.location[0]
-        except IndexError:
-            raise ProcessGroupCreationError("no location")
-        
-        #check for valid user/group
-        try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError("error getting uid/gid")
-        kerneloptions = self.kerneloptions
-        # strip out BGLMPI_MAPPING until mpirun bug is fixed 
-        mapfile = ''
-        outerenv = ("BGLMPI_MAPPING", )
-        if self.env.has_key('BGLMPI_MAPPING'):
-            mapfile = self.env['BGLMPI_MAPPING']
-        envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems() if not envdata[0] in outerenv])
-        atexit._atexit = []
 
         cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
                '-np', str(self.size), '-partition', partition,
