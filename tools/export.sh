@@ -14,7 +14,7 @@ tagstr=`echo ${version} | sed -e 's/\./_/g'`
 svn copy "${repo}/trunk" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} release"
 svn export . "${expath}"
 svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
-cd "${expath}" ; perl -p -i -e "s/\\\$Version\\\$/${version}/" src/clients/*.py ; rm src/clients/*.bak ; ./autogen.sh
+cd "${expath}" ; perl -p -i -e "s/\\\$Version\\\$/${version}/" src/clients/*.py ; rm src/clients/*.bak 
 cd /tmp
 
 tar czf "${tarname}" "${name}-${version}"
