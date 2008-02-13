@@ -1,1 +1,0 @@
-pkgpython_PYTHON = __init__.py Component.py  Data.py Logging.py Proxy.py Util.py Cqparse.py

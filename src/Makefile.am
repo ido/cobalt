@@ -1,1 +1,0 @@
-SUBDIRS = components clients lib .
