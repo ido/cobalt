@@ -191,6 +191,13 @@ class ProcessGroup (Data):
     state = property(_get_state)
     
     def _mpirun (self):
+        try:
+            os.setgid(groupid)
+            os.setuid(userid)
+        except OSError:
+            logger.error("failed to change userid/groupid for process group %s" % (self.id))
+            os._exit(1)
+
         stdin = open(self.stdin or "/dev/null", 'r')
         os.dup2(stdin.fileno(), sys.__stdin__.fileno())
         try:
@@ -225,13 +232,6 @@ class ProcessGroup (Data):
         envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems() if not envdata[0] in outerenv])
         atexit._atexit = []
 
-        try:
-            os.setgid(groupid)
-            os.setuid(userid)
-        except OSError:
-            logger.error("failed to change userid/groupid for process group %s" % (self.id))
-            os._exit(1)
-        
         cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
                '-np', str(self.size), '-partition', partition,
                '-mode', self.mode, '-cwd', self.cwd, '-exe', self.executable)
