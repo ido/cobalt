@@ -10,7 +10,8 @@ setup(name="Cobalt",
       author_email="cobalt@mcs.anl.gov",
       packages=["Cobalt", "Cobalt.Components"],
       package_dir = {'Cobalt': 'src/lib'},
-      scripts = glob('src/clients/*.py') + glob('src/clients/POSIX/*.py'),
+      scripts = glob('src/clients/*.py') + glob('src/clients/POSIX/*.py') \
+      + glob('src/components/*.py'),
       data_files=[('share/man/man1', glob('man/*.1')),
                   ('share/man/man1', glob('POSIX/man/*.1')),
                   ('share/man/man8', glob('man/*.8'))]
