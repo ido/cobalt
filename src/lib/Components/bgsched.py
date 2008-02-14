@@ -242,7 +242,7 @@ class Partition (ForeignData):
 
 class PartitionDict (ForeignDataDict):
     item_cls = Partition
-    __oserror__ = Cobalt.Util.FailureMode("QM Connection (partition)")
+    __oserror__ = Cobalt.Util.FailureMode("System Connection (partition)")
     __failname__ = 'System Connection'
     __function__ = ComponentProxy("system").get_partitions
     __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children', 'state']
@@ -357,6 +357,7 @@ class BGSched (Component):
         self.assigned_partitions = {}
         self.sched_info = {}
         self.started_jobs = {}
+        self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
     
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1}
@@ -370,6 +371,7 @@ class BGSched (Component):
         self.assigned_partitions = {}
         self.sched_info = {}
         self.started_jobs = {}
+        self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
 
     def prioritycmp(self, job1, job2):
         """Compare 2 jobs first using queue priority and then first-in, first-out."""
@@ -462,8 +464,10 @@ class BGSched (Component):
 
     def _start_job(self, job, partition):
         cqm = ComponentProxy("queue-manager")
+        sys = ComponentProxy("system")
         
         try:
+            sys.reserve_partition(partition.name)
             print "trying to start job %d on partition %s" % (job.jobid, partition.name)
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition.name])
         except ComponentLookupError:
@@ -480,8 +484,9 @@ class BGSched (Component):
         
         # if we're missing information, don't bother trying to schedule jobs
         if not (self.partitions.__oserror__.status and self.queues.__oserror__.status and self.jobs.__oserror__.status):
-            self.logger.error("foreign data scynchronization failed: disabling scheduling")
+            self.sync_state.Fail()
             return
+        self.sync_state.Pass()
         
         # clean up the assigned_partitions cached data, and the started_jobs cached data
         now = time.time()
