@@ -17,15 +17,11 @@ import sets
 import logging
 import sys
 import os
-import operator
-import random
 import signal
 import tempfile
 import time
 import thread
 import ConfigParser
-import thread
-from datetime import datetime
 try:
     set = set
 except NameError:
@@ -33,7 +29,7 @@ except NameError:
 
 import Cobalt
 import Cobalt.Data
-from Cobalt.Data import Data, DataDict, DataList, IncrID, DataCreationError
+from Cobalt.Data import Data, DataDict, IncrID, DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
@@ -210,12 +206,21 @@ class ProcessGroup (Data):
             raise ProcessGroupCreationError("no location")
 
         kerneloptions = self.kerneloptions
-        # strip out BGLMPI_MAPPING until mpirun bug is fixed 
-        mapfile = ''
-        outerenv = ("BGLMPI_MAPPING", )
-        if self.env.has_key('BGLMPI_MAPPING'):
-            mapfile = self.env['BGLMPI_MAPPING']
-        envs = " ".join(["%s=%s" % envdata for envdata in self.env.iteritems() if not envdata[0] in outerenv])
+
+        # export subset of MPIRUN_* variables to mpirun's environment
+        # we explicitly state the ones we want since some are "dangerous"
+        exportenv = [ 'MPIRUN_CONNECTION', 'MPIRUN_KERNEL_OPTIONS',
+                      'MPIRUN_MAPFILE', 'MPIRUN_START_GDBSERVER',
+                      'MPIRUN_LABEL', 'MPIRUN_NW', 'MPIRUN_VERBOSE',
+                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE' ]
+        app_envs = []
+        for key, value in self.env.iteritems():
+            if key in exportenv:
+                os.environ[key] = value
+            else:
+                app_envs.append((key, value))
+            
+        envs = " ".join(["%s=%s" % x for x in app_envs])
         atexit._atexit = []
 
         stdin = open(self.stdin or "/dev/null", 'r')
@@ -242,8 +247,6 @@ class ProcessGroup (Data):
             cmd = cmd + ('-env',  envs)
         if kerneloptions:
             cmd = cmd + ('-kernel_options', kerneloptions)
-        if mapfile:
-            cmd = cmd + ('-mapfile', mapfile)
         
         # If this mpirun command originated from a user script, its arguments
         # have been passed along in a special attribute.  These arguments have
