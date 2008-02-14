@@ -464,10 +464,8 @@ class BGSched (Component):
 
     def _start_job(self, job, partition):
         cqm = ComponentProxy("queue-manager")
-        sys = ComponentProxy("system")
         
         try:
-            sys.reserve_partition(partition.name)
             print "trying to start job %d on partition %s" % (job.jobid, partition.name)
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition.name])
         except ComponentLookupError:
