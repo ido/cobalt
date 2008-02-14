@@ -199,8 +199,13 @@ class Component (object):
         statefile = statefile or self.statefile
         if statefile:
             data = cPickle.dumps(self)
-            statefile = file(statefile or self.statefile, "wb")
-            statefile.write(data)
+            try:
+                statefile = file(statefile or self.statefile, "wb")
+                statefile.write(data)
+            except IOError:
+                self.logger.error("Failed to write to statefile %s" % statefile)
+                self.logger.error("Disabling state persisitence code")
+                self.statefile = None
     
     def do_tasks (self):
         """Perform automatic tasks for the component.

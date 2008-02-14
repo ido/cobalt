@@ -413,7 +413,10 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
                 except socket.timeout:
                     pass
                 if self.instance and hasattr(self.instance, "do_tasks"):
-                    self.instance.do_tasks()
+                    try:
+                        self.instance.do_tasks()
+                    except:
+                        self.logger.error("Task executaion failure", exc_info=1)
         finally:
             #signal.signal(signal.SIGINT, sigint)
             #signal.signal(signal.SIGTERM, sigterm)
