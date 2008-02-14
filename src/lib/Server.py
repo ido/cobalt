@@ -317,8 +317,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
             timeout=timeout, keyfile=keyfile, certfile=certfile)
         self.logRequests = logRequests
         self.serve = False
-        self._register = False
-        self.should_register = register
+        self.register = register
         self.register_introspection_functions()
         self.register_function(self.ping)
         self.logger.info("service available at %s" % self.url)
@@ -342,7 +341,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
             name = instance.name
         except AttributeError:
             name = "unknown"
-        if self.should_register:
+        if self.register:
             self.register_with_slp()
         self.logger.info("serving %s at %s" % (name, self.url))
     
@@ -401,46 +400,9 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
         self.RequestHandlerClass.credentials = value
     credentials = property(_get_credentials, _set_credentials)
     
-    def serve_daemon (self, pidfile_name=None):
-        
-        """Implement serve_forever inside a daemon.
-        
-        Arguments:
-        pidfile -- file in which to record daemon pid
-        """
-        
-        child_pid = os.fork()
-        if child_pid != 0:
-            return
-        
-        os.setsid()
-        
-        child_pid = os.fork()
-        if child_pid != 0:
-            os._exit(0)
-        
-        redirect_file = open("/dev/null", "w+")
-        os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
-        os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
-        os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
-        
-        os.chdir(os.sep)
-        os.umask(0)
-        
-        pidfile = open(pidfile_name or "/dev/null", "w")
-        print >> pidfile, os.getpid()
-        pidfile.close()
-        
-        self.logger.info("serve_daemon(%r) [%s]" % (pidfile_name, os.getpid()))
-        
-        self.serve_forever()
-        self.server_close()
-        os._exit(0)
-    
     def serve_forever (self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
-        self.register = self.should_register
         self.logger.info("serve_forever() [start]")
         #sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
         #sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)

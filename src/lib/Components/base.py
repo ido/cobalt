@@ -13,7 +13,6 @@ import sys
 import getopt
 import logging
 import xmlrpclib
-import ConfigParser
 
 import Cobalt
 import Cobalt.Proxy
@@ -35,7 +34,8 @@ def state_file_location():
 
     return state_dir
 
-def run_component (component, argv=None, register=True):
+def run_component (component_cls, argv=None, register=True, state_name=False,
+                   cls_kwargs={}):
     if argv is None:
         argv = sys.argv
     try:
@@ -49,18 +49,54 @@ def run_component (component, argv=None, register=True):
     # default settings
     daemon = False
     pidfile = ""
+    level = logging.INFO
     # get user input
     for item in opts:
         if item[0] == '-C':
             Cobalt.CONFIG_FILES = (item[1], )
         elif item[0] == '-D':
             daemon = True
-            pidfile = item[1]
+            pidfile_name = item[1]
+        elif item[0] == '-d':
+            level = logging.DEBUG
     
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(level)
     Cobalt.Logging.log_to_stderr(logging.getLogger())
-    Cobalt.Logging.setup_logging(component.implementation, True, True)
+    Cobalt.Logging.setup_logging(component_cls.implementation, True, True)
 
+    if daemon:
+        child_pid = os.fork()
+        if child_pid != 0:
+            return
+        
+        os.setsid()
+        
+        child_pid = os.fork()
+        if child_pid != 0:
+            os._exit(0)
+        
+        redirect_file = open("/dev/null", "w+")
+        os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
+        os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
+        os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
+        
+        os.chdir(os.sep)
+        os.umask(0)
+        
+        pidfile = open(pidfile_name or "/dev/null", "w")
+        print >> pidfile, os.getpid()
+        pidfile.close()
+
+    if state_name:
+        state_file_name = "%s/%s" % (state_file_location(), state_name)
+        try:
+            component = cPickle.load(open(state_file_name))
+        except:
+            component = component_cls(**cls_kwargs)
+        component.statefile = state_file_name
+    else:
+        component = component_cls(**cls_kwargs)
+        
     location = find_intended_location(component)
     try:
         cp = ConfigParser.ConfigParser()
@@ -73,13 +109,10 @@ def run_component (component, argv=None, register=True):
                           register=register)
     server.register_instance(component)
     
-    if daemon:
-        server.serve_daemon(pidfile)
-    else:
-        try:
-            server.serve_forever()
-        finally:
-            server.server_close()
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()
 
 def exposed (func):
     """Mark a method to be exposed publically.
