@@ -11,7 +11,7 @@ from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
                   -c <cycle time> -p <partition> -q <queue name> 
-                  -u <user> [partion1] .. [partionN]
+                  -u <user> [-f] [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 cycle time may be in minutes or DD:HH:MM:SS
@@ -47,14 +47,21 @@ if __name__ == '__main__':
             print helpmsg
             raise SystemExit, 1
         
-    
-    # we best check that the partitions are valid
-    system = ComponentProxy("system", defer=False)
-    for p in partitions:
-        test_parts = system.get_partitions([{'name':p}])
-        if len(test_parts) != 1:
-            print "cannot find partition named %s" % p
+
+    if '-f' not in sys.argv:
+        # we best check that the partitions are valid
+        pspec = [{'name':p} for p in partitions]
+        try:
+            system = ComponentProxy("system", defer=False)
+        except ComponentLookupError:
+            print "Failed to contact system component for partition check"
             raise SystemExit, 1
+        for p in partitions:
+            test_parts = system.get_partitions(pspec)
+            if len(test_parts) != len(pspec):
+                missing = [p for p in partitions if {'name':p} not in test_parts]
+                print "Missing partitions: %s" % (" ".join(missing))
+                raise SystemExit, 1
     
     try:
         [start] = [opt[1] for opt in opts if opt[0] == '-s']

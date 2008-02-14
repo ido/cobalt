@@ -26,7 +26,12 @@ Set duration (in minutes or HH:MM:SS)
 Set user for reservation
 .TP
 .B \-c
-Set the cycle time (in minutes or DD:HH:MM:SS).  This is the amount of time from reservation start until it is automatically renewed.  This can be used to create repeating reservations.
+Set the cycle time (in minutes or DD:HH:MM:SS).  This is the amount of
+time from reservation start until it is automatically renewed.  This
+can be used to create repeating reservations.
+.TP \-f
+Bypass the partition validity check. This can be used if the system
+component is not operational or a partition is not defined yet. 
 .TP
 .B \-q
 Set the queue name, if something other than the standard reservation naming convention is desired.
