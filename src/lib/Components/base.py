@@ -39,11 +39,11 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     if argv is None:
         argv = sys.argv
     try:
-        (opts, arg) = getopt.getopt(argv[1:], 'C:D:')
+        (opts, arg) = getopt.getopt(argv[1:], 'C:D:d')
     except getopt.GetoptError, e:
         print >> sys.stderr, e
         print >> sys.stderr, "Usage:"
-        print >> sys.stderr, "%s [-D pidfile] [-C config file]" % (os.path.basename(argv[0]))
+        print >> sys.stderr, "%s [-d] [-D pidfile] [-C config file]" % (os.path.basename(argv[0]))
         sys.exit(1)
     
     # default settings
