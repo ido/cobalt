@@ -108,6 +108,7 @@ class ServiceLocator (Component):
             self.services[service_name] = service
             self.logger.info("register(%r, %r)" % (service_name, location))
         else:
+            service.location = location
             service.touch()
             self.logger.info("register(%r, %r) [update]" % (service_name, location))
     register = exposed(register)
