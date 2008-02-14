@@ -357,6 +357,7 @@ class BGSystem (Component):
                 else:
                     logger.info("Partition %s is no longer defined" % pname)
         
+        self.update_relatives()
         thread.start_new_thread(self.update_partition_state, tuple())
     def save_me(self):
         Component.save(self)
