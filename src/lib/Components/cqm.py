@@ -1360,8 +1360,8 @@ class QueueManager(Component):
         for job in self.Queues.get_jobs(specs):
             if job.queue==new_q_name:
                 raise QueueError, "job %d already in queue '%s'" % (job.jobid, new_q_name)
-            if job.state != "queued":
-                raise QueueError, "jobs must be in state 'queued' to move.  job %d is in state '%s'." % (job.jobid, job.state)   
+            if job.state not in ["queued", "hold", "user hold"]:
+                raise QueueError, "jobs must be in state 'queued', 'hold', or 'user hold' to move.  job %d is in state '%s'." % (job.jobid, job.state)   
         
         results = []
         for q in self.Queues.itervalues():
