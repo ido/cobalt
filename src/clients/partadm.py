@@ -115,6 +115,15 @@ if __name__ == '__main__':
 #        print "buildRackTopology sees : " + repr(parts)
 #
 #        partinfo = Cobalt.Util.buildRackTopology(parts)
+        def my_cmp(left, right):
+            val = -cmp(int(left['size']), int(right['size']))
+            if val == 0:
+                return cmp(left['name'], right['name'])
+            else:
+                return val
+    
+        parts.sort(my_cmp)
+    
         offline = [part['name'] for part in parts if not part['functional']]
         forced = [part for part in parts \
                   if [down for down in offline \

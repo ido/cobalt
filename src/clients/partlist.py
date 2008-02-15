@@ -25,7 +25,16 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
 
-    parts = system.get_partitions([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*'}])
+    parts = system.get_partitions([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*'}])
+
+    def my_cmp(left, right):
+        val = -cmp(int(left['size']), int(right['size']))
+        if val == 0:
+            return cmp(left['name'], right['name'])
+        else:
+            return val
+
+    parts.sort(my_cmp)
 
     header = [['Name', 'Queue', 'State']]
     #build output list, adding
