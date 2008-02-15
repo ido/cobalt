@@ -480,7 +480,8 @@ class BGSystem (Component):
                 system_def = Cobalt.bridge.PartitionList.info_by_filter()
             except BridgeException:
                 self.logger.error("Error communicating with the bridge to update partition state information.")
-                return
+                time.sleep(5) # wait a little bit...
+                continue # then try again
     
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
