@@ -92,8 +92,13 @@ class Reservation (Data):
 
         my_stop = self.start + self.duration
         if self.start <= start < my_stop:
+            # Job starts within reservation 
             return True
         elif self.start <= (start + duration) < my_stop:
+            # Job ends within reservation 
+            return True
+        elif start < self.start and (start + duration) >= my_stop:
+            # Job starts before and ends after reservation
             return True
         if not self.cycle:
             return False
