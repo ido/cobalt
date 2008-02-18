@@ -36,8 +36,11 @@ if __name__ == '__main__':
             cycle = float(res['cycle'])
             now = time.time()
             periods = math.floor((now - start)/cycle)
+            # reservations can't become active until they pass the start time -- so negative periods aren't allowed
+            if periods < 0:
+                pass
             # if we are still inside the reservation, show when it started
-            if (now - start) % cycle < duration:
+            elif (now - start) % cycle < duration:
                 start += periods * cycle
             # if we are in the dead time after the reservation ended, show when the next one starts
             else:
