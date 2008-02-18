@@ -14,6 +14,7 @@ setup(name="Cobalt",
       + glob('src/components/*.py'),
       data_files=[('share/man/man1', glob('man/*.1')),
                   ('share/man/man1', glob('POSIX/man/*.1')),
+                  ('share/man/man5', glob('man/*.5')),
                   ('share/man/man8', glob('man/*.8'))]
       )
 
