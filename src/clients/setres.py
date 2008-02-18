@@ -42,10 +42,11 @@ if __name__ == '__main__':
     except ValueError:
         if args:
             partitions = args
-        else:
-            print "Must supply either -p with value or partitions as arguments"
-            print helpmsg
-            raise SystemExit, 1
+
+    if not partitions and '-m' not in sys.argv[1:]:
+        print "Must supply either -p with value or partitions as arguments"
+        print helpmsg
+        raise SystemExit, 1
         
 
     if '-f' not in sys.argv:
