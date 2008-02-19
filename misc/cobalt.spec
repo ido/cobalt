@@ -8,7 +8,7 @@ URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python2.5, python-tlslite, python-m2crypto
+Requires: python2.5, python-tlslite, M2Crypto, python2.5-xml
 
 %package -n cobalt-clients
 Version: %{version}
@@ -73,7 +73,7 @@ cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -
 %files -n cobalt-clients
 /usr/bin/*
 /usr/lib/python2.5/site-packages/Cobalt/*
-/usr/lib/python2.5/site-packages/Cobalt-0.98.0pre3-py2.5.egg-info
+/usr/lib/python2.5/site-packages/Cobalt-*egg-info*
 /usr/share/man/man1/*.1*
 
 %defattr(-,root,root,-)
