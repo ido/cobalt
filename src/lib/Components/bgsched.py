@@ -337,11 +337,11 @@ class QueueDict(ForeignDataDict):
     __function__ = ComponentProxy("queue-manager").get_queues
     __fields__ = ['name', 'state', 'policy', 'priority']
 
-    def Sync(self):
-        qp = [(q.name, q.policy) for q in self.itervalues()]
-        Cobalt.Data.ForeignDataDict.Sync(self)
-        [q.LoadPolicy() for q in self.itervalues() \
-         if (q.name, q.policy) not in qp]
+#    def Sync(self):
+#        qp = [(q.name, q.policy) for q in self.itervalues()]
+#        Cobalt.Data.ForeignDataDict.Sync(self)
+#        [q.LoadPolicy() for q in self.itervalues() \
+#         if (q.name, q.policy) not in qp]
 
 
 class BGSched (Component):
@@ -549,11 +549,15 @@ class BGSched (Component):
         
 
         active_queues = []
+        spruce_queues = []
         res_queues = set(item.queue for item \
                          in self.reservations.q_get([{'queue':'*'}]))
         for queue in self.queues.itervalues():
             if queue.name not in res_queues and queue.state == 'running':
-                active_queues.append(queue)
+                if queue.policy == "high-prio":
+                    spruce_queues.append(queue)
+                else:
+                    active_queues.append(queue)
         
         # handle the reservation jobs that might be ready to go
         self._run_reservation_jobs(available_partitions, res_queues)
@@ -563,7 +567,17 @@ class BGSched (Component):
         for j in temp_jobs:
             if not self.started_jobs.has_key(j.jobid):
                 active_jobs.append(j)
-                
+
+        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in spruce_queues])
+        spruce_jobs = []
+        for j in temp_jobs:
+            if not self.started_jobs.has_key(j.jobid):
+                spruce_jobs.append(j)
+
+        # if there are any pending jobs in high-prio queues, those are the only ones that can start
+        if spruce_jobs:
+            active_jobs = spruce_jobs
+
         active_jobs.sort(self.prioritycmp)
         
         # this is the bit that actually picks which job to run
