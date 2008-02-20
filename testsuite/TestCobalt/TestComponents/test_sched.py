@@ -1,6 +1,6 @@
 from Cobalt.Data import DataCreationError
 
-from Cobalt.Components.system import Simulator
+from Cobalt.Components.simulator import Simulator
 from Cobalt.Components.bgsched import Reservation
 
 

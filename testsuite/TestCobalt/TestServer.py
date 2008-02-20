@@ -2,6 +2,7 @@ import os
 import threading
 import xmlrpclib
 
+import Cobalt.Server
 from Cobalt.Server import find_intended_location, XMLRPCServer
 from Cobalt.Components.base import Component
 
@@ -59,19 +60,24 @@ class TestFindIntendedLocation (object):
 
 
 class XMLRPCServerTester (object):
+
+    def setup (self):
+        self._outside_credentials = Cobalt.Server.XMLRPCRequestHandler.credentials
+        self._outside_require_auth = Cobalt.Server.XMLRPCRequestHandler.require_auth
+        Cobalt.Server.XMLRPCRequestHandler.credentials = None
+        Cobalt.Server.XMLRPCRequestHandler.require_auth = False
     
     def teardown (self):
+        Cobalt.Server.XMLRPCRequestHandler.credentials = self._outside_credentials
+        Cobalt.Server.XMLRPCRequestHandler.require_auth = self._outside_require_auth
         self.server.server_close()
     
     def test_require_auth (self):
-        assert self.server.require_auth == \
-            self.server.RequestHandlerClass.require_auth == True
-        self.server.RequestHandlerClass.require_auth = False
-        assert self.server.require_auth == \
-            self.server.RequestHandlerClass.require_auth == False
-        self.server.require_auth = True
-        assert self.server.require_auth == \
-            self.server.RequestHandlerClass.require_auth == True
+        assert not self.server.require_auth
+        self.server.RequestHandlerClass.require_auth = True
+        assert self.server.require_auth
+        self.server.require_auth = False
+        assert not self.server.require_auth
     
     def test_credentials (self):
         assert self.server.credentials == \
@@ -108,6 +114,7 @@ class XMLRPCServerTester (object):
 class TestXMLRPCServer_http (XMLRPCServerTester):
     
     def setup (self):
+        XMLRPCServerTester.setup(self)
         self.server = XMLRPCServer(("localhost", 5900), register=False)
         self.proxy = xmlrpclib.ServerProxy("http://localhost:5900")
     
@@ -121,6 +128,7 @@ class TestXMLRPCServer_http (XMLRPCServerTester):
 class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
     
     def setup (self):
+        XMLRPCServerTester.setup(self)
         self.server = XMLRPCServer(("localhost", 5900), register=False)
         self.server.require_auth = True
         self.server.credentials = dict(user="pass")
@@ -175,6 +183,7 @@ class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
 class TestXMLRPCServer_https (XMLRPCServerTester):
     
     def setup (self):
+        XMLRPCServerTester.setup(self)
         assert os.path.exists("keyfile") and os.path.exists("certfile")
         self.server = XMLRPCServer(("localhost", 5900), keyfile="keyfile", certfile="certfile", register=False)
         self.proxy = xmlrpclib.ServerProxy("https://localhost:5900")

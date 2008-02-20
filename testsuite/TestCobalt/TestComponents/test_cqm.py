@@ -1,7 +1,7 @@
 import time
 import xmlrpclib
 
-from Cobalt.Components.cqm import QueueManager
+from Cobalt.Components.cqm import QueueManager, QueueError
 from Cobalt.Data import IncrID
 import Cobalt.Components.cqm
 
@@ -108,7 +108,7 @@ class TestQueueManager (TestComponent):
 
         try:
             self.cqm.add_jobs([{'queue':"not a valid name"}])
-        except xmlrpclib.Fault:
+        except QueueError:
             pass
         else:
             assert not "trying to add a job to a non-existent queue should raise an Exception"
@@ -202,14 +202,14 @@ class TestQueueManager (TestComponent):
         
         try:
             self.cqm.move_jobs([{'jobname':"hello"}], "default")
-        except xmlrpclib.Fault:
+        except QueueError:
             pass
         else:
             assert not "moving a job to the same queue should cause an exception"
             
         try:
             self.cqm.move_jobs([{'jobname':"hello"}], "jonx")
-        except xmlrpclib.Fault:
+        except QueueError:
             pass
         else:
             assert not "moving a job to a non-existent queue should cause an exception"
@@ -222,7 +222,7 @@ class TestQueueManager (TestComponent):
         
         try:
             self.cqm.move_jobs([{'jobname':"hello"}], "restricted")
-        except xmlrpclib.Fault:
+        except QueueError:
             pass
         else:
             assert not "a job failing can_queue should prevent the move_jobs from succeeding"

@@ -1,6 +1,7 @@
 import os
+import time
 
-from Cobalt.Components.system import Simulator
+from Cobalt.Components.simulator import Simulator
 
 from test_base import TestComponent
 
@@ -51,9 +52,9 @@ class TestSimulator (TestComponent):
         idle_partitions_after = self.system.get_partitions([{'state':"idle"}])
         assert idle_partitions_before == idle_partitions_after
     
-    def test_add_jobs (self):
-        self.system.add_jobs([dict(
-            id = "1",
+    def test_add_process_groups (self):
+        self.system.add_process_groups([dict(
+            id = "*",
             size = "32",
             executable = "/bin/ls",
             location = "ANLR00",
@@ -64,11 +65,11 @@ class TestSimulator (TestComponent):
             user = os.getlogin(),
         )])
     
-    def test_get_jobs (self):
-        specs = self.system.get_jobs([{'id':"*"}])
+    def test_get_process_groups (self):
+        specs = self.system.get_process_groups([{'id':"*"}])
         assert not specs
-        self.system.add_jobs([dict(
-            id = "1",
+        self.system.add_process_groups([dict(
+            id = "*",
             size = "32",
             executable = "/bin/ls",
             location = "ANLR00",
@@ -78,31 +79,12 @@ class TestSimulator (TestComponent):
             errorfile = "errfile",
             user = os.getlogin(),
         )])
-        specs = self.system.get_jobs([{'id':"*"}])
+        specs = self.system.get_process_groups([{'id':"*"}])
         assert specs
     
-    def test_del_jobs (self):
-        self.system.add_jobs([dict(
-            id = "1",
-            size = "32",
-            executable = "/bin/ls",
-            location = "ANLR00",
-            cwd = os.getcwd(),
-            inputfile = "infile",
-            outputfile = "outfile",
-            errorfile = "errfile",
-            user = os.getlogin(),
-        )])
-        jobs = self.system.get_jobs([{'id':"*"}])
-        assert jobs
-        specs = [job.to_rx(["id"]) for job in jobs]
-        self.system.del_jobs(specs)
-        jobs = self.system.get_jobs([{'id':"*"}])
-        assert not jobs
-    
-    def test_run_jobs (self):
-        self.system.add_jobs([dict(
-            id = "1",
+    def test_run_process_groups (self):
+        self.system.add_process_groups([dict(
+            id = "*",
             size = "32",
             executable = "/bin/ls",
             location = ["ANLR00"],
@@ -113,9 +95,9 @@ class TestSimulator (TestComponent):
             user = os.getlogin(),
         )])
     
-    def test_signal_jobs (self):
-        self.system.add_jobs([dict(
-            id = "1",
+    def test_signal_process_groups (self):
+        self.system.add_process_groups([dict(
+            id = "*",
             size = "32",
             executable = "/bin/ls",
             location = "ANLR00",
@@ -126,9 +108,7 @@ class TestSimulator (TestComponent):
             user = os.getlogin(),
         )])
         
-        jobs = self.system.signal_jobs([{'id':"*"}], "SIGINT")
-        assert jobs
-        assert self.system.jobs
-        jobs = self.system.signal_jobs([{'id':"*"}], "SIGKILL")
-        assert jobs
-        assert not self.system.jobs
+        for signal in ["SIGINT", "SIGKILL"]:
+            process_groups = self.system.signal_process_groups([{'id':"*"}], signal)
+            assert len(process_groups) == 1
+            assert process_groups[0].signals[-1] == signal
