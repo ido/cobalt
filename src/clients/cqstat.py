@@ -249,6 +249,9 @@ if __name__ == '__main__':
                 j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
             # args
             j['args'] = ' '.join(j['args'])
+            
+            # make the SubmitTime readable by humans
+            j['submittime'] = time.ctime(float(j['submittime']))
 
         # any header that was not present in the query response has value set to '-'
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]
