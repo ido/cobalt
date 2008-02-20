@@ -41,20 +41,17 @@ class Reservation (Data):
     def __init__ (self, spec):
         Data.__init__(self, spec)
         self.tag = spec.get("tag", "reservation")
-        self.duration = spec.get("duration")
         self.cycle = spec.get("cycle")
         self.users = spec.get("users", "")
         self.createdQueue = False
         self.partitions = spec.get("partitions", "")
-        try:
-            self.name = spec.get("name")
-        except:
-            raise DataCreationError("required key name missing")
+        missing = [x for x in self.required_fields if x not in spec]
+        if missing:
+            raise DataCreationError('required key %s missing' % (missing,))
+        self.name = spec['name']
+        self.start = spec['start']
         self.queue = spec.get("queue", "R.%s" % self.name)
-        try:
-            self.start = spec.get("start")
-        except:
-            raise DataCreationError("required key start missing")
+        self.duration = spec.get("duration")
         
     def _get_active(self):
         return self.is_active()
