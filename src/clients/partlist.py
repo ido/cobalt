@@ -25,7 +25,9 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
 
-    parts = system.get_partitions([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*'}])
+    spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*',
+             'functional':True, 'scheduled':True}]
+    parts = system.get_partitions(spec)
 
     def my_cmp(left, right):
         val = -cmp(int(left['size']), int(right['size']))
