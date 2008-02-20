@@ -231,7 +231,6 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             header = self.headers['Authorization']
         except KeyError:
             self.logger.error("No authentication data presented")
-            print >> file("outfile", "w"), self.headers
             raise self.CouldNotAuthenticate("client did not present credentials")
         auth_type, auth_content = header.split()
         auth_content = base64.standard_b64decode(auth_content)
@@ -256,8 +255,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         if self.require_auth:
             try:
                 self.authenticate()
-            except self.CouldNotAuthenticate, cae:
-                self.logger.error("Authentication failed: %s" % cae.message)
+            except self.CouldNotAuthenticate, e:
+                self.logger.error("Authentication failed: %s" % e.message)
                 code = 401
                 message, explanation = self.responses[401]
                 self.send_error(code, message)
