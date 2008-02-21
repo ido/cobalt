@@ -6,7 +6,7 @@ from Cobalt.Data import \
     IncrID, RandomID, \
     Data, ForeignData, \
     DataSet, DataList, DataDict, \
-    DataCreationError
+    DataCreationError, ForeignData, ForeignDataDict
 
 
 class TestIncrID (object):
@@ -272,3 +272,60 @@ class TestDataSet (object):
         items = data_set.Get([{'tag':"somedata"}])
         assert len(items) == 1
         assert items[0] == specs[0]
+
+    def test_Del (self):
+        data_set = DataSet()
+        specs = [{'tag':"somedata"}, {'tag':"someotherdata"}]
+        data_set.Add(specs)
+        assert len(data_set.Get([{'tag':'*'}])) == 2
+        data_set.Del([specs[0]])
+        assert len(data_set.Get([{'tag':'*'}])) == 1
+        callback_result = []
+        data_set.Del(specs[1], callback=lambda x,y:callback_result.append(x))
+        assert len(callback_result) == 1
+                   
+
+class TestForeignDataDict (object):
+    class my_data (ForeignData):
+        fields = ['id', 'value']
+        def __init__(self, spec):
+            self.id = spec.get('id')
+            self.value = spec.get('value')
+        
+    class sync_tester (object):
+        data = [{'tag':'foo', 'id':1, 'value':'queued'},
+                {'tag':'foo', 'id':2, 'value':'queued'},
+                {'tag':'foo', 'id':3, 'value':'queued'},
+                {'tag':'foo', 'id':1, 'value':'hold'}]
+        def __init__(self):
+            self.count = 0
+
+        def Call(self, arg):
+            self.count += 1
+            if self.count == 1:
+                return []
+            elif self.count == 2:
+                return self.data[:3]
+            elif self.count == 3:
+                return [self.data[1], self.data[3]]
+            elif self.count == 4:
+                raise Exception
+
+    def TestSync(self):
+        m = self.my_data({'tag':'foo', 'id':1, 'value':'queued'})
+        print m.id
+        s = self.sync_tester()
+        f = ForeignDataDict()
+        f.item_cls = self.my_data
+        f.key = 'id'
+        f.__function__ = s.Call
+        f.Sync()
+        assert len(f.keys()) == 0
+        f.Sync()
+        assert len(f.keys()) == 3
+        f.Sync()
+        assert len(f.keys()) == 2
+        assert f[1].value == 'hold'
+        assert f.__oserror__.status == True
+        f.Sync()
+        assert f.__oserror__.status == False
