@@ -155,7 +155,7 @@ class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
         self.proxy = xmlrpclib.ServerProxy("http://localhost:5900")
         try:
             self.test_ping()
-        except xmlrpclib.ProtocolError:
+        except xmlrpclib.Fault:
             pass
         else:
             assert not "Allowed unauthorized access."
@@ -164,7 +164,7 @@ class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
         self.proxy = xmlrpclib.ServerProxy("http://otheruser@localhost:5900")
         try:
             self.test_ping()
-        except xmlrpclib.ProtocolError:
+        except xmlrpclib.Fault:
             pass
         else:
             assert not "Allowed unauthorized access."
@@ -173,7 +173,7 @@ class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
         self.proxy = xmlrpclib.ServerProxy("http://user:wrongpassword@localhost:5900")
         try:
             self.test_ping()
-        except xmlrpclib.ProtocolError:
+        except xmlrpclib.Fault:
             pass
         else:
             assert not "Allowed unauthorized access."
