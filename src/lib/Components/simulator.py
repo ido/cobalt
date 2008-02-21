@@ -255,9 +255,9 @@ class Simulator (Component):
         self._partitions = PartitionDict()
         self._managed_partitions = set()
         self.process_groups = ProcessGroupDict()
-        config_file = kwargs.get("config_file", None)
-        if config_file is not None:
-            self.configure(config_file)
+        self.config_file = kwargs.get("config_file", None)
+        if self.config_file is not None:
+            self.configure(self.config_file)
     
     def _get_partitions (self):
         return PartitionDict([
@@ -268,13 +268,17 @@ class Simulator (Component):
     partitions = property(_get_partitions)
     
     def __getstate__(self):
-        return {'managed_partitions':self._managed_partitions, 'version':1}
+        return {'managed_partitions':self._managed_partitions, 'version':1, 'config_file':self.config_file}
     
     def __setstate__(self, state):
         self._managed_partitions = state['managed_partitions']
+        self.config_file = state['config_file']
         self._partitions = PartitionDict()
         self.process_groups = ProcessGroupDict()
+        if self.config_file is not None:
+            self.configure(self.config_file)
 
+        self.update_relatives()
         
     def save_me(self):
         Component.save(self)
