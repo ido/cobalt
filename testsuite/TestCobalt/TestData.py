@@ -9,6 +9,10 @@ from Cobalt.Data import \
     DataCreationError, ForeignData, ForeignDataDict
 
 
+import Cobalt.Logging
+
+Cobalt.Logging.setup_logging("test", to_console=True)
+
 class TestIncrID (object):
     
     def test_get (self, max=100):
