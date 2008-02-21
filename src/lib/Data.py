@@ -515,13 +515,8 @@ class ForeignDataDict(DataDict):
         spec = dict([(field, "*") for field in self.__fields__])
         try:
             foreign_data = self.__function__([spec])
-        except Exception:
-            self.__oserror__.Fail()
-            raise 
-            return
         except:
-            Cobalt.Util.logger.error("Unexpected fault during data sync",
-                                     exc_info=1)
+            self.__oserror__.Fail()
             return
         self.__oserror__.Pass()
         
