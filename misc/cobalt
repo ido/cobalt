@@ -6,12 +6,12 @@
 # description: Cobalt resource manager/scheduler
 #
 
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-CONFIGPATH=@sysconfdir@
+prefix=/usr
+exec_prefix=/usr/bin
+CONFIGPATH=/etc
 CONFIGFILE="${CONFIGPATH}/cobalt.conf"
-DAEMONDIR=@sbindir@
-PIDPATH=@PATH_TO_PIDFILE@
+DAEMONDIR=/usr/sbin
+PIDPATH=/var/run/
 
 # Starts the component specified as the first argument.
 # Optional second argument used for extra arguments to 
