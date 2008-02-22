@@ -47,7 +47,7 @@ def find_intended_location (component, config_files=None):
     try:
         url = config.get("components", component.name)
     except (NoSectionError, NoOptionError):
-        return ("127.0.0.1", 0)
+        return ('', 0)
     location = urlparse.urlparse(url)[1]
     if ":" in location:
         host, port = location.split(":")
@@ -189,12 +189,13 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     secure = property(_get_secure)
     
     def _get_url (self):
-        address, port = self.socket.getsockname()
+        port = self.socket.getsockname()[1]
+        hostname = socket.gethostname()
         if self.secure:
             protocol = "https"
         else:
             protocol = "http"
-        return "%s://%s:%i" % (protocol, address, port)
+        return "%s://%s:%i" % (protocol, hostname, port)
     url = property(_get_url)
 
 
