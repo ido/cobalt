@@ -52,9 +52,9 @@ def find_intended_location (component, config_files=None):
     if ":" in location:
         host, port = location.split(":")
         port = int(port)
-        location = (host, port)
+        location = ('', port)
     else:
-        location = (location, 0)
+        location = ('', 0)
     return location
 
 
