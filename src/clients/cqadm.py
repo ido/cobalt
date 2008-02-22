@@ -255,7 +255,9 @@ if __name__ == '__main__':
                     raise SystemExit, 1
             updates['walltime'] = opts['time']
         try:
-            response = cqm.set_jobs(spec, updates)
+            response = []
+            if updates:
+                response = cqm.set_jobs(spec, updates)
             if new_q_name:
                 response += cqm.move_jobs(spec, new_q_name)
         except xmlrpclib.Fault, flt:
