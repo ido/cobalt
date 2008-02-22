@@ -72,8 +72,8 @@ cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -
 
 %files -n cobalt-clients
 /usr/bin/*
-/usr/lib/python2.5/site-packages/Cobalt/*
-/usr/lib/python2.5/site-packages/Cobalt-*egg-info*
+/usr/lib*/python2.5/site-packages/Cobalt/*
+/usr/lib*/python2.5/site-packages/Cobalt-*egg-info*
 /usr/share/man/man1/*.1*
 
 %defattr(-,root,root,-)
