@@ -7,11 +7,9 @@ __all__ = ['bridge', 'bgl_rm_api', 'Components', 'Data',
 
 import sys
 
-# global config file specification
-# making this a tuple rather than a list makes it
-# a value, rather than a mutable object, and prevents
-# shared object-state ugliness
+DEFAULT_CONFIG_FILES = ("/etc/cobalt.conf", )
+
 if '-C' in sys.argv:
     CONFIG_FILES = (sys.argv[sys.argv.index('-C') + 1], )
 else:
-    CONFIG_FILES = ("/etc/cobalt.conf", )
+    CONFIG_FILES = DEFAULT_CONFIG_FILES

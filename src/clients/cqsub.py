@@ -17,6 +17,7 @@ import re
 import logging
 
 import Cobalt
+Cobalt.CONFIG_FILES = Cobalt.DEFAULT_CONFIG_FILES
 import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
