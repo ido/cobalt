@@ -4,7 +4,7 @@ from distutils.core import setup
 from glob import glob
 
 setup(name="Cobalt",
-      version="0.98.0pre4",
+      version="0.98.0",
       description="Cobalt Resource Manager",
       author="Cobalt Team",
       author_email="cobalt@mcs.anl.gov",
