@@ -33,9 +33,10 @@ def dgetopt(arglist, opt, vopt, msg):
         option = gopt[1:]
         if opt.has_key(option):
             ret[opt[option]] = True
-        elif option == 'C':
-            continue
         else:
+            if option == 'C':
+                if 'C' not in out.keys() + vopt.keys():
+                    continue
             ret[vopt[option]] = garg
     return ret, list(args)
 
@@ -72,9 +73,9 @@ def dgetopt_long(arglist, opt, vopt, msg):
         option = gopt.split('-')[-1]
         if opt.has_key(option):
             ret[opt[option]] = True
-        elif option == 'C':
-            continue
         else:
+            if option == 'C' and 'C' not in opt.keys() + vopt.keys():
+                continue
             ret[vopt[option]] = garg
 
     return ret, list(args)
