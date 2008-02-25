@@ -635,13 +635,10 @@ class BGJob(Job):
     
     _configfields = ['bgkernel']
     _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read(Cobalt.CONFIG_FILES)
-        if not _config._sections.has_key('cqm'):
-            print '''"cqm" section missing from cobalt config file'''
-            sys.exit(1)
+    _config.read(Cobalt.CONFIG_FILES)
+    if not _config._sections.has_key('cqm'):
+        print '''"cqm" section missing from cobalt config file'''
+        sys.exit(1)
     config = _config._sections['cqm']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
