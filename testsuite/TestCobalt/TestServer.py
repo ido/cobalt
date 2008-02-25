@@ -1,4 +1,5 @@
 import os
+import socket
 import threading
 import xmlrpclib
 
@@ -20,7 +21,7 @@ class TestFindIntendedLocation (object):
     def test_nofile (self):
         component = Component()
         location = find_intended_location(component, config_files=["testfile"])
-        assert location == ("127.0.0.1", 0)
+        assert location == ("", 0)
     
     def test_file_without_def (self):
         testfile = open("testfile", "w")
@@ -29,7 +30,7 @@ class TestFindIntendedLocation (object):
         testfile.close()
         component = Component()
         location = find_intended_location(component, config_files=["testfile"])
-        assert location == ("127.0.0.1", 0)
+        assert location == ("", 0)
     
     def test_file_with_bad_def (self):
         testfile = open("testfile", "w")
@@ -47,7 +48,7 @@ class TestFindIntendedLocation (object):
         testfile.close()
         component = Component()
         location = find_intended_location(component, config_files=["testfile"])
-        assert location == ("localhost", 8080)
+        assert location == ("", 8080)
     
     def test_file_with_def_noport (self):
         testfile = open("testfile", "w")
@@ -56,7 +57,7 @@ class TestFindIntendedLocation (object):
         testfile.close()
         component = Component()
         location = find_intended_location(component, config_files=["testfile"])
-        assert location == ("localhost", 0)
+        assert location == ("", 0)
 
 
 class XMLRPCServerTester (object):
@@ -122,7 +123,8 @@ class TestXMLRPCServer_http (XMLRPCServerTester):
         assert not self.server.secure
     
     def test_url (self):
-        assert self.server.url == "http://127.0.0.1:5900"
+        hname = socket.gethostname()
+        assert self.server.url == "http://%s:5900" % hname
 
 
 class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
@@ -192,4 +194,5 @@ class TestXMLRPCServer_https (XMLRPCServerTester):
         assert self.server.secure
     
     def test_url (self):
-        assert self.server.url == "https://127.0.0.1:5900"
+        hname = socket.gethostname()
+        assert self.server.url == "https://%s:5900" % hname
