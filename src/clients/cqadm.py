@@ -73,6 +73,8 @@ if __name__ == '__main__':
         spec = [{'tag':'queue', 'name':qname} for qname in args]
     else:
         for i in range(len(args)):
+            if args[i] == '*':
+                continue
             try:
                 args[i] = int(args[i])
             except:

@@ -85,6 +85,8 @@ if __name__ == '__main__':
 
     user = pwd.getpwuid(os.getuid())[0]
     for i in range(len(args)):
+        if args[i] == '*':
+            continue
         try:
             args[i] = int(args[i])
         except:
