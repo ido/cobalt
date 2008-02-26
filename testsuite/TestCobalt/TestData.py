@@ -2,11 +2,8 @@ import time
 import itertools
 import warnings
 
-from Cobalt.Data import \
-    IncrID, RandomID, \
-    Data, ForeignData, \
-    DataSet, DataList, DataDict, \
-    DataCreationError, ForeignData, ForeignDataDict
+from Cobalt.Data import IncrID, RandomID, Data, ForeignData, DataList, \
+     DataDict, DataCreationError, ForeignData, ForeignDataDict
 
 
 import Cobalt.Logging
@@ -219,92 +216,6 @@ class TestDataDict (object):
             assert not "Failed to remove item from list."
         assert self.datadict["three"].tag == "three"
 
-
-class TestDataSet (object):
-    
-    def test_default_data (self):
-        data_set = DataSet()
-        assert data_set.data == []
-    
-    def test_iteration (self):
-        data_set = DataSet()
-        datas = [object(), object()]
-        for data in datas:
-            data_set.append(data)
-        assert set(datas) == set(data_set)
-    
-    def test_append (self):
-        data_set = DataSet()
-        for data in [object(), object()]:
-            data_set.append(data)
-            assert list(data_set)[-1] is data
-    
-    def test_remove (self):
-        data_set = DataSet()
-        
-        for data in [object(), object()]:
-            data_set.append(data)
-        count = list(data_set).count(data)
-        data_set.remove(data)
-        assert list(data_set).count(data) == count - 1
-    
-    def test_Add_single (self):
-        data_set = DataSet()
-        data_set.__object__ = Data
-        data_set.Add({'tag':"somedata"})
-        assert len(list(data_set)) == 1
-        assert list(data_set)[0].to_rx() == {'tag':"somedata"}
-    
-    def test_Add_multiple (self):
-        data_set = DataSet()
-        data_set.__object__ = Data
-        data_set.Add([{'tag':"somedata"}, {'tag':"someotherdata"}])
-        assert len(list(data_set)) == 2
-    
-    def test_Add_value (self):
-        data_set = DataSet()
-        data_set.__object__ = Data
-        value = data_set.Add({'tag':"somedata"})
-        assert len(value) == 1
-        assert value[0] == {'tag':"somedata"}
-    
-    def test_Get_single (self):
-        data_set = DataSet()
-        data_set.__object__ = Data
-        specs = [{'tag':"somedata"}, {'tag':"someotherdata"}]
-        data_set.Add(specs)
-        items = data_set.Get({'tag':"somedata"})
-        assert len(items) == 1
-        assert items[0]['tag'] == "somedata"
-    
-    def test_Get_multiple (self):
-        data_set = DataSet()
-        data_set.__object__ = Data
-        specs = [{'tag':"somedata"}, {'tag':"someotherdata"}]
-        data_set.Add(specs)
-        items = data_set.Get([{'tag':"*"}])
-        assert len(items) == 2
-        for item in items:
-            assert item == specs[0] or item == specs[1]
-        items = data_set.Get([{'tag':"somedata"}, {'tag':"someotherdata"}])
-        assert len(items) == 2
-        for item in items:
-            assert item == specs[0] or item == specs[1]
-        items = data_set.Get([{'tag':"somedata"}])
-        assert len(items) == 1
-        assert items[0] == specs[0]
-
-    def test_Del (self):
-        data_set = DataSet()
-        specs = [{'tag':"somedata"}, {'tag':"someotherdata"}]
-        data_set.Add(specs)
-        assert len(data_set.Get([{'tag':'*'}])) == 2
-        data_set.Del([specs[0]])
-        assert len(data_set.Get([{'tag':'*'}])) == 1
-        callback_result = []
-        data_set.Del(specs[1], callback=lambda x,y:callback_result.append(x))
-        assert len(callback_result) == 1
-                   
 
 class TestForeignDataDict (object):
     class my_data (ForeignData):
