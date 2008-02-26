@@ -16,6 +16,69 @@ import Cobalt
 
 logger = logging.getLogger('Util')
 
+class TimeFormatError (Exception):
+    fault_code = hash("TimeFormatError")
+
+def get_time(date_string):
+    '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, or DD:HH:MM:SS, and return the total number of minutes.  Raise an exception for bad values.'''
+    time_info = {}
+
+    units = date_string.split(":")
+
+    if len(units) == 1:
+        time_info["minutes"] = units[0]
+    elif len(units) == 2:
+        time_info["hours"] = units[0]
+        time_info["minutes"] = units[1]
+    elif len(units) == 3:
+        time_info["hours"] = units[0]
+        time_info["minutes"] = units[1]
+        time_info["seconds"] = units[2]
+    elif len(units) == 4:
+        time_info["days"] = units[0]
+        time_info["hours"] = units[1]
+        time_info["minutes"] = units[2]
+        time_info["seconds"] = units[3]
+    else:
+        raise TimeFormatError, "time may be specified as minutes, HH:MM, HH:MM:SS, or DD:HH:MM:SS"
+
+    for key in time_info:
+        try:
+            time_info[key] = int(time_info[key])
+        except ValueError:
+            raise TimeFormatError, "illegal value '%s' for %s" % (time_info[key], key)
+            
+    if time_info.has_key("seconds"):
+        if time_info["seconds"] < 0 or time_info["seconds"] > 59:
+            raise TimeFormatError, "seconds value '%s' outside range [0, 59]" % time_info["seconds"]
+
+    if time_info.has_key("minutes"):
+        if len(time_info) == 1:
+            if time_info["minutes"] < 0:
+                raise TimeFormatError, "minutes value must not be negative"
+        else:
+            if time_info["minutes"] < 0 or time_info["minutes"] > 59:
+                raise TimeFormatError, "minutes value '%s' outside range [0, 59]" % time_info["minutes"]
+
+    if time_info.has_key("hours"):
+        if len(time_info) < 4:
+            if time_info["hours"] < 0:
+                raise TimeFormatError, "hours value must not be negative"
+        else:
+            if time_info["hours"] < 0 or time_info["hours"] > 23:
+                raise TimeFormatError, "hours value '%s' outside range [0, 23]" % time_info["hours"]
+
+    if time_info.has_key("days"):
+        if time_info["days"] < 0:
+            raise TimeFormatError, "days value must not be negative"
+
+    minutes = time_info.get("minutes", 0)
+    minutes += 60 * time_info.get("hours", 0)
+    minutes += 1440 * time_info.get("days", 0)
+
+    return minutes
+
+
 def dgetopt(arglist, opt, vopt, msg):
     '''parse options into a dictionary'''
     ret = {}

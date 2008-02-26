@@ -110,28 +110,12 @@ if __name__ == '__main__':
         updates['nodes'] = opts['nodecount']
     # ensure time is actually in minutes
     if opts['time']:
-        if opts['time'].count(':') > 0:
-            # process as a time
-            #print "assuming seconds are not included in %s" % opts['time']
-            units = opts['time'].split(':')
-            units.reverse()
-            totaltime = 0
-            mults = [0, 1, 60]
-            if len(units) > 3:
-                logger.error("time too large")
-                sys.exit(1)
-            totaltime = sum([mults[index] * float(units[index]) for index in range(len(units))])
-            logger.error("submitting walltime=%s minutes" % str(totaltime))
-            opts['time'] = str(totaltime)
         try:
-            numtime = float(opts['time'])
-        except:
-            logger.error("invalid time specification")
+            minutes = Cobalt.Util.get_time(opts['time'])
+        except Cobalt.Util.TimeFormatError, e:
+            print "invalid time specification: %s" % e.message
             sys.exit(1)
-        if numtime <= 0:
-            logger.error("invalid time specification")
-            sys.exit(1)
-        updates['walltime'] = opts['time']
+        updates['walltime'] = str(minutes)
 
     try:
         sys_type = CP.get('cqm', 'bgtype')

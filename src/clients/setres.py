@@ -83,21 +83,11 @@ if __name__ == '__main__':
     
     if duration:
         try:
-            if duration.count(':') == 0:
-                dsec = int(duration) * 60
-            else:
-                units = duration.split(':')
-                units.reverse()
-                totaltime = 0
-                mults = [1, 60, 3600]
-                if len(units) > 3:
-                    print "time too large"
-                    raise SystemExit, 1
-                dsec = sum([mults[index] * float(units[index]) for index in range(len(units))])
-        except ValueError:
-            print "Error: duration '%s' is invalid" % duration
-            print "duration may be in minutes or HH:MM:SS"
-            raise SystemExit, 1
+            minutes = Cobalt.Util.get_time(duration)
+        except Cobalt.Util.TimeFormatError, e:
+            print "invalid duration specification: %s" % e.message
+            sys.exit(1)
+        dsec = 60 * minutes
     if start:
         try:
             (day, rtime) = start.split('-')
@@ -129,25 +119,13 @@ if __name__ == '__main__':
     else:
         cycle_time = None
     
-    if cycle_time:    
+    if cycle_time:
         try:
-            if cycle_time.count(':') == 0:
-                cycle_time = int(cycle_time) * 60
-            else:
-                units = cycle_time.split(':')
-                units.reverse()
-                totaltime = 0
-                mults = [1, 60, 3600, 86400]
-                if len(units) > 4:
-                    print "time too large"
-                    raise SystemExit, 1
-                cycle_time = sum([mults[index] * float(units[index]) for index in range(len(units))])
-        except ValueError:
-            print "Error: cycle time '%s' is invalid" % duration
-            print "cycle time may be in minutes or DD:HH:MM:SS"
-            raise SystemExit, 1
-
-        
+            minutes = Cobalt.Util.get_time(cycle_time)
+        except Cobalt.Util.TimeFormatError, e:
+            print "invalid cycle time specification: %s" % e.message
+            sys.exit(1)
+        cycle_time = 60 * minutes
 
     # modify the existing reservation instead of creating a new one
     if '-m' in sys.argv[1:]:

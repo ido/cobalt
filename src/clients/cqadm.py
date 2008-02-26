@@ -233,27 +233,12 @@ if __name__ == '__main__':
         if opts['index']:
             updates['index'] = opts['index']
         if opts['time']:
-            if ':' in opts['time']:
-                units = opts['time'].split(':')
-                units.reverse()
-                totaltime = 0
-                mults = [0, 1, 60]
-                if len(units) > 3:
-                    print "time too large"
-                    raise SystemExit, 1
-                totaltime = sum([mults[index] * float(units[index]) \
-                                 for index in range(len(units))])
-                opts['time'] = str(totaltime)
-            else:
-                try:
-                    t = int(opts['time'])
-                    if t < 0:
-                        print "time can't be negative"
-                        raise Exception("time can't be negative")
-                except:
-                    print "Invalid value for time"
-                    raise SystemExit, 1
-            updates['walltime'] = opts['time']
+            try:
+                minutes = Cobalt.Util.get_time(opts['time'])
+            except Cobalt.Util.TimeFormatError, e:
+                print "invalid time specification: %s" % e.message
+                sys.exit(1)
+            updates['walltime'] = str(minutes)
         try:
             response = []
             if updates:
