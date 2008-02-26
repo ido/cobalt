@@ -14,22 +14,18 @@
 #
 __revision__ = '$Revision$'
 
-import commands
 import datetime
 import os
 import re
 import logging
-import string
-import sys
 import time
 import ConfigParser
 import math
 
 import Cobalt
 import Cobalt.Proxy
-#import Cobalt.Data
+import Cobalt.Data
 import Cobalt.Logging
-from Cobalt.Data import Data
 #
 # Configuration
 #
@@ -249,11 +245,11 @@ def _time_property(time_field):
         
     return property(_get_helper, _set_helper)
 
-class CobaltJob (Data):
+class CobaltJob (Cobalt.Data.Data):
     
     """A single job run through the Cobalt scheduling system."""
     
-    fields = Data.fields + [
+    fields = Cobalt.Data.Data.fields + [
         "jobid", "submit_time", 
         "username", "nodes", "processors", "mode", "walltime", "start_time", 
         "queue", "partition", "partition_size",
@@ -443,20 +439,20 @@ class CobaltJob (Data):
         return result
 
 
-class CobaltLogParser(Cobalt.Data.DataSet):
+class CobaltLogParser(Cobalt.Data.DataList):
     """
     The CobaltLogParser contains a processed list of Cobalt jobs.
     
     Logfiles are processed by calling parse_file, and a directory of logfiles
     may be processed in any order. 
     """
-    __object__ = CobaltJob
+    item_cls = CobaltJob
     
     def __init__(self):
         """
         Create a new CobaltLogParser.
         """
-        Cobalt.Data.DataSet.__init__(self)
+        Cobalt.Data.DataList.__init__(self)
         self._jobs = {}
         #self.comms = Cobalt.Proxy.CommDict()
     
