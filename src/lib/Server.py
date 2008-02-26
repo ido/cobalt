@@ -404,8 +404,8 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
         self.logger.info("serve_forever() [start]")
-        #sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
-        #sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
+        sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
+        sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
         try:
             while self.serve:
                 try:
@@ -418,8 +418,6 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
                     except:
                         self.logger.error("Task executaion failure", exc_info=1)
         finally:
-            #signal.signal(signal.SIGINT, sigint)
-            #signal.signal(signal.SIGTERM, sigterm)
             self.logger.info("serve_forever() [stop]")
     
     def shutdown (self):
