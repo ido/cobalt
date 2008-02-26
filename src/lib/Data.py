@@ -83,7 +83,9 @@ class Data (object):
     Setting a field attribute on a data updates the timestamp automatically.
     
     Class attributes:
-    spec_fields -- list of public data fields for the entity
+    fields -- list of public data fields for the entity
+    inherent -- a list of fields that cannot be included in the spec
+    required -- a list of fields required in the spec
     
     Attributes:
     tag -- Misc. label.
@@ -95,6 +97,8 @@ class Data (object):
     """
     
     fields = ["tag"]
+    inherent = []
+    required = []
     
     def __init__ (self, spec):
         
@@ -105,6 +109,14 @@ class Data (object):
         """
         
         self.tag = spec.get("tag", "unknown")
+        missing = [item for item in self.required if item not in spec]
+        if missing:
+            raise DataCreationError, "Missing fields %s" % (":".join(missing))
+        inherent = [item for item in self.inherent
+                    if item in spec and spec[item] != '*']
+        if inherent:
+            raise DataCreationError, "Specified inherent field %s" \
+                  % (":".join(inherent))
     
     def match (self, spec):
         """True if every field in spec == the same field on the entity.
@@ -163,61 +175,6 @@ class Data (object):
         if field not in self.fields:
             warnings.warn("Creating new attribute '%s' on '%s' with set." % (field, self), RuntimeWarning, stacklevel=2)
         setattr(self, field, value)
-
-
-class Job (Data):
-    
-    """The canonical definition of a Cobalt job.
-    
-    Attributes:
-    tag -- "job"
-    id -- unique id
-    state -- current state of the job (queued, running, done)
-    executable -- file to execute
-    args -- arguments to pass to the executable
-    stdin -- file to use for stdin
-    stdout -- file to use for stdout
-    stderr -- file to use for stderr
-    cwd -- current working directory
-    env -- environment variables for the job
-    user -- user executing the job
-    exit -- exit status of the job
-    kerneloptions -- options to pass to the kernel
-    size -- number of nodes/processes in the job
-    location -- where to execute the job (partition?)
-    mode -- execution mode of the job
-    walltime -- the amount of time requested for the job
-    """
-    
-    fields = Data.fields + [
-        "id", "state", "executable", "args", "stdin",
-        "stdout", "stderr", "cwd", "env", "user", "exit",
-        "kerneloptions", "size", "location", "mode", "walltime",
-        "true_mpi_args",
-    ]
-    
-    def __init__ (self, spec):
-        Data.__init__(self, spec)
-        spec = spec.copy()
-        self.id = spec.pop("id")
-        self.state = spec.pop("state", None)
-        self.executable = spec.pop("executable")
-        self.args = spec.pop("args", None)
-        self.stdin = spec.pop("stdin", "/dev/null")
-        self.stdout = spec.pop("stdout", "/dev/null")
-        self.stderr = spec.pop("stderr", "/dev/null")
-        self.cwd = spec.pop("cwd")
-        self.env = spec.pop("env", None)
-        self.user = spec.pop("user")
-        self.exit = spec.pop("exit", None)
-        self.kerneloptions = spec.pop("kerneloptions", None)
-        self.size = spec.pop("size")
-        self.location = spec.pop("location", None)
-        self.mode = spec.pop("mode", None)
-        self.walltime = spec.pop("walltime", None)
-        self.true_mpi_args = spec.pop("true_mpi_args", None)
-        self.tag = spec.get("tag", "job")
-        
 
 
 class DataList (list):

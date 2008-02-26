@@ -60,6 +60,23 @@ class TestData (object):
     
     def teardown (self):
         warnings.resetwarnings()
+
+    def test_init (self):
+        class r(Data):
+            required = ['foo']
+            inherent = ['id']
+
+        try:
+            item = r({})
+            assert False
+        except DataCreationError:
+            pass
+
+        try:
+            item = r({'id':2})
+            assert False
+        except DataCreationError:
+            pass
     
     def test_get (self):
         warnings.simplefilter("ignore", DeprecationWarning)
