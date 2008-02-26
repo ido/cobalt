@@ -36,7 +36,7 @@ class Reservation (Data):
         "active", "queue", 
     ]
     
-    required_fields = ["name", "start", "duration"]
+    required = ["name", "start", "duration"]
     
     def __init__ (self, spec):
         Data.__init__(self, spec)
@@ -45,9 +45,6 @@ class Reservation (Data):
         self.users = spec.get("users", "")
         self.createdQueue = False
         self.partitions = spec.get("partitions", "")
-        missing = [x for x in self.required_fields if x not in spec]
-        if missing:
-            raise DataCreationError('required key %s missing' % (missing,))
         self.name = spec['name']
         self.start = spec['start']
         self.queue = spec.get("queue", "R.%s" % self.name)

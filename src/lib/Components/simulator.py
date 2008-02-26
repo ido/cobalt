@@ -127,7 +127,7 @@ class PartitionDict (DataDict):
 
 
 class ProcessGroup (Cobalt.Data.Data):
-    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
+    required = ['user', 'executable', 'args', 'location', 'size', 'cwd']
     fields = Cobalt.Data.Data.fields + [
         "id", "user", "size", "cwd", "executable", "env", "args", "location",
         "head_pid", "stdin", "stdout", "stderr", "exit_status", "state",
