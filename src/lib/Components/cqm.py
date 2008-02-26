@@ -1259,7 +1259,7 @@ class QueueManager(Component):
     def get_history(self, data):
         '''Fetches queue history from acct log'''
         self.cqp.perform_default_parse()
-        return self.cqp.Get(data)
+        return self.cqp.q_get(data)
     get_history = exposed(get_history)
 
     def poll_process_groups (self):
