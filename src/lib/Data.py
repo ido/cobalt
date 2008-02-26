@@ -3,8 +3,6 @@
 __revision__ = '$Revision$'
 
 import time
-import types
-import xmlrpclib
 import random
 import warnings
 
@@ -190,7 +188,7 @@ class DataList (list):
     q_del -- remove items from the list
     """
     
-    item_cls = None
+    item_cls = Data
     
     def q_add (self, specs, callback=None, cargs={}):
         """Construct new items of type self.item_cls in the list.
@@ -259,7 +257,7 @@ class DataDict (dict):
     q_del -- remove items from the dict
     """
     
-    item_cls = None
+    item_cls = Data
     key = None
     
     def q_add (self, specs, callback=None, cargs={}):
