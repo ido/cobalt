@@ -5,6 +5,7 @@ __revision__ = '$Revision: 345 $'
 __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time
+import xmlrpclib
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
