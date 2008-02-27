@@ -412,6 +412,9 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
                     self.handle_request()
                 except socket.timeout:
                     pass
+                except:
+                    self.logger.error("Got unexpected error in handle_request",
+                                      exc_info=1)
                 if self.instance and hasattr(self.instance, "do_tasks"):
                     try:
                         self.instance.do_tasks()
