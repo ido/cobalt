@@ -1327,7 +1327,7 @@ class QueueManager(Component):
                 if key in Restriction.__checks__:
                     if newattr[key] is None and queue.restrictions.has_key(key):
                         del queue.restrictions[key]
-                    else:
+                    elif newattr[key] is not None:
                         queue.restrictions[key] = Restriction({'name':key, 'value':newattr[key]}, queue)
         return self.Queues.get_queues(specs, _setQueues, updates)
     set_queues = exposed(query(set_queues))
