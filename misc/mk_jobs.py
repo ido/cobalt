@@ -58,7 +58,7 @@ if __name__ == '__main__':
         jobidfmt = "%%%ss" % maxjoblen
     # calculate derived values
     for j in response:
-        print "cqadm -j %s" % j['jobid']
+        print "cqadm.py -j %s" % j['jobid']
         command = "cqsub "
         command += "-q %s " % j['queue']
         command += "-C %s " % j['outputdir']

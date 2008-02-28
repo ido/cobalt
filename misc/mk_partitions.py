@@ -64,11 +64,11 @@ if __name__ == '__main__':
     [part.__setitem__('functional', '-') for part in forced]
 
     for part in parts:
-        print "partadm -a %s" % part['name']
-        print "partadm --queue=%s %s" % (part['queue'], part['name'])
+        print "partadm.py -a %s" % part['name']
+        print "partadm.py --queue=%s %s" % (part['queue'], part['name'])
         if part['functional'] and part['functional']!='-':
-            print "partadm --activate %s" % part['name']
+            print "partadm.py --activate %s" % part['name']
         if part['scheduled']:
-            print "partadm --enable %s" % part['name']
+            print "partadm.py --enable %s" % part['name']
 
         
