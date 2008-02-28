@@ -357,12 +357,18 @@ class BGSched (Component):
         self.sched_info = {}
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
+        self.active = True
     
     def __getstate__(self):
-        return {'reservations':self.reservations, 'version':1}
+        return {'reservations':self.reservations, 'version':1,
+                'active':self.active}
     
     def __setstate__(self, state):
         self.reservations = state['reservations']
+        if 'active' in state:
+            self.active = state['active']
+        else:
+            self.active = True
         
         self.queues = QueueDict()
         self.jobs = JobDict()
@@ -478,7 +484,9 @@ class BGSched (Component):
 
     def schedule_jobs (self):
         '''look at the queued jobs, and decide which ones to start'''
-        
+
+        if not self.active:
+            return
         # if we're missing information, don't bother trying to schedule jobs
         if not (self.partitions.__oserror__.status and self.queues.__oserror__.status and self.jobs.__oserror__.status):
             self.sync_state.Fail()
@@ -621,3 +629,13 @@ class BGSched (Component):
             ret[str(k)] = self.sched_info[k]
         return ret
     get_sched_info = exposed(get_sched_info)
+
+    def enable(self):
+        """Enable scheduling"""
+        self.active = True
+    enable = exposed(enable)
+
+    def disable(self):
+        """Disable scheduling"""
+        self.active = False
+    disable = exposed(disable)
