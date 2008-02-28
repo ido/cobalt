@@ -436,6 +436,8 @@ class BGSched (Component):
         active_jobs.sort(self.prioritycmp)
             
         for job in active_jobs:
+            best_score = sys.maxint
+            best_partition = None
             cur_res = self.reservations[job.queue[2:]]
             if not cur_res.job_within_reservation(job):
                 if cur_res.is_active():
@@ -462,8 +464,19 @@ class BGSched (Component):
                 if not self.partitions.can_run(partition, job):
                     continue
                 
-                # let's run this thing!
-                self._start_job(job, partition)
+                # let's check the impact on partitions that would become blocked
+                score = 0
+                for p in partition.parents:
+                    if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
+                        score += 1
+                
+                # the lower the score, the fewer new partitions will be blocked by this selection
+                if score < best_score:
+                    best_score = score
+                    best_partition = partition        
+
+            if best_partition is not None:
+                self._start_job(job, best_partition)
                 return
 
 
@@ -607,7 +620,7 @@ class BGSched (Component):
                         # let's check the impact on partitions that would become blocked
                         score = 0
                         for p in partition.parents:
-                            if self.partitions[p].state == "idle":
+                            if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
                                 score += 1
                         
                         # the lower the score, the fewer new partitions will be blocked by this selection
