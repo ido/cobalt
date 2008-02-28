@@ -89,7 +89,7 @@ if __name__ == '__main__':
         if j.has_key('inputfile'):
             command += "-i %s " % j['inputfile']
 
-        command += "-t %s " % j['walltime']
+        command += "-t %s " % int(float(j['walltime']))
         command += "-n %s " % j['nodes']
 
         if j['state'] == "hold":
