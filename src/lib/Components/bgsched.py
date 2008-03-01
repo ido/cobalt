@@ -438,7 +438,13 @@ class BGSched (Component):
         for job in active_jobs:
             best_score = sys.maxint
             best_partition = None
-            cur_res = self.reservations[job.queue[2:]]
+            try:
+                cur_res = [r for r in self.reservations.values()
+                           if r.queue == job.queue][0]
+            except:
+                self.logger.error("Could not match reservation queue %s" \
+                                  % job.queue)
+                continue
             if not cur_res.job_within_reservation(job):
                 if cur_res.is_active():
                     self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % cur_res.name
