@@ -10,7 +10,7 @@ import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy, ComponentLookupError
 
 
-__helpmsg__ = "Usage: cqwait [--version] [-vr] <jobid> <jobid>\n"
+__helpmsg__ = "Usage: cqwait [--version] [-vr] [--start] <jobid> <jobid>\n"
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -18,7 +18,7 @@ if __name__ == '__main__':
         print "cobalt %s" % __version__
         raise SystemExit, 0
 
-    options = {'r':'quickreturn', 'v':'version', 'version':'version'}
+    options = {'r':'quickreturn', 'v':'version', 'version':'version', 'start':'start'}
     doptions = {}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
@@ -48,12 +48,26 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             raise SystemExit, 1
     
-    query = [{'tag':'job', 'jobid':jid} for jid in args]
-
-    while True:
-        response = cqm.get_jobs(query)
-        if len(response) == 0:
-            raise SystemExit, 0
-        else:
-            time.sleep(2)
+    if opts['start']:
+        query = [{'tag':'job', 'jobid':jid, 'state':"*"} for jid in args]
     
+        while True:
+            response = cqm.get_jobs(query)
+            count = 0
+            for r in response:
+                if r['state'] == 'running':
+                    count += 1
+            if len(response) == count:
+                raise SystemExit, 0
+            else:
+                time.sleep(2)
+    else:
+        query = [{'tag':'job', 'jobid':jid} for jid in args]
+    
+        while True:
+            response = cqm.get_jobs(query)
+            if len(response) == 0:
+                raise SystemExit, 0
+            else:
+                time.sleep(2)
+        
