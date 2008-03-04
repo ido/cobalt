@@ -438,53 +438,48 @@ class BGSched (Component):
         for job in active_jobs:
             best_score = sys.maxint
             best_partition = None
-            try:
-                cur_res = [r for r in self.reservations.values()
-                           if r.queue == job.queue][0]
-            except:
-                self.logger.error("Could not match reservation queue %s" \
-                                  % job.queue)
-                continue
-            if not cur_res.job_within_reservation(job):
-                if cur_res.is_active():
-                    self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % cur_res.name
-                else:
-                    self.sched_info[job.jobid] = "reservation '%s' is not active yet" % cur_res.name
-                continue
             
-            for partition in available_partitions:
-                # check if the current partition is linked to the job's reservation
-                part_in_res = False
-                for part_name in cur_res.partitions.split(":"):
-                    if not part_name in self.partitions:
-                        self.logger.error("reservation '%s' refers to non-existant partition '%s'" % (cur_res.name, part_name))
+            for cur_res in self.reservations.values():
+                if job.queue == cur_res.queue:
+                    if not cur_res.job_within_reservation(job):
+                        if cur_res.is_active():
+                            self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % cur_res.name
+                        else:
+                            self.sched_info[job.jobid] = "reservation '%s' is not active yet" % cur_res.name
                         continue
-                    if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
-                        continue
-                    # if we got here, then the partition is part of the reservation
-                    part_in_res = True
-                
-                if not part_in_res:
-                    continue
                     
-                if not self.partitions.can_run(partition, job):
-                    continue
-                
-                # let's check the impact on partitions that would become blocked
-                score = 0
-                for p in partition.parents:
-                    if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
-                        score += 1
-                
-                # the lower the score, the fewer new partitions will be blocked by this selection
-                if score < best_score:
-                    best_score = score
-                    best_partition = partition        
-
-            if best_partition is not None:
-                self._start_job(job, best_partition)
-                return
-
+                    for partition in available_partitions:
+                        # check if the current partition is linked to the job's reservation
+                        part_in_res = False
+                        for part_name in cur_res.partitions.split(":"):
+                            if not part_name in self.partitions:
+                                self.logger.error("reservation '%s' refers to non-existant partition '%s'" % (cur_res.name, part_name))
+                                continue
+                            if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
+                                continue
+                            # if we got here, then the partition is part of the reservation
+                            part_in_res = True
+                        
+                        if not part_in_res:
+                            continue
+                            
+                        if not self.partitions.can_run(partition, job):
+                            continue
+                        
+                        # let's check the impact on partitions that would become blocked
+                        score = 0
+                        for p in partition.parents:
+                            if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
+                                score += 1
+                        
+                        # the lower the score, the fewer new partitions will be blocked by this selection
+                        if score < best_score:
+                            best_score = score
+                            best_partition = partition        
+        
+                    if best_partition is not None:
+                        self._start_job(job, best_partition)
+                        return
 
     def _start_job(self, job, partition):
         cqm = ComponentProxy("queue-manager")
