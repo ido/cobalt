@@ -232,9 +232,9 @@ class BlueGene (Resource):
         element_pointer -- memory address for machine in bridge
         """
         Resource.__init__(self, element_pointer, **kwargs)
-        self.base_partitions = ElementGenerator(self, BasePartition, RM_BPNum, RM_FirstBP, RM_NextBP)
-        self.switches = ElementGenerator(self, Switch, RM_SwitchNum, RM_FirstSwitch, RM_NextSwitch)
-        self.wires = ElementGenerator(self, Wire, RM_WireNum, RM_FirstWire, RM_NextWire)
+        self.base_partitions = list(ElementGenerator(self, BasePartition, RM_BPNum, RM_FirstBP, RM_NextBP))
+        self.switches = list(ElementGenerator(self, Switch, RM_SwitchNum, RM_FirstSwitch, RM_NextSwitch))
+        self.wires = list(ElementGenerator(self, Wire, RM_WireNum, RM_FirstWire, RM_NextWire))
     
     def __del__ (self):
         if self._free:
@@ -336,11 +336,10 @@ class Partition (Resource):
     
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
-        self.base_partitions = ElementGenerator(self, BasePartition, RM_PartitionBPNum, RM_PartitionFirstBP, RM_PartitionNextBP)
-        self.switches = ElementGenerator(self, Switch, RM_PartitionSwitchNum, RM_PartitionFirstSwitch, RM_PartitionNextSwitch)
+        self.base_partitions = list(ElementGenerator(self, BasePartition, RM_PartitionBPNum, RM_PartitionFirstBP, RM_PartitionNextBP))
+        self.switches = list(ElementGenerator(self, Switch, RM_PartitionSwitchNum, RM_PartitionFirstSwitch, RM_PartitionNextSwitch))
         
-        self._node_cards = ElementGenerator(self, NodeCard, RM_PartitionNodeCardNum, RM_PartitionFirstNodeCard, RM_PartitionNextNodeCard)
-        # self.users = ElementGenerator(self, PartitionUsers, RM_PartitionUsersNum, RM_PartitionFirstUser, RM_PartitionNextUser)
+        self._node_cards = list(ElementGenerator(self, NodeCard, RM_PartitionNodeCardNum, RM_PartitionFirstNodeCard, RM_PartitionNextNodeCard))
     
     def __del__ (self):
         if self._free:
@@ -627,7 +626,7 @@ elif systype == 'BGP':
 bridge.rm_free_nodecard_list.argtypes = [POINTER(rm_nodecard_list_t)]
 bridge.rm_free_nodecard_list.restype = check_status
 
-class NodeCardList (Resource, ElementGenerator):
+class NodeCardList (Resource, list):
     
     _ctype = POINTER(rm_nodecard_list_t)
     
@@ -643,7 +642,7 @@ class NodeCardList (Resource, ElementGenerator):
     
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
-        ElementGenerator.__init__(self, self, NodeCard, RM_NodeCardListSize, RM_NodeCardListFirst, RM_NodeCardListNext)
+        self.extend(ElementGenerator(self, NodeCard, RM_NodeCardListSize, RM_NodeCardListFirst, RM_NodeCardListNext))
     
     def __del__ (self):
         if self._free:
@@ -688,7 +687,6 @@ class Switch (Resource):
     
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
-        # self.connections = ElementGenerator(self, ?...) # requires a connection object, and implementation of class-level ctype
     
     def __del__ (self):
         if self._free:
@@ -854,10 +852,10 @@ bridge.rm_get_partitions.restype = check_status
 bridge.rm_get_partitions_info.argtypes = [rm_partition_state_t, POINTER(POINTER(rm_partition_list_t))]
 bridge.rm_get_partitions_info.restype = check_status
 
-bridge.rm_free_partition_list.argtypes = [POINTER(rm_partition_t)]
+bridge.rm_free_partition_list.argtypes = [POINTER(rm_partition_list_t)]
 bridge.rm_free_partition_list.restype = check_status
 
-class PartitionList (Resource, ElementGenerator):
+class PartitionList (Resource, list):
     
     _ctype = POINTER(rm_partition_list_t)
     
@@ -879,7 +877,11 @@ class PartitionList (Resource, ElementGenerator):
 
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
-        ElementGenerator.__init__(self, self, Partition, RM_PartListSize, RM_PartListFirstPart, RM_PartListNextPart)
+        self.extend(ElementGenerator(self, Partition, RM_PartListSize, RM_PartListFirstPart, RM_PartListNextPart))
+    
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_partition_list(self)
 
 
 class rm_job_list_t (Structure):
@@ -901,7 +903,7 @@ elif systype == 'BGP':
 bridge.rm_free_job_list.argtypes = [POINTER(rm_job_list_t)]
 bridge.rm_free_job_list.restype = check_status
 
-class JobList (Resource, ElementGenerator):
+class JobList (Resource, list):
     
     _ctype = POINTER(rm_job_list_t)
     
@@ -913,7 +915,7 @@ class JobList (Resource, ElementGenerator):
     
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
-        ElementGenerator.__init__(self, self, Job, RM_JobListSize, RM_JobListFirstJob, RM_JobListNextJob)
+        self.extend(ElementGenerator(self, Job, RM_JobListSize, RM_JobListFirstJob, RM_JobListNextJob))
     
     def __del__ (self):
         if self._free:
