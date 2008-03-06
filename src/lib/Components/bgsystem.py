@@ -539,6 +539,48 @@ class BGSystem (Component):
                 elif p_set.union(other_set)==p_set:
                     p._children.add(other)
                     other._parents.add(p)
+
+    def generate_xml(self):
+        """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
+        parent_data = {}
+        child_data = {}
+        for p_name in self._managed_partitions:
+            p = self._partitions[p_name]
+            parent_data[p] = []
+            child_data[p] = []
+
+            for other_name in self._managed_partitions:
+                if p.name == other_name:
+                    break
+
+                other = self._partitions[other_name]
+                p_set = sets.Set(p.node_cards)
+                other_set = sets.Set(other.node_cards)
+
+                # if p is a subset of other, then p is a child
+                if p_set.intersection(other_set)==p_set:
+                    parent_data[p].append(other)
+                # if p contains other, then p is a parent
+                elif p_set.union(other_set)==p_set:
+                    child_data[p].append(other)
+
+        def _generate_xml(partition):
+            ret = "<Partition name='%s' size='%s'>\n" % (partition.name, partition.size)
+            if child_data[partition]:
+                for p in child_data[partition]:
+                    ret += _generate_xml(p)
+            ret += "</Partition>\n"
+            
+            return ret
+        
+        ret = "<Rack name='R00'>\n"
+        for p in parent_data:
+            if not parent_data[p]:
+                ret += _generate_xml(p)
+        ret += "</Rack>\n"
+            
+        return ret
+    generate_xml = exposed(generate_xml)
     
     def add_partitions (self, specs):
         self.logger.info("add_partitions(%r)" % (specs))

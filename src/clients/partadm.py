@@ -27,7 +27,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:C:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps='])
+                                      'queue=', 'deps=', 'xml'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -71,6 +71,9 @@ if __name__ == '__main__':
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'functional':False})
+    elif '--xml' in sys.argv:
+        func = system.generate_xml
+        args = tuple()
     elif '-l' in sys.argv:
         func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
