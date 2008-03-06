@@ -359,6 +359,7 @@ class BGSystem (Component):
         
         self.update_relatives()
         thread.start_new_thread(self.update_partition_state, tuple())
+
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
@@ -546,12 +547,12 @@ class BGSystem (Component):
         child_data = {}
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
-            parent_data[p] = []
-            child_data[p] = []
+            child_data[p] = sets.Set()
+            parent_data[p] = None
 
             for other_name in self._managed_partitions:
                 if p.name == other_name:
-                    break
+                    continue
 
                 other = self._partitions[other_name]
                 p_set = sets.Set(p.node_cards)
@@ -559,10 +560,15 @@ class BGSystem (Component):
 
                 # if p is a subset of other, then p is a child
                 if p_set.intersection(other_set)==p_set:
-                    parent_data[p].append(other)
-                # if p contains other, then p is a parent
-                elif p_set.union(other_set)==p_set:
-                    child_data[p].append(other)
+                    if parent_data[p] is not None:
+                        if parent_data[p].size > other.size:
+                            parent_data[p] = other
+                    else:
+                        parent_data[p] = other
+
+        for p in parent_data:
+            if parent_data[p]:
+                child_data[parent_data[p]].add(p)
 
         def _generate_xml(partition):
             ret = "<Partition name='%s' size='%s'>\n" % (partition.name, partition.size)
@@ -575,6 +581,7 @@ class BGSystem (Component):
         
         ret = "<Rack name='R00'>\n"
         for p in parent_data:
+            # for each root of the partition tree
             if not parent_data[p]:
                 ret += _generate_xml(p)
         ret += "</Rack>\n"
