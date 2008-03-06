@@ -416,8 +416,13 @@ class BGSched (Component):
         reservations = self.reservations.values()
         for i in range(len(reservations)):
             for j in range(i+1, len(reservations)):
-                res1 = reservations[i]
-                res2 = reservations[j]
+                # if at least one reservation is cyclic, we want *that* reservation to be the one getting its overlaps method called
+                if reservations[i].cycle is not None:
+                    res1 = reservations[i]
+                    res2 = reservations[j]
+                else:
+                    res1 = reservations[j]
+                    res2 = reservations[i]
                 for p in res2.partitions.split(":"):
                     if res1.overlaps(self.partitions[p], res2.start, res2.duration):
                         ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
