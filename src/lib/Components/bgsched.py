@@ -411,11 +411,19 @@ class BGSched (Component):
         return self.reservations.q_get(specs, _set_reservations, updates)
     set_reservations = exposed(query(set_reservations))
 
-    #def SetReservation(self, *args):
-    #    return self.reservations.Get(*args,
-    #                                 callback = \
-    #                                 lambda r, na:r.update(na))
-    #SetReservation = exposed(SetReservation)
+    def check_reservations(self):
+        ret = ""
+        reservations = self.reservations.values()
+        for i in range(len(reservations)):
+            for j in range(i+1, len(reservations)):
+                res1 = reservations[i]
+                res2 = reservations[j]
+                for p in res2.partitions.split(":"):
+                    if res1.overlaps(self.partitions[p], res2.start, res2.duration):
+                        ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
+
+        return ret
+    check_reservations = exposed(check_reservations)
 
     def sync_data(self):
         for item in [self.jobs, self.queues, self.partitions]:

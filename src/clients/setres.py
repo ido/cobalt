@@ -150,6 +150,8 @@ if __name__ == '__main__':
             updates['partitions'] = ":".join(partitions)
                 
         scheduler.set_reservations([{'name':rname}], updates)
+        print scheduler.check_reservations()
+
         raise SystemExit, 0
 
     spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time }
@@ -157,6 +159,7 @@ if __name__ == '__main__':
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:
         print scheduler.add_reservations([spec])
+        print scheduler.check_reservations()
     except xmlrpclib.Fault, flt:
         if flt.faultCode==ComponentLookupError.fault_code:
             print "Couldn't contact the queue manager"
