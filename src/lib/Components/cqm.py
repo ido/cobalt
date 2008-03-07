@@ -675,7 +675,7 @@ class BGJob(Job):
             self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
         else:
             self.steps = ['RunBGUserJob', 'FinishUserPgrp', 'Finish']
-        if self.config.get('bgkernel'):
+        if self.config.get('bgkernel') == 'true':
             self.steps.insert(0, 'SetBGKernel')
         self.SetPassive()
         
@@ -838,6 +838,14 @@ class BGJob(Job):
     def Finish(self):
         '''Finish up accounting for job, also adds postscript ability'''
         Job.Finish(self)
+
+        if self.config.get('bgkernel') == 'true':
+            try:
+                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location))
+                os.symlink('%s/%s' % (self.config.get('bootprofiles'), 'default'),
+                           '%s/%s' % (self.config.get('partitionboot'), self.location))
+            except OSError:
+                logger.error("Failed to reset boot location at job end for partition for %s" % (self.location))
 
         if self.config.get('postscript'):
             postscripts = self.config.get('postscript').split(':')
