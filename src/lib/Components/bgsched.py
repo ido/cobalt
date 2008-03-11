@@ -12,19 +12,16 @@ except:
     from sets import Set as set
 
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, DataCreationError
+from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 import xmlrpclib
 
 import Cobalt.SchedulerPolicies
 
 logger = logging.getLogger("Cobalt.Components.scheduler")
 
-
-class ReservationError(Exception):
-    log = False
-    fault_code = hash("ReservationError")
 
 
 class Reservation (Data):

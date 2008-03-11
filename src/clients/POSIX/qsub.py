@@ -18,8 +18,8 @@ import logging
 import Cobalt
 import Cobalt.Logging
 import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
-from Cobalt.Components.cqm import QueueError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import QueueError, ComponentLookupError
 
 
 def processfilter(cmdstr, jobdict):
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # ensure time is actually in minutes
     try:
         minutes = Cobalt.Util.get_time(opts['time'])
-    except Cobalt.Util.TimeFormatError, e:
+    except Cobalt.Exceptions.TimeFormatError, e:
         logger.error("invalid time specification: %s" % e.message)
         sys.exit(1)
     logger.error("submitting walltime=%s minutes" % str(minutes))

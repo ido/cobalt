@@ -7,7 +7,8 @@ __version__ = '$Version$'
 
 import sys, time
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 
 __helpmsg__ = "Usage: cqwait [--version] [-vr] [--start] <jobid> <jobid>\n"

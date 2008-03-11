@@ -19,13 +19,11 @@ import logging, os, pwd, signal, sys, tempfile, time
 import xmlrpclib
 
 import Cobalt.Logging
-from Cobalt.Data import Data, DataDict, IncrID, DataCreationError
+from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ProcessGroupCreationError, DataCreationError, ComponentLookupError
 
-
-class ProcessGroupCreationError (Exception):
-    """An error occured when creation a process group."""
 
 class ProcessGroup(Data):
     '''Run a script'''

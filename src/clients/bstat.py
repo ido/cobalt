@@ -4,6 +4,7 @@ import sys
 import socket
 
 from Cobalt.Proxy import *
+from Cobalt.Exceptions import ComponentLookupError
 
 state_markers = dict(
     idle = ("*", " ", " "),

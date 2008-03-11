@@ -10,14 +10,12 @@ import ConfigParser
 import popen2
 from datetime import date, datetime
 from getopt import getopt, GetoptError
+from Cobalt.Exceptions import TimeFormatError
 import logging
 
 import Cobalt
 
 logger = logging.getLogger('Util')
-
-class TimeFormatError (Exception):
-    fault_code = hash("TimeFormatError")
 
 def get_time(date_string):
     '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, or DD:HH:MM:SS, and return the total number of minutes.  Raise an exception for bad values.'''

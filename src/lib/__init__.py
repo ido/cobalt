@@ -2,7 +2,7 @@
 
 __revision__ = '$Revision$'
 
-__all__ = ['bridge', 'bgl_rm_api', 'Components', 'Data',
+__all__ = ['bridge', 'bgl_rm_api', 'Components', 'Data', 'Exceptions',
            'Logging', 'Proxy', 'Util']
 
 import sys

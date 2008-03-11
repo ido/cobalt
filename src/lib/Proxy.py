@@ -19,6 +19,7 @@ import urlparse
 import tlslite.errors
 
 import Cobalt
+from Cobalt.Exceptions import ComponentLookupError, ComponentOperationError
 
 __all__ = [
     "ComponentProxy", "ComponentLookupError", "RetryMethod",
@@ -62,21 +63,6 @@ xmlrpclib._Method = RetryMethod
 def register_component (component):
     local_components[component.name] = component
 
-
-class ComponentError (Exception):
-    
-    """Component error baseclass"""
-
-
-class ComponentLookupError (ComponentError):
-
-    """Unable to locate an address for the given component."""
-
-    fault_code = hash("ComponentLookupError")
-
-class ComponentOperationError (ComponentError):
-    
-    """Component Failure during operation"""
 
 
 def ComponentProxy (component_name, **kwargs):

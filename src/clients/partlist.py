@@ -7,7 +7,8 @@ __version__ = '$Version$'
 import sys, operator
 from optparse import OptionParser
 import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 helpmsg = '''Usage: partlist [--version]'''
 

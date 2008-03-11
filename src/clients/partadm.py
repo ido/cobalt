@@ -7,7 +7,8 @@ __version__ = '$Version$'
 import sys, getopt, xmlrpclib
 
 import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 
 helpmsg = '''Usage: partadm.py [-a] [-d] part1 part2 (add or del)

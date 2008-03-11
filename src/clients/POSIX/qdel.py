@@ -6,7 +6,8 @@ __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 usehelp = "Usage:\nqdel [--version] [-f] <jobid> <jobid>"
 

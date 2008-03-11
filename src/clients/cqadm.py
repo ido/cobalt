@@ -7,8 +7,8 @@ __version__ = '$Version$'
 import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Util
 import getpass
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
-from Cobalt.Components.cqm import QueueError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import QueueError, ComponentLookupError
 
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
@@ -237,7 +237,7 @@ if __name__ == '__main__':
         if opts['time']:
             try:
                 minutes = Cobalt.Util.get_time(opts['time'])
-            except Cobalt.Util.TimeFormatError, e:
+            except Cobalt.Exceptions.TimeFormatError, e:
                 print "invalid time specification: %s" % e.message
                 sys.exit(1)
             updates['walltime'] = str(minutes)

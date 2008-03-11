@@ -16,7 +16,8 @@ import socket
 import Cobalt
 import Cobalt.Logging
 import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 __helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--header] [--schedinfo] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>\n" + \

@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     try:
         cqm = Cobalt.Proxy.queue_manager()
-    except Cobalt.Proxy.CobaltComponentError:
+    except Cobalt.Exceptions.ComponentLookupError:
         print "Failed to connect to queue manager"
         raise SystemExit, 1
 

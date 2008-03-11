@@ -9,6 +9,7 @@ import warnings
 from sets import Set as set
 
 import Cobalt.Util
+from Cobalt.Exceptions import DataCreationError, IncrIDError
 
 
 def get_spec_fields (specs):
@@ -20,13 +21,6 @@ def get_spec_fields (specs):
     return fields
 
 
-class DataCreationError (Exception):
-    '''Used when a new object cannot be created'''
-    pass
-
-class IncrIDError (Exception):
-    '''Used when trying to set the IncrID counter to a value that has already been used'''
-    pass
 
 class IncrID (object):
     

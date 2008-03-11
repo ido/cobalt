@@ -19,6 +19,8 @@ import Cobalt.Proxy
 import Cobalt.Logging
 from Cobalt.Server import XMLRPCServer, find_intended_location
 from Cobalt.Data import get_spec_fields
+from Cobalt.Exceptions import NoExposedMethod
+
 
 
 def state_file_location():
@@ -153,9 +155,6 @@ def marshal_query_result (items, specs=None):
     else:
         fields = None
     return [item.to_rx(fields) for item in items]
-
-class NoExposedMethod (Exception):
-    """There is no method exposed with the given name."""
 
 
 class Component (object):

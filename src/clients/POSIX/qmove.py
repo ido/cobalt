@@ -6,7 +6,8 @@ __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time, xmlrpclib
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 usehelp = "Usage:\nqmove <queue name> <jobid> <jobid>"
 

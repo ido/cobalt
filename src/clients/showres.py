@@ -6,7 +6,8 @@ __version__ = '$Version$'
 import sys, time
 import math
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 if __name__ == '__main__':
     if '--version' in sys.argv:

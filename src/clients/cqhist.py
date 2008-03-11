@@ -26,7 +26,8 @@ from optparse import OptionParser
 
 # Application imports
 import Cobalt.Cqparse as cqparse
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 if __name__ == '__main__':
     if '--version' in sys.argv:

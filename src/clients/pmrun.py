@@ -6,7 +6,8 @@ __revision__ = '$Revision$'
 import sys, time, Cobalt.Proxy, Cobalt.Logging
 import pwd
 import os
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 if __name__ == '__main__':
     level = 20

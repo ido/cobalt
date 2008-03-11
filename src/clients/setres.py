@@ -7,7 +7,8 @@ __version__ = '$Version$'
 import getopt, pwd, sys, time
 import xmlrpclib
 import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
                   -c <cycle time> -p <partition> -q <queue name> 
@@ -84,7 +85,7 @@ if __name__ == '__main__':
     if duration:
         try:
             minutes = Cobalt.Util.get_time(duration)
-        except Cobalt.Util.TimeFormatError, e:
+        except Cobalt.Exceptions.TimeFormatError, e:
             print "invalid duration specification: %s" % e.message
             sys.exit(1)
         dsec = 60 * minutes
@@ -122,7 +123,7 @@ if __name__ == '__main__':
     if cycle_time:
         try:
             minutes = Cobalt.Util.get_time(cycle_time)
-        except Cobalt.Util.TimeFormatError, e:
+        except Cobalt.Exceptions.TimeFormatError, e:
             print "invalid cycle time specification: %s" % e.message
             sys.exit(1)
         cycle_time = 60 * minutes

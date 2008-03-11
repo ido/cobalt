@@ -17,7 +17,8 @@ import logging
 import Cobalt
 import Cobalt.Logging
 import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 helpmsg = """
 Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
@@ -69,7 +70,7 @@ if __name__ == '__main__':
     if opts['time']:
         try:
             minutes = Cobalt.Util.get_time(opts['time'])
-        except Cobalt.Util.TimeFormatError, e:
+        except Cobalt.Exceptions.TimeFormatError, e:
             print "invalid time specification: %s" % e.message
             sys.exit(1)
         query['walltime'] = str(minutes)

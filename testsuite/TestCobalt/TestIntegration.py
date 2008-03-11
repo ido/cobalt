@@ -10,7 +10,8 @@ from Cobalt.Components.cqm import QueueManager
 from Cobalt.Components.slp import TimingServiceLocator
 from Cobalt.Components.simulator import Simulator
 from Cobalt.Components.scriptm import ScriptManager
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 import Cobalt.Proxy
 
 class TestIntegration (object):

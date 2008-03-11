@@ -16,28 +16,12 @@ import Cobalt.Util
 import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Proxy import ComponentProxy, ComponentLookupError
-
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import TimerException, QueueError, ComponentLookupError
 
 
 logger = logging.getLogger('cqm')
 cqm_id_gen = None
-
-class SystemError(Exception):
-    '''This error occurs when communications with the system fail'''
-    pass
-
-class TimerException(Exception):
-    '''This error occurs when timer methods are called in the wrong order'''
-    pass
-
-class ScriptManagerError(Exception):
-    '''This error occurs when communications with the script manager fail'''
-    pass
-
-class QueueError(Exception):
-    log = False
-    fault_code = hash("QueueError")
 
 class Timer(object):
     '''The timer object keeps track of elapsed times for jobs'''

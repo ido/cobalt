@@ -1,7 +1,8 @@
 import time
 import xmlrpclib
 
-from Cobalt.Components.cqm import QueueManager, QueueError
+from Cobalt.Components.cqm import QueueManager 
+from Cobalt.Exceptions import QueueError
 from Cobalt.Data import IncrID
 import Cobalt.Components.cqm
 

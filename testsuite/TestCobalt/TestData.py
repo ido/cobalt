@@ -3,8 +3,8 @@ import itertools
 import warnings
 
 from Cobalt.Data import IncrID, RandomID, Data, ForeignData, DataList, \
-     DataDict, DataCreationError, ForeignData, ForeignDataDict
-
+     DataDict, ForeignData, ForeignDataDict
+from Cobalt.Exceptions import DataCreationError
 
 import Cobalt.Logging
 

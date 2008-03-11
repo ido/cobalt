@@ -6,9 +6,6 @@ PartitionDict -- default container for partitions
 ProcessGroup -- a group of processes started with mpirun
 ProcessGroupDict -- default container for ProcessGroup instances
 BGSystem -- Blue Gene system component
-
-Exceptions:
-ProcessGroupCreationError -- error when creating a ProcessGroup
 """
 
 import atexit
@@ -29,13 +26,13 @@ except NameError:
 
 import Cobalt
 import Cobalt.Data
-from Cobalt.Data import Data, DataDict, IncrID, DataCreationError
+from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
+from Cobalt.Exceptions import ProcessGroupCreationError, DataCreationError
 
 __all__ = [
-    "ProcessGroupCreationError",
     "Partition", "PartitionDict",
     "ProcessGroup", "ProcessGroupDict",
     "Simulator",
@@ -43,9 +40,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
-
-class ProcessGroupCreationError (Exception):
-    """An error occured when creation a process group."""
 
 
 class NodeCard (object):

@@ -32,6 +32,7 @@ import Cobalt
 import Cobalt.Data
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Exceptions import ProcessGroupCreationError
 
 __all__ = [
     "ProcessGroupCreationError",
@@ -42,9 +43,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-
-class ProcessGroupCreationError (Exception):
-    """An error occured when creation a process group."""
 
 class Partition (Data):
     
@@ -223,7 +221,7 @@ class ProcessGroupDict (DataDict):
     def q_add (self, specs, callback=None, cargs={}):
         for spec in specs:
             if spec.get("id", "*") != "*":
-                raise Cobalt.Data.DataCreationError("cannot specify an id")
+                raise Cobalt.Exceptions.DataCreationError("cannot specify an id")
             spec['id'] = self.id_gen.next()
         return DataDict.q_add(self, specs)
 
