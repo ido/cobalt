@@ -8,10 +8,8 @@ import os
 import sys
 import pwd
 import os.path
-import popen2
 import xmlrpclib
 import ConfigParser
-import re
 import logging
 
 import Cobalt
@@ -61,7 +59,8 @@ if __name__ == '__main__':
         except:
             logger.error("jobid must be an integer")
             sys.exit(1)
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*',
+             'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*'} for jobid in args]
     updates = {}
     nc = 0
     if opts['nodecount']:
@@ -144,11 +143,17 @@ if __name__ == '__main__':
         filters = CP.get('cqm', 'filters').split(':')
     except ConfigParser.NoOptionError:
         filters = []
-    for filt in filters:
-        Cobalt.Util.processfilter(filt, updates)
 
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
+        jobdata = cqm.get_jobs(spec)
+        if not jobdata:
+            print "Failed to match any jobs"
+            sys.exit(1)
+        jobinfo = jobdata[0]
+        jobinfo.update(updates)
+        for filt in filters:
+            Cobalt.Util.processfilter(filt, jobinfo)
         response = cqm.set_jobs(spec, updates)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
