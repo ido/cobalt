@@ -19,38 +19,6 @@ import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-def processfilter(cmdstr, jobdict):
-    '''Run a filter on the job, passing in all job args and processing all output'''
-    extra = []
-    for key, value in jobdict.iteritems():
-        if isinstance(value, list):
-            extra.append('%s="%s"' % (key, ':'.join(value)))
-        elif isinstance(value, dict):
-            extra.append('%s="{%s}"' % (key, str(value)))
-        else:
-            extra.append('%s="%s"' % (key, value))
-    rc, out, err = Cobalt.Util.runcommand(" ".join([cmdstr] + extra))
-    if err:
-        # strip \n from last line of stderr to make sure only
-        # one \n is print'ed 
-        err[-1] = err[-1].strip()
-        # the lines in err already end in \n from readlines()
-        print >>sys.stderr, ''.join(err)
-    if rc != 0:
-        print >>sys.stderr, "Filter %s failed" % (cmdstr)
-        sys.exit(1)
-    if out:
-        for line in out:
-            key, value = line.strip().split('=', 1)
-            if key not in jobdict.keys():
-                jobdict[key] = value
-            elif isinstance(jobdict[key], list):
-                jobdict[key] = value.split(':')
-            elif isinstance(jobdict[key], dict):
-                jobdict[key].update(eval(value))
-            else:
-                jobdict[key] = value
-
 helpmsg = """
 Usage: qalter [-d] [-v] -A <project name> -t <time in minutes> 
               -e <error file path> -o <output file path> 
@@ -177,7 +145,7 @@ if __name__ == '__main__':
     except ConfigParser.NoOptionError:
         filters = []
     for filt in filters:
-        processfilter(filt, updates)
+        Cobalt.Util.processfilter(filt, updates)
 
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
