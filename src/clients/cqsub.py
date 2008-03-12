@@ -222,7 +222,7 @@ if __name__ == '__main__':
             logger.error("directory %s does not exist" % jobspec.get('outputpath'))
             sys.exit(1)
     if opts['held']:
-        jobspec.update({'state':'hold'})
+        jobspec.update({'state':'user hold'})
     if opts['env']:
         if sys.argv.count('-e') > 1:
             logger.error("Use of multiple -e options is not supported. Specify multiple environment variables with -e FOO=1:BAR=2")
