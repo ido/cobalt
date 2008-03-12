@@ -4,7 +4,7 @@
 __revision__ = '$Id$'
 __version__ = '$Version$'
 
-import getopt, pwd, sys, time
+import getopt, math, pwd, sys, time
 import xmlrpclib
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -12,7 +12,7 @@ from Cobalt.Exceptions import ComponentLookupError
 
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
                   -c <cycle time> -p <partition> -q <queue name> 
-                  -u <user> [-f] [partion1] .. [partionN]
+                  -D -u <user> [-f] [partion1] .. [partionN]
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 cycle time may be in minutes or DD:HH:MM:SS
@@ -134,11 +134,38 @@ if __name__ == '__main__':
             print "-m must by called with -n <reservation name>"
             raise SystemExit
         rname = [arg for (opt, arg) in opts if opt == '-n'][0]
-        res_list = scheduler.get_reservations([{'name':rname}])
+        query = [{'name':rname, 'start':'*', 'cycle':'*', 'duration':'*'}]
+        res_list = scheduler.get_reservations(query)
         if not res_list:
             print "cannot find reservation named '%s'" % rname
             raise SystemExit, 1
         updates = {}
+        if '-D' in sys.argv:
+            res = res_list[0]
+            if start or cycle_time:
+                print "Cannot use -D while changing start or cycle time"
+                raise SystemExit, 1
+            if not res['cycle']:
+                print "Cannot use -D on a non-cyclic reservation"
+                raise SystemExit, 1
+            start = res['start']
+            duration = res['duration']
+            cycle = float(res['cycle'])
+            now = time.time()
+            periods = math.floor((now - start)/cycle)
+    
+            if(periods < 0):
+                start += cycle
+            elif(now - start) % cycle < duration:
+                start += (periods + 1) * cycle
+            else:
+                start += (periods + 2) * cycle
+
+            newstart = time.strftime("%c", time.localtime(start))
+            print "Setting new start time for for reservation '%s': %s" \
+                  % (res['name'], newstart)
+
+            updates['start'] = newstart
         if user:
             updates['users'] = user
         if start:
@@ -162,7 +189,7 @@ if __name__ == '__main__':
         print scheduler.add_reservations([spec])
         print scheduler.check_reservations()
     except xmlrpclib.Fault, flt:
-        if flt.faultCode==ComponentLookupError.fault_code:
+        if flt.faultCode == ComponentLookupError.fault_code:
             print "Couldn't contact the queue manager"
             sys.exit(1)
         else:
