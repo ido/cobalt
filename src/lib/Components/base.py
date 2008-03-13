@@ -12,6 +12,7 @@ import pydoc
 import sys
 import getopt
 import logging
+import time
 import xmlrpclib
 
 import Cobalt
@@ -133,9 +134,11 @@ def exposed (func):
     func.exposed = True
     return func
 
-def automatic (func):
-    """Mark a method to be run continually."""
+def automatic (func, period=10):
+    """Mark a method to be run periodically."""
     func.automatic = True
+    func.automatic_period = period
+    func.automatic_ts = -1
     return func
 
 def query (func=None, **kwargs):
@@ -214,8 +217,11 @@ class Component (object):
         """
         for name, func in inspect.getmembers(self, callable):
             if getattr(func, "automatic", False):
-                func()
-    
+                if (time.time() - func.automatic_ts) > \
+                   func.automatic_period:
+                    func()
+                    func.__dict__['automatic_ts'] = time.time()
+
     def _resolve_exposed_method (self, method_name):
         """Resolve an exposed method.
         
