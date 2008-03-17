@@ -165,7 +165,7 @@ if __name__ == '__main__':
             print "Setting new start time for for reservation '%s': %s" \
                   % (res['name'], newstart)
 
-            updates['start'] = newstart
+            updates['start'] = start
         if user:
             updates['users'] = user
         if start:
