@@ -603,8 +603,6 @@ class BGSystem (Component):
     
     def get_partitions (self, specs):
         """Query partitions on simulator."""
-        self.logger.info("get_partitions(%r)" % (specs))
-        
         self._partitions_lock.acquire()
         partitions = self.partitions.q_get(specs)
         self._partitions_lock.release()
@@ -629,6 +627,7 @@ class BGSystem (Component):
     
     def set_partitions (self, specs, updates):
         def _set_partitions(part, newattr):
+            self.logger.info("updating partition %s: %r" % (part.name, newattr))
             part.update(newattr)
             
         self._partitions_lock.acquire()

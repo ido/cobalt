@@ -230,7 +230,6 @@ class ScriptManager(Component):
     
     def get_jobs(self, specs):
         '''query existing process group'''
-        self.logger.info("querying for process group %r" % specs)
         return self.pgroups.q_get(specs)
     get_jobs = exposed(query(get_jobs))
 
@@ -261,7 +260,7 @@ class ScriptManager(Component):
         '''Invoke the real mpirun on behalf of a script being executed by the script manager.'''
         jobs = self.pgroups.q_get([{'jobid':spec['jobid'], 'user':spec['user']}])
         if len(jobs) != 1:
-            self.logger.error("invoke_mpi_from_script mached more than one job with spec %r" % spec)
+            self.logger.error("invoke_mpi_from_script matched more than one job with spec %r" % spec)
             return -1
         else:
             jobs[0].invoke_mpi_from_script(spec['true_mpi_args'])

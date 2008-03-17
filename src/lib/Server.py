@@ -355,8 +355,6 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
             ComponentProxy("service-location").register(name, self.url)
         except Exception, e:
             self.logger.error("register_with_slp() [%s]" % (e))
-        else:
-            self.logger.info("register_with_slp()")
     
     def unregister_with_slp (self):
         try:

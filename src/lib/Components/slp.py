@@ -110,7 +110,6 @@ class ServiceLocator (Component):
         else:
             service.location = location
             service.touch()
-            self.logger.info("register(%r, %r) [update]" % (service_name, location))
     register = exposed(register)
     
     def unregister (self, service_name):
@@ -136,15 +135,13 @@ class ServiceLocator (Component):
         try:
             service = self.services[service_name]
         except KeyError:
-            self.logger.info("locate(%r) [not registered]" % (service_name))
+            self.logger.debug("locate(%r) [not registered]" % (service_name))
             return ""
-        self.logger.info("locate(%r) [%r]" % (service_name, service.location))
         return service.location
     locate = exposed(locate)
     
     def get_services (self, specs):
         """Query interface "Get" method."""
-        self.logger.info("get_services(%r)" % (specs))
         return self.services.q_get(specs)
     get_services = exposed(query(get_services))
 

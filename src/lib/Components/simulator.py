@@ -339,7 +339,6 @@ class Simulator (Component):
     
     def get_partitions (self, specs):
         """Query partitions on simulator."""
-        self.logger.info("get_partitions(%r)" % (specs))
         return self.partitions.q_get(specs)
     get_partitions = exposed(query(get_partitions))
     
@@ -356,6 +355,7 @@ class Simulator (Component):
     
     def set_partitions (self, specs, updates):
         def _set_partitions(part, newattr):
+            self.logger.info("updating partition %s: %r" % (part.name, newattr))
             part.update(newattr)
         return self._partitions.q_get(specs, _set_partitions, updates)
     set_partitions = exposed(query(set_partitions))
@@ -421,7 +421,6 @@ class Simulator (Component):
     
     def get_process_groups (self, specs):
         """Query process_groups from the simulator."""
-        self.logger.info("get_process_groups(%r)" % (specs))
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
     

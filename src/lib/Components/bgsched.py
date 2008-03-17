@@ -495,7 +495,7 @@ class BGSched (Component):
         cqm = ComponentProxy("queue-manager")
         
         try:
-            print "trying to start job %d on partition %s" % (job.jobid, partition.name)
+            self.logger.info("trying to start job %d on partition %s" % (job.jobid, partition.name))
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition.name])
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
