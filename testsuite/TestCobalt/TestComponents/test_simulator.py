@@ -63,6 +63,7 @@ class TestSimulator (TestComponent):
             outputfile = "outfile",
             errorfile = "errfile",
             user = os.getlogin(),
+            args = [],
         )])
     
     def test_get_process_groups (self):
@@ -78,6 +79,7 @@ class TestSimulator (TestComponent):
             outputfile = "outfile",
             errorfile = "errfile",
             user = os.getlogin(),
+            args = [],
         )])
         specs = self.system.get_process_groups([{'id':"*"}])
         assert specs
@@ -93,6 +95,7 @@ class TestSimulator (TestComponent):
             outputfile = "outfile",
             errorfile = "errfile",
             user = os.getlogin(),
+            args = [], 
         )])
     
     def test_signal_process_groups (self):
@@ -106,6 +109,7 @@ class TestSimulator (TestComponent):
             outputfile = "outfile",
             errorfile = "errfile",
             user = os.getlogin(),
+            args = [],
         )])
         
         for signal in ["SIGINT", "SIGKILL"]:
