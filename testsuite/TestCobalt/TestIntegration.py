@@ -86,7 +86,7 @@ class TestIntegration (object):
         if len(r) != 1:
             assert not "the job has stopped running prematurely"
 
-        time.sleep(180)
+        time.sleep(185)
 
         # finish stepping through the ... uh ... steps, to the point where the job
         # finishes and is removed from the queue.
@@ -94,6 +94,7 @@ class TestIntegration (object):
         # this will start to fail if the number of job steps ever changes
         for i in range(4):
             my_do_tasks()
+            time.sleep(11)
         
         r = cqm.get_jobs([{'jobid':'*', 'state':'*'}])
         if r:
@@ -131,6 +132,7 @@ class TestIntegration (object):
         
         for i in range(4):
             my_do_tasks()
+            time.sleep(11)
         
         r = cqm.get_jobs([{'jobid':'*', 'state':'*'}])
         if r:
