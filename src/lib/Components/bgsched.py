@@ -286,7 +286,10 @@ def fifocmp (job1, job2):
     """Compare 2 jobs for first-in, first-out."""
     
     def fifo_value (job):
-        return job.index or job.jobid
+        if job.index is not None:
+            return int(job.index)
+        else:
+            return job.jobid
     
     return cmp(fifo_value(job1), fifo_value(job2))
 
@@ -380,7 +383,7 @@ class BGSched (Component):
         
         val = cmp(self.queues[job1.queue].priority, self.queues[job2.queue].priority)
         if val == 0:
-            return cmp(job1.jobid, job2.jobid)
+            return fifocmp(job1, job2)
         else:
             # we want the higher priority first
             return -val
