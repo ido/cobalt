@@ -282,18 +282,6 @@ class Job (ForeignData):
         
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
-def fifocmp (job1, job2):
-    """Compare 2 jobs for first-in, first-out."""
-    
-    def fifo_value (job):
-        if job.index is not None:
-            return int(job.index)
-        else:
-            return job.jobid
-    
-    return cmp(fifo_value(job1), fifo_value(job2))
-
-
 class JobDict(ForeignDataDict):
     item_cls = Job
     key = 'jobid'
@@ -383,12 +371,42 @@ class BGSched (Component):
         
         val = cmp(self.queues[job1.queue].priority, self.queues[job2.queue].priority)
         if val == 0:
-            return fifocmp(job1, job2)
+            return self.fifocmp(job1, job2)
         else:
             # we want the higher priority first
             return -val
-
         
+    def fifocmp (self, job1, job2):
+        """Compare 2 jobs for first-in, first-out."""
+        
+        def fifo_value (job):
+            if job.index is not None:
+                return int(job.index)
+            else:
+                return job.jobid
+            
+        # Implement some simple variations on FIFO scheduling
+        # within a particular queue, based on queue policy
+        fifoval = cmp(fifo_value(job1), fifo_value(job2))
+        if(job1.queue == job2.queue):
+            qpolicy = self.queues[job1.queue].policy
+            sizeval = cmp(int(job1.nodes), int(job2.nodes))
+            wtimeval = cmp(int(job1.walltime), int(job2.walltime))
+            if(qpolicy == 'largest-first' and sizeval):
+                return -sizeval
+            elif(qpolicy == 'smallest-first' and sizeval):
+                return sizeval
+            elif(qpolicy == 'longest-first' and wtimeval):
+                return -wtimeval
+            elif(qpolicy == 'shortest-first' and wtimeval):
+                return wtimeval
+            else:
+                return fifoval
+        else:
+            return fifoval
+
+        return cmp(fifo_value(job1), fifo_value(job2))
+
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
