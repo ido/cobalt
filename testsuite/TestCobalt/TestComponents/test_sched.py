@@ -1,9 +1,15 @@
+import time
+
 from Cobalt.Exceptions import DataCreationError
 
 from Cobalt.Components.simulator import Simulator
 from Cobalt.Components.bgsched import Reservation
 
-
+class Job (object):
+    def __init__(self, walltime, queue):
+        # remember that walltime is in minutes
+        self.walltime = walltime
+        self.queue = queue
 
 class TestReservation (object):
 
@@ -76,3 +82,41 @@ class TestReservation (object):
         assert not reservation.overlaps(partition=self.test_partition, start=110, duration=39)
         assert reservation.overlaps(partition=self.test_partition, start=90, duration=100)
         
+    def test_job_within_reservation (self):
+        # past reservation
+        reservation = Reservation({'name':"mine", 'start':100, 'duration':3600, 'partitions':"ANLR00", 'queue':"default"})
+        j = Job(5, "default")
+        assert not reservation.job_within_reservation(j)
+        j = Job(70, "default")
+        assert not reservation.job_within_reservation(j)
+        
+        # current reservation
+        reservation = Reservation({'name':"mine", 'start':time.time(), 'duration':3600, 'partitions':"ANLR00", 'queue':"default"})
+        j = Job(5, "default")
+        assert reservation.job_within_reservation(j)
+        j = Job(70, "default")
+        assert not reservation.job_within_reservation(j)
+        
+        # future reservation
+        reservation = Reservation({'name':"mine", 'start':time.time() + 3600, 'duration':3600, 'partitions':"ANLR00", 'queue':"default"})
+        j = Job(5, "default")
+        assert not reservation.job_within_reservation(j)
+        j = Job(40, "default")
+        assert not reservation.job_within_reservation(j)
+        j = Job(70, "default")
+        assert not reservation.job_within_reservation(j)
+
+    def test_job_within_reservation_cyclic (self):
+        reservation = Reservation({'name':"mine", 'start':time.time()-3000, 'duration':3600, 'cycle':4000, 'partitions':"ANLR00", 'queue':"default"})
+        # jobs ends inside the reservation
+        j = Job(8, "default")
+        assert reservation.job_within_reservation(j)
+        # job ends in the "dead zone"
+        j = Job(12, "default")
+        assert not reservation.job_within_reservation(j)
+        # job ends the next time the reservation is active
+        j = Job(50, "default")
+        assert not reservation.job_within_reservation(j)
+        # job lasts longer than the reservation
+        j = Job(100, "default")
+        assert not reservation.job_within_reservation(j)

@@ -122,7 +122,9 @@ class Reservation (Data):
                 if 60 * float(job.walltime) > self.duration:
                     return False
                 
-                if ((job_end - self.start) % self.cycle) < self.duration:
+                relative_start = (time.time() - self.start) % self.cycle
+                relative_end = relative_start + 60 * float(job.walltime)
+                if relative_end < self.duration:
                     return True
                 else:
                     return False
