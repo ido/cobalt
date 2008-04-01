@@ -444,6 +444,8 @@ class BGSched (Component):
                     res1 = reservations[j]
                     res2 = reservations[i]
                 for p in res2.partitions.split(":"):
+                    # we substract a little bit because the overlaps method isn't really meant to do this
+                    # it will report warnings when one reservation starts at the same time another ends
                     if res1.overlaps(self.partitions[p], res2.start, res2.duration - 0.00001):
                         ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
 
