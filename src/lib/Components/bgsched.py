@@ -22,7 +22,7 @@ import Cobalt.SchedulerPolicies
 
 logger = logging.getLogger("Cobalt.Components.scheduler")
 
-
+SLOP_TIME = 180
 
 class Reservation (Data):
     
@@ -111,7 +111,7 @@ class Reservation (Data):
             return False
         
         if job.queue == self.queue:
-            job_end = time.time() + 60 * float(job.walltime)
+            job_end = time.time() + 60 * float(job.walltime) + SLOP_TIME
             if not self.cycle:
                 res_end = self.start + self.duration
                 if job_end < res_end:
@@ -119,11 +119,11 @@ class Reservation (Data):
                 else:
                     return False
             else:
-                if 60 * float(job.walltime) > self.duration:
+                if 60 * float(job.walltime) + SLOP_TIME > self.duration:
                     return False
                 
                 relative_start = (time.time() - self.start) % self.cycle
-                relative_end = relative_start + 60 * float(job.walltime)
+                relative_end = relative_start + 60 * float(job.walltime) + SLOP_TIME
                 if relative_end < self.duration:
                     return True
                 else:
@@ -444,7 +444,7 @@ class BGSched (Component):
                     res1 = reservations[j]
                     res2 = reservations[i]
                 for p in res2.partitions.split(":"):
-                    if res1.overlaps(self.partitions[p], res2.start, res2.duration):
+                    if res1.overlaps(self.partitions[p], res2.start, res2.duration - 0.00001):
                         ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
 
         return ret
@@ -645,7 +645,7 @@ class BGSched (Component):
                     really_okay = True
                     for res in self.reservations.itervalues():
                         # if the proposed job overlaps an active reservation, don't run it
-                        if res.overlaps(partition, time.time(), 60 * float(job.walltime)):
+                        if res.overlaps(partition, time.time(), 60 * float(job.walltime) + SLOP_TIME):
                             really_okay = False
                             self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
                             break

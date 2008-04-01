@@ -109,7 +109,7 @@ class TestReservation (object):
     def test_job_within_reservation_cyclic (self):
         reservation = Reservation({'name':"mine", 'start':time.time()-3000, 'duration':3600, 'cycle':4000, 'partitions':"ANLR00", 'queue':"default"})
         # jobs ends inside the reservation
-        j = Job(8, "default")
+        j = Job(6, "default")
         assert reservation.job_within_reservation(j)
         # job ends in the "dead zone"
         j = Job(12, "default")
