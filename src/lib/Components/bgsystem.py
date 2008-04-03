@@ -537,48 +537,27 @@ class BGSystem (Component):
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
-        parent_data = {}
-        child_data = {}
+        ret = "<BG>\n"
+        ret += "<PartitionList>\n"
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
-            child_data[p] = sets.Set()
-            parent_data[p] = None
 
-            for other_name in self._managed_partitions:
-                if p.name == other_name:
-                    continue
-
-                other = self._partitions[other_name]
-                p_set = sets.Set(p.node_cards)
-                other_set = sets.Set(other.node_cards)
-
-                # if p is a subset of other, then p is a child
-                if p_set.intersection(other_set)==p_set:
-                    if parent_data[p] is not None:
-                        if parent_data[p].size > other.size:
-                            parent_data[p] = other
-                    else:
-                        parent_data[p] = other
-
-        for p in parent_data:
-            if parent_data[p]:
-                child_data[parent_data[p]].add(p)
-
-        def _generate_xml(partition):
-            ret = "<Partition name='%s' size='%s'>\n" % (partition.name, partition.size)
-            if child_data[partition]:
-                for p in child_data[partition]:
-                    ret += _generate_xml(p)
-            ret += "</Partition>\n"
-            
-            return ret
+            ret += "   <Partition name='%s'>\n" % p.name
+            for nc in p.node_cards:
+                ret += "      <NodeCard id='%s' />\n" % nc.id
+            ret += "   </Partition>\n"
         
-        ret = "<Rack name='R00'>\n"
-        for p in parent_data:
-            # for each root of the partition tree
-            if not parent_data[p]:
-                ret += _generate_xml(p)
-        ret += "</Rack>\n"
+        ret += "</PartitionList>\n"
+
+        ret += "<Dependencies>\n"
+
+        for p_name in self._managed_partitions:
+            p = self._partitions[p_name]
+            for dep in p._wiring_conflicts:
+                ret += "   <Wiring id1='%s' id2='%s' />\n" % (p.name, dep)
+        
+        ret += "</Dependencies>\n"
+        ret += "</BG>\n"
             
         return ret
     generate_xml = exposed(generate_xml)
