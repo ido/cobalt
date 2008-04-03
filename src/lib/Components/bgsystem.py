@@ -554,7 +554,8 @@ class BGSystem (Component):
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
             for dep in p._wiring_conflicts:
-                ret += "   <Wiring id1='%s' id2='%s' />\n" % (p.name, dep)
+                if dep in self._managed_partitions:
+                    ret += "   <Wiring id1='%s' id2='%s' />\n" % (p.name, dep)
         
         ret += "</Dependencies>\n"
         ret += "</BG>\n"
