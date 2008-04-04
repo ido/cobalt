@@ -20,6 +20,7 @@ import operator
 import random
 import time
 import thread
+import sets
 from datetime import datetime
 from ConfigParser import ConfigParser
 
@@ -43,6 +44,15 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+
+class NodeCard (object):
+    def __init__(self, name):
+        self.id = name
+        self.used_by = ''
+        
+    def __eq__(self, other):
+        return self.id == other.id
+        
 
 class Partition (Data):
     
@@ -78,40 +88,38 @@ class Partition (Data):
         self.functional = spec.pop("functional", False)
         self.queue = spec.pop("queue", "default")
         self.size = spec.pop("size", None)
-        self._parents = set()
-        self.parents = list()
-        self._children = set()
-        self.children = list()
-        self._busy = False
+        # these hold Partition objects
+        self._parents = sets.Set()
+        self._children = sets.Set()
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
+        self.node_cards = spec.get("node_cards", [])
+        # this holds partition names
+        self._wiring_conflicts = sets.Set()
+
+        self._update_node_cards()
+
+    def _update_node_cards(self):
+        if self.state == "busy":
+            for nc in self.node_cards:
+                nc.used_by = self.name
+    
+    def _get_parents (self):
+        return [parent.name for parent in self._parents]
+    
+    parents = property(_get_parents)
+    
+    def _get_children (self):
+        return [child.name for child in self._children]
+    
+    children = property(_get_children)
     
     def __str__ (self):
         return self.name
     
     def __repr__ (self):
         return "<%s name=%r>" % (self.__class__.__name__, self.name)
-    
-    def _get_state (self):
-        for partition in self._parents | self._children:
-            if partition._busy:
-                return "blocked"
-        if self._busy:
-            return "busy"
-        return "idle"
-    
-    def _set_state (self, value):
-        if self.state == "blocked":
-            raise ValueError("blocked")
-        if value == "idle":
-            self._busy = False
-        elif value == "busy":
-            self._busy = True
-        else:
-            raise ValueError(value)
-    
-    state = property(_get_state, _set_state)
-    
+
 
 class PartitionDict (DataDict):
     
@@ -125,7 +133,7 @@ class PartitionDict (DataDict):
 
 
 class ProcessGroup (Cobalt.Data.Data):
-    required = ['user', 'executable', 'args', 'location', 'size', 'cwd']
+    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
     fields = Cobalt.Data.Data.fields + [
         "id", "user", "size", "cwd", "executable", "env", "args", "location",
         "head_pid", "stdin", "stdout", "stderr", "exit_status", "state",
@@ -253,6 +261,8 @@ class Simulator (Component):
         self._partitions = PartitionDict()
         self._managed_partitions = set()
         self.process_groups = ProcessGroupDict()
+        self.node_card_cache = dict()
+        self._partitions_lock = thread.allocate_lock()
         self.config_file = kwargs.get("config_file", None)
         if self.config_file is not None:
             self.configure(self.config_file)
@@ -266,15 +276,38 @@ class Simulator (Component):
     partitions = property(_get_partitions)
     
     def __getstate__(self):
-        return {'managed_partitions':self._managed_partitions, 'version':1, 'config_file':self.config_file}
+        flags = {}
+        for part in self._partitions.values():
+            sched = None
+            func = None
+            queue = None
+            if hasattr(part, 'scheduled'):
+                sched = part.scheduled
+            if hasattr(part, 'functional'):
+                func = part.functional
+            if hasattr(part, 'queue'):
+                queue = part.queue
+            flags[part.name] =  (sched, func, queue)
+        return {'managed_partitions':self._managed_partitions, 'version':2, 'config_file':self.config_file, 'partition_flags': flags}
     
     def __setstate__(self, state):
         self._managed_partitions = state['managed_partitions']
         self.config_file = state['config_file']
         self._partitions = PartitionDict()
         self.process_groups = ProcessGroupDict()
+        self.node_card_cache = dict()
+        self._partitions_lock = thread.allocate_lock()
         if self.config_file is not None:
             self.configure(self.config_file)
+
+        if 'partition_flags' in state:
+            for pname, flags in state['partition_flags'].items():
+                if pname in self._partitions:
+                    self._partitions[pname].scheduled = flags[0]
+                    self._partitions[pname].functional = flags[1]
+                    self._partitions[pname].queue = flags[2]
+                else:
+                    logger.info("Partition %s is no longer defined" % pname)
 
         self.update_relatives()
         
@@ -291,37 +324,68 @@ class Simulator (Component):
         config_file -- xml configuration file
         """
         
+        def _get_node_card(name):
+            if not self.node_card_cache.has_key(name):
+                self.node_card_cache[name] = NodeCard(name)
+                
+            return self.node_card_cache[name]
+            
+            
         self.logger.info("configure()")
-        system_doc = ElementTree.parse(config_file)
+        try:
+            system_doc = ElementTree.parse(config_file)
+        except IOError:
+            self.logger.error("unable to open file: %r" % config_file)
+            self.logger.error("exiting...")
+            sys.exit(1)
+        except:
+            self.logger.error("problem loading data from file: %r" % config_file)
+            self.logger.error("exiting...")
+            sys.exit(1)
+            
         system_def = system_doc.getroot()
+        if system_def.tag != "BG":
+            self.logger.error("unexpected root element in %r: %r" % (config_file, system_def.tag))
+            self.logger.error("exiting...")
+            sys.exit(1)
         
+        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
+        NODES_PER_NODECARD = 32
+                
         # initialize a new partition dict with all partitions
+        #
         partitions = PartitionDict()
-        partitions.q_add([
-            dict(
+        
+        tmp_list = []
+
+        # this is going to hold partition objects from the bridge (not our own Partition)
+        wiring_cache = {}
+        bp_cache = {}
+        
+        for partition_def in system_def.getiterator("Partition"):
+            node_list = []
+            
+            for nc in partition_def.getiterator("NodeCard"): 
+                node_list.append(_get_node_card(nc.get("id")))
+
+            tmp_list.append( dict(
                 name = partition_def.get("name"),
                 queue = "default",
-                scheduled = True,
-                functional = True,
-                size = partition_def.get("size"),
-            )
-            for partition_def in system_def.getiterator("Partition")
-        ])
+                size = NODES_PER_NODECARD * len(node_list),
+                node_cards = node_list,
+                state = "idle",
+            ))
         
-        # parent/child relationships
-        for partition_def in system_def.getiterator("Partition"):
-            partition = partitions[partition_def.get("name")]
-            partition._children.update([
-                partitions[child_def.get("name")]
-                for child_def in partition_def.getiterator("Partition")
-                if child_def.get("name") != partition.name
-            ])
-            for child in partition._children:
-                child._parents.add(partition)
+        partitions.q_add(tmp_list)
         
+        # find the wiring deps
+        for dep in system_def.getiterator("Wiring"):
+            partitions[dep.get("id1")]._wiring_conflicts.add(dep.get("id2"))
+            
         # update object state
         self._partitions.clear()
         self._partitions.update(partitions)
+
     
     def add_partitions (self, specs):
         self.logger.info("add_partitions(%r)" % (specs))
@@ -367,6 +431,7 @@ class Simulator (Component):
         name -- name of the partition to reserve
         size -- size of the process group reserving the partition (optional)
         """
+        
         try:
             partition = self.partitions[name]
         except KeyError:
@@ -380,7 +445,11 @@ class Simulator (Component):
         if size is not None and size > partition.size:
             self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
             return False
+
+        self._partitions_lock.acquire()
         partition.state = "busy"
+        self._partitions_lock.release()
+        
         self.logger.info("reserve_partition(%r, %r)" % (name, size))
         return True
     reserve_partition = exposed(reserve_partition)
@@ -399,7 +468,11 @@ class Simulator (Component):
         if not partition.state == "busy":
             self.logger.info("release_partition(%r) [not busy]" % (name))
             return False
+                
+        self._partitions_lock.acquire()
         partition.state = "idle"
+        self._partitions_lock.release()
+
         self.logger.info("release_partition(%r)" % (name))
         return True
     release_partition = exposed(release_partition)
@@ -546,9 +619,62 @@ class Simulator (Component):
         
         process_group.exit_status = 0
     
+    
+    def update_partition_state(self):
+        # first, set all of the nodecards to not busy
+        for nc in self.node_card_cache.values():
+            nc.used_by = ''
+
+        self._partitions_lock.acquire()
+                    
+        for p in self._partitions.values():
+            p._update_node_cards()
+            
+        for p in self._partitions.values():
+            if p.state != "busy":
+                # since we don't have the bridge, a partition which isn't busy
+                # should be set to idle and then blocked states can be derived
+                p.state = "idle"
+                for nc in p.node_cards:
+                    if nc.used_by:
+                        p.state = "blocked (%s)" % nc.used_by
+                        break
+                for dep_name in p._wiring_conflicts:
+                    if self._partitions[dep_name].state == "busy":
+                        p.state = "blocked-wiring (%s)" % dep_name
+                        break
+        
+        self._partitions_lock.release()
+    update_partition_state = automatic(update_partition_state)
+
+    
     def update_relatives(self):
         """Call this method after changing the contents of self._managed_partitions"""
         for p_name in self._managed_partitions:
+            self._partitions[p_name]._parents = sets.Set()
+            self._partitions[p_name]._children = sets.Set()
+
+        for p_name in self._managed_partitions:
             p = self._partitions[p_name]
-            p.parents = [parent.name for parent in p._parents if parent.name in self._managed_partitions]
-            p.children = [child.name for child in p._children if child.name in self._managed_partitions]
+            
+            # toss the wiring dependencies in with the parents
+            for dep_name in p._wiring_conflicts:
+                if dep_name in self._managed_partitions:
+                    p._parents.add(self._partitions[dep_name])
+            
+            for other_name in self._managed_partitions:
+                if p.name == other_name:
+                    break
+
+                other = self._partitions[other_name]
+                p_set = sets.Set(p.node_cards)
+                other_set = sets.Set(other.node_cards)
+
+                # if p is a subset of other, then p is a child
+                if p_set.intersection(other_set)==p_set:
+                    p._parents.add(other)
+                    other._children.add(p)
+                # if p contains other, then p is a parent
+                elif p_set.union(other_set)==p_set:
+                    p._children.add(other)
+                    other._parents.add(p)
