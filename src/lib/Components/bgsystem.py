@@ -91,6 +91,7 @@ class Partition (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.node_cards = spec.get("node_cards", [])
+        self.switches = spec.get("switches", [])
         # this holds partition names
         self._wiring_conflicts = sets.Set()
 
@@ -423,6 +424,7 @@ class BGSystem (Component):
                 queue = "default",
                 size = NODES_PER_NODECARD * nc_count,
                 node_cards = node_list,
+                switches = [ s.id for s in partition_def.switches ],
                 state = _get_state(partition_def),
             ))
         
@@ -545,19 +547,12 @@ class BGSystem (Component):
             ret += "   <Partition name='%s'>\n" % p.name
             for nc in p.node_cards:
                 ret += "      <NodeCard id='%s' />\n" % nc.id
+            for s in p.switches:
+                ret += "      <Switch id='%s' />\n" % s
             ret += "   </Partition>\n"
         
         ret += "</PartitionList>\n"
 
-        ret += "<Dependencies>\n"
-
-        for p_name in self._managed_partitions:
-            p = self._partitions[p_name]
-            for dep in p._wiring_conflicts:
-                if dep in self._managed_partitions:
-                    ret += "   <Wiring id1='%s' id2='%s' />\n" % (p.name, dep)
-        
-        ret += "</Dependencies>\n"
         ret += "</BG>\n"
             
         return ret
