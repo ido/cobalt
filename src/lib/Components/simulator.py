@@ -94,6 +94,7 @@ class Partition (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.node_cards = spec.get("node_cards", [])
+        self.switches = spec.get("switches", [])
         # this holds partition names
         self._wiring_conflicts = sets.Set()
 
@@ -364,23 +365,47 @@ class Simulator (Component):
         
         for partition_def in system_def.getiterator("Partition"):
             node_list = []
+            switch_list = []
             
             for nc in partition_def.getiterator("NodeCard"): 
                 node_list.append(_get_node_card(nc.get("id")))
 
+            nc_count = len(node_list)
+            
+            if not wiring_cache.has_key(nc_count):
+                wiring_cache[nc_count] = []
+            wiring_cache[nc_count].append(partition_def.get("name"))
+
+            for s in partition_def.getiterator("Switch"):
+                switch_list.append(s.get("id"))
+
             tmp_list.append( dict(
                 name = partition_def.get("name"),
                 queue = "default",
-                size = NODES_PER_NODECARD * len(node_list),
+                size = NODES_PER_NODECARD * nc_count,
                 node_cards = node_list,
+                switches = switch_list,
                 state = "idle",
             ))
         
         partitions.q_add(tmp_list)
         
         # find the wiring deps
-        for dep in system_def.getiterator("Wiring"):
-            partitions[dep.get("id1")]._wiring_conflicts.add(dep.get("id2"))
+        for size in wiring_cache:
+            for p in wiring_cache[size]:
+                p = partitions[p]
+                s1 = sets.Set( p.switches )
+                for other in wiring_cache[size]:
+                    other = partitions[other]
+                    if (p.name == other.name):
+                        continue
+
+                    s2 = sets.Set( other.switches )
+                    
+                    if s1.intersection(s2):
+                        print "found a wiring dep between %s and %s" % (p.name, other.name)
+                        partitions[p.name]._wiring_conflicts.add(other.name)
+        
             
         # update object state
         self._partitions.clear()
@@ -449,6 +474,8 @@ class Simulator (Component):
         self._partitions_lock.acquire()
         partition.state = "busy"
         self._partitions_lock.release()
+        # explicitly call this, since the above "busy" is instantaneously available
+        self.update_partition_state()
         
         self.logger.info("reserve_partition(%r, %r)" % (name, size))
         return True
