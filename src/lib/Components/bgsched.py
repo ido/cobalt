@@ -627,8 +627,12 @@ class BGSched (Component):
 
         active_queues = []
         spruce_queues = []
-        res_queues = set(item.queue for item \
-                         in self.reservations.q_get([{'queue':'*'}]))
+        res_queues = set()
+        for item in self.reservations.q_get([{'queue':'*'}]):
+            if self.queues.has_key(item.queue):
+                if self.queues[item.queue].state == 'running':
+                    res_queues.add(item.queue)
+
         for queue in self.queues.itervalues():
             if queue.name not in res_queues and queue.state == 'running':
                 if queue.policy == "high-prio":
