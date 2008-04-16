@@ -116,6 +116,7 @@ class Simulator (BGBaseSystem):
         BGBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ProcessGroup
         self.config_file = kwargs.get("config_file", None)
+        self.failed_components = sets.Set()
         if self.config_file is not None:
             self.configure(self.config_file)
     
@@ -142,6 +143,7 @@ class Simulator (BGBaseSystem):
         self.process_groups.item_cls = ProcessGroup
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
+        self.failed_components = sets.Set()
         if self.config_file is not None:
             self.configure(self.config_file)
 
@@ -417,6 +419,37 @@ class Simulator (BGBaseSystem):
             print >> stderr, "FE_MPI (Info) : Exit status: 1"
             process_group.exit_status = 1
             return
+        
+        
+        hardware_failure = False
+        for nc in self.partitions[partition].node_cards:
+            if nc.id in self.failed_components:
+                hardware_failure = True
+                break
+        for switch in self.partitions[partition].switches:
+            if switch in self.failed_components:
+                hardware_failure = True
+                break
+
+        if hardware_failure:
+            excuses = ["incorrectly polarized packet accelerator", "the Internet is full", "side fumbling detected", "unilateral phase detractors offline", ]
+            print >> stderr, "BE_MPI (ERROR): Booting aborted - partition is in DEALLOCATING ('D') state"
+            print >> stderr, "BE_MPI (ERROR): Partition has not reached the READY ('I') state"
+            print >> stderr, "BE_MPI (Info) : Checking for block error text:"
+            print >> stderr, "BE_MPI (ERROR): block error text '%s.'" % random.choice(excuses)
+            print >> stderr, "BE_MPI (Info) : Starting cleanup sequence"
+            time.sleep(20)
+            self.release_partition(partition)
+            print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
+            print >> stderr, "FE_MPI (ERROR): Failure list:"
+            print >> stderr, "FE_MPI (ERROR): - 1.", partition, "couldn't boot."
+            print >> stderr, "FE_MPI (Info) : FE completed"
+            print >> stderr, "FE_MPI (Info) : Exit status: 1"
+            process_group.exit_status = 1
+            return
+
+
+        
         print >> stderr, "FE_MPI (Info) : process group with id", process_group.id
         print >> stderr, "FE_MPI (Info) : Waiting for process_group to terminate"
         
@@ -480,3 +513,34 @@ class Simulator (BGBaseSystem):
         
         self._partitions_lock.release()
     update_partition_state = automatic(update_partition_state)
+
+    def add_failed_components(self, component_names):
+        success = []
+        for name in component_names:
+            if self.node_card_cache.has_key(name):
+                self.failed_components.add(name)
+                success.append(name)
+            else:
+                for p in self._partitions.values():
+                    if name in p.switches:
+                        self.failed_components.add(name)
+                        success.append(name)
+                        break
+        return success
+    add_failed_component = exposed(add_failed_components)
+    
+    def del_failed_components(self, component_names):
+        success = []
+        for name in component_names:
+            try:
+                self.failed_components.remove(name)
+                success.append(name)
+            except KeyError:
+                pass
+            
+        return success
+    del_failed_components = exposed(del_failed_components)
+    
+    def list_failed_components(self, component_names):
+        return list(self.failed_components)
+    list_failed_components = exposed(list_failed_components)
