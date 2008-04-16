@@ -80,7 +80,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 #    j['location'] = "ANLR00"
     
-    arglist += ['-partition', j['location']]
+    arglist = ['-partition', j['location']] + arglist
     
     
     if "-np" in sys.argv:
