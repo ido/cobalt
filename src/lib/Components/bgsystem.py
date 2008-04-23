@@ -116,8 +116,9 @@ class ProcessGroup (bg_base_system.ProcessGroup):
             logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, stderr, e))
 
         cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
-               '-np', str(self.size), '-partition', partition,
-               '-mode', self.mode, '-cwd', self.cwd, '-exe', self.executable)
+              '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
+               '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
+               '-exe', self.executable)
         if self.args:
             cmd = cmd + ('-args', self.args)
         if envs:
