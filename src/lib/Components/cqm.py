@@ -246,7 +246,7 @@ class Job (Data):
             return
         self.timers['queue'].Stop()
         self.timers['current_queue'].Stop()
-        if self.reservation is not None:
+        if self.reservation:
             # acctlog
             logger.info('R;%s;%s;%s' % \
                         (self.jobid, self.queue, self.user))
