@@ -5,6 +5,7 @@ __revision__ = '$Revision$'
 __version__ = '$Version$'
 
 import sys, getopt, xmlrpclib
+import sets
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -119,13 +120,39 @@ if __name__ == '__main__':
 #        print "buildRackTopology sees : " + repr(parts)
 #
 #        partinfo = Cobalt.Util.buildRackTopology(parts)
+
+        try:
+            scheduler = ComponentProxy("scheduler", defer=False)
+        except ComponentLookupError:
+            print "Failed to connect to scheduler"
+            raise SystemExit, 1
+    
+        reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*"}])
+    
+        expanded_parts = {}
+        for res in reservations:
+            for res_part in res['partitions'].split(":"):
+                for p in parts:
+                    if p['name'] == res_part:
+                        if expanded_parts.has_key(res['queue']):
+                            expanded_parts[res['queue']].add(p['children'])
+                        else:
+                            expanded_parts[res['queue']] = sets.Set( p['children'] )
+                        expanded_parts[res['queue']].add(p['name'])
+            
+        
+        for res in reservations:
+            for p in parts:
+                if p['name'] in expanded_parts[res['queue']]:
+                    p['queue'] += ":%s" % res['queue']
+    
         def my_cmp(left, right):
             val = -cmp(int(left['size']), int(right['size']))
             if val == 0:
                 return cmp(left['name'], right['name'])
             else:
                 return val
-    
+        
         parts.sort(my_cmp)
     
         offline = [part['name'] for part in parts if not part['functional']]
