@@ -19,7 +19,7 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--header] [--schedinfo] <jobid> <jobid>\n" + \
+__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--sort <fields>] [--header <fields>] [--schedinfo] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>\n" + \
               "       cqstat [--version]"
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
                'q':'q', 'schedinfo':'schedinfo'}
-    doptions = {'header':'header'}
+    doptions = {'header':'header', 'sort':'sort'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
 
@@ -258,7 +258,30 @@ if __name__ == '__main__':
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]
                   for j in response]
 
-    output.sort()
+    field = opts['sort'] or "JobID"
+    fields = [f.lower() for f in field.split(":")]
+    idxes = []
+    for f in fields:
+        try:
+            idx = [str(h).lower() for h in header].index(f)
+            idxes.append(idx)
+        except ValueError:
+            pass
+    if not idxes:
+        idxes.append(0)
+
+    def _my_cmp(left, right):
+        for idx in idxes:
+            val = cmp(left[idx], right[idx])
+            if val == 0:
+                continue
+            else:
+                return val
+    
+        return 0
+    
+    output.sort(_my_cmp)
+    
     if opts['long']:
         Cobalt.Util.print_vertical([tuple(x) for x in [header] + output])
     else:
