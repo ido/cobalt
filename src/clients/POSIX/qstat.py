@@ -20,7 +20,7 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-__helpmsg__ = "Usage: qstat [-d] [-f] [-l] [--header] [--schedinfo] <jobid> <jobid>\n" + \
+__helpmsg__ = "Usage: qstat [-d] [-f] [-l] [--header] [--schedinfo] [<jobid|queue> ...]\n" + \
               "       qstat [-d] -Q <queue> <queue>\n" + \
               "       qstat [--version]"
 
@@ -88,6 +88,13 @@ if __name__ == '__main__':
     if opts['header']:
         custom_header = opts['header'].split(':')
 
+    cqm = ComponentProxy("queue-manager", defer=False)
+    try:
+        queues = cqm.get_queues([{'name':"*", 'state':"*"}])
+    except:
+        print >> sys.stderr, "Failed to get queue list from queue manager"
+        sys.exit(1)
+
     level = 30
     if opts['debug']:
         level = 10
@@ -98,10 +105,12 @@ if __name__ == '__main__':
         
     if opts['schedinfo']:
         print "The most recent scheduling attempt reports:\n"
-        cqm = ComponentProxy("queue-manager", defer=False)
-        sched = ComponentProxy("scheduler", defer=False)
+        try:
+            sched = ComponentProxy("scheduler", defer=False)
+        except:
+            print >> sys.stderr, "Failed to contact scheduler"
+            sys.exit(1)
         jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'state':"*"}])
-        queues = cqm.get_queues([{'name':"*", 'state':"*"}])
         sched_info = sched.get_sched_info()
         
         for job in jobs:
@@ -181,17 +190,19 @@ if __name__ == '__main__':
             query = []
             for n in names:
                 if n=='*':
-                    query.append({'tag':'job', 'jobid':n})
+                    query.append({'tag':'job', 'jobid':n, 'queue':'*'})
+                elif [q['name'] for q in queues if q['name'] == n]:
+                    query.append({'tag':'job', 'queue':n, 'jobid':'*'})
                 else:
-                    query.append({'tag':'job', 'jobid':int(n)})
+                    query.append({'tag':'job', 'jobid':int(n), 'queue':'*'})
         except ValueError:
-            print "jobids must be integers"
+            print "%s is not a valid jobid or queue name" % n
             sys.exit(1)
         for q in query:
             for h in long_header:
                 if h == 'JobName':
                     q.update({'outputpath':'*'})
-                elif h != 'JobID':
+                elif h not in ['JobID', 'Queue']:
                     q.update({h.lower():'*'})
                 if h in query_dependencies.keys():
                     for x in query_dependencies[h]:
