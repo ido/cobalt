@@ -276,8 +276,12 @@ class AccountingLog:
     def LogMessage(self, message):
         self.RotateLog()
         timenow = time.strftime("%Y-%m-%d %T", time.localtime())
-        self.logfile.write("%s %s\n" % (timenow, message))
-        self.logfile.flush()
+        
+        try:
+            self.logfile.write("%s %s\n" % (timenow, message))
+            self.logfile.flush()
+        except IOError, e:
+            logger.error("AccountingLog failure : %s" % e)
 
 class FailureMode(object):
     '''FailureModes are used to report (and supress) errors appropriately
@@ -392,14 +396,18 @@ class PBSLog (object):
             for key, value in messages.iteritems()
         ])
         
-        self.logfile.write("%s;%s;%s;%s\n" % (
-            datetime.strftime(format),
-            record_type,
-            id_string or self.id_string,
-            message_text,
-        ))
-        
-        self.logfile.flush()
+        try:
+            self.logfile.write("%s;%s;%s;%s\n" % (
+                datetime.strftime(format),
+                record_type,
+                id_string or self.id_string,
+                message_text,
+            ))
+            
+            self.logfile.flush()
+        except IOError, e:
+            logger.error("PBSLog failure : %s" % e)
+
 
 
 def processfilter(cmdstr, jobdict):
