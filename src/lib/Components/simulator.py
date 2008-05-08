@@ -457,6 +457,8 @@ class Simulator (BGBaseSystem):
         
         start_time = time.time()
         run_time = random.randint(60, 180)
+        my_exit_status = 0
+         
         print "running for about %f seconds" % run_time
         while time.time() < (start_time + run_time):
             if "SIGKILL" in process_group.signals:
@@ -464,6 +466,7 @@ class Simulator (BGBaseSystem):
                 return
             elif "SIGTERM" in process_group.signals:
                 print >> stderr, "FE_MPI (Info) : ProcessGroup got signal SIGTERM"
+                my_exit_status = 1
                 break
             else:
                 time.sleep(1) # tumblers better than pumpers
@@ -482,9 +485,9 @@ class Simulator (BGBaseSystem):
         print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
         print >> stderr, "BE_MPI (Info) : BE completed"
         print >> stderr, "FE_MPI (Info) : FE completed"
-        print >> stderr, "FE_MPI (Info) : Exit status: 0"
+        print >> stderr, "FE_MPI (Info) : Exit status:", my_exit_status
         
-        process_group.exit_status = 0
+        process_group.exit_status = my_exit_status
     
     
     def update_partition_state(self):

@@ -99,7 +99,7 @@ if __name__ == '__main__':
         print "The most recent scheduling attempt reports:\n"
         cqm = ComponentProxy("queue-manager", defer=False)
         sched = ComponentProxy("scheduler", defer=False)
-        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'state':"*"}])
+        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
         queues = cqm.get_queues([{'name':"*", 'state':"*"}])
         sched_info = sched.get_sched_info()
         
@@ -110,8 +110,12 @@ if __name__ == '__main__':
                 
             print "job", job['jobid'], ":"
             print "    ",
-            if job['state'] == 'running':
+            if job['system_state'] == 'running':
                 print "the job is running"
+            elif job['system_state'] == 'hold' or job['user_state'] == 'hold':
+                print "the job has a hold on it"
+            elif job['dependencies']:
+                print "the job has dependencies:", job['dependencies']
             elif [q['state'] for q in queues if q['name']==job['queue']][0] != 'running':
                 print "the queue '%s' isn't running" % job['queue']
             elif sched_info.has_key(str(job['jobid'])):
@@ -147,7 +151,7 @@ if __name__ == '__main__':
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Queue', 'StartTime', 'Index', 'SubmitTime', 'Path',
                       'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project']
+                      'Project', 'Dependencies']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 

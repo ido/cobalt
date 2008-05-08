@@ -20,13 +20,14 @@ from Cobalt.Exceptions import ComponentLookupError
 helpmsg = """
 Usage: qalter [-d] [-v] -A <project name> -t <time in minutes> 
               -e <error file path> -o <output file path> 
+              --dependencies <jobid1>:<jobid2>
               -n <number of nodes> -h --proccount <processor count> 
               -M <email address> --mode <mode co/vn> <jobid1> <jobid2> """
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
-                'proccount':'proccount', 
+                'proccount':'proccount', 'dependencies':'dependencies', 
                 'M':'notify', 'e':'error', 'o':'output'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
@@ -138,6 +139,14 @@ if __name__ == '__main__':
         updates.update({'outputpath': opts['output']})
     if opts['held']:
         updates.update({'state':'user hold'})
+    if opts['dependencies']:
+        deps = opts['dependencies']
+        if deps and deps.lower() != "none":
+            deps = deps.split(":")
+        else:
+            deps = []
+
+        updates.update({'all_dependencies': deps})
 
     try:
         filters = CP.get('cqm', 'filters').split(':')

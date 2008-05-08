@@ -26,6 +26,7 @@ from Cobalt.Exceptions import QueueError, ComponentLookupError
 
 helpmsg = """
 Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
+             --dependencies <jobid1>:<jobid2>
              -e envvar1=value1:envvar2=value2 -k <kernel profile>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -E <error file path> -o <output file path> -i <input file path>
@@ -38,7 +39,7 @@ if __name__ == '__main__':
                 'c':'proccount', 'C':'cwd', 'e':'env', 'k':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
-                'i':'inputfile'}
+                'i':'inputfile', 'dependencies':'dependencies'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -190,7 +191,7 @@ if __name__ == '__main__':
             logger.error("directory %s does not exist" % jobspec.get('outputpath'))
             sys.exit(1)
     if opts['held']:
-        jobspec.update({'state':'user hold'})
+        jobspec.update({'user_state':'hold'})
     if opts['env']:
         if sys.argv.count('-e') > 1:
             logger.error("Use of multiple -e options is not supported. Specify multiple environment variables with -e FOO=1:BAR=2")
@@ -213,6 +214,8 @@ if __name__ == '__main__':
             sys.exit(1)
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
+    if opts['dependencies']:
+        jobspec['all_dependencies'] = opts['dependencies']
     try:
         filters = CP.get('cqm', 'filters').split(':')
     except ConfigParser.NoOptionError:

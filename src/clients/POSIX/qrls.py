@@ -47,14 +47,14 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             raise SystemExit, 1
         
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'state':'user hold'} for jobid in args]
-    check_state_spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'state':'*'} for jobid in args]
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'hold'} for jobid in args]
+    check_state_spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'*'} for jobid in args]
     
     updates = {}
-    updates['state'] = "queued"
+    updates['user_state'] = "ready"
 
     try:
-        check_state = [j for j in cqm.get_jobs(check_state_spec) if j.get('state') != 'user hold']
+        check_state = [j for j in cqm.get_jobs(check_state_spec) if j.get('user_state') != 'hold']
         response = cqm.set_jobs(spec, updates)
     except xmlrpclib.Fault, flt:
         response = []

@@ -24,6 +24,7 @@ from Cobalt.Exceptions import QueueError, ComponentLookupError
 
 helpmsg = """
 Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
+             --dependencies <jobid1>:<jobid2>
              --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -e <error file path> -o <output file path> -i <input file path>
@@ -37,7 +38,7 @@ if __name__ == '__main__':
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
-                'i':'inputfile'}
+                'i':'inputfile', 'dependencies':'dependencies'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -189,7 +190,7 @@ if __name__ == '__main__':
             logger.error("directory %s does not exist" % jobspec.get('outputpath'))
             sys.exit(1)
     if opts['held']:
-        jobspec.update({'state':'user hold'})
+        jobspec.update({'user_state':'hold'})
     if opts['env']:
         jobspec['envs'] = {}
         key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]
@@ -209,6 +210,8 @@ if __name__ == '__main__':
             sys.exit(1)
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
+    if opts['dependencies']:
+        jobspec['all_dependencies'] = opts['dependencies']
     try:
         filters = CP.get('cqm', 'filters').split(':')
     except ConfigParser.NoOptionError:

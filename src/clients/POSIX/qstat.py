@@ -110,7 +110,7 @@ if __name__ == '__main__':
         except:
             print >> sys.stderr, "Failed to contact scheduler"
             sys.exit(1)
-        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'state':"*"}])
+        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
         sched_info = sched.get_sched_info()
         
         for job in jobs:
@@ -120,8 +120,12 @@ if __name__ == '__main__':
                 
             print "job", job['jobid'], ":"
             print "    ",
-            if job['state'] == 'running':
+            if job['system_state'] == 'running':
                 print "the job is running"
+            elif job['system_state'] == 'hold' or job['user_state'] == 'hold':
+                print "the job has a hold on it"
+            elif job['dependencies']:
+                print "the job has dependencies:", job['dependencies']
             elif [q['state'] for q in queues if q['name']==job['queue']][0] != 'running':
                 print "the queue '%s' isn't running" % job['queue']
             elif sched_info.has_key(str(job['jobid'])):
@@ -157,7 +161,7 @@ if __name__ == '__main__':
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Queue', 'StartTime', 'Index', 'SubmitTime', 'Path',
                       'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project']
+                      'Project', 'Dependencies']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 

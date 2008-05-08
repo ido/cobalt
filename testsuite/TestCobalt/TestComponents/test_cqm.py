@@ -91,16 +91,16 @@ class TestQueueManager (TestComponent):
     def test_set_queues(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])
          
-        self.cqm.set_queues([{'tag':"queue", 'name':"default"}], {'state':"bar"})
+        self.cqm.set_queues([{'tag':"queue", 'name':"default"}], {'system_state':"bar"})
         results = self.cqm.get_queues([{'tag':"queue", 'name':"default"}])
-        assert results[0].state == 'bar'
+        assert results[0].system_state == 'bar'
 
         self.cqm.add_queues([{'tag':"queue", 'name':"foo"}])
         self.cqm.add_queues([{'tag':"queue", 'name':"bar"}])
-        self.cqm.set_queues([{'tag':"queue", 'name':"*"}], {'state':"bar"})
+        self.cqm.set_queues([{'tag':"queue", 'name':"*"}], {'system_state':"bar"})
         results = self.cqm.get_queues([{'tag':"queue", 'name':"*"}])
     
-        assert results[0].state == results[1].state == results[2].state == 'bar'
+        assert results[0].system_state == results[1].system_state == results[2].system_state == 'bar'
          
     def test_add_jobs(self):
         self.cqm.add_queues([{'tag':"queue", 'name':"default"}])

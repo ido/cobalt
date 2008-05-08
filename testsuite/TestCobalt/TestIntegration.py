@@ -74,7 +74,7 @@ class TestIntegration (object):
         self.qm.do_tasks()
         self.qm.do_tasks()
         self.qm.do_tasks()
-        r = cqm.get_jobs([{'jobid':'*', 'state':'running'}])
+        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
         if not r:
             assert not "the job didn't start"
     
@@ -82,7 +82,7 @@ class TestIntegration (object):
         
         my_do_tasks()
     
-        r = cqm.get_jobs([{'jobid':'*', 'state':'running'}])
+        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
         if len(r) != 1:
             assert not "the job has stopped running prematurely"
 
@@ -96,7 +96,7 @@ class TestIntegration (object):
             my_do_tasks()
             time.sleep(11)
         
-        r = cqm.get_jobs([{'jobid':'*', 'state':'*'}])
+        r = cqm.get_jobs([{'jobid':'*', 'system_state':'*'}])
         if r:
             assert not "the job seems to have run overtime"
 
@@ -113,7 +113,7 @@ class TestIntegration (object):
         self.qm.do_tasks()
         self.qm.do_tasks()
         self.qm.do_tasks()
-        r = cqm.get_jobs([{'jobid':'*', 'state':'running'}])
+        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
         if not r:
             assert not "the job didn't start"
         
@@ -121,7 +121,7 @@ class TestIntegration (object):
         
         my_do_tasks()
     
-        r = cqm.get_jobs([{'jobid':'*', 'state':'running'}])
+        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
         if len(r) != 1:
             assert not "the job has stopped running prematurely"
 
@@ -134,6 +134,6 @@ class TestIntegration (object):
             my_do_tasks()
             time.sleep(11)
         
-        r = cqm.get_jobs([{'jobid':'*', 'state':'*'}])
+        r = cqm.get_jobs([{'jobid':'*', 'system_state':'*'}])
         if r:
             assert not "the job didn't die when asked to"

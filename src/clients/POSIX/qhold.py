@@ -47,14 +47,15 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             raise SystemExit, 1
         
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'state':'queued'} for jobid in args]
-    check_state_spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'state':'*'} for jobid in args]
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'ready', 'system_state':"ready"} for jobid in args]
+    spec += [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'ready', 'system_state':"hold"} for jobid in args]
+    check_state_spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'*', 'system_state':"*"} for jobid in args]
     
     updates = {}
-    updates['state'] = "user hold"
+    updates['user_state'] = "hold"
 
     try:
-        check_state = [j for j in cqm.get_jobs(check_state_spec) if j.get('state') != 'queued']
+        check_state = [j for j in cqm.get_jobs(check_state_spec) if j.get('user_state') != 'ready']
         response = cqm.set_jobs(spec, updates)
     except xmlrpclib.Fault, flt:
         response = []
@@ -69,10 +70,8 @@ if __name__ == '__main__':
         if check_state:
             print "   Failed to place user hold on jobs: "
             for job in check_state:
-                if job.get('state') == 'user hold':
+                if job.get('user_state') == 'hold':
                     print "      job %d already in state 'user hold'" % job.get('jobid')
-                else:
-                    print "      job %d cannot be moved from state '%s'" % (job.get('jobid'), job.get('state'))
             print
         if response:
             print "   Placed user hold on jobs: "

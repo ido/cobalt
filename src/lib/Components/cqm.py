@@ -10,6 +10,7 @@ import sys
 import time
 import xmlrpclib
 import ConfigParser
+import sets
 
 import Cobalt
 import Cobalt.Util
@@ -56,7 +57,7 @@ class Job (Data):
         "procs", "nodes", "mode", "cwd", "command", "args", "outputdir",
         "project", "lienID", "exit_status", "stagein", "stageout",
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile",
-        "kerneloptions",
+        "kerneloptions", "system_state", "user_state", "dependencies",
     ]
 
     def __init__(self, spec):
@@ -71,7 +72,11 @@ class Job (Data):
 
         self.jobid = spec.get("jobid")
         self.jobname = spec.get("jobname", "N/A")
-        self.state = spec.get("state", "queued")
+        
+        self.system_state = spec.get("system_state", "ready")
+        self.user_state = spec.get("user_state", "ready")
+        self.job_step = None
+        
         self.attribute = spec.get("attribute", "compute")
         self.location = spec.get("location", "N/A")
         self.starttime = spec.get("starttime", "-1")
@@ -103,6 +108,13 @@ class Job (Data):
         self.kerneloptions = spec.get("kerneloptions")
         self.tag = spec.get("tag", "job")
         
+        self.all_dependencies = spec.get("all_dependencies")
+        if self.all_dependencies:
+            self.all_dependencies = self.all_dependencies.split(":")
+        else:
+            self.all_dependencies = []
+        self.satisfied_dependencies = []
+
         self.timers['queue'].Start()
         self.timers['current_queue'].Start()
         self.staged = 0
@@ -117,6 +129,34 @@ class Job (Data):
             'Q;%s;%s;%s' % (self.jobid, self.user, self.queue))
         self.acctlog.LogMessage(
             'Q;%s;%s;%s' % (self.jobid, self.user, self.queue))
+    
+    def _get_job_state(self):
+        if self.all_dependencies:
+            if not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies)):
+                return "dependency hold"
+        
+        if self.system_state == "ready":
+            if self.user_state == "ready":
+                return "queued"
+            else:
+                return "user " + self.user_state
+        elif self.system_state == "running":
+            return "running - %s" % self.job_step
+        elif self.system_state == "hold":
+            return "admin hold"
+    state = property(_get_job_state)
+    
+    def _get_dependencies(self):
+        ret = ""
+        for dep in self.all_dependencies:
+            ret += dep
+            if dep in self.satisfied_dependencies:
+                ret += "*"
+            ret += ", "
+        
+        ret = ret[:-2]    
+        return ret
+    dependencies = property(_get_dependencies)
     
     def __setattr__ (self, name, value):
         if name == "state":
@@ -208,7 +248,7 @@ class Job (Data):
         '''Finish up accounting for job'''
         used_time = int(self.timers['user'].Check()) * len(self.location.split(':'))
                                                                 
-        self.state = "done"
+        self.job_step = "done"
         self.SetPassive()
         #AddEvent("queue-manager", "job-completed", self.jobid)
         # acctlog
@@ -237,11 +277,11 @@ class Job (Data):
         if len(self.steps) > 1:
             self.steps = self.steps[1:]
         else:
-            self.state = "done"
+            self.job_state = "done"
             
     def Run(self, nodelist):
         '''Run a job'''
-        if self.state not in ['ready', 'queued', 'stage-pending', 'prologue']:
+        if self.system_state == "running":
             logger.info("Got multiple run commands for job %s" % self.jobid)
             return
         self.timers['queue'].Stop()
@@ -263,6 +303,8 @@ class Job (Data):
                 self.nodes, self.procs, self.mode,
                 self.walltime))
         self.location = ":".join(nodelist)
+        self.system_state = "running"
+        self.job_step = "starting"
         self.starttime = str(time.time())
         self.SetActive()
         if self.project:
@@ -412,30 +454,16 @@ class Job (Data):
         logger.info(killmsg % (self.jobid))
         if self.state in ['epilogue', 'cleanup']:
             logger.info("Not killing job %s during recovery" % (self.jobid))
-        elif self.state in ['setup', 'prologue', 'stage-pending', 'stage-error', 'pm-error']:
-            # then perform step manipulation
-            if self.state in ['setup', 'prologue']:
-                self.steps.remove('RunUserJob')
-            # then activate if needed
-            if self.state in ['stage-pending']:
-                self.SetActive()
-            else:
-                self.SetPassive()
-            if self.state in ['stage-error', 'pm-error']:
-                self.state = 'done'
-        elif self.state == 'running':
+        elif self.system_state == 'running':
             if not self.pgid.has_key('user'):
                 logger.error("Job %s has no pgroup associated with it" % self.jobid)
             else:
                 self.killed = self.KillPGID(self.pgid['user'])
-        elif self.state == 'hold':  #job in 'hold' and running
+        elif self.system_state == 'hold':  #job in 'hold' and running
             self.killed = self.KillPGID(self.pgid['user'])
         else:
             logger.error("Got qdel for job %s in unexpected state %s" % (self.jobid, self.state))
  
-        # acctlog
-        logger.info('D;%s;%s' % (self.jobid, self.user))
-        self.acctlog.LogMessage('D;%s;%s' % (self.jobid, self.user))
 
     def AdminStart(self, cmd):
         '''Run an administrative job step'''
@@ -474,6 +502,8 @@ class Job (Data):
     def KillPGID(self, pgid):
         '''Kill a process group'''
         
+        self.job_step = "killing"
+        
         if self.mode == 'script':
             try:
                 pgroup = ComponentProxy("script-manager").signal_jobs([{'id':pgid}], "SIGTERM")
@@ -491,7 +521,7 @@ class Job (Data):
 
     def over_time(self):
         '''Check if a job has run over its time'''
-        if self.state == 'running':
+        if self.system_state == 'running':
             runtime = self.timers['user'].Check()/60.0
             if float(self.walltime) < runtime:
                 return 1
@@ -654,7 +684,6 @@ class BGJob(Job):
         self.envs = spec.get("envs")
         self.exit_status = spec.get("exit_status")
         
-        
         if self.notify or self.adminemail:
             self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
         else:
@@ -721,7 +750,8 @@ class BGJob(Job):
 
     def RunBGUserJob(self):
         '''Run a Blue Gene Job'''
-        self.state = 'running'
+        self.system_state = 'running'
+        self.job_step = "executing"
         self.timers['user'].Start()
         self.LogStart()
         if not self.outputpath:
@@ -927,7 +957,7 @@ class Restriction (Data):
     def maxuserjobs(self, job, queuestate=None):
         '''limits how many jobs each user can run by checking queue state
         with potential job added'''
-        userjobs = [j for j in queuestate if j.user == job.user and j.state == 'running' and j.queue == job['queue']]
+        userjobs = [j for j in queuestate if j.user == job.user and j.system_state == 'running' and j.queue == job['queue']]
         if len(userjobs) >= int(self.value):
             return (False, "Maxuserjobs limit reached")
         else:
@@ -1165,11 +1195,16 @@ class QueueManager(Component):
             job.pbslog.log("A",
                 # No attributes.
             )
-        finished_jobs = [j for j in [j for queue in self.Queues.itervalues() for j in queue.jobs] if j.state == 'done']
+        finished_jobs = [j for j in [j for queue in self.Queues.itervalues() for j in queue.jobs] if j.job_step == 'done']
         for job in finished_jobs:
             job.LogFinish()
         for (j, queue) in [(j, queue) for queue in self.Queues.itervalues() for j in queue.jobs]:
-            if j.state == 'done':
+            if j.job_step == 'done':
+                # check to see if somebody depended on this
+                if j.exit_status == 0:
+                    for waiting_job in self.Queues.get_jobs([{'state':"dependency hold"}]):
+                        if str(j.jobid) in waiting_job.all_dependencies:
+                            waiting_job.satisfied_dependencies.append(str(j.jobid))
                 queue.jobs.q_del([{'jobid':j.jobid}])
         
         for (name, q) in self.Queues.items():
@@ -1206,8 +1241,10 @@ class QueueManager(Component):
         for spec in data:
             for job, q in [(job, queue) for queue in self.Queues.itervalues() for job in queue.jobs if job.match(spec)]:
                 ret.append(job)
-                if job.state in ['queued', 'ready', 'user hold'] or (job.state == 'hold' and not job.pgid):
+                if job.system_state != "running":
                     #q.remove(job)
+                    q.jobs.q_del([spec])
+                elif job.system_state == "running" and job.job_step == "starting":
                     q.jobs.q_del([spec])
                 elif force:
                     # Need acct log message for forced delete, 
@@ -1225,6 +1262,9 @@ class QueueManager(Component):
                 job.pbslog.log("D",
                     requester = user or job.user, # who deleted the job
                 )
+                logger.info('D;%s;%s' % (job.jobid, job.user))
+                job.acctlog.LogMessage('D;%s;%s' % (job.jobid, job.user))
+
         return ret
     del_jobs = exposed(query(del_jobs))
 
@@ -1349,7 +1389,7 @@ class QueueManager(Component):
         for job in self.Queues.get_jobs(specs):
             if job.queue==new_q_name:
                 raise QueueError, "job %d already in queue '%s'" % (job.jobid, new_q_name)
-            if job.state not in ["queued", "hold", "user hold"]:
+            if job.system_state != "running":
                 raise QueueError, "jobs must be in state 'queued', 'hold', or 'user hold' to move.  job %d is in state '%s'." % (job.jobid, job.state)   
         
         results = []
