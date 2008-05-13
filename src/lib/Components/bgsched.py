@@ -294,7 +294,7 @@ class JobDict(ForeignDataDict):
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
-        "name", "state", "policy", "priority", "maxrunning", 
+        "name", "state", "policy", "priority"
     ]
 
     def __init__(self, spec):
@@ -304,10 +304,8 @@ class Queue(ForeignData):
         self.state = spec.pop("state", None)
         self.policy = spec.pop("policy", None)
         self.priority = spec.pop("priority", 0)
-        try:
-            self.maxrunning = int(spec.get('maxrunning'))
-        except:
-            self.maxrunning = sys.maxint
+        
+        
 
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
@@ -324,7 +322,7 @@ class QueueDict(ForeignDataDict):
     key = 'name'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (queue)")
     __function__ = ComponentProxy("queue-manager").get_queues
-    __fields__ = ['name', 'state', 'policy', 'priority', 'maxrunning']
+    __fields__ = ['name', 'state', 'policy', 'priority']
 
 #    def Sync(self):
 #        qp = [(q.name, q.policy) for q in self.itervalues()]
@@ -543,27 +541,6 @@ class BGSched (Component):
             self.sync_state.Fail()
             return
         self.sync_state.Pass()
-
-        # enforce the maxrunning queue attribute (HACK ALERT)
-        q_enough = list()
-        for queue in self.queues.values():
-            if queue.maxrunning == None:
-                continue
-            unum = dict()
-            q_run_jobs = [job for job in self.jobs.values()
-                          if job.queue == queue.name and
-                          (job.state == 'running' or job.jobid in self.started_jobs)]
-            for job in q_run_jobs:
-                if job.user not in unum:
-                    unum[job.user] = 1
-                else:
-                    unum[job.user] = unum[job.user] + 1
-            for user in unum:
-                if unum[user] >= int(queue.maxrunning):
-                    q_enough.append((user, queue.name))
-        for job in self.jobs.values():
-            if (job.user, job.queue) in q_enough:
-                job.state = 'hold'
         
         # clean up the assigned_partitions cached data, and the started_jobs cached data
         now = time.time()

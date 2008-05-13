@@ -115,6 +115,8 @@ class Job (Data):
             self.all_dependencies = []
         self.satisfied_dependencies = []
 
+        self.max_running = False
+
         self.timers['queue'].Start()
         self.timers['current_queue'].Start()
         self.staged = 0
@@ -134,6 +136,9 @@ class Job (Data):
         if self.all_dependencies:
             if not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies)):
                 return "dependency hold"
+        
+        if self.max_running:
+            return "MaxRunning hold"
         
         if self.system_state == "ready":
             if self.user_state == "ready":
@@ -1080,6 +1085,25 @@ class Queue (Data):
         else:
             return (True, probs)
 
+    def update_max_running(self):
+        '''In order to keep the max_running property of jobs up to date, this function needs
+        to be called when a job starts running, or a new job appears in a queue.'''
+        
+        if not self.restrictions.has_key("maxrunning"):
+            return
+        unum = dict()
+        for job in self.jobs.q_get([{'system_state':"running"}]):
+            if job.user not in unum:
+                unum[job.user] = 1
+            else:
+                unum[job.user] = unum[job.user] + 1
+
+        for job in self.jobs:
+            job.max_running = False
+            if unum.get(job.user, 0) >= int(self.restrictions["maxrunning"].value):
+                if job.system_state != "running":
+                    job.max_running = True
+
 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -1109,6 +1133,7 @@ class QueueDict(DataDict):
         # we know all of the queues exist, so add the jobs to the appropriate JobList
         for spec in specs:
             results += self[spec['queue']].jobs.q_add([spec], callback, cargs)
+            self[spec['queue']].update_max_running()
             
         return results
     
@@ -1206,7 +1231,11 @@ class QueueManager(Component):
                         if str(j.jobid) in waiting_job.all_dependencies:
                             waiting_job.satisfied_dependencies.append(str(j.jobid))
                 queue.jobs.q_del([{'jobid':j.jobid}])
-        
+
+        # enforce the maxrunning queue attribute (HACK ALERT)
+        for queue in self.Queues.itervalues():
+            queue.update_max_running()
+                            
         for (name, q) in self.Queues.items():
             if q.state == 'dead' and q.name.startswith('R.') and not q.jobs:
                 del self.Queues[name]
@@ -1368,6 +1397,7 @@ class QueueManager(Component):
     def run_jobs(self, specs, nodelist):
         def _run_jobs(job, nodes):
             job.Run(nodes)
+            self.Queues[job.queue].update_max_running()
         return self.Queues.get_jobs(specs, _run_jobs, nodelist)
     run_jobs = exposed(query(run_jobs))
 
@@ -1389,8 +1419,8 @@ class QueueManager(Component):
         for job in self.Queues.get_jobs(specs):
             if job.queue==new_q_name:
                 raise QueueError, "job %d already in queue '%s'" % (job.jobid, new_q_name)
-            if job.system_state != "running":
-                raise QueueError, "jobs must be in state 'queued', 'hold', or 'user hold' to move.  job %d is in state '%s'." % (job.jobid, job.state)   
+            if job.system_state == "running":
+                raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
         
         results = []
         for q in self.Queues.itervalues():
@@ -1410,6 +1440,7 @@ class QueueManager(Component):
                 q.jobs.remove(job)
                 job.queue = new_q.name
                 results += new_q.jobs.q_add([job.to_rx()])
+                new_q.update_max_running()
         return results
     move_jobs = exposed(query(move_jobs))
                     
