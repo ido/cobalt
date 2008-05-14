@@ -272,11 +272,6 @@ class Job (Data):
             args = " ".join(self.args),
         )
 
-    def fail_job(self, state):
-        '''Signal complete job failure, resulting in specified state'''
-        self.state = None
-        self.steps = []
-
     def SetActive(self):
         '''set job info active mode'''
         self.active = True
@@ -285,12 +280,6 @@ class Job (Data):
         '''set job into passive mode'''
         self.active = False
         
-    def HasPG(self, pgid):
-        '''Check if a job has a pgroup'''
-        if pgid in self.pgid.values():
-            return 1
-        return 0
-
     def Finish(self):
         '''Finish up accounting for job, also adds postscript ability'''
         used_time = int(self.timers['user'].Check()) * len(self.location.split(':'))
@@ -403,17 +392,6 @@ class Job (Data):
                                     (self.jobid, self.user,
                                      self.queue, ":".join(nodelist)))
 
-    def FinishStage(self):
-        '''Complete a stage'''
-        self.state = 'stage-pending'
-        if not self.staged:
-            self.SetPassive()
-            self.steps = ['FinishStage'] + self.steps
-        else:
-            self.state = 'ready'
-            #AddEvent("queue-manager", "job-ready", self.jobid)
-            self.SetActive()     
-
     def FinishUserPgrp(self):
         '''Complete a process group for the user job'''
         self.timers['user'].Stop()
@@ -442,88 +420,6 @@ class Job (Data):
             logger.error("No record of pgid for user job %s" % (self.jobid))
         self.SetActive()
 
-    def FinalizeStage(self):
-        '''This method should be removed.'''
-        self.SetActive()
-
-
-    def RunPrologue(self):
-        '''Run the job prologue'''
-        self.timers['/usr/sbin/prologue'] = Timer()
-        if self.location == 'none':
-            # requeue if not ready
-            self.steps = ['RunPrologue'] + self.steps
-            self.SetPassive()
-            return
-        self.state = 'prologue'
-        #this path and executable should be pulled from cfg file
-        try:
-            os.system("/master/bcfg/generators/account/setaccess.py -a %s %s" % (self.user,
-                                                                                 " ".join(self.location)))
-        except:
-            logger.info("access control not enabled")
-        self.timers['/usr/sbin/prologue'].Start()
-        self.AdminStart('/usr/sbin/prologue')
-        self.SetPassive()
-
-    def RunEpilogue(self):
-        '''Run the job epilogue'''
-        self.timers['/usr/sbin/epilogue'] = Timer()
-        self.state = 'epilogue'
-        os.system("/master/bcfg/generators/account/setaccess.py -r %s %s" % (self.user,
-                                                                             " ".join(self.location.split(':'))))
-        self.timers['/usr/sbin/epilogue'].Start()
-        self.AdminStart('/usr/sbin/epilogue')
-        self.SetPassive()
-
-    def RunUserJob(self):
-        '''Run the user job'''
-        self.state = 'running'
-        self.timers['user'].Start()
-        self.LogStart()
-        args = []
-        if self.host:
-            args = ["-i", "-h", self.host, "-p", self.port]
-        if self.url:
-            args += ["-b", self.url]
-        if self.stageid is not None:
-            args += ["-n", self.stageid]
-        elif self.command:
-            args += ["-f", self.command]
-        if self.stageout:
-            args += ["-s", self.stageout]
-        if self.type == 'pbs':
-            args.append("-P")
-        args.append("-t")
-        args.append(str(60 * float(self.walltime)))
-        location = self.location.split(':')
-        outputfile = "%s/%s.output" % (self.outputdir, self.jobid)
-        errorfile = "%s/%s.error" % (self.outputdir, self.jobid)
-        cwd = self.cwd or self.envs['data']['PWD']
-        env = self.envs['data']
-        env['path'] = ":".join([env.get("path", ""), "/bin:/usr/bin:/usr/local/bin"])
-        try:
-            pgroup = ComponentProxy("system").add_process_groups([{
-                'tag':'process-group',
-                'user':self.user,
-                'id':'*',
-                'executable':'/usr/bin/mpish',
-                'size':self.procs,
-                'args':args,
-                'env':env,
-                'stdin':self.inputfile,
-                'stderr':errorfile,
-                'stdout':outputfile,
-                'location':location,
-                'cwd':cwd,
-                'kerneloptions':self.kerneloptions}])
-        except (ComponentLookupError, xmlrpclib.Fault):
-                logger.error("Job %s: Failed to start up user job; requeueing" \
-                             % (self.jobid))
-                self.steps = ['RunUserJob'] + self.steps
-                return
-        self.pgid['user'] = pgroup[0]['id']
-        self.SetPassive()
 
     def Kill(self, killmsg):
         '''Kill a job'''
@@ -543,29 +439,6 @@ class Job (Data):
         else:
             logger.error("Got qdel for job %s in unexpected state %s" % (self.jobid, self.state))
  
-
-    def AdminStart(self, cmd):
-        '''Run an administrative job step'''
-        location = self.location.split(':')
-        try:
-            process_groups = ComponentProxy("system").add_process_groups([{
-                'tag':'process-group',
-                'id':'*',
-                'user':'root',
-                'size':self.nodes,
-                'cwd':'/',
-                'executable':cmd,
-                'env':{'path':"/bin:/usr/bin:/usr/local/bin"},
-                'args':[self.user],
-                'location':location,
-                'stdin':self.inputfile,
-                'kerneloptions':self.kerneloptions}])
-        except (ComponentLookupError, xmlrpclib.Fault):
-            logger.error("Job %s: Failed to start up user job in AdminStart; requeueing" \
-                         % (self.jobid))
-            self.steps = ['AdminStart'] + self.steps
-            return
-        self.pgid[cmd] = process_groups[0]['id']
 
     def CompletePG(self, pgid):
         '''Finish accounting for a completed jobid'''
@@ -862,9 +735,6 @@ class Job (Data):
                 self.pgid['user'] = pgroup[0]['id']
             
         self.SetPassive()
-
-
-    
 
     
 class JobList(DataList):
@@ -1423,6 +1293,3 @@ class QueueManager(Component):
         return results
     move_jobs = exposed(query(move_jobs))
                     
-            
-                
-        
