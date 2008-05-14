@@ -47,7 +47,26 @@ class Timer(object):
         return self.stop - self.start
 
 class Job (Data):
-    '''The Job class is an object corresponding to the qm notion of a queued job, including steps'''
+    '''BG Job is a Blue Gene/L job'''
+    
+    
+    _configfields = ['bgkernel']
+    _config = ConfigParser.ConfigParser()
+    _config.read(Cobalt.CONFIG_FILES)
+    if not _config._sections.has_key('cqm'):
+        print '''"cqm" section missing from cobalt config file'''
+        sys.exit(1)
+    config = _config._sections['cqm']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
+        sys.exit(1)
+    if config.get("bgkernel") == 'true':
+        for param in ['partitionboot', 'bootprofiles']:
+            if config.get(param, 'nothere') == 'nothere':
+                print "Missing option in cobalt config file: %s." % (param)
+                print "This is required only if dynamic kernel support is enabled"
+                sys.exit(1)
 
     acctlog = Cobalt.Util.AccountingLog('qm')
     
@@ -58,7 +77,10 @@ class Job (Data):
         "project", "lienID", "exit_status", "stagein", "stageout",
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile",
         "kerneloptions", "system_state", "user_state", "dependencies",
+        "bgkernel", "kernel", "notify", "adminemail", "outputpath", 
+        "errorpath", "path", 
     ]
+
 
     def __init__(self, spec):
         Data.__init__(self, spec)
@@ -78,7 +100,6 @@ class Job (Data):
         self.job_step = None
         
         self.attribute = spec.get("attribute", "compute")
-        self.location = spec.get("location", "N/A")
         self.starttime = spec.get("starttime", "-1")
         self.submittime = spec.get("submittime", time.time())
         self.endtime = spec.get("endtime", "-1")
@@ -88,14 +109,11 @@ class Job (Data):
         self.walltime = spec.get("walltime")
         self.procs = spec.get("procs")
         self.nodes = spec.get("nodes")
-        self.mode = spec.get("mode")
         self.cwd = spec.get("cwd")
         self.command = spec.get("command")
         self.args = spec.get("args")
-        self.outputdir = spec.get("outputdir")
         self.project = spec.get("project")
         self.lienID = spec.get("lienID")
-        self.exit_status = spec.get("exit_status")
         self.stagein = spec.get("stagein")
         self.stageout = spec.get("stageout")
         self.reservation = spec.get("reservation", False)
@@ -103,7 +121,6 @@ class Job (Data):
         self.port = spec.get("port")
         self.url = spec.get("url")
         self.stageid = spec.get("stageid")
-        self.envs = spec.get("envs")
         self.inputfile = spec.get("inputfile")
         self.kerneloptions = spec.get("kerneloptions")
         self.tag = spec.get("tag", "job")
@@ -116,6 +133,24 @@ class Job (Data):
         self.satisfied_dependencies = []
 
         self.max_running = False
+        
+        self.bgkernel = spec.get("bgkernel")
+        self.kernel = spec.get("kernel", "default")
+        self.notify = spec.get("notify")
+        self.adminemail = spec.get("adminemail")
+        self.location = spec.get("location")
+        self.outputpath = spec.get("outputpath")
+        if self.outputpath:
+            jname = self.outputpath.split('/')[-1].split('.output')[0]
+            if jname and jname != str(self.jobid):
+                self.jobname = jname
+        self.outputdir = spec.get("outputdir")
+        self.errorpath = spec.get("errorpath")
+        self.path = spec.get("path")
+        self.mode = spec.get("mode", "co")
+        self.envs = spec.get("envs")
+        self.exit_status = spec.get("exit_status")
+
 
         self.timers['queue'].Start()
         self.timers['current_queue'].Start()
@@ -123,8 +158,15 @@ class Job (Data):
         self.killed = False
         self.pgid = {}
         self.spgid = {}
-        self.steps = ['RunPrologue', 'RunUserJob', 'RunEpilogue', 'FinishUserPgrp', 'Finish']
+
+        if self.notify or self.adminemail:
+            self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
+        else:
+            self.steps = ['RunBGUserJob', 'FinishUserPgrp', 'Finish']
+        if self.config.get('bgkernel') == 'true':
+            self.steps.insert(0, 'SetBGKernel')
         self.SetPassive()
+        
         # acctlog
         self.pbslog = Cobalt.Util.PBSLog(self.jobid)
         logger.info(
@@ -250,7 +292,7 @@ class Job (Data):
         return 0
 
     def Finish(self):
-        '''Finish up accounting for job'''
+        '''Finish up accounting for job, also adds postscript ability'''
         used_time = int(self.timers['user'].Check()) * len(self.location.split(':'))
                                                                 
         self.job_step = "done"
@@ -262,6 +304,38 @@ class Job (Data):
         self.acctlog.LogMessage('E;%s;%s;%s' % \
                                 (self.jobid, self.user, str(used_time)))
         self.endtime = str(time.time())
+
+
+        if self.config.get('bgkernel') == 'true':
+            try:
+                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location))
+                os.symlink('%s/%s' % (self.config.get('bootprofiles'), 'default'),
+                           '%s/%s' % (self.config.get('partitionboot'), self.location))
+            except OSError:
+                logger.error("Failed to reset boot location at job end for partition for %s" % (self.location))
+
+        if self.config.get('postscript'):
+            postscripts = self.config.get('postscript').split(':')
+            extra = []
+            for field in self.fields:
+                fdata = getattr(self, field)
+                if isinstance(fdata, list):
+                    extra.append('%s="%s"' % (field, ':'.join(fdata)))
+                elif isinstance(fdata, dict):
+                    extra.append('%s="{%s}"' % (field, str(fdata)))
+                else:
+                    extra.append('%s="%s"' % (field, fdata))
+            for p in postscripts:
+                try:
+                    rc, out, err = Cobalt.Util.runcommand("%s %s" % (p, " ".join(extra)))
+                    if rc != 0:
+                        logger.info("Job %s/%s: return of postscript %s was %d, error message is %s" %
+                                     (self.jobid, self.user, p, rc, "\n".join(err)))
+                except Exception, e:
+                    logger.info("Job %s/%s: exception with postscript %s, error is %s" %
+                                 (self.jobid, self.user, p, e))
+
+
 
     def Progress(self):
         '''Run next job step'''
@@ -578,13 +652,20 @@ class Job (Data):
         return result
 
     def LogFinish(self):
-        '''Log end of job data'''
+        '''Log end of job data, specific for BG/L exit status'''
+        exit_status = self.exit_status
+        try:
+            exit_status = exit_status.get('BG/L')
+            exit_status = int(exit_status)/256
+        except:
+            pass
         logger.info("Job %s/%s on %s nodes done. %s" % \
                     (self.jobid, self.user,
                      self.nodes, self.GetStats()))
-        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit code %s" % \
+        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
                                 (self.jobid, self.user,
-                                 self.nodes, self.GetStats()))
+                                 self.nodes, self.GetStats(),
+                                 str(exit_status)))
         self.LogFinishPBS()
         
     def LogFinishPBS (self):
@@ -642,61 +723,6 @@ class Job (Data):
         
         #AddEvent("queue-manager", "job-done", self.jobid)
 
-class BGJob(Job):
-    
-    '''BG Job is a Blue Gene/L job'''
-    
-    fields = Job.fields + [
-        "bgkernel", "kernel", "notify", "adminemail", "location",
-        "outputpath", "outputdir", "errorpath", "path", "mode", "envs",
-        "exit_status",
-    ]
-    
-    _configfields = ['bgkernel']
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('cqm'):
-        print '''"cqm" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['cqm']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        sys.exit(1)
-    if config.get("bgkernel") == 'true':
-        for param in ['partitionboot', 'bootprofiles']:
-            if config.get(param, 'nothere') == 'nothere':
-                print "Missing option in cobalt config file: %s." % (param)
-                print "This is required only if dynamic kernel support is enabled"
-                sys.exit(1)
-
-    def __init__(self, spec):
-        Job.__init__(self, spec)
-        self.bgkernel = spec.get("bgkernel")
-        self.kernel = spec.get("kernel", "default")
-        self.notify = spec.get("notify")
-        self.adminemail = spec.get("adminemail")
-        self.location = spec.get("location")
-        self.outputpath = spec.get("outputpath")
-        if self.outputpath:
-            jname = self.outputpath.split('/')[-1].split('.output')[0]
-            if jname and jname != str(self.jobid):
-                self.jobname = jname
-        self.outputdir = spec.get("outputdir")
-        self.errorpath = spec.get("errorpath")
-        self.path = spec.get("path")
-        self.mode = spec.get("mode", "co")
-        self.envs = spec.get("envs")
-        self.exit_status = spec.get("exit_status")
-        
-        if self.notify or self.adminemail:
-            self.steps = ['NotifyAtStart', 'RunBGUserJob', 'NotifyAtEnd', 'FinishUserPgrp', 'Finish']
-        else:
-            self.steps = ['RunBGUserJob', 'FinishUserPgrp', 'Finish']
-        if self.config.get('bgkernel') == 'true':
-            self.steps.insert(0, 'SetBGKernel')
-        self.SetPassive()
-        
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
         try:
@@ -837,59 +863,12 @@ class BGJob(Job):
             
         self.SetPassive()
 
-    def LogFinish(self):
-        '''Log end of job data, specific for BG/L exit status'''
-        exit_status = self.exit_status
-        try:
-            exit_status = exit_status.get('BG/L')
-            exit_status = int(exit_status)/256
-        except:
-            pass
-        logger.info("Job %s/%s on %s nodes done. %s" % \
-                    (self.jobid, self.user,
-                     self.nodes, self.GetStats()))
-        self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
-                                (self.jobid, self.user,
-                                 self.nodes, self.GetStats(),
-                                 str(exit_status)))
-        self.LogFinishPBS()
+
     
-    def Finish(self):
-        '''Finish up accounting for job, also adds postscript ability'''
-        Job.Finish(self)
 
-        if self.config.get('bgkernel') == 'true':
-            try:
-                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location))
-                os.symlink('%s/%s' % (self.config.get('bootprofiles'), 'default'),
-                           '%s/%s' % (self.config.get('partitionboot'), self.location))
-            except OSError:
-                logger.error("Failed to reset boot location at job end for partition for %s" % (self.location))
-
-        if self.config.get('postscript'):
-            postscripts = self.config.get('postscript').split(':')
-            extra = []
-            for field in self.fields:
-                fdata = getattr(self, field)
-                if isinstance(fdata, list):
-                    extra.append('%s="%s"' % (field, ':'.join(fdata)))
-                elif isinstance(fdata, dict):
-                    extra.append('%s="{%s}"' % (field, str(fdata)))
-                else:
-                    extra.append('%s="%s"' % (field, fdata))
-            for p in postscripts:
-                try:
-                    rc, out, err = Cobalt.Util.runcommand("%s %s" % (p, " ".join(extra)))
-                    if rc != 0:
-                        logger.info("Job %s/%s: return of postscript %s was %d, error message is %s" %
-                                     (self.jobid, self.user, p, rc, "\n".join(err)))
-                except Exception, e:
-                    logger.info("Job %s/%s: exception with postscript %s, error is %s" %
-                                 (self.jobid, self.user, p, e))
-
-
+    
 class JobList(DataList):
-    item_cls = BGJob
+    item_cls = Job
     
     def __init__(self, q):
         self.queue = q
@@ -1040,7 +1019,7 @@ def cronmatch(pattern):
 class Queue (Data):
     '''queue object, subs JobSet and Data, which gives us:
        self is a Queue object (with restrictions and stuff)
-       self.data is a list of BGJob objects'''
+       self.data is a list of Job objects'''
     
     fields = Data.fields + [
         "cron", "name", "state", "adminemail",
@@ -1183,7 +1162,7 @@ class QueueManager(Component):
         cqm_id_gen = self.id_gen
 
     def __getstate__(self):
-        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':1}
+        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':2}
                 
     def __setstate__(self, state):
         self.Queues = state['Queues']
