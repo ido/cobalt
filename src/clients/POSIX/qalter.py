@@ -81,12 +81,40 @@ if __name__ == '__main__':
         updates['nodes'] = opts['nodecount']
     # ensure time is actually in minutes
     if opts['time']:
-        try:
-            minutes = Cobalt.Util.get_time(opts['time'])
-        except Cobalt.Exceptions.TimeFormatError, e:
-            print "invalid time specification: %s" % e.message
-            sys.exit(1)
-        updates['walltime'] = str(minutes)
+        if opts['time'][0] in [ '+', '-']:
+            try:
+                minutes = Cobalt.Util.get_time(opts['time'][1:])
+            except Cobalt.Exceptions.TimeFormatError, e:
+                print "invalid time specification: %s" % e.message
+                sys.exit(1)
+
+            jobdata = None
+            try:
+                cqm = ComponentProxy("queue-manager", defer=False)
+                jobdata = cqm.get_jobs(spec)
+            except ComponentLookupError:
+                print >> sys.stderr, "Failed to connect to queue manager"
+                sys.exit(1)
+            if not jobdata:
+                print "Failed to match any jobs"
+                sys.exit(1)
+
+            if opts['time'][0] == '-':
+                new_time = float(jobdata[0]['walltime']) - minutes
+                if new_time <= 0:
+                    print >> sys.stderr, "invalid wall time: ", new_time
+                else:
+                    updates['walltime'] = str(float(jobdata[0]['walltime']) - minutes)
+            elif opts['time'][0] == '+': 
+                updates['walltime'] = str(float(jobdata[0]['walltime']) + minutes)
+        else:
+            try:
+                minutes = Cobalt.Util.get_time(opts['time'])
+            except Cobalt.Exceptions.TimeFormatError, e:
+                print "invalid time specification: %s" % e.message
+                sys.exit(1)
+            
+            updates['walltime'] = str(minutes)
 
     try:
         sys_type = CP.get('cqm', 'bgtype')
