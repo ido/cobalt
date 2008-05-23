@@ -939,6 +939,9 @@ class Queue (Data):
         to be called when a job starts running, or a new job appears in a queue.'''
         
         if not self.restrictions.has_key("maxrunning"):
+            # if it *was* there and was removed, we better clean up
+            for job in self.jobs:
+                job.max_running = False
             return
         unum = dict()
         for job in self.jobs.q_get([{'system_state':"running"}]):
