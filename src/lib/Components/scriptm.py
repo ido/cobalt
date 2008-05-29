@@ -47,7 +47,7 @@ class ProcessGroup(Data):
         self.jobid = spec.pop("jobid", None)
         self.path = spec.pop("path", None)
         self.cwd = spec.pop("cwd", None)
-        self.args = spec.pop("args", None)
+        self.args = spec.pop("args", [])
         self.envs = spec.pop("args", None)
         self.inputfile = spec.pop("inputfile", None)
         self.kerneloptions = spec.pop("kerneloptions", None)
@@ -100,7 +100,8 @@ class ProcessGroup(Data):
                 self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.jobid, self.user, self.outlog))
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.jobid, self.user, self.errlog))
-            os.execl(self.executable, self.executable)
+            cmd = [self.executable, self.executable] + self.args
+            os.execl(*cmd)
 
     def FinishProcess(self):
         '''Handle cleanup for exited process'''
