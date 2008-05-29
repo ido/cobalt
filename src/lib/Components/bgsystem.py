@@ -431,8 +431,8 @@ class BGSystem (BGBaseSystem):
             if pid in self.diag_pids:
                 part, test = self.diag_pids[pid]
                 del self.diag_pids[pid]
-                self.logger.info("Diagnostic %s on %p finished. rc=%d" % \
-                                 (test, part, status))
+                self.logger.info("Diagnostic %s on %s finished. rc=%d" % \
+                                 (test, part.name, status))
                 self.finish_diags(part, test, status)
     _get_exit_status = automatic(_get_exit_status)
     
@@ -466,6 +466,6 @@ class BGSystem (BGBaseSystem):
             self.diag_pids[pid] = (partition, test_name)
         else:
             try:
-                os.execl(diag_exe, diag_exe, partition)
+                os.execl(diag_exe, diag_exe, partition.name)
             except:
-                os._exit(1)
+                os._exit(255)
