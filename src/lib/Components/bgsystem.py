@@ -200,6 +200,7 @@ class BGSystem (BGBaseSystem):
         self._partitions_lock = thread.allocate_lock()
         self.pending_diags = dict()
         self.failed_diags = list()
+        self.diag_pids = dict()
 
         self.configure()
         if 'partition_flags' in state:
