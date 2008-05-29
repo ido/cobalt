@@ -569,4 +569,4 @@ class Simulator (BGBaseSystem):
             if switch in self.failed_components:
                 exit_value = 2
 
-        self.finish_diags(partition, exit_value)
+        self.finish_diags(partition, test_name, exit_value)

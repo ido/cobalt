@@ -325,7 +325,7 @@ class BGBaseSystem (Component):
         '''override this method in derived classes!'''
         pass
     
-    def finish_diags(self, partition, exit_value):
+    def finish_diags(self, partition, test_name, exit_value):
         '''call this method somewhere in your derived class where you deal with the exit values of diags'''
         if exit_value == 0:
             for dead in self.failed_diags[:]:
@@ -334,7 +334,7 @@ class BGBaseSystem (Component):
                     self.logger.info("removing %s from failed_diags list" % dead)
         else:
             if partition.children:
-                self.run_diags([partition.name])
+                self.run_diags([partition.name], test_name)
             else:
                 self.failed_diags.append(partition.name)
                 self.logger.info("adding %s to failed_diags list" % partition.name)
