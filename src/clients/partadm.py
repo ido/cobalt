@@ -29,7 +29,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:C:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps=', 'xml'])
+                                      'queue=', 'deps=', 'xml', 'diag='])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -104,6 +104,10 @@ if __name__ == '__main__':
         func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
+    elif '--diag' in sys.argv:
+        func = system.run_diags
+        test_name = [arg for (opt, arg) in opts if opt == '--diag'][0]
+        args = (parts, test_name)
     else:
         print helpmsg
         raise SystemExit, 1

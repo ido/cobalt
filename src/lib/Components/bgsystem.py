@@ -201,7 +201,7 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = ProcessGroup
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
-        self.pending_diags = list()
+        self.pending_diags = dict()
         self.failed_diags = list()
 
         self.configure()

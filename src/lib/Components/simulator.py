@@ -144,7 +144,7 @@ class Simulator (BGBaseSystem):
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
         self.failed_components = sets.Set()
-        self.pending_diags = list()
+        self.pending_diags = dict()
         self.failed_diags = list()
         if self.config_file is not None:
             self.configure(self.config_file)
@@ -560,7 +560,7 @@ class Simulator (BGBaseSystem):
         return list(self.failed_components)
     list_failed_components = exposed(list_failed_components)
     
-    def launch_diags(self, partition):
+    def launch_diags(self, partition, test_name):
         exit_value = 0
         for nc in partition.node_cards:
             if nc.id in self.failed_components:

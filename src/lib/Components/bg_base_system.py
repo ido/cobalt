@@ -187,7 +187,7 @@ class BGBaseSystem (Component):
         self.process_groups = ProcessGroupDict()
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
-        self.pending_diags = list()
+        self.pending_diags = dict()
         self.failed_diags = list()
 
     def _get_partitions (self):
@@ -285,7 +285,7 @@ class BGBaseSystem (Component):
                     other._parents.add(p)
 
 
-    def run_diags(self, partition_list):
+    def run_diags(self, partition_list, test_name):
         def size_cmp(left, right):
             return -cmp(left.size, right.size)
         
@@ -310,7 +310,7 @@ class BGBaseSystem (Component):
         def _run_diags(partition):
             covering = _find_covering(partition)
             for child in covering:
-                self.pending_diags.append(child)
+                self.pending_diags[child] = test_name
             return [child.name for child in covering]
 
         results = []
@@ -321,7 +321,7 @@ class BGBaseSystem (Component):
         return results
     run_diags = exposed(run_diags)
     
-    def launch_diags(self, partition):
+    def launch_diags(self, partition, test_name):
         '''override this method in derived classes!'''
         pass
     
@@ -340,11 +340,11 @@ class BGBaseSystem (Component):
                 self.logger.info("adding %s to failed_diags list" % partition.name)
     
     def handle_pending_diags(self):
-        for p in self.pending_diags[:]:
+        for p in self.pending_diags.keys():
             if p.state in ["idle", "blocked by pending diags", "failed diags", "blocked by failed diags"]:
                 self.logger.info("launching diagnostics on %s" % p.name)
-                self.launch_diags(p)
-                self.pending_diags.remove(p)
+                self.launch_diags(p, self.pending_diags[p])
+                del self.pending_diags[p]
                 
     handle_pending_diags = automatic(handle_pending_diags)
     
