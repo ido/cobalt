@@ -187,6 +187,8 @@ class BGBaseSystem (Component):
         self.process_groups = ProcessGroupDict()
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
+        self.pending_diags = list()
+        self.failed_diags = list()
 
     def _get_partitions (self):
         return PartitionDict([
@@ -281,3 +283,68 @@ class BGBaseSystem (Component):
                 elif p_set.union(other_set)==p_set:
                     p._children.add(other)
                     other._parents.add(p)
+
+
+    def run_diags(self, partition_list):
+        def size_cmp(left, right):
+            return -cmp(left.size, right.size)
+        
+        def _find_covering(partition):
+            kids = [ self._partitions[c_name] for c_name in partition.children]
+            kids.sort(size_cmp)
+            n = len(kids)
+            part_node_cards = sets.Set(partition.node_cards)
+            # generate the power set, but try to use the big partitions first (hence the sort above)
+            for i in range(1, 2**n + 1):
+                test_cover = [ kids[j] for j in range(n) if i & 2**j ]
+                
+                test_node_cards = sets.Set()
+                for t in test_cover:
+                    test_node_cards.update(t.node_cards)
+                
+                if test_node_cards.issubset(part_node_cards) and test_node_cards.issuperset(part_node_cards):
+                    return test_cover
+                
+            return []
+
+        def _run_diags(partition):
+            covering = _find_covering(partition)
+            for child in covering:
+                self.pending_diags.append(child)
+            return [child.name for child in covering]
+
+        results = []
+        for partition_name in partition_list:
+            p = self._partitions[partition_name]
+            results.append(_run_diags(p))
+        
+        return results
+    run_diags = exposed(run_diags)
+    
+    def launch_diags(self, partition):
+        '''override this method in derived classes!'''
+        pass
+    
+    def finish_diags(self, partition, exit_value):
+        '''call this method somewhere in your derived class where you deal with the exit values of diags'''
+        if exit_value == 0:
+            for dead in self.failed_diags[:]:
+                if dead == partition.name or dead in partition.children:
+                    self.failed_diags.remove(dead)
+                    self.logger.info("removing %s from failed_diags list" % dead)
+        else:
+            if partition.children:
+                self.run_diags([partition.name])
+            else:
+                self.failed_diags.append(partition.name)
+                self.logger.info("adding %s to failed_diags list" % partition.name)
+    
+    def handle_pending_diags(self):
+        for p in self.pending_diags[:]:
+            if p.state in ["idle", "blocked by pending diags", "failed diags", "blocked by failed diags"]:
+                self.logger.info("launching diagnostics on %s" % p.name)
+                self.launch_diags(p)
+                self.pending_diags.remove(p)
+                
+    handle_pending_diags = automatic(handle_pending_diags)
+    

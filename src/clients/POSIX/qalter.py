@@ -11,6 +11,7 @@ import os.path
 import xmlrpclib
 import ConfigParser
 import logging
+import time
 
 import Cobalt
 import Cobalt.Logging, Cobalt.Util
@@ -25,7 +26,7 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
               -M <email address> --mode <mode co/vn> <jobid1> <jobid2> """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'magic':'magic'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies', 
                 'M':'notify', 'e':'error', 'o':'output'}
@@ -115,6 +116,22 @@ if __name__ == '__main__':
                 sys.exit(1)
             
             updates['walltime'] = str(minutes)
+
+    if opts['magic']:
+        scheduler = ComponentProxy("scheduler", defer=False)
+        reservations = scheduler.get_reservations([{'queue':"*", 'start':"*", 'duration':"*"}])
+        cqm = ComponentProxy("queue-manager", defer=False)
+        jobdata = cqm.get_jobs(spec)
+        
+        for job in jobdata:
+            for res in reservations:
+                if res['queue'] == job['queue']:
+                    now = time.time()
+                    time_left = res['start'] + res['duration'] - now - (10 * 60)
+                    # recall that walltime is in minutes, but unix time is in seconds
+                    time_left = time_left / 60
+                    updates['walltime'] = str(time_left)
+
 
     try:
         sys_type = CP.get('cqm', 'bgtype')

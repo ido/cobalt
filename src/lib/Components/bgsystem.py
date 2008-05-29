@@ -201,6 +201,8 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = ProcessGroup
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
+        self.pending_diags = list()
+        self.failed_diags = list()
 
         self.configure()
         if 'partition_flags' in state:
@@ -353,6 +355,9 @@ class BGSystem (BGBaseSystem):
                 
             for p in self._partitions.values():
                 if p.state != "busy":
+                    for diag_part in self.pending_diags:
+                        if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
+                            p.state = "blocked by pending diags"
                     for nc in p.node_cards:
                         if nc.used_by:
                             p.state = "blocked (%s)" % nc.used_by
@@ -361,6 +366,13 @@ class BGSystem (BGBaseSystem):
                         if self._partitions[dep_name].state == "busy":
                             p.state = "blocked-wiring (%s)" % dep_name
                             break
+                    for part_name in self.failed_diags:
+                        part = self._partitions[part_name]
+                        if p.name == part.name:
+                            p.state = "failed diags"
+                        elif p.name in part.parents or p.name in part.children:
+                            p.state = "blocked by failed diags"
+
                         
             self._partitions_lock.release()
             
