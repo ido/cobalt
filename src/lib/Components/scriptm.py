@@ -146,8 +146,8 @@ class ProcessGroup(Data):
                 'size':0,
                 'executable':"this will be ignored"}])
         except (ComponentLookupError, xmlrpclib.Fault):
-                self.log.error("Job %s: Failed to start up user script job" % (self.jobid))
-                return
+            self.log.error("Job %s: Failed to start up user script job" % (self.jobid))
+            return
 
 
         if not pgroup[0].has_key('id'):
