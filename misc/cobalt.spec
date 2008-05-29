@@ -33,6 +33,7 @@ cd src/clients && make
 rm -rf $RPM_BUILD_ROOT
 python2.5 setup.py install --prefix=${RPM_BUILD_ROOT}/usr
 install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}/usr/bin
+install -m 755 src/clients/cobalt-admin %{buildroot}%{_sbindir}/cobalt-admin
 mkdir %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}/usr/bin/slp.py %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}/usr/bin/bgsched.py %{buildroot}%{_sbindir}
@@ -53,7 +54,10 @@ mkdir -p %{buildroot}%{_initrddir}
 install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
 #mkdir %{buildroot}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
-# need to create links here
+cd %{buildroot}%{_sbindir}
+for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
+cd %{buildroot}%{_bindir}
+for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s wrapper $file ; done
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/cobalt
 chmod 700 ${RPM_BUILD_ROOT}/var/spool/cobalt
 find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python2.5@'
