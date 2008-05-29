@@ -193,7 +193,7 @@ if __name__ == '__main__':
     if opts['held']:
         jobspec.update({'user_state':'hold'})
     if opts['env']:
-        if sys.argv.count('-e') > 1:
+        if sys.argv.count('-e') - command.count('-e') > 1:
             logger.error("Use of multiple -e options is not supported. Specify multiple environment variables with -e FOO=1:BAR=2")
             raise SystemExit(1)
         jobspec['envs'] = {}
