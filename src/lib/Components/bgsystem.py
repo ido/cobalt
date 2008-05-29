@@ -24,12 +24,11 @@ except NameError:
 import Cobalt
 import Cobalt.Data
 from Cobalt.Components import bg_base_system
-from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
 from Cobalt.Exceptions import ProcessGroupCreationError
-from Cobalt.Components.bg_base_system import NodeCard, Partition, PartitionDict, ProcessGroupDict, BGBaseSystem
+from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem
 
 
 __all__ = [
@@ -39,9 +38,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
-
-
-
 
 class ProcessGroup (bg_base_system.ProcessGroup):
     _configfields = ['mpirun']
@@ -174,6 +170,7 @@ class BGSystem (BGBaseSystem):
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ProcessGroup
+        self.diag_pids = dict()
         self.configure()
         
         thread.start_new_thread(self.update_partition_state, tuple())
@@ -430,6 +427,13 @@ class BGSystem (BGBaseSystem):
                 if each.head_pid == pid:
                     each.exit_status = status
                     self.logger.info("pg %i exited with status %i" % (each.id, status))
+            if pid in self.diag_pids:
+                part, test = self.diag_pids[pid]
+                del self.diag_pids[pid]
+                self.logger.info("Diagnostic %s on %p finished. rc=%d" % \
+                                 (test, part, status))
+                self.finish_diags(part, test, status)
+    _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
         self._get_exit_status()
@@ -448,3 +452,19 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
+
+    def launch_diags(self, partition, test_name):
+        diag_exe = '/usr/lib/cobalt/diags/%s' % test_name
+        try:
+            sdata = os.stat(diag_exe)
+        except:
+            self.logger.error("Diagnostic %s not available" % test_name)
+            return
+        pid = os.fork()
+        if pid:
+            self.diag_pids[pid] = (partition, test_name)
+        else:
+            try:
+                os.execl(diag_exe, diag_exe, partition)
+            except:
+                os._exit(1)
