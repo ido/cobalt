@@ -18,6 +18,8 @@ Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
 Usage: partadm.py --diag=diag_name partition
+Usage: partadm.py --fail part1 part2
+Usage: partadm.py --unfail part1 part2
 Usage: partadm.py --dump
 Usage: partadm.py --version
 Must supply one of -a or -d or -l or -start or -stop or --queue'''
@@ -30,7 +32,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:C:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps=', 'xml', 'diag='])
+                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -74,6 +76,12 @@ if __name__ == '__main__':
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'functional':False})
+    elif '--fail' in sys.argv:
+        func = system.fail_partitions
+        args = ([{'tag':'partition', 'name':partname} for partname in parts], )
+    elif '--unfail' in sys.argv:
+        func = system.unfail_partitions
+        args = args = ([{'tag':'partition', 'name':partname} for partname in parts], )
     elif '--xml' in sys.argv:
         func = system.generate_xml
         args = tuple()

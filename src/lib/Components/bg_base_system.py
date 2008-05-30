@@ -348,3 +348,35 @@ class BGBaseSystem (Component):
                 
     handle_pending_diags = automatic(handle_pending_diags)
     
+    def fail_partitions(self, specs):
+        parts = self.get_partitions(specs)
+        if not parts:
+            ret = "no matching partitions found\n"
+        else:
+            ret = ""
+        for p in parts:
+            if self.failed_diags.count(p.name) == 0:
+                ret += "failing %s\n" % p.name
+                self.failed_diags.append(p.name)
+            else:
+                ret += "%s is already marked as failing\n" % p.name
+
+        return ret
+    fail_partitions = exposed(fail_partitions)
+    
+    def unfail_partitions(self, specs):
+        parts = self.get_partitions(specs)
+        if not parts:
+            ret = "no matching partitions found\n"
+        else:
+            ret = ""
+        for p in self.get_partitions(specs):
+            if self.failed_diags.count(p.name):
+                ret += "unfailing %s\n" % p.name
+                self.failed_diags.remove(p.name)
+            else:
+                ret += "%s is not currently failing\n" % p.name
+        
+        return ret
+    unfail_partitions = exposed(unfail_partitions)
+    
