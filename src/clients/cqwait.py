@@ -14,7 +14,7 @@ from Cobalt.Exceptions import ComponentLookupError
 __helpmsg__ = "Usage: cqwait [--version] [-vr] [--start] <jobid> <jobid>\n"
 
 if __name__ == '__main__':
-    if '--version' in sys.argv:
+    if '--version' in sys.argv or '--help' in sys.argv or '-h' in sys.argv:
         print "cqwait %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
