@@ -4,7 +4,6 @@
 __revision__ = '$Id$'
 __version__ = '$Version$'
 
-import getpass
 import getopt, sys
 import xmlrpclib
 
@@ -35,24 +34,27 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     # Check if reservation exists
+    spec = [dict(('name', arg)) for arg in args]
     try:
-        result = scheduler.get_reservations([{'name':args[0]}])
+        result = scheduler.get_reservations(spec)
     except xmlrpclib.Fault, flt:
-        if flt.faultCode==1:
+        if flt.faultCode == 1:
             print "Error communicating with queue manager"
             sys.exit(1)
 
-    if not result:
-        print "Reservation '%s' not found" % args[0]
+    if len(result) and len(result) != len(args):
+        print "Reservation subset matched" 
+    elif not result:
+        print "No Reservations matched"
         raise SystemExit, 1
 
-    user = getpass.getuser()
+
     try:
-        result = scheduler.del_reservations([{'name':args[0]}])
+        result = scheduler.del_reservations(spec)
     except xmlrpclib.Fault, flt:
-        if flt.faultCode==1:
+        if flt.faultCode == 1:
             print "Error communicating with queue manager"
             sys.exit(1)
 
     print "Released reservation '%s', matched on %d partitions" % \
-          (args[0], len(result))
+          (','.join(args), len(result))
