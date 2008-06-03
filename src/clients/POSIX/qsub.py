@@ -178,7 +178,7 @@ if __name__ == '__main__':
             jobspec.update({'errorpath':"%s/%s" % (opts['cwd'], opts['error'])})
         else:
             jobspec.update({'errorpath':opts['error']})
-        if not os.path.isdir(jobspec.get('errorpath')):
+        if not os.path.isdir(os.path.dirname(jobspec.get('errorpath'))):
             logger.error("directory %s does not exist" % jobspec.get('errorpath'))
             sys.exit(1)
     if opts['output']:
@@ -186,7 +186,7 @@ if __name__ == '__main__':
             jobspec.update({'outputpath':"%s/%s" % (opts['cwd'], opts['output'])})
         else:
             jobspec.update({'outputpath':opts['output']})
-        if not os.path.isdir(jobspec.get('outputpath')):
+        if not os.path.isdir(os.path.dirname(jobspec.get('outputpath'))):
             logger.error("directory %s does not exist" % jobspec.get('outputpath'))
             sys.exit(1)
     if opts['held']:
