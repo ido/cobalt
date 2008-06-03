@@ -77,14 +77,22 @@ if __name__ == '__main__':
 
     # check for custom header, first in cobalt.conf, env, then in --header
     custom_header = None
+    custom_header_full = None
     try:
         CP = ConfigParser.ConfigParser()
         CP.read(Cobalt.CONFIG_FILES)
         custom_header = CP.get('cqm', 'cqstat_header').split(':')
     except:
         pass
-    if 'QSTAT_HEADER' in os.environ.keys():
-        custom_header = os.environ['QSTAT_HEADER'].split(':')
+        
+    try:
+        custom_header_full = CP.get('cqm', 'cqstat_header_full').split(':')
+    except:
+        pass
+    if 'CQSTAT_HEADER' in os.environ.keys():
+        custom_header = os.environ['CQSTAT_HEADER'].split(':')
+    if 'CQSTAT_HEADER_FULL' in os.environ.keys():
+        custom_header_full = os.environ['CQSTAT_HEADER_FULL'].split(':')
     if opts['header']:
         custom_header = opts['header'].split(':')
 
@@ -180,10 +188,12 @@ if __name__ == '__main__':
                   'MaxQueued', 'MaxUserNodes', 'TotalNodes', 'State']
         response = cqm.get_queues(query)
     else:
-        if opts['full'] and not opts['long']:
-            header = full_header
-        elif opts['full'] and opts['long']:
+        if opts['full'] and opts['long']:
             header = long_header
+        elif opts['full'] and custom_header_full:
+            header = custom_header_full
+        elif opts['full'] and not opts['long']:
+            header = full_header
         elif custom_header:
             header = custom_header
         else:
