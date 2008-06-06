@@ -107,7 +107,14 @@ class ProcessGroup(Data):
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.jobid, self.user, self.errlog))
             cmd = [self.executable, self.executable] + self.args
-            os.execl(*cmd)
+            try:
+                os.execl(*cmd)
+            except Exception, e:
+                print >> err, "Something went wrong in starting the script job."
+                print >> err, e
+                err.flush()
+                os._exit(1)
+                
 
     def FinishProcess(self):
         '''Handle cleanup for exited process'''
