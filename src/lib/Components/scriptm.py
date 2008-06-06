@@ -57,7 +57,10 @@ class ProcessGroup(Data):
         
         self.log = logging.getLogger('pg')
         try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
+            tmp_info = pwd.getpwnam(self.user)
+            userid = tmp_info[2]
+            groupid = tmp_info[3]
+            home_dir = tmp_info[5]
         except KeyError:
             raise ProcessGroupCreationError, "user/group"
         if self.outputfile is not None:
@@ -78,6 +81,9 @@ class ProcessGroup(Data):
             # create a nodefile in /tmp
             os.environ['COBALT_NODEFILE'] = self.t.name
             os.environ["COBALT_JOBID"] = str(self.jobid)
+            os.environ['USER'] = self.user
+            os.environ['HOME'] = home_dir
+            os.chdir(self.cwd)
             try:
                 os.setgid(groupid)
                 os.setuid(userid)
