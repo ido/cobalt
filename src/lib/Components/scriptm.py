@@ -233,8 +233,7 @@ class ScriptManager(Component):
                         self.logger.info("Job %s/%s: ProcessGroup %s received signal %s" % \
                       (pgroup.jobid, pgroup.user, pgroup.jobid, os.WTERMSIG(stat)))
                         err = open(pgroup.errlog, 'a')
-                        print >> err, "Something went wrong in starting the script job."
-                        print >> err, "  it exited after receiving signal %s" % os.WTERMSIG(stat)
+                        print >> err, "The script job exited after receiving signal %s" % os.WTERMSIG(stat)
                         err.close()
                     if not pgroup.FinishProcess():
                         self.zombie_mpi[pgroup] = True
