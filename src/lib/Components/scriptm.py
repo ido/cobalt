@@ -229,6 +229,13 @@ class ScriptManager(Component):
                     self.logger.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
                       (pgroup.jobid, pgroup.user, pgroup.jobid, int(stat)/256, pgroup.pid))
 
+                    if os.WIFSIGNALED(stat):
+                        self.logger.info("Job %s/%s: ProcessGroup %s received signal %s" % \
+                      (pgroup.jobid, pgroup.user, pgroup.jobid, os.WTERMSIG(stat)))
+                        err = open(pgroup.errlog, 'a')
+                        print >> err, "Something went wrong in starting the script job."
+                        print >> err, "  it exited after receiving signal %s" % os.WTERMSIG(stat)
+                        err.close()
                     if not pgroup.FinishProcess():
                         self.zombie_mpi[pgroup] = True
                         
