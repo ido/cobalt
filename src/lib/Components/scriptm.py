@@ -232,9 +232,13 @@ class ScriptManager(Component):
                     if os.WIFSIGNALED(stat):
                         self.logger.info("Job %s/%s: ProcessGroup %s received signal %s" % \
                       (pgroup.jobid, pgroup.user, pgroup.jobid, os.WTERMSIG(stat)))
-                        err = open(pgroup.errlog, 'a')
-                        print >> err, "The script job exited after receiving signal %s" % os.WTERMSIG(stat)
-                        err.close()
+                        try:
+                            err = open(pgroup.errlog, 'a')
+                            print >> err, "The script job exited after receiving signal %s" % os.WTERMSIG(stat)
+                            err.close()
+                        except IOError:
+                            self.log.error("Job %s/%s: ProcessGroup %s failed to update .error file" % (pgroup.jobid, pgroup.user, pgroup.jobid))
+
                     if not pgroup.FinishProcess():
                         self.zombie_mpi[pgroup] = True
                         
