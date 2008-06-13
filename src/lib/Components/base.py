@@ -38,11 +38,11 @@ def state_file_location():
     return state_dir
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}):
+                   cls_kwargs={}, extra_getopt=''):
     if argv is None:
         argv = sys.argv
     try:
-        (opts, arg) = getopt.getopt(argv[1:], 'C:D:d')
+        (opts, arg) = getopt.getopt(argv[1:], 'C:D:d' + extra_getopt)
     except getopt.GetoptError, e:
         print >> sys.stderr, e
         print >> sys.stderr, "Usage:"
