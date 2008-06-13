@@ -34,7 +34,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     # Check if reservation exists
-    spec = [dict(('name', arg)) for arg in args]
+    spec = [{'name': arg} for arg in args]
     try:
         result = scheduler.get_reservations(spec)
     except xmlrpclib.Fault, flt:
