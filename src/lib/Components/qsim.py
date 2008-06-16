@@ -152,7 +152,7 @@ class Qsimulator(Component):
         else:
             print str(self.get_current_time()) +\
             " Warning: reached maximum time stamp: " +\
-            self.cur_time_index
+            str(self.cur_time_index)
         return self.cur_time_index
    
     def init_queues(self):
