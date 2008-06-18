@@ -28,7 +28,7 @@ if __name__ == "__main__":
     print WORKLOAD_PATH
   
     try:
-        run_component(Qsimulator, register=True,  
-                     cls_kwargs={'workload_file':WORKLOAD_PATH})
+        run_component(Qsimulator, register=True, 
+                     cls_kwargs={'workload_file':WORKLOAD_PATH, 'config_file':'simulator.xml'})
     except KeyboardInterrupt:
         sys.exit(1)
