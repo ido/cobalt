@@ -2,6 +2,7 @@
 
 '''Cobalt Queue Simulator library'''
 
+import sys
 import time
 import ConfigParser
 
@@ -10,8 +11,11 @@ import Cobalt.Util
 import Cobalt.Cqparse
 
 from Cobalt.Data import Data, DataList
-from Cobalt.Components.base import Component, exposed, query
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Components.base import Component, exposed, query, automatic
 from Cobalt.Components.cqm import QueueDict, Queue
+from Cobalt.Components.simulator import Simulator
 
 default_workload_file = "/nfs/mcs-homes15/wtang/workspace/wl-20080530"
 
@@ -59,7 +63,7 @@ class Job (Data):
 
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
                             "nodes","runtime", "start_time", "end_time",
-                            "state", "is_visible", "args"]
+                            "location", "state", "is_visible", "args"]
 
     def __init__(self, spec):
         Data.__init__(self, spec)
@@ -80,6 +84,7 @@ class Job (Data):
         self.state = spec.get("state", "invisible")
         self.is_visible = False
         self.args = []
+        self.location = ''
 
 class JobList(DataList):
     '''the list of job objects'''
@@ -118,21 +123,37 @@ class SimQueueDict(QueueDict):
         for spec in specs:
             results += self[spec['queue']].jobs.q_add([spec], callback, cargs)
             
-        return results   
+        return results
+ 
          
-class Qsimulator(Component):
+class Qsimulator(Simulator):
     '''Cobalt Queue Simulator'''
     
     implementation = "qsim"
     name = "queue-manager"
+    alias = Simulator.name
         
     def __init__(self, *args, **kwargs):
+        Simulator.__init__(self, *args, **kwargs)
         self.queues = SimQueueDict()
         self.time_stamps = [0]
         self.cur_time_index = 0
-        Component.__init__(self, *args, **kwargs)
         self.workload_file = kwargs.get("workload_file", default_workload_file)
         self.init_queues()
+    
+    def register_alias(self):
+        '''register alternate name for the Qsimulator, by registering in slp
+        with another name for the same location. in this case 'system' is the 
+        alternate name'''
+        try:
+            slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
+        except ComponentLookupError:
+            print >> sys.stderr, "unable to find service-location"
+            sys.exit(1)
+        svc_location = slp.locate(self.name)
+        if svc_location:
+            slp.register(self.alias, svc_location)
+    register_alias = automatic(register_alias, 30)            
     
     def get_current_time(self):
         '''get current time in date format'''
@@ -268,16 +289,16 @@ class Qsimulator(Component):
             job.update(newattr)
         return self.queues.get_jobs(specs, _update_job_states, updates)
                 
-    def update_job_start_end_time(self, specs, updates):
+    def start_job(self, specs, updates):
         '''update the job state and start_time and end_time when cqadm --run
         is issued to a group of jobs'''
-        def _update_job_start_end_time(job, newattr):
+        def _start_job(job, newattr):
             '''callback function to update job start/end time'''
             temp = job.to_rx()
-            newattr = self.run_job_updates(temp)
+            newattr.update(self.run_job_updates(temp))
             temp.update(newattr)
             job.update(newattr)
-        return self.queues.get_jobs(specs, _update_job_start_end_time, updates)
+        return self.queues.get_jobs(specs, _start_job, updates)
     
     def add_jobs(self, specs):
         '''Add a job, currently for unit test only'''
@@ -308,9 +329,8 @@ class Qsimulator(Component):
     def run_jobs(self, specs, nodelist):
         '''run a queued job, by updating the job state, start_time and 
         end_time'''
-        print "run_jobs: ", specs
-        print "nodelist: ", nodelist
+        print "run job specs=", specs, " on partion", nodelist
         if specs:
-            self.update_job_start_end_time(specs, {})
+            self.start_job(specs, {'location': ":".join(nodelist)})
         return self.queues.get_jobs([{'jobid':"*", 'state':"running"}])
     run_jobs = exposed(query(run_jobs))
