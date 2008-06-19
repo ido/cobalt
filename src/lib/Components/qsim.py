@@ -140,6 +140,8 @@ class Qsimulator(Simulator):
         self.cur_time_index = 0
         self.workload_file = kwargs.get("workload_file", default_workload_file)
         self.init_queues()
+        partnames = self._partitions.keys()
+        self.init_partition(partnames)
     
     def register_alias(self):
         '''register alternate name for the Qsimulator, by registering in slp
@@ -153,8 +155,14 @@ class Qsimulator(Simulator):
         svc_location = slp.locate(self.name)
         if svc_location:
             slp.register(self.alias, svc_location)
-    register_alias = automatic(register_alias, 30)            
+    register_alias = automatic(register_alias, 30)
     
+    def init_partition(self, namelist):
+        args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
+                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in namelist],)
+        func = self.add_partitions
+        apply(func, args)
+        
     def get_current_time(self):
         '''get current time in date format'''
         return self.time_stamps[self.cur_time_index]
@@ -252,9 +260,12 @@ class Qsimulator(Simulator):
                 newstate = 'queued'
                 updates['is_visible'] = True
         elif curstate == 'running':
-            if current_time_sec > end:
+            if current_time_sec > end:  #job finished
                 newstate = 'ended'
-            
+                partitions = jobspec['location'].split(':')
+                for partition in partitions:
+                    self.release_partition(partition)
+                
         if not jobspec['state'] == newstate:
             print self.get_current_time(), "state change, job", job_id, \
              ":", curstate, "->", newstate
@@ -292,6 +303,9 @@ class Qsimulator(Simulator):
     def start_job(self, specs, updates):
         '''update the job state and start_time and end_time when cqadm --run
         is issued to a group of jobs'''
+        partitions = updates['location'].split(':')
+        for partition in partitions:
+            self.reserve_partition(partition)
         def _start_job(job, newattr):
             '''callback function to update job start/end time'''
             temp = job.to_rx()
