@@ -3,12 +3,14 @@
 '''Cobalt Queue Simulator library'''
 
 import sys
+import logging
 import time
 import ConfigParser
 
 import Cobalt
 import Cobalt.Util
 import Cobalt.Cqparse
+from datetime import datetime
 
 from Cobalt.Data import Data, DataList
 from Cobalt.Proxy import ComponentProxy
@@ -18,6 +20,7 @@ from Cobalt.Components.cqm import QueueDict, Queue
 from Cobalt.Components.simulator import Simulator
 
 default_workload_file = "/nfs/mcs-homes15/wtang/workspace/wl-20080530"
+logger = logging.getLogger('cqm')
 
 def parseline(line):
     '''parse a line in work load file, return a temp
@@ -100,6 +103,7 @@ class SimQueue (Queue):
     def __init__(self, spec):
         Queue.__init__(self, spec)
         self.jobs = JobList(self)
+        self.state = 'running'
         
     def get_joblist(self):
         '''return the job list'''
@@ -125,7 +129,35 @@ class SimQueueDict(QueueDict):
             
         return results
  
+class PBSlogger:
+    def __init__(self, name):
+        CP = ConfigParser.ConfigParser()
+        CP.read(Cobalt.CONFIG_FILES)
+        try:
+            self.logdir = CP.get('cqm', 'log_dir')
+        except ConfigParser.NoOptionError:
+            self.logdir = '/var/log/cobalt-accounting'
+        self.date = None
+        self.logfile = open('/dev/null', 'w+')
+        self.name = name
+    def RotateLog(self):
+        if self.date != time.localtime()[:3]:
+            self.date = time.localtime()[:3]
+            date_string = "%s_%02d_%02d" % self.date
+            logfile = "%s/%s-%s.log" % (self.logdir, self.name, date_string)
+            try:
+                self.logfile = open(logfile, 'a+')
+            except IOError:
+                self.logfile = open("/dev/null", 'a+')
+    def LogMessage(self, message):
+        self.RotateLog()
          
+        try:
+            self.logfile.write("%s\n" % (message))
+            self.logfile.flush()
+        except IOError, e:
+            logger.error("PBSlogger failure : %s" % e)
+    
 class Qsimulator(Simulator):
     '''Cobalt Queue Simulator'''
     
@@ -142,7 +174,8 @@ class Qsimulator(Simulator):
         self.init_queues()
         partnames = self._partitions.keys()
         self.init_partition(partnames)
-    
+        self.pbslog = PBSlogger("qsim")
+             
     def register_alias(self):
         '''register alternate name for the Qsimulator, by registering in slp
         with another name for the same location. in this case 'system' is the 
@@ -158,9 +191,15 @@ class Qsimulator(Simulator):
     register_alias = automatic(register_alias, 30)
     
     def init_partition(self, namelist):
+        '''add all paritions and apply activate and enable'''
+        func = self.add_partitions
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
                   'scheduled':False, 'queue':'default', 'deps':[]} for partname in namelist],)
-        func = self.add_partitions
+        apply(func, args)
+        
+        func = self.set_partitions
+        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
+                {'scheduled':True, 'functional': True})
         apply(func, args)
         
     def get_current_time(self):
@@ -180,8 +219,8 @@ class Qsimulator(Simulator):
             str(self.cur_time_index)
         else:
             print str(self.get_current_time()) +\
-            " Warning: reached maximum time stamp: " +\
-            str(self.cur_time_index)
+            " Reached maximum time stamp: %s, simulating finished! " %  (str(self.cur_time_index))
+            exit(1)
         return self.cur_time_index
    
     def init_queues(self):
@@ -192,7 +231,7 @@ class Qsimulator(Simulator):
         specs = []
         
         for key in raw_jobs:
-            spec = {}
+            spec = {'valid':True}
             tmp = raw_jobs[key]
             
             spec['jobid'] = tmp.get('jobid')
@@ -204,18 +243,21 @@ class Qsimulator(Simulator):
                 t_tuple = time.strptime(format_sub_time, "%m/%d/%Y %H:%M:%S")
                 spec['submittime'] = time.mktime(t_tuple)                
             else:
-                spec['submittime'] = '0'
+                spec['valid'] = False
                 
             #convert walltime from 'hh:mm:ss' to float of minutes
             format_walltime = tmp.get('Resource_List.walltime')
             if format_walltime:
                 segs = format_walltime.split(':')
-                spec['walltime'] = str(int(segs[0])*60 + int(segs[1]) + \
-                                       float(segs[2])/60)
-            else:  #raw walltime is none
-                spec['walltime'] = '0'
+                spec['walltime'] = str(int(segs[0])*60 + int(segs[1]))
+            else:  #invalid job entry, discard
+                spec['valid'] = False
             
-            spec['nodes'] = tmp.get('Resource_List.nodect')
+            if tmp.get('Resource_List.nodect'):
+                spec['nodes'] = tmp.get('Resource_List.nodect')
+            else:  #invalid job entry, discard
+                spec['valid'] = False
+            
             if tmp.get('start') and tmp.get('end'): 
                 spec['runtime'] = float(tmp.get('end'))-float(tmp.get('start'))
             
@@ -227,13 +269,41 @@ class Qsimulator(Simulator):
             if format_sub_time:
                 self.time_stamps.append(format_sub_time)
             #add the job spec to the spec list
-            specs.append(spec)
+            if spec['valid'] == True:
+                specs.append(spec)
             
         self.time_stamps.sort()
         self.add_jobs(specs)
       
         return 0
     
+    def log_job_event(self, type, timestamp, spec):
+        def len2 (input):
+            input = str(input)
+            if len(input) == 1:
+                return "0" + input
+            else:
+                return input
+        if type == 'Q':
+            message = "%s;Q;%d;queue=%s" % (timestamp, spec['jobid'], spec['queue'])
+        else:
+            wall_time = spec['walltime']
+            walltime_minutes = len2(int(float(wall_time)) % 60)
+            walltime_hours = len2(int(float(wall_time)) // 60)
+            log_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
+            if type == 'S':
+                message = "%s;S;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s exec_host=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
+                 spec['submittime'], spec['start_time'], spec['location'])
+            elif type == 'E':
+                message = "%s;E;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s end=%f exec_host=%s runtime=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
+                 spec['submittime'], spec['start_time'], spec['end_time'], spec['location'], spec['runtime'])
+            else:
+                print "invalid event type, type=", type
+                return
+        self.pbslog.LogMessage(message)
+                
     def get_new_state(self, jobspec):
         '''return the new state updates of a specific job at specific time 
         stamp, including invisible->queued, running->ended'''
@@ -255,16 +325,20 @@ class Qsimulator(Simulator):
             end = 0
         
         #make state change, handle invisible->queued, running->ended
-        if curstate == 'invisible':
-            if  current_time_sec >= submit_time_sec:
-                newstate = 'queued'
-                updates['is_visible'] = True
-        elif curstate == 'running':
+        if curstate == 'running':
             if current_time_sec > end:  #job finished
                 newstate = 'ended'
                 partitions = jobspec['location'].split(':')
                 for partition in partitions:
                     self.release_partition(partition)
+                tmp = datetime.fromtimestamp(end)
+                end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
+                self.log_job_event('E', end_datetime, jobspec)
+        elif curstate == 'invisible':
+            if  current_time_sec >= submit_time_sec:
+                newstate = 'queued'
+                updates['is_visible'] = True
+                self.log_job_event('Q', self.get_current_time(), jobspec)
                 
         if not jobspec['state'] == newstate:
             print self.get_current_time(), "state change, job", job_id, \
@@ -273,6 +347,13 @@ class Qsimulator(Simulator):
         
         return updates               
     
+    def insertTimeStamp(self, new_time):
+        '''insert time stamps in the same order'''
+        pos = len(self.time_stamps)
+        while new_time < self.time_stamps[pos-1]:
+            pos = pos -1
+        self.time_stamps.insert(pos, new_time)
+     
     def run_job_updates(self, jobspec):
         ''' return the state updates (including state queued -> running, 
         setting the start_time, end_time)'''
@@ -285,6 +366,13 @@ class Qsimulator(Simulator):
         end = current_time_sec + float(jobspec['runtime'])
         updates['start_time'] = start
         updates['end_time'] = end
+        
+        #append time stamps, ensure every job can have 'time' to end
+        tmp = datetime.fromtimestamp(end)
+        end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
+        if end_datetime > self.time_stamps[len(self.time_stamps)-1]:
+            self.insertTimeStamp(end_datetime)
+        
         updates['state'] = 'running'
         print self.get_current_time(), "state change, job", jobspec['jobid'], \
              ":", jobspec['state'], "->", updates['state']
@@ -312,6 +400,7 @@ class Qsimulator(Simulator):
             newattr.update(self.run_job_updates(temp))
             temp.update(newattr)
             job.update(newattr)
+            self.log_job_event('S', self.get_current_time(), temp)
         return self.queues.get_jobs(specs, _start_job, updates)
     
     def add_jobs(self, specs):
