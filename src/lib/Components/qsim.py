@@ -258,8 +258,9 @@ class Qsimulator(Simulator):
             else:  #invalid job entry, discard
                 spec['valid'] = False
             
-            if tmp.get('start') and tmp.get('end'): 
-                spec['runtime'] = float(tmp.get('end'))-float(tmp.get('start'))
+            if tmp.get('start') and tmp.get('end'):
+                actual_run_time = float(tmp.get('end')) - float(tmp.get('start'))
+                spec['runtime'] = str(round(actual_run_time, 1))
             
             spec['state'] = 'invisible'
             spec['start_time'] = '0'
@@ -296,7 +297,7 @@ class Qsimulator(Simulator):
                 (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
                  spec['submittime'], spec['start_time'], spec['location'])
             elif type == 'E':
-                message = "%s;E;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s end=%f exec_host=%s runtime=%s" % \
+                message = "%s;E;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s end=%s exec_host=%s runtime=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
                  spec['submittime'], spec['start_time'], spec['end_time'], spec['location'], spec['runtime'])
             else:
@@ -333,6 +334,7 @@ class Qsimulator(Simulator):
                     self.release_partition(partition)
                 tmp = datetime.fromtimestamp(end)
                 end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
+                updates['is_visible'] = False
                 self.log_job_event('E', end_datetime, jobspec)
         elif curstate == 'invisible':
             if  current_time_sec >= submit_time_sec:
@@ -365,7 +367,7 @@ class Qsimulator(Simulator):
         start = current_time_sec
         end = current_time_sec + float(jobspec['runtime'])
         updates['start_time'] = start
-        updates['end_time'] = end
+        updates['end_time'] = str(round(end,1))
         
         #append time stamps, ensure every job can have 'time' to end
         tmp = datetime.fromtimestamp(end)
@@ -415,7 +417,7 @@ class Qsimulator(Simulator):
         self.time_increment()
         self.update_job_states(specs, {})
         for spec in specs:
-            spec['state'] = 'queued'
+            spec['is_visible'] = True
         return self.queues.get_jobs(specs)
     get_jobs = exposed(query(get_jobs))
     
