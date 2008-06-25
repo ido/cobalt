@@ -163,8 +163,8 @@ class Simulator (BGBaseSystem):
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
-        
-    
+
+
     def configure (self, config_file):
         
         """Configure simulated partitions.
@@ -229,7 +229,7 @@ class Simulator (BGBaseSystem):
 
             tmp_list.append( dict(
                 name = partition_def.get("name"),
-                queue = "default",
+                queue = partition_def.get("queue", "default"),
                 size = NODES_PER_NODECARD * nc_count,
                 node_cards = node_list,
                 switches = switch_list,
