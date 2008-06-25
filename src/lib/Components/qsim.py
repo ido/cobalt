@@ -5,6 +5,8 @@
 import sys
 import logging
 import time
+import os
+import signal
 import ConfigParser
 
 import Cobalt
@@ -59,6 +61,9 @@ def parse_work_load(filename):
                 raw_job_dict[jobid].update(temp)
     return raw_job_dict
 
+def quit():
+    os.kill(os.getpid(), signal.SIGINT)
+
 class Job (Data):
     '''Job for simulation'''
         
@@ -104,6 +109,7 @@ class SimQueue (Queue):
         Queue.__init__(self, spec)
         self.jobs = JobList(self)
         self.state = 'running'
+        self.tag = 'queue'
         
     def get_joblist(self):
         '''return the job list'''
@@ -184,7 +190,7 @@ class Qsimulator(Simulator):
             slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
         except ComponentLookupError:
             print >> sys.stderr, "unable to find service-location"
-            sys.exit(1)
+            quit()
         svc_location = slp.locate(self.name)
         if svc_location:
             slp.register(self.alias, svc_location)
@@ -220,7 +226,7 @@ class Qsimulator(Simulator):
         else:
             print str(self.get_current_time()) +\
             " Reached maximum time stamp: %s, simulating finished! " %  (str(self.cur_time_index))
-            exit(1)
+            quit()  #simulation completed, exit!!!
         return self.cur_time_index
    
     def init_queues(self):
