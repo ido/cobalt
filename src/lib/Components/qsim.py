@@ -181,6 +181,8 @@ class Qsimulator(Simulator):
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.pbslog = PBSlogger("qsim")
+        #tag to control time stamp increment, enable scheduler run multiple job at one time stamp
+        self.increment_tag = True
              
     def register_alias(self):
         '''register alternate name for the Qsimulator, by registering in slp
@@ -274,14 +276,15 @@ class Qsimulator(Simulator):
             
             #add the submit time into the interested time stamps list
             if format_sub_time:
-                self.time_stamps.append(format_sub_time)
+                if not self.time_stamps.__contains__(format_sub_time):
+                    self.insertTimeStamp(format_sub_time)
             #add the job spec to the spec list
             if spec['valid'] == True:
                 specs.append(spec)
             
-        self.time_stamps.sort()
+        print "total job number:", len(specs)
         self.add_jobs(specs)
-      
+                      
         return 0
     
     def log_job_event(self, type, timestamp, spec):
@@ -303,9 +306,9 @@ class Qsimulator(Simulator):
                 (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
                  spec['submittime'], spec['start_time'], spec['location'])
             elif type == 'E':
-                message = "%s;E;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s end=%s exec_host=%s runtime=%s" % \
+                message = "%s;E;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s end=%f exec_host=%s runtime=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
-                 spec['submittime'], spec['start_time'], spec['end_time'], spec['location'], spec['runtime'])
+                 spec['submittime'], spec['start_time'], round(float(spec['end_time']), 1), spec['location'], spec['runtime'])
             else:
                 print "invalid event type, type=", type
                 return
@@ -319,31 +322,32 @@ class Qsimulator(Simulator):
         newstate = curstate
         job_id = jobspec['jobid']
    
-        #change time of format "%m/%d/%Y %H:%M:%S" to Unix time sec
-        cur_tuple = time.strptime(self.get_current_time(), "%m/%d/%Y %H:%M:%S")
-        current_time_sec = time.mktime(cur_tuple)
         submit_time_sec = float(jobspec['submittime'])
         if submit_time_sec == 0:  #the never submitted job
             return updates
+        else:
+            tmp = datetime.fromtimestamp(submit_time_sec)
+            submit_datetime = tmp.strftime("%m/%d/%Y %H:%M:%S")
                         
         if jobspec['end_time']:
             end = float(jobspec['end_time'])
         else:
             end = 0
+        tmp = datetime.fromtimestamp(end)
+        end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
         
         #make state change, handle invisible->queued, running->ended
         if curstate == 'running':
-            if current_time_sec > end:  #job finished
+            if end_datetime == self.get_current_time():
                 newstate = 'ended'
                 partitions = jobspec['location'].split(':')
                 for partition in partitions:
                     self.release_partition(partition)
-                tmp = datetime.fromtimestamp(end)
-                end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
                 updates['is_visible'] = False
                 self.log_job_event('E', end_datetime, jobspec)
+
         elif curstate == 'invisible':
-            if  current_time_sec >= submit_time_sec:
+            if  submit_datetime == self.get_current_time():
                 newstate = 'queued'
                 updates['is_visible'] = True
                 self.log_job_event('Q', self.get_current_time(), jobspec)
@@ -373,13 +377,12 @@ class Qsimulator(Simulator):
         start = current_time_sec
         end = current_time_sec + float(jobspec['runtime'])
         updates['start_time'] = start
-        updates['end_time'] = str(round(end,1))
+        updates['end_time'] = end
         
         #append time stamps, ensure every job can have 'time' to end
         tmp = datetime.fromtimestamp(end)
         end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
-        if end_datetime > self.time_stamps[len(self.time_stamps)-1]:
-            self.insertTimeStamp(end_datetime)
+        self.insertTimeStamp(end_datetime)
         
         updates['state'] = 'running'
         print self.get_current_time(), "state change, job", jobspec['jobid'], \
@@ -420,7 +423,9 @@ class Qsimulator(Simulator):
     def get_jobs(self, specs):
         '''get a list of jobs, each time triggers time stamp increment and job
         states update'''
-        self.time_increment()
+        if self.increment_tag:
+            self.time_increment()
+        self.increment_tag = True
         self.update_job_states(specs, {})
         for spec in specs:
             spec['is_visible'] = True
@@ -443,5 +448,7 @@ class Qsimulator(Simulator):
         print "run job specs=", specs, " on partion", nodelist
         if specs:
             self.start_job(specs, {'location': ":".join(nodelist)})
+            #set tag false, enable scheduling another job at the same time
+            self.increment_tag = False
         return self.queues.get_jobs([{'jobid':"*", 'state':"running"}])
     run_jobs = exposed(query(run_jobs))
