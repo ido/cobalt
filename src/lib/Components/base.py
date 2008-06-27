@@ -38,7 +38,7 @@ def state_file_location():
     return state_dir
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}, extra_getopt=''):
+                   cls_kwargs={}, extra_getopt='', time_out=10):
     if argv is None:
         argv = sys.argv
     try:
@@ -109,7 +109,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         keypath = '/etc/cobalt.key'
 
     server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
-                          register=register)
+                          register=register, timeout=time_out)
     server.register_instance(component)
     
     try:
