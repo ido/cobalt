@@ -61,7 +61,7 @@ def parse_work_load(filename):
                 raw_job_dict[jobid].update(temp)
     return raw_job_dict
 
-def quit():
+def qsim_quit():
     os.kill(os.getpid(), signal.SIGINT)
 
 class Job (Data):
@@ -136,6 +136,8 @@ class SimQueueDict(QueueDict):
         return results
  
 class PBSlogger:
+    '''Logger to generate PBS-style event log'''
+
     def __init__(self, name):
         CP = ConfigParser.ConfigParser()
         CP.read(Cobalt.CONFIG_FILES)
@@ -146,7 +148,9 @@ class PBSlogger:
         self.date = None
         self.logfile = open('/dev/null', 'w+')
         self.name = name
+
     def RotateLog(self):
+        '''rotate log'''
         if self.date != time.localtime()[:3]:
             self.date = time.localtime()[:3]
             date_string = "%s_%02d_%02d" % self.date
@@ -156,6 +160,7 @@ class PBSlogger:
             except IOError:
                 self.logfile = open("/dev/null", 'a+')
     def LogMessage(self, message):
+        '''log message into pbs-style log'''
         self.RotateLog()
          
         try:
@@ -181,18 +186,18 @@ class Qsimulator(Simulator):
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.pbslog = PBSlogger("qsim")
-        #tag to control time stamp increment, enable scheduler run multiple job at one time stamp
+        #tag for controlling time stamp increment
         self.increment_tag = True
              
     def register_alias(self):
         '''register alternate name for the Qsimulator, by registering in slp
-        with another name for the same location. in this case 'system' is the 
+        with another name for the same location. in this case 'system' is the
         alternate name'''
         try:
             slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
         except ComponentLookupError:
             print >> sys.stderr, "unable to find service-location"
-            quit()
+            qsim_quit()
         svc_location = slp.locate(self.name)
         if svc_location:
             slp.register(self.alias, svc_location)
@@ -201,8 +206,9 @@ class Qsimulator(Simulator):
     def init_partition(self, namelist):
         '''add all paritions and apply activate and enable'''
         func = self.add_partitions
-        args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
-                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in namelist],)
+        args = ([{'tag':'partition', 'name':partname, 'size':"*", 
+                  'functional':False, 'scheduled':False, 'queue':'default',
+                   'deps':[]} for partname in namelist],)
         apply(func, args)
         
         func = self.set_partitions
@@ -227,8 +233,9 @@ class Qsimulator(Simulator):
             str(self.cur_time_index)
         else:
             print str(self.get_current_time()) +\
-            " Reached maximum time stamp: %s, simulating finished! " %  (str(self.cur_time_index))
-            quit()  #simulation completed, exit!!!
+            " Reached maximum time stamp: %s, simulating finished! " \
+             %  (str(self.cur_time_index))
+            qsim_quit()  #simulation completed, exit!!!
         return self.cur_time_index
    
     def init_queues(self):
@@ -267,8 +274,8 @@ class Qsimulator(Simulator):
                 spec['valid'] = False
             
             if tmp.get('start') and tmp.get('end'):
-                actual_run_time = float(tmp.get('end')) - float(tmp.get('start'))
-                spec['runtime'] = str(round(actual_run_time, 1))
+                act_run_time = float(tmp.get('end')) - float(tmp.get('start'))
+                spec['runtime'] = str(round(act_run_time, 1))
             
             spec['state'] = 'invisible'
             spec['start_time'] = '0'
@@ -277,7 +284,7 @@ class Qsimulator(Simulator):
             #add the submit time into the interested time stamps list
             if format_sub_time:
                 if not self.time_stamps.__contains__(format_sub_time):
-                    self.insertTimeStamp(format_sub_time)
+                    self.insert_time_stamp(format_sub_time)
             #add the job spec to the spec list
             if spec['valid'] == True:
                 specs.append(spec)
@@ -287,28 +294,30 @@ class Qsimulator(Simulator):
                       
         return 0
     
-    def log_job_event(self, type, timestamp, spec):
-        def len2 (input):
-            input = str(input)
-            if len(input) == 1:
-                return "0" + input
+    def log_job_event(self, eventtype, timestamp, spec):
+        '''log job events(Queue,Start,End) to PBS-style log'''
+        def len2 (_input):
+            _input = str(_input)
+            if len(_input) == 1:
+                return "0" + _input
             else:
-                return input
-        if type == 'Q':
+                return _input
+        if eventtype == 'Q':
             message = "%s;Q;%d;queue=%s" % (timestamp, spec['jobid'], spec['queue'])
         else:
             wall_time = spec['walltime']
             walltime_minutes = len2(int(float(wall_time)) % 60)
             walltime_hours = len2(int(float(wall_time)) // 60)
             log_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
-            if type == 'S':
-                message = "%s;S;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s exec_host=%s" % \
-                (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
-                 spec['submittime'], spec['start_time'], spec['location'])
-            elif type == 'E':
-                message = "%s;E;%d;queue=%s Resource_List.ncpus=%s Resource_List.walltime=%s qtime=%s start=%s end=%f exec_host=%s runtime=%s" % \
-                (timestamp, spec['jobid'], spec['queue'], spec['nodes'], log_walltime,
-                 spec['submittime'], spec['start_time'], round(float(spec['end_time']), 1), spec['location'], spec['runtime'])
+            if eventtype == 'S':
+                message = "%s;S;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s start=%s exec_host=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
+                 spec['nodes'], log_walltime, spec['start_time'], spec['location'])
+            elif eventtype == 'E':
+                message = "%s;E;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
+                 round(float(spec['end_time']), 1), spec['location'], 
+                 spec['runtime'])
             else:
                 print "invalid event type, type=", type
                 return
@@ -334,7 +343,7 @@ class Qsimulator(Simulator):
         else:
             end = 0
         tmp = datetime.fromtimestamp(end)
-        end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
+        end_datetime = tmp.strftime("%m/%d/%Y %H:%M:%S")
         
         #make state change, handle invisible->queued, running->ended
         if curstate == 'running':
@@ -359,7 +368,7 @@ class Qsimulator(Simulator):
         
         return updates               
     
-    def insertTimeStamp(self, new_time):
+    def insert_time_stamp(self, new_time):
         '''insert time stamps in the same order'''
         pos = len(self.time_stamps)
         while new_time < self.time_stamps[pos-1]:
@@ -379,10 +388,10 @@ class Qsimulator(Simulator):
         updates['start_time'] = start
         updates['end_time'] = end
         
-        #append time stamps, ensure every job can have 'time' to end
+        #insert time stamp for job end, ensure every job can have 'time' to end
         tmp = datetime.fromtimestamp(end)
-        end_datetime= tmp.strftime("%m/%d/%Y %H:%M:%S")
-        self.insertTimeStamp(end_datetime)
+        end_datetime =  tmp.strftime("%m/%d/%Y %H:%M:%S")
+        self.insert_time_stamp(end_datetime)
         
         updates['state'] = 'running'
         print self.get_current_time(), "state change, job", jobspec['jobid'], \
