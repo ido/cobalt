@@ -6,6 +6,8 @@ __revision__ = '$Revision$'
 import logging
 import sys
 import time
+import math
+import types
 try:
     set()
 except:
@@ -181,7 +183,7 @@ class ReservationDict (DataDict):
             if reservation.queue not in queues:
                 try:
                     qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'state':"running",
-                                    'users':reservation.users}])
+                                    'users':reservation.users, 'policy':"reservation_default"}])
                 except Exception, e:
                     logger.error("unable to add reservation queue %s (%s)" % \
                                  (reservation.queue, e))
@@ -217,7 +219,7 @@ class Partition (ForeignData):
     """Partitions are allocatable chunks of the machine"""
     
     fields = ForeignData.fields + [
-        "queue", "name", "nodecards", "scheduled", "functional", "size", "parents", "children", "state"
+        "queue", "name", "node_card_names", "scheduled", "functional", "size", "parents", "children", "state"
     ]
 
     def __init__(self, spec):
@@ -225,7 +227,7 @@ class Partition (ForeignData):
         spec = spec.copy()
         self.queue = spec.pop("queue", None)
         self.name = spec.pop("name", None)
-        self.nodecards = spec.pop("nodecards", None)
+        self.node_card_names = spec.pop("node_card_names", None)
         self.scheduled = spec.pop("scheduled", None)
         self.functional = spec.pop("functional", None)
         self.size = spec.pop("size", None)
@@ -243,7 +245,7 @@ class PartitionDict (ForeignDataDict):
     __oserror__ = Cobalt.Util.FailureMode("System Connection (partition)")
     __failname__ = 'System Connection'
     __function__ = ComponentProxy("system").get_partitions
-    __fields__ = ['name', 'queue', 'nodecards', 'scheduled', 'functional', 'size', 'parents', 'children', 'state']
+    __fields__ = ['name', 'queue', 'node_card_names', 'scheduled', 'functional', 'size', 'parents', 'children', 'state']
     key = 'name'
 
     def can_run(self, target_partition, job):
@@ -266,7 +268,8 @@ class Job (ForeignData):
     """A cobalt job."""
     
     fields = ForeignData.fields + [
-        "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user",
+        "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user", "submittime", 
+        "system_state", "starttime", 
     ]
     
     def __init__ (self, spec):
@@ -281,6 +284,9 @@ class Job (ForeignData):
         self.walltime = spec.pop("walltime", None)
         self.queue = spec.pop("queue", None)
         self.user = spec.pop("user", None)
+        self.submittime = spec.pop("submittime", None)
+        self.system_state = spec.pop("system_state", None)
+        self.starttime = spec.pop("starttime", None)
         
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -290,7 +296,8 @@ class JobDict(ForeignDataDict):
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (job)")
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
-                  'walltime', 'queue', 'user']
+                  'walltime', 'queue', 'user', 'submittime', 'system_state', 
+                  'starttime', ]
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
@@ -348,6 +355,7 @@ class BGSched (Component):
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.active = True
+        self.utility_functions = {}
     
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
@@ -367,7 +375,16 @@ class BGSched (Component):
         self.sched_info = {}
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
+        self.utility_functions = {}
 
+    # order the jobs with biggest utility first
+    def utilitycmp(self, tuple1, tuple2):
+        return -cmp(tuple1[1], tuple2[1])
+    
+    # order the jobs with the most walltime first
+    def walltimecmp(self, tuple1, tuple2):
+        return -cmp(float(tuple1[0].walltime), float(tuple2[0].walltime))
+    
     def prioritycmp(self, job1, job2):
         """Compare 2 jobs first using queue priority and then first-in, first-out."""
         
@@ -468,9 +485,17 @@ class BGSched (Component):
             if not self.started_jobs.has_key(j.jobid):
                 active_jobs.append(j)
 
-        active_jobs.sort(self.prioritycmp)
+        utility_scores = self._compute_utility_scores(active_jobs, time.time())
+        utility_scores.sort(self.utilitycmp)
+
+        # this is the bit that actually picks which job to run
+        for tup in utility_scores:
+            job = tup[0]
+            if tup[1] < utility_scores[0][2]:
+                self.sched_info[utility_scores[0][0].jobid] += "\n     wants to block other jobs from starting"
+                # this break is meant to take us to the explicit back filling mumbo-jumbo
+                break
             
-        for job in active_jobs:
             best_score = sys.maxint
             best_partition = None
             
@@ -529,7 +554,70 @@ class BGSched (Component):
         self.assigned_partitions[partition.name] = time.time()
         self.started_jobs[job.jobid] = time.time()
 
-        
+    def _find_best_partition(self, job, available_partitions):
+        best_score = sys.maxint
+        best_partition = None
+        for partition in available_partitions:
+            # check if the current partition is linked to the job's queue
+            if job.queue not in partition.queue.split(':'):
+                continue
+                
+            if self.partitions.can_run(partition, job):
+                really_okay = True
+                for res in self.reservations.itervalues():
+                    # if the proposed job overlaps an active reservation, don't run it
+                    if res.overlaps(partition, time.time(), 60 * float(job.walltime) + SLOP_TIME):
+                        really_okay = False
+                        self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
+                        break
+                        
+                if really_okay:
+                    # let's check the impact on partitions that would become blocked
+                    score = 0
+                    for p in partition.parents:
+                        if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
+                            score += 1
+                    
+                    # the lower the score, the fewer new partitions will be blocked by this selection
+                    if score < best_score:
+                        best_score = score
+                        best_partition = partition        
+
+        return best_partition
+
+    def _compute_utility_scores (self, active_jobs, current_time):
+        utility_scores = []
+        if not self.utility_functions:
+            self.logger.info("bulding utility functions")
+            self.define_utility_functions()
+            
+        for job in active_jobs:
+            utility_name = self.queues[job.queue].policy
+            args = {'queued_time':current_time - float(job.submittime), 'wall_time': float(job.walltime), 'size': float(job.nodes)}
+            try:
+                self.utility_functions[utility_name].func_globals.update(args)
+                score = self.utility_functions[utility_name]()
+            except KeyError:
+                # do something sensible when the requested utility function doesn't exist
+                # probably go back to the "default" one
+                
+                # and if we get here, try to fix it and throw away this scheduling iteration
+                self.logger.error("cannot find utility function named '%s' named by queue '%s'" % (utility_name, job.queue))
+                score = 0
+            except:
+                # do something sensible when the requested utility function explodes
+                # probably go back to the "default" one
+                
+                # and if we get here, try to fix it and throw away this scheduling iteration
+                logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), exc_info=True)
+                score = 0
+            
+            if type(score) is not types.TupleType:
+                score = (score, 0)
+            
+            self.sched_info[job.jobid] = str(score)    
+            utility_scores.append( (job, ) + score)
+        return utility_scores
 
     def schedule_jobs (self):
         '''look at the queued jobs, and decide which ones to start'''
@@ -619,58 +707,105 @@ class BGSched (Component):
         
         # handle the reservation jobs that might be ready to go
         self._run_reservation_jobs(available_partitions, res_queues)
+
+        # figure out stuff about queue equivalence classes
+        equiv = []
+        for part in self.partitions.itervalues():
+            if part.functional and part.scheduled:
+                found_a_match = False
+                for e in equiv:
+                    if e['data'].intersection(part.node_card_names):
+                        e['queues'].update(part.queue.split(":"))
+                        e['data'].update(part.node_card_names)
+                        found_a_match = True
+                        break
+                if not found_a_match:
+                    equiv.append( { 'queues': set(part.queue.split(":")), 'data': set(part.node_card_names) } ) 
+            
+        # print "equiv: ", 
+        # print equiv
+
         
-        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues])
-        active_jobs = []
-        for j in temp_jobs:
-            if not self.started_jobs.has_key(j.jobid):
-                active_jobs.append(j)
-
-        temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in spruce_queues])
-        spruce_jobs = []
-        for j in temp_jobs:
-            if not self.started_jobs.has_key(j.jobid):
-                spruce_jobs.append(j)
-
-        # if there are any pending jobs in high-prio queues, those are the only ones that can start
-        if spruce_jobs:
-            active_jobs = spruce_jobs
-
-        active_jobs.sort(self.prioritycmp)
-        
-        # this is the bit that actually picks which job to run
-        for job in active_jobs:
-            best_score = sys.maxint
-            best_partition = None
-            for partition in available_partitions:
-                # check if the current partition is linked to the job's queue
-                if job.queue not in partition.queue.split(':'):
+        for eq_class in equiv:
+            temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues if queue.name in eq_class['queues']])
+            active_jobs = []
+            for j in temp_jobs:
+                if not self.started_jobs.has_key(j.jobid):
+                    active_jobs.append(j)
+    
+            temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues if queue.name in eq_class['queues']])
+            spruce_jobs = []
+            for j in temp_jobs:
+                if not self.started_jobs.has_key(j.jobid):
+                    spruce_jobs.append(j)
+    
+            # if there are any pending jobs in high-prio queues, those are the only ones that can start
+            if spruce_jobs:
+                active_jobs = spruce_jobs
+    
+            utility_scores = self._compute_utility_scores(active_jobs, now)
+            utility_scores.sort(self.utilitycmp)
+    
+            # this is the bit that actually picks which job to run
+            for tup in utility_scores:
+                job = tup[0]
+                if tup[1] < utility_scores[0][2]:
+                    self.sched_info[utility_scores[0][0].jobid] += "\n     wants to block other jobs from starting"
+                    # this break is meant to take us to the explicit back filling mumbo-jumbo
+                    break
+    
+                best_partition = self._find_best_partition(job, available_partitions)
+                if best_partition is not None:
+                    self._start_job(job, best_partition)
+                    return
+    
+            # oh mercy
+            # time for some explicit backfilling
+            temp_jobs = [job for job in self.jobs.q_get([{'system_state':"running"}]) if job.queue in eq_class['queues']]
+            end_times = []
+            for job in temp_jobs:
+                end_time = float(job.starttime) + 60 * float(job.walltime)
+                end_times.append(end_time)
+            
+            for cur_res in self.reservations.values():
+                skip = True
+                for p_name in cur_res.partitions.split(":"):
+                    if eq_class['data'].intersection(self.partitions[p_name].node_card_names):
+                        skip = False
+                        break
+                if skip:
                     continue
-                    
-                if self.partitions.can_run(partition, job):
-                    really_okay = True
-                    for res in self.reservations.itervalues():
-                        # if the proposed job overlaps an active reservation, don't run it
-                        if res.overlaps(partition, time.time(), 60 * float(job.walltime) + SLOP_TIME):
-                            really_okay = False
-                            self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
-                            break
-                            
-                    if really_okay:
-                        # let's check the impact on partitions that would become blocked
-                        score = 0
-                        for p in partition.parents:
-                            if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
-                                score += 1
                         
-                        # the lower the score, the fewer new partitions will be blocked by this selection
-                        if score < best_score:
-                            best_score = score
-                            best_partition = partition        
+                if not cur_res.cycle:
+                    end_time = float(cur_res.start) + float(cur_res.duration)
+                else:
+                    done_after = float(cur_res.duration) - ((now - float(cur_res.start)) % float(cur_res.cycle))
+                    if done_after < 0:
+                        done_after += cur_res.cycle
+                    end_time = now + done_after
+                end_times.append(end_time)
+    
+            if end_times:
+                # add on an extra 2 minutes so that some jobs with the same walltime can start together 
+                cut_off = min(end_times) - now + 120
+            else:
+                # if nothing is running, we can't technically "back fill" and there's just nothing to run
+                # so we should examine the next equivalence class of queues
+                continue
+    
+            utility_scores.sort(self.walltimecmp)
+            
+            for tup in utility_scores:
+                job = tup[0]
+                if 60*float(job.walltime) > cut_off:
+                    continue
+    
+                best_partition = self._find_best_partition(job, available_partitions)
+                if best_partition is not None:
+                    self._start_job(job, best_partition)
+                    self.logger.info("backfilling job %s" % job.jobid)
+                    return
 
-            if best_partition is not None:
-                self._start_job(job, best_partition)
-                return
 
     schedule_jobs = automatic(schedule_jobs)
 
@@ -692,3 +827,20 @@ class BGSched (Component):
         """Disable scheduling"""
         self.active = False
     disable = exposed(disable)
+
+    def define_utility_functions(self):
+        f = open("/etc/cobalt.utility")
+        str = f.read()
+        code = compile(str, "/etc/cobalt.utility", 'exec')
+        
+        globals = {'math':math, 'time':time}
+        locals = {}
+        try:
+            exec code in globals, locals
+        except:
+            logger.error("whoopsies!", exc_info=True)
+            
+        for thing in locals.values():
+            if type(thing) is types.FunctionType:
+                self.utility_functions[thing.func_name] = thing
+            

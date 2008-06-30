@@ -95,6 +95,11 @@ class Partition (Data):
     
     children = property(_get_children)
     
+    def _get_node_card_names (self):
+        return [nc.id for nc in self.node_cards]
+    
+    node_card_names = property(_get_node_card_names)
+    
     def __str__ (self):
         return self.name
     
