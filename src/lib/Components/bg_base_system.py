@@ -9,11 +9,11 @@ ProcessGroupDict -- default container for process groups
 BGBaseSystem -- base system component
 """
 
+import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError
 from Cobalt.Components.base import Component, exposed, automatic, query
-import sets
-import thread
+import sets, thread, xmlrpclib, ConfigParser
 
 __all__ = [
     "NodeCard",
@@ -23,6 +23,9 @@ __all__ = [
     "ProcessGroupDict", 
     "BGBaseSystem",
 ]
+
+CP = ConfigParser.ConfigParser()
+CP.read(Cobalt.CONFIG_FILES)
 
 class NodeCard (object):
     """node cards make up Partitions"""
@@ -290,6 +293,55 @@ class BGBaseSystem (Component):
                     other._parents.add(p)
 
 
+    def validate_job(self, spec):
+        """validate a job for submission
+
+        Arguments:
+        spec -- job specification dictionary
+        """
+        # spec has {nodes, walltime*, procs, mode, kernel}
+        
+        max_nodes = max([int(p.size) for p in self._partitions.values()])
+        try:
+            sys_type = CP.get('cqm', 'bgtype')
+        except:
+            sys_type = 'bgl'
+        if sys_type == 'bgp':
+            job_types = ['smp', 'dual', 'vn', 'script']
+        else:
+            job_types = ['co', 'vn', 'script']
+        if not 0 < int(spec['nodes']) <= max_nodes:
+            raise xmlrpclib.Fault((2, "Node count out of realistic range"))
+        if float(spec['walltime']) < 5:
+            raise xmlrpclib.Fault((2, "Walltime less than minimum"))
+        if spec['mode'] not in job_types:
+            raise xmlrpclib.Fault((2, "Invalid mode"))
+        if 'proccount' not in spec:
+            if spec.get('mode', 'co') == 'vn':
+                if sys_type == 'bgl':
+                    spec['proccount'] = str(2 * int(spec['nodes']))
+                elif sys_type == 'bgp':
+                    spec['proccount'] = str(4 * int(spec['nodes']))
+                else:
+                    self.logger.error("Unknown bgtype %s" % (sys_type))
+            if spec.get('mode', 'co') == 'dual':
+                spec['proccount'] = 2 * int(spec['nodes'])
+            else:
+                spec['proccount'] = spec['nodes']
+        else:
+            if spec['proccount'] < 1:
+                raise xmlrpclib.Fault((2, "negative proccount"))
+            if spec['proccount'] > spec['nodes']:
+                if spec['mode'] not in ['vn', 'dual']:
+                    raise xmlrpclib.Fault((2, "proccount too large"))
+                if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodes'])):
+                    raise xmlrpclib.Fault((2, "proccount too large"))
+                elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodes'])):
+                    raise xmlrpclib.Fault((2, "proccount too large"))
+        # need to handle kernel
+        return spec
+    validate_job = exposed(validate_job)
+        
     def run_diags(self, partition_list, test_name):
         def size_cmp(left, right):
             return -cmp(left.size, right.size)
