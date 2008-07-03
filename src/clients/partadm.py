@@ -136,11 +136,10 @@ if __name__ == '__main__':
 
         try:
             scheduler = ComponentProxy("scheduler", defer=False)
+            reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*"}])
         except ComponentLookupError:
-            print "Failed to connect to scheduler"
-            raise SystemExit, 1
-    
-        reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*"}])
+            print "Failed to connect to scheduler; no reservation data available"
+            reservations = []
     
         expanded_parts = {}
         for res in reservations:
