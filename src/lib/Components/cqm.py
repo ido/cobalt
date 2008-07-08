@@ -1035,7 +1035,7 @@ class QueueManager(Component):
         cqm_id_gen = self.id_gen
 
     def __getstate__(self):
-        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':2}
+        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3}
                 
     def __setstate__(self, state):
         self.Queues = state['Queues']
