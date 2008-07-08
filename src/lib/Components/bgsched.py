@@ -184,7 +184,6 @@ class ReservationDict (DataDict):
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:
-                    print "adding reservation using policy:", DEFAULT_RESERVATION_POLICY
                     qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'state':"running",
                                     'users':reservation.users, 'policy':DEFAULT_RESERVATION_POLICY}])
                 except Exception, e:
@@ -765,9 +764,6 @@ class BGSched (Component):
                 if not found_a_match:
                     equiv.append( { 'queues': set(part.queue.split(":")), 'data': set(part.node_card_names) } ) 
             
-        # print "equiv: ", 
-        # print equiv
-
         
         for eq_class in equiv:
             temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues if queue.name in eq_class['queues']])
