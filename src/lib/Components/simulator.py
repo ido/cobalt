@@ -310,6 +310,9 @@ class Simulator (BGBaseSystem):
         self._partitions_lock.acquire()
         partition.state = "idle"
         self._partitions_lock.release()
+        
+        # explicitly unblock the blocked partitions
+        self.update_partition_state()
 
         self.logger.info("release_partition(%r)" % (name))
         return True
