@@ -310,12 +310,16 @@ class BGBaseSystem (Component):
             job_types = ['smp', 'dual', 'vn', 'script']
         else:
             job_types = ['co', 'vn', 'script']
+        try:
+            spec['nodes'] = int(spec['nodes'])
+        except:
+            raise xmlrpclib.Fault(2, "Non-integer node count")
         if not 0 < int(spec['nodes']) <= max_nodes:
-            raise xmlrpclib.Fault((2, "Node count out of realistic range"))
+            raise xmlrpclib.Fault(2, "Node count out of realistic range")
         if float(spec['walltime']) < 5:
-            raise xmlrpclib.Fault((2, "Walltime less than minimum"))
+            raise xmlrpclib.Fault(2, "Walltime less than minimum")
         if spec['mode'] not in job_types:
-            raise xmlrpclib.Fault((2, "Invalid mode"))
+            raise xmlrpclib.Fault(2, "Invalid mode")
         if 'proccount' not in spec:
             if spec.get('mode', 'co') == 'vn':
                 if sys_type == 'bgl':
@@ -329,15 +333,19 @@ class BGBaseSystem (Component):
             else:
                 spec['proccount'] = spec['nodes']
         else:
+            try:
+                spec['proccount'] = int(spec['proccount'])
+            except:
+                raise xmlrpclib.Fault(2, "non-integer proccount")
             if spec['proccount'] < 1:
-                raise xmlrpclib.Fault((2, "negative proccount"))
+                raise xmlrpclib.Fault(2, "negative proccount")
             if spec['proccount'] > spec['nodes']:
                 if spec['mode'] not in ['vn', 'dual']:
-                    raise xmlrpclib.Fault((2, "proccount too large"))
+                    raise xmlrpclib.Fault(2, "proccount too large")
                 if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodes'])):
-                    raise xmlrpclib.Fault((2, "proccount too large"))
+                    raise xmlrpclib.Fault(2, "proccount too large")
                 elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodes'])):
-                    raise xmlrpclib.Fault((2, "proccount too large"))
+                    raise xmlrpclib.Fault(2, "proccount too large")
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
