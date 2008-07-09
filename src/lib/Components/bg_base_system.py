@@ -311,27 +311,27 @@ class BGBaseSystem (Component):
         else:
             job_types = ['co', 'vn', 'script']
         try:
-            spec['nodes'] = int(spec['nodes'])
+            spec['nodecount'] = int(spec['nodecount'])
         except:
             raise xmlrpclib.Fault(2, "Non-integer node count")
-        if not 0 < int(spec['nodes']) <= max_nodes:
+        if not 0 < spec['nodecount'] <= max_nodes:
             raise xmlrpclib.Fault(2, "Node count out of realistic range")
-        if float(spec['walltime']) < 5:
+        if float(spec['time']) < 5:
             raise xmlrpclib.Fault(2, "Walltime less than minimum")
         if spec['mode'] not in job_types:
             raise xmlrpclib.Fault(2, "Invalid mode")
-        if 'proccount' not in spec:
+        if not spec['proccount']:
             if spec.get('mode', 'co') == 'vn':
                 if sys_type == 'bgl':
-                    spec['proccount'] = str(2 * int(spec['nodes']))
+                    spec['proccount'] = str(2 * int(spec['nodecount']))
                 elif sys_type == 'bgp':
-                    spec['proccount'] = str(4 * int(spec['nodes']))
+                    spec['proccount'] = str(4 * int(spec['nodecount']))
                 else:
                     self.logger.error("Unknown bgtype %s" % (sys_type))
             if spec.get('mode', 'co') == 'dual':
-                spec['proccount'] = 2 * int(spec['nodes'])
+                spec['proccount'] = 2 * int(spec['nodecount'])
             else:
-                spec['proccount'] = spec['nodes']
+                spec['proccount'] = spec['nodecount']
         else:
             try:
                 spec['proccount'] = int(spec['proccount'])
@@ -339,12 +339,12 @@ class BGBaseSystem (Component):
                 raise xmlrpclib.Fault(2, "non-integer proccount")
             if spec['proccount'] < 1:
                 raise xmlrpclib.Fault(2, "negative proccount")
-            if spec['proccount'] > spec['nodes']:
+            if spec['proccount'] > spec['nodecount']:
                 if spec['mode'] not in ['vn', 'dual']:
                     raise xmlrpclib.Fault(2, "proccount too large")
-                if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodes'])):
+                if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodecount'])):
                     raise xmlrpclib.Fault(2, "proccount too large")
-                elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodes'])):
+                elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodecount'])):
                     raise xmlrpclib.Fault(2, "proccount too large")
         # need to handle kernel
         return spec

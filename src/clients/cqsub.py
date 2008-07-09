@@ -39,7 +39,7 @@ if __name__ == '__main__':
                 'c':'proccount', 'C':'cwd', 'e':'env', 'k':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
-                'i':'inputfile', 'dependencies':'dependencies'}
+                'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -72,22 +72,9 @@ if __name__ == '__main__':
         sys.exit(1)
 
     jobspec = {'tag':'job'}
-    try:
-        nc = int(opts['nodecount'])
-    except:
-        logger.error("Error: non-integer node count specified with -n option")
-        sys.exit(1)
-
     if opts['kerneloptions']:
         jobspec['kerneloptions'] = opts['kerneloptions']
 
-    try:
-        sys_size = int(CP.get('cqm', 'size'))
-    except:
-        sys_size = 1024
-    if not 0 < nc <= sys_size:
-        logger.error("node count out of realistic range")
-        sys.exit(1)
     if opts['cwd'] == False:
         opts['cwd'] = os.getcwd()
     if not os.path.isdir(opts['cwd']):
@@ -99,7 +86,6 @@ if __name__ == '__main__':
     except Cobalt.Exceptions.TimeFormatError, e:
         logger.error("invalid time specification: %s" % e.message)
         sys.exit(1)
-    logger.error("submitting walltime=%s minutes" % str(minutes))
     opts['time'] = str(minutes)
     user = pwd.getpwuid(os.getuid())[0]
     if command[0][0] != '/':
@@ -109,52 +95,27 @@ if __name__ == '__main__':
         logger.error("command %s not found, or is not a file" % command[0])
         sys.exit(1)
 
-    try:
-        sys_type = CP.get('cqm', 'bgtype')
-    except:
-        sys_type = 'bgl'
-    if sys_type == 'bgp':
-        job_types = ['smp', 'co', 'dual', 'vn', 'script']
-    else:
-        job_types = ['co', 'vn', 'script']
-        
-    if not opts['mode']:
-        opts['mode'] = 'co'
-    elif opts['mode'] not in job_types:
-        logger.error("Specifed mode '%s' not valid, valid modes are\n%s" % \
-              (opts['mode'], "\n".join(job_types)))
-        sys.exit(1)
-    if opts['mode'] == 'co' and sys_type == 'bgp':
-        opts['mode'] = 'SMP'
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
-    if opts['mode'] == 'script':
+    if not opts['mode']:
+        opts['mode'] = 'co'
+    elif opts['mode'] == 'script':
         script_mode = os.stat(command[0])[stat.ST_MODE]
         if not (script_mode & stat.S_IXUSR or \
                 script_mode & stat.S_IXGRP or script_mode & stat.S_IXOTH):
             logger.error("Script %s is not executable" % command[0])
             sys.exit(1)
-    if not opts['proccount']:
-        if opts.get('mode', 'co') == 'vn':
-            # set procs to 2 x nodes
-            if sys_type == 'bgl':
-                opts['proccount'] = str(2 * int(opts['nodecount']))
-            elif sys_type == 'bgp':
-                opts['proccount'] = str(4 * int(opts['nodecount']))
-            else:
-                logger.error("Unknown bgtype %s" % (sys_type))
-                sys.exit(1)
-        elif opts.get('mode', 'co') == 'dual':
-            opts['proccount'] = str(2 * int(opts['nodecount']))
-        else:
-            opts['proccount'] = opts['nodecount']
-    else:
-        try:
-            int(opts['proccount'])
-        except:
-            logger.error("Error: non-integer node count specified with -c option")
+
+    try:
+        print opts
+        system = ComponentProxy("system", defer=False)
+        opts = system.validate_job(opts)
+    except xmlrpclib.Fault, flt:
+        logger.error("Job failed to validate: %s" % (flt.faultString))
+        if not opts['forcenoval']:
             sys.exit(1)
+
 
     if opts['project']:
         jobspec['project'] = opts['project']
