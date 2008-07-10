@@ -10,6 +10,9 @@ mpirun: /usr/bin/mpirun
 [cqm]
 log_dir: /tmp
 bgkernel: false
+
+[bgsched]
+utility_file: /tmp/asdf
 """)
 
 Cobalt.CONFIG_FILES = [config_file]
