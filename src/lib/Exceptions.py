@@ -44,4 +44,8 @@ class ComponentLookupError (ComponentError):
     """Unable to locate an address for the given component."""
     fault_code = fault_code_counter.next()
 
+class JobValidationError(Exception):
+    """This error indicates that a job could not be validated."""
+    log = False
+    fault_code = fault_code_counter.next()
 

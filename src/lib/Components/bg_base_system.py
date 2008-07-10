@@ -11,7 +11,7 @@ BGBaseSystem -- base system component
 
 import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Exceptions import DataCreationError
+from Cobalt.Exceptions import DataCreationError, JobValidationError
 from Cobalt.Components.base import Component, exposed, automatic, query
 import sets, thread, xmlrpclib, ConfigParser
 
@@ -313,13 +313,13 @@ class BGBaseSystem (Component):
         try:
             spec['nodecount'] = int(spec['nodecount'])
         except:
-            raise xmlrpclib.Fault(2, "Non-integer node count")
+            raise JobValidationError("Non-integer node count")
         if not 0 < spec['nodecount'] <= max_nodes:
-            raise xmlrpclib.Fault(2, "Node count out of realistic range")
+            raise JobValidationError("Node count out of realistic range")
         if float(spec['time']) < 5:
-            raise xmlrpclib.Fault(2, "Walltime less than minimum")
+            raise JobValidationError("Walltime less than minimum")
         if spec['mode'] not in job_types:
-            raise xmlrpclib.Fault(2, "Invalid mode")
+            raise JobValidationError("Invalid mode")
         if not spec['proccount']:
             if spec.get('mode', 'co') == 'vn':
                 if sys_type == 'bgl':
@@ -336,16 +336,16 @@ class BGBaseSystem (Component):
             try:
                 spec['proccount'] = int(spec['proccount'])
             except:
-                raise xmlrpclib.Fault(2, "non-integer proccount")
+                JobValidationError("non-integer proccount")
             if spec['proccount'] < 1:
-                raise xmlrpclib.Fault(2, "negative proccount")
+                raise JobValidationError("negative proccount")
             if spec['proccount'] > spec['nodecount']:
                 if spec['mode'] not in ['vn', 'dual']:
-                    raise xmlrpclib.Fault(2, "proccount too large")
+                    raise JobValidationError("proccount too large")
                 if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodecount'])):
-                    raise xmlrpclib.Fault(2, "proccount too large")
+                    raise JobValidationError("proccount too large")
                 elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodecount'])):
-                    raise xmlrpclib.Fault(2, "proccount too large")
+                    raise JobValidationError("proccount too large")
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)

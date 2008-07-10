@@ -261,8 +261,6 @@ class Component (object):
                     margs = []
                 result = marshal_query_result(result, *margs)
             return result
-        except xmlrpclib.Fault:
-            raise
         except Exception, e:
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
