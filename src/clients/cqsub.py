@@ -108,7 +108,6 @@ if __name__ == '__main__':
             sys.exit(1)
 
     try:
-        print opts
         system = ComponentProxy("system", defer=False)
         opts = system.validate_job(opts)
     except xmlrpclib.Fault, flt:
