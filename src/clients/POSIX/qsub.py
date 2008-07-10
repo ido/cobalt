@@ -97,10 +97,6 @@ if __name__ == '__main__':
 
     if not opts['mode']:
         opts['mode'] = 'co'
-    elif opts['mode'] not in job_types:
-        logger.error("Specifed mode '%s' not valid, valid modes are\n%s" % \
-              (opts['mode'], "\n".join(job_types)))
-        sys.exit(1)
     if opts['mode'] == 'script':
         script_mode = os.stat(command[0])[stat.ST_MODE]
         if not (script_mode & stat.S_IXUSR or \
