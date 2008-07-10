@@ -1,0 +1,161 @@
+changes in cobalt 0.98.2
+
+* change to the simulator's XML file
+* the simulator can simulate bad hardware
+* bug fix so that the state of a reservation queue is honored
+* reservation queues are shown along with normal queues in partadm and
+  partlist output
+* added a --sort flag to [c]qstat which allows the user to specify how the
+  results are sorted
+* robustification of state file saving so that a full disk doesn't make
+  cobalt corrupt its state files
+* job dependencies are supported
+* cobalt's representation of job states has changed
+* qalter -t takes relative time arguments
+* partadm --diag can be used for running "diagnostics" on a partition and
+  its children
+* releaseres can properly release multiple reservations at once
+* the fields shown with [c]qstat -f can be controlled through an
+  environment variable or a setting in cobalt.conf
+* some problems with script mode jobs are fixed
+* the scheduler now uses a utility function to choose which job to execute
+* the high-prio queue policy has been renamed high_prio (as this is now
+  handled by a function written in python, and '-' isn't legal inside a
+  name)
+* job validation has been moved from [c]qsub into the bgsystem component
+
+
+The XML format used to describe partition information to the simulator has
+changed.  A new file in this format is included with the release, and one
+can now use
+
+    partadm --xml
+
+to have a running cobalt instance create an XML file describing the system
+being managed.
+
+
+To simulate bad hardware, one can use the client script named "hammer.py".
+The components that one can break are the NodeCards and Switches listed in
+the simulator's XML file.
+
+
+Job dependencies are created by using the --dependencies flag with [c]qsub.
+The argument to this flag is a colon separated list of jobids which must
+complete successfully in order for the job being submitted to be allowed to
+run.
+
+
+Job states have changed substantially.  "administrative" holds (as
+specified with cqadm) and "user" holds (as specified with qhold) can now be
+separately applied to a job.  That is to say, a job can have both kinds of
+hold applied to it, with qrls only release a user hold, and cqadm only
+releasing an administrative hold.  Additionally, jobs may exhibit states
+like "dependency hold" or "maxrunning hold".  Running jobs will display
+additional information like "starting" or "killing".
+
+
+There is a diagnostic framework that can be used to run any kind of program
+which can help diagnose bad hardware (e.g. a normal science application
+which is hard on the machine).  Problems are isolated by using a binary
+search on the children of a suspect partition.  Use 
+
+    partadm --diag=diag_name partition_name
+
+to run a script/program named diag_name found in /usr/lib/cobalt/diags/ .
+The exit value of the script should be 0 to indicate no problem found or
+non-zero to indicate an error.
+
+
+The scheduler now uses utility functions to decide on which job to execute.
+Cobalt has two built in utility functions:  "high_prio" and "default".
+Both of these utility functions immitate the behavior of those policies in
+previous versions of cobalt.  In the [bgsched] section of cobalt.conf, one
+may make an entry such as
+
+    utility_file: /etc/cobalt.utility
+
+which tells cobalt where to find user-defined cost functions.  Also in the
+[bgsched] section, one may include an entry like
+
+    default_reservation_policy: biggest_first
+
+to control the default policy applied to a newly created reservation queue.
+The file /etc/cobalt.utility simply contains the definitions of python
+functions, the names of which can be used as queue policies, set via cqadm.
+
+The scheduler iterates through the jobs which are available to run, and
+evaluates them one by one with the utility function specified by each job's
+queue.  The job having the highest utility value is selected to run.  If
+this job is unable to run (perhaps because it needs a partition which is
+currently blocked), cobalt can use a threshold to try to run jobs that are
+"almost as good" as the one which cannot start.  This threshold is set by
+the utility function itself.  If no such jobs exist, cobalt will apply a
+conservative backfill which should not interfere with the "best" job.
+
+The utility functions take no arguments, and should return a tuple of
+length 2: the first entry is the score for the job, and the second entry is
+the minimum allowed score for some other job that is allowed to start
+instead of this one.  Information about the job currently being evaluated
+by the utility function is available through several variables:
+
+    queued_time -- the time in seconds that the job has been waiting
+    wall_time -- the time in seconds requested by the job for execution
+    size -- the number of nodes requested by the job
+    user_name -- the user name of the person owning the job
+    project -- the project under which the job was submitted
+    queue_priority -- the priority of the queue in which the job lives
+    machine_size -- the total number of nodes available in the machine
+    jobid -- the integer job id shown in [c]qstat output
+
+Here is an example of a utility function that tries to avoid starvation:
+
+def wfp():
+    val = (queued_time / wall_time)**2 * size
+    return (val, 0.75 * val)
+
+This utility function allows jobs that have been waiting in the queue to
+get angrier and angrier that they haven't been allowed to run.  The second
+entry in the return value says that if cobalt is unable to start the
+"winning" job, it should only start a job having a utility value of at
+least 75% of the winning job's utility value.  In this way, starved jobs
+can prevent other jobs from starting until enough resources are freed for
+the starved jobs to run.
+
+Here are some more considerations about utility functions.
+
+Queues pointing to overlapping partitions may have different utility
+functions, but the values generated by these utility functions will be
+compared against each other.  Queues which point to disjoint partitions do
+not have the utility values of their jobs compared against each other.
+In the first case, since the queues are competing for resources, one queue
+can prevent jobs in the other queue from starting.  In the second case,
+since there is no competition for resources, the queues cannot interfere
+with each other.
+
+Cobalt attempts to determine whether queues have overlapping partitions by
+looking at the nodecards available to each queue.  Any queues which share
+nodecards are assumed to be competing for resources.
+
+Of special note: if you are trying to configure your cobalt installation to
+have queues pointing to disjoint pieces of the machine, you need to either
+remove the "top level" partition that encompasses the entire machine, or
+change that partition to the "unschedulable" state.  Otherwise, cobalt will
+detect that all of the queues are competing for resources.
+
+Changes to the /etc/cobalt.utilty file can be made at runtime.  To tell
+cobalt to reload this file, issue the command:
+
+    schedctl --reread-policy
+
+---------------------------------------------------------------------
+
+UPGRADING FROM COBALT 0.98.1
+
+A class definition changed, which breaks the statefiles used by cqm.  The
+statefile used by bgystem and bgsched should load.
+
+To recreate the information stored in the state file, use the mk_jobs.py
+and mk_queues.py scripts.  These will dump a series of commands that will
+recreate your queue configuration and jobs that are queued.
+
