@@ -617,6 +617,9 @@ class BGSched (Component):
         if not self.user_utility_functions:
             self.define_user_utility_functions()
             
+        # tack on a 0 so the list is never empty    
+        max_nodes = max([int(p.size) for p in self.partitions.values()] + [0])
+        
         for job in active_jobs:
             utility_name = self.queues[job.queue].policy
             args = {'queued_time':current_time - float(job.submittime), 
@@ -625,7 +628,7 @@ class BGSched (Component):
                     'user_name': job.user,
                     'project': job.project,
                     'queue_priority': int(self.queues[job.queue].priority),
-                    'machine_size': 40 * 1024 * 4,
+                    'machine_size': max_nodes,
                     'jobid': int(job.jobid),
                     }
             try:
