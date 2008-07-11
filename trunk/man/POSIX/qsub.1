@@ -1,0 +1,80 @@
+.TH "qsub" 1
+.SH "NAME"
+qsub \- submit jobs to the queue manager for execution
+.SH "SYNOPSIS"
+.B qsub 
+.I [--version] [-d] [-q queue] [-A project] [-t time] [-n number of nodes] [--mode mode] [--procccount process count] <executable> <options>
+.SH "DESCRIPTION"
+.PP
+.B qsub
+submits a job to the queue manager for execution. 
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-\-version
+Print out version string
+.TP
+.B \-I
+Run an interactive command. During job execution, the current tty will
+be connected with the running job. (Not available on Blue Gene systems.)
+.TP
+.B \-\-kernel "kernel profile"
+Run the job with the specified kernel profile.
+.TP
+.B \-K "kernel options"
+Run the job with the specified kernel options (equivalent to mpirun -kernel_options on Blue Gene/L).
+.TP 
+.B \-q "queue"
+Submit the job to the specified queue.
+.TP
+.B \-\-env "environmentvar=value:var=value2"
+Set environment variables for the job.
+.TP
+.B \-h 
+Submit job in user hold state
+.TP
+.B \-\-mode "mode"
+Either co (for coprocessor mode) or vn (for virtual node mode) or script (for script jobs)
+.TP
+.B \-n "node count"
+Specifies the node count for a job
+.TP
+.B \-\-proccount "process count"
+Specify the number of processes to start
+.TP
+.B \-A "project"
+Associate the job with the allocation for project project. This is
+used to properly account for machine usage. 
+.TP
+.B \-t "wall clock time" 
+Specify the runtime for a job. The time specified is the full amount in minutes
+allotted to the job for execution. If the job runs over this limit, it
+will be killed. If colon-delimited time is specified, the format is HH:MM:SS. 
+.TP
+.B \--cwd "working directory"
+Use specified working directory for job.
+.TP 
+.B \-O "output prefix"
+Use specified prefix for .output and .error files.
+.TP
+.B \-M "email address"
+Send an email notification at the start and stop of the job to the
+specified email address.
+.TP
+.B \-e "stderr file path"
+Send job stderr to file specified.
+.TP
+.B \-o "stdout file path"
+Send job stdout to file specified.
+.TP
+.B \-i "stdin file path"
+Send file to job's stdin.
+.SH "NOTE"
+The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
+.SH "SEE ALSO"
+.BR qstat(1),
+.BR qdel(1),
+.BR cqm(1)
+.SH "BUGS"

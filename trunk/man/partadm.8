@@ -1,0 +1,50 @@
+.TH "partadm" 8
+.SH "NAME"
+partadm \- partition administration tool
+.SH "SYNOPSIS"
+.B partadm [-a|-d] [-s size] part1 part2
+.TP
+.B partadm -l
+.TP
+.B partadm [--activate|--deactivate] part1 part2
+.TP
+.B partadm [--enable|--disable] part1 part2
+.TP
+.B partadm --version
+.SH "DESCRIPTION"
+.TP
+.B \-a
+Add new partitions into the scheduler
+.TP
+.B \-d 
+Delete partitions from the scheduler
+.TP
+.B \-l
+List partitions and their properties
+.TP
+.B \-\-activate
+Set the partition as functional
+.TP
+.B \-\-deactivate
+Se the partition as non-functional. (Jobs will not be run on
+non-functional partitions, or any overlapping partitions)
+.TP
+.B \-\-enable
+Allow partition(s) to have jobs scheduled on them
+.TP
+.B \-\-disable
+Do not run jobs on this partition(s). (Jobs can run on larger or
+smaller overlapping partitions)
+.TP
+.B \-\-dump
+Dump partition state
+.TP
+.B \-r
+Activate recursive mode. All child partitions of all specified
+partitions will be modified (for activate/deactivate/enable/disable/queue/deps/free)
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.SH "SEE ALSO"
+.BR partlist(1)
+.SH "BUGS"

@@ -1,0 +1,33 @@
+.TH "bgsystem" 8
+.SH NAME
+bgsystem \- Blue Gene System Component
+.SH SYNOPSIS
+.B bgsystem 
+.I [-d] [-C <configfile>] [-D=<pidfile>]
+.SH "DESCRIPTION"
+.PP
+.B bgsystem 
+The Blue Gene System Component handles mpirun execution for jobs in the queue.
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-C <configfile>
+Specify path to cobalt.conf.
+.TP
+.B \-D=<pidfile>
+Daemonize, and write pid to pidfile.
+.SH "CONFIGURATION FILE PARAMETERS"
+.TP
+.B NOTE
+The following configuration options are still located in the legacy [bgpm] section of the cobalt.conf file.
+.TP
+.B bridge_config=/path/to/bridge.config
+Set bridge config file for user jobs.
+.TP
+.B mmcs_server_id=ipaddress
+IP address of the MMCS server
+.TP
+.B mpirun=/path/to/mpirun
+Set path to the mpirun executable.
