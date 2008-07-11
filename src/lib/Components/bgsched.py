@@ -914,7 +914,7 @@ class BGSched (Component):
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
-            val = queue_priority + (1 - 1.0/jobid)
+            val = queue_priority + (1.0/(jobid+1))
             return (val, 0)
     
         def high_prio():
