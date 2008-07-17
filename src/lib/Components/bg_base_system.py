@@ -29,9 +29,10 @@ CP.read(Cobalt.CONFIG_FILES)
 
 class NodeCard (object):
     """node cards make up Partitions"""
-    def __init__(self, name):
+    def __init__(self, name, state="RM_NODECARD_UP"):
         self.id = name
         self.used_by = ''
+        self.state = ''
         
     def __eq__(self, other):
         return self.id == other.id

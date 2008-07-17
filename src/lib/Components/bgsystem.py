@@ -229,9 +229,9 @@ class BGSystem (BGBaseSystem):
             else:
                 return "busy"
     
-        def _get_node_card(name):
+        def _get_node_card(name, state):
             if not self.node_card_cache.has_key(name):
-                self.node_card_cache[name] = NodeCard(name)
+                self.node_card_cache[name] = NodeCard(name, state)
                 
             return self.node_card_cache[name]
             
@@ -266,14 +266,14 @@ class BGSystem (BGBaseSystem):
             if partition_def.small:
                 bp_name = partition_def.base_partitions[0].id
                 for nc in partition_def._node_cards:
-                    node_list.append(_get_node_card(bp_name + "-" + nc.id))
+                    node_list.append(_get_node_card(bp_name + "-" + nc.id, nc.state))
             else:
                 try:
                     for bp in partition_def.base_partitions:
                         if bp.id not in bp_cache:
                             bp_cache[bp.id] = []
                             for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
-                                bp_cache[bp.id].append(_get_node_card(bp.id + "-" + nc.id))
+                                bp_cache[bp.id].append(_get_node_card(bp.id + "-" + nc.id, nc.state))
                         node_list += bp_cache[bp.id]
                 except BridgeException:
                     print "Error communicating with the bridge during initial config.  Terminating."
@@ -332,6 +332,12 @@ class BGSystem (BGBaseSystem):
             else:
                 return "busy"
 
+        try:
+            bg_object = Cobalt.bridge.BlueGene.by_serial()
+        except BridgeException:
+            self.logger.error("Error communicating with the bridge to get bluegene information.")
+            bg_object = None
+
         while True:
             try:
                 system_def = Cobalt.bridge.PartitionList.info_by_filter()
@@ -340,6 +346,17 @@ class BGSystem (BGBaseSystem):
                 time.sleep(5) # wait a little bit...
                 continue # then try again
     
+            try:
+                if not bg_object:
+                    bg_object = Cobalt.bridge.BlueGene.by_serial()
+                for bp in bg_object.base_partitions:
+                    for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
+                        self.node_card_cache[bp.id + "-" + nc.id].state = nc.state
+            except:
+                self.logger.error("Error communicating with the bridge to update nodecard state information.")
+                time.sleep(5) # wait a little bit...
+                continue # then try again
+
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
                 nc.used_by = ''
