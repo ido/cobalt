@@ -378,7 +378,7 @@ class BGSystem (BGBaseSystem):
                             p.state = "blocked (%s)" % nc.used_by
                             break
                         if nc.state != "RM_NODECARD_UP":
-                            p.state = "hardware down: %S" % nc.state
+                            p.state = "hardware down: %s" % nc.state
                             break 
                     for dep_name in p._wiring_conflicts:
                         if self._partitions[dep_name].state == "busy":
