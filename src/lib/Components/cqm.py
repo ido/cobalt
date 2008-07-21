@@ -473,7 +473,7 @@ class Job (Data):
 
     def over_time(self):
         '''Check if a job has run over its time'''
-        if self.system_state == 'running':
+        if self.system_state == 'running' and self.job_step != "starting":
             runtime = self.timers['user'].Check()/60.0
             if float(self.walltime) < runtime:
                 return 1
