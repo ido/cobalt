@@ -105,6 +105,6 @@ if __name__ == '__main__':
         command += "%s " % j['command']
         command += "%s " % ' '.join(j['args'])
 
-        print "su %s %s" % (j['user'], command)
+        print 'su %s -c "%s"' % (j['user'], command)
 
 
