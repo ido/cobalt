@@ -95,8 +95,6 @@ if __name__ == '__main__':
         logger.error("command %s not found, or is not a file" % command[0])
         sys.exit(1)
 
-    if not opts['mode']:
-        opts['mode'] = 'co'
     if opts['mode'] == 'script':
         script_mode = os.stat(command[0])[stat.ST_MODE]
         if not (script_mode & stat.S_IXUSR or \

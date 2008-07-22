@@ -98,9 +98,7 @@ if __name__ == '__main__':
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
-    if not opts['mode']:
-        opts['mode'] = 'co'
-    elif opts['mode'] == 'script':
+    if opts['mode'] == 'script':
         script_mode = os.stat(command[0])[stat.ST_MODE]
         if not (script_mode & stat.S_IXUSR or \
                 script_mode & stat.S_IXGRP or script_mode & stat.S_IXOTH):

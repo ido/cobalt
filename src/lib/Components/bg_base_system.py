@@ -13,7 +13,7 @@ import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError, JobValidationError
 from Cobalt.Components.base import Component, exposed, automatic, query
-import sets, thread, xmlrpclib, ConfigParser
+import sets, thread, ConfigParser
 
 __all__ = [
     "NodeCard",
@@ -319,6 +319,11 @@ class BGBaseSystem (Component):
             raise JobValidationError("Node count out of realistic range")
         if float(spec['time']) < 5:
             raise JobValidationError("Walltime less than minimum")
+        if not spec['mode']:
+            if sys_type == 'bgp':
+                spec['mode'] = 'smp'
+            else:
+                spec['mode'] = 'co'
         if spec['mode'] not in job_types:
             raise JobValidationError("Invalid mode")
         if not spec['proccount']:
