@@ -376,6 +376,9 @@ class BGSched (Component):
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
     
+        self.define_builtin_utility_functions()
+        self.define_user_utility_functions()
+
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
                 'active':self.active}
@@ -396,6 +399,10 @@ class BGSched (Component):
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
+        
+        self.define_builtin_utility_functions()
+        self.define_user_utility_functions()
+
 
     # order the jobs with biggest utility first
     def utilitycmp(self, tuple1, tuple2):
@@ -611,11 +618,6 @@ class BGSched (Component):
 
     def _compute_utility_scores (self, active_jobs, current_time):
         utility_scores = []
-        if not self.builtin_utility_functions:
-            self.define_builtin_utility_functions()
-            
-        if not self.user_utility_functions:
-            self.define_user_utility_functions()
             
         # tack on a 0 so the list is never empty    
         max_nodes = max([int(p.size) for p in self.partitions.values()] + [0])
