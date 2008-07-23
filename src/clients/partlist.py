@@ -35,7 +35,7 @@ if __name__ == '__main__':
     spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*',
              'functional':True, 'scheduled':True, 'children':'*'}]
     parts = system.get_partitions(spec)
-    reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*"}])
+    reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
 
     expanded_parts = {}
     for res in reservations:

@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
         try:
             scheduler = ComponentProxy("scheduler", defer=False)
-            reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*"}])
+            reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
         except ComponentLookupError:
             print "Failed to connect to scheduler; no reservation data available"
             reservations = []
