@@ -21,6 +21,7 @@ Usage: partadm.py --diag=diag_name partition
 Usage: partadm.py --fail part1 part2
 Usage: partadm.py --unfail part1 part2
 Usage: partadm.py --dump
+Usage: partadm.py --xml
 Usage: partadm.py --version
 Must supply one of -a or -d or -l or -start or -stop or --queue'''
 

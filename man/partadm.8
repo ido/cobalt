@@ -2,13 +2,23 @@
 .SH "NAME"
 partadm \- partition administration tool
 .SH "SYNOPSIS"
-.B partadm [-a|-d] [-s size] part1 part2
+.B partadm [-a|-d] part1 part2
 .TP
 .B partadm -l
 .TP
 .B partadm [--activate|--deactivate] part1 part2
 .TP
 .B partadm [--enable|--disable] part1 part2
+.TP
+.B partadm --queue=queue1:queue2 part1 part2
+.TP
+.B partadm --diag=diag_name partition
+.TP
+.B partadm --fail part1 part2
+.TP
+.B partadm --unfail part1 part2
+.TP
+.B partadm --xml
 .TP
 .B partadm --version
 .SH "DESCRIPTION"
@@ -35,6 +45,26 @@ Allow partition(s) to have jobs scheduled on them
 .B \-\-disable
 Do not run jobs on this partition(s). (Jobs can run on larger or
 smaller overlapping partitions)
+.TP
+.B \-\-queue
+Set the queue[s] that point to particular partitions.
+.TP
+.B \-\-diag
+Run the named diagnostic on the selected partition.  Valid diagnostics are 
+programs in /usr/lib/cobalt/diags/ which return 0 to indicate no problem was found
+on the partition being tested, and non-zero to indicate an error.
+.TP
+.B \-\-fail
+Manually fail a partition in the same way as a partition that has failed diagnostics.
+.TP
+.B \-\-unfail
+Manually clear the failed state from a partition that has failed diagnostics (or
+has been marked failed by the --fail command).
+.TP
+.B \-\-xml
+This option is only available when running bgsystem (i.e. not the simulator).
+It will produce an XML file on standard out which describes the partitions being
+managed by the running cobalt.  This file is suitable for use with the simulator. 
 .TP
 .B \-\-dump
 Dump partition state

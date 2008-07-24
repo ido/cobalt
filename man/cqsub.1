@@ -71,6 +71,10 @@ Send job stdout to file specified.
 .TP
 .B \-i "stdin file path"
 Send file to job's stdin.
+.TP
+.B \-\-dependencies <jobid1>:<jobid2>
+Set the dependencies for the job being submitted.  This job won't run until 
+jobs having ids jobid1 and jobid2 have finished.
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
 .SH "SEE ALSO"
