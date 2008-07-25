@@ -544,7 +544,7 @@ class BGSched (Component):
                         part_in_res = False
                         for part_name in cur_res.partitions.split(":"):
                             if not part_name in self.partitions:
-                                self.logger.error("reservation '%s' refers to non-existant partition '%s'" % (cur_res.name, part_name))
+                                self.logger.error("reservation '%s' refers to non-existent partition '%s'" % (cur_res.name, part_name))
                                 continue
                             if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
                                 continue
