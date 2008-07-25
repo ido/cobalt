@@ -88,9 +88,13 @@ if __name__ == '__main__':
         custom_header_full = CP.get('cqm', 'cqstat_header_full').split(':')
     except:
         pass
-    if 'CQSTAT_HEADER' in os.environ.keys():
+    if 'QSTAT_HEADER' in os.environ.keys():
+        custom_header = os.environ['QSTAT_HEADER'].split(':')
+    elif 'CQSTAT_HEADER' in os.environ.keys():
         custom_header = os.environ['CQSTAT_HEADER'].split(':')
-    if 'CQSTAT_HEADER_FULL' in os.environ.keys():
+    if 'QSTAT_HEADER_FULL' in os.environ.keys():
+        custom_header_full = os.environ['QSTAT_HEADER_FULL'].split(':')
+    elif 'CQSTAT_HEADER_FULL' in os.environ.keys():
         custom_header_full = os.environ['CQSTAT_HEADER_FULL'].split(':')
     if opts['header']:
         custom_header = opts['header'].split(':')

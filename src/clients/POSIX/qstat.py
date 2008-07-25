@@ -91,8 +91,12 @@ if __name__ == '__main__':
         pass
     if 'CQSTAT_HEADER' in os.environ.keys():
         custom_header = os.environ['CQSTAT_HEADER'].split(':')
+    elif 'QSTAT_HEADER' in os.environ.keys():
+        custom_header = os.environ['QSTAT_HEADER'].split(':')
     if 'CQSTAT_HEADER_FULL' in os.environ.keys():
         custom_header_full = os.environ['CQSTAT_HEADER_FULL'].split(':')
+    elif 'QSTAT_HEADER_FULL' in os.environ.keys():
+        custom_header_full = os.environ['QSTAT_HEADER_FULL'].split(':')
     if opts['header']:
         custom_header = opts['header'].split(':')
 
