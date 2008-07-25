@@ -334,7 +334,7 @@ class BGBaseSystem (Component):
                     spec['proccount'] = str(4 * int(spec['nodecount']))
                 else:
                     self.logger.error("Unknown bgtype %s" % (sys_type))
-            if spec.get('mode', 'co') == 'dual':
+            elif spec.get('mode', 'co') == 'dual':
                 spec['proccount'] = 2 * int(spec['nodecount'])
             else:
                 spec['proccount'] = spec['nodecount']
