@@ -32,7 +32,12 @@ used to properly account for machine usage.
 .B \-t "wall clock time" 
 Specify the runtime for a job. The time specified is the full amount in minutes
 allotted to the job for execution. If the job runs over this limit, it
-will be killed. If colon-delimited time is specified, the format is HH:MM:SS. 
+will be killed. If colon-delimited time is specified, the format is HH:MM:SS.
+
+Also note that relative time is allowed.  A time argument with a '+' at the
+beginning will add the argument amount to the current walltime, while an argument
+with a '-' at the beginning will subtract the argument amount from the current
+walltime.
 .TP
 .B \-M "email address"
 Send an email notification at the start and stop of the job to the
