@@ -22,8 +22,8 @@ class ComponentError (Exception):
 class ComponentOperationError (ComponentError):
     """Component Failure during operation"""
 
-
-
+class NodeAllocationError (ComponentError):
+    """Component failed to allocate nodes"""
 
 
 class ReservationError(Exception):

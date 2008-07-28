@@ -109,7 +109,7 @@ class Data (object):
         if inherent:
             raise DataCreationError, "Specified inherent field %s" \
                   % (":".join(inherent))
-    
+
     def match (self, spec):
         """True if every field in spec == the same field on the entity.
         
