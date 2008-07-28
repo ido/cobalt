@@ -21,7 +21,7 @@ if __name__ == '__main__':
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to bbsystem"
         raise SystemExit(1)
-    spec = {'tag':'process-group', 'user':user, 'args':[], 'env':{"FOO":"bar"}, 
+    spec = {'tag':'process-group', 'user':user, 'args':['--arg'], 'env':{"FOO":"bar"}, 
                       'executable':'/home/andrew/dev/testscript.py', 'size':700, 
                       'cwd':'/tmp', 'location':'*', 'nodes':1,
                       'outputfile':'/tmp/test1-output', 

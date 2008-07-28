@@ -33,7 +33,7 @@ class ProcessGroup(Data):
         else:
             self.errlog = tempfile.mktemp()
         if data['args']:
-            self.args = data['args']
+            self.args = [self.executable] + data['args']
         else:
             self.args = [self.executable]
         if data['env']:
