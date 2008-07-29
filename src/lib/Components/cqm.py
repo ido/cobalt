@@ -663,6 +663,9 @@ class Job (Data):
         if not self.errorpath:
             self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
 
+        if 'COBALT_JOBID' not in self.envs:
+            self.envs['COBALT_JOBID'] = str(self.jobid)
+            
         if self.config.get('prescript'):
             prescripts = self.config.get('prescript').split(':')
             extra = []
