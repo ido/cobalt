@@ -81,7 +81,11 @@ if __name__ == '__main__':
 #    j['location'] = "ANLR00"
     
     arglist = ['-partition', j['location']] + arglist
-    
+
+    # update the current working directory, if not specified on the command line    
+    if "-cwd" not in arglist:
+        arglist = ['-cwd', os.getcwd()] + arglist
+
     
     if "-np" in sys.argv:
         idx = sys.argv.index("-np")
