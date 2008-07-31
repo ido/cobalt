@@ -181,6 +181,8 @@ if __name__ == '__main__':
     for filt in filters:
         Cobalt.Util.processfilter(filt, jobspec)
 
+    jobspec['submit_command'] = " ".join(sys.argv)
+
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
         job = cqm.add_jobs([jobspec])

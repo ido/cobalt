@@ -128,6 +128,18 @@ class ProcessGroup (bg_base_system.ProcessGroup):
         # for the job, and can just replace the arguments built above.
         if self.true_mpi_args:
             cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
+    
+        try:
+            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+            print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
+            print >> cobalt_log_file, "called with environment:\n"
+            for key in os.environ:
+                print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
+            print >> cobalt_log_file, "\n"
+            cobalt_log_file.close()
+        except:
+            self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+
         os.execl(*cmd)
     
     def start (self):

@@ -43,6 +43,7 @@ class ProcessGroup(Data):
         self.user = spec.pop("user", None)
         self.outputfile = spec.pop("outputfile", None)
         self.errorfile = spec.pop("errorfile", None)
+        self.cobalt_log_file = spec.get('cobalt_log_file')
         self.executable = spec.pop("executable", None)
         self.jobid = spec.pop("jobid", None)
         self.path = spec.pop("path", None)
@@ -107,6 +108,18 @@ class ProcessGroup(Data):
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.jobid, self.user, self.errlog))
             cmd = [self.executable, self.executable] + self.args
+            
+            try:
+                cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+                print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
+                print >> cobalt_log_file, "called with environment:\n"
+                for key in os.environ:
+                    print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
+                print >> cobalt_log_file, "\n"
+                cobalt_log_file.close()
+            except:
+                self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+            
             try:
                 os.execl(*cmd)
             except Exception, e:
@@ -151,6 +164,7 @@ class ProcessGroup(Data):
                 'user':self.user, 
                 'stdout':self.outputfile,
                 'stderr':self.errorfile,
+                'cobalt_log_file':self.cobalt_log_file,
                 'cwd':self.cwd, 
                 'location': self.location,
                 'stdin':self.inputfile,

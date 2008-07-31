@@ -99,6 +99,7 @@ class Job (Data):
         self.user_state = spec.get("user_state", "ready")
         self.job_step = None
         
+        self.submit_command = spec.get("submit_command")
         self.attribute = spec.get("attribute", "compute")
         self.starttime = spec.get("starttime", "-1")
         self.submittime = spec.get("submittime", time.time())
@@ -146,9 +147,10 @@ class Job (Data):
                 self.jobname = jname
         self.outputdir = spec.get("outputdir")
         self.errorpath = spec.get("errorpath")
+        self.cobalt_log_file = spec.get("cobalt_log_file")
         self.path = spec.get("path")
         self.mode = spec.get("mode", "co")
-        self.envs = spec.get("envs")
+        self.envs = spec.get("envs", {})
         self.exit_status = spec.get("exit_status")
 
 
@@ -662,6 +664,13 @@ class Job (Data):
             self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
         if not self.errorpath:
             self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
+        if not self.cobalt_log_file:
+            self.cobalt_log_file = "%s/%s.cobaltlog" % (self.outputdir, self.jobid)
+
+        cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+        print >> cobalt_log_file, "%s\n" % self.submit_command
+        print >> cobalt_log_file, "submitted with cwd set to: %s\n" % self.cwd
+        cobalt_log_file.close()
 
         if 'COBALT_JOBID' not in self.envs:
             self.envs['COBALT_JOBID'] = str(self.jobid)
@@ -690,7 +699,8 @@ class Job (Data):
 
         if self.mode == 'script':
             try:
-                pgroup = ComponentProxy("script-manager").add_jobs([{'tag':'process-group', 'user':self.user, 'outputfile':self.outputpath,
+                pgroup = ComponentProxy("script-manager").add_jobs([{'tag':'process-group', 'user':self.user, 
+                     'outputfile':self.outputpath, 'cobalt_log_file':self.cobalt_log_file,
                      'errorfile':self.errorpath, 'path':self.path, 'size':self.procs,
                      'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
                      'args':self.args, 'envs':self.envs, 'location':[self.location],
@@ -715,6 +725,7 @@ class Job (Data):
                     'stdin':self.inputfile,
                     'stdout':self.outputpath,
                     'stderr':self.errorpath,
+                    'cobalt_log_file':self.cobalt_log_file,
                     'size':self.procs,
                     'mode':self.mode,
                     'cwd':self.outputdir,
@@ -1075,6 +1086,13 @@ class QueueManager(Component):
             job.pbslog.log("A",
                 # No attributes.
             )
+            try:
+                cobalt_log_file = open(job.cobalt_log_file or "/dev/null", "a")
+                print >> cobalt_log_file, "job killed because walltime exceeded"
+                cobalt_log_file.close()
+            except:
+                self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (job.jobid, job.user, job.cobalt_log_file))
+
         finished_jobs = [j for j in [j for queue in self.Queues.itervalues() for j in queue.jobs] if j.job_step == 'done']
         for job in finished_jobs:
             job.LogFinish()
@@ -1135,11 +1153,26 @@ class QueueManager(Component):
                     # otherwise can't tell if job ever ended
                     job.Kill("Job %s killed based on admin request")
                     
+                    try:
+                        cobalt_log_file = open(job.cobalt_log_file or "/dev/null", "a")
+                        print >> cobalt_log_file, "job killed based on admin request"
+                        cobalt_log_file.close()
+                    except:
+                        self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (job.jobid, job.user, job.cobalt_log_file))
+                    
                     # FIXME
                     # i think the below *shouldn't* be there -- it seems like job.Kill will eventually make it happen
                     q.jobs.q_del([spec])
                 else:
                     job.Kill("Job %s killed based on user request")
+                    
+                    try:
+                        cobalt_log_file = open(job.cobalt_log_file or "/dev/null", "a")
+                        print >> cobalt_log_file, "job killed based on user request"
+                        cobalt_log_file.close()
+                    except:
+                        self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (job.jobid, job.user, job.cobalt_log_file))
+
                 # It's my understanding that the above code draws a distinction
                 # between killing a running job and killing a job that hasn't started yet.
                 # I don't think PBS logs draw this distionction.
