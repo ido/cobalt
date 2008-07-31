@@ -247,7 +247,7 @@ class ScriptManager(Component):
                         self.logger.info("Job %s/%s: ProcessGroup %s received signal %s" % \
                       (pgroup.jobid, pgroup.user, pgroup.jobid, os.WTERMSIG(stat)))
                         try:
-                            err = open(pgroup.errlog, 'a')
+                            err = open(pgroup.cobalt_log_file, 'a')
                             print >> err, "The script job exited after receiving signal %s" % os.WTERMSIG(stat)
                             err.close()
                         except IOError:
