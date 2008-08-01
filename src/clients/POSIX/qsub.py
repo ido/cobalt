@@ -29,7 +29,7 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -e <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h --proccount <processor count> 
-             --mode <mode co/vn> <command> <args>
+             --mode <mode co/vn> --debuglog <cobaltlog file path> <command> <args>
 """
 
 if __name__ == '__main__':
@@ -38,7 +38,8 @@ if __name__ == '__main__':
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
-                'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval'}
+                'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
+                'debuglog':'debuglog' }
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -146,6 +147,14 @@ if __name__ == '__main__':
             jobspec.update({'outputpath':opts['output']})
         if not os.path.isdir(os.path.dirname(jobspec.get('outputpath'))):
             logger.error("directory %s does not exist" % jobspec.get('outputpath'))
+            sys.exit(1)
+    if opts['debuglog']:
+        if not opts['debuglog'].startswith('/'):
+            jobspec.update({'cobalt_log_file':"%s/%s" % (opts['cwd'], opts['debuglog'])})
+        else:
+            jobspec.update({'cobalt_log_file':opts['debuglog']})
+        if not os.path.isdir(os.path.dirname(jobspec.get('cobalt_log_file'))):
+            logger.error("directory %s does not exist" % jobspec.get('cobalt_log_file'))
             sys.exit(1)
     if opts['held']:
         jobspec.update({'user_state':'hold'})
