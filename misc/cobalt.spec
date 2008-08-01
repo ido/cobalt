@@ -1,6 +1,6 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.98.2pre1
+Version: 0.98.2pre2
 Release: 1
 License: GPL
 Group: System Software
@@ -8,7 +8,7 @@ URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python2.5, python-tlslite, M2Crypto, python2.5-xml
+Requires: python2.5, python2.5-tlslite, M2Crypto, python2.5-xml
 
 %package -n cobalt-clients
 Version: %{version}
