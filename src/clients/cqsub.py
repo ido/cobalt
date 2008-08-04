@@ -129,11 +129,13 @@ if __name__ == '__main__':
     if opts['outputprefix']:
         if opts['outputprefix'][0] == '/':
             jobspec.update({'outputpath':"%s.output" % (opts['outputprefix']),
-                            'errorpath':"%s.error" % (opts['outputprefix'])})
+                            'errorpath':"%s.error" % (opts['outputprefix']),
+                            'cobalt_log_file':"%s.cobaltlog" % (opts['outputprefix'])})
         else:
             jobspec.update({'outputpath':"%s/%s.output" % (opts['cwd'],
                                                            opts['outputprefix']),
-                            'errorpath':"%s/%s.error" % (opts['cwd'], opts['outputprefix'])})
+                            'errorpath':"%s/%s.error" % (opts['cwd'], opts['outputprefix']),
+                            'cobalt_log_file':"%s/%s.cobaltlog" % (opts['cwd'], opts['outputprefix'])})
     if opts['error']:
         if not opts['error'].startswith('/'):
             jobspec.update({'errorpath':"%s/%s" % (opts['cwd'], opts['error'])})
