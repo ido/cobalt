@@ -6,6 +6,7 @@ __revision__ = '$Revision$'
 
 import logging
 import os
+import pwd
 import sys
 import time
 import xmlrpclib
@@ -671,6 +672,9 @@ class Job (Data):
         print >> cobalt_log_file, "%s\n" % self.submit_command
         print >> cobalt_log_file, "submitted with cwd set to: %s\n" % self.cwd
         cobalt_log_file.close()
+        
+        userid, groupid = pwd.getpwnam(self.user)[2:4]
+        os.chown(self.cobalt_log_file, userid, groupid)
 
         if 'COBALT_JOBID' not in self.envs:
             self.envs['COBALT_JOBID'] = str(self.jobid)

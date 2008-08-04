@@ -138,7 +138,7 @@ class ProcessGroup (bg_base_system.ProcessGroup):
             print >> cobalt_log_file, "\n"
             cobalt_log_file.close()
         except:
-            self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.id, self.user, self.cobalt_log_file))
 
         os.execl(*cmd)
     
