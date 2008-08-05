@@ -2,27 +2,39 @@
 
 '''Cobalt Queue Simulator library'''
 
-import sys
-import logging
-import time
-import os
-import signal
 import ConfigParser
+import logging
+import math
+import os
+import random
+import signal
+import sys
+import time
+import urlparse
 
-import Cobalt
-import Cobalt.Util
-import Cobalt.Cqparse
+from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 from datetime import datetime
 
-from Cobalt.Data import Data, DataList
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
+import Cobalt
+import Cobalt.Cqparse
+import Cobalt.Util
+
 from Cobalt.Components.base import Component, exposed, query, automatic
 from Cobalt.Components.cqm import QueueDict, Queue
 from Cobalt.Components.simulator import Simulator
+from Cobalt.Data import Data, DataList
+from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Proxy import ComponentProxy, local_components
+from Cobalt.Server import XMLRPCServer, find_intended_location
 
-default_workload_file = "/nfs/mcs-homes15/wtang/workspace/wl-20080530"
-logger = logging.getLogger('cqm')
+MIDPLANE_SIZE = 512
+FAILURE_FREE = True
+default_SCALE = 2000000
+default_SHAPE = 0.9 
+default_SENSITIVITY = 0.7
+default_SPECIFICITY = 0.9
+default_FAILURE_LOG = "failure.lists"
+logger = logging.getLogger('Qsim')
 
 def parseline(line):
     '''parse a line in work load file, return a temp
@@ -45,7 +57,7 @@ def parseline(line):
 def parse_work_load(filename):
     '''parse the whole work load file, return a raw job dictionary''' 
     temp = {'jobid':'*', 'submittime':'*', 'queue':'*', 
-            'Resource_List.walltime':'*','nodes':'*', 'runtime':'*'} 
+            'Resource_List.walltime':'*','nodes':'*', 'runtime':'*'}
     # raw_job_dict = { '<jobid>':temp, '<jobid2>':temp2, ...}
     raw_job_dict = {}
     wlf = open(filename, 'r')
@@ -61,22 +73,34 @@ def parse_work_load(filename):
                 raw_job_dict[jobid].update(temp)
     return raw_job_dict
 
+def sec_to_date(sec, format="%m/%d/%Y %H:%M:%S"):
+    tmp = datetime.fromtimestamp(sec)
+    fmtdate = tmp.strftime(format)
+    return fmtdate    
+                      
+def date_to_sec(fmtdate, format="%m/%d/%Y %H:%M:%S"):
+    t_tuple = time.strptime(fmtdate, format)
+    sec = time.mktime(t_tuple)
+    return sec
+
 def qsim_quit():
+    print "pid=", os.getpid()
     os.kill(os.getpid(), signal.SIGINT)
 
 class Job (Data):
     '''Job for simulation'''
         
-    _config = ConfigParser.ConfigParser()
+    #_config = ConfigParser.ConfigParser()
 
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
                             "nodes","runtime", "start_time", "end_time",
-                            "location", "state", "is_visible", "args"]
+                            "failure_time", "location", "state", "is_visible",
+                            "args"]
 
     def __init__(self, spec):
         Data.__init__(self, spec)
         self.tag = 'job'
-        #following 6 fields are initialized at beginning of simulation
+        #following fields are initialized at beginning of simulation
         self.jobid = int(spec.get("jobid"))
         self.queue = spec.get("queue", "default")
         
@@ -90,6 +114,7 @@ class Job (Data):
         self.start_time = spec.get('start_time', '0')
         self.end_time = spec.get('end_time', '0')
         self.state = spec.get("state", "invisible")
+        self.failure_time = 0
         self.is_visible = False
         self.args = []
         self.location = ''
@@ -139,30 +164,30 @@ class PBSlogger:
     '''Logger to generate PBS-style event log'''
 
     def __init__(self, name):
+        #get log directory
         CP = ConfigParser.ConfigParser()
         CP.read(Cobalt.CONFIG_FILES)
         try:
             self.logdir = CP.get('cqm', 'log_dir')
         except ConfigParser.NoOptionError:
-            self.logdir = '/var/log/cobalt-accounting'
-        self.date = None
-        self.logfile = open('/dev/null', 'w+')
-        self.name = name
-
-    def RotateLog(self):
-        '''rotate log'''
-        if self.date != time.localtime()[:3]:
+            self.logdir = '.'
+            
+        #determine log filename
+        if name:
+            filename = "%s/qsim-%s.log" % (self.logdir, name)
+        else:
             self.date = time.localtime()[:3]
             date_string = "%s_%02d_%02d" % self.date
-            logfile = "%s/%s-%s.log" % (self.logdir, self.name, date_string)
-            try:
-                self.logfile = open(logfile, 'a+')
-            except IOError:
-                self.logfile = open("/dev/null", 'a+')
+            filename = "%s/qsim-%s.log" % (self.logdir, date_string)    
+        
+        self.logfile = open(filename, 'w')
+        self.name = name
+
+    def closeLog(self):
+        self.logfile.close()
+
     def LogMessage(self, message):
         '''log message into pbs-style log'''
-        self.RotateLog()
-         
         try:
             self.logfile.write("%s\n" % (message))
             self.logfile.flush()
@@ -175,19 +200,59 @@ class Qsimulator(Simulator):
     implementation = "qsim"
     name = "queue-manager"
     alias = Simulator.name
-        
+
     def __init__(self, *args, **kwargs):
+        
+        print "kwargs= ",  kwargs
+        
+        #initialize partitions
         Simulator.__init__(self, *args, **kwargs)
-        self.queues = SimQueueDict()
-        self.time_stamps = [0]
-        self.cur_time_index = 0
-        self.workload_file = kwargs.get("workload_file", default_workload_file)
-        self.init_queues()
         partnames = self._partitions.keys()
         self.init_partition(partnames)
-        self.pbslog = PBSlogger("qsim")
+   
+        #get command line parameters
+        self.workload_file =  kwargs.get("workload")
+        self.output_log = kwargs.get("outputlog")
+        self.failure_log = kwargs.get('failurelog')
+        self.weibull = kwargs.get('weibull')
+        if self.weibull:
+            self.SCALE = float(kwargs.get('scale', default_SCALE))
+            self.SHAPE = float(kwargs.get('shape', default_SHAPE))
+        self.fault_aware = kwargs.get('faultaware')
+        if self.fault_aware:
+            self.SENSITIVITY = float(kwargs.get('sensitivity', default_SENSITIVITY))
+            self.SPECIFICITY = float(kwargs.get('specificity', default_SPECIFICITY))
+        
+        if self.failure_log or self.weibull:
+            FAILURE_FREE = False
+        
+        #initialize time stamps and job queues
+        self.time_stamps = [0]
+        self.cur_time_index = 0
+        self.queues = SimQueueDict()
+        self.init_queues()
+        
+        #initialize failures
+        self.failure_dict = {}
+        if not FAILURE_FREE:
+            if self.failure_log:  
+                #if specified failure log, use log trace failure
+                self.inject_failures()
+            elif self.weibull:
+                #else MAKE failures by Weibull distribution
+                self.make_failures()
+        
+        #initialize PBS-style logger
+        self.pbslog = PBSlogger(self.output_log)
+        
+        #finish tag
+        self.finished = False
+        
         #tag for controlling time stamp increment
         self.increment_tag = True
+        
+        #register local alias "system" for this component
+        local_components["system"] = self
              
     def register_alias(self):
         '''register alternate name for the Qsimulator, by registering in slp
@@ -203,12 +268,16 @@ class Qsimulator(Simulator):
             slp.register(self.alias, svc_location)
     register_alias = automatic(register_alias, 30)
     
+    def is_finished(self):
+        return self.finished
+    is_finished = exposed(is_finished)
+    
     def init_partition(self, namelist):
         '''add all paritions and apply activate and enable'''
         func = self.add_partitions
-        args = ([{'tag':'partition', 'name':partname, 'size':"*", 
-                  'functional':False, 'scheduled':False, 'queue':'default',
-                   'deps':[]} for partname in namelist],)
+        args = ([{'tag':'partition', 'name':partname, 'size':"*",
+                  'functional':False, 'scheduled':False, 'queue':"*",
+                  'deps':[]} for partname in namelist],)
         apply(func, args)
         
         func = self.set_partitions
@@ -223,10 +292,11 @@ class Qsimulator(Simulator):
     def get_current_time_stamp(self):
         '''get current time stamp index'''
         return self.cur_time_index
+    get_current_time_stamp = exposed(get_current_time_stamp)
 
     def time_increment(self):
         '''the current time stamp increments by 1'''
-        if self.cur_time_index  < len(self.time_stamps) -1:
+        if self.cur_time_index  < len(self.time_stamps) - 1:
             self.cur_time_index += 1
             print str(self.get_current_time()) + \
             " time stamp incremented by 1, current time stamp: " + \
@@ -235,6 +305,8 @@ class Qsimulator(Simulator):
             print str(self.get_current_time()) +\
             " Reached maximum time stamp: %s, simulating finished! " \
              %  (str(self.cur_time_index))
+            self.finished = True
+            self.pbslog.closeLog()
             qsim_quit()  #simulation completed, exit!!!
         return self.cur_time_index
    
@@ -255,8 +327,7 @@ class Qsimulator(Simulator):
             #convert submittime from "%m/%d/%Y %H:%M:%S" to Unix time sec
             format_sub_time = tmp.get('submittime')
             if format_sub_time:
-                t_tuple = time.strptime(format_sub_time, "%m/%d/%Y %H:%M:%S")
-                spec['submittime'] = time.mktime(t_tuple)                
+                spec['submittime'] = date_to_sec(format_sub_time)                
             else:
                 spec['valid'] = False
                 
@@ -276,18 +347,18 @@ class Qsimulator(Simulator):
             if tmp.get('start') and tmp.get('end'):
                 act_run_time = float(tmp.get('end')) - float(tmp.get('start'))
                 spec['runtime'] = str(round(act_run_time, 1))
+            else:
+                spec['valid'] = False
             
             spec['state'] = 'invisible'
             spec['start_time'] = '0'
             spec['end_time'] = '0'
             
-            #add the submit time into the interested time stamps list
-            if format_sub_time:
-                if not self.time_stamps.__contains__(format_sub_time):
-                    self.insert_time_stamp(format_sub_time)
             #add the job spec to the spec list
             if spec['valid'] == True:
                 specs.append(spec)
+                if not self.time_stamps.__contains__(format_sub_time):
+                    self.insert_time_stamp(format_sub_time)
             
         print "total job number:", len(specs)
         self.add_jobs(specs)
@@ -318,6 +389,13 @@ class Qsimulator(Simulator):
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
                  round(float(spec['end_time']), 1), spec['location'], 
                  spec['runtime'])
+            elif eventtype == 'F':
+                failtime =  round(float(spec['failure_time']) - float(spec['start_time']), 1)
+                message = "%s;F;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s exec_host=%s start=%s failtime=%s complete=%f" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
+                 spec['nodes'], log_walltime, spec['location'], spec['start_time'], 
+                 failtime, round(failtime / float(spec['runtime']), 2)
+                )
             else:
                 print "invalid event type, type=", type
                 return
@@ -326,6 +404,7 @@ class Qsimulator(Simulator):
     def get_new_state(self, jobspec):
         '''return the new state updates of a specific job at specific time 
         stamp, including invisible->queued, running->ended'''
+        
         updates = {}
         curstate = jobspec['state']
         newstate = curstate
@@ -335,26 +414,40 @@ class Qsimulator(Simulator):
         if submit_time_sec == 0:  #the never submitted job
             return updates
         else:
-            tmp = datetime.fromtimestamp(submit_time_sec)
-            submit_datetime = tmp.strftime("%m/%d/%Y %H:%M:%S")
+            submit_datetime = sec_to_date(submit_time_sec)
                         
         if jobspec['end_time']:
             end = float(jobspec['end_time'])
         else:
             end = 0
-        tmp = datetime.fromtimestamp(end)
-        end_datetime = tmp.strftime("%m/%d/%Y %H:%M:%S")
+        end_datetime = sec_to_date(end)
         
-        #make state change, handle invisible->queued, running->ended
+        if jobspec['failure_time']:
+            fail = float(jobspec['failure_time'])
+        else:
+            fail = 0
+        failure_datetime = sec_to_date(fail)
+        
+        #make state change
         if curstate == 'running':
-            if end_datetime == self.get_current_time():
-                newstate = 'ended'
+            #job fails, resubmit
+            if failure_datetime == self.get_current_time():
+                newstate = 'queued'
+                updates['failure_time'] = 0
                 partitions = jobspec['location'].split(':')
                 for partition in partitions:
                     self.release_partition(partition)
-                updates['is_visible'] = False
+                self.log_job_event('F', failure_datetime, jobspec)
+                print self.get_current_time(), " job %d failed at %s!!" % (job_id, jobspec['location'])
+            #job completes
+            elif end_datetime == self.get_current_time():
+                newstate = 'ended'
+                updates['is_visible'] = False                                                                                                   
                 self.log_job_event('E', end_datetime, jobspec)
-
+                partitions = jobspec['location'].split(':')
+                for partition in partitions:
+                    self.release_partition(partition)
+            
         elif curstate == 'invisible':
             if  submit_datetime == self.get_current_time():
                 newstate = 'queued'
@@ -375,27 +468,37 @@ class Qsimulator(Simulator):
             pos = pos -1
         self.time_stamps.insert(pos, new_time)
      
-    def run_job_updates(self, jobspec):
+    def run_job_updates(self, jobspec, newattr):
         ''' return the state updates (including state queued -> running, 
         setting the start_time, end_time)'''
         updates = {}
         if not jobspec['state'] == 'queued':
             return updates
-        t_tuple = time.strptime(self.get_current_time(), "%m/%d/%Y %H:%M:%S")
-        current_time_sec = time.mktime(t_tuple)
-        start = current_time_sec
-        end = current_time_sec + float(jobspec['runtime'])
-        updates['start_time'] = start
-        updates['end_time'] = end
         
-        #insert time stamp for job end, ensure every job can have 'time' to end
-        tmp = datetime.fromtimestamp(end)
-        end_datetime =  tmp.strftime("%m/%d/%Y %H:%M:%S")
-        self.insert_time_stamp(end_datetime)
+        start = date_to_sec(self.get_current_time())
+        updates['start_time'] = start
         
         updates['state'] = 'running'
         print self.get_current_time(), "state change, job", jobspec['jobid'], \
              ":", jobspec['state'], "->", updates['state']
+             
+        #determine whether the job is going to fail before completion
+        location = newattr['location']
+        duration = float(jobspec['runtime'])
+        nearest_failure = self.get_next_failure(location, start, duration)
+        if (nearest_failure):
+            updates['failure_time'] = date_to_sec(nearest_failure)
+            new_time_stamp = nearest_failure
+        else:  # will complete
+            end = start + duration
+            updates['end_time'] = end
+            new_time_stamp = sec_to_date(end)
+            
+        #insert new time stamp for job end or failure
+        self.insert_time_stamp(new_time_stamp)
+        
+        updates.update(newattr)
+      
         return updates
     
     def update_job_states(self, specs, updates):
@@ -417,7 +520,8 @@ class Qsimulator(Simulator):
         def _start_job(job, newattr):
             '''callback function to update job start/end time'''
             temp = job.to_rx()
-            newattr.update(self.run_job_updates(temp))
+            newattr = self.run_job_updates(temp, newattr)
+            print "newattr=", newattr
             temp.update(newattr)
             job.update(newattr)
             self.log_job_event('S', self.get_current_time(), temp)
@@ -438,7 +542,8 @@ class Qsimulator(Simulator):
         self.update_job_states(specs, {})
         for spec in specs:
             spec['is_visible'] = True
-        return self.queues.get_jobs(specs)
+        jobs = self.queues.get_jobs(specs)
+        return jobs
     get_jobs = exposed(query(get_jobs))
     
     def add_queues(self, specs):
@@ -452,7 +557,7 @@ class Qsimulator(Simulator):
     get_queues = exposed(query(get_queues))
 
     def run_jobs(self, specs, nodelist):
-        '''run a queued job, by updating the job state, start_time and 
+        '''run a queued job, by updating the job state, start_time and
         end_time'''
         print "run job specs=", specs, " on partion", nodelist
         if specs:
@@ -461,3 +566,193 @@ class Qsimulator(Simulator):
             self.increment_tag = False
         return self.queues.get_jobs([{'jobid':"*", 'state':"running"}])
     run_jobs = exposed(query(run_jobs))
+    
+    def get_midplanes(self, partname):
+        '''return a list of sub-partitions each contains 512-nodes(midplane)'''
+        midplane_list = []
+        partition = self._partitions[partname]
+        
+        if partition.size == MIDPLANE_SIZE:
+            midplane_list.append(partname)
+        elif partition.size > MIDPLANE_SIZE:
+            children = partition.children
+            for part in children:
+                if self._partitions[part].size == MIDPLANE_SIZE:
+                    midplane_list.append(part)
+        else:
+            parents = partition.parents
+            for part in parents:
+                if self._partitions[part].size == MIDPLANE_SIZE:
+                    midplane_list.append(part)
+                            
+        return midplane_list   
+    
+    def get_next_failure(self, location, now, duration):
+        '''return the next(closest) failure moment according the partition failure list'''
+        
+        if (FAILURE_FREE):
+            return None
+        
+        def _find_next_failure(partname, now):
+            next = None
+            failure_list = self.failure_dict[partname]
+            if failure_list:
+                for fail_time in failure_list:
+                    if date_to_sec(fail_time) > now:
+                        next = fail_time
+                        break
+            return next
+                                       
+        closest_fail_sec = sys.maxint
+        partitions = location.split(':')
+        
+        midplanes = set()
+        for partition in partitions:
+            tmp_midplanes = self.get_midplanes(partition)
+            for item in tmp_midplanes:
+                if item not in midplanes:
+                    midplanes.add(item)
+                        
+        for midplane in midplanes:
+            next = _find_next_failure(midplane, now)
+            if (next):
+                next_sec = date_to_sec(next)
+                if next_sec < closest_fail_sec:
+                    closest_fail_sec =next_sec
+                        
+        if closest_fail_sec == sys.maxint:
+            next_failure_date = None
+        else:
+            job_end_sec = now + duration
+            if closest_fail_sec < job_end_sec:
+                next_failure_date = sec_to_date(closest_fail_sec)
+            else:
+                next_failure_date = None
+                
+        return next_failure_date                 
+
+    def will_job_fail(self, mtbf, nodes, hours):
+        '''simulate static failure chance, [not used]'''
+        return False
+        print "mtbf=%d, nodes=%d, hours=%f" % (mtbf,nodes,hours)
+        failure_chance = 1 - (1 - hours * 1.0/mtbf) ** nodes
+        if failure_chance > 0.7 :
+            failure_chance = 0.7
+        random_num = random.random()
+        print "failure chance=%f, random_num=%f" % (failure_chance, random_num)
+        if random_num < failure_chance:
+            return True
+        else:
+            return False
+        
+    def nodes_static(self):
+        '''static the node requested by each job, [not used]'''
+        jobs = self.queues.get_jobs([{'jobid':"*", 'queue':"*", 'nodes':"*"}])
+        nodesdict = {}
+        for job in jobs:
+            nodes = int(job.nodes)
+            nodesstr = nodes
+            if (nodesdict.has_key(nodesstr)):
+                nodesdict[nodesstr] =  nodesdict[nodesstr] + 1
+            else:
+                nodesdict[nodesstr] = 1
+        keys = nodesdict.keys()
+        keys.sort()
+        for key in keys:
+            print key, ":", nodesdict[key]
+            
+    def gen_failure_list(self, lamda, k, startdate, enddate):
+        '''generate a synthetic failure time list based on weibull distribution
+         and start/end date time'''
+        failure_moments = []
+        ttf_list = []
+                
+        start = date_to_sec(startdate)
+        end = date_to_sec(enddate)
+        
+        cur_failure = start
+        
+        while True:
+            ttf = random.weibullvariate(lamda,k)
+            cur_failure += ttf
+            if cur_failure < end:
+                ttf_list.append(ttf)
+                failure_moments.append(sec_to_date(cur_failure))
+            else:
+                break
+        return failure_moments, ttf_list
+    
+    def make_failures(self):
+        '''generate failure lists for each 512-nodes partition'''
+        ttf_dict = {}
+        start = self.time_stamps[1]
+        end = self.time_stamps[len(self.time_stamps)-1]
+        
+        for partition in self._partitions.values():
+            if partition.size == MIDPLANE_SIZE:
+                fl, ttfs = self.gen_failure_list(self.SCALE, self.SHAPE, start, end)
+                self.failure_dict[partition.name] = fl
+                ttf_dict[partition.name] = ttfs
+                        
+        partnames = self.failure_dict.keys()
+        partnames.sort()
+        f = open(default_FAILURE_LOG, "w")
+        total_f = 0
+        mtbf = 0
+        for part in partnames:
+            f_list = self.failure_dict[part]
+            print part, " ", f_list
+            f.write("%s;%s\n" % (part, ";".join(f_list)))
+            total_f +=  len(f_list)
+            
+            ttfs = ttf_dict[part]  
+            if len(ttfs)==0:
+                mtbf = 0
+            else:
+                total = 0
+               
+                for ttf in ttfs:
+                    total += ttf
+                    mtbf = total / len(ttfs)
+        start_sec = date_to_sec(start)
+        end_sec = date_to_sec(end)
+        f.write("Total=%d\nMTBF=%f" % (total_f, (end_sec-start_sec)/(total_f*3600)))
+
+        f.close()
+        
+    def inject_failures(self):
+        '''parse failure trace log to make failure list for each 1-midplane partition'''
+                
+        raw_job_dict = {}
+        partnames = set(self._partitions.keys())
+        flog = open(self.failure_log, "r")
+        self.failure_dict = {}
+        for line in flog:
+            print "line=", line
+            line = line.strip('\n')
+            parsedline = line.split(";")
+            print "parsedline=", parsedline
+            failure_list = []
+            part = parsedline[0]
+            if part in partnames:
+                for i in range(1, len(parsedline)):
+                    failure_moment = parsedline[i]
+                    if len(failure_moment) == 0:
+                        continue
+                    failure_list.append(failure_moment)
+                self.failure_dict[part] = failure_list
+        partnames = self.failure_dict.keys()
+        partnames.sort()
+        for part in partnames:
+            f_list = self.failure_dict[part]
+            print part, " ", f_list   
+        
+    def get_failure_chance(self, location, duration):
+        now = date_to_sec(self.get_current_time())
+        next_fail = self.get_next_failure(location, now, duration)
+        if (next_fail):
+            return self.SENSITIVITY
+        else:
+            return 1 - self.SPECIFICITY
+    get_failure_chance = exposed(get_failure_chance)
+    
