@@ -214,14 +214,24 @@ class Qsimulator(Simulator):
         self.workload_file =  kwargs.get("workload")
         self.output_log = kwargs.get("outputlog")
         self.failure_log = kwargs.get('failurelog')
+        
         self.weibull = kwargs.get('weibull')
         if self.weibull:
-            self.SCALE = float(kwargs.get('scale', default_SCALE))
-            self.SHAPE = float(kwargs.get('shape', default_SHAPE))
+            self.SCALE = float(kwargs.get('scale'))
+            if self.SCALE == 0:
+                self.SCALE = default_SCALE
+            self.SHAPE = float(kwargs.get('shape'))
+            if self.SHAPE == 0:
+                self.SHAPE = default_SHAPE
+        
         self.fault_aware = kwargs.get('faultaware')
         if self.fault_aware:
-            self.SENSITIVITY = float(kwargs.get('sensitivity', default_SENSITIVITY))
-            self.SPECIFICITY = float(kwargs.get('specificity', default_SPECIFICITY))
+            self.SENSITIVITY = float(kwargs.get('sensitivity'))
+            if self.SENSITIVITY == 0:
+                self.SENSITIVITY = default_SENSITIVITY
+            self.SPECIFICITY = float(kwargs.get('specificity'))
+            if self.SPECIFICITY == 0:
+                self.SPECIFICITY = default_SPECIFICITY
         
         if self.failure_log or self.weibull:
             self.FAILURE_FREE = False
@@ -661,7 +671,7 @@ class Qsimulator(Simulator):
         for key in keys:
             print key, ":", nodesdict[key]
             
-    def gen_failure_list(self, lamda, k, startdate, enddate):
+    def gen_failure_list(self, scale, shape, startdate, enddate):
         '''generate a synthetic failure time list based on weibull distribution
          and start/end date time'''
         failure_moments = []
@@ -673,7 +683,7 @@ class Qsimulator(Simulator):
         cur_failure = start
         
         while True:
-            ttf = random.weibullvariate(lamda,k)
+            ttf = random.weibullvariate(scale,shape)
             cur_failure += ttf
             if cur_failure < end:
                 ttf_list.append(ttf)
