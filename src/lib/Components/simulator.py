@@ -363,9 +363,13 @@ class Simulator (BGBaseSystem):
         argv = process_group._get_argv()
         stdout = open(process_group.stdout or "/dev/null", "a")
         stderr = open(process_group.stderr or "/dev/null", "a")
-        cobalt_log_file = open(process_group.cobalt_log_file or "/dev/null", "a")
-        print >> cobalt_log_file, "%s\n" % " ".join(argv[1:])
-        cobalt_log_file.close()
+        
+        try:
+            cobalt_log_file = open(process_group.cobalt_log_file or "/dev/null", "a")
+            print >> cobalt_log_file, "%s\n" % " ".join(argv[1:])
+            cobalt_log_file.close()
+        except:
+            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % (process_group.id, process_group.user, process_group.cobalt_log_file))
         
         try:
             partition = argv[argv.index("-partition") + 1]

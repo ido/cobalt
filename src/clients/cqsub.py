@@ -193,8 +193,6 @@ if __name__ == '__main__':
     for filt in filters:
         Cobalt.Util.processfilter(filt, jobspec)
 
-    jobspec['submit_command'] = " ".join(sys.argv)
-
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
         job = cqm.add_jobs([jobspec])
@@ -217,5 +215,19 @@ if __name__ == '__main__':
     # log jobid to stdout
     if job:
         print job[0]['jobid']
+        
+        if jobspec.has_key('cobalt_log_file'):
+            filename = jobspec['cobalt_log_file']
+        else:
+            filename = "%s/%s.cobaltlog" % (jobspec['outputdir'], job[0]['jobid'])
+
+        try:
+            cobalt_log_file = open(filename, "a")
+            print >> cobalt_log_file, "%s\n" % (" ".join(sys.argv))
+            print >> cobalt_log_file, "submitted with cwd set to: %s\n" % jobspec['cwd']
+            cobalt_log_file.close()
+        except Exception, e:
+            logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
+            logger.error("         %s" % e.strerror)
     else:
-        print "failed to create teh job.  maybe a queue isn't there"
+        logger.error("failed to create teh job.  maybe a queue isn't there")

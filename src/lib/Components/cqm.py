@@ -100,7 +100,6 @@ class Job (Data):
         self.user_state = spec.get("user_state", "ready")
         self.job_step = None
         
-        self.submit_command = spec.get("submit_command")
         self.attribute = spec.get("attribute", "compute")
         self.starttime = spec.get("starttime", "-1")
         self.submittime = spec.get("submittime", time.time())
@@ -668,14 +667,6 @@ class Job (Data):
         if not self.cobalt_log_file:
             self.cobalt_log_file = "%s/%s.cobaltlog" % (self.outputdir, self.jobid)
 
-        cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
-        print >> cobalt_log_file, "%s\n" % self.submit_command
-        print >> cobalt_log_file, "submitted with cwd set to: %s\n" % self.cwd
-        cobalt_log_file.close()
-        
-        userid, groupid = pwd.getpwnam(self.user)[2:4]
-        os.chown(self.cobalt_log_file, userid, groupid)
-
         if 'COBALT_JOBID' not in self.envs:
             self.envs['COBALT_JOBID'] = str(self.jobid)
             
@@ -753,6 +744,25 @@ class Job (Data):
                 self.pgid['user'] = pgroup[0]['id']
             
         self.SetPassive()
+
+    def write_cobalt_log(self, message):
+        uid = pwd.getpwnam(self.user)[2]
+        try:
+            file_uid = os.stat(self.cobalt_log_file).st_uid
+        except:
+             logger.error("Job %s/%s:  cannot stat cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+             return
+             
+        if file_uid != uid:
+            logger.error("Job %s/%s:  user does not own cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+            return
+        
+        try:    
+            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+            print >> cobalt_log_file, message
+            cobalt_log_file.close()
+        except:
+            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
 
     
 class JobList(DataList):
@@ -1090,12 +1100,7 @@ class QueueManager(Component):
             job.pbslog.log("A",
                 # No attributes.
             )
-            try:
-                cobalt_log_file = open(job.cobalt_log_file or "/dev/null", "a")
-                print >> cobalt_log_file, "job killed because walltime exceeded"
-                cobalt_log_file.close()
-            except:
-                self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (job.jobid, job.user, job.cobalt_log_file))
+            job.write_cobalt_log("job killed because walltime exceeded")
 
         finished_jobs = [j for j in [j for queue in self.Queues.itervalues() for j in queue.jobs] if j.job_step == 'done']
         for job in finished_jobs:
@@ -1156,27 +1161,15 @@ class QueueManager(Component):
                     # Need acct log message for forced delete, 
                     # otherwise can't tell if job ever ended
                     job.Kill("Job %s killed based on admin request")
-                    
-                    try:
-                        cobalt_log_file = open(job.cobalt_log_file or "/dev/null", "a")
-                        print >> cobalt_log_file, "job killed based on admin request"
-                        cobalt_log_file.close()
-                    except:
-                        self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (job.jobid, job.user, job.cobalt_log_file))
+                    job.write_cobalt_log("job killed based on admin request")
                     
                     # FIXME
                     # i think the below *shouldn't* be there -- it seems like job.Kill will eventually make it happen
                     q.jobs.q_del([spec])
                 else:
                     job.Kill("Job %s killed based on user request")
+                    job.write_cobalt_log("job killed based on user request")
                     
-                    try:
-                        cobalt_log_file = open(job.cobalt_log_file or "/dev/null", "a")
-                        print >> cobalt_log_file, "job killed based on user request"
-                        cobalt_log_file.close()
-                    except:
-                        self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (job.jobid, job.user, job.cobalt_log_file))
-
                 # It's my understanding that the above code draws a distinction
                 # between killing a running job and killing a job that hasn't started yet.
                 # I don't think PBS logs draw this distionction.
