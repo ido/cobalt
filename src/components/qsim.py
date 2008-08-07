@@ -12,7 +12,7 @@ from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Components.bgsched import BGSched
 from Cobalt.Components.qsim import Qsimulator
 
-__helpmsg__ = "Usage: qsim -j <jobworklod> -p <partition.xml> [--output=<outputlogfile>]\n" +\
+__helpmsg__ = "Usage: qsim -j <jobworkload> -p <partition.xml> [--output=<outputlogfile>]\n" +\
         "[--weibull --scale=<scale> --shape=<shape>]  [--failurelog=<failurelog>]\n" +\
         "[--fautlaware --sensitivity=sensitivity --specificity=specificity]\n" +\
         "[--standalone]  [--profile]"
