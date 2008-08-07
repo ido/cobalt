@@ -28,7 +28,6 @@ from Cobalt.Proxy import ComponentProxy, local_components
 from Cobalt.Server import XMLRPCServer, find_intended_location
 
 MIDPLANE_SIZE = 512
-FAILURE_FREE = True
 default_SCALE = 2000000
 default_SHAPE = 0.9 
 default_SENSITIVITY = 0.7
@@ -159,7 +158,7 @@ class SimQueueDict(QueueDict):
             results += self[spec['queue']].jobs.q_add([spec], callback, cargs)
             
         return results
- 
+
 class PBSlogger:
     '''Logger to generate PBS-style event log'''
 
@@ -211,6 +210,7 @@ class Qsimulator(Simulator):
         self.init_partition(partnames)
    
         #get command line parameters
+        self.FAILURE_FREE = True
         self.workload_file =  kwargs.get("workload")
         self.output_log = kwargs.get("outputlog")
         self.failure_log = kwargs.get('failurelog')
@@ -224,7 +224,7 @@ class Qsimulator(Simulator):
             self.SPECIFICITY = float(kwargs.get('specificity', default_SPECIFICITY))
         
         if self.failure_log or self.weibull:
-            FAILURE_FREE = False
+            self.FAILURE_FREE = False
         
         #initialize time stamps and job queues
         self.time_stamps = [0]
@@ -234,7 +234,7 @@ class Qsimulator(Simulator):
         
         #initialize failures
         self.failure_dict = {}
-        if not FAILURE_FREE:
+        if not self.FAILURE_FREE:
             if self.failure_log:  
                 #if specified failure log, use log trace failure
                 self.inject_failures()
@@ -447,6 +447,7 @@ class Qsimulator(Simulator):
                 partitions = jobspec['location'].split(':')
                 for partition in partitions:
                     self.release_partition(partition)
+                self.queues.del_jobs([{'jobid':job_id}])
             
         elif curstate == 'invisible':
             if  submit_datetime == self.get_current_time():
@@ -521,7 +522,6 @@ class Qsimulator(Simulator):
             '''callback function to update job start/end time'''
             temp = job.to_rx()
             newattr = self.run_job_updates(temp, newattr)
-            print "newattr=", newattr
             temp.update(newattr)
             job.update(newattr)
             self.log_job_event('S', self.get_current_time(), temp)
@@ -590,7 +590,7 @@ class Qsimulator(Simulator):
     def get_next_failure(self, location, now, duration):
         '''return the next(closest) failure moment according the partition failure list'''
         
-        if (FAILURE_FREE):
+        if (self.FAILURE_FREE):
             return None
         
         def _find_next_failure(partname, now):
