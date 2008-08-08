@@ -5,6 +5,7 @@ __revision__ = '$Id$'
 __version__ = '$Version$'
 
 import getopt, math, pwd, sys, time
+import os
 import xmlrpclib
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -177,7 +178,7 @@ if __name__ == '__main__':
         if partitions:
             updates['partitions'] = ":".join(partitions)
                 
-        scheduler.set_reservations([{'name':rname}], updates)
+        scheduler.set_reservations([{'name':rname}], updates, pwd.getpwuid(os.getuid())[0])
         print scheduler.check_reservations()
 
         raise SystemExit, 0
@@ -186,7 +187,7 @@ if __name__ == '__main__':
     if '-q' in sys.argv:
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:
-        print scheduler.add_reservations([spec])
+        print scheduler.add_reservations([spec], pwd.getpwuid(os.getuid())[0])
         print scheduler.check_reservations()
     except xmlrpclib.Fault, flt:
         if flt.faultCode == ComponentLookupError.fault_code:

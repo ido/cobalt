@@ -457,11 +457,13 @@ class BGSched (Component):
         Component.save(self)
     save_me = automatic(save_me)
 
-    def add_reservations (self, specs):
+    def add_reservations (self, specs, user_name):
+        self.logger.info("%s adding reservation: %r" % (user_name, specs))
         return self.reservations.q_add(specs)
     add_reservations = exposed(query(add_reservations))
 
-    def del_reservations (self, specs):
+    def del_reservations (self, specs, user_name):
+        self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         return self.reservations.q_del(specs)
     del_reservations = exposed(query(del_reservations))
 
@@ -469,7 +471,8 @@ class BGSched (Component):
         return self.reservations.q_get(specs)
     get_reservations = exposed(query(get_reservations))
 
-    def set_reservations(self, specs, updates):
+    def set_reservations(self, specs, updates, user_name):
+        self.logger.info("%s modifying reservation: %r with updates %r" % (user_name, specs, updates))
         def _set_reservations(res, newattr):
             res.update(newattr)
         return self.reservations.q_get(specs, _set_reservations, updates)

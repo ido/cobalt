@@ -5,6 +5,8 @@ __revision__ = '$Id$'
 __version__ = '$Version$'
 
 import getopt, sys
+import os
+import pwd
 import xmlrpclib
 
 from Cobalt.Proxy import ComponentProxy
@@ -50,7 +52,7 @@ if __name__ == '__main__':
 
 
     try:
-        result = scheduler.del_reservations(spec)
+        result = scheduler.del_reservations(spec, pwd.getpwuid(os.getuid())[0])
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 1:
             print "Error communicating with queue manager"
