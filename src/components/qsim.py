@@ -2,6 +2,7 @@
 
 """Queue Simulator executable."""
 
+import inspect 
 import sys
 
 import Cobalt.Util
@@ -16,14 +17,19 @@ __helpmsg__ = "Usage: qsim -j <jobworkload> -p <partition.xml> [--output=<output
         "[--weibull --scale=<scale> --shape=<shape>]  [--failurelog=<failurelog>]\n" +\
         "[--fautlaware --sensitivity=sensitivity --specificity=specificity]\n" +\
         "[--standalone]  [--profile]"
+
+class my_bgsched (BGSched):
+    def do_tasks (self):
+        for name, func in inspect.getmembers(self, callable):
+            if getattr(func, "automatic", False):
+                func() 
         
 def integrated_main(opts):
     '''run instantiated qsim, together with bgsched, slp,scriptm in one process'''
     TimingServiceLocator()
     ScriptManager()
     qsim = Qsimulator(**opts)
-    bgsched = BGSched()
-        
+    bgsched = my_bgsched()
     while not qsim.is_finished():
         bgsched.do_tasks()
         
@@ -44,10 +50,6 @@ def profile_main(opts):
     prof.runcall(integrated_main, opts)
     
 if __name__ == "__main__":
-       
-    #prof = hotshot.Profile("cqsim.prof")
-    #prof.runcall(cqsim_main)
-    #cqsim_main()
     
     options = {'weibull':'weibull', 'faultaware':'faultaware',
                'standalone':'standalone', 'profile':'profile'}
