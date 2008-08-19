@@ -349,12 +349,6 @@ class BGSystem (BGBaseSystem):
             else:
                 return "busy"
 
-        try:
-            bg_object = Cobalt.bridge.BlueGene.by_serial()
-        except BridgeException:
-            self.logger.error("Error communicating with the bridge to get bluegene information.")
-            bg_object = None
-
         while True:
             try:
                 system_def = Cobalt.bridge.PartitionList.info_by_filter()
@@ -364,8 +358,7 @@ class BGSystem (BGBaseSystem):
                 continue # then try again
     
             try:
-                if not bg_object:
-                    bg_object = Cobalt.bridge.BlueGene.by_serial()
+                bg_object = Cobalt.bridge.BlueGene.by_serial()
                 for bp in bg_object.base_partitions:
                     for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
                         self.node_card_cache[bp.id + "-" + nc.id].state = nc.state
@@ -373,6 +366,11 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("Error communicating with the bridge to update nodecard state information.")
                 time.sleep(5) # wait a little bit...
                 continue # then try again
+
+            busted_switches = []
+            for s in bg_object.switches:
+                if s.state != "RM_SWITCH_UP":
+                    busted_switches.append(s.id)
 
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
@@ -395,8 +393,11 @@ class BGSystem (BGBaseSystem):
                             p.state = "blocked (%s)" % nc.used_by
                             break
                         if nc.state != "RM_NODECARD_UP":
-                            p.state = "hardware down: %s" % nc.state
+                            p.state = "hardware down: nodecard %s" % nc.id
                             break 
+                    for s in p.switches:
+                        if s in busted_switches:
+                            p.state = "hardware down: switch %s" % s 
                     for dep_name in p._wiring_conflicts:
                         if self._partitions[dep_name].state == "busy":
                             p.state = "blocked-wiring (%s)" % dep_name
