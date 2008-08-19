@@ -187,22 +187,30 @@ if __name__ == '__main__':
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
         jobdata = cqm.get_jobs(spec)
-        if not jobdata:
-            print "Failed to match any jobs"
-            sys.exit(1)
-        jobinfo = jobdata[0]
-        jobinfo.update(updates)
-        for filt in filters:
-            Cobalt.Util.processfilter(filt, jobinfo)
-        response = cqm.set_jobs(spec, updates)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(1)
     except xmlrpclib.Fault, flt:
-        response = []
-        if flt.faultCode == 30:
-            print flt.faultString
-            sys.exit(1)
+        print >> sys.stderr, flt.faultString
+        sys.exit(1)
+
+    if not jobdata:
+        print "Failed to match any jobs"
+        sys.exit(1)
+        
+    response = False
+    for jobinfo in jobdata:
+        original_spec = jobinfo.copy()
+        jobinfo.update(updates)
+        for filt in filters:
+            Cobalt.Util.processfilter(filt, jobinfo)
+        try:
+            cqm.set_jobs([original_spec], jobinfo)
+            response = True
+        except xmlrpclib.Fault, flt:
+            print >> sys.stderr, flt.faultString
+            response = True
+
     if not response:
         Cobalt.Logging.logging.error("Failed to match any jobs or queues")
     else:

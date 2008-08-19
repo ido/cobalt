@@ -5,6 +5,7 @@ __revision__ = '$Revision: 345 $'
 __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time, xmlrpclib
+import ConfigParser
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
@@ -35,6 +36,10 @@ if __name__ == '__main__':
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qmove', to_syslog=False, level=level)
     logger = Cobalt.Logging.logging.getLogger('qmove')
+    
+    CP = ConfigParser.ConfigParser()
+    CP.read(Cobalt.CONFIG_FILES)
+
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
     except ComponentLookupError:
@@ -50,19 +55,39 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             raise SystemExit, 1
         
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*',
+             'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*'} for jobid in args]
 
     try:
-        response = cqm.move_jobs(spec, queue)
+        filters = CP.get('cqm', 'filters').split(':')
+    except ConfigParser.NoOptionError:
+        filters = []
+
+    try:
+        jobdata = cqm.get_jobs(spec)
     except xmlrpclib.Fault, flt:
         print flt.faultString
         raise SystemExit, 1
+
+    if not jobdata:
+        print "Failed to match any jobs"
+        sys.exit(1)
+
+    response = []
+    for jobinfo in jobdata:
+        original_spec = jobinfo.copy()
+        jobinfo.update({'queue': queue})
+        for filt in filters:
+            Cobalt.Util.processfilter(filt, jobinfo)
+        try:
+            [job] = cqm.move_jobs([original_spec], jobinfo['queue'])
+            response.append("moved job %d to queue '%s'" % (job.get('jobid'), job.get('queue')))
+        except xmlrpclib.Fault, flt:
+            response.append(flt.faultString)
 
     if not response:
         logger.error("Failed to match any jobs or queues")
     else:
         logger.debug(response)
-        print "   Moved Jobs to queue: " + queue
-        for job in response:
-            print "      %d" % job.get('jobid')
-
+        for line in response:
+            print line
