@@ -94,6 +94,7 @@ class Job (Data):
         )
 
         self.jobid = spec.get("jobid")
+        self.umask = spec.get("umask")
         self.jobname = spec.get("jobname", "N/A")
         
         self.system_state = spec.get("system_state", "ready")
@@ -700,7 +701,7 @@ class Job (Data):
                      'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
                      'args':self.args, 'envs':self.envs, 'location':[self.location],
                      'id':"*", 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions,
-                     'jobid':self.jobid, }])
+                     'jobid':self.jobid, 'umask':self.umask}])
             except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Job %s: Failed to start up user script job; requeueing" \
                              % (self.jobid))
@@ -728,7 +729,7 @@ class Job (Data):
                     'args':self.args,
                     'env':self.envs,
                     'location':[self.location],
-                    'id':"*",
+                    'id':"*", 'umask':self.umask,
                     'kerneloptions':self.kerneloptions,
                 }])
             except (ComponentLookupError, xmlrpclib.Fault):

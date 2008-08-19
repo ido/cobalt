@@ -31,7 +31,7 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -E <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h -c <processor count> -m <mode co/vn> 
-             --debuglog <cobaltlog file path> <command> <args>
+             -u <umask> --debuglog <cobaltlog file path> <command> <args>
 """
 
 if __name__ == '__main__':
@@ -41,7 +41,7 @@ if __name__ == '__main__':
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog' }
+                'debuglog':'debuglog', 'u':'umask' }
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -74,6 +74,12 @@ if __name__ == '__main__':
         sys.exit(1)
 
     jobspec = {'tag':'job'}
+    if opts['umask']:
+        jobspec['umask'] = int(opts['umask'], 8)
+    else:
+        um = os.umask(022)
+        os.umask(um)
+        jobspec['umask'] = um
     if opts['kerneloptions']:
         jobspec['kerneloptions'] = opts['kerneloptions']
 

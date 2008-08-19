@@ -136,6 +136,7 @@ class ProcessGroup (Data):
         self.stdout = spec.get('stdout')
         self.stderr = spec.get('stderr')
         self.cobalt_log_file = spec.get('cobalt_log_file')
+        self.umask = spec.get('umask')
         self.exit_status = None
         self.location = spec.get('location') or []
         self.user = spec.get('user', "")

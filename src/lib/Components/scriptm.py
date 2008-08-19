@@ -37,6 +37,7 @@ class ProcessGroup(Data):
         Data.__init__(self, spec)
         spec = spec.copy()
         self.tag = spec.get("tag", "process-group")
+        self.umask = spec.get('umask', 022)
         self.name = spec.pop("name", None)
         self.location = spec.pop("location", None)
         self.state = spec.pop("state", 'running')
@@ -91,6 +92,10 @@ class ProcessGroup(Data):
             except OSError:
                 self.log.error("Failed to change userid/groupid for PG %s" % (self.jobid))
                 sys.exit(0)
+            try:
+                os.umask(self.umask)
+            except:
+                self.log.error("Failed to set umask to %s" % self.umask)
             try:
                 err = open(self.errlog, 'a')
                 os.chmod(self.errlog, 0600)
@@ -251,7 +256,7 @@ class ScriptManager(Component):
                             print >> err, "The script job exited after receiving signal %s" % os.WTERMSIG(stat)
                             err.close()
                         except IOError:
-                            self.log.error("Job %s/%s: ProcessGroup %s failed to update .error file" % (pgroup.jobid, pgroup.user, pgroup.jobid))
+                            self.logger.error( "Job %s/%s: ProcessGroup %s failed to update .error file" % (pgroup.jobid, pgroup.user, pgroup.jobid))
 
                     if not pgroup.FinishProcess():
                         self.zombie_mpi[pgroup] = True

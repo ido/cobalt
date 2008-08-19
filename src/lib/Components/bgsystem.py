@@ -74,6 +74,10 @@ class ProcessGroup (bg_base_system.ProcessGroup):
             os._exit(1)
 
         try:
+            os.umask(self.umask)
+        except:
+            logger.error("Failed to set umask to %s" % self.umask)
+        try:
             partition = self.location[0]
         except IndexError:
             raise ProcessGroupCreationError("no location")
@@ -138,7 +142,8 @@ class ProcessGroup (bg_base_system.ProcessGroup):
             print >> cobalt_log_file, "\n"
             cobalt_log_file.close()
         except:
-            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.id, self.user, self.cobalt_log_file))
+            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % \
+                         (self.id, self.user, self.cobalt_log_file))
 
         os.execl(*cmd)
     
