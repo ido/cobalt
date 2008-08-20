@@ -76,6 +76,7 @@ if __name__ == '__main__':
     jobspec = {'tag':'job'}
     if opts['umask']:
         jobspec['umask'] = int(opts['umask'], 8)
+        os.umask(int(opts['umask'], 8))
     else:
         um = os.umask(022)
         os.umask(um)

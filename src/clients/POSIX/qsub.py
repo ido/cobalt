@@ -36,7 +36,7 @@ if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
-                'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask'
+                'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
                 'debuglog':'debuglog' }
@@ -74,6 +74,7 @@ if __name__ == '__main__':
     jobspec = {'tag':'job'}
     if opts['umask']:
         jobspec['umask'] = int(opts['umask'], 8)
+        os.umask(int(opts['umask'], 8))
     else:
         um = os.umask(022)
         os.umask(um)
