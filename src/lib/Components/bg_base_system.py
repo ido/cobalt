@@ -368,7 +368,7 @@ class BGBaseSystem (Component):
             n = len(kids)
             part_node_cards = sets.Set(partition.node_cards)
             # generate the power set, but try to use the big partitions first (hence the sort above)
-            for i in range(1, 2**n + 1):
+            for i in xrange(1, 2**n + 1):
                 test_cover = [ kids[j] for j in range(n) if i & 2**j ]
                 
                 test_node_cards = sets.Set()
