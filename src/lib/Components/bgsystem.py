@@ -522,6 +522,8 @@ class BGSystem (BGBaseSystem):
         else:
             try:
                 stdout = open(self.config.get("diag_log_file") or "/dev/null", 'a')
+                stdout.write("[%s] starting %s on partition %s\n" % (time.ctime(), test_name, partition))
+                stdout.flush()
                 os.dup2(stdout.fileno(), sys.__stdout__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stdout will be lost)" % e)
