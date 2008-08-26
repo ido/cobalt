@@ -183,6 +183,23 @@ class BGSystem (BGBaseSystem):
     implementation = "bgsystem"
     
     logger = logger
+
+    
+    _configfields = ['diag_script_location', 'diag_log_file']
+    _config = ConfigParser.ConfigParser()
+    if '-C' in sys.argv:
+        _config.read(sys.argv[sys.argv.index('-C') + 1])
+    else:
+        _config.read(Cobalt.CONFIG_FILES)
+    if not _config._sections.has_key('bgsystem'):
+        print '''"bgsystem" section missing from cobalt config file'''
+        sys.exit(1)
+    config = _config._sections['bgsystem']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
+        sys.exit(1)
+
     
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
@@ -493,7 +510,7 @@ class BGSystem (BGBaseSystem):
     signal_process_groups = exposed(query(signal_process_groups))
 
     def launch_diags(self, partition, test_name):
-        diag_exe = '/usr/lib/cobalt/diags/%s' % test_name
+        diag_exe = os.path.join(self.config.get("diag_script_location"), test_name) 
         try:
             sdata = os.stat(diag_exe)
         except:
@@ -503,6 +520,17 @@ class BGSystem (BGBaseSystem):
         if pid:
             self.diag_pids[pid] = (partition, test_name)
         else:
+            try:
+                stdout = open(self.config.get("diag_log_file") or "/dev/null", 'a')
+                os.dup2(stdout.fileno(), sys.__stdout__.fileno())
+            except (IOError, OSError), e:
+                logger.error("error opening diag_log_file file: %s (stdout will be lost)" % e)
+            try:
+                stderr = open(self.config.get("diag_log_file") or "/dev/null", 'a')
+                os.dup2(stderr.fileno(), sys.__stderr__.fileno())
+            except (IOError, OSError), e:
+                logger.error("error opening diag_log_file file: %s (stderr will be lost)" % e)
+
             try:
                 os.execl(diag_exe, diag_exe, partition.name)
             except:
