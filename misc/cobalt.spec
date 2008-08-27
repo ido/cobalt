@@ -1,6 +1,6 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.98.2pre2
+Version: 0.98.2pre3
 Release: 1
 License: GPL
 Group: System Software
@@ -60,7 +60,7 @@ cd %{buildroot}%{_bindir}
 for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf wrapper $file ; done
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/cobalt
 chmod 700 ${RPM_BUILD_ROOT}/var/spool/cobalt
-find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python2.5@'
+# find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python2.5@'
 cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done 
 
 %clean
