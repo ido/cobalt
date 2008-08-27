@@ -82,8 +82,9 @@ if __name__ == '__main__':
     
     arglist = ['-partition', j['location']] + arglist
 
-    # update the current working directory, if not specified on the command line    
-    if "-cwd" not in arglist:
+    # update the current working directory, if not specified on the command line
+    # however, mpirun -free gets angry if you specify -cwd, so check for that    
+    if "-cwd" not in arglist and "-free" not in arglist:
         arglist = ['-cwd', os.getcwd()] + arglist
 
     
