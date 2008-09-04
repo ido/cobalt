@@ -49,3 +49,11 @@ class JobValidationError(Exception):
     log = False
     fault_code = fault_code_counter.next()
 
+class DataStateError(Exception):
+    log = True
+    fault_code = fault_code_counter.next()
+
+class DataStateTransitionError(Exception):
+    log = True
+    fault_code = fault_code_counter.next()
+

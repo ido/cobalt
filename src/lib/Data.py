@@ -9,7 +9,7 @@ import warnings
 from sets import Set as set
 
 import Cobalt.Util
-from Cobalt.Exceptions import DataCreationError, IncrIDError
+from Cobalt.Exceptions import DataCreationError, IncrIDError, DataStateError, DataStateTransitionError
 
 
 def get_spec_fields (specs):
@@ -167,6 +167,41 @@ class Data (object):
         if field not in self.fields:
             warnings.warn("Creating new attribute '%s' on '%s' with set." % (field, self), RuntimeWarning, stacklevel=2)
         setattr(self, field, value)
+
+
+class DataState(Data):
+    """Instance class for state machine instances
+    """
+    _initial_state = None
+    _states = []
+    _transitions = []
+    def _get_state(self):
+        """
+        
+        Arguments:
+        - `self`:
+        """
+        return self._state
+
+    def _set_state(self, newvalue):
+        """
+        Set state to new value, ensuring it is a proper state and respects the state machine
+        Arguments:
+        - `self`:
+        - `newvalue`:
+        """
+        if newvalue not in self._states:
+            raise DataStateError(newvalue)
+        if not hasattr(self, '_state'):
+            if newvalue != self._initial_state:
+                raise DataStateError(newvalue)
+        elif (self._state, newvalue) not in self._transitions:
+            raise DataStateTransitionError((self._state, newvalue))
+        self._state = newvalue
+    
+    state = property(_get_state, _set_state)
+
+        
 
 
 class DataList (list):

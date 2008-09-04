@@ -3,8 +3,8 @@ import itertools
 import warnings
 
 from Cobalt.Data import IncrID, RandomID, Data, ForeignData, DataList, \
-     DataDict, ForeignData, ForeignDataDict
-from Cobalt.Exceptions import DataCreationError
+     DataDict, ForeignData, ForeignDataDict, DataState
+from Cobalt.Exceptions import DataCreationError, DataStateError, DataStateTransitionError
 
 import Cobalt.Logging
 
@@ -117,6 +117,36 @@ class TestData (object):
         assert rx['tag'] == "somedata"
         assert rx['otherattribute'] is None
 
+
+class TestDataState (TestData):
+    def test_setstate(self):
+        class TestDataState(DataState):
+            _initial_state = 'init'
+            _states = ['init', 'middle', 'end']
+            _transitions = [('init', 'end')]
+
+            def __init__(self, data):
+                Data.__init__(self, data)
+                self.state = data['state']
+
+        try:
+            a = TestDataState({'state':'middle'})
+            assert False
+        except DataStateError:
+            pass
+
+        a = TestDataState({'state':'init'})
+        try:
+            a.state = 'middle'
+            assert False
+        except DataStateTransitionError:
+            pass
+        try:
+            a.state = 'other'
+            assert False
+        except DataStateError:
+            pass
+        a.state = 'end'
 
 class TestForeignData (TestData):
     
