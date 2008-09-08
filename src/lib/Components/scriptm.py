@@ -98,7 +98,6 @@ class ProcessGroup(Data):
                 self.log.error("Failed to set umask to %s" % self.umask)
             try:
                 err = open(self.errlog, 'a')
-                os.chmod(self.errlog, 0600)
                 os.dup2(err.fileno(), sys.__stderr__.fileno())
             except IOError:
                 self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % (self.jobid, self.user, self.errlog))
@@ -106,7 +105,6 @@ class ProcessGroup(Data):
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" % (self.jobid, self.user, self.errlog))
             try:
                 out = open(self.outlog, 'a')
-                os.chmod(self.outlog, 0600)
                 os.dup2(out.fileno(), sys.__stdout__.fileno())
             except IOError:
                 self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" % (self.jobid, self.user, self.outlog))

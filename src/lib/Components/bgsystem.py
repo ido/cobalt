@@ -104,13 +104,11 @@ class ProcessGroup (bg_base_system.ProcessGroup):
         os.dup2(stdin.fileno(), sys.__stdin__.fileno())
         try:
             stdout = open(self.stdout or tempfile.mktemp(), 'a')
-            os.chmod(self.stdout, 0600)
             os.dup2(stdout.fileno(), sys.__stdout__.fileno())
         except (IOError, OSError), e:
             logger.error("process group %s: error opening stdout file %s: %s (stdout will be lost)" % (self.id, self.stdout, e))
         try:
             stderr = open(self.stderr or tempfile.mktemp(), 'a')
-            os.chmod(self.stderr, 0600)
             os.dup2(stderr.fileno(), sys.__stderr__.fileno())
         except (IOError, OSError), e:
             logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, self.stderr, e))
