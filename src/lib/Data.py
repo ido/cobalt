@@ -172,9 +172,9 @@ class Data (object):
 class DataState(Data):
     """Instance class for state machine instances
     """
-    _initial_state = None
-    _states = []
-    _transitions = []
+    initial_state = None
+    states = []
+    transitions = []
     def _get_state(self):
         """
         
@@ -190,12 +190,12 @@ class DataState(Data):
         - `self`:
         - `newvalue`:
         """
-        if newvalue not in self._states:
+        if newvalue not in self.states:
             raise DataStateError(newvalue)
         if not hasattr(self, '_state'):
-            if newvalue != self._initial_state:
+            if newvalue != self.initial_state:
                 raise DataStateError(newvalue)
-        elif (self._state, newvalue) not in self._transitions:
+        elif (self._state, newvalue) not in self.transitions:
             raise DataStateTransitionError((self._state, newvalue))
         self._state = newvalue
     

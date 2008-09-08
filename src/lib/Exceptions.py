@@ -57,3 +57,14 @@ class DataStateTransitionError(Exception):
     log = True
     fault_code = fault_code_counter.next()
 
+class StateMachineError (Exception):
+    log = True
+    fault_code = fault_code_counter.next()
+
+class StateMachineIllegalEventError (Exception):
+    log = True
+    fault_code = fault_code_counter.next()
+
+class StateMachineNonexistentEventError (Exception):
+    log = True
+    fault_code = fault_code_counter.next()
