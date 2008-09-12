@@ -180,21 +180,41 @@ class Job (Data):
     def _get_job_state(self):
         if self.all_dependencies:
             if not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies)):
-                return "dependency hold"
+                return "dep_hold"
         
         if self.max_running:
-            return "MaxRunning hold"
+            return "maxrun_hold"
         
         if self.system_state == "ready":
             if self.user_state == "ready":
                 return "queued"
             else:
-                return "user " + self.user_state
+                return "user_" + self.user_state
         elif self.system_state == "running":
-            return "running - %s" % self.job_step
+            return self.job_step
         elif self.system_state == "hold":
-            return "admin hold"
+            return "admin_hold"
     state = property(_get_job_state)
+    
+    def _get_short_job_state(self):
+        if self.all_dependencies:
+            if not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies)):
+                return "H"
+        
+        if self.max_running:
+            return "H"
+        
+        if self.system_state == "ready":
+            if self.user_state == "ready":
+                return "Q"
+            else:
+                return "H"
+        elif self.system_state == "running":
+            return "R"
+        elif self.system_state == "hold":
+            return "H"
+    short_state = property(_get_short_job_state)
+        
     
     def _get_dependencies(self):
         ret = ""
@@ -658,7 +678,7 @@ class Job (Data):
     def RunBGUserJob(self):
         '''Run a Blue Gene Job'''
         self.system_state = 'running'
-        self.job_step = "executing"
+        self.job_step = "running"
         self.timers['user'].Start()
         self.LogStart()
         if not self.outputpath:
