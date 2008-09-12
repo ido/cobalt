@@ -173,7 +173,7 @@ if __name__ == '__main__':
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Queue', 'StartTime', 'Index', 'SubmitTime', 'Path',
                       'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project', 'Dependencies']
+                      'Project', 'Dependencies', 'short_state']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
@@ -311,6 +311,10 @@ if __name__ == '__main__':
         return 0
     
     output.sort(_my_cmp)
+    
+    if "short_state" in header:
+        idx = header.index("short_state")
+        header[idx] = "S"
     
     if opts['long']:
         Cobalt.Util.print_vertical([tuple(x) for x in [header] + output])
