@@ -1,0 +1,22 @@
+.TH "cqwait" 1
+.SH NAME
+cqwait \- wait for job initiation or completion
+.SH SYNOPSIS
+.B cqwait
+.I [-v] [-r] [--start] <jobid> <jobid>
+.SH DESCRIPTION
+.PP
+cqwait waits for job completion by default. 
+.SH OPTIONS
+.TP
+.B \-\-start
+Exit upon job start as opposed to the default exit on completion behavior
+.TP
+.B \-\-version or \-v
+Print out version string
+.SH "SEE ALSO"
+.BR cqdel(1),
+.BR cqsub(1),
+.BR cqm(8)
+.SH BUGS
+None are currently known.
