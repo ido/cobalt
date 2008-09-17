@@ -85,7 +85,6 @@ class ProcessGroup(Data):
             os.environ["COBALT_JOBID"] = str(self.jobid)
             os.environ['USER'] = self.user
             os.environ['HOME'] = home_dir
-            os.chdir(self.cwd)
             try:
                 os.setgid(groupid)
                 os.setuid(userid)
@@ -111,9 +110,18 @@ class ProcessGroup(Data):
             except OSError:
                 self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" % (self.jobid, self.user, self.errlog))
             cmd = [self.executable, self.executable] + self.args
-            
+
+            chdir_error = ""
+            try:
+                os.chdir(self.cwd)
+            except:
+                self.log.error("Job %s/%s: unable to set cwd to %s" % (self.jobid, self.user, self.cwd))
+                chdir_error = "unable to set cwd to %s" % self.cwd
+                
             try:
                 cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+                if chdir_error:
+                    print >> cobalt_log_file, chdir_error + "\n" 
                 print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
                 print >> cobalt_log_file, "called with environment:\n"
                 for key in os.environ:
@@ -121,14 +129,12 @@ class ProcessGroup(Data):
                 print >> cobalt_log_file, "\n"
                 cobalt_log_file.close()
             except:
-                self.log.error("Job %s/%s:  unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
-            
+                self.log.error("Job %s/%s: unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+
             try:
                 os.execl(*cmd)
             except Exception, e:
-                print >> err, "Something went wrong in starting the script job."
-                print >> err, e
-                err.flush()
+                self.log.error("Job %s/%s: Something went wrong in starting the script job." % (self.jobid, self.user), exc_info=1)
                 os._exit(1)
                 
 

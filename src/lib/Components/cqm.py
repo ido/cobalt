@@ -1130,7 +1130,7 @@ class QueueManager(Component):
             if j.job_step == 'done':
                 # check to see if somebody depended on this
                 if j.exit_status == 0:
-                    for waiting_job in self.Queues.get_jobs([{'state':"dependency hold"}]):
+                    for waiting_job in self.Queues.get_jobs([{'state':"dep_hold"}]):
                         if str(j.jobid) in waiting_job.all_dependencies:
                             waiting_job.satisfied_dependencies.append(str(j.jobid))
                 queue.jobs.q_del([{'jobid':j.jobid}])
