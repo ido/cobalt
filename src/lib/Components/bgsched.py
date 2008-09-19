@@ -68,18 +68,9 @@ class Reservation (Data):
         Data.update(self, spec)
 
     
-    def overlaps(self, partition, start, duration):
+    def overlaps(self, start, duration):
         '''check job overlap with reservations'''
         if start + duration < self.start:
-            return False
-
-        part_list = self.partitions.split(":")
-        no_overlap = True
-        for part_name in part_list:
-            if part_name==partition.name or part_name in partition.children or part_name in partition.parents:
-                no_overlap = False
-                break
-        if no_overlap:
             return False
 
         if self.cycle and duration >= self.cycle:
@@ -217,52 +208,7 @@ class ReservationDict (DataDict):
             logger.error("problem disabling reservation queue (%s)" % e)
         return reservations
 
-class Partition (ForeignData):
-    """Partitions are allocatable chunks of the machine"""
-    
-    fields = ForeignData.fields + [
-        "queue", "name", "node_card_names", "scheduled", "functional", "size", "parents", "children", "state"
-    ]
 
-    def __init__(self, spec):
-        ForeignData.__init__(self, spec)
-        spec = spec.copy()
-        self.queue = spec.pop("queue", None)
-        self.name = spec.pop("name", None)
-        self.node_card_names = spec.pop("node_card_names", None)
-        self.scheduled = spec.pop("scheduled", None)
-        self.functional = spec.pop("functional", None)
-        self.size = spec.pop("size", None)
-        self.parents = spec.pop("parents", None)
-        self.children = spec.pop("children", None)
-        self.state = spec.pop("state", None)
-        
-        
-    def _can_run (self, job):
-        """Check that job can run on partition with reservation constraints"""
-        return self.scheduled and self.functional
-
-class PartitionDict (ForeignDataDict):
-    item_cls = Partition
-    __oserror__ = Cobalt.Util.FailureMode("System Connection (partition)")
-    __failname__ = 'System Connection'
-    __function__ = ComponentProxy("system").get_partitions
-    __fields__ = ['name', 'queue', 'node_card_names', 'scheduled', 'functional', 'size', 'parents', 'children', 'state']
-    key = 'name'
-
-    def can_run(self, target_partition, job):
-        if target_partition.state != "idle":
-            return False
-        desired = sys.maxint
-        for part in self.itervalues():
-            if not part.functional:
-                if target_partition.name in part.children or target_partition.name in part.parents:
-                    return False
-            else:
-                if part.scheduled:
-                    if int(job.nodes) <= int(part.size) < desired:
-                        desired = int(part.size)
-        return target_partition._can_run(job) and int(target_partition.size) == desired
                 
 
 class Job (ForeignData):
@@ -367,8 +313,6 @@ class BGSched (Component):
         self.reservations = ReservationDict()
         self.queues = QueueDict()
         self.jobs = JobDict()
-        self.partitions = PartitionDict()
-        self.assigned_partitions = {}
         self.sched_info = {}
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
@@ -392,8 +336,6 @@ class BGSched (Component):
         
         self.queues = QueueDict()
         self.jobs = JobDict()
-        self.partitions = PartitionDict()
-        self.assigned_partitions = {}
         self.sched_info = {}
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
@@ -407,10 +349,6 @@ class BGSched (Component):
     # order the jobs with biggest utility first
     def utilitycmp(self, tuple1, tuple2):
         return -cmp(tuple1[1], tuple2[1])
-    
-    # order the jobs with the most walltime first
-    def walltimecmp(self, tuple1, tuple2):
-        return -cmp(float(tuple1[0].walltime), float(tuple2[0].walltime))
     
     def prioritycmp(self, job1, job2):
         """Compare 2 jobs first using queue priority and then first-in, first-out."""
@@ -490,17 +428,24 @@ class BGSched (Component):
                 else:
                     res1 = reservations[j]
                     res2 = reservations[i]
-                for p in res2.partitions.split(":"):
-                    # we subtract a little bit because the overlaps method isn't really meant to do this
-                    # it will report warnings when one reservation starts at the same time another ends
-                    if res1.overlaps(self.partitions[p], res2.start, res2.duration - 0.00001):
-                        ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
+
+                # we subtract a little bit because the overlaps method isn't really meant to do this
+                # it will report warnings when one reservation starts at the same time another ends
+                if res1.overlaps(res2.start, res2.duration - 0.00001):
+                    # now we need to check for overlap in space
+                    results = ComponentProxy("system").get_partitions(
+                        [ {'name': p, 'children': '*', 'parents': '*'} for p in res2.partitions.split(":") ]
+                    )
+                    for p in res1.partitions.split(":"):
+                        for r in results:
+                            if p==r['name'] or p in r['children'] or p in r['parents']:
+                                ret += "Warning: reservation '%s' overlaps reservation '%s'\n" % (res1.name, res2.name)
 
         return ret
     check_reservations = exposed(check_reservations)
 
     def sync_data(self):
-        for item in [self.jobs, self.queues, self.partitions]:
+        for item in [self.jobs, self.queues]:
             try:
                 item.Sync()
             except (ComponentLookupError, xmlrpclib.Fault):
@@ -508,9 +453,13 @@ class BGSched (Component):
                 pass
     sync_data = automatic(sync_data)
 
-    def _run_reservation_jobs (self, available_partitions, res_queues):
+    def _run_reservation_jobs (self):
         # handle each reservation separately, as they shouldn't be competing for resources
-        for queue in res_queues:
+        for cur_res in self.reservations.itervalues():
+            queue = cur_res.queue
+            if not (self.queues.has_key(queue) and self.queues[queue].state == 'running'):
+                continue
+            
             temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue}])
             active_jobs = []
             for j in temp_jobs:
@@ -523,109 +472,44 @@ class BGSched (Component):
                 # or an error occurred -- either way, give up now
                 continue
             utility_scores.sort(self.utilitycmp)
-    
-            # this is the bit that actually picks which job to run
+            
+            job_location_args = []
             for tup in utility_scores:
                 job = tup[0]
-                if tup[1] < utility_scores[0][2]:
-                    self.sched_info[utility_scores[0][0].jobid] += "\n     wants to block other jobs from starting"
-                    # this break is meant to take us to the explicit back filling mumbo-jumbo
-                    break
-                
-                best_score = sys.maxint
-                best_partition = None
-                
-                for cur_res in self.reservations.values():
-                    if job.queue == cur_res.queue:
-                        if not cur_res.job_within_reservation(job):
-                            if cur_res.is_active():
-                                self.sched_info[job.jobid] = "not enough time in reservation '%s' for job to finish" % cur_res.name
-                            else:
-                                self.sched_info[job.jobid] = "reservation '%s' is not active yet" % cur_res.name
-                            continue
-                        
-                        for partition in available_partitions:
-                            # check if the current partition is linked to the job's reservation
-                            part_in_res = False
-                            for part_name in cur_res.partitions.split(":"):
-                                if not part_name in self.partitions:
-                                    self.logger.error("reservation '%s' refers to non-existent partition '%s'" % (cur_res.name, part_name))
-                                    continue
-                                if not (partition.name==self.partitions[part_name].name or partition.name in self.partitions[part_name].children):
-                                    continue
-                                # if we got here, then the partition is part of the reservation
-                                part_in_res = True
-                            
-                            if not part_in_res:
-                                continue
-                                
-                            if not self.partitions.can_run(partition, job):
-                                continue
-                            
-                            # let's check the impact on partitions that would become blocked
-                            score = 0
-                            for p in partition.parents:
-                                if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
-                                    score += 1
-                            
-                            # the lower the score, the fewer new partitions will be blocked by this selection
-                            if score < best_score:
-                                best_score = score
-                                best_partition = partition        
-            
-                        if best_partition is not None:
-                            self._start_job(job, best_partition)
-                            return
+                job_location_args.append( 
+                    { 'jobid': str(job.jobid), 
+                      'nodes': job.nodes, 
+                      'queue': job.queue, 
+                      'required': cur_res.partitions.split(":"),
+                      'utility_score': tup[1],
+                      'walltime': job.walltime,
+                    } )
 
-    def _start_job(self, job, partition):
+            # there's no backfilling in reservations
+            best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], 0)
+    
+            for jobid in best_partition_dict:
+                job = self.jobs[int(jobid)]
+                self._start_job(job, best_partition_dict[jobid])
+
+    def _start_job(self, job, partition_name):
         cqm = ComponentProxy("queue-manager")
         
         try:
-            self.logger.info("trying to start job %d on partition %s" % (job.jobid, partition.name))
-            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition.name])
+            self.logger.info("trying to start job %d on partition %s" % (job.jobid, partition_name))
+            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition_name])
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
             return
 
-        self.assigned_partitions[partition.name] = time.time()
         self.started_jobs[job.jobid] = time.time()
 
-    def _find_best_partition(self, job, available_partitions):
-        best_score = sys.maxint
-        best_partition = None
-        for partition in available_partitions:
-            # check if the current partition is linked to the job's queue
-            if job.queue not in partition.queue.split(':'):
-                continue
-                
-            if self.partitions.can_run(partition, job):
-                really_okay = True
-                for res in self.reservations.itervalues():
-                    # if the proposed job overlaps an active reservation, don't run it
-                    if res.overlaps(partition, time.time(), 60 * float(job.walltime) + SLOP_TIME):
-                        really_okay = False
-                        self.sched_info[job.jobid] = "overlaps reservation '%s'" % res.name
-                        break
-                        
-                if really_okay:
-                    # let's check the impact on partitions that would become blocked
-                    score = 0
-                    for p in partition.parents:
-                        if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
-                            score += 1
-                    
-                    # the lower the score, the fewer new partitions will be blocked by this selection
-                    if score < best_score:
-                        best_score = score
-                        best_partition = partition        
-
-        return best_partition
 
     def _compute_utility_scores (self, active_jobs, current_time):
         utility_scores = []
             
         # tack on a 0 so the list is never empty    
-        max_nodes = max([int(p.size) for p in self.partitions.values()] + [0])
+        # max_nodes = max([int(p.size) for p in self.partitions.values()] + [0])
         
         for job in active_jobs:
             utility_name = self.queues[job.queue].policy
@@ -635,7 +519,7 @@ class BGSched (Component):
                     'user_name': job.user,
                     'project': job.project,
                     'queue_priority': int(self.queues[job.queue].priority),
-                    'machine_size': max_nodes,
+                    #'machine_size': max_nodes,
                     'jobid': int(job.jobid),
                     }
             try:
@@ -677,17 +561,13 @@ class BGSched (Component):
         if not self.active:
             return
         # if we're missing information, don't bother trying to schedule jobs
-        if not (self.partitions.__oserror__.status and self.queues.__oserror__.status and self.jobs.__oserror__.status):
+        if not (self.queues.__oserror__.status and self.jobs.__oserror__.status):
             self.sync_state.Fail()
             return
         self.sync_state.Pass()
         
-        # clean up the assigned_partitions cached data, and the started_jobs cached data
+        # clean up the started_jobs cached data
         now = time.time()
-        for part_name in self.assigned_partitions.keys():
-            if (now - self.assigned_partitions[part_name]) > 5*60:
-                del self.assigned_partitions[part_name]
-        
         for job_name in self.started_jobs.keys():
             if (now - self.started_jobs[job_name]) > 60:
                 del self.started_jobs[job_name]
@@ -709,39 +589,6 @@ class BGSched (Component):
             self.logger.error("failed to connect to script manager")
             return
 
-        for name in script_locations:
-            # once the partition can be found from the script manager, the scheduler doesn't need to keep track of it
-            if self.assigned_partitions.has_key(name):
-                del self.assigned_partitions[name]
-                
-        available_partitions = []
-        for partition in self.partitions.itervalues():
-            okay_to_add = True
-
-            if partition.state != "idle":
-                # if the system component finally knows that the partition isn't idle, we don't need to keep
-                # track of it any longer
-                if self.assigned_partitions.has_key(partition.name):
-                    del self.assigned_partitions[partition.name]
-                continue
-            
-            if partition.name in self.assigned_partitions:
-                continue
-            
-            if partition.name in script_locations:
-                continue
-
-            # walk the various lists of partitions and see if the current partition belongs to the parents or children of 
-            # a partition which is in use
-            for key in set(self.assigned_partitions.keys() + script_locations):
-                if partition.name in self.partitions[key].parents or partition.name in self.partitions[key].children:
-                    okay_to_add = False
-                    break
-            
-            if okay_to_add:
-                available_partitions.append(partition)
-        
-
         active_queues = []
         spruce_queues = []
         res_queues = set()
@@ -758,22 +605,13 @@ class BGSched (Component):
                     active_queues.append(queue)
         
         # handle the reservation jobs that might be ready to go
-        self._run_reservation_jobs(available_partitions, res_queues)
+        self._run_reservation_jobs()
 
         # figure out stuff about queue equivalence classes
-        equiv = []
-        for part in self.partitions.itervalues():
-            if part.functional and part.scheduled:
-                found_a_match = False
-                for e in equiv:
-                    if e['data'].intersection(part.node_card_names):
-                        e['queues'].update(part.queue.split(":"))
-                        e['data'].update(part.node_card_names)
-                        found_a_match = True
-                        break
-                if not found_a_match:
-                    equiv.append( { 'queues': set(part.queue.split(":")), 'data': set(part.node_card_names) } ) 
-            
+        res_info = {}
+        for cur_res in self.reservations.values():
+            res_info[cur_res.name] = cur_res.partitions
+        equiv = ComponentProxy("system").find_queue_equivalence_classes(res_info)
         
         for eq_class in equiv:
             temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues if queue.name in eq_class['queues']])
@@ -798,37 +636,18 @@ class BGSched (Component):
                 # or an error occurred -- either way, go on to the next equivalence class
                 continue
             utility_scores.sort(self.utilitycmp)
-    
-            # this is the bit that actually picks which job to run
-            for tup in utility_scores:
-                job = tup[0]
-                if tup[1] < utility_scores[0][2]:
-                    self.sched_info[utility_scores[0][0].jobid] += "\n     wants to block other jobs from starting"
-                    # this break is meant to take us to the explicit back filling mumbo-jumbo
-                    break
-    
-                best_partition = self._find_best_partition(job, available_partitions)
-                if best_partition is not None:
-                    self._start_job(job, best_partition)
-                    return
-    
-            # oh mercy
-            # time for some explicit backfilling
+            
+            
+            # get the cutoff time for backfilling
             temp_jobs = [job for job in self.jobs.q_get([{'system_state':"running"}]) if job.queue in eq_class['queues']]
             end_times = []
             for job in temp_jobs:
                 end_time = float(job.starttime) + 60 * float(job.walltime)
                 end_times.append(end_time)
             
-            for cur_res in self.reservations.values():
-                skip = True
-                for p_name in cur_res.partitions.split(":"):
-                    if eq_class['data'].intersection(self.partitions[p_name].node_card_names):
-                        skip = False
-                        break
-                if skip:
-                    continue
-                        
+            for res_name in eq_class['reservations']:
+                cur_res = self.reservations[res_name]
+
                 if not cur_res.cycle:
                     end_time = float(cur_res.start) + float(cur_res.duration)
                 else:
@@ -843,22 +662,34 @@ class BGSched (Component):
                 cut_off = min(end_times) - now + 120
             else:
                 # if nothing is running, we can't technically "back fill" and there's just nothing to run
-                # so we should examine the next equivalence class of queues
-                continue
-    
-            utility_scores.sort(self.walltimecmp)
+                cut_off = 0
+
             
+            # now smoosh lots of data together to be passed to the allocator in the system component
+            job_location_args = []
             for tup in utility_scores:
                 job = tup[0]
-                if 60*float(job.walltime) > cut_off:
-                    continue
-    
-                best_partition = self._find_best_partition(job, available_partitions)
-                if best_partition is not None:
-                    self._start_job(job, best_partition)
-                    self.logger.info("backfilling job %s" % job.jobid)
-                    return
+                forbidden_locations = set(script_locations)
+                for res_name in eq_class['reservations']:
+                    cur_res = self.reservations[res_name]
+                    if cur_res.overlaps(time.time(), 60 * float(job.walltime) + SLOP_TIME):
+                        forbidden_locations.update(cur_res.partitions.split(":"))
 
+                job_location_args.append( 
+                    { 'jobid': str(job.jobid), 
+                      'nodes': job.nodes, 
+                      'queue': job.queue, 
+                      'forbidden': list(forbidden_locations),
+                      'utility_score': tup[1],
+                      'walltime': job.walltime,
+                    } )
+
+            best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], cut_off)
+    
+            for jobid in best_partition_dict:
+                job = self.jobs[int(jobid)]
+                self._start_job(job, best_partition_dict[jobid])
+    
 
     schedule_jobs = automatic(schedule_jobs)
 

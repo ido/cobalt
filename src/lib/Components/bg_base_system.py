@@ -9,6 +9,8 @@ ProcessGroupDict -- default container for process groups
 BGBaseSystem -- base system component
 """
 
+import sys
+import time
 import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError, JobValidationError
@@ -79,6 +81,7 @@ class Partition (Data):
         self.tag = spec.get("tag", "partition")
         self.node_cards = spec.get("node_cards", [])
         self.switches = spec.get("switches", [])
+        self.reserved_until = False
         # this holds partition names
         self._wiring_conflicts = sets.Set()
 
@@ -453,3 +456,166 @@ class BGBaseSystem (Component):
         return ret
     unfail_partitions = exposed(unfail_partitions)
     
+    def _find_job_location(self, args):
+        jobid = args['jobid']
+        nodes = args['nodes']
+        queue = args['queue']
+        utility_score = args['utility_score']
+        walltime = args['walltime']
+        forbidden = args.get("forbidden", [])
+        required = args.get("required", [])
+        
+        best_score = sys.maxint
+        best_partition = None
+        
+        available_partitions = set()
+        if required:
+            for p_name in required:
+                available_partitions.add(self.partitions[p_name])
+                available_partitions.update(self.partitions[p_name]._children)
+        else:
+            for p in self.partitions.itervalues():
+                skip = False
+                for bad_name in forbidden:
+                    if p.name==bad_name or bad_name in p.children or bad_name in p.parents:
+                        skip = True
+                        break
+                if not skip:
+                    available_partitions.add(p)
+                
+        for partition in available_partitions:
+            # check if the current partition is linked to the job's queue (but if reservation locations were
+            # passed in via the "required" argument, then we know it's all good)
+            if not required and queue not in partition.queue.split(':'):
+                continue
+                
+            if self.can_run(partition, nodes):
+                # let's check the impact on partitions that would become blocked
+                score = 0
+                for p in partition.parents:
+                    if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
+                        score += 1
+                
+                # the lower the score, the fewer new partitions will be blocked by this selection
+                if score < best_score:
+                    best_score = score
+                    best_partition = partition        
+
+        if best_partition:
+            return {jobid: best_partition.name}
+
+    
+    # the argument "required" is used to pass in the set of locations allowed by a reservation;
+    def find_job_location(self, arg_list, utility_cutoff, backfill_cutoff):
+        best_partition_dict = {}
+        
+        # first time through, try for starting jobs based on utility scores
+        for args in arg_list:
+            if args['utility_score'] < utility_cutoff:
+                break
+            
+            partition_name = self._find_job_location(args)
+            if partition_name:
+                best_partition_dict.update(partition_name)
+                break
+        
+        # the next time through, try to backfill, but only if we couldn't find anyting to start
+        if not best_partition_dict:
+            arg_list.sort(self._walltimecmp)
+            for args in arg_list:
+                if 60*float(args['walltime']) > backfill_cutoff:
+                    break
+                
+                partition_name = self._find_job_location(args)
+                if partition_name:
+                    best_partition_dict.update(partition_name)
+                    break
+
+        # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
+        # be running jobs very soon
+        for partition_name in best_partition_dict.itervalues():
+            part = self.partitions[partition_name] 
+            part.reserved_until = time.time() + 5*60
+            part.state = "starting job"
+            for p in part._parents:
+                if p.state == "idle":
+                    p.state = "blocked by starting job"
+            for p in part._children:
+                if p.state == "idle":
+                    p.state = "blocked by starting job"
+            
+        return best_partition_dict
+    find_job_location = exposed(find_job_location)
+    
+    def _walltimecmp(self, dict1, dict2):
+        return -cmp(float(dict1['walltime']), float(dict2['walltime']))
+
+
+    def find_queue_equivalence_classes(self, reservation_dict):
+        equiv = []
+        for part in self.partitions.itervalues():
+            if part.functional and part.scheduled:
+                found_a_match = False
+                for e in equiv:
+                    if e['data'].intersection(part.node_card_names):
+                        e['queues'].update(part.queue.split(":"))
+                        e['data'].update(part.node_card_names)
+                        found_a_match = True
+                        break
+                if not found_a_match:
+                    equiv.append( { 'queues': set(part.queue.split(":")), 'data': set(part.node_card_names), 'reservations': set() } ) 
+        
+        real_equiv = []
+        for eq_class in equiv:
+            found_a_match = False
+            for e in real_equiv:
+                if e['queues'].intersection(eq_class['queues']):
+                    e['queues'].update(eq_class['queues'])
+                    e['data'].update(eq_class['data'])
+                    found_a_match = True
+                    break
+            if not found_a_match:
+                real_equiv.append(eq_class)
+
+        equiv = real_equiv
+                
+        for eq_class in equiv:
+            for res_name in reservation_dict:
+                skip = True
+                for p_name in reservation_dict[res_name].split(":"):
+                    p = self.partitions[p_name]
+                    if eq_class['data'].intersection(p.node_card_names):
+                        eq_class['reservations'].add(res_name)
+                    for dep_name in p._wiring_conflicts:
+                        if eq_class['data'].intersection(self.partitions[dep_name].node_card_names):
+                            eq_class['reservations'].add(res_name)
+                            break
+
+            for key in eq_class:
+                eq_class[key] = list(eq_class[key])
+            del eq_class['data']
+        
+        return equiv
+    find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
+    
+    
+    def can_run(self, target_partition, node_count):
+        if target_partition.state != "idle":
+            return False
+        desired = sys.maxint
+        for part in self.partitions.itervalues():
+            if not part.functional:
+                if target_partition.name in part.children or target_partition.name in part.parents:
+                    return False
+            else:
+                if part.scheduled:
+                    if int(node_count) <= int(part.size) < desired:
+                        desired = int(part.size)
+        return target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired
+
+    def reserve_partition_until(self, partition_name, time):
+        try:
+            self.partitions[partition_name].reserved_until = time
+        except:
+            self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
+    reserve_partition_until = exposed(reserve_partition_until)

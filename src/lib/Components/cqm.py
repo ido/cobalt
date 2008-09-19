@@ -423,6 +423,7 @@ class Job (Data):
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
                 if self.mode == 'script':
                     result = ComponentProxy("script-manager").wait_jobs([{'id':self.spgid['user'], 'exit_status':'*'}])
+                    ComponentProxy("system").reserve_partition_until(self.location, 1)
                 else:
                     result = ComponentProxy("system").wait_process_groups([{'id':self.spgid['user'], 'exit_status':'*'}])
                 if result:
@@ -722,6 +723,8 @@ class Job (Data):
                      'args':self.args, 'envs':self.envs, 'location':[self.location],
                      'id':"*", 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions,
                      'jobid':self.jobid, 'umask':self.umask}])
+                # reserve the partition until 1 second after unix epoch -- i.e. cancel the reservation
+                ComponentProxy("system").reserve_partition_until(self.location, time.time() + 60*float(self.walltime))
             except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Job %s: Failed to start up user script job; requeueing" \
                              % (self.jobid))

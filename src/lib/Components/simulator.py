@@ -273,7 +273,7 @@ class Simulator (BGBaseSystem):
         except KeyError:
             self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
             return False
-        if partition.state != "idle":
+        if partition.state != "starting job":
             self.logger.error("reserve_partition(%r, %r) [%s]" % (name, size, partition.state))
             return False
         if not partition.functional:
@@ -513,11 +513,20 @@ class Simulator (BGBaseSystem):
         for p in self._partitions.values():
             p._update_node_cards()
             
+        now = time.time()    
         for p in self._partitions.values():
             if p.state != "busy":
                 # since we don't have the bridge, a partition which isn't busy
                 # should be set to idle and then blocked states can be derived
                 p.state = "idle"
+                if p.reserved_until:
+                    p.state = "starting job"
+                    for part in p._parents:
+                        if part.state == "idle":
+                            part.state = "blocked by starting job"
+                    for p in p._children:
+                        if part.state == "idle":
+                            part.state = "blocked by starting job"
                 for diag_part in self.pending_diags:
                     if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
                         p.state = "blocked by pending diags"
@@ -535,6 +544,12 @@ class Simulator (BGBaseSystem):
                         p.state = "failed diags"
                     elif p.name in part.parents or p.name in part.children:
                         p.state = "blocked by failed diags"
+            else:
+                p.reserved_until = False
+
+            if p.reserved_until:
+                if now > p.reserved_until:
+                    p.reserved_until = False
 
         
         self._partitions_lock.release()

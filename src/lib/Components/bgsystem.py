@@ -397,9 +397,18 @@ class BGSystem (BGBaseSystem):
                 if self._partitions.has_key(partition.id):
                     self._partitions[partition.id].state = _get_state(partition)
                     self._partitions[partition.id]._update_node_cards()
-                
+
+            now = time.time()
             for p in self._partitions.values():
                 if p.state != "busy":
+                    if p.reserved_until:
+                        p.state = "starting job"
+                        for part in p._parents:
+                            if part.state == "idle":
+                                part.state = "blocked by starting job"
+                        for p in p._children:
+                            if part.state == "idle":
+                                part.state = "blocked by starting job"
                     for diag_part in self.pending_diags:
                         if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
                             p.state = "blocked by pending diags"
@@ -423,6 +432,12 @@ class BGSystem (BGBaseSystem):
                             p.state = "failed diags"
                         elif p.name in part.parents or p.name in part.children:
                             p.state = "blocked by failed diags"
+                else:
+                    p.reserved_until = False
+                    
+                if p.reserved_until:
+                    if now > p.reserved_until:
+                        p.reserved_until = False
 
                         
             self._partitions_lock.release()
