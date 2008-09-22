@@ -54,7 +54,7 @@ if __name__ == "__main__":
     options = {'weibull':'weibull', 'faultaware':'faultaware',
                'standalone':'standalone', 'profile':'profile'}
     doptions = {'j':'workload', 'p':'config_file', 'failurelog':'failurelog',
-                'scale':'scale', 'shape':'shape',
+                'scale':'scale', 'shape':'shape', 'P': 'policy',
                 'sensitivity':'sensitivity', 'specificity':'specificity',
                 'output':'outputlog'}
 

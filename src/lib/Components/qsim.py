@@ -143,13 +143,17 @@ class SimQueueDict(QueueDict):
     '''Queue Dict class for simulating, extended from cqm.QueueDict'''
     item_cls = SimQueue
     key = "name"
+
+    def __init__(self, policy):
+        QueueDict.__init__(self)
+        self.policy = policy
  
     def add_jobs(self, specs, callback=None, cargs={}):
         '''add jobs to queues, if specified queue not exist, create one''' 
         queue_names = self.keys()
         for spec in specs:
             if spec['queue'] not in queue_names:
-                self.add_queues([{"name":spec['queue']}])
+                self.add_queues([{"name":spec['queue'], "policy":self.policy}])
                 queue_names.append(spec['queue'])
                
         results = []
@@ -239,7 +243,7 @@ class Qsimulator(Simulator):
         #initialize time stamps and job queues
         self.time_stamps = [0]
         self.cur_time_index = 0
-        self.queues = SimQueueDict()
+        self.queues = SimQueueDict(policy=kwargs['policy'])
         self.init_queues()
         
         #initialize failures
