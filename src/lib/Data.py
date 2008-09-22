@@ -171,25 +171,57 @@ class Data (object):
 
 class DataState(Data):
     """Instance class for state machine instances
+
+    Class attributes:
+    states -- list of states
+    transistions -- list of legal state transistions in the form of (old state, new state) tuples
+    initial_state -- starting state (must be in the list of states)
+
+    Properties:
+    state - get current state; transition to a new state (must be a legal transition as defined in the list of transitions)
     """
+
     initial_state = None
     states = []
     transitions = []
-    def _get_state(self):
-        """
-        
+
+    def __init__(self, spec):
+        """Validate states and transitions
+
         Arguments:
-        - `self`:
+        spec -- a dictionary passed to the underlying Data class
+
+        Exceptions:
+        DataStateError -- states, transitions or initial_state contains an improper value; accompanying message contains
+            additional information
         """
+        Data.__init__(self, spec)
+
+        if not isinstance(self.states, list):
+            raise DataStateError("states attribute is not a list: %s" % (self.states,))
+
+        if self.initial_state == None:
+            raise DataStateError("initial_state is not set")
+        if self.initial_state not in self.states:
+            raise DataStateError("initial_state is not a valid state: %s" % (self.initial_state,))
+
+        if not isinstance(self.transitions, list):
+            raise DataStateError("transitions attribute is not a list: %s" % (self.transitions,))
+        for transition in self.transitions:
+            if not isinstance(transition, tuple) or len(transition) != 2:
+                raise DataStateError("transition is not a 2-tuple: %s" % (transition,))
+            old_state, new_state = transition
+            if old_state not in self.states:
+                raise DataStateError("transition contains a invalid state: %s" % (old_state,))
+            if new_state not in self.states:
+                raise DataStateError("transition contains a invalid state: %s" % (new_state,))
+
+    def _get_state(self):
+        """Get the current state"""
         return self._state
 
     def _set_state(self, newvalue):
-        """
-        Set state to new value, ensuring it is a proper state and respects the state machine
-        Arguments:
-        - `self`:
-        - `newvalue`:
-        """
+        """Set state to new value, ensuring it is a proper state and respects the state machine"""
         if newvalue not in self.states:
             raise DataStateError(newvalue)
         if not hasattr(self, '_state'):
@@ -199,9 +231,15 @@ class DataState(Data):
             raise DataStateTransitionError((self._state, newvalue))
         self._state = newvalue
     
-    state = property(_get_state, _set_state)
+    state = property(_get_state, _set_state, doc = """
+Get -- get the current state
 
-        
+Set -- set state to new value, ensuring it is a proper state and respects the state machine
+
+    Exceptions:
+    DataStateError -- the specified state is not in the list of valid states or is not a valid initial state
+    DataStateTransitionError -- transitioning from the current state to the new state is not legal
+""")
 
 
 class DataList (list):
