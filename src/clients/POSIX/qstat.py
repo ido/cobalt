@@ -124,6 +124,9 @@ if __name__ == '__main__':
             sys.exit(1)
         jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
         sched_info = sched.get_sched_info()
+
+        if len(args) and not jobs:
+            raise SystemExit(1)
         
         for job in jobs:
             if len(args) > 0:
