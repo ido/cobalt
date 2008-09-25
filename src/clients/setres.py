@@ -34,7 +34,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axC:', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axC:D', [])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -167,12 +167,14 @@ if __name__ == '__main__':
                   % (res['name'], newstart)
 
             updates['start'] = start
+        else:
+            if start:
+                updates['start'] = starttime
+            if duration:
+                updates['duration'] = dsec
+            
         if user:
             updates['users'] = user
-        if start:
-            updates['start'] = starttime
-        if duration:
-            updates['duration'] = dsec
         if cycle_time:
             updates['cycle'] = cycle_time
         if partitions:
