@@ -98,7 +98,7 @@ if __name__ == '__main__':
         idx = -1
      
     if idx > 0:
-        if int(sys.argv[idx+1]) > int(j['procs']):
+        if int(sys.argv[idx+1]) > (int(j['procs']) * 4):
             logger.error("Error: tried to request more processors (%s) than reserved (%s)." % (sys.argv[idx+1], j['procs']))
             raise SystemExit, 1
         
