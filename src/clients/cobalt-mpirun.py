@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Cobalt fake mpirun'''
+'''Cobalt mpirun'''
 __revision__ = ''
 __version__ = '$Version$'
 
@@ -9,11 +9,11 @@ import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-usehelp = "Usage:\nfake-mpirun [--version] [-h] <mpirun arguments>"
+usehelp = "Usage:\ncobalt-mpirun [--version] [-h] <mpirun arguments>"
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
-        print "fake-mpirun %s" % __revision__
+        print "cobalt-mpirun %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
     if '-h' in sys.argv:
@@ -51,13 +51,13 @@ if __name__ == '__main__':
     if '-d' in sys.argv:
         level = 10
 
-    Cobalt.Logging.setup_logging('fake-mpirun', to_syslog=False, level=level)
-    logger = logging.getLogger('fake-mpirun')
+    Cobalt.Logging.setup_logging('cobalt-mpirun', to_syslog=False, level=level)
+    logger = logging.getLogger('cobalt-mpirun')
 
     try:
         os.environ["COBALT_JOBID"] = os.environ["COBALT_JOBID"]
     except KeyError:
-        logger.error("fake-mpirun must be invoked by a script submitted to cobalt.")
+        logger.error("cobalt-mpirun must be invoked by a script submitted to cobalt.")
         raise SystemExit, 1
 
     try:
@@ -76,7 +76,7 @@ if __name__ == '__main__':
          
     j = response[0]
     if j['location'] is None:
-        logger.error("Error: fake-mpirun's parent is in state '%s' and has not specified a partition." % j['state'])
+        logger.error("Error: cobalt-mpirun's parent is in state '%s' and has not specified a partition." % j['state'])
         raise SystemExit, 1
 #    j['location'] = "ANLR00"
     
