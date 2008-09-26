@@ -142,8 +142,11 @@ if __name__ == '__main__':
                 
             else:
                 print "maybe the potential locations for the job are blocked or busy?"
-            
-        sys.exit()
+
+        if len(args) and not jobs:
+            sys.exit(1)
+        else:
+            sys.exit()
     
     Cobalt.Logging.setup_logging('cqstat', to_syslog=False, level=level)
 
@@ -216,6 +219,9 @@ if __name__ == '__main__':
                         if x not in header:
                             q.update({x.lower():'*'})
         response = cqm.get_jobs(query)
+        
+    if len(args) and not response:
+        sys.exit(1)
 
     if opts['q']:
         for q in response:

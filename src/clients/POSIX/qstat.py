@@ -125,9 +125,6 @@ if __name__ == '__main__':
         jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
         sched_info = sched.get_sched_info()
 
-        if len(args) and not jobs:
-            raise SystemExit(1)
-        
         for job in jobs:
             if len(args) > 0:
                 if str(job['jobid']) not in args:
@@ -156,7 +153,10 @@ if __name__ == '__main__':
             else:
                 print "maybe the potential locations for the job are blocked or busy?"
             
-        sys.exit()
+        if len(args) and not jobs:
+            sys.exit(1)
+        else:
+            sys.exit()
         
     Cobalt.Logging.setup_logging('qstat', to_syslog=False, level=level)
 
@@ -230,6 +230,9 @@ if __name__ == '__main__':
                         if x not in header:
                             q.update({x.lower():'*'})
         response = cqm.get_jobs(query)
+        
+    if len(args) and not response:
+        sys.exit(1)
 
     if opts['Q']:
         for q in response:
