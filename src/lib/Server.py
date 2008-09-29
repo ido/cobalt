@@ -181,8 +181,8 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
             cls = SocketServer.TCPServer
         try:
             cls.finish_request(self, *args, **kwargs)
-        except socket.error:
-            self.logger.error("Socket error occurred in send")
+        except socket.error, e:
+            self.logger.error("Socket error occurred in send: %s" % e)
     
     def _get_secure (self):
         return self.private_key and self.certificate_chain
