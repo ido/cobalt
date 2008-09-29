@@ -486,7 +486,11 @@ class BGSched (Component):
                     } )
 
             # there's no backfilling in reservations
-            best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], 0)
+            try:
+                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], 0)
+            except:
+                self.logger.error("failed to connect to system component")
+                best_partition_dict = {}
     
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
@@ -611,7 +615,11 @@ class BGSched (Component):
         res_info = {}
         for cur_res in self.reservations.values():
             res_info[cur_res.name] = cur_res.partitions
-        equiv = ComponentProxy("system").find_queue_equivalence_classes(res_info)
+        try:
+            equiv = ComponentProxy("system").find_queue_equivalence_classes(res_info)
+        except:
+            self.logger.error("failed to connect to system component")
+            return
         
         for eq_class in equiv:
             temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues if queue.name in eq_class['queues']])
@@ -684,7 +692,11 @@ class BGSched (Component):
                       'walltime': job.walltime,
                     } )
 
-            best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], cut_off)
+            try:
+                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], cut_off)
+            except:
+                self.logger.error("failed to connect to system component")
+                best_partition_dict = {}
     
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
