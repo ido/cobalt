@@ -519,7 +519,7 @@ class BGBaseSystem (Component):
                 best_partition_dict.update(partition_name)
                 break
         
-        # the next time through, try to backfill, but only if we couldn't find anyting to start
+        # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
             arg_list.sort(self._walltimecmp)
             for args in arg_list:
