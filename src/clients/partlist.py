@@ -51,7 +51,7 @@ if __name__ == '__main__':
     
     for res in reservations:
         for p in parts:
-            if p['name'] in expanded_parts[res['queue']]:
+            if p['name'] in expanded_parts.get(res['queue'], []):
                 p['queue'] += ":%s" % res['queue']
 
     def my_cmp(left, right):
