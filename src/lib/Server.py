@@ -14,6 +14,7 @@ import socket
 import SocketServer
 import SimpleXMLRPCServer
 import base64
+import inspect
 import signal
 from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 import logging
@@ -30,6 +31,8 @@ from tlslite.api import \
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
 
+class ForkedChild(Exception):
+    pass
 
 def find_intended_location (component, config_files=None):
     """Determine a component's intended service location.
@@ -74,37 +77,57 @@ class TLSConnection (tlslite.api.TLSConnection):
 tlslite.integration.TLSSocketServerMixIn.TLSConnection = TLSConnection
 
 
-if sys.version_info[0] < 2 or (sys.version_info[0] == 2 and sys.version_info[1] < 5):
-    class SimpleXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
+class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         
-        def __init__ (self, allow_none, encoding):
-            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-            self.allow_none = allow_none
-            self.encoding = encoding
+    def __init__ (self, allow_none, encoding):
+        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
+        self.allow_none = allow_none
+        self.encoding = encoding
+        self.forkable = []
         
-        def _marshaled_dispatch (self, data, dispatch_method=None):
-            try:
-                params, method = xmlrpclib.loads(data)
-                if dispatch_method is not None:
-                    response = dispatch_method(method, params)
-                else:
-                    response = self._dispatch(method, params)
-                response = (response,)
-                response = xmlrpclib.dumps(response, methodresponse=1,
-                    allow_none=self.allow_none, encoding=self.encoding)
-            except xmlrpclib.Fault, fault:
-                response = xmlrpclib.dumps(fault,
-                    allow_none=self.allow_none, encoding=self.encoding)
-            except:
-                # report exception back to server
-                response = xmlrpclib.dumps(
-                    xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
-                    allow_none=self.allow_none, encoding=self.encoding)
-            return response
-    
-else:
-    SimpleXMLRPCDispatcher = SimpleXMLRPCServer.SimpleXMLRPCDispatcher
+    def _marshaled_dispatch (self, data, dispatch_method=None):
+        try:
+            params, method = xmlrpclib.loads(data)
+            if method in self.forkable:
+                pid = os.fork()
+                if pid:
+                    raise ForkedChild
+            if dispatch_method is not None:
+                response = dispatch_method(method, params)
+            else:
+                response = self._dispatch(method, params)
+            if method not in self.forkable and False:
+                pid = os.fork()
+                if pid:
+                    raise ForkedChild
+            response = (response,)
+            response = xmlrpclib.dumps(response, methodresponse=1,
+                                       allow_none=self.allow_none,
+                                       encoding=self.encoding)
+        except xmlrpclib.Fault, fault:
+            response = xmlrpclib.dumps(fault,
+                                       allow_none=self.allow_none,
+                                       encoding=self.encoding)
+        except ForkedChild:
+            raise
+        except:
+            # report exception back to server
+            response = xmlrpclib.dumps(
+                xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
+                allow_none=self.allow_none, encoding=self.encoding)
+        return response
 
+    def register_instance(self, instance, *args, **kwargs):
+        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.register_instance(self,
+                                                                    instance,
+                                                                    *args,
+                                                                    **kwargs)
+        # figure out which methods are forkable and record them as such
+        self.forkable = []
+        for mname, method in inspect.getmembers(instance, callable):
+            if getattr(method, 'exposed', False) and \
+            getattr(method, 'forkable', False):
+                self.forkable.append(mname)
 
 class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     
@@ -151,6 +174,7 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
             self.certificate_chain = None
         self.request_certificate = reqCert
         self.sessions = SessionCache()
+        self.master_pid = os.getpid()
     
     def handshake (self, connection):
         
@@ -175,12 +199,15 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     
     def finish_request (self, *args, **kwargs):
         """Support optional ssl/tls handshaking."""
-        if self.private_key and self.certificate_chain:
-            cls = TLSSocketServerMixIn
-        else:
-            cls = SocketServer.TCPServer
         try:
-            cls.finish_request(self, *args, **kwargs)
+            if self.private_key and self.certificate_chain:
+                tlsConnection = TLSConnection(args[0])
+                if self.handshake(tlsConnection) == True:
+                    self.RequestHandlerClass(tlsConnection, args[1], self)
+                    if os.getpid() != self.master_pid:
+                        tlsConnection.close()
+            else:
+                SocketServer.TCPServer.finish_request(self, *args, **kwargs)
         except socket.error, e:
             self.logger.error("Socket error occurred in send: %s" % e)
     
@@ -264,8 +291,39 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 return False
         return True
 
+    ### FIXME need to override do_POST here
+    def do_POST(self):
+        try:
+            max_chunk_size = 10*1024*1024
+            size_remaining = int(self.headers["content-length"])
+            L = []
+            while size_remaining:
+                chunk_size = min(size_remaining, max_chunk_size)
+                L.append(self.rfile.read(chunk_size))
+                size_remaining -= len(L[-1])
+            data = ''.join(L)
 
-class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
+            response = self.server._marshaled_dispatch(data, None)
+        except ForkedChild:
+            return
+        except: 
+            raise
+            self.send_response(500)
+            self.end_headers()
+        else:
+            # got a valid XML RPC response
+            self.send_response(200)
+            self.send_header("Content-type", "text/xml")
+            self.send_header("Content-length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+            # shut down the connection
+            self.wfile.flush()
+            self.connection.shutdown(1)
+   
+
+class XMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
     
     """Component XMLRPCServer.
     
@@ -306,7 +364,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
         encoding -- encoding to use for xml-rpc (default UTF-8)
         """
         
-        SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
+        CobaltXMLRPCDispatcher.__init__(self, allow_none, encoding)
         
         if not RequestHandlerClass:
             class RequestHandlerClass (XMLRPCRequestHandler):
@@ -336,7 +394,7 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
     register = property(_get_register, _set_register)
     
     def register_instance (self, instance, *args, **kwargs):
-        SimpleXMLRPCDispatcher.register_instance(self, instance, *args, **kwargs)
+        CobaltXMLRPCDispatcher.register_instance(self, instance, *args, **kwargs)
         try:
             name = instance.name
         except AttributeError:
@@ -401,11 +459,16 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
     def serve_forever (self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
+        master_pid = os.getpid()
         self.logger.info("serve_forever() [start]")
         sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
         sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
         try:
             while self.serve:
+                try:
+                    os.waitpid(0, os.WNOHANG)
+                except:
+                    pass
                 try:
                     self.handle_request()
                 except socket.timeout:
@@ -418,6 +481,12 @@ class XMLRPCServer (TCPServer, SimpleXMLRPCDispatcher, object):
                         self.instance.do_tasks()
                     except:
                         self.logger.error("Task executaion failure", exc_info=1)
+                if os.getpid() != master_pid:
+                    os._exit(0)
+                try:
+                    os.waitpid(0, os.WNOHANG)
+                except:
+                    pass
         finally:
             self.logger.info("serve_forever() [stop]")
     

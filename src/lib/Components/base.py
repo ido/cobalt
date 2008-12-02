@@ -141,6 +141,11 @@ def automatic (func, period=10):
     func.automatic_ts = -1
     return func
 
+def forkable (func):
+    '''mark a handler as forkable'''
+    func.forkable = True
+    return func
+
 def query (func=None, **kwargs):
     """Mark a method to be marshalled as a query."""
     def _query (func):
