@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 import xmlrpclib
@@ -6,29 +5,45 @@ import time
 import traceback
 import logging
 
-from Cobalt.Components.cqm import QueueManager
 from Cobalt.Components.slp import TimingServiceLocator
+from Cobalt.Components.cqm import QueueManager
 from Cobalt.Components.simulator import Simulator
 from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 import Cobalt.Proxy
+from TestCobalt.Utilities.ThreadSupport import *
+
+class TSQueueManager (QueueManager):
+    __metaclass__ = ThreadSafetyMetaClass
+
+class TSSimulator (Simulator):
+    __metaclass__ = ThreadSafetyMetaClass
+
+class TSScriptManager (ScriptManager):
+    __metaclass__ = ThreadSafetyMetaClass
 
 class TestIntegration (object):
     def setup (self):
         self.slp = TimingServiceLocator()
-        self.qm = QueueManager()
-        self.sys = Simulator(config_file="simulator.xml")
-        self.sm = ScriptManager()
+        self.system = TSSimulator(config_file="simulator.xml")
+        self.system_thr = ComponentProgressThread(self.system)
+        self.system_thr.start()
+        self.scriptm = TSScriptManager()
+        self.scriptm_thr = ComponentProgressThread(self.scriptm)
+        self.scriptm_thr.start()
+        self.qm = TSQueueManager()
+        self.qm_thr = ComponentProgressThread(self.qm)
+        self.qm_thr.start()
         
     def teardown (self):
+        self.qm_thr.stop()
+        self.scriptm_thr.stop()
+        self.system_thr.stop()
         Cobalt.Proxy.local_components.clear()
 
     def test_something(self):
         logging.basicConfig()
-        def my_do_tasks():
-            self.sys.do_tasks()
-            self.qm.do_tasks()
         
         try:
             cqm = ComponentProxy("queue-manager")
@@ -48,92 +63,103 @@ class TestIntegration (object):
         else:
             assert not "Adding job to non-existent queue should raise xmlrpclib.Fault"
             
-        # add a partition to manage
+        # get the list of available partitions and add them to the pool of managed partitions
         try:
             simulator = ComponentProxy("system")
         except ComponentLookupError:
             assert not "failed to connect to simulator"
 
-        simulator.add_partitions([{'name':"ANLR00"}])
+        for part_name in self.system._partitions:
+            partitions = simulator.add_partitions([{'tag':"partition", 'name':part_name, 'queue':"default"}])
+            assert len(partitions) == 1
+            partitions = simulator.set_partitions([{'tag':"partition", 'name':part_name}], {'functional':True, 'scheduled':True})
+            assert len(partitions) == 1
 
-            
-        # now add a real job
-        # we will
-        # 1. start it
-        # 2. check that it started
-        # 3. sleep for a bit, and then check that it's still running
-        # 4. sleep some more and then check to see if it actually finished running
-        jobs = cqm.add_jobs([{'queue':"default", 'mode':"co", 'command':"/bin/ls", 
-                              'outputdir':os.getcwd(), 'walltime':1, 'procs':600,
-                              'args':[], 'user':"nobody" }])
+        partitions = simulator.get_partitions([{'name':"*", 'size':"*", 'queue':"*"}])
+        assert len(partitions) > 0
+
+        # now run a real job
+        #
+        # 1. add the job to the default queue
+        # 2. obtain a partition for it to run on
+        # 3. start running it on that paritition
+        # 4. check that it started running
+        # 5. sleep for a bit, and then check that it's still running
+        # 6. sleep some more and then check to see if it actually finished running
+
+        nodes = partitions[0]['size']
+        jobs = cqm.add_jobs([{'queue':"default", 'mode':"co", 'command':"/bin/ls", 'outputdir':os.getcwd(), 'walltime':4,
+            'nodes':nodes, 'procs':nodes, 'args':[], 'user':"nobody", 'jobid':"*"}])
         assert len(jobs) == 1
-                             
-        cqm.run_jobs([{'jobid':1}], ["ANLR00"])
 
-        # this will start to fail if the number of job steps ever changes
-        self.qm.do_tasks()
-        self.qm.do_tasks()
-        self.qm.do_tasks()
-        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
+        job = jobs[0]
+        jobid = job['jobid']
+        job_location_args = [{'jobid':jobid, 'nodes':job['nodes'], 'queue':job['queue'], 'utility_score':1,
+            'walltime':job['walltime']}]
+        locations = simulator.find_job_location(job_location_args, 0, 3600)
+        assert locations.has_key(jobid)
+
+        partition = locations[jobid]
+        cqm.run_jobs([{'jobid':jobid}], [partition])
+
+        r = cqm.get_jobs([{'jobid':jobid, 'state':"*", 'system_state':"running"}])
         if not r:
             assert not "the job didn't start"
     
         time.sleep(20)
         
-        my_do_tasks()
-    
-        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
+        r = cqm.get_jobs([{'jobid':jobid, 'state':"*", 'system_state':"running"}])
         if len(r) != 1:
             assert not "the job has stopped running prematurely"
 
-        time.sleep(185)
-
-        # finish stepping through the ... uh ... steps, to the point where the job
-        # finishes and is removed from the queue.
-        # NB: as noted above
-        # this will start to fail if the number of job steps ever changes
-        for i in range(4):
-            my_do_tasks()
-            time.sleep(11)
-        
-        r = cqm.get_jobs([{'jobid':'*', 'system_state':'*'}])
-        if r:
-            assert not "the job seems to have run overtime"
+        start_time = time.time()
+        while True:
+            r = cqm.get_jobs([{'jobid':jobid, 'state':"*", 'system_state':"running"}])
+            if r:
+                if time.time() - start_time > 240:
+                    assert not "the job seems to have run overtime"
+                else:
+                    time.sleep(5)
+            else:
+                break
 
 
         # this time, we'll add a job to the queue, start the job, sleep for a bit
         # and then try to kill the job before it has finished
-        jobs = cqm.add_jobs([{'queue':"default", 'mode':"co", 'command':"/bin/ls", 
-                              'outputdir':os.getcwd(), 'walltime':10, 'procs':600,
-                              'args':[], 'user':"nobody" }])
+        nodes = partitions[0]['size']
+        jobs = cqm.add_jobs([{'queue':"default", 'mode':"co", 'command':"/bin/ls", 'outputdir':os.getcwd(), 'walltime':1,
+            'nodes':nodes, 'procs':nodes, 'args':[], 'user':"nobody", 'jobid':"*"}])
         assert len(jobs) == 1
-                             
-        cqm.run_jobs([{'jobid':2}], ["ANLR00"])
 
-        self.qm.do_tasks()
-        self.qm.do_tasks()
-        self.qm.do_tasks()
-        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
+        job = jobs[0]
+        jobid = job['jobid']
+        job_location_args = [{'jobid':jobid, 'nodes': job['nodes'], 'queue': job['queue'], 'utility_score': 1,
+            'walltime': job['walltime']}]
+        locations = simulator.find_job_location(job_location_args, 0, 3600)
+        assert locations.has_key(jobid)
+
+        partition = locations[jobid]
+        cqm.run_jobs([{'jobid':jobid}], [partition])
+
+        r = cqm.get_jobs([{'jobid':jobid, 'state':"*", 'system_state':"running"}])
         if not r:
             assert not "the job didn't start"
         
         time.sleep(20)
         
-        my_do_tasks()
-    
-        r = cqm.get_jobs([{'jobid':'*', 'system_state':'running'}])
+        r = cqm.get_jobs([{'jobid':jobid, 'system_state':"running"}])
         if len(r) != 1:
             assert not "the job has stopped running prematurely"
-
-        cqm.del_jobs([{'jobid':2}])
+                                        
+        cqm.del_jobs([{'jobid':jobid}])
         
-        # give the thread in the simulator a chance to die
-        time.sleep(2)
-        
-        for i in range(4):
-            my_do_tasks()
-            time.sleep(11)
-        
-        r = cqm.get_jobs([{'jobid':'*', 'system_state':'*'}])
-        if r:
-            assert not "the job didn't die when asked to"
+        start_time = time.time()
+        while True:
+            r = cqm.get_jobs([{'jobid':jobid, 'system_state':"running"}])
+            if r:
+                if time.time() - start_time > 30:
+                    assert not "the job didn't die when asked to"
+                else:
+                    time.sleep(5)
+            else:
+                break

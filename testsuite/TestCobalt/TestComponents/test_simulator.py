@@ -32,10 +32,19 @@ class TestSimulator (TestComponent):
         assert system._partitions
     
     def test_reserve_partition (self):
-        self.system.add_partitions([{'name':self.system._partitions.keys()[0]}])
+        part_name = self.system._partitions.keys()[0]
+        partitions = self.system.add_partitions([{'name':part_name}])
+        assert len(partitions) == 1
+        partitions = self.system.set_partitions([{'tag':"partition", 'name':part_name}], {'functional':True, 'scheduled':True})
+        assert len(partitions) == 1
         idle_partitions = self.system.get_partitions([{'state':"idle"}])
         partition = idle_partitions[0]
-        reserved = self.system.reserve_partition(partition.name)
+        assert partition.name == part_name
+        job_location_args = [{'jobid':3003, 'nodes': partition.size, 'queue': "default", 'utility_score': 1,
+            'walltime':1}]
+        locations = self.system.find_job_location(job_location_args, 0, 3600)
+        assert locations.has_key(3003)
+        reserved = self.system.reserve_partition(locations[3003])
         assert reserved
         assert partition.state == "busy"
         for parent in self.system._partitions.q_get([{'name':parent} for parent in partition.parents]):
