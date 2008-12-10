@@ -33,7 +33,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*',
-             'functional':True, 'scheduled':True, 'children':'*'}]
+             'functional':'*', 'scheduled':'*', 'children':'*'}]
     parts = system.get_partitions(spec)
     reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
 
@@ -43,8 +43,7 @@ if __name__ == '__main__':
             for p in parts:
                 if p['name'] == res_part:
                     if expanded_parts.has_key(res['queue']):
-                        for child in p['children']:
-                            expanded_parts[res['queue']].add(child)
+                        expanded_parts[res['queue']].update(p['children'])
                     else:
                         expanded_parts[res['queue']] = sets.Set( p['children'] )
                     expanded_parts[res['queue']].add(p['name'])
@@ -66,5 +65,5 @@ if __name__ == '__main__':
 
     header = [['Name', 'Queue', 'State']]
     #build output list, adding
-    output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts]
+    output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
     Cobalt.Util.printTabular(header + output)

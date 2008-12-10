@@ -1,12 +1,9 @@
 """Hardware abstraction layer for the system on which process groups are run.
 
 Classes:
-NodeCard -- node cards make up Partitions
-Partition -- atomic set of nodes
-PartitionDict -- default container for partitions
 ProcessGroup -- virtual process group running on the system
 ProcessGroupDict -- default container for process groups
-BGBaseSystem -- base system component
+ClusterBaseSystem -- base system component
 """
 
 import sys
@@ -18,117 +15,21 @@ from Cobalt.Components.base import Component, exposed, automatic, query
 import sets, thread, ConfigParser
 
 __all__ = [
-    "NodeCard",
-    "Partition",
-    "PartitionDict",
     "ProcessGroup",
     "ProcessGroupDict", 
-    "BGBaseSystem",
+    "ClusterBaseSystem",
 ]
 
 CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 
-class NodeCard (object):
-    """node cards make up Partitions"""
-    def __init__(self, name, state="RM_NODECARD_UP"):
-        self.id = name
-        self.used_by = ''
-        self.state = ''
-        
-    def __eq__(self, other):
-        return self.id == other.id
-        
-
-class Partition (Data):
-    
-    """An atomic set of nodes.
-    
-    Partitions can be reserved to run process groups on.
-    
-    Attributes:
-    tag -- partition
-    scheduled -- ? (default False)
-    name -- canonical name
-    functional -- the partition is available for reservations
-    queue -- ?
-    parents -- super(containing)-partitions
-    children -- sub-partitions
-    size -- number of nodes in the partition
-    
-    Properties:
-    state -- "idle", "busy", or "blocked"
-    """
-    
-    fields = Data.fields + [
-        "tag", "scheduled", "name", "functional",
-        "queue", "size", "parents", "children", "state",
-    ]
-    
-    def __init__ (self, spec):
-        """Initialize a new partition."""
-        Data.__init__(self, spec)
-        spec = spec.copy()
-        self.scheduled = spec.pop("scheduled", False)
-        self.name = spec.pop("name", None)
-        self.functional = spec.pop("functional", False)
-        self.queue = spec.pop("queue", "default")
-        self.size = spec.pop("size", None)
-        # these hold Partition objects
-        self._parents = sets.Set()
-        self._children = sets.Set()
-        self.state = spec.pop("state", "idle")
-        self.tag = spec.get("tag", "partition")
-        self.node_cards = spec.get("node_cards", [])
-        self.switches = spec.get("switches", [])
-        self.reserved_until = False
-        # this holds partition names
-        self._wiring_conflicts = sets.Set()
-
-        self._update_node_cards()
-
-    def _update_node_cards(self):
-        if self.state == "busy":
-            for nc in self.node_cards:
-                nc.used_by = self.name
-    
-    def _get_parents (self):
-        return [parent.name for parent in self._parents]
-    
-    parents = property(_get_parents)
-    
-    def _get_children (self):
-        return [child.name for child in self._children]
-    
-    children = property(_get_children)
-    
-    def _get_node_card_names (self):
-        return [nc.id for nc in self.node_cards]
-    
-    node_card_names = property(_get_node_card_names)
-    
-    def __str__ (self):
-        return self.name
-    
-    def __repr__ (self):
-        return "<%s name=%r>" % (self.__class__.__name__, self.name)
-
-
-class PartitionDict (DataDict):
-    """Default container for partitions.
-    
-    Keyed by partition name.
-    """
-    
-    item_cls = Partition
-    key = "name"
 
 class ProcessGroup (Data):
     required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
     fields = Data.fields + [
         "id", "user", "size", "cwd", "executable", "env", "args", "location",
         "head_pid", "stdin", "stdout", "stderr", "exit_status", "state",
-        "mode", "kerneloptions", "true_mpi_args",
+        "mode", "kerneloptions", "true_mpi_args", "jobid",
     ]
 
     def __init__(self, spec):
@@ -151,6 +52,7 @@ class ProcessGroup (Data):
         self.kerneloptions = spec.get('kerneloptions')
         self.env = spec.get('env') or {}
         self.true_mpi_args = spec.get('true_mpi_args')
+        self.jobid = spec.get('jobid')
 
     def _get_state (self):
         if self.exit_status is None:
@@ -183,7 +85,7 @@ class ProcessGroupDict (DataDict):
         return DataDict.q_add(self, specs)
 
 
-class BGBaseSystem (Component):
+class ClusterBaseSystem (Component):
     """base system class.
     
     Methods:
@@ -196,113 +98,18 @@ class BGBaseSystem (Component):
     
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
-        self._partitions = PartitionDict()
-        self._managed_partitions = sets.Set()
         self.process_groups = ProcessGroupDict()
-        self.node_card_cache = dict()
-        self._partitions_lock = thread.allocate_lock()
         self.pending_diags = dict()
         self.failed_diags = list()
+        self.all_nodes = sets.Set()
+        self.running_nodes = sets.Set()
+        self.down_nodes = sets.Set()
+        self.queue_assignments = {}
+        self.config_file = kwargs.get("config_file", None)
+        if self.config_file is not None:
+            self.configure(self.config_file)
+        self.queue_assignments["default"] = sets.Set(self.all_nodes)
 
-    def _get_partitions (self):
-        return PartitionDict([
-            (partition.name, partition) for partition in self._partitions.itervalues()
-            if partition.name in self._managed_partitions
-        ])
-    
-    partitions = property(_get_partitions)
-
-    def add_partitions (self, specs):
-        self.logger.info("add_partitions(%r)" % (specs))
-        specs = [{'name':spec.get("name")} for spec in specs]
-        
-        self._partitions_lock.acquire()
-        partitions = [
-            partition for partition in self._partitions.q_get(specs)
-            if partition.name not in self._managed_partitions
-        ]
-        self._partitions_lock.release()
-        
-        self._managed_partitions.update([
-            partition.name for partition in partitions
-        ])
-        self.update_relatives()
-        return partitions
-    add_partition = exposed(query(add_partitions))
-
-    def get_partitions (self, specs):
-        """Query partitions on simulator."""
-        self._partitions_lock.acquire()
-        partitions = self.partitions.q_get(specs)
-        self._partitions_lock.release()
-        
-        return partitions
-    get_partitions = exposed(query(get_partitions))
-    
-    def verify_locations(self, location_list):
-        """Providing a system agnostic interface for making sure a 'location string' is valid"""
-        parts = self.get_partitions([{'name':l} for l in location_list])
-        return [ p.name for p in parts ]
-    verify_locations = exposed(verify_locations)
-
-    def del_partitions (self, specs):
-        """Remove partitions from the list of managed partitions"""
-        self.logger.info("del_partitions(%r)" % (specs))
-        
-        self._partitions_lock.acquire()
-        partitions = [
-            partition for partition in self._partitions.q_get(specs)
-            if partition.name in self._managed_partitions
-        ]
-        self._partitions_lock.release()
-        
-        self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
-        self.update_relatives()
-        return partitions
-    del_partitions = exposed(query(del_partitions))
-
-    def set_partitions (self, specs, updates):
-        """Update random attributes on matching partitions"""
-        def _set_partitions(part, newattr):
-            self.logger.info("updating partition %s: %r" % (part.name, newattr))
-            part.update(newattr)
-            
-        self._partitions_lock.acquire()
-        partitions = self._partitions.q_get(specs, _set_partitions, updates)
-        self._partitions_lock.release()
-        return partitions
-    set_partitions = exposed(query(set_partitions))
-
-    def update_relatives(self):
-        """Call this method after changing the contents of self._managed_partitions"""
-        for p_name in self._managed_partitions:
-            self._partitions[p_name]._parents = sets.Set()
-            self._partitions[p_name]._children = sets.Set()
-
-        for p_name in self._managed_partitions:
-            p = self._partitions[p_name]
-            
-            # toss the wiring dependencies in with the parents
-            for dep_name in p._wiring_conflicts:
-                if dep_name in self._managed_partitions:
-                    p._parents.add(self._partitions[dep_name])
-            
-            for other_name in self._managed_partitions:
-                if p.name == other_name:
-                    break
-
-                other = self._partitions[other_name]
-                p_set = sets.Set(p.node_cards)
-                other_set = sets.Set(other.node_cards)
-
-                # if p is a subset of other, then p is a child
-                if p_set.intersection(other_set)==p_set:
-                    p._parents.add(other)
-                    other._children.add(p)
-                # if p contains other, then p is a parent
-                elif p_set.union(other_set)==p_set:
-                    p._children.add(other)
-                    other._parents.add(p)
 
 
     def validate_job(self, spec):
@@ -313,7 +120,7 @@ class BGBaseSystem (Component):
         """
         # spec has {nodes, walltime*, procs, mode, kernel}
         
-        max_nodes = max([int(p.size) for p in self._partitions.values()])
+        max_nodes = len(self.all_nodes)
         try:
             sys_type = CP.get('cqm', 'bgtype')
         except:
@@ -473,84 +280,56 @@ class BGBaseSystem (Component):
         
         best_score = sys.maxint
         best_partition = None
-        
-        available_partitions = set()
-        if required:
-            for p_name in required:
-                available_partitions.add(self.partitions[p_name])
-                available_partitions.update(self.partitions[p_name]._children)
-        else:
-            for p in self.partitions.itervalues():
-                skip = False
-                for bad_name in forbidden:
-                    if p.name==bad_name or bad_name in p.children or bad_name in p.parents:
-                        skip = True
-                        break
-                if not skip:
-                    available_partitions.add(p)
-                
-        for partition in available_partitions:
-            # check if the current partition is linked to the job's queue (but if reservation locations were
-            # passed in via the "required" argument, then we know it's all good)
-            if not required and queue not in partition.queue.split(':'):
-                continue
-                
-            if self.can_run(partition, nodes):
-                # let's check the impact on partitions that would become blocked
-                score = 0
-                for p in partition.parents:
-                    if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
-                        score += 1
-                
-                # the lower the score, the fewer new partitions will be blocked by this selection
-                if score < best_score:
-                    best_score = score
-                    best_partition = partition        
 
-        if best_partition:
-            return {jobid: [best_partition.name]}
+        if required:
+            available_nodes = sets.Set(required)
+        else:
+            available_nodes = self.queue_assignments[queue].difference(forbidden)
+
+        available_nodes = available_nodes.difference(self.running_nodes)
+        available_nodes = available_nodes.difference(self.down_nodes)
+
+            
+        if nodes <= len(available_nodes):
+            return {jobid: [available_nodes.pop() for i in range(nodes)]}
+        else:
+            return None
 
     
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
     def find_job_location(self, arg_list, utility_cutoff, backfill_cutoff):
-        best_partition_dict = {}
+        best_location_dict = {}
         
         # first time through, try for starting jobs based on utility scores
         for args in arg_list:
             if args['utility_score'] < utility_cutoff:
                 break
             
-            partition_name = self._find_job_location(args)
-            if partition_name:
-                best_partition_dict.update(partition_name)
+            location_data = self._find_job_location(args)
+            if location_data:
+                best_location_dict.update(location_data)
                 break
         
         # the next time through, try to backfill, but only if we couldn't find anything to start
-        if not best_partition_dict:
+        if not best_location_dict:
             arg_list.sort(self._walltimecmp)
             for args in arg_list:
                 if 60*float(args['walltime']) > backfill_cutoff:
                     break
                 
-                partition_name = self._find_job_location(args)
-                if partition_name:
-                    best_partition_dict.update(partition_name)
+                location_data = self._find_job_location(args)
+                if location_data:
+                    best_location_dict.update(location_data)
                     break
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
         # be running jobs very soon
-        for partition_list in best_partition_dict.itervalues():
-            part = self.partitions[partition_list[0]] 
-            part.reserved_until = time.time() + 5*60
-            part.state = "starting job"
-            for p in part._parents:
-                if p.state == "idle":
-                    p.state = "blocked by starting job"
-            for p in part._children:
-                if p.state == "idle":
-                    p.state = "blocked by starting job"
+        for location_list in best_location_dict.itervalues():
+            self.running_nodes.update(location_list)
+
+        print "best_location_dict:", best_location_dict
             
-        return best_partition_dict
+        return best_location_dict
     find_job_location = exposed(find_job_location)
     
     def _walltimecmp(self, dict1, dict2):
@@ -559,17 +338,17 @@ class BGBaseSystem (Component):
 
     def find_queue_equivalence_classes(self, reservation_dict):
         equiv = []
-        for part in self.partitions.itervalues():
-            if part.functional and part.scheduled:
-                found_a_match = False
-                for e in equiv:
-                    if e['data'].intersection(part.node_card_names):
-                        e['queues'].update(part.queue.split(":"))
-                        e['data'].update(part.node_card_names)
-                        found_a_match = True
-                        break
-                if not found_a_match:
-                    equiv.append( { 'queues': set(part.queue.split(":")), 'data': set(part.node_card_names), 'reservations': set() } ) 
+        for q in self.queue_assignments:
+            found_a_match = False
+            for e in equiv:
+                if e['data'].intersection(self.queue_assignments[q]):
+                    e['queues'].add(q)
+                    e['data'].update(self.queue_assignments[q])
+                    found_a_match = True
+                    break
+            if not found_a_match:
+                equiv.append( { 'queues': set([q]), 'data': set(self.queue_assignments[q]), 'reservations': set() } )
+        
         
         real_equiv = []
         for eq_class in equiv:
@@ -588,14 +367,9 @@ class BGBaseSystem (Component):
         for eq_class in equiv:
             for res_name in reservation_dict:
                 skip = True
-                for p_name in reservation_dict[res_name].split(":"):
-                    p = self.partitions[p_name]
-                    if eq_class['data'].intersection(p.node_card_names):
+                for host_name in reservation_dict[res_name].split(":"):
+                    if host_name in eq_class['data']:
                         eq_class['reservations'].add(res_name)
-                    for dep_name in p._wiring_conflicts:
-                        if eq_class['data'].intersection(self.partitions[dep_name].node_card_names):
-                            eq_class['reservations'].add(res_name)
-                            break
 
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
@@ -605,19 +379,6 @@ class BGBaseSystem (Component):
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
     
     
-    def can_run(self, target_partition, node_count):
-        if target_partition.state != "idle":
-            return False
-        desired = sys.maxint
-        for part in self.partitions.itervalues():
-            if not part.functional:
-                if target_partition.name in part.children or target_partition.name in part.parents:
-                    return False
-            else:
-                if part.scheduled:
-                    if int(node_count) <= int(part.size) < desired:
-                        desired = int(part.size)
-        return target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired
 
     def reserve_partition_until(self, partition_name, time):
         try:
@@ -625,3 +386,84 @@ class BGBaseSystem (Component):
         except:
             self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
     reserve_partition_until = exposed(reserve_partition_until)
+
+
+    def nodes_up(self, node_list):
+        changed = []
+        for n in node_list:
+            if n in self.down_nodes:
+                self.down_nodes.remove(n)
+                changed.append(n)
+            if n in self.running_nodes:
+                self.running_nodes.remove(n)
+                changed.append(n)
+        return changed
+    nodes_up = exposed(nodes_up)
+        
+
+    def nodes_down(self, node_list):
+        changed = []
+        for n in node_list:
+            if n in self.all_nodes:
+                self.down_nodes.add(n)
+                changed.append(n)
+        return changed
+    nodes_down = exposed(nodes_down)
+
+    def get_node_status(self):
+        status = {}
+        for n in self.all_nodes:
+            if n in self.running_nodes:
+                status[n] = "allocated"
+            elif n in self.down_nodes:
+                status[n] = "down"
+            else:
+                status[n] = "idle"
+        return status
+    get_node_status = exposed(get_node_status)
+
+    def get_queue_assignments(self):
+        ret = {}
+        for q in self.queue_assignments:
+            ret[q] = list(self.queue_assignments[q])
+        return ret
+    get_queue_assignments = exposed(get_queue_assignments)
+    
+    def set_queue_assignments(self, queue_names, node_list):
+        checked_nodes = sets.Set()
+        for n in node_list:
+            if n in self.all_nodes:
+                checked_nodes.add(n)
+        
+        queue_list = queue_names.split(":")
+        for q in queue_list:
+            if q not in self.queue_assignments:
+                self.queue_assignments[q] = sets.Set()
+                
+        for q in self.queue_assignments.keys():
+            if q not in queue_list:
+                self.queue_assignments[q].difference_update(checked_nodes)
+                if len(self.queue_assignments[q])==0:
+                    del self.queue_assignments[q]
+            else:
+                self.queue_assignments[q].update(checked_nodes)
+        return list(checked_nodes)
+    set_queue_assignments = exposed(set_queue_assignments)
+
+    def verify_locations(self, location_list):
+        """Providing a system agnostic interface for making sure a 'location string' is valid"""
+        ret = []
+        for l in location_list:
+            if l in self.all_nodes:
+                ret.append(l)
+        return ret
+    verify_locations = exposed(verify_locations)
+
+    def configure(self, filename):
+        f = open(filename)
+        
+        for line in f:
+            self.all_nodes.add(line.strip())
+        
+        f.close()
+    

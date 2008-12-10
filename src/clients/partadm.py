@@ -148,7 +148,7 @@ if __name__ == '__main__':
                 for p in parts:
                     if p['name'] == res_part:
                         if expanded_parts.has_key(res['queue']):
-                            expanded_parts[res['queue']].add(p['children'])
+                            expanded_parts[res['queue']].update(p['children'])
                         else:
                             expanded_parts[res['queue']] = sets.Set( p['children'] )
                         expanded_parts[res['queue']].add(p['name'])

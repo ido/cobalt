@@ -48,7 +48,7 @@ class RetryMethod(_Method):
                     raise xmlrpclib.Fault(20, msg)
             except tlslite.errors.TLSError, err:
                 log.error("Unexpected TLS Error: %s. Retrying" % \
-                          (err.message))
+                          (err.args[0]))
             except xmlrpclib.Fault:
                 raise
             except:

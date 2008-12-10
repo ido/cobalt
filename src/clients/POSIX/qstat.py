@@ -49,6 +49,7 @@ def mergelist(locations):
         if block:
             block[0].append(newnum)
             block[0].sort()
+            uniq = uniq[1:]
         else:
             retl.append([newnum])
             uniq = uniq[1:]

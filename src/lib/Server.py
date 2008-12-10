@@ -284,7 +284,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             try:
                 self.authenticate()
             except self.CouldNotAuthenticate, e:
-                self.logger.error("Authentication failed: %s" % e.message)
+                self.logger.error("Authentication failed: %s" % e.args[0])
                 code = 401
                 message, explanation = self.responses[401]
                 self.send_error(code, message)

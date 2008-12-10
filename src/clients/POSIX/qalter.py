@@ -87,7 +87,7 @@ if __name__ == '__main__':
             try:
                 minutes = Cobalt.Util.get_time(opts['time'][1:])
             except Cobalt.Exceptions.TimeFormatError, e:
-                print "invalid time specification: %s" % e.message
+                print "invalid time specification: %s" % e.args[0]
                 sys.exit(1)
 
             jobdata = None
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             try:
                 minutes = Cobalt.Util.get_time(opts['time'])
             except Cobalt.Exceptions.TimeFormatError, e:
-                print "invalid time specification: %s" % e.message
+                print "invalid time specification: %s" % e.args[0]
                 sys.exit(1)
             
             updates['walltime'] = str(minutes)

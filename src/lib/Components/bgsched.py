@@ -445,12 +445,14 @@ class BGSched (Component):
     check_reservations = exposed(check_reservations)
 
     def sync_data(self):
+        started = time.time()
         for item in [self.jobs, self.queues]:
             try:
                 item.Sync()
             except (ComponentLookupError, xmlrpclib.Fault):
                 # the ForeignDataDicts already include FailureMode stuff
                 pass
+        print "took %f seconds for sync_data" % (time.time() - started, )
     sync_data = automatic(sync_data)
 
     def _run_reservation_jobs (self):
@@ -496,12 +498,12 @@ class BGSched (Component):
                 job = self.jobs[int(jobid)]
                 self._start_job(job, best_partition_dict[jobid])
 
-    def _start_job(self, job, partition_name):
+    def _start_job(self, job, partition_list):
         cqm = ComponentProxy("queue-manager")
         
         try:
-            self.logger.info("trying to start job %d on partition %s" % (job.jobid, partition_name))
-            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], [partition_name])
+            self.logger.info("trying to start job %d on partition %r" % (job.jobid, partition_list))
+            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list)
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
             return
@@ -561,6 +563,8 @@ class BGSched (Component):
 
     def schedule_jobs (self):
         '''look at the queued jobs, and decide which ones to start'''
+
+        started_scheduling = time.time()
 
         if not self.active:
             return
@@ -695,7 +699,7 @@ class BGSched (Component):
             try:
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], cut_off)
             except:
-                self.logger.error("failed to connect to system component")
+                self.logger.error("failed to connect to system component", exc_info=True)
                 best_partition_dict = {}
     
             for jobid in best_partition_dict:
@@ -703,6 +707,7 @@ class BGSched (Component):
                 self._start_job(job, best_partition_dict[jobid])
     
 
+        print "took %f seconds for scheduling loop" % (time.time() - started_scheduling, )
     schedule_jobs = automatic(schedule_jobs)
 
     

@@ -279,7 +279,7 @@ class Job (Data):
             qtime = self.timers['current_queue'].start, # time in seconds when job was queued into current queue
             etime = self.etime, # time in seconds when job became eligible to run; no holds, etc.
             start = self.timers['user'].start, # time in seconds when job execution started
-            exec_host = self.location, # name of host on which the job is being executed (location is a :-separated list of nodes)
+            exec_host = ":".join(self.location), # name of host on which the job is being executed (location is a :-separated list of nodes)
             #Resource_List__dot__RES = , # limit for use of RES
             Resource_List__dot__ncpus = self.procs, # max number of cpus
             Resource_List__dot__nodect = self.nodes, # max number of nodes
@@ -305,7 +305,7 @@ class Job (Data):
         
     def Finish(self):
         '''Finish up accounting for job, also adds postscript ability'''
-        used_time = int(self.timers['user'].Check()) * len(self.location.split(':'))
+        used_time = int(self.timers['user'].Check()) * len(self.location)
                                                                 
         self.job_step = "done"
         self.SetPassive()
@@ -393,7 +393,7 @@ class Job (Data):
                 self.jobid, self.user, self.jobname,
                 self.nodes, self.procs, self.mode,
                 self.walltime))
-        self.location = ":".join(nodelist)
+        self.location = nodelist
         self.system_state = "running"
         self.job_step = "starting"
         self.starttime = str(time.time())
@@ -423,7 +423,7 @@ class Job (Data):
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
                 if self.mode == 'script':
                     result = ComponentProxy("script-manager").wait_jobs([{'id':self.spgid['user'], 'exit_status':'*'}])
-                    ComponentProxy("system").reserve_partition_until(self.location, 1)
+                    ComponentProxy("system").reserve_partition_until(self.location[0], 1)
                 else:
                     result = ComponentProxy("system").wait_process_groups([{'id':self.spgid['user'], 'exit_status':'*'}])
                 if result:
@@ -599,7 +599,7 @@ class Job (Data):
             qtime = self.timers['current_queue'].start, # time in seconds when job was queued into current queue
             etime = self.etime, # time in seconds when job became eligible to run
             start = self.timers['user'].start, # time in seconds when job execution started
-            exec_host = self.location, # name of host on which the job is being executed
+            exec_host = self.location[0], # name of host on which the job is being executed
             #Resource_List__dot__RES = , # limit for use of RES
             Resource_List__dot__ncpus = self.procs, # max number of cpus
             Resource_List__dot__nodect = self.nodes, # max number of nodes
@@ -623,23 +623,23 @@ class Job (Data):
     def SetBGKernel(self):
         '''Ensure that the kernel is set properly prior to job launch'''
         try:
-            current = os.readlink('%s/%s' % (self.config.get('partitionboot'), self.location))
+            current = os.readlink('%s/%s' % (self.config.get('partitionboot'), self.location[0]))
         except OSError:
-            logger.error("Failed to read partitionboot location %s/%s" % (self.config.get('partitionboot'), self.location))
+            logger.error("Failed to read partitionboot location %s/%s" % (self.config.get('partitionboot'), self.location[0]))
             logger.info("Job %s/%s using kernel %s" % (self.jobid, self.user, self.kernel))
             self.acctlog.LogMessage("Job %s/%s using kernel %s" % (self.jobid, self.user, 'N/A'))
             return
         switched = current.split('/')[-1]
         if current != "%s/%s" % (self.config.get('bootprofiles'), self.kernel):
-            logger.info("Updating boot image for %s" % (self.location))
+            logger.info("Updating boot image for %s" % (self.location[0]))
             logger.info("Set to %s should be %s" % (current.split('/')[-1], self.kernel))
             try:
-                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location))
+                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location[0]))
                 os.symlink('%s/%s' % (self.config.get('bootprofiles'), self.kernel),
-                           '%s/%s' % (self.config.get('partitionboot'), self.location))
+                           '%s/%s' % (self.config.get('partitionboot'), self.location[0]))
                 switched = self.kernel
             except OSError:
-                logger.error("Failed to reset boot location for partition for %s" % (self.location))
+                logger.error("Failed to reset boot location for partition for %s" % (self.location[0]))
 
         logger.info("Job %s/%s using kernel %s" % (self.jobid, self.user, switched))
         self.acctlog.LogMessage("Job %s/%s using kernel %s" % (self.jobid, self.user, switched))
@@ -651,8 +651,8 @@ class Job (Data):
             mserver = 'localhost'
         else:
             mserver = mailserver
-        subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.jobid, self.user, self.queue, self.location)
-        mmsg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.jobid, self.user, self.location, self.queue, time.strftime('%c', time.localtime()))
+        subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.jobid, self.user, self.queue, self.location[0])
+        mmsg = "Job %s/%s starting on partition %s, in the '%s' queue , at %s" % (self.jobid, self.user, self.location[0], self.queue, time.strftime('%c', time.localtime()))
         toaddr = []
         if self.adminemail:
             toaddr = toaddr + self.adminemail.split(':')
@@ -667,8 +667,8 @@ class Job (Data):
             mserver = 'localhost'
         else:
             mserver = mailserver
-        subj = 'Cobalt: Job %s/%s finished - %s/%s %s' % (self.jobid, self.user, self.queue, self.location, self.GetStats())
-        mmsg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.jobid, self.user, self.location, self.queue, time.strftime('%c', time.localtime()), self.GetStats())
+        subj = 'Cobalt: Job %s/%s finished - %s/%s %s' % (self.jobid, self.user, self.queue, self.location[0], self.GetStats())
+        mmsg = "Job %s/%s finished on partition %s, in the '%s' queue, at %s\nStats: %s" %  (self.jobid, self.user, self.location[0], self.queue, time.strftime('%c', time.localtime()), self.GetStats())
         toaddr = []
         if self.adminemail:
             toaddr = toaddr + self.adminemail.split(':')
@@ -720,11 +720,11 @@ class Job (Data):
                      'outputfile':self.outputpath, 'cobalt_log_file':self.cobalt_log_file,
                      'errorfile':self.errorpath, 'path':self.path, 'size':self.procs,
                      'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
-                     'args':self.args, 'envs':self.envs, 'location':[self.location],
+                     'args':self.args, 'envs':self.envs, 'location':self.location,
                      'id':"*", 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions,
                      'jobid':self.jobid, 'umask':self.umask}])
                 # reserve the partition until 1 second after unix epoch -- i.e. cancel the reservation
-                ComponentProxy("system").reserve_partition_until(self.location, time.time() + 60*float(self.walltime))
+                ComponentProxy("system").reserve_partition_until(self.location[0], time.time() + 60*float(self.walltime))
             except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Job %s: Failed to start up user script job; requeueing" \
                              % (self.jobid))
@@ -751,9 +751,10 @@ class Job (Data):
                     'executable':self.command,
                     'args':self.args,
                     'env':self.envs,
-                    'location':[self.location],
+                    'location':self.location,
                     'id':"*", 'umask':self.umask,
                     'kerneloptions':self.kerneloptions,
+                    'jobid':self.jobid,
                 }])
             except (ComponentLookupError, xmlrpclib.Fault):
                 logger.error("Job %s: Failed to start up user job; requeueing" \
