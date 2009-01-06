@@ -78,56 +78,42 @@ tlslite.integration.TLSSocketServerMixIn.TLSConnection = TLSConnection
 
 
 class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
-        
+    logger = logging.getLogger("Cobalt.Server.CobaltXMLRPCDispatcher")
     def __init__ (self, allow_none, encoding):
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
         self.allow_none = allow_none
         self.encoding = encoding
-        self.forkable = []
         
     def _marshaled_dispatch (self, data, dispatch_method=None):
         try:
             params, method = xmlrpclib.loads(data)
-            if method in self.forkable:
-                pid = os.fork()
-                if pid:
-                    raise ForkedChild
+            lock_start = time.time()
+            self.instance.lock.acquire()
+            lock_done = time.time()
             if dispatch_method is not None:
                 response = dispatch_method(method, params)
             else:
                 response = self._dispatch(method, params)
-            if method not in self.forkable and False:
-                pid = os.fork()
-                if pid:
-                    raise ForkedChild
+            method_done = time.time()
             response = (response,)
             response = xmlrpclib.dumps(response, methodresponse=1,
                                        allow_none=self.allow_none,
                                        encoding=self.encoding)
         except xmlrpclib.Fault, fault:
+            method_done = time.time()
             response = xmlrpclib.dumps(fault,
                                        allow_none=self.allow_none,
                                        encoding=self.encoding)
-        except ForkedChild:
-            raise
         except:
+            method_done = time.time()
             # report exception back to server
             response = xmlrpclib.dumps(
                 xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
                 allow_none=self.allow_none, encoding=self.encoding)
+        self.instance.lock.release()
+        self.logger.info("Lock took %fs, Method took %fs" % \
+                         (lock_done - lock_start, method_done - lock_done))
         return response
-
-    def register_instance(self, instance, *args, **kwargs):
-        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.register_instance(self,
-                                                                    instance,
-                                                                    *args,
-                                                                    **kwargs)
-        # figure out which methods are forkable and record them as such
-        self.forkable = []
-        for mname, method in inspect.getmembers(instance, callable):
-            if getattr(method, 'exposed', False) and \
-            getattr(method, 'forkable', False):
-                self.forkable.append(mname)
 
 class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     
@@ -304,8 +290,6 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             data = ''.join(L)
 
             response = self.server._marshaled_dispatch(data, None)
-        except ForkedChild:
-            return
         except: 
             raise
             self.send_response(500)
@@ -323,7 +307,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.connection.shutdown(1)
    
 
-class XMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
+class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer, 
+                    CobaltXMLRPCDispatcher, object):
     
     """Component XMLRPCServer.
     
