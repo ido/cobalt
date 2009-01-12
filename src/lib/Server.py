@@ -83,37 +83,60 @@ class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
         self.allow_none = allow_none
         self.encoding = encoding
-        
-    def _marshaled_dispatch (self, data, dispatch_method=None):
+
+    def _marshaled_dispatch (self, data):
+        need_to_lock = True
+        method_func = None
+        params, method = xmlrpclib.loads(data)
+        self.logger.error('method is %s' % method)
         try:
-            params, method = xmlrpclib.loads(data)
+            method_func = self.instance._resolve_exposed_method(method)
+            self.logger.error('method_func is %s' % method_func)
+        except:
+            pass
+        if method_func:
+            pass
+        elif method in self.funcs:
+            method_func = self.funcs[method]
+        else:
+            return xmlrpclib.dumps(xmlrpclib.Fault(1, "Method not supported",
+                                                   allow_none=self.allow_none,
+                                                   encoding=self.encoding))
+        if method_func.get('locking', False):
+            need_to_lock = False
+
+        if need_to_lock:
             lock_start = time.time()
             self.instance.lock.acquire()
             lock_done = time.time()
-            if dispatch_method is not None:
-                response = dispatch_method(method, params)
-            else:
-                response = self._dispatch(method, params)
+
+        try:
+            method_start = time.time()
+            response = self.instance._execute_exposed_method(method_func,
+                                                             params)
             method_done = time.time()
             response = (response,)
-            response = xmlrpclib.dumps(response, methodresponse=1,
-                                       allow_none=self.allow_none,
-                                       encoding=self.encoding)
+            raw_response = xmlrpclib.dumps(response, methodresponse=1,
+                                           allow_none=self.allow_none,
+                                           encoding=self.encoding)
         except xmlrpclib.Fault, fault:
             method_done = time.time()
-            response = xmlrpclib.dumps(fault,
-                                       allow_none=self.allow_none,
-                                       encoding=self.encoding)
+            raw_response = xmlrpclib.dumps(fault,
+                                           allow_none=self.allow_none,
+                                           encoding=self.encoding)
         except:
+            self.logger.error('bomb', exc_info=1)
             method_done = time.time()
             # report exception back to server
-            response = xmlrpclib.dumps(
+            raw_response = xmlrpclib.dumps(
                 xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
                 allow_none=self.allow_none, encoding=self.encoding)
-        self.instance.lock.release()
-        self.logger.info("Lock took %fs, Method took %fs" % \
-                         (lock_done - lock_start, method_done - lock_done))
-        return response
+        if need_to_lock:
+            self.instance.lock.release()
+            self.logger.info("Lock took %fs, Method took %fs" % \
+                             (lock_done - lock_start, method_done - method_start))
+
+        return raw_response
 
 class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     
@@ -289,7 +312,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 size_remaining -= len(L[-1])
             data = ''.join(L)
 
-            response = self.server._marshaled_dispatch(data, None)
+            response = self.server._marshaled_dispatch(data)
         except: 
             raise
             self.send_response(500)
@@ -363,6 +386,8 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         self.register = register
         self.register_introspection_functions()
         self.register_function(self.ping)
+        self.task_thread = threading.Thread(target=self._tasks_thread)
+        self.task_thread.start()
         self.logger.info("service available at %s" % self.url)
     
     def _get_register (self):
@@ -418,6 +443,18 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
                 time.sleep(frequency)
         except:
             self.logger.error("slp_thread failed", exc_info=1)
+
+    def _tasks_thread (self):
+        try:
+            while self.serve:
+                try:
+                    if self.instance and hasattr(self.instance, 'do_tasks'):
+                        self.instance.do_tasks()
+                except:
+                    self.logger.error("Unexpected task failure", exc_info=1)
+                time.sleep(30)
+        except:
+            self.logger.error("tasks_thread failed", exc_info=1)
     
     def server_close (self):
         TCPServer.server_close(self)
@@ -451,27 +488,12 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         try:
             while self.serve:
                 try:
-                    os.waitpid(0, os.WNOHANG)
-                except:
-                    pass
-                try:
                     self.handle_request()
                 except socket.timeout:
                     pass
                 except:
                     self.logger.error("Got unexpected error in handle_request",
                                       exc_info=1)
-                if self.instance and hasattr(self.instance, "do_tasks"):
-                    try:
-                        self.instance.do_tasks()
-                    except:
-                        self.logger.error("Task executaion failure", exc_info=1)
-                if os.getpid() != master_pid:
-                    os._exit(0)
-                try:
-                    os.waitpid(0, os.WNOHANG)
-                except:
-                    pass
         finally:
             self.logger.info("serve_forever() [stop]")
     

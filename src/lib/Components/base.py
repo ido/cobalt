@@ -142,9 +142,9 @@ def automatic (func, period=10):
     func.automatic_ts = -1
     return func
 
-def auto_no_lock (func):
+def locking (func):
     """Mark a function as being internally thread safe"""
-    func.auto_no_lock = True
+    func.locking = True
     return func
 
 def readonly (func):
@@ -169,7 +169,6 @@ def marshal_query_result (items, specs=None):
     else:
         fields = None
     return [item.to_rx(fields) for item in items]
-
 
 class Component (object):
     
@@ -238,7 +237,7 @@ class Component (object):
         """
         for name, func in inspect.getmembers(self, callable):
             if getattr(func, "automatic", False):
-                need_to_lock = not getattr(func, 'auto_no_lock', False)
+                need_to_lock = not getattr(func, 'locking', False)
                 if (time.time() - func.automatic_ts) > \
                    func.automatic_period:
                     if need_to_lock:
@@ -265,18 +264,17 @@ class Component (object):
         if not getattr(func, "exposed", False):
             raise NoExposedMethod(method_name)
         return func
-    
-    def _dispatch (self, method, args):
+
+    def _execute_exposed_method (self, method, args):
         """Custom XML-RPC dispatcher for components.
         
         method -- XML-RPC method name
         args -- tuple of paramaters to method
         """
         try:
-            func = self._resolve_exposed_method(method)
-            result = func(*args)
-            if getattr(func, "query", False):
-                if not getattr(func, "query_all_methods", False):
+            result = method(*args)
+            if getattr(method, "query", False):
+                if not getattr(method, "query_all_methods", False):
                     margs = args[:1]
                 else:
                     margs = []
