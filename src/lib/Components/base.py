@@ -22,7 +22,7 @@ import Cobalt.Logging
 from Cobalt.Server import XMLRPCServer, find_intended_location
 from Cobalt.Data import get_spec_fields
 from Cobalt.Exceptions import NoExposedMethod
-
+from Cobalt.Statistics import Statistics
 
 
 def state_file_location():
@@ -202,6 +202,7 @@ class Component (object):
             Cobalt.Proxy.register_component(self)
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
         self.lock = threading.Lock()
+        self.statistics = Statistics()
         
     def save (self, statefile=None):
         """Pickle the component.
@@ -241,7 +242,10 @@ class Component (object):
                 if (time.time() - func.automatic_ts) > \
                    func.automatic_period:
                     if need_to_lock:
+                        t1 = time.time()
                         self.lock.acquire()
+                        t2 = time.time()
+                        self.statistics.add_value('component_lock', t2-t1)
                     try:
                         func()
                     except:
@@ -265,25 +269,50 @@ class Component (object):
             raise NoExposedMethod(method_name)
         return func
 
-    def _execute_exposed_method (self, method, args):
+    def _dispatch (self, method, args, dispatch_dict):
         """Custom XML-RPC dispatcher for components.
         
         method -- XML-RPC method name
         args -- tuple of paramaters to method
         """
+        need_to_lock = True
+        if method in dispatch_dict:
+            method_func = dispatch_dict[method]
+        else:
+            try:
+                method_func = self._resolve_exposed_method(method)
+            except Exception, e:
+                if getattr(e, "log", True):
+                    self.logger.error(e, exc_info=True)
+                raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
+        
+        if getattr(method_func, 'locking', False):
+            need_to_lock = False
+        if need_to_lock:
+            lock_start = time.time()
+            self.lock.acquire()
+            lock_done = time.time()
         try:
-            result = method(*args)
-            if getattr(method, "query", False):
-                if not getattr(method, "query_all_methods", False):
-                    margs = args[:1]
-                else:
-                    margs = []
-                result = marshal_query_result(result, *margs)
-            return result
+            method_start = time.time()
+            result = method_func(*args)
+            method_done = time.time()
         except Exception, e:
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
+        finally:
+            if need_to_lock:
+                self.lock.release()
+            self.statistics.add_value('component_lock',
+                                      lock_done - lock_start)
+        self.statistics.add_value(method, method_done - method_start)
+        if getattr(method_func, "query", False):
+            if not getattr(method_func, "query_all_methods", False):
+                margs = args[:1]
+            else:
+                margs = []
+            result = marshal_query_result(result, *margs)
+        return result
     
     def _listMethods (self):
         """Custom XML-RPC introspective method list."""

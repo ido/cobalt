@@ -80,62 +80,31 @@ tlslite.integration.TLSSocketServerMixIn.TLSConnection = TLSConnection
 class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     logger = logging.getLogger("Cobalt.Server.CobaltXMLRPCDispatcher")
     def __init__ (self, allow_none, encoding):
-        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
+        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
+                                                           allow_none,
+                                                           encoding)
         self.allow_none = allow_none
         self.encoding = encoding
 
     def _marshaled_dispatch (self, data):
-        need_to_lock = True
         method_func = None
         params, method = xmlrpclib.loads(data)
-        self.logger.error('method is %s' % method)
         try:
-            method_func = self.instance._resolve_exposed_method(method)
-            self.logger.error('method_func is %s' % method_func)
-        except:
-            pass
-        if method_func:
-            pass
-        elif method in self.funcs:
-            method_func = self.funcs[method]
-        else:
-            return xmlrpclib.dumps(xmlrpclib.Fault(1, "Method not supported",
-                                                   allow_none=self.allow_none,
-                                                   encoding=self.encoding))
-        if method_func.get('locking', False):
-            need_to_lock = False
-
-        if need_to_lock:
-            lock_start = time.time()
-            self.instance.lock.acquire()
-            lock_done = time.time()
-
-        try:
-            method_start = time.time()
-            response = self.instance._execute_exposed_method(method_func,
-                                                             params)
-            method_done = time.time()
+            response = self.instance._dispatch(method, params, self.funcs)
             response = (response,)
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except xmlrpclib.Fault, fault:
-            method_done = time.time()
             raw_response = xmlrpclib.dumps(fault,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except:
             self.logger.error('bomb', exc_info=1)
-            method_done = time.time()
             # report exception back to server
             raw_response = xmlrpclib.dumps(
                 xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
                 allow_none=self.allow_none, encoding=self.encoding)
-        if need_to_lock:
-            self.instance.lock.release()
-            self.logger.info("Lock took %fs, Method took %fs" % \
-                             (lock_done - lock_start, method_done - method_start))
-
         return raw_response
 
 class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
