@@ -356,7 +356,6 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         self.register_introspection_functions()
         self.register_function(self.ping)
         self.task_thread = threading.Thread(target=self._tasks_thread)
-        self.task_thread.start()
         self.logger.info("service available at %s" % self.url)
     
     def _get_register (self):
@@ -451,6 +450,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         """Serve single requests until (self.serve == False)."""
         self.serve = True
         master_pid = os.getpid()
+        self.task_thread.start()
         self.logger.info("serve_forever() [start]")
         sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
         sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)

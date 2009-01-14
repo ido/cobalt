@@ -247,12 +247,17 @@ class Component (object):
                         t2 = time.time()
                         self.statistics.add_value('component_lock', t2-t1)
                     try:
+                        mt1 = time.time()
                         func()
                     except:
-                        self.logger("Automatic method %s failed" \
-                                    % (name), exc_info=1)
+                        self.logger.error("Automatic method %s failed" \
+                                          % (name), exc_info=1)
+                    finally:
+                        mt2 = time.time()
+
                     if need_to_lock:
                         self.lock.release()
+                    self.statistics.add_value(name, mt2-mt1)
                     func.__dict__['automatic_ts'] = time.time()
 
     def _resolve_exposed_method (self, method_name):
