@@ -13,7 +13,7 @@ class Statistic(object):
         if value > self.max:
             self.max = value
         self.count += 1
-        self.ave = (((self.ave * self.count) + value) / self.count )
+        self.ave = (((self.ave * (self.count - 1)) + value) / self.count )
 
     def get_value(self):
         return (self.name, (self.min, self.max, self.ave))
@@ -29,5 +29,5 @@ class Statistics(object):
             self.data[name].add_value(value)
 
     def display(self):
-        return dict([(key, value.get_value()) in self.data.iteritems()])
+        return dict([value.get_value() for value in self.data.values()])
             
