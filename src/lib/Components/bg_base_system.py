@@ -11,11 +11,14 @@ BGBaseSystem -- base system component
 
 import sys
 import time
+import xmlrpclib
 import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Exceptions import DataCreationError, JobValidationError
+from Cobalt.Exceptions import DataCreationError, JobValidationError, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query
 import sets, thread, ConfigParser
+from Cobalt.Proxy import ComponentProxy
+
 
 __all__ = [
     "NodeCard",
@@ -141,6 +144,7 @@ class ProcessGroup (Data):
         self.cobalt_log_file = spec.get('cobalt_log_file')
         self.umask = spec.get('umask')
         self.exit_status = None
+        self.script_id = None
         self.location = spec.get('location') or []
         self.user = spec.get('user', "")
         self.executable = spec.get('executable')
@@ -217,10 +221,14 @@ class BGBaseSystem (Component):
         specs = [{'name':spec.get("name")} for spec in specs]
         
         self._partitions_lock.acquire()
-        partitions = [
-            partition for partition in self._partitions.q_get(specs)
-            if partition.name not in self._managed_partitions
-        ]
+        try:
+            partitions = [
+                partition for partition in self._partitions.q_get(specs)
+                if partition.name not in self._managed_partitions
+            ]
+        except:
+            partitions = []
+            self.logger.error("error in add_partitions", exc_info=True)
         self._partitions_lock.release()
         
         self._managed_partitions.update([
@@ -233,7 +241,11 @@ class BGBaseSystem (Component):
     def get_partitions (self, specs):
         """Query partitions on simulator."""
         self._partitions_lock.acquire()
-        partitions = self.partitions.q_get(specs)
+        try:
+            partitions = self.partitions.q_get(specs)
+        except:
+            partitions = []
+            self.logger.error("error in get_partitions", exc_info=True)
         self._partitions_lock.release()
         
         return partitions
@@ -250,10 +262,14 @@ class BGBaseSystem (Component):
         self.logger.info("del_partitions(%r)" % (specs))
         
         self._partitions_lock.acquire()
-        partitions = [
-            partition for partition in self._partitions.q_get(specs)
-            if partition.name in self._managed_partitions
-        ]
+        try:
+            partitions = [
+                partition for partition in self._partitions.q_get(specs)
+                if partition.name in self._managed_partitions
+            ]
+        except:
+            partitions = []
+            self.logger.error("error in del_partitions", exc_info=True)
         self._partitions_lock.release()
         
         self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
@@ -268,7 +284,11 @@ class BGBaseSystem (Component):
             part.update(newattr)
             
         self._partitions_lock.acquire()
-        partitions = self._partitions.q_get(specs, _set_partitions, updates)
+        try:
+            partitions = self._partitions.q_get(specs, _set_partitions, updates)
+        except:
+            partitions = []
+            self.logger.error("error in set_partitions", exc_info=True)
         self._partitions_lock.release()
         return partitions
     set_partitions = exposed(query(set_partitions))
@@ -530,7 +550,7 @@ class BGBaseSystem (Component):
             arg_list.sort(self._walltimecmp)
             for args in arg_list:
                 if 60*float(args['walltime']) > backfill_cutoff:
-                    break
+                    continue
                 
                 partition_name = self._find_job_location(args)
                 if partition_name:
@@ -557,19 +577,29 @@ class BGBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict):
+    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
         equiv = []
         for part in self.partitions.itervalues():
             if part.functional and part.scheduled:
+                part_active_queues = []
+                for q in part.queue.split(":"):
+                    if q in active_queue_names:
+                        part_active_queues.append(q)
+
+                # go on to the next partition if there are no running
+                # queues using this partition
+                if not part_active_queues:
+                    continue
+                
                 found_a_match = False
                 for e in equiv:
                     if e['data'].intersection(part.node_card_names):
-                        e['queues'].update(part.queue.split(":"))
+                        e['queues'].update(part_active_queues)
                         e['data'].update(part.node_card_names)
                         found_a_match = True
                         break
                 if not found_a_match:
-                    equiv.append( { 'queues': set(part.queue.split(":")), 'data': set(part.node_card_names), 'reservations': set() } ) 
+                    equiv.append( { 'queues': set(part_active_queues), 'data': set(part.node_card_names), 'reservations': set() } ) 
         
         real_equiv = []
         for eq_class in equiv:
@@ -625,3 +655,30 @@ class BGBaseSystem (Component):
         except:
             self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
     reserve_partition_until = exposed(reserve_partition_until)
+
+    # yarrrrr!   deadlock ho!!
+    # making more than one RPC call in the same atomic method is a recipe for disaster
+    # maybe i need a second automatic method to do the waiting?
+    def sm_sync(self):
+        '''Resynchronize with the script manager'''
+        print "starting sm_sync"
+        try:
+            pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
+        except (ComponentLookupError, xmlrpclib.Fault):
+            self.logger.error("Failed to communicate with script manager")
+            return
+        live = [item['id'] for item in pgroups]
+        print "live:", live
+        for each in self.process_groups.itervalues():
+            if each.mode == 'script' and each.script_id not in live:
+                self.logger.info("Found dead pg for script job %s" % (each.script_id))
+                result = ComponentProxy("script-manager").wait_jobs([{'id':each.script_id, 'exit_status':'*'}])
+                for r in result:
+                    which_one = None
+                    if r['id'] == each.script_id:
+                        each.exit_status = r['exit_status']
+                        self.reserve_partition_until(each.location[0], 1)
+
+        print "ending sm_sync"
+    sm_sync = automatic(sm_sync)
+

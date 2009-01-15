@@ -12,6 +12,7 @@ import time
 import xmlrpclib
 import ConfigParser
 import sets
+import threading
 
 import Cobalt
 import Cobalt.Util
@@ -421,11 +422,7 @@ class Job (Data):
         if self.spgid.has_key('user'):
             try:
                 #pgroups = self.comms['pm'].WaitProcessGroup([{'tag':'process-group', 'pgid':self.spgid['user'], 'output':'*', 'error':'*'}])
-                if self.mode == 'script':
-                    result = ComponentProxy("script-manager").wait_jobs([{'id':self.spgid['user'], 'exit_status':'*'}])
-                    ComponentProxy("system").reserve_partition_until(self.location[0], 1)
-                else:
-                    result = ComponentProxy("system").wait_process_groups([{'id':self.spgid['user'], 'exit_status':'*'}])
+                result = ComponentProxy("system").wait_process_groups([{'id':self.spgid['user'], 'exit_status':'*'}])
                 if result:
                     self.exit_status = result[0].get('exit_status')
                 #this seems needed to get the info back into the object so it can be handed back to the filestager.
@@ -480,18 +477,11 @@ class Job (Data):
         
         self.job_step = "killing"
         
-        if self.mode == 'script':
-            try:
-                pgroup = ComponentProxy("script-manager").signal_jobs([{'id':pgid}], "SIGTERM")
-            except (ComponentLookupError, xmlrpclib.Fault):
-                logger.error("Failed to communicate with script manager when killing job")
-                return False
-        else:
-            try:
-                pgroup = ComponentProxy("system").signal_process_groups([{'id':pgid}], "SIGTERM")
-            except ComponentLookupError:
-                logger.error("Failed to communicate with the system when killing job")
-                return False
+        try:
+            pgroup = ComponentProxy("system").signal_process_groups([{'id':pgid}], "SIGTERM")
+        except ComponentLookupError:
+            logger.error("Failed to communicate with the system when killing job")
+            return False
 
         return True
 
@@ -714,59 +704,37 @@ class Job (Data):
                     logger.info("Job %s/%s: exception with prescript %s, error is %s" %
                                 (self.jobid, self.user, p, e))
 
-        if self.mode == 'script':
-            try:
-                pgroup = ComponentProxy("script-manager").add_jobs([{'tag':'process-group', 'user':self.user, 
-                     'outputfile':self.outputpath, 'cobalt_log_file':self.cobalt_log_file,
-                     'errorfile':self.errorpath, 'path':self.path, 'size':self.procs,
-                     'mode':self.mode, 'cwd':self.outputdir, 'executable':self.command,
-                     'args':self.args, 'envs':self.envs, 'location':self.location,
-                     'id':"*", 'inputfile':self.inputfile, 'kerneloptions':self.kerneloptions,
-                     'jobid':self.jobid, 'umask':self.umask}])
-                # reserve the partition until 1 second after unix epoch -- i.e. cancel the reservation
-                ComponentProxy("system").reserve_partition_until(self.location[0], time.time() + 60*float(self.walltime))
-            except (ComponentLookupError, xmlrpclib.Fault):
-                logger.error("Job %s: Failed to start up user script job; requeueing" \
-                             % (self.jobid))
-                self.steps = ['RunBGUserJob'] + self.steps
-                return
-
-            
-            if not pgroup[0].has_key('id'):
-                logger.error("Process Group creation failed for Job %s" % self.jobid)
-                self.state = 'sm-failure'
-            else:
-                self.pgid['user'] = pgroup[0]['id']
+        try:
+            pgroup = ComponentProxy("system").add_process_groups([{
+                'user':self.user,
+                'stdin':self.inputfile,
+                'stdout':self.outputpath,
+                'stderr':self.errorpath,
+                'cobalt_log_file':self.cobalt_log_file,
+                'size':self.procs,
+                'mode':self.mode,
+                'cwd':self.outputdir,
+                'executable':self.command,
+                'args':self.args,
+                'env':self.envs,
+                'location':self.location,
+                'id':"*", 'umask':self.umask,
+                'kerneloptions':self.kerneloptions,
+                'jobid':self.jobid,
+                'path':self.path,
+                'walltime':self.walltime,
+            }])
+        except (ComponentLookupError, xmlrpclib.Fault):
+            logger.error("Job %s: Failed to start up user job; requeueing" \
+                         % (self.jobid), exc_info=True)
+            self.steps = ['RunBGUserJob'] + self.steps
+            return
+        
+        if not pgroup[0].has_key('id'):
+            logger.error("Process Group creation failed for Job %s" % self.jobid)
+            self.state = 'pm-failure'
         else:
-            try:
-                pgroup = ComponentProxy("system").add_process_groups([{
-                    'user':self.user,
-                    'stdin':self.inputfile,
-                    'stdout':self.outputpath,
-                    'stderr':self.errorpath,
-                    'cobalt_log_file':self.cobalt_log_file,
-                    'size':self.procs,
-                    'mode':self.mode,
-                    'cwd':self.outputdir,
-                    'executable':self.command,
-                    'args':self.args,
-                    'env':self.envs,
-                    'location':self.location,
-                    'id':"*", 'umask':self.umask,
-                    'kerneloptions':self.kerneloptions,
-                    'jobid':self.jobid,
-                }])
-            except (ComponentLookupError, xmlrpclib.Fault):
-                logger.error("Job %s: Failed to start up user job; requeueing" \
-                             % (self.jobid))
-                self.steps = ['RunBGUserJob'] + self.steps
-                return
-            
-            if not pgroup[0].has_key('id'):
-                logger.error("Process Group creation failed for Job %s" % self.jobid)
-                self.state = 'pm-failure'
-            else:
-                self.pgid['user'] = pgroup[0]['id']
+            self.pgid['user'] = pgroup[0]['id']
             
         self.SetPassive()
 
@@ -1102,6 +1070,8 @@ class QueueManager(Component):
         
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
+        self.lock = threading.Lock()
+
 
     def save_me(self):
         Component.save(self)
@@ -1235,7 +1205,7 @@ class QueueManager(Component):
 
     def poll_process_groups (self):
         '''Resynchronize with the system'''
-        
+        print "starting poll_process_groups"
         try:
             pgroups = ComponentProxy("system").get_process_groups([{'id':'*', 'state':'running'}])
         except (ComponentLookupError, xmlrpclib.Fault):
@@ -1243,29 +1213,14 @@ class QueueManager(Component):
             return
         
         live = [item['id'] for item in pgroups]
-        for job in [j for queue in self.Queues.itervalues() for j in queue.jobs if j.mode!='script']:
+        for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
             for pgtype in job.pgid.keys():
                 pgid = job.pgid[pgtype]
                 if pgid not in live:
                     self.logger.info("Found dead pg for job %s" % (job.jobid))
                     job.CompletePG(pgid)
+        print "ending poll_process_groups"
     poll_process_groups = automatic(poll_process_groups)
-
-    def sm_sync(self):
-        '''Resynchronize with the script manager'''
-        try:
-            pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
-        except (ComponentLookupError, xmlrpclib.Fault):
-            logger.error("Failed to communicate with script manager")
-            return
-        live = [item['id'] for item in pgroups]
-        for job in [j for queue in self.Queues.itervalues() for j in queue.jobs if j.mode=='script']:
-            for pgtype in job.pgid.keys():
-                pgid = job.pgid[pgtype]
-                if pgid not in live:
-                    self.logger.info("Found dead pg for job %s" % (job.jobid))
-                    job.CompletePG(pgid)
-    sm_sync = automatic(sm_sync)
 
     def get_jobs(self, specs):
         return self.Queues.get_jobs(specs)

@@ -336,9 +336,13 @@ class ClusterBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict):
+    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
         equiv = []
         for q in self.queue_assignments:
+            # skip queues that aren't "running"
+            if not q in active_queue_names:
+                continue
+
             found_a_match = False
             for e in equiv:
                 if e['data'].intersection(self.queue_assignments[q]):

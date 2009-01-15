@@ -15,6 +15,7 @@ import signal
 import tempfile
 import time
 import thread
+import threading
 import ConfigParser
 try:
     set = set
@@ -29,6 +30,7 @@ import Cobalt.bridge
 from Cobalt.bridge import BridgeException
 from Cobalt.Exceptions import ProcessGroupCreationError
 from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem
+from Cobalt.Proxy import ComponentProxy
 
 
 __all__ = [
@@ -57,7 +59,6 @@ class ProcessGroup (bg_base_system.ProcessGroup):
     
     def __init__(self, spec):
         bg_base_system.ProcessGroup.__init__(self, spec)
-        self.start()
     
     def _mpirun (self):
         #check for valid user/group
@@ -233,6 +234,7 @@ class BGSystem (BGBaseSystem):
         self.pending_diags = dict()
         self.failed_diags = list()
         self.diag_pids = dict()
+        self.pending_script_waits = sets.Set()
 
         self.configure()
         if 'partition_flags' in state:
@@ -246,6 +248,7 @@ class BGSystem (BGBaseSystem):
         
         self.update_relatives()
         thread.start_new_thread(self.update_partition_state, tuple())
+        self.lock = threading.Lock()
 
     def save_me(self):
         Component.save(self)
@@ -392,53 +395,55 @@ class BGSystem (BGBaseSystem):
                 nc.used_by = ''
                 
             self._partitions_lock.acquire()
-
-            for partition in system_def:
-                if self._partitions.has_key(partition.id):
-                    self._partitions[partition.id].state = _get_state(partition)
-                    self._partitions[partition.id]._update_node_cards()
-
-            now = time.time()
-            for p in self._partitions.values():
-                if p.state != "busy":
-                    if p.reserved_until:
-                        p.state = "starting job"
-                        for part in p._parents:
-                            if part.state == "idle":
-                                part.state = "blocked by starting job"
-                        for p in p._children:
-                            if part.state == "idle":
-                                part.state = "blocked by starting job"
-                    for diag_part in self.pending_diags:
-                        if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
-                            p.state = "blocked by pending diags"
-                    for nc in p.node_cards:
-                        if nc.used_by:
-                            p.state = "blocked (%s)" % nc.used_by
-                            break
-                        if nc.state != "RM_NODECARD_UP":
-                            p.state = "hardware offline: nodecard %s" % nc.id
-                            break 
-                    for s in p.switches:
-                        if s in busted_switches:
-                            p.state = "hardware offline: switch %s" % s 
-                    for dep_name in p._wiring_conflicts:
-                        if self._partitions[dep_name].state == "busy":
-                            p.state = "blocked-wiring (%s)" % dep_name
-                            break
-                    for part_name in self.failed_diags:
-                        part = self._partitions[part_name]
-                        if p.name == part.name:
-                            p.state = "failed diags"
-                        elif p.name in part.parents or p.name in part.children:
-                            p.state = "blocked by failed diags"
-                else:
-                    p.reserved_until = False
-                    
-                if p.reserved_until:
-                    if now > p.reserved_until:
+            try:
+                for partition in system_def:
+                    if self._partitions.has_key(partition.id):
+                        self._partitions[partition.id].state = _get_state(partition)
+                        self._partitions[partition.id]._update_node_cards()
+    
+                now = time.time()
+                for p in self._partitions.values():
+                    if p.state != "busy":
+                        if p.reserved_until:
+                            p.state = "starting job"
+                            for part in p._parents:
+                                if part.state == "idle":
+                                    part.state = "blocked by starting job"
+                            for part in p._children:
+                                if part.state == "idle":
+                                    part.state = "blocked by starting job"
+                        for diag_part in self.pending_diags:
+                            if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
+                                p.state = "blocked by pending diags"
+                        for nc in p.node_cards:
+                            if nc.used_by:
+                                p.state = "blocked (%s)" % nc.used_by
+                                break
+                            if nc.state != "RM_NODECARD_UP":
+                                p.state = "hardware offline: nodecard %s" % nc.id
+                                break 
+                        for s in p.switches:
+                            if s in busted_switches:
+                                p.state = "hardware offline: switch %s" % s 
+                        for dep_name in p._wiring_conflicts:
+                            if self._partitions[dep_name].state == "busy":
+                                p.state = "blocked-wiring (%s)" % dep_name
+                                break
+                        for part_name in self.failed_diags:
+                            part = self._partitions[part_name]
+                            if p.name == part.name:
+                                p.state = "failed diags"
+                            elif p.name in part.parents or p.name in part.children:
+                                p.state = "blocked by failed diags"
+                    else:
                         p.reserved_until = False
+                        
+                    if p.reserved_until:
+                        if now > p.reserved_until:
+                            p.reserved_until = False
 
+            except:
+                self.logger.error("error in update_partition_state", exc_info=True)
                         
             self._partitions_lock.release()
             
@@ -474,7 +479,34 @@ class BGSystem (BGBaseSystem):
         spec -- dictionary hash specifying a process group to start
         """
         
-        return self.process_groups.q_add(specs)
+        self.logger.info("add_process_groups(%r)" % (specs))
+        
+        script_specs = []
+        other_specs = []
+        for spec in specs:
+            if spec['mode'] == "script":
+                script_specs.append(spec)
+            else:
+                other_specs.append(spec)
+        
+        # start up script jobs
+        new_pgroups = []
+        if script_specs:
+            try:
+                for spec in script_specs:
+                    script_pgroup = ComponentProxy("script-manager").add_jobs([spec])
+                    self.reserve_partition_until(spec['location'][0], time.time() + 60*float(spec['walltime']))
+                    new_pgroup = self.process_groups.q_add([spec])
+                    new_pgroup[0].script_id = script_pgroup[0]['id']
+                    new_pgroups.append(new_pgroup[0])
+            except (ComponentLookupError, xmlrpclib.Fault):
+                raise ProcessGroupCreationError("system::add_process_groups failed to communicate with script-manager")
+
+        process_groups = self.process_groups.q_add(other_specs)
+        for process_group in process_groups:
+            process_group.start()
+            
+        return new_pgroups + process_groups
     
     add_process_groups = exposed(query(add_process_groups))
     
@@ -515,10 +547,16 @@ class BGSystem (BGBaseSystem):
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
-            try:
-                os.kill(int(pg.head_pid), getattr(signal, signame))
-            except OSError, e:
-                self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
+            if pg.mode == "script":
+                try:
+                    ComponentProxy("script-manager").signal_jobs([{'id':pg.script_id}], "SIGTERM")
+                except (ComponentLookupError, xmlrpclib.Fault):
+                    self.logger.error("Failed to communicate with script manager when killing job")
+            else:
+                try:
+                    os.kill(int(pg.head_pid), getattr(signal, signame))
+                except OSError, e:
+                    self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 

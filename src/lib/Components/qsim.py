@@ -94,7 +94,7 @@ class Job (Data):
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
                             "nodes","runtime", "start_time", "end_time",
                             "failure_time", "location", "state", "is_visible",
-                            "args"]
+                            "args", "system_state", "starttime"]
 
     def __init__(self, spec):
         Data.__init__(self, spec)
@@ -113,6 +113,8 @@ class Job (Data):
         self.start_time = spec.get('start_time', '0')
         self.end_time = spec.get('end_time', '0')
         self.state = spec.get("state", "invisible")
+        self.system_state = ''
+        self.starttime = 0
         self.failure_time = 0
         self.is_visible = False
         self.args = []
@@ -492,8 +494,10 @@ class Qsimulator(Simulator):
         
         start = date_to_sec(self.get_current_time())
         updates['start_time'] = start
+        updates['starttime'] = start
         
         updates['state'] = 'running'
+        updates['system_state'] = 'running'
         print self.get_current_time(), "state change, job", jobspec['jobid'], \
              ":", jobspec['state'], "->", updates['state']
              

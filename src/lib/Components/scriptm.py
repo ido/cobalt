@@ -29,8 +29,8 @@ class ProcessGroup(Data):
     '''Run a script'''
 
     fields = Data.fields + [
-        "tag", "name", "location", "state", "user", "outputfile", "errorfile", "executable", "jobid",
-        "path", "cwd", "args", "envs", "inputfile", "kerneloptions", "id", 
+        "tag", "name", "location", "state", "user", "stdout", "stderr", "executable", "jobid",
+        "path", "cwd", "args", "env", "stdin", "kerneloptions", "id", "exit_status",
     ]
 
     def __init__(self, spec):
@@ -42,20 +42,21 @@ class ProcessGroup(Data):
         self.location = spec.pop("location", None)
         self.state = spec.pop("state", 'running')
         self.user = spec.pop("user", None)
-        self.outputfile = spec.pop("outputfile", None)
-        self.errorfile = spec.pop("errorfile", None)
+        self.stdout = spec.pop("stdout", None)
+        self.stderr = spec.pop("stderr", None)
         self.cobalt_log_file = spec.get('cobalt_log_file')
         self.executable = spec.pop("executable", None)
         self.jobid = spec.pop("jobid", None)
         self.path = spec.pop("path", None)
         self.cwd = spec.pop("cwd", None)
         self.args = spec.pop("args", [])
-        self.envs = spec.pop("args", None)
-        self.inputfile = spec.pop("inputfile", None)
+        self.env = spec.pop("env", None)
+        self.stdin = spec.pop("stdin", None)
         self.kerneloptions = spec.pop("kerneloptions", None)
         self.id = spec.get("id")
         
         self.mpi_system_id = None
+        self.exit_status = None
         
         self.log = logging.getLogger('pg')
         try:
@@ -65,12 +66,12 @@ class ProcessGroup(Data):
             home_dir = tmp_info[5]
         except KeyError:
             raise ProcessGroupCreationError, "user/group"
-        if self.outputfile is not None:
-            self.outlog = self.outputfile
+        if self.stdout is not None:
+            self.outlog = self.stdout
         else:
             self.outlog = tempfile.mktemp()            
-        if self.errorfile is not None:
-            self.errlog = self.errorfile
+        if self.stderr is not None:
+            self.errlog = self.stderr
         else:
             self.errlog = tempfile.mktemp()
 
@@ -162,23 +163,23 @@ class ProcessGroup(Data):
     def invoke_mpi_from_script(self, true_mpi_args):
         '''Run an mpirun job that was invoked by a script.'''
         self.state = 'running'
-        if self.outputfile is None:
+        if self.stdout is None:
             self.outputpath = "%s/%s.output" % (self.cwd, self.jobid)
-        if self.errorfile is None:
+        if self.stderr is None:
             self.errorpath = "%s/%s.error" % (self.cwd, self.jobid)
 
         try:
             pgroup = ComponentProxy("system").add_process_groups([{
                 'tag':'process-group',
                 'user':self.user, 
-                'stdout':self.outputfile,
-                'stderr':self.errorfile,
+                'stdout':self.stdout,
+                'stderr':self.stderr,
                 'cobalt_log_file':self.cobalt_log_file,
                 'cwd':self.cwd, 
                 'location': self.location,
-                'stdin':self.inputfile,
+                'stdin':self.stdin,
                 'true_mpi_args':true_mpi_args, 
-                'envs':{'path':self.path},
+                'env':{'path':self.path},
                 'size':0,
                 'executable':"this will be ignored"}])
         except (ComponentLookupError, xmlrpclib.Fault):
@@ -231,6 +232,7 @@ class ScriptManager(Component):
         self.zombie_mpi = {}
     
     def manage_children(self):
+        print "starting manage_children"
         for pgroup in self.zombie_mpi.keys():
             if pgroup.FinishProcess():
                 del self.zombie_mpi[pgroup]
@@ -249,6 +251,7 @@ class ScriptManager(Component):
                     self.logger.error("Failed to locate process group for pid %s" % (pid))
                 elif len(pgrps) == 1:
                     pgroup = pgrps[0]
+                    pgroup.exit_status = stat
                     self.logger.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
                       (pgroup.jobid, pgroup.user, pgroup.jobid, int(stat)/256, pgroup.pid))
 
@@ -267,6 +270,7 @@ class ScriptManager(Component):
                         
                 else:
                     self.logger.error("Got more than one match for pid %s" % (pid))
+        print "ending manage_children"
     manage_children = automatic(manage_children)
 
     def add_jobs(self, specs):

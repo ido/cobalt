@@ -100,7 +100,6 @@ class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except:
-            self.logger.error('bomb', exc_info=1)
             # report exception back to server
             raw_response = xmlrpclib.dumps(
                 xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
@@ -357,6 +356,8 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         self.register_function(self.ping)
         self.task_thread = threading.Thread(target=self._tasks_thread)
         self.logger.info("service available at %s" % self.url)
+        self.timeout = timeout
+
     
     def _get_register (self):
         return self._register
@@ -420,7 +421,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
                         self.instance.do_tasks()
                 except:
                     self.logger.error("Unexpected task failure", exc_info=1)
-                time.sleep(30)
+                time.sleep(self.timeout)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
     
@@ -454,6 +455,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         self.logger.info("serve_forever() [start]")
         sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
         sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
+
         try:
             while self.serve:
                 try:

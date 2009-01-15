@@ -382,6 +382,9 @@ class DataDict (dict):
             key = getattr(item, self.key)
             del self[key]
         return matched_items
+    
+    def copy (self):
+        return self.__class__((key, value) for key, value in self.iteritems())
 
 
 class ForeignData (Data):
