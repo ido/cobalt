@@ -31,6 +31,7 @@ from Cobalt.bridge import BridgeException
 from Cobalt.Exceptions import ProcessGroupCreationError
 from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem
 from Cobalt.Proxy import ComponentProxy
+from Cobalt.Statistics import Statistics
 
 
 __all__ = [
@@ -249,6 +250,7 @@ class BGSystem (BGBaseSystem):
         self.update_relatives()
         thread.start_new_thread(self.update_partition_state, tuple())
         self.lock = threading.Lock()
+        self.statistics = Statistics()
 
     def save_me(self):
         Component.save(self)

@@ -661,14 +661,12 @@ class BGBaseSystem (Component):
     # maybe i need a second automatic method to do the waiting?
     def sm_sync(self):
         '''Resynchronize with the script manager'''
-        print "starting sm_sync"
         try:
             pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
         except (ComponentLookupError, xmlrpclib.Fault):
             self.logger.error("Failed to communicate with script manager")
             return
         live = [item['id'] for item in pgroups]
-        print "live:", live
         for each in self.process_groups.itervalues():
             if each.mode == 'script' and each.script_id not in live:
                 self.logger.info("Found dead pg for script job %s" % (each.script_id))
@@ -679,6 +677,5 @@ class BGBaseSystem (Component):
                         each.exit_status = r['exit_status']
                         self.reserve_partition_until(each.location[0], 1)
 
-        print "ending sm_sync"
     sm_sync = automatic(sm_sync)
 

@@ -232,7 +232,6 @@ class ScriptManager(Component):
         self.zombie_mpi = {}
     
     def manage_children(self):
-        print "starting manage_children"
         for pgroup in self.zombie_mpi.keys():
             if pgroup.FinishProcess():
                 del self.zombie_mpi[pgroup]
@@ -270,7 +269,6 @@ class ScriptManager(Component):
                         
                 else:
                     self.logger.error("Got more than one match for pid %s" % (pid))
-        print "ending manage_children"
     manage_children = automatic(manage_children)
 
     def add_jobs(self, specs):

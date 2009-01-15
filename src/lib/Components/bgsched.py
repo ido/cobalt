@@ -10,6 +10,7 @@ import math
 import types
 import ConfigParser
 import threading
+import xmlrpclib
 try:
     set()
 except:
@@ -20,7 +21,7 @@ from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
-import xmlrpclib
+from Cobalt.Statistics import Statistics
 
 import Cobalt.SchedulerPolicies
 
@@ -348,6 +349,7 @@ class BGSched (Component):
         self.define_user_utility_functions()
         self.get_current_time = time.time
         self.lock = threading.Lock()
+        self.statistics = Statistics()
 
 
 

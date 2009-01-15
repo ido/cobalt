@@ -33,6 +33,8 @@ from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Components.bg_base_system import NodeCard, Partition, PartitionDict, ProcessGroupDict, BGBaseSystem
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Proxy import ComponentProxy
+from Cobalt.Statistics import Statistics
+
 
 __all__ = [
     "ProcessGroup", 
@@ -163,6 +165,7 @@ class Simulator (BGBaseSystem):
 
         self.update_relatives()
         self.lock = threading.Lock()
+        self.statistics = Statistics()
         
     def save_me(self):
         Component.save(self)

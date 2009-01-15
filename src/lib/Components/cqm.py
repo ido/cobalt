@@ -21,6 +21,8 @@ from Cobalt.Data import Data, DataList, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import TimerException, QueueError, ComponentLookupError
+from Cobalt.Statistics import Statistics
+
 
 
 logger = logging.getLogger('cqm')
@@ -1071,6 +1073,7 @@ class QueueManager(Component):
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
         self.lock = threading.Lock()
+        self.statistics = Statistics()
 
 
     def save_me(self):
@@ -1205,7 +1208,6 @@ class QueueManager(Component):
 
     def poll_process_groups (self):
         '''Resynchronize with the system'''
-        print "starting poll_process_groups"
         try:
             pgroups = ComponentProxy("system").get_process_groups([{'id':'*', 'state':'running'}])
         except (ComponentLookupError, xmlrpclib.Fault):
@@ -1219,7 +1221,6 @@ class QueueManager(Component):
                 if pgid not in live:
                     self.logger.info("Found dead pg for job %s" % (job.jobid))
                     job.CompletePG(pgid)
-        print "ending poll_process_groups"
     poll_process_groups = automatic(poll_process_groups)
 
     def get_jobs(self, specs):
