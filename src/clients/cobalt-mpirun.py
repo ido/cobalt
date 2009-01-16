@@ -80,7 +80,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 #    j['location'] = "ANLR00"
     
-    arglist = ['-partition', j['location']] + arglist
+    arglist = ['-partition', j['location'][0]] + arglist
 
     # update the current working directory, if not specified on the command line
     # however, mpirun -free gets angry if you specify -cwd, so check for that    
