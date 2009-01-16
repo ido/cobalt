@@ -1152,9 +1152,9 @@ class QueueManager(Component):
                 ret.append(job)
                 if job.system_state != "running":
                     #q.remove(job)
-                    q.jobs.q_del([spec])
+                    q.jobs.q_del([{'jobid': job.jobid}])
                 elif job.system_state == "running" and job.job_step == "starting":
-                    q.jobs.q_del([spec])
+                    q.jobs.q_del([{'jobid': job.jobid}])
                 elif force:
                     # Need acct log message for forced delete, 
                     # otherwise can't tell if job ever ended
@@ -1163,7 +1163,7 @@ class QueueManager(Component):
                     
                     # FIXME
                     # i think the below *shouldn't* be there -- it seems like job.Kill will eventually make it happen
-                    q.jobs.q_del([spec])
+                    q.jobs.q_del([{'jobid': job.jobid}])
                 else:
                     job.Kill("Job %s killed based on user request")
                     job.write_cobalt_log("job killed based on user request")
