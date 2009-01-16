@@ -596,7 +596,7 @@ class BGSched (Component):
             reservations_cache = self.reservations.copy()
         except:
             # just to make sure we don't keep the lock forever
-            pass
+            self.logger.error("error in schedule_jobs", exc_info=True)
         self.lock.release()
         
         # clean up the started_jobs cached data

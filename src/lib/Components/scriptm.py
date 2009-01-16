@@ -273,7 +273,7 @@ class ScriptManager(Component):
                         self.logger.error("Got more than one match for pid %s" % (pid))
         except:
             # just to make sure we don't keep the lock forever
-            pass
+            self.logger.error("error in manage_children", exc_info=True)
         self.lock.release()
     manage_children = locking(automatic(manage_children))
 
@@ -318,7 +318,7 @@ class ScriptManager(Component):
             jobs = self.pgroups.q_get([{'jobid':spec['jobid'], 'user':spec['user']}])
         except:
             # just make sure we don't keep the lock forever
-            pass
+            self.logger.error("error in invoke_mpi_from_script", exc_info=True)
         self.lock.release()
 
         if len(jobs) != 1:
