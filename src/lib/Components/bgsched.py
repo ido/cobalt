@@ -713,11 +713,12 @@ class BGSched (Component):
                       'queue': job.queue, 
                       'forbidden': list(forbidden_locations),
                       'utility_score': tup[1],
+                      'threshold': tup[2],
                       'walltime': job.walltime,
                     } )
 
             try:
-                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], cut_off)
+                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, cut_off)
             except:
                 self.logger.error("failed to connect to system component", exc_info=True)
                 best_partition_dict = {}

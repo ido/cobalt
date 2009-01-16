@@ -297,12 +297,12 @@ class ClusterBaseSystem (Component):
 
     
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
-    def find_job_location(self, arg_list, utility_cutoff, backfill_cutoff):
+    def find_job_location(self, arg_list, backfill_cutoff):
         best_location_dict = {}
         
         # first time through, try for starting jobs based on utility scores
         for args in arg_list:
-            if args['utility_score'] < utility_cutoff:
+            if args['utility_score'] < arg_list[0]['threshold']:
                 break
             
             location_data = self._find_job_location(args)
