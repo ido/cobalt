@@ -596,6 +596,10 @@ class BGBaseSystem (Component):
                 if partition_name:
                     best_partition_dict.update(partition_name)
                     break
+            
+            # at this time, we only want to try launching one job at a time
+            if best_partition_dict:
+                break
         
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
@@ -622,8 +626,8 @@ class BGBaseSystem (Component):
             for p in part._children:
                 if p.state == "idle":
                     p.state = "blocked by starting job"
-            
-        return best_partition_dict
+        
+        print "best_partition_dict:", best_partition_dict    
     find_job_location = exposed(find_job_location)
     
     def _walltimecmp(self, dict1, dict2):
