@@ -120,7 +120,8 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
     allow_reuse_address = True
     logger = logging.getLogger("Cobalt.Server.TCPServer")
     
-    def __init__ (self, server_address, RequestHandlerClass, keyfile=None, certfile=None, reqCert=False, timeout=None):
+    def __init__ (self, server_address, RequestHandlerClass, keyfile=None,
+                  certfile=None, reqCert=False, timeout=None):
         
         """Initialize the SSL-TCP server.
         
@@ -134,8 +135,9 @@ class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
         reqCert -- client must present certificate
         timeout -- timeout for non-blocking request handling
         """
-        
-        SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
+
+        all_iface_address = ('', server_address[1])
+        SocketServer.TCPServer.__init__(self, all_iface_address, RequestHandlerClass)
         
         self.socket.settimeout(timeout)
         
@@ -345,7 +347,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         if not RequestHandlerClass:
             class RequestHandlerClass (XMLRPCRequestHandler):
                 """A subclassed request handler to prevent class-attribute conflicts."""
-        
+
         TCPServer.__init__(self,
             server_address, RequestHandlerClass,
             timeout=timeout, keyfile=keyfile, certfile=certfile)
