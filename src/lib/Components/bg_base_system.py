@@ -627,7 +627,7 @@ class BGBaseSystem (Component):
                 if p.state == "idle":
                     p.state = "blocked by starting job"
         
-        print "best_partition_dict:", best_partition_dict    
+        return best_partition_dict
     find_job_location = exposed(find_job_location)
     
     def _walltimecmp(self, dict1, dict2):
