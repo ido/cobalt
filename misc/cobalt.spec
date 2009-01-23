@@ -46,6 +46,10 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} %{buildroot}/usr/bin/cqadm.py %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}/usr/bin/bgsystem.py %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}/usr/bin/schedctl.py %{buildroot}%{_sbindir}
+%{__mv} %{buildroot}/usr/bin/cluster_system.py %{buildroot}%{_sbindir}
+%{__mv} %{buildroot}/usr/bin/cluster_simulator.py %{buildroot}%{_sbindir}
+%{__mv} %{buildroot}/usr/bin/nodeadm.py %{buildroot}%{_sbindir}
+%{__mv} %{buildroot}/usr/bin/perfdata.py %{buildroot}%{_sbindir}
 %{__rm} -f %{buildroot}/usr/bin/test*
 %{__rm} -f %{buildroot}/usr/bin/brun.py
 %{__rm} -f %{buildroot}/usr/bin/bstat.py
