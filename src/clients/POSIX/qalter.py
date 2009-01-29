@@ -63,7 +63,7 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             sys.exit(1)
     spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*',
-             'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*'} for jobid in args]
+             'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*', 'state':'*'} for jobid in args]
     updates = {}
     nc = 0
     if opts['nodecount']:
@@ -197,9 +197,30 @@ if __name__ == '__main__':
     if not jobdata:
         print "Failed to match any jobs"
         sys.exit(1)
+
+    job_running = False
+    for job in jobdata:
+        if job['state'] in ["starting", "running", "killing"]:
+            job_running = True
+            
+    if job_running:
+        if updates.has_key('procs'):
+            print >> sys.stderr, "cannot change processor count of a running job"
+        if updates.has_key('nodes'):
+            print >> sys.stderr, "cannot change node count of a running job"
+        if updates.has_key('walltime'):
+            print >> sys.stderr, "cannot change wall time of a running job"
+        if updates.has_key('mode'):
+            print >> sys.stderr, "cannot change mode of a running job"
+        if updates.has_key('errorpath'):
+            print >> sys.stderr, "cannot change the error path of a running job"
+        if updates.has_key('outputpath'):
+            print >> sys.stderr, "cannot change the output path of a running job"
+        sys.exit(1)
         
     response = False
     for jobinfo in jobdata:
+        del jobinfo['state']
         original_spec = jobinfo.copy()
         jobinfo.update(updates)
         for filt in filters:
