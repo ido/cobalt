@@ -258,6 +258,8 @@ if __name__ == '__main__':
             # location
             if isinstance(j['location'], types.ListType) and len(j['location']) > 1:
                 j['location'] = mergelist(j['location'])
+            elif isinstance(j['location'], types.ListType) and len(j['location']) == 1:
+                j['location'] = j['location'][0]
             # queuedtime
             if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
                 j['queuedtime'] = get_elapsed_time(float(j.get('submittime')), time.time())
