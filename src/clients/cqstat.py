@@ -110,8 +110,16 @@ if __name__ == '__main__':
     
     if opts['schedinfo']:
         print "The most recent scheduling attempt reports:\n"
-        cqm = ComponentProxy("queue-manager", defer=False)
-        sched = ComponentProxy("scheduler", defer=False)
+        try:
+            cqm = ComponentProxy("queue-manager", defer=False)
+        except:
+            print >> sys.stderr, "Failed to connect to queue manager"
+            sys.exit(1)
+        try:
+            sched = ComponentProxy("scheduler", defer=False)
+        except:
+            print >> sys.stderr, "Failed to connect to scheduler"
+            sys.exit(1)
         jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
         queues = cqm.get_queues([{'name':"*", 'state':"*"}])
         sched_info = sched.get_sched_info()

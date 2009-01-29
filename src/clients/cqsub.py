@@ -115,7 +115,11 @@ if __name__ == '__main__':
             sys.exit(1)
 
     try:
-        system = ComponentProxy("system", defer=False)
+        try:
+            system = ComponentProxy("system", defer=False)
+        except:
+            print >> sys.stderr, "Failed to contact system component"
+            sys.exit(1)
         opts = system.validate_job(opts)
     except xmlrpclib.Fault, flt:
         logger.error("Job failed to validate: %s" % (flt.faultString))

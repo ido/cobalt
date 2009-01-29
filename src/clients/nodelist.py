@@ -10,8 +10,8 @@ from Cobalt.Proxy import ComponentProxy
 if __name__ == '__main__':
 
     try:
-        system = Cobalt.Proxy.ComponentProxy("system")
-    except ComponentLookupError:
+        system = Cobalt.Proxy.ComponentProxy("system", defer=False)
+    except:
         print >> sys.stderr, "failed to connect to system component"
         sys.exit(1)
 

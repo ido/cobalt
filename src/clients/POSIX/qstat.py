@@ -101,7 +101,12 @@ if __name__ == '__main__':
     if opts['header']:
         custom_header = opts['header'].split(':')
 
-    cqm = ComponentProxy("queue-manager", defer=False)
+    try:
+        cqm = ComponentProxy("queue-manager", defer=False)
+    except ComponentLookupError:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
+    
     try:
         queues = cqm.get_queues([{'name':"*", 'state':"*"}])
     except:

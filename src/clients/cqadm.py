@@ -22,7 +22,12 @@ def get_queues(cqm_conn):
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*',
              'adminemail':'*', 'totalnodes':'*', 'cron':'*', 'policy':'*', 'priority':'*'}]
-    return cqm_conn.get_queues(info)
+    try:
+        ret = cqm_conn.get_queues(info)
+    except:
+        print >> sys.stderr, "Failed to connect to queue manager"
+        sys.exit(1)
+    return ret
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
