@@ -308,7 +308,7 @@ class Component (object):
         finally:
             if need_to_lock:
                 self.lock.release()
-            self.statistics.add_value('component_lock',
+                self.statistics.add_value('component_lock',
                                       lock_done - lock_start)
         self.statistics.add_value(method, method_done - method_start)
         if getattr(method_func, "query", False):
