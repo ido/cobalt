@@ -491,12 +491,13 @@ class BGSched (Component):
                       'queue': job.queue, 
                       'required': cur_res.partitions.split(":"),
                       'utility_score': tup[1],
+                      'threshold': tup[2],
                       'walltime': job.walltime,
                     } )
 
             # there's no backfilling in reservations
             try:
-                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, utility_scores[0][2], 0)
+                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, 0)
             except:
                 self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
