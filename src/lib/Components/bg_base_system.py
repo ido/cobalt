@@ -680,9 +680,10 @@ class BGBaseSystem (Component):
                     if eq_class['data'].intersection(p.node_card_names):
                         eq_class['reservations'].add(res_name)
                     for dep_name in p._wiring_conflicts:
-                        if eq_class['data'].intersection(self.partitions[dep_name].node_card_names):
-                            eq_class['reservations'].add(res_name)
-                            break
+                        if self.partitions.has_key(dep_name):
+                            if eq_class['data'].intersection(self.partitions[dep_name].node_card_names):
+                                eq_class['reservations'].add(res_name)
+                                break
 
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
