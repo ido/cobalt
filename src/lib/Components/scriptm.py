@@ -266,8 +266,7 @@ class ScriptManager(Component):
                             except IOError:
                                 self.logger.error( "Job %s/%s: ProcessGroup %s failed to update .error file" % (pgroup.jobid, pgroup.user, pgroup.jobid))
 
-                        if not pgroup.FinishProcess():
-                            self.zombie_mpi[pgroup] = True
+                        self.zombie_mpi[pgroup] = True
                             
                     else:
                         self.logger.error("Got more than one match for pid %s" % (pid))
