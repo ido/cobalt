@@ -31,37 +31,37 @@ cd src/clients && make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p %{buildroot}%{_sbindir}
+mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
 python2.5 setup.py install --prefix=${RPM_BUILD_ROOT}/usr
 install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}/usr/bin
 install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
-%{__mv} %{buildroot}/usr/bin/slp.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/bgsched.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/scriptm.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/cqm.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/brooklyn.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/partadm.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/setres.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/releaseres.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/cqadm.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/bgsystem.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/schedctl.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/cluster_system.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/cluster_simulator.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/nodeadm.py %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}/usr/bin/perfdata.py %{buildroot}%{_sbindir}
-%{__rm} -f %{buildroot}/usr/bin/test*
-%{__rm} -f %{buildroot}/usr/bin/brun.py
-%{__rm} -f %{buildroot}/usr/bin/bstat.py
-%{__rm} -f %{buildroot}/usr/bin/pmrun.py
-%{__rm} -f %{buildroot}/usr/bin/cdump.py
-mkdir -p %{buildroot}%{_initrddir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgsched.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/scriptm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/brooklyn.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/setres.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/releaseres.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqadm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/schedctl.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_system.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_simulator.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/nodeadm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/perfdata.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/test*
+%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/brun.py
+%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/bstat.py
+%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/pmrun.py
+%{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/cdump.py
+mkdir -p ${RPM_BUILD_ROOT}%{_initrddir}
 install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
-#mkdir %{buildroot}%{_sysconfdir}
+#mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
-cd %{buildroot}%{_sbindir}
+cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
-cd %{buildroot}%{_bindir}
+cd ${RPM_BUILD_ROOT}%{_bindir}
 for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf wrapper $file ; done
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/cobalt
 chmod 700 ${RPM_BUILD_ROOT}/var/spool/cobalt
@@ -71,16 +71,28 @@ cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -
 %clean
 #rm -rf $RPM_BUILD_ROOT
 
+%pre
+if ! /usr/bin/getent group cobalt &>/dev/null
+then
+    groupadd cobalt
+fi
+
+%post
+chmod g+s /usr/bin/wrapper
+
+
 %files -n cobalt
 /usr/sbin/*
-%config (noreplace) /etc/cobalt.conf
+%config (noreplace) %attr(640,root,cobalt) /etc/cobalt.conf
 %config(noreplace) /etc/init.d/cobalt
 /usr/share/man/man5/*
 /usr/share/man/man8/*.8*
 /var/spool/cobalt
 
+
 %files -n cobalt-clients
 /usr/bin/*
+%attr(755,root,cobalt) /usr/bin/wrapper
 /usr/lib*/python2.5/site-packages/Cobalt/*
 /usr/lib*/python2.5/site-packages/Cobalt-*egg-info*
 /usr/share/man/man1/*.1*
