@@ -212,13 +212,6 @@ class Component (object):
         """
         statefile = statefile or self.statefile
         if statefile:
-            try:
-                os.stat(statefile)
-            except OSError:
-                pass
-            else:
-                os.rename(statefile, statefile + ".old")
-
             temp_statefile = statefile + ".temp"
             data = cPickle.dumps(self)
             try:
@@ -227,8 +220,11 @@ class Component (object):
                 fd.close()
             except IOError, e:
                 self.logger.error("statefile failure : %s" % e)
+                return str(e)
             else:
                 os.rename(temp_statefile, statefile)
+                return "state saved to file: %s" % statefile
+    save = exposed(save)
     
     def do_tasks (self):
         """Perform automatic tasks for the component.

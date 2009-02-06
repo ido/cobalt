@@ -6,6 +6,7 @@ __version__ = '$Version$'
 
 import sys, getopt, xmlrpclib
 import sets
+import os
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -23,6 +24,7 @@ Usage: partadm.py --unfail part1 part2
 Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
+Usage: partadm.py --savestate filename
 Must supply one of -a or -d or -l or -start or -stop or --queue'''
 
 if __name__ == '__main__':
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:C:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail'])
+                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail', 'savestate'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -82,10 +84,20 @@ if __name__ == '__main__':
         args = ([{'tag':'partition', 'name':partname} for partname in parts], )
     elif '--unfail' in sys.argv:
         func = system.unfail_partitions
-        args = args = ([{'tag':'partition', 'name':partname} for partname in parts], )
+        args = ([{'tag':'partition', 'name':partname} for partname in parts], )
     elif '--xml' in sys.argv:
         func = system.generate_xml
         args = tuple()
+    elif '--savestate' in sys.argv:
+        if not args:
+            print "please specify a filename"
+            sys.exit(1)
+        directory = os.path.dirname(args[0])
+        if not os.path.exists(directory):
+            print "directory %s does not exist" % directory
+            sys.exit(1)
+        func = system.save
+        args = (args[0],)
     elif '-l' in sys.argv:
         func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',

@@ -7,6 +7,7 @@ __version__ = '$Version$'
 import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Util
 import getpass
+import os
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import QueueError, ComponentLookupError
 
@@ -14,7 +15,8 @@ __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<locati
               '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
               '[--drainq] [--killq] [--setq "property=value property=value"] [--unsetq "property property"] --policy=<qpolicy> <queue> <queue>\n' + \
-              '       cqadm [-j <next jobid>]'
+              '       cqadm [-j <next jobid>]\n' + \
+              '       cqadm [--savestate <filename>]'
 
 def get_queues(cqm_conn):
     '''gets queues from cqmConn'''
@@ -41,13 +43,13 @@ if __name__ == '__main__':
                'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
                 'i':'index', 'policy':'policy', 'run':'run',
-                'setq':'setq', 'time':'time', 'unsetq':'unsetq', }
+                'setq':'setq', 'time':'time', 'unsetq':'unsetq', 'savestate':'savestate'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
 
     if len(args) == 0 and not [arg for arg in sys.argv[1:] if arg not in
-                               ['getq', 'j', 'setjobid']]:
+                               ['getq', 'j', 'setjobid', 'savestate']]:
         print "At least one jobid or queue name must be supplied"
         print __helpmsg__
         raise SystemExit, 1
@@ -104,6 +106,18 @@ if __name__ == '__main__':
         except xmlrpclib.Fault, flt:
             print flt.faultString
             raise SystemExit, 1
+    elif opts['savestate']:
+        try:
+            directory = os.path.dirname(opts['savestate'])
+            if not os.path.exists(directory):
+                print "directory %s does not exist" % directory
+                sys.exit(1)
+            response = cqm.save(opts['savestate'])
+        except Exception, e:
+            print e
+            sys.exit(1)
+        else:
+            print response
     elif kdata:
         user = getpass.getuser()
         for cmd in kdata:
