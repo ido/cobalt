@@ -236,6 +236,7 @@ class BGSystem (BGBaseSystem):
         self.failed_diags = list()
         self.diag_pids = dict()
         self.pending_script_waits = sets.Set()
+        self.bridge_in_error = False
 
         self.configure()
         if 'partition_flags' in state:
@@ -374,6 +375,7 @@ class BGSystem (BGBaseSystem):
                 system_def = Cobalt.bridge.PartitionList.info_by_filter()
             except BridgeException:
                 self.logger.error("Error communicating with the bridge to update partition state information.")
+                self.bridge_in_error = True
                 time.sleep(5) # wait a little bit...
                 continue # then try again
     
@@ -384,9 +386,11 @@ class BGSystem (BGBaseSystem):
                         self.node_card_cache[bp.id + "-" + nc.id].state = nc.state
             except:
                 self.logger.error("Error communicating with the bridge to update nodecard state information.")
+                self.bridge_in_error = True
                 time.sleep(5) # wait a little bit...
                 continue # then try again
 
+            self.bridge_in_error = False
             busted_switches = []
             for s in bg_object.switches:
                 if s.state != "RM_SWITCH_UP":

@@ -207,6 +207,7 @@ class BGBaseSystem (Component):
         self._partitions_lock = thread.allocate_lock()
         self.pending_diags = dict()
         self.failed_diags = list()
+        self.bridge_in_error = False
 
     def _get_partitions (self):
         return PartitionDict([
@@ -574,6 +575,9 @@ class BGBaseSystem (Component):
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
     def find_job_location(self, arg_list, backfill_cutoff):
         best_partition_dict = {}
+        
+        if self.bridge_in_error:
+            return {}
         
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
