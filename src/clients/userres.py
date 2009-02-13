@@ -1,78 +1,88 @@
 #!/usr/bin/env python
 
-'''Setup reservations in the scheduler'''
-__revision__ = '$Id: setres.py 64 2006-04-01 20:07:13Z voran $'
+'''This script removes reservations'''
+__revision__ = '$Id: releaseres.py 1361 2008-08-08 16:22:14Z buettner $'
 __version__ = '$Version$'
 
-import getopt, sys, time, os
-import Cobalt.Proxy, Cobalt.Util
+import sys
+import optparse
+import os
+import pwd
+import time
+import math
+import xmlrpclib
 
-helpmsg = '''Usage: userres -s <starttime> -d <duration> -p <partition> -u <user[:user:user...]>
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
--p partition where partition is restricted to R00 and R001
--u user where user can be a : delimited list of users is optional'''
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
 if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "userres %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
+    p = optparse.OptionParser(usage="%prog <reservation name>", 
+                              description="This program does things to reservations you are done using.  Cyclic reservations are deferred until the next time they repeat, while one time reservations are released.")
+    
+    if len(sys.argv) == 1:
+        p.print_help()
+        sys.exit(1)
+        
+    opt, args = p.parse_args()
+
+    reservation_names = args
+    
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 's:d:p:u:', [])
-    except getopt.GetoptError, msg:
-        print msg
-        print helpmsg
-        raise SystemExit, 1
+        scheduler = ComponentProxy("scheduler", defer=False)
+    except ComponentLookupError:
+        print "Failed to connect to scheduler"
+        sys.exit(1)
+
+    # Check if reservation exists
+    spec = [{'name': rname, 'users':"*", 'start':'*', 'cycle':'*', 'duration':'*'} for rname in reservation_names]
     try:
-        [partition] = [opt[1] for opt in opts if opt[0] == '-p']
-        [start] = [opt[1] for opt in opts if opt[0] == '-s']
-        [duration] = [opt[1] for opt in opts if opt[0] == '-d']
+        result = scheduler.get_reservations(spec)
     except:
-        print "Must supply -s, -d, and -p with values" 
-        print helpmsg
-        raise SystemExit, 1
-    if duration.count(':') == 0:
-        dsec = int(duration) * 60
-    else:
-        units = duration.split(':')
-        units.reverse()
-        totaltime = 0
-        mults = [1, 60, 3600]
-        if len(units) > 3:
-            print "time too large"
-            raise SystemExit, 1
-        dsec = sum([mults[index] * float(units[index]) for index in range(len(units))])
-    (day, rtime) = start.split('-')
-    (syear, smonth, sday) = [int(field) for field in day.split('_')]
-    (shour, smin) = [int(field) for field in rtime.split(':')]
-    starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
-    print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
-    if partition[0] not in ['R00', 'R001'] or len(partition) > 1:
-        print "Invalid partition selection"
-        print helpmsg
-        raise SystemExit, 1
-    user = os.getlogin()
-    if '-u' in sys.argv[1:]:
-        users = [opt[1] for opt in opts if opt[0] == '-u'][0]
-        user += ":" + users
-    nameinfo = "%s.%d" %(user[0],int(time.time() * 1000 % 10000))
-    allparts = []
-    scheduler = Cobalt.Proxy.scheduler()
-    parts = scheduler.GetPartition([{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', \
-                                     'scheduled':'*', 'functional':'*', 'deps':'*'}])
-    partinfo = Cobalt.Util.buildRackTopology(parts)
-    try:
-        for part in partition:
-            allparts.append(part)
-            for relative in partinfo[part][0] + partinfo[part][1]:
-                if relative not in allparts:
-                    allparts.append(relative)                
-    except:
-        print "Invalid partition(s)"
-        print helpmsg
-        raise SystemExit, 1 
-    spec = [{'tag':'partition', 'name':allparts}]
-    print scheduler.AddReservation(spec, nameinfo, user, starttime, dsec)
+        print "Error communicating with scheduler"
+        sys.exit(1)
+
+    if len(result) and len(result) != len(args):
+        print "Reservation subset matched" 
+    elif not result:
+        print "No Reservations matched"
+        sys.exit(1)
 
 
+    user_name = pwd.getpwuid(os.getuid())[0]
+    
+    for spec in result:
+        if not spec['users'] or user_name not in spec['users'].split(":"):
+            print "You are not a user of reservation '%s' and so cannot alter it." % spec['name']
+            continue
+        
+        if spec['cycle']:
+            start = spec['start']
+            duration = spec['duration']
+            cycle = float(spec['cycle'])
+            now = time.time()
+            periods = math.floor((now - start)/cycle)
+    
+            if(periods < 0):
+                start += cycle
+            elif(now - start) % cycle < duration:
+                start += (periods + 1) * cycle
+            else:
+                start += (periods + 2) * cycle
+
+            updates = {'start':start}
+            try:
+                scheduler.set_reservations([{'name':spec['name']}], updates, user_name)
+            except:
+                print "Error deferring reservation '%'" % spec['name']
+                continue
+            
+            newstart = time.strftime("%c", time.localtime(start))
+            print "Setting new start time for for reservation '%s': %s" % (spec['name'], newstart)
+        else:
+            try:
+                scheduler.del_reservations([{'name':spec['name']}], user_name)
+            except:
+                print "Error releasing reservation '%s'" % spec['name']
+                continue
+            
+            print "Releasing reservation '%s'" % spec['name']
