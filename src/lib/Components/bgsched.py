@@ -472,7 +472,7 @@ class BGSched (Component):
             temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue}])
             active_jobs = []
             for j in temp_jobs:
-                if not self.started_jobs.has_key(j.jobid):
+                if not self.started_jobs.has_key(j.jobid) and cur_res.job_within_reservation(j):
                     active_jobs.append(j)
     
             utility_scores = self._compute_utility_scores(active_jobs, self.get_current_time())
