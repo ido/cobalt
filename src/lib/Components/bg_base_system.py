@@ -720,9 +720,11 @@ class BGBaseSystem (Component):
 
     def reserve_partition_until(self, partition_name, time):
         try:
+            self._partitions_lock.acquire()
             self.partitions[partition_name].reserved_until = time
         except:
             self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
+        self._partitions_lock.release()
     reserve_partition_until = exposed(reserve_partition_until)
 
     # yarrrrr!   deadlock ho!!
@@ -746,5 +748,5 @@ class BGBaseSystem (Component):
                         each.exit_status = r['exit_status']
                         self.reserve_partition_until(each.location[0], 1)
 
-    sm_sync = automatic(sm_sync)
+    sm_sync = locking(automatic(sm_sync))
 
