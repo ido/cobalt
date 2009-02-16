@@ -18,7 +18,7 @@ import Cobalt
 import Cobalt.Util
 import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, IncrID
-from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import TimerException, QueueError, ComponentLookupError
 from Cobalt.Statistics import Statistics
@@ -1214,13 +1214,18 @@ class QueueManager(Component):
             logger.error("Failed to communicate with the system")
             return
         
-        live = [item['id'] for item in pgroups]
-        for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
-            for pgtype in job.pgid.keys():
-                pgid = job.pgid[pgtype]
-                if pgid not in live:
-                    self.logger.info("Found dead pg for job %s" % (job.jobid))
-                    job.CompletePG(pgid)
+        self.lock.acquire()
+        try:
+            live = [item['id'] for item in pgroups]
+            for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
+                for pgtype in job.pgid.keys():
+                    pgid = job.pgid[pgtype]
+                    if pgid not in live:
+                        self.logger.info("Found dead pg for job %s" % (job.jobid))
+                        job.CompletePG(pgid)
+        except:
+            logger.error("error in poll_process_groups", exc_info=True)
+        self.lock.release()
     poll_process_groups = automatic(poll_process_groups)
 
     def get_jobs(self, specs):
