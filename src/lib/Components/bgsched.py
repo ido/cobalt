@@ -177,23 +177,23 @@ class ReservationDict (DataDict):
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:
-                    qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'state':"running",
-                                    'users':reservation.users, 'policy':DEFAULT_RESERVATION_POLICY}])
+                    qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'policy':DEFAULT_RESERVATION_POLICY}])
                 except Exception, e:
                     logger.error("unable to add reservation queue %s (%s)" % \
                                  (reservation.queue, e))
                 else:
                     reservation.createdQueue = True
                     logger.info("added reservation queue %s" % (reservation.queue))
+            try:
+                # we can't set the users list using add_queues, so we want to call set_queues even if bgsched
+                # just created the queue
+                qm.set_queues([{'name':reservation.queue}],
+                              {'state':"running", 'users':reservation.users})
+            except Exception, e:
+                logger.error("unable to update reservation queue %s (%s)" % \
+                             (reservation.queue, e))
             else:
-                try:
-                    qm.set_queues([{'name':reservation.queue}],
-                                  {'state':"running", 'users':reservation.users})
-                except Exception, e:
-                    logger.error("unable to update reservation queue %s (%s)" % \
-                                 (reservation.queue, e))
-                else:
-                    logger.info("updated reservation queue %s" % reservation.queue)
+                logger.info("updated reservation queue %s" % reservation.queue)
     
         return reservations
         
