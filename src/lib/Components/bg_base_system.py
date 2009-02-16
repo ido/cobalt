@@ -15,7 +15,7 @@ import xmlrpclib
 import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError, JobValidationError, ComponentLookupError
-from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Components.base import Component, exposed, automatic, query, locking
 import sets, thread, ConfigParser
 from Cobalt.Proxy import ComponentProxy
 
@@ -620,19 +620,26 @@ class BGBaseSystem (Component):
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
         # be running jobs very soon
-        for partition_list in best_partition_dict.itervalues():
-            part = self.partitions[partition_list[0]] 
-            part.reserved_until = time.time() + 5*60
-            part.state = "starting job"
-            for p in part._parents:
-                if p.state == "idle":
-                    p.state = "blocked by starting job"
-            for p in part._children:
-                if p.state == "idle":
-                    p.state = "blocked by starting job"
+        #
+        # also, this is the only part of finding a job location where we need to lock anything
+        self._partitions_lock.acquire()
+        try:
+            for partition_list in best_partition_dict.itervalues():
+                part = self.partitions[partition_list[0]] 
+                part.reserved_until = time.time() + 5*60
+                part.state = "starting job"
+                for p in part._parents:
+                    if p.state == "idle":
+                        p.state = "blocked by starting job"
+                for p in part._children:
+                    if p.state == "idle":
+                        p.state = "blocked by starting job"
+        except:
+            self.logger.error("error in find_job_location", exc_info=True)
+        self._partitions_lock.release()
         
         return best_partition_dict
-    find_job_location = exposed(find_job_location)
+    find_job_location = locking(exposed(find_job_location))
     
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
