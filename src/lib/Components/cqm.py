@@ -1226,7 +1226,7 @@ class QueueManager(Component):
         except:
             logger.error("error in poll_process_groups", exc_info=True)
         self.lock.release()
-    poll_process_groups = automatic(poll_process_groups)
+    poll_process_groups = locking(automatic(poll_process_groups))
 
     def get_jobs(self, specs):
         return self.Queues.get_jobs(specs)
