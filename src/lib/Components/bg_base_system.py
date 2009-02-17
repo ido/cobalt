@@ -85,6 +85,7 @@ class Partition (Data):
         self.node_cards = spec.get("node_cards", [])
         self.switches = spec.get("switches", [])
         self.reserved_until = False
+        self.reserved_by = None
         # this holds partition names
         self._wiring_conflicts = sets.Set()
 
@@ -718,10 +719,16 @@ class BGBaseSystem (Component):
                         desired = int(part.size)
         return target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired
 
-    def reserve_partition_until(self, partition_name, time):
+    def reserve_partition_until(self, partition_name, time, pgroup_id):
+        if self.partitions[partition_name].reserved_by:
+            if self.partitions[partition_name].reserved_by != pgroup_id:
+                self.logger.error("pgid %s wasn't allowed to update the reservation on %s" % (pgroup_id, partition_name))
+                return
+
         try:
             self._partitions_lock.acquire()
             self.partitions[partition_name].reserved_until = time
+            self.partitions[partition_name].reserved_by = pgroup_id
         except:
             self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
         self._partitions_lock.release()
@@ -746,7 +753,7 @@ class BGBaseSystem (Component):
                     which_one = None
                     if r['id'] == each.script_id:
                         each.exit_status = r['exit_status']
-                        self.reserve_partition_until(each.location[0], 1)
+                        self.reserve_partition_until(each.location[0], 1, each.id)
 
     sm_sync = locking(automatic(sm_sync))
 

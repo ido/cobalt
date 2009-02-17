@@ -151,6 +151,7 @@ class Simulator (BGBaseSystem):
         self.failed_components = sets.Set()
         self.pending_diags = dict()
         self.failed_diags = list()
+        self.bridge_in_error = False
         if self.config_file is not None:
             self.configure(self.config_file)
 
@@ -356,9 +357,9 @@ class Simulator (BGBaseSystem):
             try:
                 for spec in script_specs:
                     script_pgroup = ComponentProxy("script-manager").add_jobs([spec])
-                    self.reserve_partition_until(spec['location'][0], time.time() + 60*float(spec['walltime']))
                     new_pgroup = self.process_groups.q_add([spec])
                     new_pgroup[0].script_id = script_pgroup[0]['id']
+                    self.reserve_partition_until(spec['location'][0], time.time() + 60*float(spec['walltime']), new_pgroup[0].id)
                     new_pgroups.append(new_pgroup[0])
             except (ComponentLookupError, xmlrpclib.Fault):
                 raise ProcessGroupCreationError("system::add_process_groups failed to communicate with script-manager")
@@ -382,7 +383,7 @@ class Simulator (BGBaseSystem):
         for process_group in process_groups:
             # jobs that were launched on behalf of the script manager shouldn't release the partition
             if not process_group.true_mpi_args:
-                self.reserve_partition_until(process_group.location[0], 1)
+                self.reserve_partition_until(process_group.location[0], 1, process_group.id)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
@@ -598,6 +599,7 @@ class Simulator (BGBaseSystem):
                 if p.reserved_until:
                     if now > p.reserved_until:
                         p.reserved_until = False
+                        p.reserved_by = None
         except:
             self.logger.error("error in update_partition_state", exc_info=True)
         

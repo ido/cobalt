@@ -384,7 +384,7 @@ class ClusterBaseSystem (Component):
     
     
 
-    def reserve_partition_until(self, partition_name, time):
+    def reserve_partition_until(self, partition_name, time, pgroup_id):
         try:
             self.partitions[partition_name].reserved_until = time
         except:
