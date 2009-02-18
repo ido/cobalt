@@ -442,6 +442,12 @@ class BGSystem (BGBaseSystem):
                             elif p.name in part.parents or p.name in part.children:
                                 p.state = "blocked by failed diags"
                         
+                    # when the partition becomes busy, if a script job isn't reserving
+                    # it, then release the reservation
+                    else:
+                        if not p.reserved_by:
+                            p.reserved_until = False
+
                     if p.reserved_until:
                         if now > p.reserved_until:
                             p.reserved_until = False
@@ -545,9 +551,6 @@ class BGSystem (BGBaseSystem):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            # jobs that were launched on behalf of the script manager shouldn't release the partition
-            if not process_group.true_mpi_args:
-                self.reserve_partition_until(process_group.location[0], 1, process_group.id)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
