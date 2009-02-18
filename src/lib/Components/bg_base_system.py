@@ -12,6 +12,7 @@ BGBaseSystem -- base system component
 import sys
 import time
 import xmlrpclib
+import copy
 import Cobalt
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError, JobValidationError, ComponentLookupError
@@ -209,6 +210,7 @@ class BGBaseSystem (Component):
         self.pending_diags = dict()
         self.failed_diags = list()
         self.bridge_in_error = False
+        self.cached_partitions = None
 
     def _get_partitions (self):
         return PartitionDict([
@@ -499,10 +501,10 @@ class BGBaseSystem (Component):
         available_partitions = set()
         if required:
             for p_name in required:
-                available_partitions.add(self.partitions[p_name])
-                available_partitions.update(self.partitions[p_name]._children)
+                available_partitions.add(self.cached_partitions[p_name])
+                available_partitions.update(self.cached_partitions[p_name]._children)
         else:
-            for p in self.partitions.itervalues():
+            for p in self.cached_partitions.itervalues():
                 skip = False
                 for bad_name in forbidden:
                     if p.name==bad_name or bad_name in p.children or bad_name in p.parents:
@@ -519,11 +521,11 @@ class BGBaseSystem (Component):
             if not required and queue not in partition.queue.split(':'):
                 continue
                 
-            if self.can_run(partition, nodes):
+            if self.can_run(partition, nodes, self.cached_partitions):
                 # let's check the impact on partitions that would become blocked
                 score = 0
                 for p in partition.parents:
-                    if self.partitions[p].state == "idle" and self.partitions[p].scheduled:
+                    if self.cached_partitions[p].state == "idle" and self.cached_partitions[p].scheduled:
                         score += 1
                 
                 # the lower the score, the fewer new partitions will be blocked by this selection
@@ -551,12 +553,12 @@ class BGBaseSystem (Component):
 
     def possible_locations(self, job):
         locations = []
-        for target_partition in self.partitions.itervalues():
+        for target_partition in self.cached_partitions.itervalues():
             if job['queue'] not in target_partition.queue.split(':'):
                 continue
             desired = sys.maxint
             usable = True
-            for part in self.partitions.itervalues():
+            for part in self.cached_partitions.itervalues():
                 if not part.functional:
                     if target_partition.name in part.children or target_partition.name in part.parents:
                         usable = False
@@ -580,6 +582,10 @@ class BGBaseSystem (Component):
         if self.bridge_in_error:
             return {}
         
+        self._partitions_lock.acquire()
+        self.cached_partitions = copy.deepcopy(self.partitions)
+        self._partitions_lock.release()
+        
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
         for idx in range(len(arg_list)):
@@ -590,9 +596,9 @@ class BGBaseSystem (Component):
                     location = self._find_drain_partition(winning_job)
                     if location is not None:
                         for p_name in location.parents:
-                            drain_partitions.add(self.partitions[p_name])
+                            drain_partitions.add(self.cached_partitions[p_name])
                         for p_name in location.children:
-                            drain_partitions.add(self.partitions[p_name])
+                            drain_partitions.add(self.cached_partitions[p_name])
                         drain_partitions.add(location)
                         # self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
                     break
@@ -705,11 +711,11 @@ class BGBaseSystem (Component):
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
     
     
-    def can_run(self, target_partition, node_count):
+    def can_run(self, target_partition, node_count, partition_dict):
         if target_partition.state != "idle":
             return False
         desired = sys.maxint
-        for part in self.partitions.itervalues():
+        for part in partition_dict.itervalues():
             if not part.functional:
                 if target_partition.name in part.children or target_partition.name in part.parents:
                     return False

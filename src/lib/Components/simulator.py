@@ -152,6 +152,7 @@ class Simulator (BGBaseSystem):
         self.pending_diags = dict()
         self.failed_diags = list()
         self.bridge_in_error = False
+        self.cached_partitions = None
         if self.config_file is not None:
             self.configure(self.config_file)
 

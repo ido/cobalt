@@ -237,6 +237,7 @@ class BGSystem (BGBaseSystem):
         self.diag_pids = dict()
         self.pending_script_waits = sets.Set()
         self.bridge_in_error = False
+        self.cached_partitions = None
 
         self.configure()
         if 'partition_flags' in state:
