@@ -75,10 +75,11 @@ class ProcessGroup (bg_base_system.ProcessGroup):
             logger.error("failed to change userid/groupid for process group %s" % (self.id))
             os._exit(1)
 
-        try:
-            os.umask(self.umask)
-        except:
-            logger.error("Failed to set umask to %s" % self.umask)
+        if self.umask != None:
+            try:
+                os.umask(self.umask)
+            except:
+                logger.error("Failed to set umask to %s" % self.umask)
         try:
             partition = self.location[0]
         except IndexError:
