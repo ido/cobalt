@@ -583,7 +583,11 @@ class BGBaseSystem (Component):
             return {}
         
         self._partitions_lock.acquire()
-        self.cached_partitions = copy.deepcopy(self.partitions)
+        try:
+            self.cached_partitions = copy.deepcopy(self.partitions)
+        except:
+            self.logger.error("error in copy.deepcopy", exc_info=True)
+            return {}
         self._partitions_lock.release()
         
         # first time through, try for starting jobs based on utility scores
