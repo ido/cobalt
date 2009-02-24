@@ -298,10 +298,9 @@ class BGSystem (BGBaseSystem):
         for partition_def in system_def:
             node_list = []
             nc_count = len(list(partition_def.node_cards))
-            if partition_def.connection == "RM_TORUS":
-                if not wiring_cache.has_key(nc_count):
-                    wiring_cache[nc_count] = []
-                wiring_cache[nc_count].append(partition_def)
+            if not wiring_cache.has_key(nc_count):
+                wiring_cache[nc_count] = []
+            wiring_cache[nc_count].append(partition_def)
 
             if partition_def.small:
                 bp_name = partition_def.base_partitions[0].id
