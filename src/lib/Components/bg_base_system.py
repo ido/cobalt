@@ -755,7 +755,13 @@ class BGBaseSystem (Component):
             self.logger.error("Failed to communicate with script manager")
             return
         live = [item['id'] for item in pgroups]
-        for each in self.process_groups.itervalues():
+        self.lock.acquire()
+        try:
+            process_groups_cache = self.process_groups.values()
+        except:
+            self.logger.error("error copying process_groups.values()", exc_info=True)
+        self.lock.release()
+        for each in process_groups_cache:
             if each.mode == 'script' and each.script_id not in live:
                 self.logger.info("Found dead pg for script job %s" % (each.script_id))
                 result = ComponentProxy("script-manager").wait_jobs([{'id':each.script_id, 'exit_status':'*'}])
