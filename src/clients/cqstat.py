@@ -64,10 +64,10 @@ if __name__ == '__main__':
     if '--version' in sys.argv:
         print "cqstat %s" % __revision__
         print "cobalt %s" % __version__
-        sys.exit()
+        sys.exit(0)
     if '-h' in sys.argv or '--help' in sys.argv:
         print __helpmsg__
-        sys.exit(1)
+        sys.exit(0)
 
     options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
                'q':'q', 'schedinfo':'schedinfo'}
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     if opts['version']:
         print "cqstat %s" % __revision__
-        sys.exit()
+        sys.exit(0)
     
     if opts['schedinfo']:
         print "The most recent scheduling attempt reports:\n"
@@ -114,12 +114,12 @@ if __name__ == '__main__':
             cqm = ComponentProxy("queue-manager", defer=False)
         except:
             print >> sys.stderr, "Failed to connect to queue manager"
-            sys.exit(1)
+            sys.exit(2)
         try:
             sched = ComponentProxy("scheduler", defer=False)
         except:
             print >> sys.stderr, "Failed to connect to scheduler"
-            sys.exit(1)
+            sys.exit(2)
         jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
         queues = cqm.get_queues([{'name':"*", 'state':"*"}])
         sched_info = sched.get_sched_info()
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         if len(args) and not jobs:
             sys.exit(1)
         else:
-            sys.exit()
+            sys.exit(0)
     
     Cobalt.Logging.setup_logging('cqstat', to_syslog=False, level=level)
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         cqm = ComponentProxy("queue-manager", defer=False)
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
-        sys.exit(1)
+        sys.exit(2)
 
     if opts['q']:  # querying for queues
         query = [{'name':qname, 'users':'*', 
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                     query.append({'tag':'job', 'jobid':int(n)})
         except ValueError:
             print "jobids must be integers"
-            sys.exit(1)
+            sys.exit(2)
         for q in query:
             for h in long_header:
                 if h == 'JobName':
