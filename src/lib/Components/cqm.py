@@ -323,9 +323,9 @@ class Job (Data):
 
         if self.config.get('bgkernel') == 'true':
             try:
-                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location))
+                os.unlink('%s/%s' % (self.config.get('partitionboot'), self.location[0]))
                 os.symlink('%s/%s' % (self.config.get('bootprofiles'), 'default'),
-                           '%s/%s' % (self.config.get('partitionboot'), self.location))
+                           '%s/%s' % (self.config.get('partitionboot'), self.location[0]))
             except OSError:
                 logger.error("Failed to reset boot location at job end for partition for %s" % (self.location))
 
