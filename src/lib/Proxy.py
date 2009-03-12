@@ -135,7 +135,7 @@ class LocalProxyMethod (object):
         self._func_name = func_name
     
     def __call__ (self, *args):
-        return self._proxy._component._dispatch(self._func_name, args)
+        return self._proxy._component._dispatch(self._func_name, args, dict())
 
 
 class DeferredProxy (object):
