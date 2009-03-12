@@ -497,7 +497,7 @@ class BGSched (Component):
 
             # there's no backfilling in reservations
             try:
-                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, 0)
+                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
             except:
                 self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
@@ -660,7 +660,7 @@ class BGSched (Component):
             drain_end_times = []
             for job in temp_jobs:
                 end_time = float(job.starttime) + 60 * float(job.walltime)
-                end_times.append(end_time)
+                end_times.append([job.location, end_time])
                 drain_end_times.append(end_time)
             
             for res_name in eq_class['reservations']:
@@ -673,16 +673,11 @@ class BGSched (Component):
                     if done_after < 0:
                         done_after += cur_res.cycle
                     end_time = now + done_after
-                end_times.append(end_time)
+                for location in cur_res.partitions.split(":"):
+                    end_times.append([[location], end_time])
                 if cur_res.is_active():
                     drain_end_times.append(end_time)
     
-            if end_times:
-                # add on an extra 2 minutes so that some jobs with the same walltime can start together 
-                cut_off = min(end_times) - now + 120
-            else:
-                # if nothing is running, we can't technically "back fill" and there's just nothing to run
-                cut_off = 0
             
             if drain_end_times:
                 max_drain_wait = max(drain_end_times) - now
@@ -719,7 +714,7 @@ class BGSched (Component):
                     } )
 
             try:
-                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, cut_off)
+                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
             except:
                 self.logger.error("failed to connect to system component", exc_info=True)
                 best_partition_dict = {}
