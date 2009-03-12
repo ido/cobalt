@@ -7,6 +7,8 @@ import Cobalt.Server
 from Cobalt.Server import find_intended_location, XMLRPCServer
 from Cobalt.Components.base import Component
 
+c = Component()
+
 class TestFindIntendedLocation (object):
     
     def setup (self):
@@ -117,6 +119,7 @@ class TestXMLRPCServer_http (XMLRPCServerTester):
     def setup (self):
         XMLRPCServerTester.setup(self)
         self.server = XMLRPCServer(("localhost", 5900), register=False)
+        self.server.register_instance(c)
         self.proxy = xmlrpclib.ServerProxy("http://localhost:5900")
     
     def test_secure (self):
@@ -134,6 +137,7 @@ class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
         self.server = XMLRPCServer(("localhost", 5900), register=False)
         self.server.require_auth = True
         self.server.credentials = dict(user="pass")
+        self.server.register_instance(c)
         self.proxy = xmlrpclib.ServerProxy("http://user:pass@localhost:5900")
     
     def test_require_auth (self):
@@ -188,6 +192,7 @@ class TestXMLRPCServer_https (XMLRPCServerTester):
         XMLRPCServerTester.setup(self)
         assert os.path.exists("keyfile") and os.path.exists("certfile")
         self.server = XMLRPCServer(("localhost", 5900), keyfile="keyfile", certfile="certfile", register=False)
+        self.server.register_instance(c)
         self.proxy = xmlrpclib.ServerProxy("https://localhost:5900")
     
     def test_secure (self):

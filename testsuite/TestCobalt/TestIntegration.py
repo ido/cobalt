@@ -12,7 +12,7 @@ from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 import Cobalt.Proxy
-from TestCobalt.Utilities.ThreadSupport import *
+from Utilities.ThreadSupport import *
 
 class TSQueueManager (QueueManager):
     __metaclass__ = ThreadSafetyMetaClass
@@ -96,7 +96,7 @@ class TestIntegration (object):
         jobid = job['jobid']
         job_location_args = [{'jobid':jobid, 'nodes':job['nodes'], 'queue':job['queue'], 'utility_score':1,
             'walltime':job['walltime']}]
-        locations = simulator.find_job_location(job_location_args, 0, 3600)
+        locations = simulator.find_job_location(job_location_args, 3600)
         assert locations.has_key(jobid)
 
         partition = locations[jobid]
@@ -135,7 +135,7 @@ class TestIntegration (object):
         jobid = job['jobid']
         job_location_args = [{'jobid':jobid, 'nodes': job['nodes'], 'queue': job['queue'], 'utility_score': 1,
             'walltime': job['walltime']}]
-        locations = simulator.find_job_location(job_location_args, 0, 3600)
+        locations = simulator.find_job_location(job_location_args, 3600)
         assert locations.has_key(jobid)
 
         partition = locations[jobid]
