@@ -6,6 +6,7 @@ __version__ = '$Version$'
 
 import sys, operator
 import sets
+import time
 from optparse import OptionParser
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -33,7 +34,7 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*',
-             'functional':'*', 'scheduled':'*', 'children':'*'}]
+             'functional':'*', 'scheduled':'*', 'children':'*', 'backfill_time':"*", 'draining':"*"}]
     parts = system.get_partitions(spec)
     reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
 
@@ -62,8 +63,20 @@ if __name__ == '__main__':
             return val
 
     parts.sort(my_cmp)
+    
+    now = time.time()
+    for part in parts:
+        if part['draining'] and part['state'] == "idle":
+            hours, seconds = divmod(part['backfill_time'] - now, 3600.0)
+            minutes = seconds/60.0
+            part['backfill'] = "%d:%0.2d" % (int(hours), int(minutes))
+        else:
+            part['backfill'] = "-"
 
-    header = [['Name', 'Queue', 'State']]
+
+
+
+    header = [['Name', 'Queue', 'State', 'Backfill']]
     #build output list, adding
     output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
     Cobalt.Util.printTabular(header + output)

@@ -66,7 +66,8 @@ class Partition (Data):
     
     fields = Data.fields + [
         "tag", "scheduled", "name", "functional",
-        "queue", "size", "parents", "children", "state",
+        "queue", "size", "parents", "children", "state", 
+        "backfill_time",
     ]
     
     def __init__ (self, spec):
@@ -89,6 +90,8 @@ class Partition (Data):
         self.reserved_by = None
         # this holds partition names
         self._wiring_conflicts = sets.Set()
+        self.backfill_time = None
+        self.draining = False
 
         self._update_node_cards()
 
@@ -486,7 +489,7 @@ class BGBaseSystem (Component):
         return ret
     unfail_partitions = exposed(unfail_partitions)
     
-    def _find_job_location(self, args, drain_partitions=set(), backfill_info={}):
+    def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
         jobid = args['jobid']
         nodes = args['nodes']
         queue = args['queue']
@@ -523,8 +526,8 @@ class BGBaseSystem (Component):
                 continue
             
             # if the job needs more time than the partition currently has available, look elsewhere    
-            if partition.name in backfill_info:
-                if 60*float(walltime) > (backfill_info[partition.name] - now):
+            if backfilling:
+                if 60*float(walltime) > (partition.backfill_time - now):
                     continue
                 
             if self.can_run(partition, nodes, self.cached_partitions):
@@ -543,7 +546,7 @@ class BGBaseSystem (Component):
             return {jobid: [best_partition.name]}
 
 
-    def _find_drain_partition(self, job, backfill_info):
+    def _find_drain_partition(self, job):
         drain_partition = None
         locations = self.possible_locations(job)
         
@@ -551,7 +554,7 @@ class BGBaseSystem (Component):
             if not drain_partition:
                 drain_partition = p
             else:
-                if backfill_info[p.name] < backfill_info[drain_partition.name]:
+                if p.backfill_time < drain_partition.backfill_time:
                     drain_partition = p
 
         return drain_partition
@@ -595,56 +598,78 @@ class BGBaseSystem (Component):
             self.logger.error("error in copy.deepcopy", exc_info=True)
             return {}
         self._partitions_lock.release()
-        
-        # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain
+
+            
+        # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
         job_end_times = {}
         for item in end_times:
             job_end_times[item[0][0]] = item[1]
             
-        backfills = {}
         now = time.time()
         for p in self.cached_partitions.itervalues():
-            backfills[p.name] = now
+            p.backfill_time = now
+            p.draining = False
         
         for p in self.cached_partitions.itervalues():    
             if p.name in job_end_times:
-                if job_end_times[p.name] > backfills[p.name]:
-                    backfills[p.name] = job_end_times[p.name]
+                if job_end_times[p.name] > p.backfill_time:
+                    p.backfill_time = job_end_times[p.name]
                 
                 for parent_name in p.parents:
-                    if backfills[p.name] > backfills[parent_name]:
-                        backfills[parent_name] = backfills[p.name]
+                    parent_partition = self.cached_partitions[parent_name]
+                    if p.backfill_time > parent_partition.backfill_time:
+                        parent_partition.backfill_time = p.backfill_time
         
         for p in self.cached_partitions.itervalues():
-            if backfills[p.name] == now:
+            if p.backfill_time == now:
                 continue
             
             for child_name in p.children:
-                if backfills[child_name] == now or backfills[child_name] > backfills[p.name]:
-                    backfills[child_name] = backfills[p.name]
+                child_partition = self.cached_partitions[child_name]
+                if child_partition.backfill_time == now or child_partition.backfill_time > p.backfill_time:
+                    child_partition.backfill_time = p.backfill_time
 
         
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
+        # the sets draining_jobs and cannot_start are for efficiency, not correctness
+        draining_jobs = set()
+        cannot_start = set()
         for idx in range(len(arg_list)):
             winning_job = arg_list[idx]
             for jj in range(idx, len(arg_list)):
                 job = arg_list[jj]
+                
+                # this job isn't good enough!
                 if job['utility_score'] < winning_job['threshold']:
-                    location = self._find_drain_partition(winning_job, backfills)
-                    if location is not None:
-                        for p_name in location.parents:
-                            drain_partitions.add(self.cached_partitions[p_name])
-                        for p_name in location.children:
-                            drain_partitions.add(self.cached_partitions[p_name])
-                        drain_partitions.add(location)
-                        self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
                     break
 
-                partition_name = self._find_job_location(job, drain_partitions)
-                if partition_name:
-                    best_partition_dict.update(partition_name)
-                    break
+                if job['jobid'] not in cannot_start:
+                    print "can we start:", job['jobid']
+                    partition_name = self._find_job_location(job, drain_partitions)
+                    if partition_name:
+                        best_partition_dict.update(partition_name)
+                        break
+                
+                cannot_start.add(job['jobid'])
+                
+                # we already picked a drain location for the winning job
+                if winning_job['jobid'] in draining_jobs:
+                    continue
+
+                location = self._find_drain_partition(winning_job)
+                if location is not None:
+                    for p_name in location.parents:
+                        drain_partitions.add(self.cached_partitions[p_name])
+                    for p_name in location.children:
+                        drain_partitions.add(self.cached_partitions[p_name])
+                        self.cached_partitions[p_name].draining = True
+                    drain_partitions.add(location)
+                    #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
+                    location.draining = True
+                    draining_jobs.add(winning_job['jobid'])
+                    
+
             
             # at this time, we only want to try launching one job at a time
             if best_partition_dict:
@@ -655,28 +680,10 @@ class BGBaseSystem (Component):
             
             # arg_list.sort(self._walltimecmp)
 
-            # debugging output
-            def _my_cmp(left, right):
-                ret = -cmp(int(left.name.split("-")[-1]), int(right.name.split("-")[-1]))
-                if ret == 0:
-                    ret = cmp(left.name, right.name)
-                return ret
-
-            for p in sorted(self.cached_partitions.values(), cmp=_my_cmp):
-                if p.state == "idle":
-                    if backfills[p.name] > now:
-                        #print pname, time.strftime("%H.%M", time.localtime(backfills[pname]))
-                        hours, seconds = divmod(backfills[p.name] - now, 3600.0)
-                        minutes = seconds/60.0
-                        print "%s %d:%0.2d" % (p.name, int(hours), int(minutes))
-                    else:
-                        print p.name, "right now!!!1!"            
-            # end debugging output            
-
             for args in arg_list:
-                partition_name = self._find_job_location(args, backfill_info=backfills)
+                partition_name = self._find_job_location(args, backfilling=True)
                 if partition_name:
-                    self.logger.info("backfilling job %s" % job['jobid'])
+                    self.logger.info("backfilling job %s" % args['jobid'])
                     best_partition_dict.update(partition_name)
                     break
 
@@ -686,6 +693,11 @@ class BGBaseSystem (Component):
         # also, this is the only part of finding a job location where we need to lock anything
         self._partitions_lock.acquire()
         try:
+            for p in self.partitions.itervalues():
+                # push the backfilling info from the local cache back to the real objects
+                p.draining = self.cached_partitions[p.name].draining
+                p.backfill_time = self.cached_partitions[p.name].backfill_time
+                
             for partition_list in best_partition_dict.itervalues():
                 part = self.partitions[partition_list[0]] 
                 part.reserved_until = time.time() + 5*60
