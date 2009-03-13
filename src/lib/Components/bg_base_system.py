@@ -645,7 +645,6 @@ class BGBaseSystem (Component):
                     break
 
                 if job['jobid'] not in cannot_start:
-                    print "can we start:", job['jobid']
                     partition_name = self._find_job_location(job, drain_partitions)
                     if partition_name:
                         best_partition_dict.update(partition_name)
