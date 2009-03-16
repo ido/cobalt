@@ -67,7 +67,10 @@ if __name__ == '__main__':
     now = time.time()
     for part in parts:
         if part['draining'] and part['state'] == "idle":
-            hours, seconds = divmod(part['backfill_time'] - now, 3600.0)
+            # remove a little extra, to make sure that users can just type the number
+            # that is output by partlist to get their job to backfill
+            remaining = max(0, part['backfill_time'] - now - 90)
+            hours, seconds = divmod(remaining, 3600.0)
             minutes = seconds/60.0
             part['backfill'] = "%d:%0.2d" % (int(hours), int(minutes))
         else:
