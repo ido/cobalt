@@ -673,8 +673,6 @@ class BGSched (Component):
                     if done_after < 0:
                         done_after += cur_res.cycle
                     end_time = now + done_after
-                for location in cur_res.partitions.split(":"):
-                    end_times.append([[location], end_time])
                 if cur_res.is_active():
                     drain_end_times.append(end_time)
     
