@@ -270,17 +270,22 @@ class ClusterBaseSystem (Component):
     unfail_partitions = exposed(unfail_partitions)
     
     def _find_job_location(self, args):
-        jobid = args['jobid']
         nodes = args['nodes']
+        jobid = args['jobid']
+        
+        available_nodes = self._get_available_nodes(args)
+            
+        if nodes <= len(available_nodes):
+            return {jobid: [available_nodes.pop() for i in range(nodes)]}
+        else:
+            return None
+
+
+    def _get_available_nodes(self, args):
         queue = args['queue']
-        utility_score = args['utility_score']
-        walltime = args['walltime']
         forbidden = args.get("forbidden", [])
         required = args.get("required", [])
         
-        best_score = sys.maxint
-        best_partition = None
-
         if required:
             available_nodes = sets.Set(required)
         else:
@@ -289,20 +294,19 @@ class ClusterBaseSystem (Component):
         available_nodes = available_nodes.difference(self.running_nodes)
         available_nodes = available_nodes.difference(self.down_nodes)
 
-            
-        if nodes <= len(available_nodes):
-            return {jobid: [available_nodes.pop() for i in range(nodes)]}
-        else:
-            return None
-
+        return available_nodes
+    
+    def _backfill_cmp(self, left, right):
+        return cmp(left[1], right[1])
     
     # the argument "required" is used to pass in the set of locations allowed by a reservation;
-    def find_job_location(self, arg_list, backfill_cutoff):
+    def find_job_location(self, arg_list, end_times):
         best_location_dict = {}
+        winner = arg_list[0]
         
         # first time through, try for starting jobs based on utility scores
         for args in arg_list:
-            if args['utility_score'] < arg_list[0]['threshold']:
+            if args['utility_score'] < winner['threshold']:
                 break
             
             location_data = self._find_job_location(args)
@@ -312,14 +316,27 @@ class ClusterBaseSystem (Component):
         
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_location_dict:
-            arg_list.sort(self._walltimecmp)
+            job_end_times = {}
+            total = 0
+            for item in sorted(end_times, cmp=self._backfill_cmp):
+                total += len(item[0])
+                job_end_times[total] = item[1]
+    
+            needed = winner['nodes'] - len(self._get_available_nodes(winner))
+            now = time.time()
+            backfill_cutoff = 0
+            for num in sorted(job_end_times):
+                if needed <= num:
+                    backfill_cutoff = job_end_times[num] - now
+
             for args in arg_list:
                 if 60*float(args['walltime']) > backfill_cutoff:
-                    break
+                    continue
                 
                 location_data = self._find_job_location(args)
                 if location_data:
                     best_location_dict.update(location_data)
+                    self.logger.info("backfilling job %s" % args['jobid'])
                     break
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
@@ -327,8 +344,6 @@ class ClusterBaseSystem (Component):
         for location_list in best_location_dict.itervalues():
             self.running_nodes.update(location_list)
 
-        print "best_location_dict:", best_location_dict
-            
         return best_location_dict
     find_job_location = exposed(find_job_location)
     
