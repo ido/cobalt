@@ -18,6 +18,7 @@ import time
 import thread
 import ConfigParser
 import tempfile
+import subprocess
 try:
     set = set
 except NameError:
@@ -239,12 +240,18 @@ class ClusterSystem (ClusterBaseSystem):
             group_name = ""
             self.logger.error("Job %s/%s unable to determine group name for epilogue" % (pg.jobid, pg.user))
  
+        processes = []
         for host in pg.location:
             h = host.split(":")[0]
             try:
-                os.system("ssh %s %s %s %s %s" % (h, pg.config.get("epilogue"), pg.jobid, pg.user, group_name))
+                p = subprocess.Popen("ssh %s %s %s %s %s" % (h, pg.config.get("epilogue"), pg.jobid, pg.user, group_name), shell=True)
+                processes.append(p)
             except:
                 self.logger.error("Job %s/%s failed to run epilogue on host %s" % (pg.jobid, pg.user, h))
+        
+        for p in processes:
+            p.wait()
+            
         for host in pg.location:
             self.running_nodes.discard(host)
 
