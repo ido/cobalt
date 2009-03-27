@@ -27,7 +27,7 @@ except NameError:
 import Cobalt
 import Cobalt.Data
 from Cobalt.Components import cluster_base_system
-from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Exceptions import ProcessGroupCreationError
 from Cobalt.Components.cluster_base_system import ProcessGroupDict, ClusterBaseSystem
 
@@ -40,7 +40,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 class ProcessGroup (cluster_base_system.ProcessGroup):
-    _configfields = ['prologue', 'epilogue']
+    _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue']
     _config = ConfigParser.ConfigParser()
     if '-C' in sys.argv:
         _config.read(sys.argv[sys.argv.index('-C') + 1])
@@ -219,7 +219,7 @@ class ClusterSystem (ClusterBaseSystem):
         for process_group in process_groups:
             thread.start_new_thread(self.clean_nodes, (process_group,))
         return process_groups
-    wait_process_groups = exposed(query(wait_process_groups))
+    wait_process_groups = locking(exposed(query(wait_process_groups)))
     
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
@@ -245,16 +245,46 @@ class ClusterSystem (ClusterBaseSystem):
             h = host.split(":")[0]
             try:
                 p = subprocess.Popen("ssh %s %s %s %s %s" % (h, pg.config.get("epilogue"), pg.jobid, pg.user, group_name), shell=True)
+                p.host = h
                 processes.append(p)
             except:
                 self.logger.error("Job %s/%s failed to run epilogue on host %s" % (pg.jobid, pg.user, h))
         
-        for p in processes:
-            p.wait()
+        start = time.time()
+        dirty_nodes = []
+        while True:
+            running = False
+            for p in processes:
+                if p.poll() is None:
+                    running = True
+                    break
             
-        for host in pg.location:
-            self.running_nodes.discard(host)
-
-        del self.process_groups[pg.id]
+            if not running:
+                break
+            
+            if time.time() - start > float(pg.config.get("epiloge_timeout")):
+                for p in processes:
+                    if p.poll() is None:
+                        os.kill(p.pid, signal.SIGTERM)
+                        dirty_nodes.append(p.host)
+                        self.logger.error("Job %s/%s epilogue timed out on host %s" % (pg.jobid, pg.user, p.host))
+                break
+            else:
+                time.sleep(5)
+            
+            
+        self.lock.acquire()
+        try:
+            for host in pg.location:
+                self.running_nodes.discard(host)
+            
+            if dirty_nodes:    
+                for host in dirty_nodes:
+                    self.down_nodes.add(host)
+                p = subprocess.Popen("%s %s %s %s %s" % (pg.config.get("epi_epilogue"), pg.jobid, pg.user, group_name, " ".join(dirty_nodes)), shell=True)
+            
+            del self.process_groups[pg.id]
+        except:
+            self.logger.error("error in clean_nodes", exc_info=True)
+        self.lock.release()
         
-
