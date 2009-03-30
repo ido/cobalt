@@ -262,7 +262,7 @@ class ClusterSystem (ClusterBaseSystem):
             if not running:
                 break
             
-            if time.time() - start > float(pg.config.get("epiloge_timeout")):
+            if time.time() - start > float(pg.config.get("epilogue_timeout")):
                 for p in processes:
                     if p.poll() is None:
                         os.kill(p.pid, signal.SIGTERM)
