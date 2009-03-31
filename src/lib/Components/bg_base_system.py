@@ -811,22 +811,27 @@ class BGBaseSystem (Component):
     # maybe i need a second automatic method to do the waiting?
     def sm_sync(self):
         '''Resynchronize with the script manager'''
-        try:
-            pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
-        except (ComponentLookupError, xmlrpclib.Fault):
-            self.logger.error("Failed to communicate with script manager")
-            return
-        live = [item['id'] for item in pgroups]
+        # get this cache first -- it's no problem if this data is old, but bad things
+        # happen when this data is newer than the list of running processes in scriptm
         self.lock.acquire()
         try:
             process_groups_cache = self.process_groups.values()
         except:
             self.logger.error("error copying process_groups.values()", exc_info=True)
         self.lock.release()
+
+        try:
+            pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
+        except (ComponentLookupError, xmlrpclib.Fault):
+            self.logger.error("Failed to communicate with script manager")
+            return
+        live = [item['id'] for item in pgroups]
+        
         for each in process_groups_cache:
             if each.mode == 'script' and each.script_id not in live:
                 self.logger.info("Found dead pg for script job %s" % (each.script_id))
                 result = ComponentProxy("script-manager").wait_jobs([{'id':each.script_id, 'exit_status':'*'}])
+                self.logger.info("wait returned %r" % result)
                 for r in result:
                     which_one = None
                     if r['id'] == each.script_id:
