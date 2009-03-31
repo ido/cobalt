@@ -117,7 +117,7 @@ class ProcessGroup (cluster_base_system.ProcessGroup):
             logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, self.stderr, e))
 
         rank0 = self.location[0].split(":")[0]
-        cmd_string = "/home/buettner/cluster/src/clients/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
+        cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
         cmd = ("/usr/bin/ssh", "/usr/bin/ssh", rank0, cmd_string)
         
         # If this mpirun command originated from a user script, its arguments
@@ -244,7 +244,7 @@ class ClusterSystem (ClusterBaseSystem):
         for host in pg.location:
             h = host.split(":")[0]
             try:
-                p = subprocess.Popen("ssh %s %s %s %s %s" % (h, pg.config.get("epilogue"), pg.jobid, pg.user, group_name), shell=True)
+                p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), pg.jobid, pg.user, group_name])
                 p.host = h
                 processes.append(p)
             except:
@@ -265,9 +265,12 @@ class ClusterSystem (ClusterBaseSystem):
             if time.time() - start > float(pg.config.get("epilogue_timeout")):
                 for p in processes:
                     if p.poll() is None:
-                        os.kill(p.pid, signal.SIGTERM)
-                        dirty_nodes.append(p.host)
-                        self.logger.error("Job %s/%s epilogue timed out on host %s" % (pg.jobid, pg.user, p.host))
+                        try:
+                            os.kill(p.pid, signal.SIGTERM)
+                            dirty_nodes.append(p.host)
+                            self.logger.error("Job %s/%s epilogue timed out on host %s" % (pg.jobid, pg.user, p.host))
+                        except:
+                            self.logger.error("epilogue for %s already terminated" %p.host)
                 break
             else:
                 time.sleep(5)
@@ -277,11 +280,12 @@ class ClusterSystem (ClusterBaseSystem):
         try:
             for host in pg.location:
                 self.running_nodes.discard(host)
+                self.logger.error("freeing %s" % host)
             
             if dirty_nodes:    
                 for host in dirty_nodes:
                     self.down_nodes.add(host)
-                p = subprocess.Popen("%s %s %s %s %s" % (pg.config.get("epi_epilogue"), pg.jobid, pg.user, group_name, " ".join(dirty_nodes)), shell=True)
+                p = subprocess.Popen([pg.config.get("epi_epilogue"), pg.jobid, pg.user, group_name] + dirty_nodes)
             
             del self.process_groups[pg.id]
         except:
