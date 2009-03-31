@@ -113,11 +113,21 @@ if __name__ == '__main__':
         pgid = int(scriptm.invoke_mpi_from_script(jobspec))
         
         # give the process a chance to get started before we check for it
-        time.sleep(10)
+        start = time.time()
         while True:
             r = system.get_process_groups([{'id':pgid, 'state':'*'}])
-            state = r[0]['state']
-            if state == 'running':
+            if r:
+                break
+            
+            # we'll give it 90 seconds to get started
+            if time.time() - start > 90:
+                break
+            
+            time.sleep(5)
+        
+        while True:
+            r = system.get_process_groups([{'id':pgid, 'state':'*'}])
+            if r and r[0]['state'] == 'running':
                 time.sleep(5)
                 continue
             else:
