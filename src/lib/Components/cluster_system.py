@@ -199,18 +199,18 @@ class ClusterSystem (ClusterBaseSystem):
     get_process_groups = exposed(query(get_process_groups))
     
     def _get_exit_status (self):
-        while True:
+        for each in self.process_groups.itervalues():
             try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
-            except OSError: # there are no child processes
-                break
-            if pid == 0: # there are no zombie processes
-                break
-            status = status >> 8
-            for each in self.process_groups.itervalues():
-                if each.head_pid == pid:
-                    each.exit_status = status
-                    self.logger.info("pg %i exited with status %i" % (each.id, status))
+                pid, status = os.waitpid(each.head_pid, os.WNOHANG)
+            except OSError: # the child has terminated
+                continue
+
+            # if the child has terminated
+            if each.head_pid == pid:
+                status = status >> 8
+                each.exit_status = status
+                self.logger.info("pg %i exited with status %i" % (each.id, status))
+                    
     _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
