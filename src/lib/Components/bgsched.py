@@ -659,7 +659,11 @@ class BGSched (Component):
             end_times = []
             drain_end_times = []
             for job in temp_jobs:
-                end_time = float(job.starttime) + 60 * float(job.walltime)
+                # take the max so that jobs which have gone overtime and are being killed
+                # continue to cast a small backfilling shadow (we need this for the case
+                # that the final job in a drained partition runs overtime -- which otherwise
+                # allows things to be backfilled into the drained partition)
+                end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
                 end_times.append([job.location, end_time])
                 drain_end_times.append(end_time)
             
