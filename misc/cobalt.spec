@@ -78,6 +78,7 @@ then
 fi
 
 %post
+chgrp cobalt /usr/bin/wrapper
 chmod g+s /usr/bin/wrapper
 
 
