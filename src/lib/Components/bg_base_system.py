@@ -607,7 +607,10 @@ class BGBaseSystem (Component):
             
         now = time.time()
         for p in self.cached_partitions.itervalues():
-            p.backfill_time = now
+            if p.state == "idle":
+                p.backfill_time = now
+            else:
+                p.backfill_time = now + 5*60
             p.draining = False
         
         for p in self.cached_partitions.itervalues():    
