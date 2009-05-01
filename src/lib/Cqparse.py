@@ -30,23 +30,14 @@ import Cobalt.Logging
 # Configuration
 #
 
-# Choose the default log directory. If we have /var/log/cobalt, use that
-# (as in a production system). If debugging from SVN, use the local logs.
-# Otherwise, panic!
-# read log_dir from [cqm] in cobalt.conf
+# Find the default log directory. Check config file, and default to
+# /var/log/cobalt-accounting.
 CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 try:
     DEFAULT_LOG_DIRECTORY = CP.get('cqm', 'log_dir')
 except ConfigParser.NoOptionError:
     DEFAULT_LOG_DIRECTORY = '/var/log/cobalt-accounting'
-
-# if os.path.exists( "/var/log/cobalt" ):
-#     DEFAULT_LOG_DIRECTORY = "/var/log/cobalt"
-# elif os.path.exists( os.path.join( os.path.curdir + "/logs" ) ):
-#     DEFAULT_LOG_DIRECTORY = os.path.join( os.path.curdir + "/logs" )
-# else:
-#     raise IOError, "No Cobalt log directory found. Please edit cqparse.py"
 
 # Default number of previous days to include when examining logs. This must
 # be greater than the maximum walltime in days + 1 so we are sure to catch the
@@ -57,20 +48,6 @@ DEFAULT_DAYS = 3
 # Create a logger
 #
 
-# Python 2.4 style:
-#logging.basicConfig( level=logging.DEBUG,
-#    format='%(name)-16.16s %(levelname)-8s : %(message)s')
-
-# Create a logger Python 2.3-style:
-# formatter = logging.Formatter('%(name)-9.9s %(levelname)-8s : %(message)s')
-# console = logging.StreamHandler()
-# console.setFormatter(formatter)
-# logging.getLogger('').addHandler(console)
-
-# # Get a logger for the main program
-# logger = logging.getLogger( "cqparse" )
-# logger.setLevel( logging.DEBUG )
-#Cobalt.Logging.setup_logging('cqm', level=logging.INFO)
 logger = logging.getLogger('cqm')
 
 # ----------------------------------------------------------------------------
@@ -79,15 +56,11 @@ logger = logging.getLogger('cqm')
 #
 # ----------------------------------------------------------------------------
 
-# Log filename regular expression
-# qm-2007_02_05.log
-re_filename = re.compile( """
-    qm-
-    (?P<year>\d\d\d\d)_
-    (?P<month>\d\d)_
-    (?P<day>\d\d)
-    \.log
-    """, re.VERBOSE)
+# PBS Log filename regular expression
+# 20090203
+re_filename = re.compile( """(?P<year>\d\d\d\d)
+                             (?P<month>\d\d)
+                             (?P<day>\d\d)""", re.VERBOSE)
 
 # Submit job regular expression
 #       2007-02-05 22:09:06 Q;25592;voran;default
@@ -221,15 +194,17 @@ re_kernel = re.compile("""
     (?P<kernel>\S+)\s*
     """, re.VERBOSE)
 
-# ----------------------------------------------------------------------------
-#
-# Cobalt Job Object
-#
-# ----------------------------------------------------------------------------
+# PBS-style exit log record
+re_pbs_e = re.compile("""(?P<date>\d\d/\d\d/\d\d\d\d\s+
+                         \d\d:\d\d:\d\d);
+                         E;
+                         (?P<jobid>\d+);
+                         (?P<attributes>.*)$""", re.VERBOSE)
+
 def _time_property(time_field):
     """
     The "private" time_field attribute of an object may contain some sort of time object.
-    Or maybe a string.  Or a flaot.  Who knows?  
+    Or maybe a string.  Or a float.  Who knows?  
     
     Whatever it is, you're not getting a time object from the "public" attribute.
     """
@@ -245,80 +220,38 @@ def _time_property(time_field):
         
     return property(_get_helper, _set_helper)
 
+# ----------------------------------------------------------------------------
+#
+# Cobalt Job Object
+#
+# ----------------------------------------------------------------------------
 class CobaltJob (Cobalt.Data.Data):
     
     """A single job run through the Cobalt scheduling system."""
     
     fields = Cobalt.Data.Data.fields + [
         "jobid", "submit_time", 
-        "username", "nodes", "processors", "mode", "walltime", "start_time", 
-        "queue", "partition", "partition_size",
-        "finish_time", "queue_time", "user_time", "deleted_time", 
-        "state", "usertime_formatted", "queuetime_formatted", "finishtime_formatted", "exitcode", "kernel",
+        "user", "nodes", "procs", "mode", "walltime", "start_time", 
+        "queue", "location", "partition_size",
+        "end_time", "endtime", "queued_time", "queuedtime", "run_time", "runtime", "deleted_time", 
+        "state", "usertime_formatted", "queuetime_formatted", "finishtime_formatted",
+        "exit", "kernel", "account",
     ]
+    required = Cobalt.Data.Data.required + ["jobid"]
 
-    def __init__(self, jobid):
+    def __init__(self, spec):
         
         """Initialize a new empty CobaltJob."""
-        
-        self.tag = "job"
-        self.jobid = long(jobid)
-        
-        # Job submission information
-        self._submit = False
-        
-        # Basic user and job information
-        self._start = False
-        
-        # Job assignment information
-        self._run = False
-        
-        # Final job times
-        self._done = False
-        self._deleted = False
-        
-        # Job submission
-        self._submit_time = None,
-        
-        # User and job info
-        self.username = None,
-        self.nodes = None,
-        self.processors = None,
-        self.mode = None,
-        self.walltime = None,
-        self._start_time = None,
-        
-        # Job assignment
-        self.queue = None,
-        self.partition = None,
-        self.partition_size = None,
-        
-        # Final job times
-        self._finish_time = None,
-        self._queue_time = None,
-        self._user_time = None,
-        self._deleted_time = None,
-        
-        # Job state and misc.
-        self.state = None, # queued, running, done, None (invalid)
-        self.usertime_formatted = None,
-        self.queuetime_formatted = None,
-        self.finishtime_formatted = None,
-        self.exitcode = None,
-        self.kernel = "default",
- 
+        Cobalt.Data.Data.__init__(self, spec)
 
+        self.tag = "job"
+        
+        for item in spec:
+            setattr(self, item, spec[item])
+        
     def __str__(self):
         return "<CobaltJob %i>" % (self.jobid)
     
-    submit_time = _time_property('_submit_time')
-    start_time = _time_property('_start_time')
-    finish_time = _time_property('_finish_time')
-    queue_time = _time_property('_queue_time')
-    user_time = _time_property('_user_time')
-    deleted_time = _time_property('_deleted_time')
-    
-
     def finalize(self):
         """
         Check this log record for proper formatting. Return True if the record
@@ -332,31 +265,7 @@ class CobaltJob (Cobalt.Data.Data):
         # we have observed for this job. If we get a bogus combination, mark
         # the job as invalid
         #
-        if self._start and self._run and (self._done or self._deleted):
-            self.state = "done"
-        elif self._submit and self._start and self._run and (not self._done):
-            self.state = "running"
-        elif self._submit and not self._start and not self._run and not self._done:
-            self.state = "queued"
-
-        # If we have only the tail end states, that means the job started before
-        # our analysis period. Ignore those silently!
-        elif not self._submit and not self._start and self._run and self._done:
-            self.state = None
-        elif not self._submit and not self._start and not self._run and self._done:
-            self.state = None
-#         elif self._submit and self._start and self._done:
-#             self.state = "done"
-        else:
-            self.state = None
-            logger.error("Job %i has a bogus state: %i %i %i %i" % (self.jobid,
-                self._submit, self._start, self._run, self._done ))
-            return False
-
-        # If the job is queued or running, the completion statistics will not
-        # be available. Leave now.
-        if self.state != "done":
-            return True
+        self.state = "done"
         
         #
         # Now that we have verified that all four log events were recorded,
@@ -365,51 +274,8 @@ class CobaltJob (Cobalt.Data.Data):
         result = True
         
         # Make sure that we have a username
-        if self.username is None:
+        if self.user is None:
             logger.error("Job %i has an empty username" % (self.jobid))
-            result = False
-        
-        # Check that the finish time is after the start time
-        if self.start_time > self.finish_time and not self._deleted:
-            logger.error("Job %i finishes before it starts (%s, %s)" %
-                (self.jobid, self.start_time, self.finish_time))
-            result = False
-        
-#         # Verify that the partition size is sane for a BG/L system
-#         if self.get('partition_size') <= 0:
-#             logger.error("Job %i partition %s size decoded as %i" %
-#                 (self.get('jobid'), self.get('partition'), self.get('partition_size')))
-#             result = False
-#         if self.get('partition_size') % 32 != 0:
-#             logger.error("Job %i partition size %i is not a multiple of 32" %
-#                 (self.get('jobid'), self.get('partition_size')))
-#             result = False
-        
-#         # Verify that the number of nodes fits within the paritition
-#         if self.get('nodes') > self.get('partition_size'):
-#             logger.error("Job %i fits %i nodes on a %i-node partition" %
-#                 (self.get('jobid'), self.get('nodes'), self.get('partition_size')))
-#             result = False
-
-        # hack for a job that is forcibly deleted (cqadm.py --delete)
-        # job stats are not produced, only D; line
-        if self.finish_time is None and self._deleted:
-            # definitely has start_time and deleted_time at this point
-            if self.submit_time is not None:
-                self.queue_time = self.start_time - self.submit_time
-            else:
-                self.queue_time = 0
-            self.user_time = self.deleted_time - self.start_time
-            self.finish_time = self.deleted_time
-        
-        # Make sure that the queue and user times are positive
-        if self.queue_time < 0:
-            logger.error("Job %i has negative queue time" % (self.jobid))
-            self.queue_time = 0
-            result = False
-        if self.user_time < 0:
-            logger.error("Job %i has negative user time" % (self.jobid))
-            self.user_time = 0
             result = False
         
         #
@@ -427,19 +293,19 @@ class CobaltJob (Cobalt.Data.Data):
                 seconds = seconds - (minutes * 60)
             return "%02i:%02i:%02i" % (hours, minutes, seconds)
         
-        self.usertime_formatted = format_time(self.user_time)
-        self.queuetime_formatted = format_time(self.queue_time)
-        self.finishtime_formatted = self.finish_time.strftime("%Y-%m-%d %H:%M:%S")
+        self.queuedtime = format_time(self.queued_time)
+        self.endtime = datetime.datetime.fromtimestamp(
+            self.end_time).strftime("%Y-%m-%d %H:%M:%S")
 
-        if self.exitcode is None or self.exitcode == "N/A":
-            self.exitcode = "N/A"
-        elif int(self.exitcode) > 255:
-            self.exitcode = int(self.exitcode) / 256
+        if not self.exit.isdigit():
+            self.exit = 'N/A'
+        elif int(self.exit) > 255:
+            self.exit = int(self.exit) / 256
         
         return result
 
 
-class CobaltLogParser(Cobalt.Data.DataList):
+class CobaltLogParser(Cobalt.Data.DataDict):
     """
     The CobaltLogParser contains a processed list of Cobalt jobs.
     
@@ -447,14 +313,15 @@ class CobaltLogParser(Cobalt.Data.DataList):
     may be processed in any order. 
     """
     item_cls = CobaltJob
-    
-    def __init__(self):
-        """
-        Create a new CobaltLogParser.
-        """
-        Cobalt.Data.DataList.__init__(self)
-        self._jobs = {}
-        #self.comms = Cobalt.Proxy.CommDict()
+    key = "jobid"
+
+#     def __init__(self):
+#         """
+#         Create a new CobaltLogParser.
+#         """
+#         Cobalt.Data.DataDict.__init__(self)
+# #         self._jobs = {}
+#         #self.comms = Cobalt.Proxy.CommDict()
     
     # ----------------------------------------
     # Generators
@@ -517,126 +384,52 @@ class CobaltLogParser(Cobalt.Data.DataList):
             "Filename %s was not in format 'qm-yyyy_mm_dd'" % \
             (filename)
         
-        # Read the log file        
-        file = open( filename, "r" )
-        for line in file:
-            # Try the line against the three regular expressions we're looking
-            # for. We don't require the logs to be parsed in order, so any of
-            # the lines may appear first.
+        # Read the log file
+        logfile = open( filename, "r" )
+        for line in logfile:
+            # Try the line against the regular expressions we're looking
+            # for. Currently just looking for the PBS exit line.
             
-            # If the line matches the regular expressions, extact the jobid.
+            # If the line matches the regular expressions, extract the jobid.
             # This is a bit kludgy, but we'll want separate match objects
             # later so we can set parameters.
             jobid = None
-            m_submit = re_submit.match(line)
-            if m_submit:
-                jobid = long(m_submit.group("jobid"))
-            m_start = re_start.match(line)
-            if m_start:
-                jobid = long(m_start.group("jobid"))
-            m_start_old = re_start_old.match(line)
-            if m_start_old:
-                jobid = long(m_start_old.group("jobid"))
-                m_start = m_start_old
-            m_run = re_run.match(line)
-            if m_run:
-                jobid = long(m_run.group("jobid"))
-#             m_freeing = re_freeing.match(line)
-#             if m_freeing:
-#                 jobid = long(m_freeing.group("jobid"))
-            m_done = re_done.match(line)
-            if m_done:
-                jobid = long(m_done.group("jobid"))
-            m_deleted = re_deleted.match(line)
-            if m_deleted:
-                jobid = long(m_deleted.group("jobid"))
-            m_stats = re_stats.match(line)
-            if m_stats:
-                jobid = long(m_stats.group("jobid"))
-            m_kernel = re_kernel.match(line)
-            if m_kernel:
-                jobid = long(m_kernel.group("jobid"))
+            m_pbs_e = re_pbs_e.match(line)
+            if m_pbs_e:
+                jobid = long(m_pbs_e.group("jobid"))
             
             # If none matched, then get the next line
             if not jobid:
                 continue
             
-            # Now, get or create the record            
-            if jobid not in self._jobs:
-                job = CobaltJob(jobid)
-                self._jobs[jobid] = job
-            else:
-                job = self._jobs[jobid]
+            job = {'jobid':jobid}
             
-            # Set the object's parameters
-            if m_submit:
-                job._submit = True
-                job.submit_time = self.__prepare_time(
-                    m_submit.group("submit_time"))
-            if m_start:
-                job._start = True
-                job.start_time = self.__prepare_time(
-                    m_start.group("start_time"))
-                job.username = m_start.group("username")
-                job.nodes = int(m_start.group("nodes"))
-                job.processors = int(m_start.group("processors"))
-                job.mode = m_start.group("mode")
-                job.walltime = m_start.group("walltime")
-            if m_run:
-                job._run = True
-                job.queue = m_run.group("queue")
-                job.partition = m_run.group("partition")
-                part = [p for p in self._partitions if p.get('name') == job.partition]
-                if part:
-                    job.partition_size = int(part[0].get('size'))
-#                     print 'size of %s is %s' % (job.partition, job.partition_size)
-                else:
-                # We have to manually size full racks! They don't start with
-                # sizes! :-/ This makes it hard to be portable.
-                    nums = re.findall(r"\d+", m_run.group("partition"))
-                    for n in nums:
-                        if int(n) > 1 and math.log(int(n), 2) % 1 == 0:
-                            job.partition_size = int(n)
-
-                    if job.partition_size is None:
-                        logger.debug("While parsing log line '%s': Could not determine size of partition '%s'." % (line, job.partition))
-                        job.partition_size = 0
-
-            # Most of the time, we get freeing following by done. In some
-            # crashes, we get freeing without the done. Flag those jobs as
-            # done anyway. This is a hack. :-/
-#             if m_freeing and job._submit and job._start and job._run:
-#                 #job._done = True
-#                 job.freed_partitions.append(m_freeing.group("partition"))
-#                 if not job.finish_time:
-#                     job.finish_time = self.__prepare_time(
-#                         m_freeing.group("finish_time"))
-#                 if not job.queuetime:
-#                     job.queuetime = 0
-#                 if not job.usertime:
-#                     job.usertime = 0
+            # the attributes regex group consists of all the job attributes
+            # listed after the jobid on the log line
+            job_attributes = m_pbs_e.group("attributes")
+            attribute_dict = dict()
+            for item in re.split(r'\s+(?=[a-zA-Z0-9_.]+=)', job_attributes):
+                attribute_dict.update([item.split("=", 1)])
+            job['user'] = attribute_dict['user']
+            job['nodes'] = attribute_dict['Resource_List.nodect']
+            job['procs'] = attribute_dict['Resource_List.ncpus']
+            job['mode'] = attribute_dict['mode']
+            job['runtime'] = attribute_dict['resources_used.walltime']
+            job['walltime'] = attribute_dict['Resource_List.walltime']
+            job['queue'] = attribute_dict['queue']
+            job['location'] = attribute_dict['exec_host']
+            job['account'] = attribute_dict.get('account', 'N/A')
+            job['exit'] = attribute_dict.get('Exit_status', 'N/A')
             
-            if m_stats:
-                job._done = True
-                job.queue_time = float(m_stats.group("queuetime"))
-                job.user_time = float(m_stats.group("usertime"))
-                job.exitcode = m_stats.group("exitcode")
-
-            if m_done:
-                job._done = True
-                job.finish_time = self.__prepare_time(
-                    m_done.group("finish_time"))
-                job.user_time = float(m_done.group("usertime"))
-
-            if m_deleted:
-                job._deleted = True
-                job.deleted_time = self.__prepare_time(
-                    m_deleted.group("finish_time"))
-
-            if m_kernel:
-                job.kernel = m_kernel.group("kernel")
+            # stats
+            job['submit_time'] = float(attribute_dict['ctime'])
+            job['start_time'] = float(attribute_dict['start'])
+            job['queued_time'] = float(attribute_dict['start']) - float(attribute_dict['ctime'])
+            job['end_time'] = float(attribute_dict['end'])
+            
+            self.q_add([job])
         
-        file.close()
+        logfile.close()
     
     def finalize_parse(self):
         """
@@ -644,12 +437,9 @@ class CobaltLogParser(Cobalt.Data.DataList):
         information for all of the jobs that were recorded.
         """
         
-        # First, calculate derived job state for all of the jobs
-        #print dir(self.data)
-        for job in self._jobs.itervalues():
+        # Calculate derived job state for all of the jobs
+        for job in self.itervalues():
             job.finalize()
-    
-        self.data = self._jobs.values()
     
     # ----------------------------------------
     # Log folder parsing
@@ -683,15 +473,14 @@ class CobaltLogParser(Cobalt.Data.DataList):
         # Start with the archive files of format "cobalt.log-yyyymmdd", and
         # then add the cobalt.log file we already checked for
         files = [ filename for filename in os.listdir( logdir )
-                  if filename.startswith( "qm-" ) and
+                  if re.match("^\d{8,8}$", filename) and
                   os.path.isfile( os.path.join( logdir + "/" + filename ))]
         files.sort()
         files = files[-DEFAULT_DAYS:]
-#         files.append( "cobalt.log")
         
         # Now, parse all of the files
-        for file in files:
-            self.parse_file( os.path.join( logdir + "/" + file ))
+        for logfile in files:
+            self.parse_file( os.path.join( logdir + "/" + logfile ))
         
         # Finalize the parse
         self.finalize_parse()

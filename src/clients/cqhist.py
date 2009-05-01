@@ -63,13 +63,27 @@ if __name__ == '__main__':
                        help="suppress all headers" )
 
     # Output options
-    parser.add_option( "-a", "--alldetails", default=False,
+    parser.add_option( "-l", "--alldetails", default=False,
                        action="store_true", dest="alldetails",
                        help="show all job details" )
+
+    parser.add_option( "-d", "--debug", default=False,
+                       action="store_true", dest="debugging",
+                       help="show debugging information" )
 
     # Get the options
     (options, args) = parser.parse_args()
 
+    # default headers used for querying job history and output
+    long_header = ("EndTime", "JobID", "User",
+                   "WallTime", "QueuedTime", "RunTime",
+                   "Queue",
+                   "Procs", "Mode", "Location",
+                   "Kernel", "Account", "Exit")
+    header =      ("EndTime", "JobID", "User", "Queue",
+                   "Procs", "Mode",
+                   "RunTime",
+                   "Exit")
     # -------------------------------------------------------------------------
     #
     # Execution
@@ -77,42 +91,38 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
     
     #
-    # Get all of the jobs
+    # Get all of the jobs, directly accessing log files
     #
-    try:
-        cqm = ComponentProxy("queue-manager")
-        jobs = cqm.get_history([
-            {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
-             'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
-             'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
-             'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
-             'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
-    except ComponentLookupError:
-        print "Can't connect to queue manager, falling back to log files"
-        cqp = cqparse.CobaltLogParser()
-        cqp.perform_default_parse()
-        jobs = cqp.Get([
-            {'tag':'job', 'finish_time_formatted':'*', 'jobid':'*', 'queue':'*',
-             'username':'*', 'processors':'*', 'mode':'*', 'partition_size':'*',
-             'partition':'*', 'queuetime_formatted':'*', 'usertime_formatted':'*',
-             'partition_size':'*', 'usertime_formatted':'*', 'exitcode':'*',
-             'usertime':'*', 'queuetime':'*', 'state':'done', 'kernel':'*'}])
+    query = dict()
+    for item in long_header:
+        query.update({item.lower():'*'})
+#     try:
+#         cqm = ComponentProxy("queue-manager", defer=False)
+#         jobs = cqm.get_history([query])
+#     except (ComponentLookupError):
+#     print "Trouble connecting to queue manager, falling back to log files"
+    cqp = cqparse.CobaltLogParser()
+    cqp.perform_default_parse()
+    jobs = cqp.q_get([query])
+
+    jobs = [j.to_rx() for j in jobs]
 
     #
     # Get the statistics
     #
-    print "Cobalt queue history (%i jobs):" % (len(jobs))
+    if not options.noheader:
+        print "Cobalt queue history (%i jobs):" % (len(jobs))
 
     #
     # Filter the jobs using the specified selection criteria
     #
     if options.username:
-        jobs = [ job for job in jobs if job['username'] == options.username ]
+        jobs = [ job for job in jobs if job['user'] == options.username ]
     if options.queue:
         jobs = [ job for job in jobs if job['queue'] == options.queue ]
 
     # Now, sort the jobs
-    js = [ (job['finish_time_formatted'], job) for job in jobs ]
+    js = [ (job['endtime'], job) for job in jobs ]
     js.sort()
     jobs = [ job[1] for job in js ]
 
@@ -123,39 +133,26 @@ if __name__ == '__main__':
     #
     # Print the standard output
     #
-
+    
     # Print the header
     if not options.noheader:
         if options.alldetails:
-            print "%-19s %7s %-10s %-8s %5s %4s %5s %18s %9s  %9s %8s %6s %10s" % (
-                "Termination Time", "Job ID", "Queue", "User",
-                "ncpus", "mode", "nodes",
-                "partition", "queuetime",
-                "walltime", "cpuh", "Exit", "Kernel")
+            print "%-19s %7s %-8s %-8s %10s %-8s %-10s %5s %4s %18s %6s %8s %4s" % long_header
         else:
             print "%s" % ( "-" * 78 )
-            print "%-19s %6s %-10s %-8s %5s %4s %5s %8s %6s" % (
-                "Termination Time", "Job ID", "Queue", "User",
-                "ncpus", "mode", "nodes", "Walltime", "Exit")
+            print "%-19s %7s %-8s %-10s %5s %4s %-8s %4s" % header
+    
 
     # Print the job lines
     for job in jobs:
         if options.alldetails:
-#             print job['queuetime'], job['usertime']
+
 #             if job['queuetime'] > job['usertime']:
 #                 wait_flag = "*"
 #             else:
 #                 wait_flag = " "
             wait_flag = " "
-            print "%19s %7i %-10s %-8s %5i %4s %5i %18s %9s%s %9s %8.2f %6s %10s" % (
-                job['finish_time_formatted'], job['jobid'], job['queue'], job['username'],
-                job['processors'], job['mode'], job['partition_size'],
-                job['partition'], job['queuetime_formatted'], wait_flag,
-                job['usertime_formatted'],
-                job['partition_size'] * job['usertime'] / 3600, job.get('exitcode', 'N/A'),
-                job['kernel'])
+            print "%(endtime)19s %(jobid)7lu %(user)-8s %(walltime)-8s %(queuedtime)-10s %(runtime)-8s %(queue)-10s %(procs)5s %(mode)4s %(location)18s %(kernel)-6s %(account)8s %(exit)4s" % job
         else:
-            print "%19s %6i %-10s %-8s %5i %4s %5i %8s %6s" % (
-                job['finish_time_formatted'], job['jobid'], job['queue'], job['username'],
-                job['processors'], job['mode'], job['partition_size'], 
-                job['usertime_formatted'], job.get('exitcode', 'N/A') )
+            output = [job.get(x, '-') for x in [y.lower() for y in header]]
+            print "%(endtime)19s %(jobid)7lu %(user)-8s %(queue)-10s %(procs)5s %(mode)4s %(runtime)-8s %(exit)4s" % job
