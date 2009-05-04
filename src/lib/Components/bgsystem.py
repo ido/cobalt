@@ -204,6 +204,7 @@ class BGSystem (BGBaseSystem):
     
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
+        sys.setrecursionlimit(5000)
         self.process_groups.item_cls = ProcessGroup
         self.diag_pids = dict()
         self.configure()
@@ -227,6 +228,7 @@ class BGSystem (BGBaseSystem):
                 'partition_flags': flags}
     
     def __setstate__(self, state):
+        sys.setrecursionlimit(5000)
         self._managed_partitions = state['managed_partitions']
         self._partitions = PartitionDict()
         self.process_groups = ProcessGroupDict()
