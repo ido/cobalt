@@ -597,7 +597,8 @@ class BGBaseSystem (Component):
         except:
             self.logger.error("error in copy.deepcopy", exc_info=True)
             return {}
-        self._partitions_lock.release()
+        finally:
+            self._partitions_lock.release()
 
             
         # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
