@@ -28,7 +28,7 @@ from Cobalt.Components import bg_base_system
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
-from Cobalt.Exceptions import ProcessGroupCreationError
+from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
