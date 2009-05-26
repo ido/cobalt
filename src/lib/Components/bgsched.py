@@ -679,6 +679,8 @@ class BGSched (Component):
                     end_time = now + done_after
                 if cur_res.is_active():
                     drain_end_times.append(end_time)
+                    for part_name in cur_res.partitions.split(":"):
+                        end_times.append([[part_name], end_time])
     
             
             if drain_end_times:
