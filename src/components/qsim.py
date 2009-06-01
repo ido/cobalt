@@ -12,17 +12,23 @@ from Cobalt.Components.slp import TimingServiceLocator
 from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Components.bgsched import BGSched
 from Cobalt.Components.qsim import Qsimulator
+from Cobalt.Proxy import ComponentProxy, local_components
 
 __helpmsg__ = "Usage: qsim -j <jobworkload> -p <partition.xml> [--output=<outputlogfile>]\n" +\
         "[--weibull --scale=<scale> --shape=<shape>]  [--failurelog=<failurelog>]\n" +\
-        "[--fautlaware --sensitivity=sensitivity --specificity=specificity]\n" +\
+        "[--faultaware --sensitivity=sensitivity --specificity=specificity]\n" +\
         "[--standalone]  [--profile]"
 
 class my_bgsched (BGSched):
+    
+    def __init__(self, *args, **kwargs):
+        BGSched.__init__(self, *args, **kwargs)
+        self.get_current_time = ComponentProxy("queue-manager").get_current_time_sec
+    
     def do_tasks (self):
         for name, func in inspect.getmembers(self, callable):
             if getattr(func, "automatic", False):
-                func() 
+                func()
         
 def integrated_main(opts):
     '''run instantiated qsim, together with bgsched, slp,scriptm in one process'''
