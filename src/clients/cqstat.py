@@ -175,7 +175,7 @@ if __name__ == '__main__':
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Queue', 'StartTime', 'Index', 'SubmitTime', 'Path',
                       'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project', 'Dependencies', 'short_state']
+                      'Project', 'Dependencies', 'short_state', 'Notify']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
