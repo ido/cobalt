@@ -16,6 +16,7 @@ import tempfile
 import time
 import thread
 import threading
+import xmlrpclib
 import ConfigParser
 try:
     set = set
