@@ -17,7 +17,6 @@ import re
 import logging
 
 import Cobalt
-Cobalt.CONFIG_FILES = Cobalt.DEFAULT_CONFIG_FILES
 import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -26,7 +25,7 @@ from Cobalt.Exceptions import QueueError, ComponentLookupError
 
 helpmsg = """
 Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
-             --dependencies <jobid1>:<jobid2>
+             --dependencies <jobid1>:<jobid2> --preemptable
              -e envvar1=value1:envvar2=value2 -k <kernel profile>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -E <error file path> -o <output file path> -i <input file path>
@@ -35,13 +34,13 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
 """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode',
                 'c':'proccount', 'C':'cwd', 'e':'env', 'k':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'u':'umask' }
+                'debuglog':'debuglog', 'u':'umask'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -172,7 +171,7 @@ if __name__ == '__main__':
             logger.error("directory %s does not exist" % jobspec.get('cobalt_log_file'))
             sys.exit(1)
     if opts['held']:
-        jobspec.update({'user_state':'hold'})
+        jobspec.update({'user_hold':True})
     if opts['env']:
         if sys.argv.count('-e') - command.count('-e') > 1:
             logger.error("Use of multiple -e options is not supported. Specify multiple environment variables with -e FOO=1:BAR=2")
@@ -193,6 +192,8 @@ if __name__ == '__main__':
         if not os.path.isfile(jobspec.get('inputfile')):
             logger.error("file %s not found, or is not a file" % jobspec.get('inputfile'))
             sys.exit(1)
+    if opts['preemptable']:
+        jobspec.update({'preemptable':True})
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
     if opts['dependencies']:

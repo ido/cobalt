@@ -120,7 +120,8 @@ if __name__ == '__main__':
         except:
             print >> sys.stderr, "Failed to connect to scheduler"
             sys.exit(2)
-        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'system_state':"*", 'user_state':"*", 'dependencies':"*"}])
+        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'is_active':"*", 'has_completed':False, 'user_hold':"*", 'admin_hold':"*",
+                              'dependencies':"*"}])
         queues = cqm.get_queues([{'name':"*", 'state':"*"}])
         sched_info = sched.get_sched_info()
         
@@ -131,9 +132,12 @@ if __name__ == '__main__':
                 
             print "job", job['jobid'], ":"
             print "    ",
-            if job['system_state'] == 'running':
-                print "the job is running"
-            elif job['system_state'] == 'hold' or job['user_state'] == 'hold':
+            if job['is_active']:
+                hold_msg = ""
+                if job['admin_hold'] == True or job['user_hold'] == True:
+                    hold_msg = " (hold pending)"
+                print "the job is running%s" % (hold_msg,)
+            elif job['admin_hold'] == True or job['user_hold'] == True:
                 print "the job has a hold on it"
             elif job['dependencies']:
                 print "the job has dependencies:", job['dependencies']
@@ -170,11 +174,12 @@ if __name__ == '__main__':
     default_header = ['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']
     full_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
-                      'Queue', 'StartTime', 'Index']
+                      'Preemptable', 'Queue', 'StartTime', 'Index']
     long_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
-                      'Queue', 'StartTime', 'Index', 'SubmitTime', 'Path',
-                      'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
+                      'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
+                      'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
+                      'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'Dependencies', 'short_state', 'Notify']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
@@ -246,7 +251,7 @@ if __name__ == '__main__':
         # calculate derived values
         for j in response:
             # walltime
-            t = int(j['walltime'].split('.')[0])
+            t = int(float(j['walltime']))
             h = int(math.floor(t/60))
             t -= (h * 60)
             j['walltime'] = "%02d:%02d:00" % (h, t)

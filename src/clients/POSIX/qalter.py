@@ -62,8 +62,8 @@ if __name__ == '__main__':
         except:
             logger.error("jobid must be an integer")
             sys.exit(1)
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*',
-             'walltime':'*', 'queue':'*', 'procs':'*', 'nodes':'*', 'state':'*'} for jobid in args]
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*', 'queue':'*', 'procs':'*',
+             'nodes':'*', 'is_active':"*"} for jobid in args]
     updates = {}
     nc = 0
     if opts['nodecount']:
@@ -74,7 +74,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
         try:
-            sys_size = int(CP.get('cqm', 'size'))
+            sys_size = int(CP.get('system', 'size'))
         except:
             sys_size = 1024
         if not 0 < nc <= sys_size:
@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
 
     try:
-        sys_type = CP.get('cqm', 'bgtype')
+        sys_type = CP.get('bgsystem', 'bgtype')
     except:
         sys_type = 'bgl'
     if sys_type == 'bgp':
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     if opts['output']:
         updates.update({'outputpath': opts['output']})
     if opts['held']:
-        updates.update({'state':'user hold'})
+        updates.update({'user_hold':True})
     if opts['dependencies']:
         deps = opts['dependencies']
         if deps and deps.lower() != "none":
@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     job_running = False
     for job in jobdata:
-        if job['state'] in ["starting", "running", "killing"]:
+        if job['is_active']:
             job_running = True
             
     if job_running:
@@ -220,7 +220,7 @@ if __name__ == '__main__':
         
     response = False
     for jobinfo in jobdata:
-        del jobinfo['state']
+        del jobinfo['is_active']
         original_spec = jobinfo.copy()
         jobinfo.update(updates)
         for filt in filters:

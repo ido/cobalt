@@ -24,7 +24,7 @@ from Cobalt.Exceptions import QueueError, ComponentLookupError
 
 helpmsg = """
 Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-             --dependencies <jobid1>:<jobid2>
+             --dependencies <jobid1>:<jobid2> --preemptable
              --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -e <error file path> -o <output file path> -i <input file path>
@@ -33,7 +33,7 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
 """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
@@ -171,7 +171,7 @@ if __name__ == '__main__':
             logger.error("directory %s does not exist" % jobspec.get('cobalt_log_file'))
             sys.exit(1)
     if opts['held']:
-        jobspec.update({'user_state':'hold'})
+        jobspec.update({'user_hold':True})
     if opts['env']:
         jobspec['envs'] = {}
         key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]
@@ -189,6 +189,8 @@ if __name__ == '__main__':
         if not os.path.isfile(jobspec.get('inputfile')):
             logger.error("file %s not found, or is not a file" % jobspec.get('inputfile'))
             sys.exit(1)
+    if opts['preemptable']:
+        jobspec.update({'preemptable':True})
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
     if opts['dependencies']:

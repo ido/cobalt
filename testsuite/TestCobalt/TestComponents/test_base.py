@@ -32,10 +32,11 @@ class TestComponent (object):
         assert component.method1.exposed
         assert component.method2.exposed
         assert not getattr(component.method3, "exposed", False)
-        exposed_methods = component._listMethods()
-        assert set(exposed_methods) == set(["get_name", "get_implementation", "method1", "method2"])
-        assert component._dispatch("method1", ()) == "return1"
-        assert component._dispatch("method2", ()) == "return2"
+        exposed_methods = component.listMethods()
+        assert set(exposed_methods) == set(['get_implementation', 'get_name', 'get_statistics', 'listMethods', 'method1',
+            'method2', 'methodHelp', 'save'])
+        assert component._dispatch("method1", (), {}) == "return1"
+        assert component._dispatch("method2", (), {}) == "return2"
         try:
             component._dispatch("method3", ())
         except Exception:

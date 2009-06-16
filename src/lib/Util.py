@@ -1,6 +1,8 @@
 '''Utility funtions for Cobalt programs'''
 __revision__ = '$Revision$'
 
+import copy_reg
+import cPickle
 import os
 import types
 import smtplib
@@ -8,11 +10,14 @@ import socket
 import sys
 import time
 import ConfigParser
+import os.path
 import popen2
 from datetime import date, datetime
 from getopt import getopt, GetoptError
-from Cobalt.Exceptions import TimeFormatError
+from Cobalt.Exceptions import TimeFormatError, TimerException, ThreadPickledAliveException
 import logging
+from threading import Thread
+import inspect
 
 import Cobalt
 
@@ -245,7 +250,7 @@ def sendemail(toaddr, subj, msg, smtpserver = 'localhost'):
     
 def runcommand(cmd):
     '''Execute command, returning rc, stdout, stderr'''
-    cmdp = popen2.Popen3(cmd, True)
+    cmdp = popen2.Popen3(os.path.expandvars(cmd), True)
     out = []
     err = []
     status = cmdp.wait()
@@ -258,9 +263,9 @@ class AccountingLog:
         CP = ConfigParser.ConfigParser()
         CP.read(Cobalt.CONFIG_FILES)
         try:
-            self.logdir = CP.get('cqm', 'log_dir')
+            self.logdir = os.path.expandvars(CP.get('cqm', 'log_dir'))
         except ConfigParser.NoOptionError:
-            self.logdir = '/var/log/cobalt-accounting'
+            self.logdir = Cobalt.DEFAULT_LOG_DIRECTORY
         self.date = None
         self.logfile = open('/dev/null', 'w+')
         self.name = name
@@ -302,113 +307,6 @@ class FailureMode(object):
             logger.error("Failure %s occured" % (self.name))
             self.status = False
 
-class PBSLog (object):
-    
-    """Manage a log using the PBS accounting log file format.
-    
-    Properties:
-    logfile -- The (open) file to log messages to.
-        
-    For more information see section 10.3 of the PBS Pro. 7 Admin Guide.
-    """
-    
-    def __init__ (self, id_string=None):
-        """Initialize a new PBS-style log generator."""
-        self.id_string = id_string
-        # Get the log directory from a config file.
-        config = ConfigParser.ConfigParser()
-        config.read(Cobalt.CONFIG_FILES)
-        try:
-            self.logdir = config.get('cqm', 'log_dir')
-        except:
-            self.logdir = "/var/log/cobalt-accounting"
-        # The date of the last log entry.
-        self._last_date = None
-        # The active (open) log file.
-        self._last_file = None
-    
-    def _get_logfile (self):
-        """Return an appropriate open file for logging."""
-        if self._last_date == date.today():
-            # The date has not changed, so reuse
-            # the previous file.
-            return self._last_file
-        else:
-            # The date has changed, so open a new
-            # file.
-            self._last_date = date.today()
-            format = "%Y%m%d" # ccyymmdd
-            filename = os.path.join(
-                self.logdir,
-                self._last_date.strftime(format),
-            )
-            try:
-                self._last_file = open(filename, "a")
-            except IOError:
-                self._last_file = open("/dev/null", "a")
-            return self._last_file
-    logfile = property(_get_logfile)
-    
-    def reset (self):
-        """Reset the open log file."""
-        self._last_date = None
-        self._last_file = None
-    
-    def _prep_key (self, key):
-        # replace __dot__ with '.'
-        key = str(key)
-        key = key.replace("__dot__", ".")
-        return key
-    
-    def _prep_value (self, value):
-        # automatically quote values containing spaces
-        if " " in str(value):
-            value = '"%s"' % value
-        return value
-    
-    def log (self, record_type, id_string=None, datetime=datetime.now, **messages):
-        
-        """Add a log entry.
-        
-        Arguments:
-        id_string -- The job, reservation, or reservation-job identifier. (default self.id_string)
-        record_type -- A single character indicating the type of record.
-        
-        Keyword arguments:
-        datetime -- Either a datetime, or a callable that returns a datetime. (default datetime.now)
-        
-        Additional keyword arguments may be specified to set messages.
-        """
-        
-        try:
-            datetime = datetime()
-        except:
-            pass # assume datetime is already a datetime
-        format = "%m/%d/%Y %H:%M:%S" # mm/dd/ccyy hh:mm:ss
-        
-        assert record_type in ("A", "B", "C", "D", "E", "F", "K",
-                               "k", "Q", "R", "S", "T", "U", "Y")
-        
-        assert id_string or self.id_string
-        
-        message_text = " ".join([
-            "%s=%s" % (self._prep_key(key), self._prep_value(value))
-            for key, value in messages.iteritems()
-        ])
-        
-        try:
-            self.logfile.write("%s;%s;%s;%s\n" % (
-                datetime.strftime(format),
-                record_type,
-                id_string or self.id_string,
-                message_text,
-            ))
-            
-            self.logfile.flush()
-        except IOError, e:
-            logger.error("PBSLog failure : %s" % e)
-
-
 
 def processfilter(cmdstr, jobdict):
     '''Run a filter on the job, passing in all job args and processing all output'''
@@ -441,3 +339,276 @@ def processfilter(cmdstr, jobdict):
                 jobdict[key].update(eval(value))
             else:
                 jobdict[key] = value
+
+
+class Timer (object):
+    '''the timer object keeps track of start, stop and elapsed times'''
+    def __init__(self, max_time = None):
+        self.__start_times = []
+        self.__stop_times = []
+        if max_time != None and max_time < 0:
+            raise TimerException, "maximum time may not be negative (max_time=%s)" % (max_time,)
+        self.__max_time = max_time
+        self.__elapsed_time = 0.0
+    
+    def start(self):
+        '''(re)start time tracking'''
+        if self.is_active:
+            raise TimerException, "timer already started"
+        self.__start_times.append(time.time())
+        
+    def stop(self):
+        '''stop time tracking'''
+        if not self.is_active:
+            raise TimerException, "timer not active"
+        self.__stop_times.append(time.time())
+        self.__elapsed_time += self.__stop_times[-1] - self.__start_times[-1]
+
+    def __get_is_active(self):
+        '''determine if the timer is currently running'''
+        return len(self.__start_times) > len(self.__stop_times)
+
+    is_active = property(__get_is_active, doc = "flag indicating if the time is currently active")
+
+    def __get_elapsed_time(self):
+        '''get the time elapsed while the timer has been active, including any current activity'''
+        if not self.is_active:
+            return self.__elapsed_time
+        else:
+            return self.__elapsed_time + time.time() - self.__start_times[-1]
+
+    elapsed_time = property(__get_elapsed_time, doc = "time elapsed while the has been active, including any current activity")
+
+    def __get_max_time(self):
+        return self.__max_time
+
+    def __set_max_time(self, max_time):
+        if max_time != None and max_time < 0:
+            raise TimerException, "maximum time may not be negative (max_time=%s)" % (max_time,)
+        self.__max_time = max_time
+
+    max_time = property(__get_max_time, __set_max_time)
+
+    def __get_has_expired(self):
+        '''determine if the timer has expired'''
+        if self.__max_time != None:
+            return self.elapsed_time > self.__max_time
+        else:
+            # raise TimerException, "timer does not have a maximum time associated with it"
+            return False
+
+    has_expired = property(__get_has_expired, doc = "flag indicating if the timer has expired")
+
+    def __get_start_times(self):
+        '''create and return a duplicate list of the start times'''
+        return list(self.__start_times)
+
+    start_times = property(__get_start_times, doc = "list of start times")
+
+    def __get_stop_times(self):
+        '''create and return a duplicate list of the stop times'''
+        return list(self.__stop_times)
+
+    stop_times = property(__get_stop_times, doc = "list of end times")
+
+    def __get_elapsed_times(self):
+        '''create and return a list of elapsed times'''
+        elapsed_times = []
+        for index in xrange(len(self.__stop_times)):
+            elapsed_times.append(self.__stop_times[index] - self.__start_times[index])
+        if self.is_active:
+            elapsed_times.append(time.time() - self.__start_times[-1])
+        return elapsed_times
+
+    elapsed_times = property(__get_elapsed_times, doc = "list of elapsed times")
+
+def getattrname(clsname, attrname):
+    '''return mangled private attribute names so that they may be looked up in the dictionary or using getattr()'''
+    if attrname[0:2] != "__" or attrname[-2:] == "__":
+        return attrname
+    else:
+        return "_" + clsname.lstrip("_") + attrname
+
+class ClassInfoMetaclass (type):
+    '''when a class is created, add private attributes to the class that contain a reference to the class and the class name'''
+    def __init__(cls, name, bases, dict):
+        type.__init__(cls, name, bases, dict)
+        setattr(cls, getattrname(name, "__cls"), cls)
+        setattr(cls, getattrname(name, "__clsname"), name)
+
+#
+# NOTE: replaced by type.mro().  the desired order as stated below is obtained using <type>.mro()[::-1].
+#
+# _class_list_map = {}
+# 
+# def _get_class_list(cls):
+#     '''
+#     return a list of the classes used to construct the supplied class.  the list is ordered such that a base class will always
+#     appear before classes derived from that base class.
+#     '''
+#     try:
+#         return _class_list_map[cls]
+#     except KeyError:
+#         classes = []
+#         classtree = inspect.getclasstree([cls], True)
+#         if len(classtree) > 1:
+#             for superclass, super2classes in classtree[0::2]:
+#                 for sc in _get_class_list(superclass):
+#                     if sc not in classes:
+#                         classes.append(sc)
+#         classes.append(cls)
+#         _class_list_map[cls] = classes
+#         return classes
+#
+
+
+_class_pickle_methods_map = {}
+_class_unpickle_methods_map = {}
+
+def _get_pickle_method_list(cls):
+    try:
+        return _class_pickle_methods_map[cls]
+    except KeyError:
+        methods = []
+        for cls in cls.mro():
+            method = getattr(cls, getattrname(cls.__name__, "__pickle_data"), None)
+            if method and callable(method):
+                methods.append(method)
+        _class_pickle_methods_map[cls] = methods
+        return methods
+
+def _get_unpickle_method_list(cls):
+    try:
+        return _class_unpickle_methods_map[cls]
+    except KeyError:
+        methods = []
+        for cls in cls.mro()[::-1]:
+            method = getattr(cls, getattrname(cls.__name__, "__unpickle_data"), None)
+            if method and callable(method):
+                methods.append(method)
+        _class_unpickle_methods_map[cls] = methods
+        return methods
+
+def pickle_data(obj):
+    data = obj.__dict__.copy()
+    for method in _get_pickle_method_list(obj.__class__):
+        method(obj, data)
+    return data
+
+def unpickle_data(obj, data):
+    obj.__dict__.update(data)
+    for method in _get_unpickle_method_list(obj.__class__):
+        method(obj, data)
+
+
+class PickleAwareThread (object):
+    __metaclass__ = ClassInfoMetaclass
+
+    def __init__(self, group = None, target = None, name = None, args = (), kwargs = {}):
+        self.__thread = Thread(group = group, target = self.__run_thread, name = name, args = args, kwargs = kwargs)
+        self.__group = group
+        self.__target = target
+        self.__name = self.__thread.getName()
+        self.__args = args
+        self.__kwargs = kwargs
+        self.__is_daemon = self.__thread.isDaemon()
+        self.__started = False
+        self.__stopped = False
+
+    def __pickle_data(self, data):
+        del data[getattrname(self.__clsname, "__thread")]
+
+    def __unpickle_data(self, data):
+        if not self.__started:
+            self.__thread = Thread(group = self.__group, target = self.__run_thread, name = self.__name, args = self.__args,
+                kwargs = self.__kwargs)
+        else:
+            self.__thread = None
+
+    def __getstate__(self):
+        return pickle_data(self)
+
+    def __setstate__(self, data):
+        unpickle_data(self, data)
+
+    def start(self):
+        if self.__thread:
+            self.__started = True
+            self.__thread.start()
+        else:
+            assert False, "thread already started"
+
+    def __run_thread(self):
+        self.__started = True
+        self.run()
+        self.__stopped = True
+
+    def run(self):
+        if self.__target:
+            self.__target(*self.__args, **self.__kwargs)
+
+    def join(self, timeout = None):
+        if self.__thread:
+            self.__thread.join(timeout)
+        elif not self.__stopped:
+            raise ThreadPickledAliveException
+
+    def getName(self):
+        return self.__name
+
+    def setName(self, name):
+        self.__name = name
+        if self.__thread:
+            self.__thread.setName(name)
+
+    def isAlive(self):
+        if self.__thread:
+            return self.__thread.isAlive()
+        elif self.__stopped:
+            return False
+        else:
+            raise ThreadPickledAliveException
+
+    def isDaemon(self):
+        return self.__is_daemon
+
+    def setDaemon(self, daemonic):
+        assert not self.__started, "cannot set daemon status of active thread"
+        self.__thread.setDaemon(daemonic)
+        self.is_daemon = daemonic
+
+
+# routines to pickle and unpickle class and instance methods.  the routines are registered with copy_reg so that cPickle will use
+# them whenever it encounters a method type.
+_method_class_map = {}
+
+def _pickle_method(method):
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    if cls == types.TypeType:
+        cls = obj
+        obj = None
+    try:
+        func_cls = _method_class_map[method]
+    except KeyError:
+        found = False
+        for func_cls in cls.mro():
+            try:
+                func = func_cls.__dict__[getattrname(func_cls.__name__, func_name)]
+            except KeyError:
+                pass
+            else:
+                if method.im_func == func.__get__(obj, cls).im_func:
+                    _method_class_map[method] = func_cls
+                    found = True
+                    break
+        assert found == True, "method was not found!"
+    func_name = getattrname(func_cls.__name__, func_name)
+    return _unpickle_method, (func_name, func_cls, obj, cls)
+
+def _unpickle_method(func_name, func_cls, obj, cls):
+    func = func_cls.__dict__[func_name]
+    return func.__get__(obj, cls)
+
+copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)

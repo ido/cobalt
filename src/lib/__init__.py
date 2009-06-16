@@ -9,6 +9,7 @@ import sys
 import os
 
 DEFAULT_CONFIG_FILES = ("/etc/cobalt.conf", )
+DEFAULT_LOG_DIRECTORY = '/var/log/cobalt'
 
 if '-C' in sys.argv:
     CONFIG_FILES = (sys.argv[sys.argv.index('-C') + 1], )

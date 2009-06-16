@@ -47,34 +47,68 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             raise SystemExit, 1
         
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'ready', 'system_state':"ready"} for jobid in args]
-    spec += [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'ready', 'system_state':"hold"} for jobid in args]
-    check_state_spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_state':'*', 'system_state':"*"} for jobid in args]
     
-    updates = {}
-    updates['user_state'] = "hold"
+    check_specs = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_hold':'*'} for jobid in args]
 
     try:
-        check_state = [j for j in cqm.get_jobs(check_state_spec) if j.get('user_state') != 'ready']
-        response = cqm.set_jobs(spec, updates)
+        check_response = cqm.get_jobs(check_specs)
     except xmlrpclib.Fault, flt:
-        response = []
-        if flt.faultCode == 30:
-            print flt.faultString
-            raise SystemExit, 1
+        print flt.faultString
+        raise SystemExit, 1
 
-    if not response and not check_state:
-        logger.error("Failed to match any jobs or queues")
+    jobs_existed = [j.get('jobid') for j in check_response]
+    update_specs = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_hold':"*", 'is_active':"*"} for jobid in jobs_existed]
+    updates = {'user_hold':True}
+
+    time.sleep(10)
+
+    try:
+        update_response = cqm.set_jobs(update_specs, updates)
+    except xmlrpclib.Fault, flt:
+        print flt.faultString
+        raise SystemExit, 1
+
+    jobs_found = [j.get('jobid') for j in update_response]
+    jobs_not_found = list(set(args).difference(set(jobs_existed)))
+    jobs_completed = [j.get('jobid') for j in update_response if j.get('has_completed')] + \
+        list(set(jobs_existed).difference(set(jobs_found)))
+    jobs_had_hold = [j.get('jobid') for j in check_response if j.get('user_hold') and j.get('jobid') in jobs_found]
+    jobs_active = [j.get('jobid') for j in update_response if j.get('is_active')]
+    pending_holds = [j.get('jobid') for j in update_response if j.get('user_hold') and j.get('is_active')]
+    unknown_failures = [j.get('jobid') for j in update_response if not j.get('user_hold') and
+        j.get('jobid') not in jobs_completed + jobs_had_hold + jobs_active]
+    new_holds = [j.get('jobid') for j in update_response if j.get('user_hold') and j.get('jobid') not in jobs_had_hold]
+    failed_holds = list(set(args).difference(set(new_holds)))
+
+    if not check_response and not update_response:
+        print "   No jobs found."
+        logger.error("Failed to match any jobs")
     else:
-        logger.debug(response)
-        if check_state:
-            print "   Failed to place user hold on jobs: "
-            for job in check_state:
-                if job.get('user_state') == 'hold':
-                    print "      job %d already in state 'user hold'" % job.get('jobid')
-            print
-        if response:
-            print "   Placed user hold on jobs: "
-            for job in response:
-                print "      %d" % job.get('jobid')
-    
+        logger.debug("Response: %s" % (update_response,))
+
+    if len(failed_holds) > 0:
+        print "   Failed to place user hold on jobs: "
+        for jobid in failed_holds:
+            if jobid in jobs_not_found:
+                print "      job %d not found" % (jobid,)
+            elif jobid in jobs_completed:
+                print "      job %d has already completed" % (jobid,)
+            elif jobid in jobs_had_hold:
+                if jobid in pending_holds:
+                    print "      job %d already has a pending 'user hold'" % (jobid,)
+                else:
+                    print "      job %d already in state 'user hold'" % (jobid,)
+            elif jobid in jobs_active:
+                print "      job %d is already active" % (jobid,)
+            elif jobid in unknown_failures:
+                print "      job %d encountered an unexpected problem while attempting to place the 'user hold'" % (jobid,)
+            else:
+                assert False, "job %d not properly categorized" % (jobid,)
+
+    if len(new_holds) > 0:
+        print "   Placed user hold on jobs: "
+        for jobid in new_holds:
+            if jobid in pending_holds:
+                print "      %d (pending)" % (jobid,)
+            else:
+                print "      %d" % (jobid,)

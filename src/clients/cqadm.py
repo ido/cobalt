@@ -9,12 +9,13 @@ import Cobalt.Logging, Cobalt.Util
 import getpass
 import os
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import QueueError, ComponentLookupError
+from Cobalt.Exceptions import QueueError, ComponentLookupError, JobPreemptionError, JobRunError, JobDeleteError
 
 __helpmsg__ = 'Usage: cqadm [--version] [-d] [--hold] [--release] [--run=<location>] ' + \
-              '[--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
+              '[--preempt] [--kill] [--delete] [--queue=queuename] [--time=time] <jobid> <jobid>\n' + \
               '       cqadm [-d] [-f] [--addq] [--delq] [--getq] [--stopq] [--startq] ' + \
-              '[--drainq] [--killq] [--setq "property=value property=value"] [--unsetq "property property"] --policy=<qpolicy> <queue> <queue>\n' + \
+              '[--drainq] [--killq] [--setq "property=value property=value"] [--unsetq "property property"] ' + \
+              '--policy=<qpolicy> <queue> <queue>\n' + \
               '       cqadm [-j <next jobid>]\n' + \
               '       cqadm [--savestate <filename>]'
 
@@ -38,7 +39,7 @@ if __name__ == '__main__':
         raise SystemExit, 0
 
     options = {'getq':'getq', 'f':'force', 'd':'debug', 'hold':'hold',
-               'release':'release', 'kill':'kill', 'delete':'delete',
+               'release':'release', 'preempt':'preempt', 'kill':'kill', 'delete':'delete',
                'addq':'addq', 'delq':'delq', 'stopq':'stopq',
                'startq':'startq', 'drainq':'drainq', 'killq':'killq'}
     doptions = {'j':'setjobid', 'setjobid':'setjobid', 'queue':'queue',
@@ -121,17 +122,35 @@ if __name__ == '__main__':
     elif kdata:
         user = getpass.getuser()
         for cmd in kdata:
-            if cmd == '--delete':
-                response = cqm.del_jobs(spec, True, user)
-            else:
-                response = cqm.del_jobs(spec, user)
+            try:
+                if cmd == '--delete':
+                    response = cqm.del_jobs(spec, True, user)
+                else:
+                    response = cqm.del_jobs(spec, False, user)
+            except xmlrpclib.Fault, flt:
+                if flt.faultCode == JobDeleteError.fault_code:
+                    args = eval(flt.faultString)
+                    exc = JobDeleteError(*args)
+                    print >>sys.stderr, "Job %s: ERROR - %s" % (exc.jobid, exc.message)
+                    raise SystemExit, exit_code
+                else:
+                    raise
     elif opts['run']:
         location = opts['run']
         part_list = ComponentProxy("system").get_partitions([{'name': location}])
         if len(part_list) != 1:
             print "Error: cannot find partition named '%s'" % location
             raise SystemExit, 1
-        response = cqm.run_jobs(spec, location.split(':'))
+        try:
+            response = cqm.run_jobs(spec, location.split(':'))
+        except xmlrpclib.Fault, flt:
+            if flt.faultCode == JobRunError.fault_code:
+                args = eval(flt.faultString)
+                exc = JobRunError(*args)
+                print >>sys.stderr, "Job %s: ERROR - %s" % (exc.jobid, exc.message)
+                raise SystemExit, 1
+            else:
+                raise
     elif opts['addq']:
         existing_queues = get_queues(cqm)
         if [qname for qname in args if qname in
@@ -222,29 +241,44 @@ if __name__ == '__main__':
         response = cqm.set_queues(spec, {'state':'dead'})
     elif opts['policy']:
         response = cqm.set_queues(spec, {'policy':opts['policy']})
+    elif opts['preempt']:
+        if not spec:
+            print "you must specify a jobid to preempt"
+            raise SystemExit, 1
+        user = getpass.getuser()
+        try:
+            response = cqm.preempt_jobs(spec, user, opts['force'])
+        except xmlrpclib.Fault, flt:
+            if flt.faultCode == JobPreemptionError.fault_code:
+                args = eval(flt.faultString)
+                exc = JobPreemptionError(*args)
+                print "Job %s: ERROR - %s" % (exc.jobid, exc.message)
+                raise SystemExit, 1
+            else:
+                raise
     else:
         updates = {}
         new_q_name = None
         if opts['hold']:
-            updates['system_state'] = 'hold'
+            updates['admin_hold'] = True
             if not spec:
                 print "you must specify a jobid to hold"
                 raise SystemExit, 1
             copy = []
             for s in spec:
-                s['system_state'] = 'ready'
+                s['admin_hold'] = False
                 copy.append(s.copy())
 #            for c in copy:
 #                c['state'] = 'user hold'
 #            spec += copy
         elif opts['release']:
-            updates['system_state'] = 'ready'
+            updates['admin_hold'] = False
             if not spec:
                 print "you must specify a jobid to release"
                 raise SystemExit, 1
             copy = []
             for s in spec:
-                s['system_state'] = 'hold'
+                s['admin_hold'] = True
                 copy.append(s.copy())
 #            for c in copy:
 #                c['state'] = 'user hold'

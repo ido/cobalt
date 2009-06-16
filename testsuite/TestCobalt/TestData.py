@@ -123,13 +123,13 @@ class TestDataState (TestData):
         class TestDataState(DataState):
             required = ['state'] + DataState.required
 
-            initial_state = 'init'
-            states = ['init', 'middle', 'end']
-            transitions = [('init', 'end')]
+            _initial_state = 'init'
+            _states = ['init', 'middle', 'end']
+            _transitions = [('init', 'end')]
             
             def __init__(self, data):
                 DataState.__init__(self, data)
-                self.state = data['state']
+                self._state = data['state']
 
         try:
             a = TestDataState({'state':'middle'})
@@ -139,21 +139,21 @@ class TestDataState (TestData):
 
         a = TestDataState({'state':'init'})
         try:
-            a.state = 'middle'
+            a._state = 'middle'
             assert False
         except DataStateTransitionError:
             pass
         try:
-            a.state = 'other'
+            a._state = 'other'
             assert False
         except DataStateError:
             pass
-        a.state = 'end'
+        a._state = 'end'
 
     def test_init_states_not_list(self):
         class TestDataState (DataState):
-            states = 'BadStateList'
-            initial_state = 'BadState'
+            _states = 'BadStateList'
+            _initial_state = 'BadState'
 
         try:
             tds = TestDataState({})
@@ -163,7 +163,7 @@ class TestDataState (TestData):
 
     def test_init_initial_state_not_set(self):
         class TestDataState (DataState):
-            states = ['State']
+            _states = ['State']
             
         try:
             tds = TestDataState({})
@@ -173,8 +173,8 @@ class TestDataState (TestData):
 
     def test_init_initial_state_invalid(self):
         class TestDataState (DataState):
-            states = ['State']
-            initial_state = 'BadState'
+            _states = ['State']
+            _initial_state = 'BadState'
 
         try:
             tds = TestDataState({})
@@ -184,9 +184,9 @@ class TestDataState (TestData):
 
     def test_init_transitions_not_list(self):
         class TestDataState (DataState):
-            states = ['State']
-            initial_state = 'State'
-            transitions = 'State'
+            _states = ['State']
+            _initial_state = 'State'
+            _transitions = 'State'
 
         try:
             tds = TestDataState({})
@@ -196,9 +196,9 @@ class TestDataState (TestData):
 
     def test_init_transition_not_2tuple(self):
         class TestDataState (DataState):
-            states = ['State1', 'State2']
-            initial_state = 'State1'
-            transitions = [('State1', 'State2', 'State3')]
+            _states = ['State1', 'State2']
+            _initial_state = 'State1'
+            _transitions = [('State1', 'State2', 'State3')]
 
         try:
             tds = TestDataState({})
@@ -208,9 +208,9 @@ class TestDataState (TestData):
 
     def test_init_transition_states_invalid(self):
         class TestDataState1 (DataState):
-            states = ['State1', 'State2']
-            initial_state = 'State1'
-            transitions = [('BadState', 'State2')]
+            _states = ['State1', 'State2']
+            _initial_state = 'State1'
+            _transitions = [('BadState', 'State2')]
 
         try:
             tds = TestDataState1({})
@@ -219,9 +219,9 @@ class TestDataState (TestData):
             pass
 
         class TestDataState2 (DataState):
-            states = ['State1', 'State2']
-            initial_state = 'State1'
-            transitions = [('State1', 'BadState')]
+            _states = ['State1', 'State2']
+            _initial_state = 'State1'
+            _transitions = [('State1', 'BadState')]
 
         try:
             tds = TestDataState2({})

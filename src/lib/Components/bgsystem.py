@@ -30,7 +30,7 @@ from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
-from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem
+from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem, JobValidationError
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 
@@ -46,10 +46,7 @@ Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 class ProcessGroup (bg_base_system.ProcessGroup):
     _configfields = ['mpirun']
     _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read(Cobalt.CONFIG_FILES)
+    _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgpm'):
         print '''"bgpm" section missing from cobalt config file'''
         sys.exit(1)
@@ -187,12 +184,9 @@ class BGSystem (BGBaseSystem):
     logger = logger
 
     
-    _configfields = ['diag_script_location', 'diag_log_file']
+    _configfields = ['diag_script_location', 'diag_log_file', 'kernel']
     _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read(Cobalt.CONFIG_FILES)
+    _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsystem'):
         print '''"bgsystem" section missing from cobalt config file'''
         sys.exit(1)
@@ -201,8 +195,13 @@ class BGSystem (BGBaseSystem):
     if mfields:
         print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
         sys.exit(1)
+    if config.get('kernel') == "true":
+        _kernel_configfields = ['bootprofiles', 'partitionboot']
+        mfields = [field for field in _kernel_configfields if not config.has_key(field)]
+        if mfields:
+            print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
+            sys.exit(1)
 
-    
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
         sys.setrecursionlimit(5000)
@@ -403,7 +402,27 @@ class BGSystem (BGBaseSystem):
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
                 nc.used_by = ''
-                
+
+            # determine which partitions just became idle...
+            pnames = []
+            self._partitions_lock.acquire()
+            try:
+                for partition in system_def:
+                    if self._partitions.has_key(partition.id) and partition.id in self._managed_partitions:
+                        state = _get_state(partition)
+                        if self._partitions[partition.id].state in ["busy", "starting job"] and state == "idle":
+                            if not self._partitions[partition.id].reserved_until:
+                                pnames.append(partition.id)
+            except:
+                self.logger.exception("Unexpected error occurred while computing list of partitions which just became idle.")
+            finally:
+                self._partitions_lock.release()
+
+            # ...and set their kernels back to the default (while _not_ holding the lock)
+            for pname in pnames:
+                self._clear_kernel(pname)
+
+            # update the state of each partition
             self._partitions_lock.acquire()
             try:
                 for partition in system_def:
@@ -463,7 +482,46 @@ class BGSystem (BGBaseSystem):
             self._partitions_lock.release()
             
             time.sleep(10)
-    
+
+    def _validate_kernel(self, kernel):
+        if self.config.get('kernel') != 'true':
+            return True
+        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        return os.path.exists(kernel_dir)
+
+    def _set_kernel(self, partition, kernel):
+        '''Set the kernel to be used by jobs run on the specified partition'''
+        if self.config.get('kernel') != 'true':
+            if kernel != "default":
+                raise Exception("custom kernel capabilities disabled")
+            return
+        partition_link = "%s/%s" % (os.path.expandvars(self.config.get('partitionboot')), partition)
+        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        try:
+            current = os.readlink(partition_link)
+        except OSError:
+            self.logger.error("partition %s: failed to read partitionboot location %s" % (partition, partition_link))
+            raise Exception("failed to read partitionboot location %s" % (partition_link,))
+        if current != kernel_dir:
+            if not self._validate_kernel(kernel):
+                self.logger.error("partition %s: kernel directory \"%s\" does not exist" % (partition, kernel_dir))
+                raise Exception("kernel directory \"%s\" does not exist" % (kernel_dir,))
+            self.logger.info("partition %s: updating boot image; currently set to \"%s\"" % (partition, current.split('/')[-1]))
+            try:
+                os.unlink(partition_link)
+                os.symlink(kernel_dir, partition_link)
+            except OSError:
+                self.logger.error("partition %s: failed to reset boot location" % (partition,))
+                raise Exception("failed to reset boot location for partition" % (partition,))
+            self.logger.info("partition %s: boot image updated; now set to \"%s\"" % (partition, kernel))
+
+    def _clear_kernel(self, partition):
+        '''Set the kernel to be used by a partition to the default value'''
+        if self.config.get('kernel') == 'true':
+            try:
+                self._set_kernel(partition, "default")
+            except:
+                logger.error("partition %s: failed to reset boot location" % (partition,))
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
@@ -495,7 +553,7 @@ class BGSystem (BGBaseSystem):
         """
         
         self.logger.info("add_process_groups(%r)" % (specs))
-        
+
         script_specs = []
         other_specs = []
         for spec in specs:
@@ -503,25 +561,61 @@ class BGSystem (BGBaseSystem):
                 script_specs.append(spec)
             else:
                 other_specs.append(spec)
-        
-        # start up script jobs
-        new_pgroups = []
-        if script_specs:
-            try:
-                for spec in script_specs:
-                    script_pgroup = ComponentProxy("script-manager").add_jobs([spec])
-                    new_pgroup = self.process_groups.q_add([spec])
-                    new_pgroup[0].script_id = script_pgroup[0]['id']
-                    self.reserve_partition_until(spec['location'][0], time.time() + 60*float(spec['walltime']), new_pgroup[0].id)
-                    new_pgroups.append(new_pgroup[0])
-            except (ComponentLookupError, xmlrpclib.Fault):
-                raise ProcessGroupCreationError("system::add_process_groups failed to communicate with script-manager")
 
+        # start up script jobs
+        script_pgroups = []
+        if script_specs:
+            for spec in script_specs:
+                try:
+                    self._set_kernel(spec.get('location')[0], spec.get('kernel', "default"))
+                except Exception, e:
+                    new_pgroup = self.process_groups.q_add([spec])
+                    pgroup = new_pgroup[0]
+                    pgroup.nodect = self._partitions[pgroup.location[0]].size
+                    pgroup.exit_status = 1
+                    self.logger.info("process group %s: job %s/%s failed to set the kernel; %s", pgroup.id, pgroup.jobid, 
+                        pgroup.user, e)
+                else:
+                    try:
+                        script_pgroup = ComponentProxy("script-manager").add_jobs([spec])
+                    except (ComponentLookupError, xmlrpclib.Fault):
+                        self._clear_kernel(spec.get('location')[0])
+                        # FIXME: jobs that were already started are not reported
+                        raise ProcessGroupCreationError("system::add_process_groups failed to communicate with script-manager")
+                    new_pgroup = self.process_groups.q_add([spec])
+                    pgroup = new_pgroup[0]
+                    pgroup.script_id = script_pgroup[0]['id']
+                    pgroup.nodect = self._partitions[pgroup.location[0]].size
+                    self.logger.info("job %s/%s: process group %s created to track script", pgroup.jobid, pgroup.user, pgroup.id)
+                    self.reserve_resources_until(spec['location'], time.time() + 60*float(spec['walltime']), pgroup.jobid)
+                    if pgroup.kernel != "default":
+                        self.logger.info("process group %s: job %s/%s using kernel %s", pgroup.id, pgroup.jobid, pgroup.user, 
+                            pgroup.kernel)
+                    script_pgroups.append(pgroup)
+
+        # start up non-script mode jobs
         process_groups = self.process_groups.q_add(other_specs)
-        for process_group in process_groups:
-            process_group.start()
+        for pgroup in process_groups:
+            pgroup.nodect = self._partitions[pgroup.location[0]].size
+            self.logger.info("job %s/%s: process group %s created to track mpirun status", pgroup.jobid, pgroup.user, pgroup.id)
+            try:
+                if not pgroup.true_mpi_args:
+                    self._set_kernel(pgroup.location[0], pgroup.kernel)
+            except Exception, e:
+                # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag
+                # should be added to the process group that wait_process_group uses to determine when a process group is no
+                # longer active.  an error message should also be attached to the process group so that cqm can report the
+                # problem to the user.
+                pgroup.exit_status = 1
+                self.logger.info("process group %s: job %s/%s failed to set the kernel; %s", pgroup.id, pgroup.jobid, 
+                    pgroup.user, e)
+            else:
+                if pgroup.kernel != "default" and not pgroup.true_mpi_args:
+                    self.logger.info("process group %s: job %s/%s using kernel %s", pgroup.id, pgroup.jobid, pgroup.user,
+                        pgroup.kernel)
+                pgroup.start()
             
-        return new_pgroups + process_groups
+        return script_pgroups + process_groups
     
     add_process_groups = exposed(query(add_process_groups))
     
@@ -542,7 +636,8 @@ class BGSystem (BGBaseSystem):
             for each in self.process_groups.itervalues():
                 if each.head_pid == pid:
                     each.exit_status = status
-                    self.logger.info("pg %i exited with status %i" % (each.id, status))
+                    self.logger.info("process group %i: job %s/%s exited with status %i" % \
+                        (each.id, each.jobid, each.user, status))
             if pid in self.diag_pids:
                 part, test = self.diag_pids[pid]
                 del self.diag_pids[pid]
@@ -562,21 +657,34 @@ class BGSystem (BGBaseSystem):
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
-            if pg.mode == "script":
-                try:
-                    ComponentProxy("script-manager").signal_jobs([{'id':pg.script_id}], "SIGTERM")
-                except (ComponentLookupError, xmlrpclib.Fault):
-                    self.logger.error("Failed to communicate with script manager when killing job")
-            else:
-                try:
-                    os.kill(int(pg.head_pid), getattr(signal, signame))
-                except OSError, e:
-                    self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
+            if pg.exit_status is not None:
+                if pg.mode == "script":
+                    try:
+                        ComponentProxy("script-manager").signal_jobs([{'id':pg.script_id}], signame)
+                    except (ComponentLookupError, xmlrpclib.Fault):
+                        self.logger.error("Failed to communicate with script manager when killing job")
+                else:
+                    try:
+                        os.kill(int(pg.head_pid), getattr(signal, signame))
+                    except OSError, e:
+                        self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
+    def validate_job(self, spec):
+        """validate a job for submission
+
+        Arguments:
+        spec -- job specification dictionary
+        """
+        spec = BGBaseSystem.validate_job(self, spec)
+        if not self._validate_kernel(spec['kernel']):
+            raise JobValidationError("kernel does not exist")
+        return spec
+    validate_job = exposed(validate_job)
+
     def launch_diags(self, partition, test_name):
-        diag_exe = os.path.join(self.config.get("diag_script_location"), test_name) 
+        diag_exe = os.path.join(os.path.expandvars(self.config.get("diag_script_location")), test_name) 
         try:
             sdata = os.stat(diag_exe)
         except:
@@ -587,14 +695,14 @@ class BGSystem (BGBaseSystem):
             self.diag_pids[pid] = (partition, test_name)
         else:
             try:
-                stdout = open(self.config.get("diag_log_file") or "/dev/null", 'a')
+                stdout = open(os.path.expandvars(self.config.get("diag_log_file")) or "/dev/null", 'a')
                 stdout.write("[%s] starting %s on partition %s\n" % (time.ctime(), test_name, partition))
                 stdout.flush()
                 os.dup2(stdout.fileno(), sys.__stdout__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stdout will be lost)" % e)
             try:
-                stderr = open(self.config.get("diag_log_file") or "/dev/null", 'a')
+                stderr = open(os.path.expandvars(self.config.get("diag_log_file")) or "/dev/null", 'a')
                 os.dup2(stderr.fileno(), sys.__stderr__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stderr will be lost)" % e)

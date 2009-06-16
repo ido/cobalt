@@ -78,7 +78,8 @@ class Data (object):
     fields -- list of public data fields for the entity
     inherent -- a list of fields that cannot be included in the spec
     required -- a list of fields required in the spec
-    
+    explicit -- fields that are only returned when explicitly listed in the spec
+
     Attributes:
     tag -- Misc. label.
     
@@ -91,7 +92,8 @@ class Data (object):
     fields = ["tag"]
     inherent = []
     required = []
-    
+    explicit = []
+
     def __init__ (self, spec):
         
         """Initialize a Data item.
@@ -117,7 +119,7 @@ class Data (object):
         spec -- Dictionary specifying fields and values to match against.
         """
         for field, value in spec.iteritems():
-            if not (value == "*" or (field in self.fields and getattr(self, field) == value)):
+            if not (value == "*" or (field in self.fields and hasattr(self, field) and getattr(self, field) == value)):
                 return False
         return True
     
@@ -125,24 +127,21 @@ class Data (object):
         """Return a transmittable version of an entity.
         
         Arguments:
-        fields -- List of fields to include. (default self.fields.keys())
+        fields -- List of fields to include. (default self.fields.keys() - self.explicit.keys())
         """
         if fields is None:
-            fields = self.fields
+            fields = [field for field in self.fields if field not in self.explicit]
         return dict([(field, getattr(self, field, None)) for field in fields])
     
     def update (self, spec):
-        """(deprecated) Update the values of multiple fields on an entity.
-        
-        Though this method has not been officially deprecated, it should not
-        be used in new code.
+        """Update the values of multiple fields on an entity.
         
         Arguments:
         spec -- A dictionary specifying the values of fields to set.
         """
-        warnings.warn("Use of Cobalt.Data.Data.update is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
+        # warnings.warn("Use of Cobalt.Data.Data.update is deprecated. Use attributes in stead.", DeprecationWarning, stacklevel=2)
         for key, value in spec.iteritems():
-            if not hasattr(self, key):
+            if key not in self.fields:
                 warnings.warn("Creating new attribute '%s' on '%s' with update." % (key, self), RuntimeWarning, stacklevel=2)
             setattr(self, key, value)
     
@@ -173,17 +172,17 @@ class DataState(Data):
     """Instance class for state machine instances
 
     Class attributes:
-    states -- list of states
-    transistions -- list of legal state transistions in the form of (old state, new state) tuples
-    initial_state -- starting state (must be in the list of states)
+    _states -- list of states
+    _transistions -- list of legal state transistions in the form of (old state, new state) tuples
+    _initial_state -- starting state (must be in the list of states)
 
     Properties:
-    state - get current state; transition to a new state (must be a legal transition as defined in the list of transitions)
+    _state - get current state; transition to a new state (must be a legal transition as defined in the list of transitions)
     """
 
-    initial_state = None
-    states = []
-    transitions = []
+    _initial_state = None
+    _states = []
+    _transitions = []
 
     def __init__(self, spec):
         """Validate states and transitions
@@ -192,46 +191,46 @@ class DataState(Data):
         spec -- a dictionary passed to the underlying Data class
 
         Exceptions:
-        DataStateError -- states, transitions or initial_state contains an improper value; accompanying message contains
+        DataStateError -- _states, _transitions or _initial_state contains an improper value; accompanying message contains
             additional information
         """
         Data.__init__(self, spec)
 
-        if not isinstance(self.states, list):
-            raise DataStateError("states attribute is not a list: %s" % (self.states,))
+        if not isinstance(self._states, list):
+            raise DataStateError("_states attribute is not a list: %s" % (self._states,))
 
-        if self.initial_state == None:
-            raise DataStateError("initial_state is not set")
-        if self.initial_state not in self.states:
-            raise DataStateError("initial_state is not a valid state: %s" % (self.initial_state,))
+        if self._initial_state == None:
+            raise DataStateError("_initial_state is not set")
+        if self._initial_state not in self._states:
+            raise DataStateError("_initial_state is not a valid state: %s" % (self._initial_state,))
 
-        if not isinstance(self.transitions, list):
-            raise DataStateError("transitions attribute is not a list: %s" % (self.transitions,))
-        for transition in self.transitions:
+        if not isinstance(self._transitions, list):
+            raise DataStateError("_transitions attribute is not a list: %s" % (self._transitions,))
+        for transition in self._transitions:
             if not isinstance(transition, tuple) or len(transition) != 2:
-                raise DataStateError("transition is not a 2-tuple: %s" % (transition,))
+                raise DataStateError("_transition is not a 2-tuple: %s" % (transition,))
             old_state, new_state = transition
-            if old_state not in self.states:
-                raise DataStateError("transition contains a invalid state: %s" % (old_state,))
-            if new_state not in self.states:
-                raise DataStateError("transition contains a invalid state: %s" % (new_state,))
+            if old_state not in self._states:
+                raise DataStateError("_transition contains a invalid state: %s" % (old_state,))
+            if new_state not in self._states:
+                raise DataStateError("_transition contains a invalid state: %s" % (new_state,))
 
-    def _get_state(self):
+    def __get_state(self):
         """Get the current state"""
-        return self._state
+        return self.__state
 
-    def _set_state(self, newvalue):
+    def __set_state(self, newvalue):
         """Set state to new value, ensuring it is a proper state and respects the state machine"""
-        if newvalue not in self.states:
+        if newvalue not in self._states:
             raise DataStateError(newvalue)
-        if not hasattr(self, '_state'):
-            if newvalue != self.initial_state:
+        if not hasattr(self, '_DataState__state'):
+            if newvalue != self._initial_state:
                 raise DataStateError(newvalue)
-        elif (self._state, newvalue) not in self.transitions:
-            raise DataStateTransitionError((self._state, newvalue))
-        self._state = newvalue
+        elif (self.__state, newvalue) not in self._transitions:
+            raise DataStateTransitionError((self.__state, newvalue))
+        self.__state = newvalue
     
-    state = property(_get_state, _set_state, doc = """
+    _state = property(__get_state, __set_state, doc = """
 Get -- get the current state
 
 Set -- set state to new value, ensuring it is a proper state and respects the state machine

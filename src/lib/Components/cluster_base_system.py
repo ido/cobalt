@@ -121,8 +121,9 @@ class ClusterBaseSystem (Component):
         # spec has {nodes, walltime*, procs, mode, kernel}
         
         max_nodes = len(self.all_nodes)
+        # FIXME: is bgtype really needed for clusters?
         try:
-            sys_type = CP.get('cqm', 'bgtype')
+            sys_type = CP.get('bgsystem', 'bgtype')
         except:
             sys_type = 'bgl'
         if sys_type == 'bgp':
@@ -399,12 +400,13 @@ class ClusterBaseSystem (Component):
     
     
 
-    def reserve_partition_until(self, partition_name, time, pgroup_id):
+    def reserve_resources_until(self, location, time, jobid):
+        partition_name = location[0]
         try:
             self.partitions[partition_name].reserved_until = time
         except:
             self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
-    reserve_partition_until = exposed(reserve_partition_until)
+    reserve_resources_until = exposed(reserve_resources_until)
 
 
     def nodes_up(self, node_list):

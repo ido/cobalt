@@ -2,4 +2,4 @@
 
 __revision__ = '$Revision:$'
 
-__all__ = ["ThreadSupport"]
+__all__ = ["ThreadSupport", "Logging"]

@@ -49,6 +49,49 @@ class JobValidationError(Exception):
     log = False
     fault_code = fault_code_counter.next()
 
+class JobProcessingError (Exception):
+    fault_code = fault_code_counter.next()
+    def __init__(self, msg, jobid, user, state, sm_state, sm_event):
+        self.args = (msg, jobid, user, state, sm_state, sm_event)
+        self.message = msg
+        self.jobid = jobid
+        self.user = user
+        self.state = state
+        self.sm_state = state
+        self.sm_event = event
+
+class JobPreemptionError (Exception):
+    log = False
+    fault_code = fault_code_counter.next()
+    def __init__(self, msg, jobid, user, force):
+        self.args = (msg, jobid, user, force)
+        self.message = msg
+        self.jobid = jobid
+        self.user = user
+        self.force = force
+
+class JobRunError (Exception):
+    log = False
+    fault_code = fault_code_counter.next()
+    def __init__(self, msg, jobid, state, sm_state):
+        self.args = (msg, jobid, state, sm_state)
+        self.message = msg
+        self.jobid = jobid
+        self.state = state
+        self.sm_state = sm_state
+
+class JobDeleteError (Exception):
+    log = False
+    fault_code = fault_code_counter.next()
+    def __init__(self, msg, jobid, user, force, state, sm_state):
+        self.args = (msg, jobid, user, force, state, sm_state)
+        self.message = msg
+        self.jobid = jobid
+        self.user = user
+        self.force = force
+        self.state = state
+        self.sm_state = sm_state
+
 class DataStateError(Exception):
     log = True
     fault_code = fault_code_counter.next()
@@ -66,5 +109,9 @@ class StateMachineIllegalEventError (Exception):
     fault_code = fault_code_counter.next()
 
 class StateMachineNonexistentEventError (Exception):
+    log = True
+    fault_code = fault_code_counter.next()
+
+class ThreadPickledAliveException (Exception):
     log = True
     fault_code = fault_code_counter.next()

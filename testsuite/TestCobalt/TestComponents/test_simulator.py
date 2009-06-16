@@ -40,11 +40,11 @@ class TestSimulator (TestComponent):
         idle_partitions = self.system.get_partitions([{'state':"idle"}])
         partition = idle_partitions[0]
         assert partition.name == part_name
-        job_location_args = [{'jobid':3003, 'nodes': partition.size, 'queue': "default", 'utility_score': 1,
+        job_location_args = [{'jobid':3003, 'nodes': partition.size, 'queue': "default", 'utility_score': 1, 'threshold': 0,
             'walltime':1}]
-        locations = self.system.find_job_location(job_location_args, 0, 3600)
+        locations = self.system.find_job_location(job_location_args, [])
         assert locations.has_key(3003)
-        reserved = self.system.reserve_partition(locations[3003])
+        reserved = self.system.reserve_partition(locations[3003][0])
         assert reserved
         assert partition.state == "busy"
         for parent in self.system._partitions.q_get([{'name':parent} for parent in partition.parents]):

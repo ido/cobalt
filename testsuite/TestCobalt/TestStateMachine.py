@@ -7,39 +7,39 @@ class TestStateMachine (object):
 
     def test_init(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 seas = {('Waiting', 'Start') : [self.start1, self.start2], ('Active', 'Stop') : [self.stop]}
-                ta = [self.terminate1, self.terminate2]
+                ta = [(self.terminate1, {}), (self.terminate2, {})]
                 StateMachine.__init__(self, {}, seas = seas, terminal_actions = ta)
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
-            def start2(self, event, args):
+            def start2(self, args):
                 pass
     
-            def stop(self, event, args):
+            def stop(self, args):
                 pass
 
-            def terminate1(self):
+            def terminate1(self, args):
                 pass
 
-            def terminate2(self):
+            def terminate2(self, args):
                 pass
 
         tsm = TSM()
 
     def test_init_terminal_state_missing(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active']
-            transitions = [('Waiting', 'Active')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active']
+            _transitions = [('Waiting', 'Active')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
@@ -50,12 +50,12 @@ class TestStateMachine (object):
         except StateMachineError:
             pass
 
-    def test_init_initial_state_missing(self):
+    def test_init__initial_state_missing(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            # initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            # _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
@@ -66,12 +66,12 @@ class TestStateMachine (object):
         except StateMachineError:
             pass
 
-    def test_init_initial_state_bad(self):
+    def test_init__initial_state_bad(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'BadState'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'BadState'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
@@ -84,10 +84,10 @@ class TestStateMachine (object):
 
     def test_init_seas_not_dict(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = 1)
@@ -100,10 +100,10 @@ class TestStateMachine (object):
 
     def test_init_seas_key_not_tuple(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {1 : []})
@@ -116,10 +116,10 @@ class TestStateMachine (object):
 
     def test_init_seas_key_not_2tuple(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {(1, 2, 3) : []})
@@ -132,10 +132,10 @@ class TestStateMachine (object):
 
     def test_init_seas_key_bad_state(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {('BadState', 'Start') : []})
@@ -148,10 +148,10 @@ class TestStateMachine (object):
 
     def test_init_seas_key_bad_event(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {('Waiting', 'BadEvent') : []})
@@ -164,15 +164,15 @@ class TestStateMachine (object):
 
     def test_init_seas_actions_not_list(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {('Waiting', 'Start') : self.start1})
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
         try:
@@ -183,17 +183,17 @@ class TestStateMachine (object):
 
     def test_init_seas_action_not_method(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             not_method = 1
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {('Waiting', 'Start') : [self.start1, self.not_method]})
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
         try:
@@ -207,30 +207,49 @@ class TestStateMachine (object):
             pass
 
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, seas = {('Waiting', 'Start') : [self.start1, extern_start_func]})
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
         tsm = TSM()
 
     def test_init_terminal_actions_not_list(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {}, terminal_actions = self.terminate1)
 
-            def terminate1(self):
+            def terminate1(self, args):
+                pass
+
+        try:
+            tsm = TSM()
+            assert False
+        except StateMachineError:
+            pass
+
+    def test_init_terminal_actions_not_list_of_tuples(self):
+        class TSM (StateMachine):
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
+
+            def __init__(self):
+                StateMachine.__init__(self, {}, terminal_actions = [self.terminate1])
+
+            def terminate1(self, args):
                 pass
 
         try:
@@ -241,17 +260,38 @@ class TestStateMachine (object):
 
     def test_init_terminal_action_not_method(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             not_method = 1
 
             def __init__(self):
-                StateMachine.__init__(self, {}, terminal_actions = [self.terminate1, self.not_method])
+                StateMachine.__init__(self, {}, terminal_actions = [(self.terminate1, {}), (self.not_method, {})])
 
-            def terminate1(self):
+            def terminate1(self, args):
+                pass
+
+        try:
+            tsm = TSM()
+            assert False
+        except StateMachineError:
+            pass
+
+    def test_init_terminal_action_args_not_dict(self):
+        class TSM (StateMachine):
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
+
+            not_method = 1
+
+            def __init__(self):
+                StateMachine.__init__(self, {}, terminal_actions = [(self.terminate1, 1)])
+
+            def terminate1(self, args):
                 pass
 
         try:
@@ -262,16 +302,16 @@ class TestStateMachine (object):
 
     def test_add_action(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
                 self.add_action('Waiting', 'Start', self.start1)
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
         tsm = TSM()
@@ -281,10 +321,10 @@ class TestStateMachine (object):
             pass
 
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
@@ -294,16 +334,16 @@ class TestStateMachine (object):
 
     def test_add_action_bad_state(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
                 self.add_action('BadState', 'Start', self.start1)
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
         try:
@@ -314,16 +354,16 @@ class TestStateMachine (object):
 
     def test_add_action_bad_event(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
                 self.add_action('Waiting', 'BadEvent', self.start1)
 
-            def start1(self, event, args):
+            def start1(self, args):
                 pass
 
         try:
@@ -334,10 +374,10 @@ class TestStateMachine (object):
 
     def test_add_action_not_method(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             not_method = 1
 
@@ -353,16 +393,16 @@ class TestStateMachine (object):
 
     def test_add_terminal_action(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
                 self.add_terminal_action(self.terminate1)
 
-            def terminate1(self):
+            def terminate1(self, args):
                 pass
 
         tsm = TSM()
@@ -372,10 +412,10 @@ class TestStateMachine (object):
             pass
 
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 StateMachine.__init__(self, {})
@@ -385,10 +425,10 @@ class TestStateMachine (object):
 
     def test_add_terminal_action_not_method(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             not_method = 1
 
@@ -402,12 +442,31 @@ class TestStateMachine (object):
         except StateMachineError:
             pass
 
+    def test_add_terminal_action_args_not_dict(self):
+        class TSM (StateMachine):
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
+
+            not_method = 1
+
+            def __init__(self):
+                StateMachine.__init__(self, {})
+                self.add_terminal_action(self.not_method, 1)
+
+        try:
+            tsm = TSM()
+            assert False
+        except StateMachineError:
+            pass
+
     def test_trigger_nonexistent_event(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 seas = {('Waiting', 'Progress') : []}
@@ -421,10 +480,10 @@ class TestStateMachine (object):
 
     def test_trigger_illegal_event(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 seas = {('Waiting', 'Start') : []}
@@ -438,16 +497,16 @@ class TestStateMachine (object):
 
     def test_trigger_args(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 seas = {('Waiting', 'Start') : [self.start]}
                 StateMachine.__init__(self, {}, seas = seas)
 
-            def start(self, event, args):
+            def start(self, args):
                 assert args == {'foo' : "bar", 'baz' : "bif"}, "args = %s" % args
 
         tsm = TSM()
@@ -455,10 +514,10 @@ class TestStateMachine (object):
 
     def test_run(self):
         class TSM (StateMachine):
-            states = ['Waiting', 'Active'] + StateMachine.states
-            transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
-            initial_state = 'Waiting'
-            events = ['Start', 'Stop'] + StateMachine.events
+            _states = ['Waiting', 'Active'] + StateMachine._states
+            _transitions = [('Waiting', 'Active'), ('Active', 'Terminal')]
+            _initial_state = 'Waiting'
+            _events = ['Start', 'Stop'] + StateMachine._events
 
             def __init__(self):
                 seas = {
@@ -466,49 +525,55 @@ class TestStateMachine (object):
                     ('Active', 'Progress') : [self.progress],
                     ('Active', 'Stop') : [self.stop],
                     }
-                ta = [self.terminate1, self.terminate2]
+                ta = [(self.terminate1, {}), (self.terminate2, {'n' : 13})]
                 StateMachine.__init__(self, {}, seas = seas, terminal_actions = ta)
                 self.actions = []
 
-            def start1(self, event, args):
+            def start1(self, args):
                 self.actions = self.actions + [traceback.extract_stack()[-1][2]]
 
-            def start2(self, event, args):
+            def start2(self, args):
                 self.actions = self.actions + [traceback.extract_stack()[-1][2]]
-                self.state = 'Active'
+                self._state = 'Active'
     
-            def progress(self, event, args):
+            def progress(self, args):
                 self.actions = self.actions + [traceback.extract_stack()[-1][2]]
 
-            def stop(self, event, args):
+            def stop(self, args):
                 self.actions = self.actions + [traceback.extract_stack()[-1][2]]
-                self.state = 'Terminal'
+                self._state = 'Terminal'
 
-            def terminate1(self):
+            def terminate1(self, args):
                 self.actions = self.actions + [traceback.extract_stack()[-1][2]]
 
-            def terminate2(self):
+            def terminate2(self, args):
+                assert args['n'] == 13
+                self.actions = self.actions + [traceback.extract_stack()[-1][2]]
+
+            def terminate3(self, args):
+                assert args['m'] == 169
                 self.actions = self.actions + [traceback.extract_stack()[-1][2]]
 
         tsm = TSM()
-        assert tsm.state == 'Waiting', 'state = %s' % tsm.state
+        assert tsm._state == 'Waiting', 'state = %s' % tsm._state
+        tsm.add_terminal_action(tsm.terminate3, {'m' : 169})
 
         tsm.actions = []
         tsm.trigger_event('Progress')
         assert tsm.actions == [], "actions run = %s" % tsm.actions
-        assert tsm.state == 'Waiting', 'state = %s' % tsm.state
+        assert tsm._state == 'Waiting', 'state = %s' % tsm._state
 
         tsm.actions = []
         tsm.trigger_event('Start')
         assert tsm.actions == ['start1', 'start2'], "actions run = %s" % tsm.actions
-        assert tsm.state == 'Active', 'state = %s' % tsm.state
+        assert tsm._state == 'Active', 'state = %s' % tsm._state
 
         tsm.actions = []
         tsm.trigger_event('Progress')
         assert tsm.actions == ['progress'], "actions run = %s" % tsm.actions
-        assert tsm.state == 'Active', 'state = %s' % tsm.state
+        assert tsm._state == 'Active', 'state = %s' % tsm._state
 
         tsm.actions = []
         tsm.trigger_event('Stop')
-        assert tsm.actions == ['stop', 'terminate1', 'terminate2'], "actions run = %s" % tsm.actions
-        assert tsm.state == 'Terminal', 'state = %s' % tsm.state
+        assert tsm.actions == ['stop', 'terminate1', 'terminate2', 'terminate3'], "actions run = %s" % tsm.actions
+        assert tsm._state == 'Terminal', 'state = %s' % tsm._state

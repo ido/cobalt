@@ -170,6 +170,7 @@ class ProcessGroup(Data):
 
         try:
             pgroup = ComponentProxy("system").add_process_groups([{
+                'jobid':self.jobid,
                 'tag':'process-group',
                 'user':self.user, 
                 'stdout':self.stdout,

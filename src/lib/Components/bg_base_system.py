@@ -132,16 +132,17 @@ class PartitionDict (DataDict):
     key = "name"
 
 class ProcessGroup (Data):
-    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
+    required_fields = ['jobid', 'user', 'executable', 'args', 'location', 'size', 'cwd']
     fields = Data.fields + [
-        "id", "user", "size", "cwd", "executable", "env", "args", "location",
+        "id", "jobid", "user", "size", "nodect", "cwd", "executable", "env", "args", "location",
         "head_pid", "stdin", "stdout", "stderr", "exit_status", "state",
-        "mode", "kerneloptions", "true_mpi_args",
+        "mode", "kernel", "kerneloptions", "true_mpi_args",
     ]
 
     def __init__(self, spec):
         Data.__init__(self, spec)
         self.id = spec.get("id")
+        self.jobid = spec.get("jobid")
         self.head_pid = None
         self.stdin = spec.get('stdin')
         self.stdout = spec.get('stdout')
@@ -155,8 +156,10 @@ class ProcessGroup (Data):
         self.executable = spec.get('executable')
         self.cwd = spec.get('cwd')
         self.size = spec.get('size')
+        self.nodect = None
         self.mode = spec.get('mode', 'co')
         self.args = " ".join(spec.get('args') or [])
+        self.kernel = spec.get('kernel')
         self.kerneloptions = spec.get('kerneloptions')
         self.env = spec.get('env') or {}
         self.true_mpi_args = spec.get('true_mpi_args')
@@ -191,6 +194,11 @@ class ProcessGroupDict (DataDict):
             spec['id'] = self.id_gen.next()
         return DataDict.q_add(self, specs)
 
+    def find_by_jobid(self, jobid):
+        for id, pg in self.iteritems():
+            if pg.jobid == jobid:
+                return pg
+        return None
 
 class BGBaseSystem (Component):
     """base system class.
@@ -342,7 +350,7 @@ class BGBaseSystem (Component):
         
         max_nodes = max([int(p.size) for p in self._partitions.values()])
         try:
-            sys_type = CP.get('cqm', 'bgtype')
+            sys_type = CP.get('bgsystem', 'bgtype')
         except:
             sys_type = 'bgl'
         if sys_type == 'bgp':
@@ -795,20 +803,34 @@ class BGBaseSystem (Component):
                         desired = int(part.size)
         return target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired
 
-    def reserve_partition_until(self, partition_name, time, pgroup_id):
+    def reserve_resources_until(self, location, new_time, jobid):
+        partition_name = location[0]
         if self.partitions[partition_name].reserved_by:
-            if self.partitions[partition_name].reserved_by != pgroup_id:
-                self.logger.error("pgid %s wasn't allowed to update the reservation on %s" % (pgroup_id, partition_name))
+            if self.partitions[partition_name].reserved_by != jobid:
+                self.logger.error("job %s wasn't allowed to update the reservation on %s" % (jobid, partition_name))
                 return
-
+        pg = self.process_groups.find_by_jobid(jobid)
         try:
             self._partitions_lock.acquire()
-            self.partitions[partition_name].reserved_until = time
-            self.partitions[partition_name].reserved_by = pgroup_id
+            if new_time:
+                # only adjust partition reservation time for script mode jobs
+                if pg != None and pg.mode == 'script':
+                    self.partitions[partition_name].reserved_until = new_time
+                    self.partitions[partition_name].reserved_by = jobid
+                    self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
+                        time.asctime(time.gmtime(new_time)))
+                else:
+                    # FIXME: this will be removed when all jobs reserve the partitions to which they are assigned
+                    self.logger.info("job %s: only script mode jobs may reserve partitions", jobid)
+            else:
+                self.partitions[partition_name].reserved_until = False
+                self.partitions[partition_name].reserved_by = None
+                self.logger.info("reservation on partition '%s' has been removed", partition_name)
         except:
-            self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
-        self._partitions_lock.release()
-    reserve_partition_until = exposed(reserve_partition_until)
+            self.logger.exception("an unexpected error occurred will adjusting the partition reservation time")
+        finally:
+            self._partitions_lock.release()
+    reserve_resources_until = exposed(reserve_resources_until)
 
     # yarrrrr!   deadlock ho!!
     # making more than one RPC call in the same atomic method is a recipe for disaster
@@ -840,7 +862,7 @@ class BGBaseSystem (Component):
                     which_one = None
                     if r['id'] == each.script_id:
                         each.exit_status = r['exit_status']
-                        self.reserve_partition_until(each.location[0], 1, each.id)
+                        self.reserve_resources_until(each.location, None, each.jobid)
 
     sm_sync = locking(automatic(sm_sync))
 

@@ -305,6 +305,7 @@ elif systype == 'BGP':
     RM_PartitionID = 10000
     RM_PartitionState = 10001
     RM_PartitionConnection = 10003
+    RM_PartitionJobID = 10007
     RM_PartitionUserName = 10008
     RM_PartitionBPNum = 10013
     RM_PartitionFirstBP = 10014
@@ -376,6 +377,13 @@ class Partition (Resource):
     
     connection = property(_get_connection)
     
+    def _get_job_id (self):
+        job_id = self._get_data(RM_PartitionJobID, c_int)
+        return job_id.value
+        
+    if systype == 'BGP':
+        job_id = property(_get_job_id)
+    
     def _get_user_name (self):
         name = self._get_data(RM_PartitionUserName, c_char_p)
         return free_value(name)
@@ -439,7 +447,6 @@ class Partition (Resource):
 
     if systype == 'BGL':
         mode = property(_get_mode)
-
 
 ##
 # Base Partition
@@ -938,6 +945,7 @@ rm_job_stderr_info_t = c_int
 rm_job_runtime_t = c_int
 rm_job_computenodes_used_t = c_int
 rm_job_exitstatus_t = c_int
+rm_signal_t = c_int
 
 if systype == 'BGL':
     RM_JobState = 64
@@ -994,6 +1002,12 @@ bridge.rm_get_job.restype = check_status
 bridge.rm_free_job.argtypes = [POINTER(rm_job_t)]
 bridge.rm_free_job.restype = check_status
 
+bridge.jm_signal_job.argtypes = [db_job_id_t, rm_signal_t]
+bridge.jm_signal_job.restype = check_status
+
+bridge.jm_cancel_job.argtypes = [db_job_id_t]
+bridge.jm_cancel_job.restype = check_status
+
 class Job (Resource):
     
     _ctype = POINTER(rm_job_t)
@@ -1008,6 +1022,14 @@ class Job (Resource):
         if self._free:
             bridge.rm_free_job(self)
     
+    def signal (self, signalnum):
+        status = bridge.jm_signal_job(self.db_id, rm_signal_t(signalnum))
+        return status
+    
+    def cancel (self):
+        status = bridge.jm_cancel_job(self.db_id)
+        return status
+
     def _get_id (self):
         id = self._get_data(RM_JobID, rm_job_id_t)
         return free_value(id)
@@ -1042,7 +1064,7 @@ class Job (Resource):
         id = self._get_data(RM_JobDBJobID, db_job_id_t)
         return id.value
     
-    id = property(_get_db_id)
+    db_id = property(_get_db_id)
     
     def _get_outfile (self):
         outfile = self._get_data(RM_JobOutFile, c_char_p)

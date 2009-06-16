@@ -4,6 +4,7 @@
 __revision__ = '$Revision$'
 
 import logging
+import os.path
 import sys
 import time
 import math
@@ -219,7 +220,7 @@ class Job (ForeignData):
     
     fields = ForeignData.fields + [
         "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user", "submittime", 
-        "system_state", "starttime", "project",
+        "starttime", "project", 'is_runnable', 'is_active', 'has_resources', 
     ]
     
     def __init__ (self, spec):
@@ -235,9 +236,11 @@ class Job (ForeignData):
         self.queue = spec.pop("queue", None)
         self.user = spec.pop("user", None)
         self.submittime = spec.pop("submittime", None)
-        self.system_state = spec.pop("system_state", None)
         self.starttime = spec.pop("starttime", None)
         self.project = spec.pop("project", None)
+        self.is_runnable = spec.pop("is_runnable", None)
+        self.is_active = spec.pop("is_active", None)
+        self.has_resources = spec.pop("has_resources", None)
         
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -247,8 +250,8 @@ class JobDict(ForeignDataDict):
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (job)")
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
-                  'walltime', 'queue', 'user', 'submittime', 'system_state', 
-                  'starttime', 'project' ]
+                  'walltime', 'queue', 'user', 'submittime', 'starttime', 'project',
+                  'is_runnable', 'is_active', 'has_resources', ]
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
@@ -428,7 +431,8 @@ class BGSched (Component):
         reservations = self.reservations.values()
         for i in range(len(reservations)):
             for j in range(i+1, len(reservations)):
-                # if at least one reservation is cyclic, we want *that* reservation to be the one getting its overlaps method called
+                # if at least one reservation is cyclic, we want *that* reservation to be the one getting its overlaps method
+                # called
                 if reservations[i].cycle is not None:
                     res1 = reservations[i]
                     res2 = reservations[j]
@@ -469,7 +473,7 @@ class BGSched (Component):
             if not (self.queues.has_key(queue) and self.queues[queue].state == 'running'):
                 continue
             
-            temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue}])
+            temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue}])
             active_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid) and cur_res.job_within_reservation(j):
@@ -558,7 +562,8 @@ class BGSched (Component):
                 # probably go back to the "default" one
                 
                 # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), exc_info=True)
+                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
+                    exc_info=True)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
                 self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
                 return
@@ -638,13 +643,15 @@ class BGSched (Component):
             return
         
         for eq_class in equiv:
-            temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in active_queues if queue.name in eq_class['queues']])
+            temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in active_queues \
+                if queue.name in eq_class['queues']])
             active_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
                     active_jobs.append(j)
     
-            temp_jobs = self.jobs.q_get([{'state':"queued", 'queue':queue.name} for queue in spruce_queues if queue.name in eq_class['queues']])
+            temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in spruce_queues \
+                if queue.name in eq_class['queues']])
             spruce_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
@@ -655,7 +662,11 @@ class BGSched (Component):
                 active_jobs = spruce_jobs
 
             # get the cutoff time for backfilling
-            temp_jobs = [job for job in self.jobs.q_get([{'system_state':"running"}]) if job.queue in eq_class['queues']]
+            #
+            # BRT: should we use 'has_resources' or 'is_active'?  has_resources returns to false once the resource epilogue
+            # scripts have finished running while is_active only returns to false once the job (not just the running task) has
+            # completely terminated.  the difference is likely to be slight unless the job epilogue scripts are heavy weight.
+            temp_jobs = [job for job in self.jobs.q_get([{'has_resources':True}]) if job.queue in eq_class['queues']]
             end_times = []
             drain_end_times = []
             for job in temp_jobs:
@@ -753,7 +764,7 @@ class BGSched (Component):
     def define_user_utility_functions(self):
         self.logger.info("building user utility functions")
         self.user_utility_functions.clear()
-        filename = self.config.get("utility_file")
+        filename = os.path.expandvars(self.config.get("utility_file"))
         try:
             f = open(filename)
         except:
@@ -778,7 +789,8 @@ class BGSched (Component):
         for thing in locals.values():
             if type(thing) is types.FunctionType:
                 if thing.func_name in self.builtin_utility_functions:
-                    self.logger.error("Attempting to overwrite builtin utility function '%s'.  User version discarded." % thing.func_name)
+                    self.logger.error("Attempting to overwrite builtin utility function '%s'.  User version discarded." % \
+                        thing.func_name)
                 else:
                     self.user_utility_functions[thing.func_name] = thing
     define_user_utility_functions = exposed(define_user_utility_functions)

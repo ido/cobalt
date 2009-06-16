@@ -12,6 +12,7 @@ int main(int argc, char **argv){
   unsetenv("IFS");
   unsetenv("LD_PRELOAD");
   unsetenv("LD_LIBRARY_PATH");
+  unsetenv("PYTHONPATH");
   /* To disable the user's ability to override the default configuration file,
      uncomment the following line.  In addition, the argument processing code
      below should be modfied to strip the -C <config-file> option from the

@@ -50,25 +50,13 @@ if __name__ == '__main__':
             raise SystemExit, 1
     
     if opts['start']:
-        query = [{'tag':'job', 'jobid':jid, 'system_state':"*"} for jid in args]
-    
-        while True:
-            response = cqm.get_jobs(query)
-            count = 0
-            for r in response:
-                if r['system_state'] == 'running':
-                    count += 1
-            if len(response) == count:
-                raise SystemExit, 0
-            else:
-                time.sleep(2)
+        query = [{'tag':'job', 'jobid':jid, 'is_active':False, 'has_completed':False} for jid in args]
     else:
         query = [{'tag':'job', 'jobid':jid} for jid in args]
     
-        while True:
-            response = cqm.get_jobs(query)
-            if len(response) == 0:
-                raise SystemExit, 0
-            else:
-                time.sleep(2)
-        
+    while True:
+        response = cqm.get_jobs(query)
+        if len(response) == 0:
+            raise SystemExit, 0
+        else:
+            time.sleep(2)

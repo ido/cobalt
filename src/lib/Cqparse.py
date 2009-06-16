@@ -16,6 +16,7 @@ __revision__ = '$Revision$'
 
 import datetime
 import os
+import os.path
 import re
 import logging
 import time
@@ -35,9 +36,9 @@ import Cobalt.Logging
 CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 try:
-    DEFAULT_LOG_DIRECTORY = CP.get('cqm', 'log_dir')
-except ConfigParser.NoOptionError:
-    DEFAULT_LOG_DIRECTORY = '/var/log/cobalt-accounting'
+    DEFAULT_LOG_DIRECTORY = os.path.expandvars(CP.get('cqm', 'log_dir'))
+except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+    DEFAULT_LOG_DIRECTORY = Cobalt.DEFAULT_LOG_DIRECTORY
 
 # Default number of previous days to include when examining logs. This must
 # be greater than the maximum walltime in days + 1 so we are sure to catch the

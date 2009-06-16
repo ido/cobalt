@@ -6,6 +6,7 @@ __all__ = ["Component", "exposed", "automatic", "run_component"]
 
 import inspect
 import os
+import os.path
 import cPickle
 import ConfigParser
 import pydoc
@@ -32,7 +33,7 @@ def state_file_location():
     else:
         _config.read(Cobalt.CONFIG_FILES)
     if _config._sections.has_key("statefiles"):
-        state_dir = _config._sections['statefiles'].get("location", "/var/spool/cobalt")
+        state_dir = os.path.expandvars(_config._sections['statefiles'].get("location", "/var/spool/cobalt"))
     else:
         state_dir = "/var/spool/cobalt"
 
@@ -66,7 +67,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     
     logging.getLogger().setLevel(level)
     Cobalt.Logging.log_to_stderr(logging.getLogger())
-    Cobalt.Logging.setup_logging(component_cls.implementation, True, True)
+    Cobalt.Logging.setup_logging(component_cls.implementation)
 
     if daemon:
         child_pid = os.fork()
@@ -105,7 +106,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     try:
         cp = ConfigParser.ConfigParser()
         cp.read([Cobalt.CONFIG_FILES[0]])
-        keypath = cp.get('communication', 'key')
+        keypath = os.path.expandvars(cp.get('communication', 'key'))
     except:
         keypath = '/etc/cobalt.key'
 
@@ -235,8 +236,7 @@ class Component (object):
         for name, func in inspect.getmembers(self, callable):
             if getattr(func, "automatic", False):
                 need_to_lock = not getattr(func, 'locking', False)
-                if (time.time() - func.automatic_ts) > \
-                   func.automatic_period:
+                if (time.time() - func.automatic_ts) > func.automatic_period:
                     if need_to_lock:
                         t1 = time.time()
                         self.lock.acquire()
@@ -250,11 +250,10 @@ class Component (object):
                                           % (name), exc_info=1)
                     finally:
                         mt2 = time.time()
-
-                    if need_to_lock:
-                        self.lock.release()
-                    self.statistics.add_value(name, mt2-mt1)
-                    func.__dict__['automatic_ts'] = time.time()
+                        if need_to_lock:
+                            self.lock.release()
+                        self.statistics.add_value(name, mt2-mt1)
+                        func.__dict__['automatic_ts'] = time.time()
 
     def _resolve_exposed_method (self, method_name):
         """Resolve an exposed method.
@@ -276,7 +275,6 @@ class Component (object):
         method -- XML-RPC method name
         args -- tuple of paramaters to method
         """
-        need_to_lock = True
         if method in dispatch_dict:
             method_func = dispatch_dict[method]
         else:
@@ -287,8 +285,7 @@ class Component (object):
                     self.logger.error(e, exc_info=True)
                 raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         
-        if getattr(method_func, 'locking', False):
-            need_to_lock = False
+        need_to_lock = not getattr(method_func, 'locking', False)
         if need_to_lock:
             lock_start = time.time()
             self.lock.acquire()
@@ -296,17 +293,17 @@ class Component (object):
         try:
             method_start = time.time()
             result = method_func(*args)
-            method_done = time.time()
         except Exception, e:
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         finally:
+            method_done = time.time()
             if need_to_lock:
                 self.lock.release()
                 self.statistics.add_value('component_lock',
                                       lock_done - lock_start)
-        self.statistics.add_value(method, method_done - method_start)
+            self.statistics.add_value(method, method_done - method_start)
         if getattr(method_func, "query", False):
             if not getattr(method_func, "query_all_methods", False):
                 margs = args[:1]

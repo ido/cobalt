@@ -7,6 +7,7 @@ import copy
 import logging
 import math
 import os
+import os.path
 import random
 import signal
 import sys
@@ -249,7 +250,7 @@ class PBSlogger:
         CP = ConfigParser.ConfigParser()
         CP.read(Cobalt.CONFIG_FILES)
         try:
-            self.logdir = CP.get('cqm', 'log_dir')
+            self.logdir = os.path.expandvars(CP.get('cqm', 'log_dir'))
         except ConfigParser.NoOptionError:
             self.logdir = '.'
             
