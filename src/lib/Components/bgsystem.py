@@ -657,7 +657,7 @@ class BGSystem (BGBaseSystem):
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
-            if pg.exit_status is not None:
+            if pg.exit_status is None:
                 if pg.mode == "script":
                     try:
                         ComponentProxy("script-manager").signal_jobs([{'id':pg.script_id}], signame)
