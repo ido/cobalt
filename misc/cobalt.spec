@@ -63,8 +63,6 @@ cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
 cd ${RPM_BUILD_ROOT}%{_bindir}
 for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf wrapper $file ; done
-mkdir -p ${RPM_BUILD_ROOT}/var/spool/cobalt
-chmod 700 ${RPM_BUILD_ROOT}/var/spool/cobalt
 find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python2.5@'
 cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done 
 
@@ -80,7 +78,10 @@ fi
 %post
 chgrp cobalt /usr/bin/wrapper
 chmod g+s /usr/bin/wrapper
-
+if test ! -d /var/spool/cobalt ; then
+    mkdir -p /var/spool/cobalt
+    chmod 700 /var/spool/cobalt
+fi
 
 %files -n cobalt
 /usr/sbin/*
@@ -88,7 +89,6 @@ chmod g+s /usr/bin/wrapper
 %config(noreplace) /etc/init.d/cobalt
 /usr/share/man/man5/*
 /usr/share/man/man8/*.8*
-/var/spool/cobalt
 
 
 %files -n cobalt-clients
