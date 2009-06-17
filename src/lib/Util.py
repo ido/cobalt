@@ -80,6 +80,8 @@ def get_time(date_string):
     minutes += 60 * time_info.get("hours", 0)
     minutes += 1440 * time_info.get("days", 0)
 
+    # XML-RPC only allows 32-bit integers... so make sure the user isn't
+    # trying to specify a number that causes an explosion
     if minutes > 2**31:
         raise TimeFormatError, "%d years is too long" % (minutes/525600, )
 
