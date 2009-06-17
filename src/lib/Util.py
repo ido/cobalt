@@ -80,6 +80,9 @@ def get_time(date_string):
     minutes += 60 * time_info.get("hours", 0)
     minutes += 1440 * time_info.get("days", 0)
 
+    if minutes > 2**31:
+        raise TimeFormatError, "%d years is too long" % (minutes/525600, )
+
     return minutes
 
 
