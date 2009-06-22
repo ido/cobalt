@@ -244,7 +244,7 @@ class ClusterSystem (ClusterBaseSystem):
         for host in pg.location:
             h = host.split(":")[0]
             try:
-                p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), pg.jobid, pg.user, group_name])
+                p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), str(pg.jobid), pg.user, group_name])
                 p.host = h
                 processes.append(p)
             except:
