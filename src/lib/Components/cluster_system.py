@@ -285,7 +285,7 @@ class ClusterSystem (ClusterBaseSystem):
             if dirty_nodes:    
                 for host in dirty_nodes:
                     self.down_nodes.add(host)
-                p = subprocess.Popen([pg.config.get("epi_epilogue"), pg.jobid, pg.user, group_name] + dirty_nodes)
+                p = subprocess.Popen([pg.config.get("epi_epilogue"), str(pg.jobid), pg.user, group_name] + dirty_nodes)
             
             del self.process_groups[pg.id]
         except:
