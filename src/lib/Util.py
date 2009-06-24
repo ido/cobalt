@@ -94,7 +94,6 @@ def dgetopt(arglist, opt, vopt, msg):
     for optname in opt.values() + vopt.values():
         ret[optname] = False
     gstr = "".join(opt.keys()) + "".join([longopt+':' for longopt in vopt.keys()])
-    gstr += 'C:'
     try:
         (opts, args) = getopt(arglist, gstr)
     except GetoptError, gerr:
@@ -106,9 +105,6 @@ def dgetopt(arglist, opt, vopt, msg):
         if opt.has_key(option):
             ret[opt[option]] = True
         else:
-            if option == 'C':
-                if 'C' not in opt.keys() + vopt.keys():
-                    continue
             ret[vopt[option]] = garg
     return ret, list(args)
 
@@ -133,7 +129,6 @@ def dgetopt_long(arglist, opt, vopt, msg):
         else:
             gstr = gstr + o + ':'
 
-    gstr += 'C:'
     try:
         (opts, args) = getopt(arglist, gstr, long_opts)
     except GetoptError, gerr:
@@ -146,8 +141,6 @@ def dgetopt_long(arglist, opt, vopt, msg):
         if opt.has_key(option):
             ret[opt[option]] = True
         else:
-            if option == 'C' and 'C' not in opt.keys() + vopt.keys():
-                continue
             ret[vopt[option]] = garg
 
     return ret, list(args)

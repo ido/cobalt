@@ -3,7 +3,7 @@
 bgsystem \- Blue Gene System Component
 .SH SYNOPSIS
 .B bgsystem 
-.I [-d] [-C <configfile>] [-D=<pidfile>]
+.I [-d] [--config-files <configfile1:configfile2>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B bgsystem 
@@ -13,7 +13,7 @@ The Blue Gene System Component handles mpirun execution for jobs in the queue.
 .B \-d
 Turn on communication debugging.
 .TP
-.B \-C <configfile>
+.B \-\-config-files <configfile1:configfile2>
 Specify path to cobalt.conf.
 .TP
 .B \-D=<pidfile>

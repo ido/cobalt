@@ -42,10 +42,7 @@ logger = logging.getLogger(__name__)
 class ProcessGroup (cluster_base_system.ProcessGroup):
     _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue']
     _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read(Cobalt.CONFIG_FILES)
+    _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('cluster_system'):
         print '''"cluster_system" section missing from cobalt config file'''
         sys.exit(1)

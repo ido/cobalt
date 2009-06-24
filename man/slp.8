@@ -3,7 +3,7 @@
 slp \- Cobalt service location protocol
 .SH SYNOPSIS
 .B slp
-.I [-d] [-C <configfile>] [-D=<pidfile>]
+.I [-d] [--config-files <configfile1:configfile2>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B slp
@@ -13,7 +13,7 @@ Service location protocol
 .B \-d
 Turn on communication debugging.
 .TP
-.B \-C <configfile>
+.B \-\-config-files <configfile1:configfile2>
 Specify path to cobalt.conf.
 .TP
 .B \-D=<pidfile>

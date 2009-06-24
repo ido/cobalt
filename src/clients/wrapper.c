@@ -15,9 +15,9 @@ int main(int argc, char **argv){
   unsetenv("PYTHONPATH");
   /* To disable the user's ability to override the default configuration file,
      uncomment the following line.  In addition, the argument processing code
-     below should be modfied to strip the -C <config-file> option from the
+     below should be modfied to strip the --config-files option from the
      arguments passed on to the python program. */
-  /* unsetenv("COBALT_CONFIG_FILE"); */
+  /* unsetenv("COBALT_CONFIG_FILES"); */
   
   putenv("SSS_WRAPPER=1");
   args = malloc((argc+1) * sizeof(char *));

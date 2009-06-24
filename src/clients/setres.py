@@ -34,7 +34,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axC:D', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', [])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg

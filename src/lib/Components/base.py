@@ -28,10 +28,7 @@ from Cobalt.Statistics import Statistics
 
 def state_file_location():
     _config = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _config.read(sys.argv[sys.argv.index('-C') + 1])
-    else:
-        _config.read(Cobalt.CONFIG_FILES)
+    _config.read(Cobalt.CONFIG_FILES)
     if _config._sections.has_key("statefiles"):
         state_dir = os.path.expandvars(_config._sections['statefiles'].get("location", "/var/spool/cobalt"))
     else:
@@ -44,11 +41,11 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     if argv is None:
         argv = sys.argv
     try:
-        (opts, arg) = getopt.getopt(argv[1:], 'C:D:d' + extra_getopt)
+        (opts, arg) = getopt.getopt(argv[1:], 'D:d' + extra_getopt)
     except getopt.GetoptError, e:
         print >> sys.stderr, e
         print >> sys.stderr, "Usage:"
-        print >> sys.stderr, "%s [-d] [-D pidfile] [-C config file]" % (os.path.basename(argv[0]))
+        print >> sys.stderr, "%s [-d] [-D pidfile] [--config-files file1:file2]" % (os.path.basename(argv[0]))
         sys.exit(1)
     
     # default settings
@@ -57,9 +54,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     level = logging.INFO
     # get user input
     for item in opts:
-        if item[0] == '-C':
-            Cobalt.CONFIG_FILES = (item[1], )
-        elif item[0] == '-D':
+        if item[0] == '-D':
             daemon = True
             pidfile_name = item[1]
         elif item[0] == '-d':

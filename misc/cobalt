@@ -24,7 +24,7 @@ start_component () {
 	component_args=''
     fi
     echo -n "Starting ${component}: "
-    "${DAEMONDIR}/${component}.py" $component_args -C "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
+    "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
     echo "done"
     return 0
 }

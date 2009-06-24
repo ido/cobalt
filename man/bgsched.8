@@ -3,7 +3,7 @@
 bgsched \- Blue Gene Scheduler
 .SH SYNOPSIS
 .B bgsched
-.I [-d] [-C <configfile>] [-D=<pidfile>]
+.I [-d] [--config-files <configfile1:configfile2>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B bgsched
@@ -13,7 +13,7 @@ Blue Gene Scheduler
 .B \-d
 Turn on communication debugging.
 .TP
-.B \-C <configfile>
+.B \-\-config-files <configfile1:configfile2>
 Specify path to cobalt.conf.
 .TP
 .B \-D=<pidfile>

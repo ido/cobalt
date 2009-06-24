@@ -3,7 +3,7 @@
 scriptm \- Cobalt Script Manager
 .SH SYNOPSIS
 .B scriptm
-.I [-d] [-C <configfile>] [-D=<pidfile>]
+.I [-d] [--config-files <configfile1:configfile2>] [-D=<pidfile>]
 .SH "DESCRIPTION"
 .PP
 .B scriptm
@@ -13,7 +13,7 @@ Cobalt Script Manager.  This component handles execution of jobs that submitted 
 .B \-d
 Turn on communication debugging.
 .TP
-.B \-C <configfile>
+.B \-\-config-files <configfile1:configfile2>
 Specify path to cobalt.conf.
 .TP
 .B \-D=<pidfile>
