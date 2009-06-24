@@ -989,13 +989,17 @@ class Job (StateMachine):
             self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, \
                 ":".join(self.location)))
 
+        optional = {}
+        if self.project:
+            optional['account'] = self.project
         # group and session are unknown
         accounting_logger.info(accounting.start(self.jobid, self.user,
-            "unknown", self.jobname, self.queue, self.ctime, self.qtime,
-            self.etime, self.start, self.exec_host,
+            "unknown", self.jobname, self.queue,
+            self.outputdir, self.command, self.args, self.mode,
+            self.ctime, self.qtime, self.etime, self.start, self.exec_host,
             {'ncpus':self.procs, 'nodect':self.nodes,
              'walltime':str_elapsed_time(self.walltime * 60)},
-            "unknown"))
+            "unknown", **optional))
 
         # notify the user that the job is starting; a separate thread is used to send the email so that cqm does not block
         # waiting for the smtp server to respond
@@ -1599,13 +1603,17 @@ class Job (StateMachine):
             self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, \
                 ":".join(self.location)))
 
+        optional = {}
+        if self.project:
+            optional['account'] = self.project
         # group and session are unknown
         accounting_logger.info(accounting.start(self.jobid, self.user,
-            "unknown", self.jobname, self.queue, self.ctime, self.qtime,
-            self.etime, self.start, self.exec_host,
+            "unknown", self.jobname, self.queue,
+            self.outputdir, self.command, self.args, self.mode,
+            self.ctime, self.qtime, self.etime, self.start, self.exec_host,
             {'ncpus':self.procs, 'nodect':self.nodes,
              'walltime':str_elapsed_time(self.walltime * 60)},
-            "unknown"))
+            "unknown", **optional))
 
         # start resource prologue scripts
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
@@ -1757,8 +1765,9 @@ class Job (StateMachine):
             exit_status = "unknown"
         # group and session are unknown
         accounting_logger.info(accounting.end(self.jobid, self.user,
-            "unknown", self.jobname, self.queue, self.ctime, self.qtime,
-            self.etime, self.start, self.exec_host,
+            "unknown", self.jobname, self.queue,
+            self.outputdir, self.command, self.args, self.mode,
+            self.ctime, self.qtime, self.etime, self.start, self.exec_host,
             {'ncpus':self.procs, 'nodect':self.nodes,
              'walltime':str_elapsed_time(self.walltime * 60)},
             "unknown", self.end, exit_status,
@@ -2098,8 +2107,9 @@ class Job (StateMachine):
                         optional['account'] = self.project
                     # group, session and exit_status are unknown
                     accounting_logger.info(accounting.end(self.jobid, self.user,
-                        "unknown", self.jobname, self.queue, self.ctime, self.qtime,
-                        self.etime, self.start, self.exec_host,
+                        "unknown", self.jobname, self.queue,
+                        self.outputdir, self.command, self.args, self.mode,
+                        self.ctime, self.qtime, self.etime, self.start, self.exec_host,
                         {'ncpus':self.procs, 'nodect':self.nodes,
                          'walltime':str_elapsed_time(self.walltime * 60)},
                          "unknown", self.end, "unknown",

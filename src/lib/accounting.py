@@ -73,7 +73,8 @@ def delete (job_id, requester):
 
 
 def end (job_id,
-         user, group, jobname, queue, ctime, qtime, etime, start, exec_host,
+         user, group, jobname, queue, cwd, exe, args, mode,
+         ctime, qtime, etime, start, exec_host,
          resource_list, session, end, exit_status, resources_used,
          account=None, resvname=None, resv_id=None, alt_id=None,
          accounting_id=None):
@@ -86,6 +87,10 @@ def end (job_id,
     group -- the group name under which the job executed
     jobname -- the name of the job
     queue -- the name of the queue in which the job executed
+    cwd -- the current working directory used by the job
+    exe -- the executable run by the job
+    args -- the arguments passsed to the executable
+    mode -- the exection mode of the job
     ctime -- time when job was created
     qtime -- time when job was queued into current queue
     etime -- time in seconds when job became eligible to run
@@ -106,6 +111,7 @@ def end (job_id,
     """
     
     message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue,
+        'cwd':cwd, 'exe':exe, 'args':args, 'mode':mode, 
         'ctime':ctime, 'qtime':qtime, 'etime':etime, 'start':start,
         'exec_host':exec_host, 'Resource_List':resource_list,
         'session':session, 'end':end, 'Exit_status':exit_status,
@@ -168,9 +174,10 @@ def rerun (job_id):
 
 
 def start (job_id,
-           user, group, jobname, queue, ctime, qtime, etime, start, exec_host,
+           user, group, jobname, queue, cwd, exe, args, mode,
+           ctime, qtime, etime, start, exec_host,
            resource_list, session,
-           resvname=None, resv_id=None, alt_id=None,
+           account=None, resvname=None, resv_id=None, alt_id=None,
            accounting_id=None):
     
     """Job started (terminated execution).
@@ -181,6 +188,10 @@ def start (job_id,
     group -- the group name under which the job executed
     jobname -- the name of the job
     queue -- the name of the queue in which the job resides
+    cwd -- the current working directory used by the job
+    exe -- the executable run by the job
+    args -- the arguments passsed to the executable
+    mode -- the exection mode of the job
     ctime -- time when job was created
     qtime -- time when job was queued into current queue
     etime -- time in seconds when job became eligible to run
@@ -190,6 +201,7 @@ def start (job_id,
     session -- session number of job
     
     Keyword arguments:
+    account -- if job has an "account name" string
     resvname -- the name of the resource reservation, if applicable
     resv_id -- the id of the resource reservation, if applicable
     alt_id -- optional alternate job identifier
@@ -197,9 +209,12 @@ def start (job_id,
     """
     
     message = {'user':user, 'group':group, 'jobname':jobname, 'queue':queue,
+        'cwd':cwd, 'exe':exe, 'args':args, 'mode':mode, 
         'ctime':ctime, 'qtime':qtime, 'etime':etime, 'start':start,
         'exec_host':exec_host, 'Resource_List':resource_list,
         'session':session}
+    if account is not None:
+        message['account'] = account
     if resvname is not None:
         message['resvname'] = resvname
     if resv_id is not None:
@@ -317,7 +332,8 @@ def serialize_message (message):
                 message['%s.%s' % (keyword, keyword_)] = value_
     for keyword, value in message.items():
         if isinstance(value, basestring):
-            pass
+            if ' ' in value or '"' in value or "," in value:
+                message[keyword] = '"' + value.replace('"', '\\"') + '"'
         else:
             for f in (serialize_list, serialize_dt, serialize_td):
                 try:
@@ -332,7 +348,12 @@ def serialize_message (message):
 
 def serialize_list (list_):
     try:
-        return ",".join(str(i) for i in list_)
+        values = []
+        for value in list_:
+            if ' ' in value or '"' in value or "," in value:
+                value = '"' + value.replace('"', '\\"') + '"'
+            values.append(value)
+        return ",".join(str(i) for i in values)
     except TypeError, ex:
         raise ValueError(ex)
 
