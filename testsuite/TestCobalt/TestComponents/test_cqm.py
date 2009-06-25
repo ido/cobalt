@@ -451,7 +451,7 @@ class SimulatedTaskManager (Component):
         try:
             self.__lock.acquire()
             while self.op_index == len(self.ops):
-                self.__cond.wait()
+                self.__cond.wait(1.0)
             op = self.ops[self.op_index]
             self.op_index += 1
         finally:
@@ -639,9 +639,10 @@ def create_touch_scripts(num_scripts):
         sh_fn = fn
         out_fn = "%s.out" % (fn_base,)
         fp = os.fdopen(fd, "w")
-        fp.write("""
+        fp.write("""\
 #!/bin/sh
 touch %(out_fn)s
+echo "%(out_fn)s has been created"
 """ % {'out_fn':out_fn})
         fp.close()
         os.chmod(sh_fn, 0700)
@@ -658,10 +659,12 @@ def create_wait_scripts(num_scripts, timeout):
         in_fn = "%s.in" % (fn_base,)
         out_fn = "%s.out" % (fn_base,)
         fp = os.fdopen(fd, "w")
-        fp.write("""
+        fp.write("""\
 #!/bin/sh
 touch %(out_fn)s
+echo "%(out_fn)s has been created"
 n=0
+echo "waiting for %(in_fn)s to be created"
 while test ! -f %(in_fn)s ; do
     sleep 0.2
     n=`expr $n + 1`
@@ -671,6 +674,7 @@ while test ! -f %(in_fn)s ; do
         exit 1
     fi
 done
+echo "%(in_fn)s now exists; deleting it"
 rm %(in_fn)s
 """ % {'in_fn':in_fn, 'out_fn':out_fn, 'timeout':timeout})
         fp.close()
@@ -1159,6 +1163,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         def _job_complete():
             self.test_calls += [traceback.extract_stack()[-1][2]]
             debug_print("TEST_JOB_EXEC: _job_complete")
+            self.job_finished_wait()
         self.test_calls = []
         self.job_exec_driver(
             num_preempts = 1, job_queued = _job_queued, job_pretask = _job_pretask, resource_pretask = _resource_pretask,

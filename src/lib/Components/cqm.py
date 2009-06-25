@@ -204,18 +204,15 @@ class RunScriptsThread (PickleAwareThread):
         '''
         PickleAwareThread.__init__(self)
         self.__scripts = scripts
-        params = []
+        self.__params = []
         for attr in attrs:
             if not hasattr(data_object, attr):
                 continue
             value = getattr(data_object, attr)
             if isinstance(value, list):
-                params.append('%s="%s"' % (attr, ':'.join([str(v) for v in value])))
-            elif isinstance(value, dict):
-                params.append('%s="{%s}"' % (attr, str(value)))
+                self.__params.append('%s=%s' % (attr, ':'.join([Cobalt.Util.escape_string(str(v), ":") for v in value])))
             else:
-                params.append('%s="%s"' % (attr, value))
-        self.__params = " ".join(params)
+                self.__params.append('%s=%s' % (attr, str(value)))
         self.__results = []
 
     def __getstate__(self):
@@ -229,10 +226,12 @@ class RunScriptsThread (PickleAwareThread):
         routine that runs the scripts and collects their results
         '''
         for script in self.__scripts:
+            if script == "":
+                continue
             results = {}
             results['script'] = script
             try:
-                rc, out, err = Cobalt.Util.runcommand("%s %s" % (script, self.__params))
+                rc, out, err = Cobalt.Util.runcommand(script, self.__params)
                 results['rc'] = rc
                 results['out'] = out
                 results['err'] = err
@@ -848,12 +847,15 @@ class Job (StateMachine):
                     ":".join(self.__sm_scripts_thread.scripts_completed)), cobalt_log = True)
                 self.__sm_scripts_state_unknown = True
 
+        self.__sm_scripts_thread.join()
+
         for result in self.__sm_scripts_thread.results:
             if result.has_key('exception'):
                 self.__sm_log_warn("exception with %s %s, error is %s" % (type, result['script'], result['exception']))
             elif result['rc'] != 0:
-                self.__sm_log_warn("return code from %s %s was %d; error text follows:%s" %
-                    (type, result['script'], result['rc'], "    ".join(["\n"] + result['err'])))
+                err_msg = ("\n" + result['err']).replace("\n", "\n    ").rstrip()
+                self.__sm_log_warn("return code from %s %s was %d; error text follows:%s" % \
+                    (type, result['script'], result['rc'], err_msg))
         return True
 
     def __sm_common_queued__hold(self, hold_state, args):

@@ -333,7 +333,7 @@ def serialize_message (message):
     for keyword, value in message.items():
         if isinstance(value, basestring):
             if ' ' in value or '"' in value or "," in value:
-                message[keyword] = '"' + value.replace('"', '\\"') + '"'
+                message[keyword] = '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
         else:
             for f in (serialize_list, serialize_dt, serialize_td):
                 try:
@@ -351,7 +351,7 @@ def serialize_list (list_):
         values = []
         for value in list_:
             if ' ' in value or '"' in value or "," in value:
-                value = '"' + value.replace('"', '\\"') + '"'
+                value = '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
             values.append(value)
         return ",".join(str(i) for i in values)
     except TypeError, ex:
