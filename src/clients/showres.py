@@ -5,9 +5,46 @@ __version__ = '$Version$'
 
 import sys, time
 import math
+import re
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+
+def _mergelist(locations):
+    '''create a set of dashed-ranges from a node list'''
+    uniq = []
+    reg = re.compile('(\D+)(\d+)')
+    [uniq.append(loc) for loc in locations if loc not in uniq]
+    uniq.sort()
+    retl = [[reg.match(uniq[0]).group(2)]]
+    prefix = reg.match(uniq[0]).group(1)
+    uniq = uniq[1:]
+    while uniq:
+        newnum = reg.match(uniq[0]).group(2)
+        block = [item for item in retl if (int(item[0]) == int(newnum) + 1)
+                 or (int(item[-1]) == int(newnum) -1)]
+        if block:
+            block[0].append(newnum)
+            block[0].sort()
+            uniq = uniq[1:]
+        else:
+            retl.append([newnum])
+            uniq = uniq[1:]
+    retnl = []
+    for item in retl:
+        if len(item) > 1:
+            retnl.append("[%s%s-%s]" % (prefix, item[0], item[-1]))
+        else:
+            retnl.append("%s%s" % (prefix, item[0]))
+    return ','.join(retnl)
+
+def mergelist(location_string, cluster):
+    if not cluster:
+        return location_string
+
+    locations = location_string.split(":")
+
+    return _mergelist(locations)
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -20,6 +57,14 @@ if __name__ == '__main__':
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
+    cluster = False
+    try:
+        if "cluster" in ComponentProxy("system", defer=False).get_implementation():
+            cluster = True
+    except ComponentLookupError:
+        print "Failed to connect to system component"
+        raise SystemExit, 1
+
     reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 'queue': '*'}])
     output = []
     if '-l' in sys.argv:
@@ -59,10 +104,10 @@ if __name__ == '__main__':
         dhour = duration/3600
         if verbose:
             output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), cycle, res['partitions']))
+                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), cycle, mergelist(res['partitions'], cluster)))
         else:
             output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin), res['partitions']))
+                           "%02d:%02d" % (dhour, dmin), mergelist(res['partitions'], cluster)))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3], "%c")), time.mktime(time.strptime(y[3], "%c"))) ) )
     Cobalt.Util.print_tabular(header + output)
