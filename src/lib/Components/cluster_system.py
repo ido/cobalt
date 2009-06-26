@@ -40,7 +40,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 class ProcessGroup (cluster_base_system.ProcessGroup):
-    _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue']
+    _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue', 'hostfile']
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('cluster_system'):

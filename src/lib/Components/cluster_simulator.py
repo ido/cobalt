@@ -42,6 +42,18 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessGroup (cluster_base_system.ProcessGroup):
+    _configfields = ['hostfile']
+    _config = ConfigParser()
+    _config.read(Cobalt.CONFIG_FILES)
+    if not _config._sections.has_key('cluster_system'):
+        print '''"cluster_system" section missing from cobalt config file'''
+        sys.exit(1)
+    config = _config._sections['cluster_system']
+    mfields = [field for field in _configfields if not config.has_key(field)]
+    if mfields:
+        print "Missing option(s) in cobalt config file [cluster_system] section: %s" % (" ".join(mfields))
+        sys.exit(1)
+
     def __init__(self, spec):
         cluster_base_system.ProcessGroup.__init__(self, spec)
         self.signals = []
@@ -108,7 +120,7 @@ class Simulator (ClusterBaseSystem):
     """
     
     name = "system"
-    implementation = "simulator"
+    implementation = "cluster_simulator"
     
     logger = logger
 

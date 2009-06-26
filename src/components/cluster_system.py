@@ -8,6 +8,6 @@ from Cobalt.Components.base import run_component
 
 if __name__ == "__main__":
     try:
-        run_component(ClusterSystem, register=True, cls_kwargs={'config_file':'cobalt.hostfile'})
+        run_component(ClusterSystem, register=True)
     except KeyboardInterrupt:
         sys.exit(1)

@@ -108,6 +108,11 @@ class ClusterBaseSystem (Component):
         self.config_file = kwargs.get("config_file", None)
         if self.config_file is not None:
             self.configure(self.config_file)
+        else:
+            try:
+                self.configure(CP.get("cluster_system", "hostfile"))
+            except:
+                self.logger.error("unable to load hostfile")
         self.queue_assignments["default"] = sets.Set(self.all_nodes)
 
 
