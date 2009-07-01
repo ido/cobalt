@@ -423,6 +423,8 @@ class ClusterBaseSystem (Component):
             if n in self.running_nodes:
                 self.running_nodes.remove(n)
                 changed.append(n)
+        if changed:
+            self.logger.info("marking nodes up: %s", ", ".join(changed))
         return changed
     nodes_up = exposed(nodes_up)
         
@@ -433,6 +435,8 @@ class ClusterBaseSystem (Component):
             if n in self.all_nodes:
                 self.down_nodes.add(n)
                 changed.append(n)
+        if changed:
+            self.logger.info("marking nodes down: %s", ", ".join(changed))
         return changed
     nodes_down = exposed(nodes_down)
 
