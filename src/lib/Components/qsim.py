@@ -159,6 +159,11 @@ class Job (Data):
                             "args",
                             "system_state",
                             "starttime",
+                            "project",
+                            "is_runnable",
+                            "is_active",
+                            "has_resources",
+                            #below are qsim specific fields
                             "remain_time",    
                             "recovery_opt",     #0-4
                             "arrival_time",
@@ -188,6 +193,8 @@ class Job (Data):
         self.starttime = 0
         self.arrival_time = 0
         self.failure_time = 0
+        self.has_resources = False
+        self.is_runnable = False
         self.is_visible = False
         self.args = []
         self.progress = 0
@@ -575,12 +582,15 @@ class Qsimulator(Simulator):
         #handle job submssion event       
         if cur_event == 'Q' and curstate == "invisible":
             newstate = "queued"
+            updates['is_runnable'] = True
             updates['is_visible'] = True
             self.log_job_event('Q', self.get_current_time(), jobspec)
         
-        #handle job end event
+        #handle job completion event
         elif cur_event == 'E' and curstate == "running":
             newstate = "ended"
+            updates['is_runnable'] = False
+            updates['has_resources'] = False
             updates['is_visible'] = False
             
             #release partition immediately
@@ -629,6 +639,8 @@ class Qsimulator(Simulator):
                 #runtime before failed after latest start
                 frag_runtime = float(jobspec['failure_time']) - float(jobspec['start_time'])
                 updates['remain_time'] = jobspec['remain_time'] - frag_runtime
+            
+            updates['has_resources'] = False
                
         else:#other event
             pass
@@ -672,6 +684,8 @@ class Qsimulator(Simulator):
 
         updates['state'] = 'running'
         updates['system_state'] = 'running'
+        updates['is_runnable'] = False
+        updates['has_resources'] = True
 
         print self.get_current_time(), "run job state change, job", jobspec['jobid'], \
              ":", jobspec['state'], "->", updates['state']
@@ -758,6 +772,10 @@ class Qsimulator(Simulator):
         #make all job queue "default" so that the scheduler won't skip some jobs based on queue-partition relationship, only in simulation!
         for job in jobs:
             job.queue = "default"
+            
+#        print "running jobs=", [job.jobid for job in self.running_jobs]
+#        print "queueing jobs=", [job.jobid for job in self.queuing_jobs]
+#        print "return jobs=", len(jobs) 
 
         return jobs
     get_jobs = exposed(query(get_jobs))
@@ -1164,7 +1182,7 @@ class Qsimulator(Simulator):
         # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
         job_end_times = {}
         for item in end_times:
-            job_end_times[item[0][0]] = item[1]
+            job_end_times[item[0]] = item[1]
             
         now = self.get_current_time_sec()
         for p in self.cached_partitions.itervalues():
