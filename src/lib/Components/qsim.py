@@ -145,7 +145,7 @@ class Job (Data):
     start_time: unix second, float
     end_time: unix second, float
     failure_time: unix second, float
-    location: 'partition:partition', string
+    location: list of string(partition name)
     state: ['invisible', 'running', 'queued', 'ended', 'pending']  string
     is_visible: true/false
     recovery_opt,     #0-4
@@ -200,7 +200,7 @@ class Job (Data):
         self.progress = 0
         self.recovery_opt = spec.get("recovery_opt", RECOVERYOPT)
         self.checkpoint = 1
-        self.location = ''
+        self.location = []
 
 class JobList(DataList):
     '''the list of job objects'''
@@ -331,7 +331,7 @@ class Qsimulator(Simulator):
             self.FAILURE_FREE = False
         
         #initialize time stamps and job queues
-        #time stamp format: ('EVENT', 'time_stamp_date', time_stamp_second, {'job_id':str(jobid), 'location':'partition-name'})
+        #time stamp format: ('EVENT', 'time_stamp_date', time_stamp_second, {'job_id':str(jobid), 'location':[partition1, partition2,...]})
         self.time_stamps = [('I', '0', 0, {})]
         self.cur_time_index = 0
         self.queues = SimQueueDict(policy=kwargs['policy'])
@@ -535,7 +535,7 @@ class Qsimulator(Simulator):
         if eventtype == 'Q':  #submitted(queued) for the first time
             message = "%s;Q;%d;queue=%s" % (timestamp, spec['jobid'], spec['queue'])
         elif eventtype == 'R':  #resume running after failure recovery
-            message = "%s;R;%s" % (timestamp, spec['location'])
+            message = "%s;R;%s" % (timestamp, ":".join(spec['location']))
         else:
             wall_time = spec['walltime']
             walltime_minutes = len2(int(float(wall_time)) % 60)
@@ -544,23 +544,23 @@ class Qsimulator(Simulator):
             if eventtype == 'S':  #start running 
                 message = "%s;S;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s start=%s exec_host=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
-                 spec['nodes'], log_walltime, spec['start_time'], spec['location'])
+                 spec['nodes'], log_walltime, spec['start_time'], ":".join(spec['location']))
             elif eventtype == 'E':  #end
                 message = "%s;E;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
-                 round(float(spec['end_time']), 1), spec['location'], 
+                 round(float(spec['end_time']), 1), ":".join(spec['location']),
                  spec['runtime'])
             elif eventtype == 'F':  #failure
                 frag_runtime = round(float(spec['failure_time']) - float(spec['start_time']), 1)  #running time before failure(after the latest start)
                 message = "%s;F;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s exec_host=%s start=%s frag_runtime=%s complete=%f" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
-                 spec['nodes'], log_walltime, spec['location'], spec['start_time'], 
+                 spec['nodes'], log_walltime, ":".join(spec['location']), spec['start_time'], 
                  frag_runtime, round(frag_runtime / float(spec['runtime']), 2)
                 )
             elif eventtype == 'P':  #pending
                 message = "%s;P;%d;queue=%s qtime=%s Resource_List.ncpus=%s Resource_List.walltime=%s exec_host=%s start=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
-                 spec['nodes'], log_walltime, spec['location'], spec['start_time'], 
+                 spec['nodes'], log_walltime, ":".join(spec['location']), spec['start_time'], 
                 )
                 print "message=", message
             else:
@@ -594,7 +594,7 @@ class Qsimulator(Simulator):
             updates['is_visible'] = False
             
             #release partition immediately
-            partitions = jobspec['location'].split(':')
+            partitions = jobspec['location']
             for partition in partitions:
                 self.release_partition(partition)
             self.queues.del_jobs([{'jobid':job_id}])
@@ -612,7 +612,7 @@ class Qsimulator(Simulator):
             print "entered failure handling"
   
             #release partition
-            partitions = jobspec['location'].split(':')
+            partitions = jobspec['location']
             for partition in partitions:
                 print "partition %s start repairing" % (partition)
                 self.start_repair_partition(partition)
@@ -624,7 +624,7 @@ class Qsimulator(Simulator):
                 fail = 0
             failure_datetime = sec_to_date(fail)
             self.log_job_event('F', failure_datetime, jobspec)
-            print self.get_current_time(), " job %d failed at %s!!" % (job_id, jobspec['location'])
+            print self.get_current_time(), " job %d failed at %s!!" % (job_id, ":".join(jobspec['location']))
             
             rec_updates = self.recovery_mgr(jobspec)
             
@@ -713,7 +713,7 @@ class Qsimulator(Simulator):
     def start_job(self, specs, updates):
         '''update the job state and start_time and end_time when cqadm --run
         is issued to a group of jobs'''
-        partitions = updates['location'].split(':')
+        partitions = updates['location']
         for partition in partitions:
             self.reserve_partition(partition)
             
@@ -838,7 +838,7 @@ class Qsimulator(Simulator):
         end_time'''
         print "run job specs=", specs, " on partion", nodelist
         if specs:
-            self.start_job(specs, {'location': ":".join(nodelist)})
+            self.start_job(specs, {'location': nodelist})
             #set tag false, enable scheduling another job at the same time
             self.increment_tag = False
         #print "current running jobs=", [job.jobid for job in self.running_jobs]
@@ -866,7 +866,7 @@ class Qsimulator(Simulator):
                             
         return midplane_list 
     
-    def get_next_failure(self, location, now, duration):    #change for rarm
+    def get_next_failure(self, location, now, duration): 
         '''return the next(closest) failure moment according the partition failure list'''
         
         if (self.FAILURE_FREE):
@@ -883,8 +883,8 @@ class Qsimulator(Simulator):
             return next
                                        
         closest_fail_sec = MAXINT
-        partitions = location.split(':')
-        
+        partitions = location
+
         midplanes = set()
         for partition in partitions:
             tmp_midplanes = self.get_midplanes(partition)
@@ -1182,8 +1182,8 @@ class Qsimulator(Simulator):
         # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
         job_end_times = {}
         for item in end_times:
-            job_end_times[item[0]] = item[1]
-            
+            job_end_times[item[0][0]] = item[1]
+                    
         now = self.get_current_time_sec()
         for p in self.cached_partitions.itervalues():
             if p.state == "idle":
