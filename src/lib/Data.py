@@ -345,7 +345,7 @@ class DataDict (dict):
             new_items[key] = new_item
         if callback:
             for item in new_items.itervalues():
-                callback(new_item, cargs)
+                callback(item, cargs)
         self.update(new_items)
         return new_items.values()
 
