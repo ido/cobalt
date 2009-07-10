@@ -596,6 +596,12 @@ class BGBaseSystem (Component):
         else:
             return []
 
+    # this function builds two things, namely a pair of dictionaries keyed by queue names
+    # self._defined_sizes maps queue names to an ordered list of partition sizes available in that queue
+    #     for all schedulable partitions (even if currently offline and not functional)
+    # self._locations_cache maps queue names to dictionaries which map partition sizes to partition objects;
+    #     this structure will only contain partitions which are fully online, so we don't try to drain a
+    #     broken partition
     def _build_locations_cache(self):
         per_queue = {}
         defined_sizes = {}
