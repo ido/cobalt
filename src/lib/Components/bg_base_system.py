@@ -511,11 +511,30 @@ class BGBaseSystem (Component):
         
         available_partitions = set()
         if required:
+            # whittle down the list of required partitions to the ones of the proper size
+            # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
+            # reservation queues aren't assigned like real queues, so that code doesn't find
+            # these
             for p_name in required:
                 available_partitions.add(self.cached_partitions[p_name])
                 available_partitions.update(self.cached_partitions[p_name]._children)
+
+            possible = set()
+            for p in available_partitions:            
+                possible.add(p.size)
+                
+            desired_size = 64
+            job_nodes = int(nodes)
+            for psize in sorted(possible):
+                if psize >= job_nodes:
+                    desired_size = psize
+                    break
+            
+            for p in available_partitions.copy():
+                if p.size != desired_size:
+                    available_partitions.remove(p)
         else:
-            for p in self.cached_partitions.itervalues():
+            for p in self.possible_locations(nodes, queue):
                 skip = False
                 for bad_name in forbidden:
                     if p.name==bad_name or bad_name in p.children or bad_name in p.parents:
@@ -528,17 +547,12 @@ class BGBaseSystem (Component):
         now = time.time()
         
         for partition in available_partitions:
-            # check if the current partition is linked to the job's queue (but if reservation locations were
-            # passed in via the "required" argument, then we know it's all good)
-            if not required and queue not in partition.queue.split(':'):
-                continue
-            
             # if the job needs more time than the partition currently has available, look elsewhere    
             if backfilling:
                 if 60*float(walltime) > (partition.backfill_time - now):
                     continue
                 
-            if self.can_run(partition, nodes, self.cached_partitions):
+            if partition.state == "idle":
                 # let's check the impact on partitions that would become blocked
                 score = 0
                 for p in partition.parents:
@@ -556,7 +570,7 @@ class BGBaseSystem (Component):
 
     def _find_drain_partition(self, job):
         drain_partition = None
-        locations = self.possible_locations(job)
+        locations = self.possible_locations(job['nodes'], job['queue'])
         
         for p in locations:
             if not drain_partition:
@@ -568,31 +582,50 @@ class BGBaseSystem (Component):
         return drain_partition
 
 
-    def possible_locations(self, job):
-        locations = []
+    def possible_locations(self, job_nodes, q_name):
+        desired_size = 64
+        job_nodes = int(job_nodes)
+        if self._defined_sizes.has_key(q_name):
+            for psize in self._defined_sizes[q_name]:
+                if psize >= job_nodes:
+                    desired_size = psize
+                    break
+
+        if self._locations_cache.has_key(q_name):
+            return self._locations_cache[q_name].get(desired_size, [])
+        else:
+            return []
+
+    def _build_locations_cache(self):
+        per_queue = {}
+        defined_sizes = {}
         for target_partition in self.cached_partitions.itervalues():
-            if job['queue'] not in target_partition.queue.split(':'):
-                continue
-            desired = sys.maxint
             usable = True
             for part in self.cached_partitions.itervalues():
                 if not part.functional:
                     if target_partition.name in part.children or target_partition.name in part.parents:
                         usable = False
                         break
-                else:
-                    if part.scheduled:
-                        if int(job['nodes']) <= int(part.size) < desired:
-                            desired = int(part.size)
 
-            if target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired and usable:
-                locations.append(target_partition)
-         
-        return locations
-
-
+            for queue_name in target_partition.queue.split(":"):
+                if not per_queue.has_key(queue_name):
+                    per_queue[queue_name] = {}
+                if not defined_sizes.has_key(queue_name):
+                    defined_sizes[queue_name] = set()
+                if target_partition.scheduled:
+                    defined_sizes[queue_name].add(target_partition.size)
+                if target_partition.scheduled and target_partition.functional and usable:
+                    if not per_queue[queue_name].has_key(target_partition.size):
+                        per_queue[queue_name][target_partition.size] = []
+                    per_queue[queue_name][target_partition.size].append(target_partition)
+        
+        for q_name in defined_sizes:
+            defined_sizes[q_name] = sorted(defined_sizes[q_name])
+        
+        self._defined_sizes = defined_sizes
+        self._locations_cache = per_queue    
     
-    # the argument "required" is used to pass in the set of locations allowed by a reservation;
+    
     def find_job_location(self, arg_list, end_times):
         best_partition_dict = {}
         
@@ -607,6 +640,9 @@ class BGBaseSystem (Component):
             return {}
         finally:
             self._partitions_lock.release()
+
+        # build the cached_partitions structure first
+        self._build_locations_cache()
 
             
         # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
