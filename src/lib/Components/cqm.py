@@ -2589,7 +2589,8 @@ class QueueManager(Component):
             for job in movelist:
                 q.jobs.remove(job)
                 job.queue = new_q.name
-                results += new_q.jobs.q_add([job.to_rx()])
+                new_q.jobs.append(job)
+                results.append(job)
                 new_q.update_max_running()
         return results
     move_jobs = exposed(query(move_jobs))
