@@ -1184,13 +1184,13 @@ class Qsimulator(Simulator):
                     Pf = self.get_failure_chance(partition.name, 60*float(walltime))
                     score += Pf
                 
-                # the lower the score, the fewer new partitions will be blocked by this selection
-                if score < best_score:
-                    best_score = score
+            # the lower the score, the fewer new partitions will be blocked by this selection
+            if score < best_score:
+                best_score = score
+                best_partition = partition
+            elif score == best_score:
+                if partition.name > best_partition.name:
                     best_partition = partition
-                elif score == best_score:
-                    if partition.name > best_partition.name:
-                        best_partition = partition
 
         if best_partition:
             #print "return bestpartition=",{jobid: [best_partition.name, best_partition.state]}
