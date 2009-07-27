@@ -1,8 +1,8 @@
 """Breadboard Component"""
 
 import os
+import sets
 import signal
-import string
 import sys
 import time
 
@@ -112,91 +112,103 @@ class ProcessGroup(Data):
         self.kerneloptions = spec.get("kerneloptions")
         self.true_mpi_args = spec.get("true_mpi_args")
         self.image = spec.get("image", "default")
+        
+        self.building_nodes = []
+        self.pinging_nodes = []
 
     def start(self):
         """Start the process group"""
-        child_pid = os.fork()
-        if not child_pid: # child
-            specs = [{"name":name, "attributes":"*"} for name in self.location]
-            time.sleep(3)
-            self.setboot_and_cycle(specs)
-            t = str(time.time())
-            if t[len(t)-1] == "9" or t[len(t)-1] == "0":
-                print "alloc failed"
-                os._exit(1)
-            self.build_and_ping(specs)
-            self.state = "running"
-            # Add code to run scripts
-            t = str(time.time())
-            if t[len(t)-1] == "9" or t[len(t)-1] == "0":
-                print "script failed"
-                os._exit(1)
-            # Finished running
-            os._exit(0)
-        else: # parent
-            self.head_pid = child_pid
-    
-    def setboot_and_cycle(self, specs):
-        """ Similar to bbsetboot.  Also reboots the node"""
+        print "Starting process group for %s" % (" ".join(self.location))
+        specs = [{"name":name, "attributes":"*"} for name in self.location]
         try:
-            resources = ComponentProxy("system").get_resources(specs)
+            system = ComponentProxy("system")
         except ComponentLookupError:
-            print >> sys.stderr, "Failure getting resources for running " \
-                + "bbsetboot on process group - exiting"
-            os._exit(1)
+            print >> sys.stderr, "Failure finding system to get resources " \
+                + "for setting build action"
+            sys.exit(1)
+        resources = system.get_resources(specs)
         action = "build-%s" % self.image
         for res in resources:
-            print res
-            res["attributes"]["action"] = action
+            # Set build action for each resource
+            specs = [{"name":res["name"]}]
+            new_attrs = {"attributes":{"action":action}}
+            system.set_attributes(specs, new_attrs)
             mac = res["attributes"]["mac"]
             linkname = "/tftpboot/pxelinux.cfg/01-%s" % \
                 mac.replace(":", "-").lower()
-            #if os.readlink(linkname) == action:
-            #    continue
-            #os.unlink(linkname)
-            #os.symlink(action, linkname)
-
+            if os.readlink(linkname) == action:
+                continue
+            os.unlink(linkname)
+            os.symlink(action, linkname)
+            # Simulate failure during setting boot state
+            #t = str(time.time())
+            #if t[len(t)-1] == "9" or t[len(t)-1] == "0":
+            #    print "Failure setting boot state for %s" \
+            #        % (" ".join(self.location))
+            #    sys.exit(1)
+        for res in resources:
             # Cycle power
             print "Rebooting node %s" % res["name"]
-            #os.system("/usr/sbin/pm -c %s" % (res["name"]))
+            os.system("/usr/sbin/pm -c %s" % res["name"])
+            # Add resource to list of building nodes
+            self.building_nodes.append(res["name"])
+        # Done initializing - move on to building
+        self.state = "building"
 
-    def build_and_ping(self, specs):
-        """Pings the node until it is ready"""
+    def check_build_done(self):
+        """Returns True if all nodes are built/available; False otherwise"""
+        specs = [{"name":name, "attributes":"*"} for name in self.building_nodes]
         try:
-            building = ComponentProxy("system").get_resources(specs)
+            system = ComponentProxy("system")
         except ComponentLookupError:
-            print >> sys.stderr, "Failure getting resources for " \
-                + "running bballoc on process group - exiting"
-            os._exit(1)
-        #build_action = "build-%s" % self.image
-        #pinging = []
-        #while building + pinging:
-        #    for node in building[:]:
-        #        if node["attributes"]["action"] != build_action:
-        #            print "Node %s is done building" % node["name"]
-        #            building.remove(node)
-        #            pinging.append(node)
-        #    for node in pinging[:]:
-        #        if os.system("/bin/ping -c 1 -W 1 %s > /dev/null" % node["name"]):
-        #            continue
-        #        print "Node %s is available" % node["name"]
-        #        pinging.remove(node)
-        #    try:
-        #        time.sleep(20)
-        #    except KeyboardInterrupt:
-        #        print >> sys.stderr, "Build process incomplete, " \
-        #            "exiting anyway"
-        #        os._exit(1)
+            print >> sys.stderr, "Failure finding system to get resources " \
+                + "for checking build status"
+            sys.exit(1)
+        building = system.get_resources(specs)
+        build_action = "build-%s" % self.image
+        for node in building:
+            if node["attributes"]["action"] != build_action:
+                print "Node %s is done building" % node["name"]
+                self.building_nodes.remove(node["name"])
+                self.pinging_nodes.append(node["name"])
+        for nodename in self.pinging_nodes:
+            if os.system("/bin/ping -c 1 -W 1 %s > /dev/null" % nodename):
+                continue
+            print "Node %s is available" % nodename
+            self.pinging_nodes.remove(nodename)
+        # Simulate failure while building
+        #t = str(time.time())
+        #if t[len(t)-1] == "9" or t[len(t)-1] == "0":
+        #    print "building/pinging error for %s" % (" ".join(self.location))
+        #    sys.exit(1)
+        if len(self.building_nodes) == 0 and len(self.pinging_nodes) == 0:
+            # Done building/pinging - move onto running
+            return True
+        return False
+
+    def run_scripts(self):
+        self.state = "running"
+        child_pid = os.fork()
+        if not child_pid:
+            # Child
+            # Put code to run scripts here
+            print "script (child) running for 5 seconds, then exit"
+            time.sleep(5)
+            os._exit(0)
+        else:
+            # Parent
+            self.head_pid = child_pid
 
     def signal(self, signame="SIGINT"):
         """Do something with this process group depending on the signal"""
         if signame == "SIGINT":
-            try:
-                os.kill(self.head_pid, getattr(signal, "SIGKILL"))
-            except OSError, e:
-                print >> sys.stderr, "signal failure for process group %s: %s"\
-                    % (str(self.id), e)
-            #os.system("/usr/sbin/pm -0 %s" % (" ".join(self.location)))
+            if self.head_pid and self.state != "terminated":
+                try:
+                    os.kill(self.head_pid, getattr(signal, signame))
+                except OSError, e:
+                    print >> sys.stderr, "signal failure for PG %s: %s" \
+                        % (str(self.id), e)
+            self.state = "terminated"
         else:
             # Handle other signals
             try:
@@ -205,7 +217,19 @@ class ProcessGroup(Data):
                 print >> sys.stderr, "signal failure for process group %s: %s"\
                     % (str(self.id), e)
 
-
+    def wait(self):
+        if self.head_pid:
+            try:
+                pid, status = os.waitpid(self.head_pid, os.WNOHANG)
+            except OSError:
+                return
+            if self.head_pid == pid:
+                # Child has terminated
+                status = status >> 8
+                self.exit_status = status
+                self.state = "terminated"
+                # Do something if exit status is non-zero?
+                print "PG in location [%s] terminated" % " ".join(self.location)
 
 
 class ProcessGroupDict(DataDict):
@@ -219,6 +243,8 @@ class ProcessGroupDict(DataDict):
     def __init__(self):
         DataDict.__init__(self)
         self.id_gen = IncrID()
+        self.building_pgs = []
+        self.pinging_pgs = []
 
     def q_add(self, specs, callback=None, cargs={}):
         """Add a process group to the container"""
@@ -228,39 +254,38 @@ class ProcessGroupDict(DataDict):
             spec['id'] = self.id_gen.next()
         return DataDict.q_add(self, specs, callback, cargs)
 
+    def q_del(self, specs, callback=None, cargs={}):
+        """Remove a process from the container"""
+        for spec in specs:
+            if not hasattr(spec, "location"):
+                spec["location"] = "*"
+        removed = DataDict.q_del(self, specs, callback, cargs)
+        try:
+            system = ComponentProxy("system")
+        except ComponentLookupError:
+            print >> sys.stderr, "Failed to connect to system to set " \
+                + "resources idle when removing a process group"
+            sys.exit(1)
+        new_specs = []
+        for pg in removed:
+            new_specs.append({"name":name} for name in pg.location)
+        new_attrs = {"state":"idle"}
+        print new_specs
+        print new_attrs
+        system.set_attributes(new_specs, new_attrs)
+
     def wait(self):
         """Runs through the process groups and sets state to 'terminated' and
         sets the appropriate exit status if the process group has finished"""
         for pg in self.itervalues():
-            try:
-                pid, status = os.waitpid(pg.head_pid, os.WNOHANG)
-            except OSError: # return status of -1?
-                continue
-            if pg.head_pid == pid: # if the child has terminated
-                status = status >> 8
-                if status != 0:
-                    if pg.state == "initializing":
-                        # Trouble building - retry
-                        print "Trouble building - retrying %s" % " ".join(pg.location)
-                        pg.start()
-                    else:
-                        # Error running script
-                        print "Error in script - process terminated %s" % " ".join(pg.location)
-                        pg.exit_status = status
-                        pg.state = "terminated"
-                        specs = [{"name":name} for name in pg.location]
-                        resources = ComponentProxy("system").get_resources(specs)
-                        for res in resources:
-                            res["state"] = "idle"
-                else:
-                    # Successful run
-                    print "Successful run %s" % " ".join(pg.location)
-                    pg.exit_status = status
-                    pg.state = "terminated"
-                    specs = [{"name":name} for name in pg.location]
-                    resources = ComponentProxy("system").get_resources(specs)
-                    for res in resources:
-                        res["state"] = "idle"
+            pg.wait()
+
+    def check_builds_done(self):
+        """Runs through each process group and starts scripts running if all
+        nodes are done building"""
+        for pg in self.itervalues():
+            if pg.check_build_done() == True and pg.state == "building":
+                pg.run_scripts()
 
 
 
@@ -282,12 +307,23 @@ class BBSystem(Component):
         Component.__init__(self, *args, **kwargs)
         self.resources = ResourceDict()
         self.process_groups = ProcessGroupDict()
+        self.queue_assignments = {}
+        self.queue_assignments["default"] = sets.Set(self.resources)
+        self.building_pgs = []
+        self.pinging_pgs = []
        
  
     def add_process_groups(self, specs):
         """Allocate nodes and add the list of those allocated to the PGDict"""
         return self.process_groups.q_add(specs, lambda x, _:x.start())
     add_process_groups = exposed(query(add_process_groups))
+
+
+    def _check_builds_done(self):
+        """Calls process group container's method to check if nodes are
+        done building and scripts can begin running"""
+        self.process_groups.check_builds_done()
+    _check_builds_done = automatic(_check_builds_done)
 
 
     def get_process_groups(self, specs):
@@ -315,6 +351,56 @@ class BBSystem(Component):
         return self.process_groups.q_get(specs, lambda x, y:x.signal(y),
                                          signal)
     signal_process_groups = exposed(query(signal_process_groups))
+
+
+    def find_queue_equivalence_classes(self, reservation_dict, 
+                                       active_queue_names):
+        """Finds equivalent queues"""
+        equiv = []
+        for q in self.queue_assignments:
+            # skip queues that aren't running
+            if not q in active_queue_names:
+                continue
+            
+            found_a_match = False
+            for e in equiv:
+                if e['data'].intersection(self.queue_assignments[q]):
+                    e['queues'].add(q)
+                    e['data'].update(self.queue_assignments[q])
+                    found_a_match = True
+                    break
+            if not found_a_match:
+                equiv.append({'queues': set([q]),
+                              'data': set(self.queue_assignments[q]),
+                              'reservations': set()})
+
+        real_equiv = []
+        for eq_class in equiv:
+            found_a_match = False
+            for e in real_equiv:
+                if e['queues'].intersection(eq_class['queues']):
+                    e['queues'].update(eq_class['queues'])
+                    e['data'].update(eq_class['data'])
+                    found_a_match = True
+                    break
+            if not found_a_match:
+                real_equiv.append(eq_class)
+        
+        equiv = real_equiv
+
+        for eq_class in equiv:
+            for res_name in reservation_dict:
+                skip = True
+                for host_name in reservation_dict[res_name].split(":"):
+                    if host_name in eq_class['data']:
+                        eq_class['reservations'].add(res_name)
+
+            for key in eq_class:
+                eq_class[key] = list(eq_class[key])
+            del eq_class['data']
+
+        return equiv
+    find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
 
 
     def get_resources(self, specs):
@@ -349,7 +435,7 @@ class BBSystem(Component):
         else:
             for key2, val2 in val.iteritems():
                 if key2 == "mac":
-                    val2 = string.replace(val2, "-", ":")
+                    val2 = val2.replace("-", ":")
                 res.attributes[key2] = val2
 
 
@@ -386,7 +472,7 @@ class BBSystem(Component):
             return self.resources.q_add(specs)
         except KeyError:
             return "KeyError"
-    add_resources = exposed(add_resources)
+    add_resources = exposed(query(add_resources))
 
 
     def remove_resources(self, specs):
@@ -443,3 +529,19 @@ class BBSystem(Component):
             locations[job["jobid"]] = [r.name for r in used_resources]
         return locations
     find_job_location = exposed(find_job_location)
+
+
+    def node_done_building(self, node):
+        """Sets a node as done building
+        
+        Arguments:
+        node -- string name of node that is done building
+
+        Returns: nothing
+        """
+        specs = [{"name":node, "attributes":"*"}]
+        nodedata = self.get_resources(specs)
+        buildimage = nodedata[0].attributes["action"]
+        nodedata[0].attributes["action"] = buildimage.replace("build-", "boot-")
+        resrcs = self.get_resources([{"name":"*"}])
+    node_done_building = exposed(node_done_building)
