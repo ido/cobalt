@@ -11,7 +11,7 @@ import tempfile
 
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, automatic, exposed, query
-from Cobalt.Exceptions import DataCreationError
+from Cobalt.Exceptions import DataCreationError, JobValidationError
 
 __all__ = ["BBSystem", "ProcessGroup", "Resource"]
 
@@ -135,13 +135,13 @@ class ProcessGroup(Data):
         self.head_pid = None
         self.id = spec.get("id")
         self.image = spec.get("image", "default")
-        self.jobid = str(spec.get("id"))
+        self.jobid = spec.get("jobid")
         self.kerneloptions = spec.get("kerneloptions")
         self.location = spec.get("location", [])
         self.location_file = None
         self.mode = spec.get("mode")
         self.size = len(spec.get("location", []))
-        self.state = "initializing"
+        self.state = "running"
         self.stderr = spec.get("stderr")
         self.stdin = spec.get("stdin")
         self.stdout = spec.get("stdout")
@@ -154,7 +154,6 @@ class ProcessGroup(Data):
 
     def run_script(self):
         """Forks a child; child sets up and execs to executable script"""
-        self.state = "running"
         self.location_file = tempfile.mkstemp()
         os.write(self.location_file[0], " ".join(self.location))
         os.close(self.location_file[0])
@@ -320,6 +319,9 @@ class BBSystem(Component):
         self.queue_assignments["default"] = sets.Set(self.resources)
 
 
+    #####################
+    # Main set of methods
+    #####################
     def add_process_groups(self, specs):
         """Allocate nodes and add the list of those allocated to the PGDict"""
         return self.process_groups.q_add(specs, lambda x, _:self._start_pg(x))
@@ -347,6 +349,9 @@ class BBSystem(Component):
     wait_process_groups = exposed(query(wait_process_groups))
 
 
+    #########################################
+    # Methods for dealing with Process Groups
+    #########################################
     def _start_pg(self, pg):
         """Starts a process group by initiating building/rebooting nodes"""
         specs = [{"name":name, "attributes":"*"} for name in pg.location]
@@ -369,15 +374,13 @@ class BBSystem(Component):
             os.system("/usr/sbin/pm -c %s" % res.name)
             # Add resource to list of building nodes
             pg.building_nodes.append(res.name)
-        # Done initializing - move on to building
-        pg.state = "building"
 
 
     def _check_builds_done(self):
         """Checks if nodes are done building for each process group and
         scripts can begin running"""
         for pg in self.process_groups.itervalues():
-            if pg.state == "building":
+            if len(pg.building_nodes) > 0 or len(pg.pinging_nodes) > 0:
                 specs = [{"name":name, "attributes":"*"} 
                          for name in pg.building_nodes]
                 building = self.get_resources(specs)
@@ -408,7 +411,8 @@ class BBSystem(Component):
         nodedata = self.get_resources(specs)
         if len(nodedata) > 0:
             buildimage = nodedata[0].attributes["action"]
-            nodedata[0].attributes["action"] = buildimage.replace("build-", "boot-")
+            nodedata[0].attributes["action"] = buildimage.replace("build-",
+                                                                  "boot-")
     node_done_building = exposed(node_done_building)
 
 
@@ -432,6 +436,9 @@ class BBSystem(Component):
         self.set_attributes(specs, new_attrs)
 
 
+    ####################################
+    # Methods for dealing with resources
+    ####################################
     def add_resources(self, specs):
         """Add a resource to this system
         
@@ -441,9 +448,12 @@ class BBSystem(Component):
         Returns: list of values added
         """
         try:
-            return self.resources.q_add(specs)
+            ret = self.resources.q_add(specs)
+            for res in ret:
+                self.queue_assignments["default"].add(res)
         except KeyError:
-            return "KeyError"
+            ret = "KeyError"
+        return ret
     add_resources = exposed(query(add_resources))
 
 
@@ -456,7 +466,10 @@ class BBSystem(Component):
 
         Returns: list of resources removed
         """
-        return self.resources.q_del(specs)
+        ret = self.resources.q_del(specs)
+        for res in ret:
+            self.queue_assignments["default"].discard(res)
+        return ret
     remove_resources = exposed(remove_resources)
 
 
@@ -514,6 +527,37 @@ class BBSystem(Component):
         removing of each resources attributes"""
         if key in res.attributes:
             del res.attributes[key]
+
+
+    ##########################################################
+    # Methods for interacting with scheduler and queue-manager
+    ##########################################################
+    def validate_job(self, spec):
+        """Validate a job for submission
+
+        Arguments:
+        spec -- job specification dictionary
+        """
+        max_nodes = len(self.get_resources([{"name":"*"}]))
+        try:
+            spec["nodecount"] = int(spec["nodecount"])
+        except ValueError:
+            raise JobValidationError("Non-integer node count")
+        if not 0 < spec["nodecount"] <= max_nodes:
+            raise JobValidationError("Node count out of realistic range")
+        if float(spec["time"]) < 10:
+            raise JobValidationError("Walltime less than minimum")
+        if not spec["mode"] == "script":
+            raise JobValidationError("Only 'script' mode supported")
+        return spec
+    validate_job = exposed(validate_job)
+
+
+    def verify_locations(self, location_list):
+        """Makes sure a 'location string' is valid"""
+        resources = self.get_resources([{"name":r} for r in location_list])
+        return [r.name for r in resources]
+    verify_locations = exposed(verify_locations)
 
 
     def find_job_location(self, job_location_args, end_times):
