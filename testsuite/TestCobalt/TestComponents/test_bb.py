@@ -1,9 +1,16 @@
 """Test cases for the BBSystem component"""
-import time, os, sys
+import time
 from Cobalt.Components.bb import BBSystem
 from Cobalt.Exceptions import DataCreationError
 
 __all__ = ["TestBBSystem"]
+
+############################
+## MODIFY THIS LIST OF NAMES
+## TO THOSE THAT ARE
+## ALLOCATED FOR TESTING
+############################
+names = ["bb17", "bb18", "bb19"]
 
 class TestBBSystem():
     """Test class for BBSystem component"""
@@ -21,99 +28,165 @@ class TestBBSystem():
         # Test adding resources
         num_resources = self.bb.get_resources([{"name":"*"}])
         assert len(num_resources) == 0
-        self.bb.add_resources(
-            [{"name":"bb01", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast", "NumProc":2,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb02", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast", "NumProc":2,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb03", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast", "NumProc":2,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb04", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast", "NumProc":2,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb05", "functional":True, "scheduled":True,
-              "attributes":{"speed":"slow", "NumProc":2,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb06", "functional":True, "scheduled":True,
-              "attributes":{"speed":"slow", "NumProc":2,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb07", "functional":True, "scheduled":True,
-              "attributes":{"action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb08", "functional":True, "scheduled":True,
-              "attributes":{"action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb09", "functional":True, "scheduled":True,
-              "attributes":{"speed":"slow", "NumProc":4,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb10", "functional":True, "scheduled":True,
-              "attributes":{"speed":"slow", "NumProc":4,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb11", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast", "NumProc":4,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb12", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast", "NumProc":4,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb13", "functional":True, "scheduled":True,
-              "attributes":{"action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb14", "functional":True, "scheduled":True,
-              "attributes":{"action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb15", "functional":True, "scheduled":True,
-              "attributes":{"NumProc":4,
-                            "action":"idle", "mac":"00:11:22:33:44:55"}},
-             {"name":"bb16", "functional":True, "scheduled":True,
-              "attributes":{"speed":"fast",
-                            "action":"idle", "mac":"00:11:22:33:44:55"}}]
-            )
+        specs = [{"name":name, "functional":True, "scheduled":True,
+                  "attributes":{"action":"idle"}} for name in names]
+        for spec in specs:
+            if spec["name"] == "bb01":
+                spec["attributes"]["mac"] = "00-17-31-F9-C8-7F"
+            elif spec["name"] == "bb02":
+                spec["attributes"]["mac"] = "00-17-31-71-99-C1"
+            elif spec["name"] == "bb03":
+                spec["attributes"]["mac"] = "00-17-31-71-99-9D"
+            elif spec["name"] == "bb04":
+                spec["attributes"]["mac"] = "00-17-31-71-99-50"
+            elif spec["name"] == "bb05":
+                spec["attributes"]["mac"] = "00-17-31-F9-C9-36"
+            elif spec["name"] == "bb06":
+                spec["attributes"]["mac"] = "00-17-31-71-99-6A"
+            elif spec["name"] == "bb07":
+                spec["attributes"]["mac"] = "00-17-31-71-99-6C"
+            elif spec["name"] == "bb08":
+                spec["attributes"]["mac"] = "00-17-31-F9-C9-31"
+            elif spec["name"] == "bb09":
+                spec["attributes"]["mac"] = "00-17-31-F9-C8-F2"
+            elif spec["name"] == "bb10":
+                spec["attributes"]["mac"] = "00-17-31-71-99-D0"
+            elif spec["name"] == "bb11":
+                spec["attributes"]["mac"] = "00-17-31-71-99-82"
+            elif spec["name"] == "bb12":
+                spec["attributes"]["mac"] = "00-17-31-71-99-EC"
+            elif spec["name"] == "bb13":
+                spec["attributes"]["mac"] = "00-17-31-71-99-E6"
+            elif spec["name"] == "bb14":
+                spec["attributes"]["mac"] = "00-17-31-71-99-E8"
+            elif spec["name"] == "bb15":
+                spec["attributes"]["mac"] = "00-17-31-71-99-E9"
+            elif spec["name"] == "bb16":
+                spec["attributes"]["mac"] = "00-17-31-71-99-89"
+            elif spec["name"] == "bb17":
+                spec["attributes"]["mac"] = "00-17-31-F9-C8-DE"
+            elif spec["name"] == "bb18":
+                spec["attributes"]["mac"] = "00-17-31-71-99-81"
+            elif spec["name"] == "bb19":
+                spec["attributes"]["mac"] = "00-1A-92-27-37-F0"
+            elif spec["name"] == "bb20":
+                spec["attributes"]["mac"] = "00-17-31-71-9A-0F"
+            elif spec["name"] == "bb21":
+                spec["attributes"]["mac"] = "00-17-31-71-99-6D"
+            elif spec["name"] == "bb22":
+                spec["attributes"]["mac"] = "00-17-31-71-99-74"
+            elif spec["name"] == "bb23":
+                spec["attributes"]["mac"] = "00-17-31-71-99-D4"
+            elif spec["name"] == "bb24":
+                spec["attributes"]["mac"] = "00-17-31-71-99-56"
+            elif spec["name"] == "bb25":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-40"
+            elif spec["name"] == "bb26":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-4E"
+            elif spec["name"] == "bb27":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-44"
+            elif spec["name"] == "bb28":
+                spec["attributes"]["mac"] = "00-1F-C6-86-76-6C"
+            elif spec["name"] == "bb29":
+                spec["attributes"]["mac"] = "00-1F-C6-84-83-C6"
+            elif spec["name"] == "bb30":
+                spec["attributes"]["mac"] = "00-23-54-01-DD-D8"
+            elif spec["name"] == "bb31":
+                spec["attributes"]["mac"] = "00-1F-C6-86-76-72"
+            elif spec["name"] == "bb32":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-46"
+            elif spec["name"] == "bb33":
+                spec["attributes"]["mac"] = "00-1F-C6-86-76-98"
+            elif spec["name"] == "bb34":
+                spec["attributes"]["mac"] = "00-23-54-44-47-CE"
+            elif spec["name"] == "bb35":
+                spec["attributes"]["mac"] = "00-1F-C6-0D-BC-54"
+            elif spec["name"] == "bb36":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-38"
+            elif spec["name"] == "bb37":
+                spec["attributes"]["mac"] = "00-1F-C6-86-76-64"
+            elif spec["name"] == "bb38":
+                spec["attributes"]["mac"] = "00-1F-C6-86-76-76"
+            elif spec["name"] == "bb39":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-3E"
+            elif spec["name"] == "bb40":
+                spec["attributes"]["mac"] = "00-1F-C6-86-76-7C"
+            elif spec["name"] == "bb41":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-48"
+            elif spec["name"] == "bb42":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-64"
+            elif spec["name"] == "bb43":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-76"
+            elif spec["name"] == "bb44":
+                spec["attributes"]["mac"] = "00-1F-C6-84-83-94"
+            elif spec["name"] == "bb45":
+                spec["attributes"]["mac"] = "00-1F-C6-84-82-74"
+            elif spec["name"] == "bb46":
+                spec["attributes"]["mac"] = "00-23-54-A1-86-58"
+            elif spec["name"] == "bb47":
+                spec["attributes"]["mac"] = "00-1F-C6-84-83-8C"
+            elif spec["name"] == "bb48":
+                spec["attributes"]["mac"] = "00-23-54-44-47-CC"
+        self.bb.add_resources(specs)
         num_resources = self.bb.get_resources([{"name":"*"}])
-        assert len(num_resources) == 16
+        assert len(num_resources) == len(names)
         # Test key error for adding resource with same name
-        keyerr = self.bb.add_resources([{"name":"bb01"}])
+        keyerr = self.bb.add_resources([{"name":names[0]}])
         assert keyerr == "KeyError"
         # Test removing resources
         self.bb.add_resources([{"name":"bb1013", "functional":True}])
         num_resources = self.bb.get_resources([{"name":"*"}])
-        assert len(num_resources) == 17
+        assert len(num_resources) == len(names) + 1
         self.bb.remove_resources([{"name":"bb1013", "functional":False}])
         num_resources = self.bb.get_resources([{"name":"*"}])
-        assert len(num_resources) == 17
+        assert len(num_resources) == len(names) + 1
         self.bb.remove_resources([{"name":"bb1013", "functional":True}])
         num_resources = self.bb.get_resources([{"name":"*"}])
-        assert len(num_resources) == 16
+        assert len(num_resources) == len(names)
         assert "bb1013" not in [r.name for r in num_resources]
         
 
     def test_find_job_location(self):
         """Tests the component method find_job_location()"""
         self.setup()
-        job_loc_args = [{"jobid":"1", "nodes":3, "queue":"default",
-                         "utility_score":1,
-                         "attrs":{"speed":"fast"}},
-                        {"jobid":"2", "nodes":2, "queue":"default",
-                         "utility_score":1,
+        self.bb.add_resources([{"name":"test1", "functional":True, "scheduled":True,
+                                "attributes":{"numProc":2, "speed":"slow"}},
+                               {"name":"test2", "functional":True, "scheduled":True,
+                                "attributes":{"numProc":2, "speed":"slow"}},
+                               {"name":"test3", "functional":True, "scheduled":True,
+                                "attributes":{"numProc":2, "speed":"fast"}},
+                               {"name":"test4", "functional":True, "scheduled":True,
+                                "attributes":{"numProc":2, "speed":"fast"}},
+                               {"name":"test5", "functional":True, "scheduled":True,
+                                "attributes":{"numProc":4, "speed":"fast"}},
+                               {"name":"test6", "functional":True, "scheduled":True,
+                                "attributes":{"numProc":4, "speed":"fast"}}
+                               ])
+        job_loc_args = [{"jobid":"1", "nodes":3, "queue":"default", "utility_score":1,
                          "attrs":{"speed":"slow"}},
-                        {"jobid":"3", "nodes":2, "queue":"default",
-                         "utility_score":1},
-                        {"jobid":"4", "nodes":3, "queue":"default",
-                         "utility_score":1,
-                         "attrs":{"NumProc":4}},
-                        {"jobid":"5", "nodes":2, "queue":"default",
-                         "utility_score":1,
-                         "attrs":{"speed":"slow", "NumProc":2}},
-                        {"jobid":"6", "nodes":4, "queue":"default",
-                         "utility_score":1}]
+                        {"jobid":"2", "nodes":2, "queue":"default", "utility_score":2,
+                         "attrs":{"speed":"slow"}},
+                        {"jobid":"3", "nodes":1, "queue":"default", "utility_score":1,
+                         "attrs":{"speed":"fast", "numProc":4}},
+                        {"jobid":"4", "nodes":3, "queue":"default", "utility_score":2,
+                         "attrs":{"speed":"fast"}},
+                        {"jobid":"5", "nodes":2, "queue":"default", "utility_score":2,
+                         "attrs":{"numProc":2}}
+                        ]
         job_locs = self.bb.find_job_location(job_loc_args, None)
-        assert len(job_locs) == 5
-        assert len(self.bb.get_resources([{"state":"idle"}])) == 2
-        assert len(self.bb.get_resources([{"state":"busy"}])) == 14
+        assert len(job_locs) == 3
+        assert job_locs["3"] == ["test5"]
+        assert job_locs["2"] == ["test1", "test2"]
+        assert job_locs["4"] == ["test3", "test4", "test6"]
+        assert len(self.bb.get_resources([{"state":"idle"}])) == len(names)
+        assert len(self.bb.get_resources([{"state":"busy"}])) == 6
 
     def test_set_and_remove_attributes(self):
         """Tests the methods set_attributes() and remove_attributes()"""
         self.setup()
-        specs = [{"name":"bb13"}, {"name":"bb14"}]
+        specs = [{"name":"test1"}, {"name":"test2"}]
         newattrs = {"attrTrue":True, "attrFalse":False, "attrInt":1013}
+        self.bb.add_resources(specs)
         self.bb.set_attributes(specs, newattrs)
         resources = self.bb.get_resources(specs)
         for r in resources:
@@ -147,24 +220,34 @@ class TestBBSystem():
             assert False
         except DataCreationError:
             assert True
-        specs0 = [{"user":"carlson", "location":["bb10", "bb13"]}]
-        specs1 = [{"user":"carlson", "location":["bb01"]}]
-        specs2 = [{"user":"carlson", "location":["bb02"]}]
-        specs3 = [{"user":"carlson", "location":["bb03"]}]
-        specs4 = [{"user":"carlson", "location":["bb04"]}]
-        specs5 = [{"user":"carlson", "location":["bb05"]}]
-        specs6 = [{"user":"carlson", "location":["bb06"]}]
-        specs7 = [{"user":"carlson", "location":["bb07"]}]
-        specs8 = [{"user":"carlson", "location":["bb08", "bb09"]}]
-        specs9 = [{"user":"carlson", "location":["bb11", "bb12"]}]
-        specscombo = specs0 + specs1 + specs2
-        pg_added = self.bb.add_process_groups(specscombo)
-        self.bb.add_process_groups(specs3 + specs4 + specs5 + specs6)
-        self.bb.add_process_groups(specs7 + specs8)
-        self.bb.add_process_groups(specs9)
+        specs = [{"user":"carlson", "location":[loc]} for loc in names]
+        pg_added = self.bb.add_process_groups(specs)
+        assert len(pg_added) == len(names)
         pgs = self.bb.get_process_groups([{"id":"*"}])
-        assert len(pgs) == 10
-        self.bb.wait_process_groups([{"id":"*"}])
+        assert len(pgs) == len(names)
+        specrun = [{"state":"initializing"}, {"state":"building"},
+                   {"state":"running"}]
+        count = 0
+        while len(self.bb.get_process_groups(specrun)) > 0:
+            #Keep running until done
+            print "waiting for pgs to finish"
+            time.sleep(10)
+            if count < len(names):
+                self.bb.node_done_building(names[count])
+                count = count + 1
+            self.bb._check_builds_done()
+        done = self.bb.get_process_groups([{"state":"terminated"}])
+        assert len(done) == len(names)
+        resources = self.bb.get_resources([{"name":"*"}])
+        assert len(resources) == len(names)
+        for res in resources:
+            res.state = "busy"
+        wait = self.bb.wait_process_groups([{"state":"terminated"}])
+        assert len(wait) == len(names)
+        resources = self.bb.get_resources([{"name":"*"}])
+        assert len(resources) == len(names)
+        for res in resources:
+            assert res.state == "idle"
         pgs = self.bb.get_process_groups([{"id":"*"}])
         assert len(pgs) == 0
 
@@ -173,12 +256,35 @@ class TestBBSystem():
         self.setup()
         pgs = self.bb.get_process_groups([{"id":"*"}])
         assert len(pgs) == 0
-        specs = [{"user":"carlson", "location":["bb10", "bb13"]}]
+        specs = [{"user":"carlson", "location":[loc]} for loc in names]
         pg_added = self.bb.add_process_groups(specs)
+        assert len(pg_added) == len(names)
         pgs = self.bb.get_process_groups([{"id":"*"}])
-        self.bb.signal_process_groups([{"id":pgs[0].id}], "SIGINT")
-        time.sleep(1)
-        self.bb.process_groups.wait()
+        assert len(pgs) == len(names)
+        resources = self.bb.get_resources([{"name":"*"}])
+        assert len(resources) == len(names)
+        for res in resources:
+            res.state = "busy"
+        time.sleep(2)
+        self.bb.signal_process_groups([{"id":"*"}], "SIGINT")
+        time.sleep(2)
+        pgs = self.bb.get_process_groups([{"id":"*"}])
+        assert len(pgs) == len(names)
+        for pg in pgs:
+            assert pg.state == "terminated"
         self.bb.wait_process_groups([{"id":"*", "state":"terminated"}])
         pgs = self.bb.get_process_groups([{"id":"*"}])
         assert len(pgs) == 0
+        resources = self.bb.get_resources([{"name":"*"}])
+        assert len(resources) == len(names)
+        for res in resources:
+            assert res.state == "idle"
+
+    def test_node_done_building(self):
+        """Tests the method node_done_building()"""
+        self.setup()
+        specs = [{"name":"test", "attributes":{"action":"build-default"}}]
+        self.bb.add_resources(specs)
+        self.bb.node_done_building("test")
+        test = self.bb.get_resources([{"name":"test"}])
+        assert test[0].attributes["action"] == "boot-default"
