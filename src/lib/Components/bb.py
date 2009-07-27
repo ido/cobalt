@@ -1,211 +1,325 @@
-'''Breadboard Component'''
+"""Breadboard Component"""
 
-import time, logging, lxml.etree, fcntl, os, pwd, signal, sys, tempfile, atexit 
-import Cobalt.Logging
-from Cobalt.Components.base import Component, exposed, query, automatic
-from Cobalt.Data import Data, DataList
-from Cobalt.Exceptions import ProcessGroupCreationError, NodeAllocationError
+import os
+import time
+
+from Cobalt.Data import Data, DataDict, IncrID
+from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Exceptions import DataCreationError
+
 
 __all__ = ['BBSystem', 'ProcessGroup']
 
-REPO = "/var/lib/bcfg2/"
+
+class Resource(Data):
+    """A single unit of a resource
+    
+    Attributes:
+    tag -- resource
+    scheduled -- Whether the resource can be scheduled on (default False)
+    name -- canonical name
+    functional -- Whether the resource is functional (default False)
+    queue -- Name of the queue which this resource is in (default "default")
+    size -- ??
+    attributes -- a dictionary of other attributes of this resource
+
+    Properties:
+    state -- "idle", "busy", or "blocked"
+    """
+
+    fields = Data.fields + ["tag", "scheduled", "name", "functional", "queue",
+                            "size", "attributes", "state"]
+
+    def __init__(self, spec):
+        """Initiates a new resource unit."""
+        Data.__init__(self, spec)
+        self.tag = "Resource"
+        self.scheduled = spec.get("scheduled", False)
+        self.name = spec.get("name", None)
+        self.functional = spec.get("functional", False)
+        self.queue = spec.get("queue", "default")
+        self.size = 1
+        self.attributes = spec.get("attributes", {})
+        self.state = spec.get("state", "idle")
+
+    def match_attributes(self, attrs):
+        """Returns true if the 'attributes' attribute of the resource
+        contains the provided attributes in 'attrs' (a dictionary)"""
+        for key, val in attrs.iteritems():
+            if not key in self.attributes or self.attributes[key] != val:
+                return False
+        return True
+
+
+
+
+class ResourceDict(DataDict):
+    """Default container for resources.
+    Keyed by resource name.
+    """
+
+    item_cls = Resource
+    key = "name"
+
+    def get_resources(self, specs, attrs):
+        """Get those resources that match specs and attrs
+
+        Arguments:
+        specs -- list of dictionaries with details for resource to match
+        attrs -- dictionary with attributes for the resource to match
+
+        Returns a list of resources that matched specs and attrs"""
+        resources = self.q_get(specs)
+        for r in resources[:]:
+            if not r.match_attributes(attrs):
+                resources.remove(r)
+        return resources
+
+
+        
 
 class ProcessGroup(Data):
-    '''Run a process on a bb system'''
-    fields = Data.fields + ['user', 'args', 'env', 'executable', 'size', 'cwd', 
-              'location', 'nodes', 'outputfile', 'errorfile', 'id', 'state']
-    required = ['user', 'executable', 'location']
-    def __init__(self, data):
-        Data.__init__(self, data)
-        self.log = logging.getLogger('pg')
-        self.state = 'initializing'
-        self.id = data['id']
-        self.pgid = data['id']
+    """A set of nodes allocated by a user"""
+    fields = Data.fields + ['id', 'user', 'size', 'cwd', 'executable', 'env',
+                            'args', 'location', 'head_pid', 'stdin', 'stdout',
+                            'stderr', 'exit_status', 'state', 'mode',
+                            'kerneloptions', 'true_mpi_args']
+
+    #required = ['user']
+
+    def __init__(self, spec):
+        Data.__init__(self, spec)
+        self.tag = "process group"
+        self.id = spec.get("id")
+        self.user = spec.get("user", "")
+        self.size = spec.get("size")
+        self.cwd = spec.get("cwd")
+        self.executable = spec.get("executable")
+        self.env = spec.get("env", {})
+        self.args = " ".join(spec.get("args", []))
+        self.location = spec.get("location", [])
+        self.head_pid = None
+        self.stdin = spec.get("stdin")
+        self.stdout = spec.get("stdout")
+        self.stderr = spec.get("stderr")
         self.exit_status = None
-        self.user = data['user']
-        self.executable = data['executable']
-        if data['outputfile']:
-            self.outlog = data['outputfile']
-        else:
-            self.outlog = tempfile.mktemp()
-        if data['errorfile']:
-            self.errlog = data['errorfile']
-        else:
-            self.errlog = tempfile.mktemp()
-        if data['args']:
-            self.args = [self.executable] + data['args']
-        else:
-            self.args = [self.executable]
-        if data['env']:
-            self.env = os.environ
-            for k, v in data['env'].iteritems():
-                self.env[k] = v
-        else:
-            self.env = os.environ
-        try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError, "user/group"
-        self.location = data['location']
-        self.pid = os.fork()
-        if not self.pid:
-            program = self.executable
-            self.t = tempfile.NamedTemporaryFile()
-            self.t.write("\n".join(self.location) + '\n')
-            self.t.flush()
-            # create a nodefile in /tmp
-            os.environ['COBALT_NODEFILE'] = self.t.name
-            try:
-                os.setgid(groupid)
-                os.setuid(userid)
-            except OSError:
-                self.log.error("Failed to change userid/groupid for PG %s" % 
-                               (self.pgid))
-                sys.exit(0)
-            try:
-                err = open(self.errlog, 'a')
-                os.chmod(self.errlog, 0600)
-                os.dup2(err.fileno(), sys.__stderr__.fileno())
-            except IOError:
-                self.log.error("Job %s/%s: Failed to open stderr file %s. Stderr will be lost" % 
-                               (self.pgid, self.user, self.errlog))
-            except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stderr will be lost" %
-                               (self.pgid, self.user, self.errlog))
-            try:
-                out = open(self.outlog, 'a')
-                os.chmod(self.outlog, 0600)
-                os.dup2(out.fileno(), sys.__stdout__.fileno())
-            except IOError:
-                self.log.error("Job %s/%s: Failed to open stdout file %s. Stdout will be lost" %
-                              (self.pgid, self.user, self.outlog))
-            except OSError:
-                self.log.error("Job %s/%s: Failed to chmod or dup2 file %s. Stdout will be lost" %
-                              (self.pgid, self.user, self.errlog))
-            except:
-                self.log.error("unknown error", exc_info=1)
-            self.state = "running"
-            try:
-                os.execve(self.executable, self.args, self.env)
-            except:
-                self.log.error("Failed to execute script %s" % self.executable)
+        self.state = "running"
+        self.mode = spec.get("mode")
+        self.kerneloptions = spec.get("kerneloptions")
+        self.true_mpi_args = spec.get("true_mpi_args")
 
-    def FinishProcess(self, status):
-        '''Handle cleanup for exited process'''
-        # process has already been waited on
-        self.state = "finished"
-        self.exit_status = int(status)/256
-        self.log.info("Job %s/%s: ProcessGroup %s Finished with exit code %d. pid %s" % \
-                      (self.pgid, self.user, self.pgid,
-                       self.exit_status, self.pid))
-        bb_path = REPO + "BB/bb.xml"
-        bb_file = open(bb_path, 'r+')
-        # acquire lock on bb.xml
-        start = time.time()
-        while time.time() - start < 5:
+    def get_state(self):
+        """Return the state of the process group"""
+        return self.state
+
+    def start(self):
+        """Start the process group"""
+        ######################
+        ## bballoc-like stuff
+        ## will go in here
+        ######################
+        child_pid = os.fork()
+        if not child_pid:
+            time.sleep(30)
+            self.state = "terminated"
+            self.exit_status = 0
+            os._exit(0)
+        else:
+            self.head_pid = child_pid
+
+    def signal(self, sig):
+        """Do something with this process group depending on the signal"""
+        os.system("/usr/sbin/pm -0 %s" % (" ".join(self.location)))
+
+
+
+
+class ProcessGroupDict(DataDict):
+    """A container for holding the different sets of allocated nodes.
+    Keyed by process group id.
+    """
+
+    item_cls = ProcessGroup
+    key = "id"
+    
+    def __init__(self):
+        DataDict.__init__(self)
+        self.id_gen = IncrID()
+
+    def q_add(self, specs, callback=None, cargs={}):
+        """Add a process group to the container"""
+        for spec in specs:
+            if spec.get("id", "*") != "*":
+                raise DataCreationError("cannot specify an id")
+            spec['id'] = self.id_gen.next()
+        return DataDict.q_add(self, specs, callback, cargs)
+
+    def wait(self):
+        """Runs through the process groups and sets state to 'terminated' and
+        sets the appropriate exit status if the process group has finished"""
+        for pg in self.itervalues():
             try:
-                fcntl.lockf(bb_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                self.logger.error("Unable to acquire lock on metadata")
+                pid, status = os.waitpid(pg.head_pid, os.WNOHANG)
+            except OSError: # the child has not terminated
                 continue
-            else:
-                break
-        bb_tree = lxml.etree.parse(bb_file)
-        root = bb_tree.getroot()
-        for node in self.location:
-            root.xpath(".//Node[@name='%s']" % node)[0].attrib['state'] = "free"
-        bb_tree.write(bb_path)
-        fcntl.lockf(bb_file.fileno(), fcntl.LOCK_UN)
-        bb_file.close()
+            # if the child has terminated
+            if pg.head_pid == pid:
+                status = status >> 8
+                pg.exit_status = status
+                pg.state = "terminated"
 
-    def Signal(self, signame):
-        '''Send a signal to a process group'''
-        try:
-            os.kill(self.pid, getattr(signal, signame))
-        except OSError, error:
-            self.log.error("Signal failure for pgid %s:%s" % (self.pgid, error.strerror))
-        return 0
+#    def find_by_jobid(self, jobid):
+#        for id, pg in self.iteritems():
+#            if pg.id == jobid:
+#                return pg
+#        return None
+
+
 
 
 class BBSystem(Component):
-    '''BBSystem Component Class'''
-    name = 'bbsystem'
-    logger = logging.getLogger("Cobalt.Components.BBSystem")
-    pgid = 0
-    
+    """Breadboard system component.
+
+    Methods:
+    add_process_groups -- allocates nodes
+    get_process_groups -- get currently allocated nodes
+    wait_process_groups -- removed terminated process groups
+    signal_process_groups -- free allocated nodes
+    """
+
+    name = "system"
+    implementation = "Breadboard"
+
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
-        self.proc_groups = DataList()
-        self.proc_groups.item_cls =  ProcessGroup
-    
-    def allocate(self, num_nodes):
-        '''Return list of free nodes from bb.xml'''
-        bb_path = REPO + "BB/bb.xml"
-        bb_file = open(bb_path, 'r+')
-        bb_tree = lxml.etree.parse(bb_file)
-        self.logger.info("Searching for %d nodes" % num_nodes)
-        # acquire lock on bb.xml
-        start = time.time()
-        while time.time() - start < 5:
-            try:
-                fcntl.lockf(bb_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                self.logger.error("Unable to acquire lock on metadata")
-                continue
-            else:
-                break
-        # find free nodes
-        root = bb_tree.getroot()
-        free = root.xpath(".//Node[@state='free']")
-        if len(free) < num_nodes:
-            self.logger.error("Not enough nodes.")
-            raise NodeAllocationError
-        free = free[:num_nodes]
-        for node in free:
-            node.attrib['state'] = "used"
-        nodes = [node.attrib['name'] for node in free]
-        bb_tree.write(bb_path)
-        fcntl.lockf(bb_file.fileno(), fcntl.LOCK_UN)
-        bb_file.close()
-        self.logger.info("Allocating: " + ','.join(nodes))
-        return nodes
+        self.resources = ResourceDict()
+        self.process_groups = ProcessGroupDict()
+       
+ 
+    def add_process_groups(self, specs):
+        """Allocate nodes and add the list of those allocated to the PGDict"""
+        process_groups = self.process_groups.q_add([specs],
+                                                   lambda x, _:x.start())
+        return process_groups
+    add_process_groups = exposed(query(add_process_groups))
+
+
+    def get_process_groups(self, specs):
+        """Get a list of existing allocations"""
+        self._wait()
+        return self.process_groups.q_get(specs)
+    get_process_groups = exposed(query(get_process_groups))
+
+
+    def _wait(self):
+        """Calls the process group container's method to mark
+        finished process groups as terminated"""
+        self.process_groups.wait()
+    _wait = automatic(_wait)
+
+
+    def wait_process_groups(self, specs):
+        """Remove terminated process groups"""
+        return self.process_groups.q_del(specs)
+    wait_process_groups = exposed(query(wait_process_groups))
+
+
+    def signal_process_groups(self, specs, signal):
+        """Free the specified process group (set of allocated nodes)"""
+        return self.process_groups.q_get(specs, lambda x, y:x.signal(y),
+                                         signal)
+    signal_process_groups = exposed(query(signal_process_groups))
+
+
+    def get_resources(self, specs):
+        """Returns a list of all the resources for this system matching the
+        given specs (list of dictionaries)"""
+        return self.resources.q_get(specs)
+    get_resources = exposed(query(get_resources))
+
+
+    def set_attributes(self, specs, newattrs):
+        """Sets an attribute in specified resources
+
+        Arguments:
+        specs -- list of dictionaries with resource attributes to match
+        newattrs -- a dictionary with key:val pairs of attributes to set
+
+        Returns: a list of the changed resources
+        """
+        return self.resources.q_get(specs, lambda x, y:[setattr(x, key, val) \
+                                                           for key, val \
+                                                           in y.iteritems()], \
+                                        newattrs)
+    set_attributes = exposed(query(set_attributes))
+
+
+    def add_resources(self, specs):
+        """Add a resource to this system
         
-    def create_processgroup(self, data):
-        '''Create new process group element'''
-        data['location'] = self.allocate(data['nodes'])
-        data['id'] = self.pgid
-        self.pgid += 1
-        return [item.to_rx() for item in self.proc_groups.q_add([data])]
-    create_processgroup = exposed(create_processgroup)
+        Arguments:
+        specs -- A list of dictionaries with the attributes for the resources
+        
+        Returns: list of values added
+        """
+        try:
+            return self.resources.q_add(specs)
+        except KeyError:
+            return "KeyError"
+    add_resources = exposed(add_resources)
 
-    def get_processgroup(self, data):
-        '''query existing process group'''
-        return [item.to_rx() for item in self.proc_groups.q_get([data])]
-    get_processgroup = exposed(get_processgroup)
 
-    def wait_processgroup(self, data):
-        '''Remove completed process group'''
-        return [itme.to_rx() for item in self.proc_groups.q_del([data])]
-    wait_processgroup = exposed(wait_processgroup)
+    def remove_resources(self, specs):
+        """Remove a resource from this system
+        
+        Arguments:
+        specs -- A list of dictionaries with the attributes to pick which
+                 resources to remove
 
-    def signal_processgroup(self, data, sig):
-        '''signal existing process group with specified signal'''
-        for pg in self.proc_groups:
-            if pg.pgid == data['id']:
-                return pg.Signal(sig)
-        # could not find pg, so return False
-        return False
-    signal_processgroup = exposed(signal_processgroup)
+        Returns: list of resources removed
+        """
+        return self.resources.q_del(specs)
+    remove_resources = exposed(remove_resources)
 
-    def kill_processgroup(self, data):
-        '''kill existing process group'''
-        return self.signal_processgroup(address, data, 'SIGINT')
-    kill_processgroup = exposed(kill_processgroup)
 
-    def wait_for_completion(self):
-        '''Watch pid's for completed pg'''
-        for pg in self.proc_groups:
-            if pg.state != 'finished':
-                exit_stat = os.waitpid(pg.pid, 0)
-                pg.FinishProcess(exit_stat[1])
-    wait_for_completion = automatic(wait_for_completion, 2)
+    def find_job_location(self, job_location_args, end_times):
+        """Finds and reserves a list of nodes in which the job can run
+        
+        Arguments:
+        job_location_args -- A list of dictionaries with info about the job
+            jobid -- string identifier
+            nodes -- int number of nodes
+            queue -- string queue name
+            required -- ??
+            utility_score -- ??
+            threshold -- ??
+            walltime -- ??
+            attrs -- dictionary of attributes to match against
+        end_times -- supposed time the job will end
+
+        Returns: Dictionary with list of nodes a job can run on, keyed by jobid
+        """
+        locations = {}
+        def jobsort(job):
+            """Used to sort job list by utility score"""
+            return job["utility_score"]
+        job_location_args.sort(key=jobsort)
+        for job in job_location_args:
+            specs = [{"name":"*", "functional":True, "scheduled":True,
+                      "state":"idle", "attributes":"*"}]
+            if "attrs" not in job:
+                job["attrs"] = {}
+            resources = self.resources.get_resources(specs, job["attrs"])
+            if len(resources) < job["nodes"]:
+                #Can't schedule job - not enough resources
+                continue
+            def namesort(res):
+                """Used to sort resources by name"""
+                return res.name
+            resources.sort(key=namesort)
+            used_resources = resources[:job["nodes"]]
+            for res in used_resources:
+                res.state = "busy"
+            locations[job["jobid"]] = [r.name for r in used_resources]
+        return locations
+    find_job_location = exposed(find_job_location)
