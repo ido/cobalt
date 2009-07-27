@@ -2,11 +2,13 @@
 
 import os
 import string
+import sys
 import time
 
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Exceptions import DataCreationError
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import DataCreationError, ComponentLookupError
 
 
 __all__ = ['BBSystem', 'ProcessGroup']
@@ -84,16 +86,16 @@ class ProcessGroup(Data):
     fields = Data.fields + ['id', 'user', 'size', 'cwd', 'executable', 'env',
                             'args', 'location', 'head_pid', 'stdin', 'stdout',
                             'stderr', 'exit_status', 'state', 'mode',
-                            'kerneloptions', 'true_mpi_args']
+                            'kerneloptions', 'true_mpi_args', 'image']
 
-    #required = ['user']
+    required = ['user', 'location']
 
     def __init__(self, spec):
         Data.__init__(self, spec)
         self.tag = "process group"
         self.id = spec.get("id")
         self.user = spec.get("user", "")
-        self.size = spec.get("size")
+        self.size = len(spec.get("location", []))
         self.cwd = spec.get("cwd")
         self.executable = spec.get("executable")
         self.env = spec.get("env", {})
@@ -104,33 +106,94 @@ class ProcessGroup(Data):
         self.stdout = spec.get("stdout")
         self.stderr = spec.get("stderr")
         self.exit_status = None
-        self.state = "running"
+        self.state = "initializing"
         self.mode = spec.get("mode")
         self.kerneloptions = spec.get("kerneloptions")
         self.true_mpi_args = spec.get("true_mpi_args")
-
-    def get_state(self):
-        """Return the state of the process group"""
-        return self.state
+        self.image = spec.get("image", "default")
 
     def start(self):
         """Start the process group"""
-        ######################
-        ## bballoc-like stuff
-        ## will go in here
-        ######################
         child_pid = os.fork()
-        if not child_pid:
-            time.sleep(30)
-            self.state = "terminated"
-            self.exit_status = 0
+        if not child_pid: # child
+            specs = [{"name":name, "attributes":"*"} for name in self.location]
+            self.setboot_and_cycle(specs)
+            t = str(time.time())
+            if t[len(t)-1] == "9" or t[len(t)-1] == "0":
+                print "alloc failed"
+                os._exit(1)
+            self.build_and_ping(specs)
+            self.state = "running"
+            # Add code to run scripts
+            time.sleep(5)
+            t = str(time.time())
+            if t[len(t)-1] == "9" or t[len(t)-1] == "0":
+                print "script failed"
+                os._exit(1)
+            # Finished running
             os._exit(0)
-        else:
+        else: # parent
             self.head_pid = child_pid
+    
+    def setboot_and_cycle(self, specs):
+        try:
+            resources = ComponentProxy("system").get_resources(specs)
+        except ComponentLookupError:
+            print >> sys.stderr, "Failure getting resources for running " \
+                + "bbsetboot on process group - exiting"
+            os._exit(1)
+        action = "build-%s" % self.image
+        for res in resources:
+            print res
+            res["attributes"]["action"] = action
+            mac = res["attributes"]["mac"]
+            linkname = "/tftpboot/pxelinux.cfg/01-%s" % \
+                mac.replace(":", "-").lower()
+            time.sleep(2) # Remove this line and uncomment following
+                          # to do actual bbsetboot work
+            #if os.readlink(linkname) == action:
+            #    continue
+            #os.unlink(linkname)
+            #os.symlink(action, linkname)
 
-    def signal(self, sig):
+            # Cycle power
+            print "Rebooting node %s" % res["name"]
+            #os.system("/usr/sbin/pm -c %s" % (res.name))
+
+    def build_and_ping(self, specs):
+        try:
+            building = ComponentProxy("system").get_resources(specs)
+        except ComponentLookupError:
+            print >> sys.stderr, "Failure getting resources for " \
+                + "running bballoc on process group - exiting"
+            os._exit(1)
+        #build_action = "build-%s" % self.image
+        #pinging = []
+        #while building + pinging:
+        #    for node in building[:]:
+        #        if node["attributes"]["action"] != build_action:
+        #            print "Node %s is done building" % node["name"]
+        #            building.remove(node)
+        #            pinging.append(node)
+        #    for node in pinging[:]:
+        #        if os.system("/bin/ping -c 1 -W 1 %s > /dev/null" % node["name"]):
+        #            continue
+        #        print "Node %s is available" % node["name"]
+        #        pinging.remove(node)
+        #    try:
+        #        time.sleep(20)
+        #    except KeyboardInterrupt:
+        #        print >> sys.stderr, "Build process incomplete, " \
+        #            "exiting anyway"
+        #        os._exit(1)
+
+    def signal(self, signame="SIGINT"):
         """Do something with this process group depending on the signal"""
-        os.system("/usr/sbin/pm -0 %s" % (" ".join(self.location)))
+        if signame == "SIGINT":
+            print "Turning off nodes %s" % (" ".join(self.location))
+            #os.system("/usr/sbin/pm -0 %s" % (" ".join(self.location)))
+        else:
+            print "other signal"
 
 
 
@@ -161,19 +224,26 @@ class ProcessGroupDict(DataDict):
         for pg in self.itervalues():
             try:
                 pid, status = os.waitpid(pg.head_pid, os.WNOHANG)
-            except OSError: # the child has not terminated
+            except OSError: # return status of -1
                 continue
-            # if the child has terminated
-            if pg.head_pid == pid:
+            if pg.head_pid == pid: # if the child has terminated
                 status = status >> 8
-                pg.exit_status = status
-                pg.state = "terminated"
-
-#    def find_by_jobid(self, jobid):
-#        for id, pg in self.iteritems():
-#            if pg.id == jobid:
-#                return pg
-#        return None
+                if status != 0:
+                    if pg.state == "initializing":
+                        # Trouble building - retry
+                        print "Trouble building - retrying %s" % " ".join(pg.location)
+                        pg.signal()
+                        pg.start()
+                    else:
+                        # Error running script
+                        print "Error in script - process terminated %s" % " ".join(pg.location)
+                        pg.exit_status = status
+                        pg.state = "terminated"
+                else:
+                    # Successful run
+                    print "Successful run %s" % " ".join(pg.location)
+                    pg.exit_status = status
+                    pg.state = "terminated"
 
 
 
@@ -199,9 +269,7 @@ class BBSystem(Component):
  
     def add_process_groups(self, specs):
         """Allocate nodes and add the list of those allocated to the PGDict"""
-        process_groups = self.process_groups.q_add([specs],
-                                                   lambda x, _:x.start())
-        return process_groups
+        return self.process_groups.q_add(specs, lambda x, _:x.start())
     add_process_groups = exposed(query(add_process_groups))
 
 
