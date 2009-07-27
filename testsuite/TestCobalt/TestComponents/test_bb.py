@@ -10,7 +10,7 @@ __all__ = ["TestBBSystem"]
 ## TO THOSE THAT ARE
 ## ALLOCATED FOR TESTING
 ############################
-names = ["bb26", "bb27", "bb28"]
+names = []
 
 class TestBBSystem():
     """Test class for BBSystem component"""
