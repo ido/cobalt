@@ -1,4 +1,5 @@
 """Test cases for the BBSystem component"""
+import time, os, sys
 from Cobalt.Components.bb import BBSystem
 from Cobalt.Exceptions import DataCreationError
 
@@ -86,6 +87,7 @@ class TestBBSystem():
 
     def test_find_job_location(self):
         """Tests the component method find_job_location()"""
+        self.setup()
         job_loc_args = [{"jobid":"1", "nodes":3, "queue":"default",
                          "utility_score":1,
                          "attrs":{"speed":"fast"}},
@@ -109,6 +111,7 @@ class TestBBSystem():
 
     def test_set_and_remove_attributes(self):
         """Tests the methods set_attributes() and remove_attributes()"""
+        self.setup()
         specs = [{"name":"bb13"}, {"name":"bb14"}]
         newattrs = {"attrTrue":True, "attrFalse":False, "attrInt":1013}
         self.bb.set_attributes(specs, newattrs)
@@ -136,6 +139,7 @@ class TestBBSystem():
 
     def test_add_process_groups(self):
         """Tests the method add_process_groups()"""
+        self.setup()
         specs = [{"id":"1013", "user":"carlson",
                   "location":["bb01", "bb02", "bb10", "bb13"]}]
         try:
@@ -160,3 +164,21 @@ class TestBBSystem():
         self.bb.add_process_groups(specs9)
         pgs = self.bb.get_process_groups([{"id":"*"}])
         assert len(pgs) == 10
+        self.bb.wait_process_groups([{"id":"*"}])
+        pgs = self.bb.get_process_groups([{"id":"*"}])
+        assert len(pgs) == 0
+
+    def test_signal_process_groups(self):
+        """Tests the method signal_process_groups()"""
+        self.setup()
+        pgs = self.bb.get_process_groups([{"id":"*"}])
+        assert len(pgs) == 0
+        specs = [{"user":"carlson", "location":["bb10", "bb13"]}]
+        pg_added = self.bb.add_process_groups(specs)
+        pgs = self.bb.get_process_groups([{"id":"*"}])
+        self.bb.signal_process_groups([{"id":pgs[0].id}], "SIGINT")
+        time.sleep(1)
+        self.bb.process_groups.wait()
+        self.bb.wait_process_groups([{"id":"*", "state":"terminated"}])
+        pgs = self.bb.get_process_groups([{"id":"*"}])
+        assert len(pgs) == 0
