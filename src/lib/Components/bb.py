@@ -1,19 +1,24 @@
 """Breadboard Component"""
 
+import atexit
+import logging
 import os
+import pwd
 import sets
 import signal
 import sys
-import time
+import tempfile
 
 from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Components.base import Component, exposed, automatic, query
+from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import DataCreationError, ComponentLookupError
+from Cobalt.Exceptions import ComponentLookupError, DataCreationError, \
+    ProcessGroupCreationError
 
 
 __all__ = ['BBSystem', 'ProcessGroup']
 
+logger = logging.getLogger(__name__)
 
 class Resource(Data):
     """A single unit of a resource
@@ -84,10 +89,11 @@ class ResourceDict(DataDict):
 
 class ProcessGroup(Data):
     """A set of nodes allocated by a user"""
-    fields = Data.fields + ['id', 'user', 'size', 'cwd', 'executable', 'env',
-                            'args', 'location', 'head_pid', 'stdin', 'stdout',
-                            'stderr', 'exit_status', 'state', 'mode',
-                            'kerneloptions', 'true_mpi_args', 'image']
+    fields = Data.fields + ['id', 'jobid', 'user', 'size', 'cwd', 'executable',
+                            'env', 'args', 'location', 'head_pid', 'stdin',
+                            'stdout', 'stderr', 'exit_status', 'state', 'mode',
+                            'kerneloptions', 'true_mpi_args', 'cobalt_log_file',
+                            'umask', 'image', 'location_file']
 
     required = ['user', 'location']
 
@@ -95,6 +101,7 @@ class ProcessGroup(Data):
         Data.__init__(self, spec)
         self.tag = "process group"
         self.id = spec.get("id")
+        self.jobid = spec.get("jobid")
         self.user = spec.get("user", "")
         self.size = len(spec.get("location", []))
         self.cwd = spec.get("cwd")
@@ -111,7 +118,11 @@ class ProcessGroup(Data):
         self.mode = spec.get("mode")
         self.kerneloptions = spec.get("kerneloptions")
         self.true_mpi_args = spec.get("true_mpi_args")
+        self.cobalt_log_file = spec.get("cobalt_log_file")
+        self.umask = spec.get("umask")
+
         self.image = spec.get("image", "default")
+        self.location_file = None
         
         self.building_nodes = []
         self.pinging_nodes = []
@@ -140,12 +151,6 @@ class ProcessGroup(Data):
                 continue
             os.unlink(linkname)
             os.symlink(action, linkname)
-            # Simulate failure during setting boot state
-            #t = str(time.time())
-            #if t[len(t)-1] == "9" or t[len(t)-1] == "0":
-            #    print "Failure setting boot state for %s" \
-            #        % (" ".join(self.location))
-            #    sys.exit(1)
         for res in resources:
             # Cycle power
             print "Rebooting node %s" % res["name"]
@@ -157,7 +162,8 @@ class ProcessGroup(Data):
 
     def check_build_done(self):
         """Returns True if all nodes are built/available; False otherwise"""
-        specs = [{"name":name, "attributes":"*"} for name in self.building_nodes]
+        specs = [{"name":name, "attributes":"*"} 
+                 for name in self.building_nodes]
         try:
             system = ComponentProxy("system")
         except ComponentLookupError:
@@ -176,28 +182,96 @@ class ProcessGroup(Data):
                 continue
             print "Node %s is available" % nodename
             self.pinging_nodes.remove(nodename)
-        # Simulate failure while building
-        #t = str(time.time())
-        #if t[len(t)-1] == "9" or t[len(t)-1] == "0":
-        #    print "building/pinging error for %s" % (" ".join(self.location))
-        #    sys.exit(1)
         if len(self.building_nodes) == 0 and len(self.pinging_nodes) == 0:
-            # Done building/pinging - move onto running
             return True
         return False
 
-    def run_scripts(self):
+    def run_script(self):
+        """Forks a child; child calls another process to setup/run the script"""
         self.state = "running"
+        self.location_file = tempfile.mkstemp()
+        open(self.location_file[1], "w").write(" ".join(self.location))
+        print "Made a tempfile with the location info."
         child_pid = os.fork()
-        if not child_pid:
-            # Child
-            # Put code to run scripts here
-            print "script (child) running for 5 seconds, then exit"
-            time.sleep(5)
-            os._exit(0)
-        else:
+        if child_pid:
             # Parent
             self.head_pid = child_pid
+        else:
+            # Child
+            print "About to call run() for pg with locs: %s" \
+                % " ".join(self.location)
+            self.run()
+
+    def run(self):
+        """Lets the child process run the script"""
+        print "Can child access tempfile?..."
+        readdata = os.read(self.location_file[0], 100)
+        print readdata
+        try:
+            userid, groupid = pwd.getpwnam(self.user)[2:4]
+        except KeyError:
+            raise ProcessGroupCreationError("error getting uid/gid")
+        try:
+            os.setgid(groupid)
+            os.setuid(userid)
+        except OSError:
+            logger.error("failed to change uid/gid for process group %s" \
+                             % self.id)
+            os._exit(1)
+        if self.umask != None:
+            try:
+                os.umask(self.umask)
+            except OSError:
+                logger.error("Failed to set umask to %s" % self.umask)
+        nodes_file_path = self.location_file[1]
+        kerneloptions = self.kerneloptions
+        app_envs = []
+        for key, value in self.env.iteritems():
+            app_envs.append((key, value))
+            
+        envs = " ".join(["%s=%s" % x for x in app_envs])
+        atexit._atexit = []
+
+        stdin = open(self.stdin or "/dev/null", "r")
+        os.dup2(stdin.fileno(), sys.__stdin__.fileno())
+        try:
+            stdout = open(self.stdout or tempfile.mktemp(), "a")
+            os.dup2(stdout.fileno(), sys.__stdout__.fileno())
+        except (IOError, OSError), e:
+            logger.error("process group %s: error opening stdout file %s: " \
+                             + "%s (stdout will be lost)" % (self.id,
+                                                             self.stdout, e))
+        try:
+            stderr = open(self.stderr or tempfile.mktemp(), "a")
+            os.dup2(stderr.fileno(), sys.__stderr__.fileno())
+        except (IOError, OSError), e:
+            logger.error("process group %s: error opening stderr file %s: " \
+                             + "%s (stderr will be lost)" % (self.id,
+                                                             self.stderr, e))
+        cmd = (self.executable, self.executable, "-nodes_file", nodes_file_path)
+        if self.args:
+            cmd = cmd + ('-args', self.args)
+        if envs:
+            cmd = cmd + ('-env', envs)
+        if kerneloptions:
+            cmd = cmd + ('-kernel_options', kerneloptions)
+        try:
+            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+            print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
+            print >> cobalt_log_file, "called with environment:\n"
+            for key in os.environ:
+                print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
+            print >> cobalt_log_file, "\n"
+            cobalt_log_file.close()
+        except IOError:
+            logger.error("Job %s/%s: unable to open cobalt log file %s" \
+                             % (self.id, self.user, self.cobalt_log_file))
+        try:
+            os.execl(*cmd)
+        except OSError:
+            logger.error("Job %s/%s: unable to execl the script" \
+                             % (self.id, self.user))
+            os._exit(1)
 
     def signal(self, signame="SIGINT"):
         """Do something with this process group depending on the signal"""
@@ -218,6 +292,7 @@ class ProcessGroup(Data):
                     % (str(self.id), e)
 
     def wait(self):
+        """Sets the PG state to 'terminated' if done"""
         if self.head_pid:
             try:
                 pid, status = os.waitpid(self.head_pid, os.WNOHANG)
@@ -226,10 +301,29 @@ class ProcessGroup(Data):
             if self.head_pid == pid:
                 # Child has terminated
                 status = status >> 8
+                # Close file descriptor of file with node locations
+                os.close(self.location_file[0])
+                # Remove temporary file with node locations
+                os.remove(self.location_file[1])
                 self.exit_status = status
                 self.state = "terminated"
                 # Do something if exit status is non-zero?
                 print "PG in location [%s] terminated" % " ".join(self.location)
+                
+    def release_resources(self):
+        """Releases resources held by a process group"""
+        try:
+            system = ComponentProxy("system")
+        except ComponentLookupError:
+            print >> sys.stderr, "Failure to connect to system component to " \
+                + "release process group resources"
+            sys.exit(1)
+        os.system("/usr/sbin/pm -0 %s" % " ".join(self.location))
+        specs = [{"name":name} for name in self.location]
+        new_attrs = {"state":"idle"}
+        system.set_attributes(specs, new_attrs)
+
+
 
 
 class ProcessGroupDict(DataDict):
@@ -254,26 +348,6 @@ class ProcessGroupDict(DataDict):
             spec['id'] = self.id_gen.next()
         return DataDict.q_add(self, specs, callback, cargs)
 
-    def q_del(self, specs, callback=None, cargs={}):
-        """Remove a process from the container"""
-        for spec in specs:
-            if not hasattr(spec, "location"):
-                spec["location"] = "*"
-        removed = DataDict.q_del(self, specs, callback, cargs)
-        try:
-            system = ComponentProxy("system")
-        except ComponentLookupError:
-            print >> sys.stderr, "Failed to connect to system to set " \
-                + "resources idle when removing a process group"
-            sys.exit(1)
-        new_specs = []
-        for pg in removed:
-            new_specs.append({"name":name} for name in pg.location)
-        new_attrs = {"state":"idle"}
-        print new_specs
-        print new_attrs
-        system.set_attributes(new_specs, new_attrs)
-
     def wait(self):
         """Runs through the process groups and sets state to 'terminated' and
         sets the appropriate exit status if the process group has finished"""
@@ -285,7 +359,7 @@ class ProcessGroupDict(DataDict):
         nodes are done building"""
         for pg in self.itervalues():
             if pg.check_build_done() == True and pg.state == "building":
-                pg.run_scripts()
+                pg.run_script()
 
 
 
@@ -342,8 +416,15 @@ class BBSystem(Component):
 
     def wait_process_groups(self, specs):
         """Remove terminated process groups"""
-        return self.process_groups.q_del(specs)
+        return self.process_groups.q_del(specs, lambda x,
+                                         _:x.release_resources())
     wait_process_groups = exposed(query(wait_process_groups))
+
+
+    def remove_terminated_groups(self):
+        """Automatic method to periodically remove terminated process groups"""
+        self.wait_process_groups([{"id":"*", "state":"terminated"}])
+    remove_terminated_groups = automatic(remove_terminated_groups)
 
 
     def signal_process_groups(self, specs, signal):
@@ -543,5 +624,4 @@ class BBSystem(Component):
         nodedata = self.get_resources(specs)
         buildimage = nodedata[0].attributes["action"]
         nodedata[0].attributes["action"] = buildimage.replace("build-", "boot-")
-        resrcs = self.get_resources([{"name":"*"}])
     node_done_building = exposed(node_done_building)

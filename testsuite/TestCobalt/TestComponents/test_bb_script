@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+import sys
+import time
+
+if __name__ == "__main__":
+    print "Test script is running."
+    print "Command line arguments:"
+    for arg in sys.argv:
+        print arg
+    print "Sleep for 5 seconds."
+    time.sleep(5)
+    print "Test script is done running"
+    locs = open(sys.argv[2], "r")
+    print "Nodes available to this process group/script: %s" \
+        % locs.readline()
+    file.close(locs)
+    SystemExit(0)

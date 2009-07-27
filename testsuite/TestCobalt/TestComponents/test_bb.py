@@ -10,7 +10,7 @@ __all__ = ["TestBBSystem"]
 ## TO THOSE THAT ARE
 ## ALLOCATED FOR TESTING
 ############################
-names = ["bb17", "bb18", "bb19"]
+names = ["bb26", "bb27", "bb28"]
 
 class TestBBSystem():
     """Test class for BBSystem component"""
@@ -149,29 +149,36 @@ class TestBBSystem():
     def test_find_job_location(self):
         """Tests the component method find_job_location()"""
         self.setup()
-        self.bb.add_resources([{"name":"test1", "functional":True, "scheduled":True,
+        self.bb.add_resources([{"name":"test1", "functional":True,
+                                "scheduled":True,
                                 "attributes":{"numProc":2, "speed":"slow"}},
-                               {"name":"test2", "functional":True, "scheduled":True,
+                               {"name":"test2", "functional":True,
+                                "scheduled":True,
                                 "attributes":{"numProc":2, "speed":"slow"}},
-                               {"name":"test3", "functional":True, "scheduled":True,
+                               {"name":"test3", "functional":True,
+                                "scheduled":True,
                                 "attributes":{"numProc":2, "speed":"fast"}},
-                               {"name":"test4", "functional":True, "scheduled":True,
+                               {"name":"test4", "functional":True,
+                                "scheduled":True,
                                 "attributes":{"numProc":2, "speed":"fast"}},
-                               {"name":"test5", "functional":True, "scheduled":True,
+                               {"name":"test5", "functional":True,
+                                "scheduled":True,
                                 "attributes":{"numProc":4, "speed":"fast"}},
-                               {"name":"test6", "functional":True, "scheduled":True,
+                               {"name":"test6", "functional":True,
+                                "scheduled":True,
                                 "attributes":{"numProc":4, "speed":"fast"}}
                                ])
-        job_loc_args = [{"jobid":"1", "nodes":3, "queue":"default", "utility_score":1,
-                         "attrs":{"speed":"slow"}},
-                        {"jobid":"2", "nodes":2, "queue":"default", "utility_score":2,
-                         "attrs":{"speed":"slow"}},
-                        {"jobid":"3", "nodes":1, "queue":"default", "utility_score":1,
-                         "attrs":{"speed":"fast", "numProc":4}},
-                        {"jobid":"4", "nodes":3, "queue":"default", "utility_score":2,
-                         "attrs":{"speed":"fast"}},
-                        {"jobid":"5", "nodes":2, "queue":"default", "utility_score":2,
-                         "attrs":{"numProc":2}}
+        job_loc_args = [{"jobid":"1", "nodes":3, "queue":"default",
+                         "utility_score":1, "attrs":{"speed":"slow"}},
+                        {"jobid":"2", "nodes":2, "queue":"default",
+                         "utility_score":2, "attrs":{"speed":"slow"}},
+                        {"jobid":"3", "nodes":1, "queue":"default",
+                         "utility_score":1, "attrs":{"speed":"fast",
+                                                     "numProc":4}},
+                        {"jobid":"4", "nodes":3, "queue":"default",
+                         "utility_score":2, "attrs":{"speed":"fast"}},
+                        {"jobid":"5", "nodes":2, "queue":"default",
+                         "utility_score":2, "attrs":{"numProc":2}}
                         ]
         job_locs = self.bb.find_job_location(job_loc_args, None)
         assert len(job_locs) == 3
@@ -220,7 +227,9 @@ class TestBBSystem():
             assert False
         except DataCreationError:
             assert True
-        specs = [{"user":"carlson", "location":[loc]} for loc in names]
+        specs = [{"user":"carlson", "location":[loc],
+                  "executable":"test_bb_script",
+                  "stdout":"test_bb_script_stdout"} for loc in names]
         pg_added = self.bb.add_process_groups(specs)
         assert len(pg_added) == len(names)
         pgs = self.bb.get_process_groups([{"id":"*"}])
