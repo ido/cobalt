@@ -16,6 +16,7 @@ class TestBBSystem():
 
     def setup_resources(self):
         """Sets up the resources for the test component"""
+        # Test adding resources
         num_resources = self.bb.get_resources([{"name":"*"}])
         assert len(num_resources) == 0
         self.bb.add_resources(
@@ -50,6 +51,21 @@ class TestBBSystem():
             )
         num_resources = self.bb.get_resources([{"name":"*"}])
         assert len(num_resources) == 16
+        # Test key error for adding resource with same name
+        keyerr = self.bb.add_resources([{"name":"bb01"}])
+        assert keyerr == "KeyError"
+        # Test removing resources
+        self.bb.add_resources([{"name":"bb1013", "functional":True}])
+        num_resources = self.bb.get_resources([{"name":"*"}])
+        assert len(num_resources) == 17
+        self.bb.remove_resources([{"name":"bb1013", "functional":False}])
+        num_resources = self.bb.get_resources([{"name":"*"}])
+        assert len(num_resources) == 17
+        self.bb.remove_resources([{"name":"bb1013", "functional":True}])
+        num_resources = self.bb.get_resources([{"name":"*"}])
+        assert len(num_resources) == 16
+        assert "bb1013" not in [r.name for r in num_resources]
+        
 
     def test_find_job_location(self):
         """Tests the component method find_job_location()"""
@@ -74,13 +90,30 @@ class TestBBSystem():
         assert len(self.bb.get_resources([{"state":"idle"}])) == 2
         assert len(self.bb.get_resources([{"state":"busy"}])) == 14
 
-    def test_set_attributes(self):
-        """Tests the component method set_attributes()"""
+    def test_set_and_remove_attributes(self):
+        """Tests the methods set_attributes() and remove_attributes()"""
         specs = [{"name":"bb13"}, {"name":"bb14"}]
         newattrs = {"attrTrue":True, "attrFalse":False, "attrInt":1013}
         self.bb.set_attributes(specs, newattrs)
-        resources = self.bb.get_resources([{"name":"bb13"}, {"name":"bb14"}])
+        resources = self.bb.get_resources(specs)
         for r in resources:
             assert r.attrTrue == True
             assert r.attrFalse == False
             assert r.attrInt == 1013
+        newattrs = {"attributes":{"speed":"fast", "myrinet":True}}
+        self.bb.set_attributes(specs, newattrs)
+        resources = self.bb.get_resources(specs)
+        for r in resources:
+            assert "speed" in r.attributes
+            assert r.attributes["speed"] == "fast"
+            assert "myrinet" in r.attributes
+            assert r.attributes["myrinet"] == True
+        attrs = ["speed"]
+        self.bb.remove_attributes(specs, attrs)
+        resources = self.bb.get_resources(specs)
+        for r in resources:
+            assert not hasattr(r, "speed")
+            assert not hasattr(r, "myrinet")
+            assert "speed" not in r.attributes
+            assert "myrinet" in r.attributes and r.attributes["myrinet"] == True
+            

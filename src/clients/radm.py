@@ -21,9 +21,12 @@ if __name__ == "__main__":
                  help="mark r1, r2, etc as schedulable")    
     p.add_option("--nonsched", action="store_true", dest="nonsched",
                  help="mark r1, r2, etc as non-schedulable")
-    p.add_option("--attr", action="store", dest="attr",
-                 help="set other attributes of r1, r2, etc to ATTR" + \
-                     "(enter ATTR as \"key1:val1 key2:val2 key3:val3 etc\")")
+    p.add_option("--setattr", action="store", dest="setattr",
+                 help="set other attributes of r1, r2, etc to SETATTR " + \
+                     "(enter SETATTR as \"key1:val1 key2:val2 etc\")")
+    p.add_option("--remattr", action="store", dest="remattr",
+                 help="remove other attributes of r1, r2, etc specified " + \
+                     "by REMATTR (enter REMATTR as \"key1 key2 etc \")")
     p.add_option("--queue", action="store", dest="queue",
                  help="set r1, r2, etc queues to QUEUE")
     p.add_option("--state", action="store", dest="state",
@@ -136,9 +139,9 @@ if __name__ == "__main__":
         for r in changed:
             print "    %s" % r["name"]
     
-    # Handle opt.attr
-    if opt.attr != None:
-        attr = opt.attr.split()
+    # Handle opt.setattr
+    if opt.setattr != None:
+        attr = opt.setattr.split()
         attrdict = {}
         for a in attr:
             try:
@@ -151,6 +154,16 @@ if __name__ == "__main__":
         newattrs = {"attributes":attrdict}
         changed = system.set_attributes(specs, newattrs)
         changed.sort(key=namesort)
-        print "Resources with changed attributes:"
+        print "Resources with set attributes:"
+        for r in changed:
+            print "    %s" % r["name"]
+
+    # Handle opt.remattr
+    if opt.remattr != None:
+        attrs = opt.remattr.split()
+        specs = [{"name":name} for name in args]
+        changed = system.remove_attributes(specs, attrs)
+        changed.sort(key=namesort)
+        print "Resources with removed attributes:"
         for r in changed:
             print "    %s" % r["name"]

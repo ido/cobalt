@@ -1,6 +1,7 @@
 """Breadboard Component"""
 
 import os
+import string
 import time
 
 from Cobalt.Data import Data, DataDict, IncrID
@@ -247,12 +248,46 @@ class BBSystem(Component):
 
         Returns: a list of the changed resources
         """
-        return self.resources.q_get(specs, lambda x, y:[setattr(x, key, val) \
-                                                           for key, val \
+        return self.resources.q_get(specs, lambda x, y:[self.set_attr(x, key, \
+                                                                          val)\
+                                                            for key, val \
                                                            in y.iteritems()], \
                                         newattrs)
     set_attributes = exposed(query(set_attributes))
 
+    
+    def set_attr(self, res, key, val):
+        """Helper method for set_attributes - actually does the
+        setting of each resources attributes"""
+        if key != "attributes":
+            setattr(res, key, val)
+        else:
+            for key2, val2 in val.iteritems():
+                if key2 == "mac":
+                    val2 = string.replace(val2, "-", ":")
+                res.attributes[key2] = val2
+
+
+    def remove_attributes(self, specs, attrs):
+        """Removes other attributes in specified resources
+
+        Arguments:
+        specs -- list of dictionaries with resource attributes to match
+        attrs -- list of names of attributes to remove from resource.attributes
+
+        Returns: a list of the changed resources
+        """
+        return self.resources.q_get(specs, lambda x, y:[self.rem_attr(x, key) \
+                                                            for key in y], \
+                                        attrs)
+    remove_attributes = exposed(query(remove_attributes))
+
+
+    def rem_attr(self, res, key):
+        """Helper method for remove_attributes - actually does the
+        removing of each resources attributes"""
+        if key in res.attributes:
+            del res.attributes[key]
 
     def add_resources(self, specs):
         """Add a resource to this system
