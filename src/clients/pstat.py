@@ -22,7 +22,7 @@ if __name__ == "__main__":
         raise SystemExit(1)
     if opt.wait:
         pm.wait_process_groups([{"state":"terminated"}])
-    pgroups = pm.get_process_groups([{"id":"*"}])
+    pgroups = pm.get_process_groups([{"id":"*", "user":"*", "state":"*", "location":"*"}])
     header = [['Id', 'User', 'State', 'Location']]
     # build output list
     output = []
