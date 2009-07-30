@@ -1,88 +1,23 @@
 """Hardware abstraction layer for the system on which process groups are run.
 
 Classes:
-ProcessGroup -- virtual process group running on the system
-ProcessGroupDict -- default container for process groups
 ClusterBaseSystem -- base system component
 """
 
-import sys
 import time
 import Cobalt
-from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Exceptions import DataCreationError, JobValidationError
-from Cobalt.Components.base import Component, exposed, automatic, query
-import sets, thread, ConfigParser
+from Cobalt.Exceptions import  JobValidationError
+from Cobalt.Components.base import Component, exposed, automatic
+from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
+import sets, ConfigParser
 
 __all__ = [
-    "ProcessGroup",
-    "ProcessGroupDict", 
     "ClusterBaseSystem",
 ]
 
 CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 
-
-class ProcessGroup (Data):
-    required_fields = ['user', 'executable', 'args', 'location', 'size', 'cwd']
-    fields = Data.fields + [
-        "id", "user", "size", "cwd", "executable", "env", "args", "location",
-        "head_pid", "stdin", "stdout", "stderr", "exit_status", "state",
-        "mode", "kerneloptions", "true_mpi_args", "jobid",
-    ]
-
-    def __init__(self, spec):
-        Data.__init__(self, spec)
-        self.id = spec.get("id")
-        self.head_pid = None
-        self.stdin = spec.get('stdin')
-        self.stdout = spec.get('stdout')
-        self.stderr = spec.get('stderr')
-        self.cobalt_log_file = spec.get('cobalt_log_file')
-        self.umask = spec.get('umask')
-        self.exit_status = None
-        self.location = spec.get('location') or []
-        self.user = spec.get('user', "")
-        self.executable = spec.get('executable')
-        self.cwd = spec.get('cwd')
-        self.size = spec.get('size')
-        self.mode = spec.get('mode', 'co')
-        self.args = " ".join(spec.get('args') or [])
-        self.kerneloptions = spec.get('kerneloptions')
-        self.env = spec.get('env') or {}
-        self.true_mpi_args = spec.get('true_mpi_args')
-        self.jobid = spec.get('jobid')
-
-    def _get_state (self):
-        if self.exit_status is None:
-            return "running"
-        else:
-            return "terminated"
-    
-    state = property(_get_state)
-
-
-class ProcessGroupDict (DataDict):
-    """Default container for process groups.
-    
-    Keyed by process group id.
-    
-    When instantiating the class, be sure to explicitly set the item_cls attribute.
-    """
-    
-    item_cls = None
-    key = "id"
-    
-    def __init__ (self):
-        self.id_gen = IncrID()
- 
-    def q_add (self, specs, callback=None, cargs={}):
-        for spec in specs:
-            if spec.get("id", "*") != "*":
-                raise DataCreationError("cannot specify an id")
-            spec['id'] = self.id_gen.next()
-        return DataDict.q_add(self, specs)
 
 
 class ClusterBaseSystem (Component):

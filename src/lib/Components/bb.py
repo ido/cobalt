@@ -24,95 +24,80 @@ class BBProcessGroup(ProcessGroup):
     """Process Group modified for Breadboard"""
 
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec)
+        ProcessGroup.__init__(self, spec, logger)
         self.image = spec.get("image", "default")
         self.building_nodes = []
         self.pinging_nodes = []
-
-    def run_script(self):
-        """Forks a child; child sets up and execs to executable script"""
         self.nodefile = tempfile.mkstemp()
         os.write(self.nodefile[0], " ".join(self.location))
         os.close(self.nodefile[0])
-        child_pid = os.fork()
-        if child_pid:
-            # Parent
-            self.head_pid = child_pid
-        else:
-            # Child
-            self.run()
 
-    def run(self):
-        """Sets up the environment and execs to the executable script"""
+    def _runjob(self):
+        """Sets up the environment and execs to the executable script."""
         try:
+            userid, groupid = pwd.getpwnam(self.user)[2:4]
+        except KeyError:
+            logger.exception("Error getting uid/gid for process " + \
+                                 "group %s" % self.id)
+            os._exit(1)
+        try:
+            os.setgid(groupid)
+            os.setuid(userid)
+        except OSError:
+            logger.exception("failed to change uid/gid for process " + \
+                                 "group %s" % self.id)
+            os._exit(1)
+        if self.umask != None:
             try:
-                userid, groupid = pwd.getpwnam(self.user)[2:4]
-            except KeyError:
-                logger.exception("Error getting uid/gid for process " + \
-                                     "group %s" % self.id)
-                os._exit(1)
-            try:
-                os.setgid(groupid)
-                os.setuid(userid)
+                os.umask(self.umask)
             except OSError:
-                logger.exception("failed to change uid/gid for process " + \
-                                     "group %s" % self.id)
-                os._exit(1)
-            if self.umask != None:
-                try:
-                    os.umask(self.umask)
-                except OSError:
-                    logger.exception("Failed to set umask to %s" % self.umask)
-            nodes_file_path = self.nodefile[1]
-            kerneloptions = self.kerneloptions
-            app_envs = []
-            for key, value in self.env.iteritems():
-                app_envs.append((key, value))            
-            envs = " ".join(["%s=%s" % x for x in app_envs])
-            atexit._atexit = []
-            stdin = open(self.stdin or "/dev/null", "r")
-            os.dup2(stdin.fileno(), sys.__stdin__.fileno())
-            try:
-                stdout = open(self.stdout or tempfile.mktemp(), "a")
-                os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-            except (IOError, OSError):
-                logger.exception(("process group %s: error opening stdout " + \
-                                      "file %s (stdout will be lost)") \
-                                     % (self.id, self.stdout))
-            try:
-                stderr = open(self.stderr or tempfile.mktemp(), "a")
-                os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-            except (IOError, OSError):
-                logger.exception(("process group %s: error opening stderr " + \
-                                      "file %s (stderr will be lost)") \
-                                     % (self.id, self.stderr)) 
-            cmd = (self.executable, self.executable, "-nodes_file", nodes_file_path)
-            if self.args:
-                cmd = cmd + ('-args', self.args)
-            if envs:
-                cmd = cmd + ('-env', envs)
-            if kerneloptions:
-                cmd = cmd + ('-kernel_options', kerneloptions)
-            try:
-                cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
-                print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
-                print >> cobalt_log_file, "called with environment:\n"
-                for key in os.environ:
-                    print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
-                print >> cobalt_log_file, "\n"
-                cobalt_log_file.close()
-            except IOError:
-                logger.error("Job %s/%s: unable to open cobalt log file %s" \
-                                 % (self.id, self.user, self.cobalt_log_file))
-            try:
-                os.execl(*cmd)
-            except OSError:
-                logger.exception("Job %s/%s: unable to execl the script" \
-                                     % (self.id, self.user))
-                os._exit(1)
-        except KeyboardInterrupt:
-            logger.exception(("Keyboard interrupt in job %s/%s while " + \
-                                  "exec'ing to script") % (self.id, self.user))
+                logger.exception("Failed to set umask to %s" % self.umask)
+        nodes_file_path = self.nodefile[1]
+        kerneloptions = self.kerneloptions
+        app_envs = []
+        for key, value in self.env.iteritems():
+            app_envs.append((key, value))            
+        envs = " ".join(["%s=%s" % x for x in app_envs])
+        atexit._atexit = []
+        stdin = open(self.stdin or "/dev/null", "r")
+        os.dup2(stdin.fileno(), sys.__stdin__.fileno())
+        try:
+            stdout = open(self.stdout or tempfile.mktemp(), "a")
+            os.dup2(stdout.fileno(), sys.__stdout__.fileno())
+        except (IOError, OSError):
+            logger.exception(("process group %s: error opening stdout " + \
+                                  "file %s (stdout will be lost)") \
+                                 % (self.id, self.stdout))
+        try:
+            stderr = open(self.stderr or tempfile.mktemp(), "a")
+            os.dup2(stderr.fileno(), sys.__stderr__.fileno())
+        except (IOError, OSError):
+            logger.exception(("process group %s: error opening stderr " + \
+                                  "file %s (stderr will be lost)") \
+                                 % (self.id, self.stderr)) 
+        cmd = (self.executable, self.executable, "-nodes_file", nodes_file_path)
+        if self.args:
+            cmd = cmd + ('-args', self.args)
+        if envs:
+            cmd = cmd + ('-env', envs)
+        if kerneloptions:
+            cmd = cmd + ('-kernel_options', kerneloptions)
+        try:
+            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
+            print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
+            print >> cobalt_log_file, "called with environment:\n"
+            for key in os.environ:
+                print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
+            print >> cobalt_log_file, "\n"
+            cobalt_log_file.close()
+        except IOError:
+            logger.error("Job %s/%s: unable to open cobalt log file %s" \
+                             % (self.id, self.user, self.cobalt_log_file))
+        try:
+            os.execl(*cmd)
+        except OSError:
+            logger.exception("Job %s/%s: unable to execl the script" \
+                                 % (self.id, self.user))
             os._exit(1)
 
     def signal(self, signame="SIGINT"):
@@ -150,21 +135,6 @@ class BBProcessGroup(ProcessGroup):
 
 
 
-class BBProcessGroupDict(ProcessGroupDict):
-    """ProcessGroupDict with modifications for Breadboard"""
-
-    item_cls = BBProcessGroup
-    
-    def __init__(self):
-        ProcessGroupDict.__init__(self)
-
-    def wait(self):
-        """Call each process group's wait() method"""
-        for pg in self.itervalues():
-            pg.wait()
-
-
-
 class BBSystem(Component):
     """Breadboard system component.
 
@@ -181,7 +151,8 @@ class BBSystem(Component):
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.resources = ResourceDict()
-        self.process_groups = BBProcessGroupDict()
+        self.process_groups = ProcessGroupDict()
+        self.process_groups.item_cls = BBProcessGroup
         self.queue_assignments = {}
         self.queue_assignments["default"] = sets.Set(self.resources)
 
@@ -256,7 +227,7 @@ class BBSystem(Component):
                         continue
                     pg.pinging_nodes.remove(nodename)
                 if len(pg.building_nodes) == 0 and len(pg.pinging_nodes) == 0:
-                    pg.run_script()
+                    pg.start()
     _check_builds_done = automatic(_check_builds_done)
 
     def node_done_building(self, node):
@@ -277,7 +248,8 @@ class BBSystem(Component):
 
     def _wait(self):
         """Calls the process group container's wait() method"""
-        self.process_groups.wait()
+        for pg in self.process_groups.itervalues():
+            pg.wait()
     _wait = automatic(_wait)
 
     def _remove_terminated_groups(self):

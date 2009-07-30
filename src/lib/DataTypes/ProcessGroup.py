@@ -3,6 +3,7 @@
 __revision__ = "$Revision$"
 
 
+import os
 
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError
@@ -43,9 +44,10 @@ class ProcessGroup(Data):
                             "nodefile", "size", "state", "stderr","stdin",
                             "stdout", "true_mpi_args", "umask", "user"]
 
-    required = ["executable", "location", "user"]
+    required = ["args", "cwd", "executable", "jobid", "location", "size",
+                "user"]
 
-    def __init__(self, spec):
+    def __init__(self, spec, logger):
         Data.__init__(self, spec)
         self.tag = "process group"
         self.args = " ".join(spec.get("args", []))
@@ -69,6 +71,8 @@ class ProcessGroup(Data):
         self.umask = spec.get("umask")
         self.user = spec.get("user", "")
 
+        self.logger = logger
+
     def _get_state(self):
         """Gets the current 'state' property of the process group"""
         if self.exit_status is None:
@@ -76,6 +80,24 @@ class ProcessGroup(Data):
         else:
             return "terminated"
     state = property(_get_state)
+
+    def start(self):
+        """Start the process group by forking to _mpirun()"""
+        child_pid = os.fork()
+        if not child_pid:
+            try:
+                self._runjob()
+            except:
+                self.logger.error("Unable to start job", exc_info=1)
+                os._exit(1)
+        else:
+            self.head_pid = child_pid
+
+    def _runjob(self):
+        """This method is called from the forked process in start() to run a job
+        on the system.  It should be overridden by whatever specialized Process
+        Group class extends this one within each system component."""
+        os._exit(0)
 
 
 

@@ -5,10 +5,8 @@ ProcessGroup -- a group of processes started with mpirun
 BGSystem -- Blue Gene system component
 """
 
-import atexit
 import pwd
 import grp
-import sets
 import logging
 import sys
 import os
@@ -17,29 +15,23 @@ import tempfile
 import time
 import thread
 import ConfigParser
-import tempfile
 import subprocess
-try:
-    set = set
-except NameError:
-    from sets import Set as set
-
 import Cobalt
 import Cobalt.Data
-from Cobalt.Components import cluster_base_system
-from Cobalt.Components.base import Component, exposed, automatic, query, locking
+from Cobalt.Components.base import exposed, automatic, query, locking
 from Cobalt.Exceptions import ProcessGroupCreationError
-from Cobalt.Components.cluster_base_system import ProcessGroupDict, ClusterBaseSystem
+from Cobalt.Components.cluster_base_system import ClusterBaseSystem
+from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 
 
 __all__ = [
-    "ProcessGroup",
-    "Simulator",
+    "ClusterProcessGroup",
+    "ClusterSystem"
 ]
 
 logger = logging.getLogger(__name__)
 
-class ProcessGroup (cluster_base_system.ProcessGroup):
+class ClusterProcessGroup(ProcessGroup):
     _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue', 'hostfile']
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
@@ -54,11 +46,11 @@ class ProcessGroup (cluster_base_system.ProcessGroup):
 
     
     def __init__(self, spec):
-        cluster_base_system.ProcessGroup.__init__(self, spec)
+        ProcessGroup.__init__(self, spec, logger)
         self.nodefile = ""
         self.start()
     
-    def _mpirun (self):
+    def _runjob(self):
         # create the nodefile
         self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
         fd = open(self.nodefile, "w")
@@ -134,23 +126,6 @@ class ProcessGroup (cluster_base_system.ProcessGroup):
                          (self.id, self.user, self.cobalt_log_file))
 
         os.execl(*cmd)
-    
-    def start (self):
-        
-        """Start the process group.
-        
-        Fork for mpirun.
-        """
-
-        child_pid = os.fork()
-        if not child_pid:
-            try:
-                self._mpirun()
-            except:
-                logger.error("unable to start mpirun", exc_info=1)
-                os._exit(1)
-        else:
-            self.head_pid = child_pid
 
 
 
@@ -175,7 +150,7 @@ class ClusterSystem (ClusterBaseSystem):
     
     def __init__ (self, *args, **kwargs):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
-        self.process_groups.item_cls = ProcessGroup
+        self.process_groups.item_cls = ClusterProcessGroup
 
         
     
