@@ -44,8 +44,8 @@ class ProcessGroup(Data):
                             "nodefile", "size", "state", "stderr","stdin",
                             "stdout", "true_mpi_args", "umask", "user"]
 
-    required = ["args", "cwd", "executable", "jobid", "location", "size",
-                "user"]
+    required = Data.required + ["args", "cwd", "executable", "jobid",
+                                "location", "size", "user"]
 
     def __init__(self, spec, logger):
         Data.__init__(self, spec)

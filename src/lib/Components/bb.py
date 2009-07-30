@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 class BBProcessGroup(ProcessGroup):
     """Process Group modified for Breadboard"""
 
+    fields = ProcessGroup.fields + ["image"]
+
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec, logger)
         self.image = spec.get("image", "default")
