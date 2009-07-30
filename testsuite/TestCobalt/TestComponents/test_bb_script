@@ -8,8 +8,8 @@ if __name__ == "__main__":
     print "Command line arguments:"
     for arg in sys.argv:
         print arg
-    print "Sleep for 5 seconds."
-    time.sleep(5)
+    print "Sleep for 20 seconds."
+    time.sleep(20)
     print "Test script is done running"
     locs = open(sys.argv[2], "r")
     print "Nodes available to this process group/script: %s" \

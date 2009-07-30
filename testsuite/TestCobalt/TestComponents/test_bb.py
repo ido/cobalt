@@ -1,4 +1,5 @@
 """Test cases for the BBSystem component"""
+import sys
 import time
 from Cobalt.Components.bb import BBSystem
 from Cobalt.Exceptions import DataCreationError
@@ -17,6 +18,10 @@ class TestBBSystem():
     
     def __init__(self):
         self.bb = None
+        if len(names) == 0:
+            print >> sys.stderr, "Must specify nodes for testing in global " + \
+                "list 'names'"
+            assert False
 
     def setup(self):
         """Sets up the test component"""
@@ -234,17 +239,23 @@ class TestBBSystem():
         assert len(pg_added) == len(names)
         pgs = self.bb.get_process_groups([{"id":"*"}])
         assert len(pgs) == len(names)
-        specrun = [{"state":"initializing"}, {"state":"building"},
-                   {"state":"running"}]
+        specrun = [{"state":"running"}]
         count = 0
-        while len(self.bb.get_process_groups(specrun)) > 0:
-            #Keep running until done
-            print "waiting for pgs to finish"
-            time.sleep(10)
-            if count < len(names):
-                self.bb.node_done_building(names[count])
-                count = count + 1
-            self.bb._check_builds_done()
+        while True:
+            done = True
+            PGs = self.bb.get_process_groups(specrun)
+            for pg in PGs:
+                if pg.building_nodes or pg.pinging_nodes:
+                    done = False
+            if not done:
+                time.sleep(20)
+                if count < len(names):
+                    self.bb.node_done_building(names[count])
+                    count = count + 1
+                self.bb._check_builds_done()
+            else:
+                break
+        time.sleep(10)
         done = self.bb.get_process_groups([{"state":"terminated"}])
         assert len(done) == len(names)
         resources = self.bb.get_resources([{"name":"*"}])
@@ -265,7 +276,9 @@ class TestBBSystem():
         self.setup()
         pgs = self.bb.get_process_groups([{"id":"*"}])
         assert len(pgs) == 0
-        specs = [{"user":"carlson", "location":[loc]} for loc in names]
+        specs = [{"user":"carlson", "location":[loc],
+                  "executable":"test_bb_script",
+                  "stdout":"test_bb_script_stdout"} for loc in names]
         pg_added = self.bb.add_process_groups(specs)
         assert len(pg_added) == len(names)
         pgs = self.bb.get_process_groups([{"id":"*"}])
@@ -274,10 +287,41 @@ class TestBBSystem():
         assert len(resources) == len(names)
         for res in resources:
             res.state = "busy"
-        time.sleep(2)
+        count = 0
+        while True:
+            done = True
+            PGs = self.bb.get_process_groups([{"state":"running"}])
+            for pg in PGs:
+                if pg.building_nodes or pg.pinging_nodes:
+                    done = False
+            if not done:
+                time.sleep(2)
+                if count < len(names):
+                    self.bb.node_done_building(names[count])
+                    count = count + 1
+                self.bb._check_builds_done()
+            else:
+                break
+        while True:
+            done = True
+            PGs = self.bb.get_process_groups([{"state":"*"}])
+            for pg in PGs:
+                if not pg.head_pid:
+                    done = False
+            if not done:
+                time.sleep(2)
+            else:
+                break
+        count = 0
+        while True:
+            if count < 5:
+                time.sleep(2)
+                count = count + 1
+            else:
+                break
         self.bb.signal_process_groups([{"id":"*"}], "SIGINT")
-        time.sleep(2)
-        pgs = self.bb.get_process_groups([{"id":"*"}])
+        time.sleep(3)
+        pgs = self.bb.get_process_groups([{"id":"*", "state":"*"}])
         assert len(pgs) == len(names)
         for pg in pgs:
             assert pg.state == "terminated"
