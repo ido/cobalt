@@ -44,7 +44,7 @@ stop_component () {
 }
 
 # Configure DB2 environment
-. /discovery/db.src
+#. /discovery/db.src
 
 umask 077
 
