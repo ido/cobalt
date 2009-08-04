@@ -8,7 +8,7 @@ setup(name="Cobalt",
       description="Cobalt Resource Manager",
       author="Cobalt Team",
       author_email="cobalt@mcs.anl.gov",
-      packages=["Cobalt", "Cobalt.Components"],
+      packages=["Cobalt", "Cobalt.Components", "Cobalt.DataTypes"],
       package_dir = {'Cobalt': 'src/lib'},
       scripts = glob('src/clients/*.py') + glob('src/clients/POSIX/*.py') \
       + glob('src/components/*.py'),
