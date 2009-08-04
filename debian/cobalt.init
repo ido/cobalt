@@ -53,7 +53,7 @@ case "$1" in
     for component in slp bb cqm scriptm bgsched; do
 	start_component $component
     done
-    touch /var/lock/subsys/cobalt
+    touch /var/lock/cobalt
     ;;
   start-debug)
     for component in slp bbsim cqm scriptm bgsched; do
