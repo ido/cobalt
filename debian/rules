@@ -44,7 +44,7 @@ install: build
 	mkdir -p debian/tmp/usr/sbin
 	mv debian/tmp/usr/bin/* debian/tmp/usr/sbin/
 	mkdir -p debian/tmp/etc/
-	install -m 644 misc/cobalt.conf debian/tmp/etc/
+	install -m 644 misc/cobalt.bb.conf debian/tmp/etc/cobalt.conf
 	mkdir -p debian/tmp/var/log/cobalt/
 	mkdir -p debian/tmp/var/spool/cobalt/
 	touch debian/tmp/etc/cobalt.utility
