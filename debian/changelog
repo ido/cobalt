@@ -1,12 +1,18 @@
 cobalt (0.99) unstable; urgency=low
 
+  * adding installation of cobalt.init script to debian installation
+
+ -- Joel Carlson <carlson@mcs.anl.gov>  Tue, 4 Aug 2009 14:32:30 -0500
+
+cobalt (0.99) unstable; urgency=low
+
   * fixing debian packaging rules and making it executable
 
- -- Joel Carlson <carlson@mcs.anl.gov> Tue, 4 Aug 2009 14:12:00 -0500
+ -- Joel Carlson <carlson@mcs.anl.gov>  Tue, 4 Aug 2009 14:12:00 -0500
 
 cobalt (0.98.1) unstable; urgency=low
 
   * first debian packaging of cobalt
   * includes new breadboard system component and client scripts
 
- -- Joel Carlson <carlson@mcs.anl.gov> Tue, 21 Jul 2009 14:25:27 -0500
+ -- Joel Carlson <carlson@mcs.anl.gov>  Tue, 21 Jul 2009 14:25:27 -0500
