@@ -1,0 +1,12 @@
+Source: cobalt
+Section: admin
+Priority: optional
+Maintainer: Cobalt Team <cobalt@mcs.anl.gov>
+Standards-Version: 3.7.2.0
+XS-Python-Version: >= 2.5
+
+Package: cobalt
+Architecture: all
+Depends: ${python:Depends}
+XB-Python-Version: ${python:Versions}
+Description: A HPC job management suite supporting compute clusters and the IBM Blue Gene series

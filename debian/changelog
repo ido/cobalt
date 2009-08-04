@@ -1,0 +1,6 @@
+cobalt (0.98.1) unstable; urgency=low
+
+  * first debian packaging of cobalt
+  * includes new breadboard system component and client scripts
+
+ -- Joel Carlson <carlson@mcs.anl.gov> Tue, 21 Jul 2009 14:25:27 -0500
