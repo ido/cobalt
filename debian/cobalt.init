@@ -59,19 +59,19 @@ case "$1" in
     for component in slp bbsim cqm scriptm bgsched; do
 	start_component $component
     done
-    touch /var/lock/subsys/cobalt
+    touch /var/lock/cobalt
     ;;
   stop)
     for component in bgsched cqm bb scriptm slp; do
 	stop_component $component
     done
-    rm -f /var/lock/subsys/cobalt
+    rm -f /var/lock/cobalt
     ;;
   stop-debug) 
     for component in bgsched cqm bbsim scriptm slp; do
 	stop_component $component
     done
-    rm -f /var/lock/subsys/cobalt
+    rm -f /var/lock/cobalt
     ;;
   restart)
     if [ $# -gt 1 ] ; then  #specific components to be restarted
