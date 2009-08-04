@@ -63,8 +63,5 @@ class ResourceDict(DataDict):
         attrs -- dictionary with other "attributes" resource must match
 
         Returns a list of resources that matched specs and attrs"""
-        resources = self.q_get(specs)
-        for r in resources[:]:
-            if not r.match_attributes(attrs):
-                resources.remove(r)
-        return resources
+        return [x for x in self.q_get(specs) \
+                         if x.match_attributes(attrs)]

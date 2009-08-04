@@ -24,6 +24,7 @@ class ProcessGroup(Data):
     head_pid -- the PID of the child process that becomes the job
     id -- integer id to identify process group
     jobid -- jobid of process group
+    kernel --
     kerneloptions -- 
     location -- location in system where job will run
     mode -- "script" or other
@@ -40,9 +41,10 @@ class ProcessGroup(Data):
 
     fields = Data.fields + ["args", "cobalt_log_file", "cwd", "env",
                             "executable", "exit_status", "head_pid", "id",
-                            "jobid", "kerneloptions", "location", "mode",
-                            "nodefile", "size", "state", "stderr","stdin",
-                            "stdout", "true_mpi_args", "umask", "user"]
+                            "jobid", "kernel", "kerneloptions", "location",
+                            "mode", "nodefile", "size", "state", "stderr",
+                            "stdin", "stdout", "true_mpi_args", "umask",
+                            "user"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -59,6 +61,7 @@ class ProcessGroup(Data):
         self.head_pid = None
         self.id = spec.get("id")
         self.jobid = spec.get("jobid")
+        self.kernel = spec.get("kernel")
         self.kerneloptions = spec.get("kerneloptions")
         self.location = spec.get("location", [])
         self.mode = spec.get("mode")

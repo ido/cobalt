@@ -14,7 +14,7 @@ from Cobalt.DataTypes.Resource import ResourceDict
 from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Exceptions import JobValidationError
 
-__all__ = ["BBSystem", "BBProcessGroup", "BBProcessGroupDict"]
+__all__ = ["BBSystem", "BBProcessGroup"]
 
 
 logger = logging.getLogger(__name__)
@@ -23,11 +23,22 @@ logger = logging.getLogger(__name__)
 class BBProcessGroup(ProcessGroup):
     """Process Group modified for Breadboard"""
 
-    fields = ProcessGroup.fields + ["image"]
-
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec, logger)
-        self.image = spec.get("image", "default")
+        if not self.kernel:
+            self.kernel = "default"
+        self.building_nodes = []
+        self.pinging_nodes = []
+        self.nodefile = tempfile.mkstemp()
+        os.write(self.nodefile[0], " ".join(self.location))
+        os.close(self.nodefile[0])
+
+    def simulator_init(self, spec, log):
+        """Used by BBSimulator to be able to extend BBProcessGroup
+        and pass through correct logger"""
+        ProcessGroup.__init__(self, spec, log)
+        if not self.kernel:
+            self.kernel = "default"
         self.building_nodes = []
         self.pinging_nodes = []
         self.nodefile = tempfile.mkstemp()
@@ -39,15 +50,15 @@ class BBProcessGroup(ProcessGroup):
         try:
             userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:
-            logger.exception("Error getting uid/gid for process " + \
-                                 "group %s" % self.id)
+            logger.exception("Error getting userid/groupid for process group %s"
+                             % self.id)
             os._exit(1)
         try:
             os.setgid(groupid)
             os.setuid(userid)
         except OSError:
-            logger.exception("failed to change uid/gid for process " + \
-                                 "group %s" % self.id)
+            logger.exception("Failed to set userid/groupid for process group %s"
+                             % self.id)
             os._exit(1)
         if self.umask != None:
             try:
@@ -55,7 +66,6 @@ class BBProcessGroup(ProcessGroup):
             except OSError:
                 logger.exception("Failed to set umask to %s" % self.umask)
         nodes_file_path = self.nodefile[1]
-        kerneloptions = self.kerneloptions
         app_envs = []
         for key, value in self.env.iteritems():
             app_envs.append((key, value))            
@@ -67,23 +77,21 @@ class BBProcessGroup(ProcessGroup):
             stdout = open(self.stdout or tempfile.mktemp(), "a")
             os.dup2(stdout.fileno(), sys.__stdout__.fileno())
         except (IOError, OSError):
-            logger.exception(("process group %s: error opening stdout " + \
-                                  "file %s (stdout will be lost)") \
-                                 % (self.id, self.stdout))
+            logger.exception(("Process Group %s: error opening stdout " +
+                              "file %s (stdout will be lost)")
+                             % (self.id, self.stdout))
         try:
             stderr = open(self.stderr or tempfile.mktemp(), "a")
             os.dup2(stderr.fileno(), sys.__stderr__.fileno())
         except (IOError, OSError):
-            logger.exception(("process group %s: error opening stderr " + \
-                                  "file %s (stderr will be lost)") \
-                                 % (self.id, self.stderr)) 
+            logger.exception(("Process Group %s: error opening stderr " +
+                              "file %s (stderr will be lost)")
+                             % (self.id, self.stderr)) 
         cmd = (self.executable, self.executable, "-nodes_file", nodes_file_path)
         if self.args:
-            cmd = cmd + ('-args', self.args)
+            cmd = cmd + ("-args", self.args)
         if envs:
-            cmd = cmd + ('-env', envs)
-        if kerneloptions:
-            cmd = cmd + ('-kernel_options', kerneloptions)
+            cmd = cmd + ("-env", envs)
         try:
             cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
             print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
@@ -93,32 +101,23 @@ class BBProcessGroup(ProcessGroup):
             print >> cobalt_log_file, "\n"
             cobalt_log_file.close()
         except IOError:
-            logger.error("Job %s/%s: unable to open cobalt log file %s" \
-                             % (self.id, self.user, self.cobalt_log_file))
+            logger.error("Job %s/%s: unable to open cobalt log file %s"
+                         % (self.id, self.user, self.cobalt_log_file))
         try:
             os.execl(*cmd)
         except OSError:
-            logger.exception("Job %s/%s: unable to execl the script" \
-                                 % (self.id, self.user))
+            logger.exception("Job %s/%s: unable to execl the script"
+                             % (self.id, self.user))
             os._exit(1)
 
     def signal(self, signame="SIGINT"):
         """Do something with this process group depending on the signal"""
-        if signame == "SIGINT":
-            if self.head_pid and self.state != "terminated":
-                try:
-                    os.kill(self.head_pid, getattr(signal, signame))
-                except OSError, e:
-                    logger.exception("signal failure for PG %s: %s" \
-                                         % (self.id, e))
-        else:
-            # Handle other signals
-            if self.head_pid and self.state != "terminated":
-                try:
-                    os.kill(self.head_pid, getattr(signal, signame))
-                except OSError, e:
-                    logger.exception("signal failure for PG %s: %s" \
-                                         % (self.id, e))
+        if self.head_pid and self.state != "terminated":
+            try:
+                os.kill(self.head_pid, getattr(signal, signame))
+            except OSError, err:
+                logger.exception("signal failure for PG %s: %s"
+                                 % (self.id, err))
 
     def wait(self):
         """Sets the PG state to 'terminated' if done"""
@@ -172,10 +171,10 @@ class BBSystem(Component):
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
 
-    def signal_process_groups(self, specs, signal):
+    def signal_process_groups(self, specs, sig):
         """Free the specified process group (set of allocated nodes)"""
         return self.process_groups.q_get(specs, lambda x, y:x.signal(y),
-                                         signal)
+                                         sig)
     signal_process_groups = exposed(query(signal_process_groups))
 
     def wait_process_groups(self, specs):
@@ -187,19 +186,19 @@ class BBSystem(Component):
     #########################################
     # Methods for dealing with Process Groups
     #########################################
-    def _start_pg(self, pg):
+    def _start_pg(self, pgp):
         """Starts a process group by initiating building/rebooting nodes"""
-        specs = [{"name":name, "attributes":"*"} for name in pg.location]
+        specs = [{"name":name, "attributes":"*"} for name in pgp.location]
         resources = self.get_resources(specs)
-        action = "build-%s" % pg.image
+        action = "build-%s" % pgp.kernel
         for res in resources:
             # Set build action for each resource
             specs = [{"name":res.name}]
             new_attrs = {"attributes":{"action":action}}
             self.set_attributes(specs, new_attrs)
             mac = res.attributes["mac"]
-            linkname = "/tftpboot/pxelinux.cfg/01-%s" % \
-                mac.replace(":", "-").lower()
+            linkname = "/tftpboot/pxelinux.cfg/01-%s" \
+                % mac.replace(":", "-").lower()
             if os.readlink(linkname) == action:
                 continue
             os.unlink(linkname)
@@ -208,28 +207,28 @@ class BBSystem(Component):
             # Cycle power
             os.system("/usr/sbin/pm -c %s" % res.name)
             # Add resource to list of building nodes
-            pg.building_nodes.append(res.name)
+            pgp.building_nodes.append(res.name)
 
     def _check_builds_done(self):
         """Checks if nodes are done building for each process group and
         scripts can begin running"""
-        for pg in self.process_groups.itervalues():
-            if len(pg.building_nodes) > 0 or len(pg.pinging_nodes) > 0:
+        for pgp in self.process_groups.itervalues():
+            if len(pgp.building_nodes) > 0 or len(pgp.pinging_nodes) > 0:
                 specs = [{"name":name, "attributes":"*"} 
-                         for name in pg.building_nodes]
+                         for name in pgp.building_nodes]
                 building = self.get_resources(specs)
-                build_action = "build-%s" % pg.image
+                build_action = "build-%s" % pgp.kernel
                 for node in building:
                     if node.attributes["action"] != build_action:
-                        pg.building_nodes.remove(node.name)
-                        pg.pinging_nodes.append(node.name)
-                for nodename in pg.pinging_nodes:
-                    if os.system("/bin/ping -c 1 -W 1 %s > /dev/null" \
-                                     % nodename):
+                        pgp.building_nodes.remove(node.name)
+                        pgp.pinging_nodes.append(node.name)
+                for nodename in pgp.pinging_nodes:
+                    if os.system("/bin/ping -c 1 -W 1 %s > /dev/null"
+                                 % nodename):
                         continue
-                    pg.pinging_nodes.remove(nodename)
-                if len(pg.building_nodes) == 0 and len(pg.pinging_nodes) == 0:
-                    pg.start()
+                    pgp.pinging_nodes.remove(nodename)
+                if len(pgp.building_nodes) == 0 and len(pgp.pinging_nodes) == 0:
+                    pgp.start()
     _check_builds_done = automatic(_check_builds_done)
 
     def node_done_building(self, node):
@@ -250,8 +249,8 @@ class BBSystem(Component):
 
     def _wait(self):
         """Calls the process group container's wait() method"""
-        for pg in self.process_groups.itervalues():
-            pg.wait()
+        for pgp in self.process_groups.itervalues():
+            pgp.wait()
     _wait = automatic(_wait)
 
     def _remove_terminated_groups(self):
@@ -259,10 +258,10 @@ class BBSystem(Component):
         self.wait_process_groups([{"id":"*", "state":"terminated"}])
     _remove_terminated_groups = automatic(_remove_terminated_groups)
 
-    def _release_resources(self, pg):
+    def _release_resources(self, pgp):
         """Releases the resources held by a process group"""
-        os.system("/usr/sbin/pm -0 %s" % " ".join(pg.location))
-        specs = [{"name":name} for name in pg.location]
+        os.system("/usr/sbin/pm -0 %s" % " ".join(pgp.location))
+        specs = [{"name":name} for name in pgp.location]
         new_attrs = {"state":"idle"}
         self.set_attributes(specs, new_attrs)
 
@@ -317,22 +316,10 @@ class BBSystem(Component):
         Returns: a list of the changed resources
         """
         return self.resources.q_get(specs,
-                                    lambda x, y:[self.set_attr(x, key, val) \
-                                                     for key, val \
-                                                     in y.iteritems()], \
-                                        newattrs)
+                                    lambda x, y:[set_attr(x, key, val)
+                                                 for key, val in y.iteritems()],
+                                    newattrs)
     set_attributes = exposed(query(set_attributes))
-    
-    def set_attr(self, res, key, val):
-        """Helper method for set_attributes - actually does the
-        setting of each resources attributes"""
-        if key != "attributes":
-            setattr(res, key, val)
-        else:
-            for key2, val2 in val.iteritems():
-                if key2 == "mac":
-                    val2 = val2.replace("-", ":")
-                res.attributes[key2] = val2
 
     def remove_attributes(self, specs, attrs):
         """Removes other attributes in specified resources
@@ -343,16 +330,9 @@ class BBSystem(Component):
 
         Returns: a list of the changed resources
         """
-        return self.resources.q_get(specs, lambda x, y:[self.rem_attr(x, key) \
-                                                            for key in y], \
-                                        attrs)
+        return self.resources.q_get(specs, lambda x, y:[rem_attr(x, key)
+                                                        for key in y], attrs)
     remove_attributes = exposed(query(remove_attributes))
-
-    def rem_attr(self, res, key):
-        """Helper method for remove_attributes - actually does the
-        removing of each resources attributes"""
-        if key in res.attributes:
-            del res.attributes[key]
 
     ##########################################################
     # Methods for interacting with scheduler and queue-manager
@@ -363,14 +343,15 @@ class BBSystem(Component):
         Arguments:
         spec -- job specification dictionary
         """
-        max_nodes = len(self.get_resources([{"name":"*"}]))
+        max_nodes = len(self.get_resources([{"name":"*", "functional":True,
+                                             "scheduled":True}]))
         try:
             spec["nodecount"] = int(spec["nodecount"])
         except ValueError:
             raise JobValidationError("Non-integer node count")
         if not 0 < spec["nodecount"] <= max_nodes:
             raise JobValidationError("Node count out of realistic range")
-        if float(spec["time"]) < 10:
+        if float(spec["time"]) < 15:
             raise JobValidationError("Walltime less than minimum")
         if not spec["mode"] == "script":
             raise JobValidationError("Only 'script' mode supported")
@@ -430,28 +411,28 @@ class BBSystem(Component):
                                        active_queue_names):
         """Finds equivalent queues"""
         equiv = []
-        for q in self.queue_assignments:
+        for queue in self.queue_assignments:
             # skip queues that aren't running
-            if not q in active_queue_names:
+            if not queue in active_queue_names:
                 continue
             found_a_match = False
-            for e in equiv:
-                if e['data'].intersection(self.queue_assignments[q]):
-                    e['queues'].add(q)
-                    e['data'].update(self.queue_assignments[q])
+            for equ in equiv:
+                if equ['data'].intersection(self.queue_assignments[queue]):
+                    equ['queues'].add(queue)
+                    equ['data'].update(self.queue_assignments[queue])
                     found_a_match = True
                     break
             if not found_a_match:
-                equiv.append({'queues': set([q]),
-                              'data': set(self.queue_assignments[q]),
+                equiv.append({'queues': set([queue]),
+                              'data': set(self.queue_assignments[queue]),
                               'reservations': set()})
         real_equiv = []
         for eq_class in equiv:
             found_a_match = False
-            for e in real_equiv:
-                if e['queues'].intersection(eq_class['queues']):
-                    e['queues'].update(eq_class['queues'])
-                    e['data'].update(eq_class['data'])
+            for equ in real_equiv:
+                if equ['queues'].intersection(eq_class['queues']):
+                    equ['queues'].update(eq_class['queues'])
+                    equ['data'].update(eq_class['data'])
                     found_a_match = True
                     break
             if not found_a_match:
@@ -459,7 +440,6 @@ class BBSystem(Component):
         equiv = real_equiv
         for eq_class in equiv:
             for res_name in reservation_dict:
-                skip = True
                 for host_name in reservation_dict[res_name].split(":"):
                     if host_name in eq_class['data']:
                         eq_class['reservations'].add(res_name)
@@ -468,3 +448,25 @@ class BBSystem(Component):
             del eq_class['data']
         return equiv
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
+
+
+
+######################################################
+# Functions used by above classes, but are not methods
+######################################################
+def set_attr(res, key, val):
+    """Helper method for system:set_attributes - actually does the
+    setting of each resources attributes"""
+    if key != "attributes":
+        setattr(res, key, val)
+    else:
+        for key2, val2 in val.iteritems():
+            if key2 == "mac":
+                val2 = val2.replace("-", ":")
+            res.attributes[key2] = val2
+
+def rem_attr(res, key):
+    """Helper method for system:remove_attributes - actually does the
+    removing of each resources attributes"""
+    if key in res.attributes:
+        del res.attributes[key]
