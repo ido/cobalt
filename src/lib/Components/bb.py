@@ -3,6 +3,7 @@
 import atexit
 import logging
 import os
+import os.path
 import pwd
 import sets
 import signal
@@ -118,6 +119,11 @@ class BBProcessGroup(ProcessGroup):
             except OSError, err:
                 logger.exception("signal failure for PG %s: %s"
                                  % (self.id, err))
+        elif not self.head_pid and self.state != "terminated":
+            if signame == "SIGINT" or signame == "SIGTERM" or \
+                    signame == "SIGKILL":
+                os.remove(self.nodefile[1])
+                self.exit_status = 1
 
     def wait(self):
         """Sets the PG state to 'terminated' if done"""
@@ -355,6 +361,25 @@ class BBSystem(Component):
             raise JobValidationError("Walltime less than minimum")
         if not spec["mode"] == "script":
             raise JobValidationError("Only 'script' mode supported")
+        if "kernel" in spec:
+            if not (os.path.exists("/tftpboot/pxelinux.cfg/build-%s" %
+                                   spec["kernel"]) and 
+                    os.path.exists("/tftpboot/pxelinux.cfg/boot-%s" %
+                                   spec["kernel"])):
+                raise JobValidationError("Specified image (from -k 'kernel' " +
+                                         "flag) does not exist")
+        if "attrs" in spec:
+            matchattrs = {}
+            for item in spec["attrs"].split(":"):
+                key, value = item.split("=")
+                matchattrs.update({key:value})
+            matched_res = self.resources.get_attr_matched_resources(
+                [{"name":"*", "functional":True, "scheduled":True,
+                  "attributes":"*"}],
+                matchattrs)
+            if spec["nodecount"] > len(matched_res):
+                raise JobValidationError("Not enough nodes exist with the " +
+                                         "attributes to match")
         return spec
     validate_job = exposed(validate_job)
 

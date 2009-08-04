@@ -30,7 +30,8 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -E <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h -c <processor count> -m <mode co/vn> 
-             -u <umask> --debuglog <cobaltlog file path> <command> <args>
+             -u <umask> --debuglog <cobaltlog file path>
+             --attrs <attr1=val1:attr2=val2> <command> <args>
 """
 
 if __name__ == '__main__':
@@ -40,7 +41,7 @@ if __name__ == '__main__':
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'u':'umask'}
+                'debuglog':'debuglog', 'u':'umask', 'attrs':'attrs'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -184,6 +185,18 @@ if __name__ == '__main__':
                 sys.exit(1)
         for key, value in key_value_pairs:
             jobspec['envs'].update({key:value})
+    if opts['attrs']:
+        if sys.argv.count('--attrs') - command.count('--attrs') > 1:
+            logger.error("Use of multiple --attrs options is not supported.  Specify multiple attributes to match with --attrs FOO=1:BAR=2")
+            raise SystemExit(1)
+        jobspec['attrs'] = {}
+        key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['attrs'])]
+        for kv in key_value_pairs:
+            if len(kv) != 2:
+                print "Improperly formatted argument to attrs : %r" % kv
+                sys.exit(1)
+        for key, value in key_value_pairs:
+            jobspec['attrs'].update({key:value})
     if opts['inputfile']:
         if not opts['inputfile'].startswith('/'):
             jobspec.update({'inputfile':"%s/%s" % (opts['cwd'], opts['inputfile'])})
