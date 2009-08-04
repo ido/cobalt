@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+# Cobalt
+#
+# chkconfig: 2345 18 09
+# description: Cobalt resource manager/scheduler
+#
+
+prefix=/usr
+exec_prefix=/usr/bin
+CONFIGPATH=/etc
+CONFIGFILE="${CONFIGPATH}/cobalt.conf"
+DAEMONDIR=/usr/sbin
+PIDPATH=/var/run/
+
+# Starts the component specified as the first argument.
+# Optional second argument used for extra arguments to 
+# pass to the component.
+start_component () {
+    component=$1
+    if [ -n $2 ] ; then
+	component_args=$2
+    else
+	component_args=''
+    fi
+    echo -n "Starting ${component}: "
+    "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
+    echo "done"
+    return 0
+}
+
+# Stops the component specified as the first argument.
+stop_component () {
+    component=$1
+    if [ -f "${PIDPATH}/${component}.pid" ] ; then
+	echo -n "Stopping ${component}: "
+	kill -INT `cat ${PIDPATH}/${component}.pid`
+	echo "done"
+	rm -f "${PIDPATH}/${component}.pid"
+    else
+	echo "${component} not running"
+    fi
+    return 0
+}
+
+# Configure DB2 environment
+. /discovery/db.src
+
+umask 077
+
+case "$1" in
+  start)
+    for component in slp bb cqm scriptm bgsched; do
+	start_component $component
+    done
+    touch /var/lock/subsys/cobalt
+    ;;
+  start-debug)
+    for component in slp bbsim cqm scriptm bgsched; do
+	start_component $component
+    done
+    touch /var/lock/subsys/cobalt
+    ;;
+  stop)
+    for component in bgsched cqm bb scriptm slp; do
+	stop_component $component
+    done
+    rm -f /var/lock/subsys/cobalt
+    ;;
+  stop-debug) 
+    for component in bgsched cqm bbsim scriptm slp; do
+	stop_component $component
+    done
+    rm -f /var/lock/subsys/cobalt
+    ;;
+  restart)
+    if [ $# -gt 1 ] ; then  #specific components to be restarted
+	shift
+	for component in $@; do 
+	    case "$component" in 
+	      cqm|bgsched)
+		stop_component $component
+		start_component $component
+		;;
+	      slp|bgpm)
+		echo "${component} cannot be restarted with jobs running"
+		;;
+	    esac
+	done
+    else  #restart all components
+	$0 stop
+	$0 start
+    fi
+    ;;
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|force-reload}"
+    exit 1
+esac
+
+exit 0
