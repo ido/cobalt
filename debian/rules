@@ -41,7 +41,7 @@ install: build
 	#$(MAKE) DESTDIR=$(CURDIR)/debian/testpack install
 	# Build architecture-independent files here.
 	python setup.py install --prefix=debian/tmp/usr
-	mkdir -p debian/usr/sbin
+	mkdir -p debian/tmp/usr/sbin
 	mv debian/tmp/usr/bin/* debian/tmp/usr/sbin/
 	mkdir -p debian/tmp/etc/
 	install -m 644 misc/cobalt.conf debian/tmp/etc/
