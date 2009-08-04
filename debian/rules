@@ -47,6 +47,7 @@ install: build
 	install -m 644 misc/cobalt.conf debian/tmp/etc/
 	mkdir -p debian/tmp/var/log/cobalt/
 	mkdir -p debian/tmp/var/spool/cobalt/
+	touch debian/tmp/etc/cobalt.utility
 
 binary-indep: build install
 	# We have nothing to do by default.
