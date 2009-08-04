@@ -212,23 +212,23 @@ class BBSystem(Component):
     def _check_builds_done(self):
         """Checks if nodes are done building for each process group and
         scripts can begin running"""
-        for pgp in self.process_groups.itervalues():
-            if len(pgp.building_nodes) > 0 or len(pgp.pinging_nodes) > 0:
-                specs = [{"name":name, "attributes":"*"} 
-                         for name in pgp.building_nodes]
-                building = self.get_resources(specs)
-                build_action = "build-%s" % pgp.kernel
-                for node in building:
-                    if node.attributes["action"] != build_action:
-                        pgp.building_nodes.remove(node.name)
-                        pgp.pinging_nodes.append(node.name)
-                for nodename in pgp.pinging_nodes:
-                    if os.system("/bin/ping -c 1 -W 1 %s > /dev/null"
-                                 % nodename):
-                        continue
-                    pgp.pinging_nodes.remove(nodename)
-                if len(pgp.building_nodes) == 0 and len(pgp.pinging_nodes) == 0:
-                    pgp.start()
+        for pgp in [x for x in self.process_groups.itervalues() if
+                    (len(x.building_nodes) > 0 or len(x.pinging_nodes) > 0)]:
+            specs = [{"name":name, "attributes":"*"}
+                     for name in pgp.building_nodes]
+            building = self.get_resources(specs)
+            build_action = "build-%s" % pgp.kernel
+            for node in building:
+                if node.attributes["action"] != build_action:
+                    pgp.building_nodes.remove(node.name)
+                    pgp.pinging_nodes.append(node.name)
+            for nodename in pgp.pinging_nodes:
+                if os.system("/bin/ping -c 1 -W 1 %s > /dev/null"
+                             % nodename):
+                    continue
+                pgp.pinging_nodes.remove(nodename)
+            if len(pgp.building_nodes) == 0 and len(pgp.pinging_nodes) == 0:
+                pgp.start()
     _check_builds_done = automatic(_check_builds_done)
 
     def node_done_building(self, node):
