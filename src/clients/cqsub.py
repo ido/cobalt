@@ -113,7 +113,23 @@ if __name__ == '__main__':
                 script_mode & stat.S_IXGRP or script_mode & stat.S_IXOTH):
             logger.error("Script %s is not executable" % command[0])
             sys.exit(1)
-
+    if opts['attrs'] is not False:
+        if sys.argv.count('--attrs') - command.count('--attrs') > 1:
+            logger.error("Use of multiple --attrs options is not supported.  Specify multiple attributes to match with --attrs FOO=1:BAR=2")
+            raise SystemExit(1)
+        jobspec['attrs'] = {}
+        newoptsattrs = {}
+        key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['attrs'])]
+        for kv in key_value_pairs:
+            if len(kv) != 2:
+                print "Improperly formatted argument to attrs : %r" % kv
+                sys.exit(1)
+        for key, value in key_value_pairs:
+            jobspec['attrs'].update({key:value})
+            newoptsattrs.update({key:value})
+        opts['attrs'] = newoptsattrs
+    else:
+        opts['attrs'] = {}
     try:
         try:
             system = ComponentProxy("system", defer=False)
@@ -185,18 +201,6 @@ if __name__ == '__main__':
                 sys.exit(1)
         for key, value in key_value_pairs:
             jobspec['envs'].update({key:value})
-    if opts['attrs']:
-        if sys.argv.count('--attrs') - command.count('--attrs') > 1:
-            logger.error("Use of multiple --attrs options is not supported.  Specify multiple attributes to match with --attrs FOO=1:BAR=2")
-            raise SystemExit(1)
-        jobspec['attrs'] = {}
-        key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['attrs'])]
-        for kv in key_value_pairs:
-            if len(kv) != 2:
-                print "Improperly formatted argument to attrs : %r" % kv
-                sys.exit(1)
-        for key, value in key_value_pairs:
-            jobspec['attrs'].update({key:value})
     if opts['inputfile']:
         if not opts['inputfile'].startswith('/'):
             jobspec.update({'inputfile':"%s/%s" % (opts['cwd'], opts['inputfile'])})

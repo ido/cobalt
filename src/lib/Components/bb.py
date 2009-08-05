@@ -88,11 +88,12 @@ class BBProcessGroup(ProcessGroup):
             logger.exception(("Process Group %s: error opening stderr " +
                               "file %s (stderr will be lost)")
                              % (self.id, self.stderr)) 
-        cmd = (self.executable, self.executable, "-nodes_file", nodes_file_path)
-        if self.args:
-            cmd = cmd + ("-args", self.args)
+        cmd = (self.executable, self.executable, "--nodes_file",
+               nodes_file_path)
         if envs:
-            cmd = cmd + ("-env", envs)
+            cmd = cmd + ("--env", envs)
+        if self.args:
+            cmd = cmd + ("--args", self.args)
         try:
             cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
             print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
@@ -259,11 +260,6 @@ class BBSystem(Component):
             pgp.wait()
     _wait = automatic(_wait)
 
-    def _remove_terminated_groups(self):
-        """Automatic method to periodically remove terminated process groups"""
-        self.wait_process_groups([{"id":"*", "state":"terminated"}])
-    _remove_terminated_groups = automatic(_remove_terminated_groups)
-
     def _release_resources(self, pgp):
         """Releases the resources held by a process group"""
         os.system("/usr/sbin/pm -0 %s" % " ".join(pgp.location))
@@ -358,25 +354,20 @@ class BBSystem(Component):
         if not 0 < spec["nodecount"] <= max_nodes:
             raise JobValidationError("Node count out of realistic range")
         if float(spec["time"]) < 15:
-            raise JobValidationError("Walltime less than minimum")
-        if not spec["mode"] == "script":
-            raise JobValidationError("Only 'script' mode supported")
+            raise JobValidationError("Walltime less than minimum 15 minutes")
         if "kernel" in spec:
             if not (os.path.exists("/tftpboot/pxelinux.cfg/build-%s" %
                                    spec["kernel"]) and 
                     os.path.exists("/tftpboot/pxelinux.cfg/boot-%s" %
                                    spec["kernel"])):
-                raise JobValidationError("Specified image (from -k 'kernel' " +
-                                         "flag) does not exist")
+                raise JobValidationError(("Specified image %s (from -k " +
+                                         "'kernel' flag does not exist")
+                                         % spec["kernel"])
         if "attrs" in spec:
-            matchattrs = {}
-            for item in spec["attrs"].split(":"):
-                key, value = item.split("=")
-                matchattrs.update({key:value})
             matched_res = self.resources.get_attr_matched_resources(
                 [{"name":"*", "functional":True, "scheduled":True,
                   "attributes":"*"}],
-                matchattrs)
+                spec["attrs"])
             if spec["nodecount"] > len(matched_res):
                 raise JobValidationError("Not enough nodes exist with the " +
                                          "attributes to match")
@@ -414,7 +405,7 @@ class BBSystem(Component):
         for job in job_location_args:
             specs = [{"name":"*", "functional":True, "scheduled":True,
                       "state":"idle", "attributes":"*"}]
-            if "attrs" not in job:
+            if "attrs" not in job or job["attrs"] is None:
                 job["attrs"] = {}
             resources = self.resources.get_attr_matched_resources(specs,
                                                                   job["attrs"])

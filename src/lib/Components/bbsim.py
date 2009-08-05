@@ -1,6 +1,7 @@
 """Breadboard Simulator"""
 
 import logging
+import os
 import random
 import thread
 import time
@@ -36,13 +37,13 @@ class BBSimProcessGroup(BBProcessGroup):
         """Returns the command string the process group would have used
         in execl command at the end of _runjob()"""
         argv = [self.executable, self.executable]
-        argv.extend(["-nodes_file", self.nodefile[1]])
-        if self.args:
-            argv.extend(["-args", " ".join(self.args)])
+        argv.extend(["--nodes_file", self.nodefile[1]])
         if self.env:
             env_kvstring = " ".join(["%s=%s" % (key, value)
                                      for key, value in self.env.iteritems()])
-            argv.extend(["-env", env_kvstring])
+            argv.extend(["--env", env_kvstring])
+        if self.args:
+            argv.extend(["--args", self.args])
         return argv
 
 
@@ -63,7 +64,6 @@ class BBSimulator(BBSystem):
     _sim_runjob -- NEW
     node_done_building -- inherited
     _wait -- inherited
-    _remove_terminated_groups -- inherited
     _release_resources -- OVERRIDDEN
 
     add_resources -- inherited
@@ -114,8 +114,8 @@ class BBSimulator(BBSystem):
                         pgp.pinging_nodes.append(node.name)
                 for nodename in pgp.pinging_nodes:
                     # REMOVED actual call to ping
-                    # Simulate ping success with 50-50 chance
-                    if random.randint(0, 9) >= 5:
+                    # Simulate ping success with 70-30 chance
+                    if random.randint(0, 9) >= 3:
                         pgp.pinging_nodes.remove(nodename)
                 if len(pgp.building_nodes) == 0 and len(pgp.pinging_nodes) == 0:
                     # CALLING new system '_sim_start()' method instead of
@@ -127,7 +127,7 @@ class BBSimulator(BBSystem):
         """Used to simulate a node finishing building"""
         for pgp in self.process_groups.itervalues():
             if len(pgp.building_nodes) > 0:
-                if random.randint(0, 9) >= 5:
+                if random.randint(0, 9) >= 3:
                     for name in pgp.location:
                         self.node_done_building(name)
     _sim_builds_done = automatic(_sim_builds_done)
@@ -156,6 +156,7 @@ class BBSimulator(BBSystem):
         while time.time() < (start_time + run_time):
             if "SIGKILL" in pgp.signals:
                 pgp.exit_status = 1
+                os.remove(pgp.nodefile[1])
                 return
             elif "SIGTERM" in pgp.signals:
                 print >> stderr, "ProcessGroup got signal SIGTERM"
@@ -166,6 +167,7 @@ class BBSimulator(BBSystem):
         print >> stderr, "ProcessGroup %s switched to state TERMINATED" % pgp.id
         print >> stderr, "Exit Status:", my_exit_status
         pgp.exit_status = my_exit_status
+        os.remove(pgp.nodefile[1])
 
     def _release_resources(self, pgp):
         """Modified _release_resources for simulator"""
