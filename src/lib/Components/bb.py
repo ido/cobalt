@@ -7,6 +7,7 @@ import os.path
 import pwd
 import sets
 import signal
+import stat
 import sys
 import tempfile
 
@@ -14,6 +15,12 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroup, ProcessGroupDict
 from Cobalt.DataTypes.Resource import ResourceDict
 from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Exceptions import JobValidationError
+
+
+### ADDED FOR BACK-COMPATIBILITY WITH BBTOOLS
+import bblib
+### END BACK-COMPATIBILITY
+
 
 __all__ = ["BBSystem", "BBProcessGroup"]
 
@@ -32,6 +39,8 @@ class BBProcessGroup(ProcessGroup):
         self.pinging_nodes = []
         self.nodefile = tempfile.mkstemp()
         os.write(self.nodefile[0], " ".join(self.location))
+        os.chmod(self.nodefile[1], stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|
+                  stat.S_IROTH)
         os.close(self.nodefile[0])
 
     def simulator_init(self, spec, log):
@@ -195,6 +204,20 @@ class BBSystem(Component):
     #########################################
     def _start_pg(self, pgp):
         """Starts a process group by initiating building/rebooting nodes"""
+
+        ###########################################
+        ### The following is for back-compatibility
+        ### with bballoc (bbtools) until breadboard
+        ### is switched entirely to run on cobalt
+        ###########################################
+        bbdata = bblib.BBConfig("/etc/bb.xml")
+        bbdata.SetNodeAttr(pgp.location, {"user":pgp.user, "state":"Cobalt",
+                                          "comment":"Managed by Cobalt"})
+        bbdata.WriteAndClose()
+        ###########################################
+        ### End of back-compatibility
+        ###########################################
+
         specs = [{"name":name, "attributes":"*"} for name in pgp.location]
         resources = self.get_resources(specs)
         action = "build-%s" % pgp.kernel
