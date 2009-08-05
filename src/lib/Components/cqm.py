@@ -287,7 +287,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state",
+        "has_completed", "sm_state", "attrs"
     ]
 
     _states = [
@@ -508,7 +508,7 @@ class Job (StateMachine):
         self.mode = spec.get("mode", "co")
         self.envs = spec.get("envs", {})
         self.force_kill_delay = spec.get("force_kill_delay", get_cqm_config('force_kill_delay', DEFAULT_FORCE_KILL_DELAY))
-
+        self.attrs = spec.get("attrs", {})
 
         self.all_dependencies = spec.get("all_dependencies")
         if self.all_dependencies:
