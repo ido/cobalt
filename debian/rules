@@ -51,7 +51,10 @@ install: build
 	# Install wrapper.c
 	make -C src/clients
 	install -m 755 src/clients/wrapper debian/tmp/usr/sbin
-	for file in find . -name \*.py | sed -e 's/\.py//' |grep -v fake ; do ln -sf debian/tmp/usr/sbin/wrapper $file ; done
+	for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ;\
+		do \
+		ln -sf debian/tmp/usr/sbin/wrapper $file ;\
+		done`
 
 binary-indep: build install
 	# We have nothing to do by default.
