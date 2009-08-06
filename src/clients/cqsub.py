@@ -107,12 +107,11 @@ if __name__ == '__main__':
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
-    if opts['mode'] == 'script':
-        script_mode = os.stat(command[0])[stat.ST_MODE]
-        if not (script_mode & stat.S_IXUSR or \
+    script_mode = os.stat(command[0])[stat.ST_MODE]
+    if not (script_mode & stat.S_IXUSR or \
                 script_mode & stat.S_IXGRP or script_mode & stat.S_IXOTH):
-            logger.error("Script %s is not executable" % command[0])
-            sys.exit(1)
+        logger.error("Script %s is not executable" % command[0])
+        sys.exit(1)
     if opts['attrs'] is not False:
         if sys.argv.count('--attrs') - command.count('--attrs') > 1:
             logger.error("Use of multiple --attrs options is not supported.  Specify multiple attributes to match with --attrs FOO=1:BAR=2")

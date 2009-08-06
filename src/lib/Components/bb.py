@@ -76,7 +76,7 @@ class BBProcessGroup(ProcessGroup):
             except OSError:
                 logger.exception("Failed to set umask to %s" % self.umask)
         nodes_file_path = self.nodefile[1]
-        os.environ["COBALTNODEFILE"] = nodes_file_path
+        os.environ["COBALT_NODEFILE"] = nodes_file_path
         for key, value in self.env.iteritems():
             os.environ[key] = value
         atexit._atexit = []

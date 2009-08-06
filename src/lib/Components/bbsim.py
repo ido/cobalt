@@ -37,7 +37,7 @@ class BBSimProcessGroup(BBProcessGroup):
         """Returns the command string the process group would have used
         in execl command at the end of _runjob()"""
         argv = [self.executable, self.executable]
-        os.environ["COBALTNODEFILE"] = self.nodefile[1]
+        os.environ["COBALT_NODEFILE"] = self.nodefile[1]
         if self.env:
             for key, value in self.env.iteritems():
                 os.environ[key] = value
