@@ -76,7 +76,7 @@ class BBProcessGroup(ProcessGroup):
             except OSError:
                 logger.exception("Failed to set umask to %s" % self.umask)
         nodes_file_path = self.nodefile[1]
-        os.environ["COBALT_NODES_FILE"] = nodes_file_path
+        os.environ["COBALTNODEFILE"] = nodes_file_path
         for key, value in self.env.iteritems():
             os.environ[key] = value
         atexit._atexit = []
@@ -285,6 +285,18 @@ class BBSystem(Component):
         specs = [{"name":name} for name in pgp.location]
         new_attrs = {"state":"idle"}
         self.set_attributes(specs, new_attrs)
+
+        ###########################################
+        ### The following is for back-compatibility
+        ### with bballoc (bbtools) until breadboard
+        ### is switched entirely to run on cobalt
+        ###########################################
+        bbdata = bblib.BBConfig("/etc/bb.xml")
+        bbdata.SetNodeAttr(pgp.location, {"user":"Cobalt"})
+        bbdata.WriteAndClose()
+        ###########################################
+        ### End of back-compatibility
+        ###########################################
 
     ####################################
     # Methods for dealing with resources

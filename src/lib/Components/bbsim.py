@@ -37,13 +37,12 @@ class BBSimProcessGroup(BBProcessGroup):
         """Returns the command string the process group would have used
         in execl command at the end of _runjob()"""
         argv = [self.executable, self.executable]
-        argv.extend(["--nodes_file", self.nodefile[1]])
+        os.environ["COBALTNODEFILE"] = self.nodefile[1]
         if self.env:
-            env_kvstring = " ".join(["%s=%s" % (key, value)
-                                     for key, value in self.env.iteritems()])
-            argv.extend(["--env", env_kvstring])
+            for key, value in self.env.iteritems():
+                os.environ[key] = value
         if self.args:
-            argv.extend(["--args", self.args])
+            argv.extend([self.args])
         return argv
 
 
