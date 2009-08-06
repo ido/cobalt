@@ -42,7 +42,29 @@ install: build
 	# Build architecture-independent files here.
 	python setup.py install --prefix=debian/tmp/usr
 	mkdir -p debian/tmp/usr/sbin
-	mv debian/tmp/usr/bin/* debian/tmp/usr/sbin/
+	mv debian/tmp/usr/bin/slp.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/bgsched.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/scriptm.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/cqm.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/brooklyn.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/setres.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/releaseres.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/cqadm.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/schedctl.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/cluster_system.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/cluster_simulator.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/nodeadm.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/perfdata.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/bb.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/bbsim.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/hammer.py debian/tmp/usr/sbin
+	mv debian/tmp/usr/bin/radm.py debian/tmp/usr/sbin
+	rm -f debian/tmp/usr/bin/*test*
+	rm -f debian/tmp/usr/bin/part*
+	rm -f debian/tmp/usr/bin/brun.py
+	rm -f debian/tmp/usr/bin/bstat.py
+	rm -f debian/tmp/usr/bin/pmrun.py
+	rm -f debian/tmp/usr/bin/cdump.py
 	mkdir -p debian/tmp/etc/
 	install -m 644 misc/cobalt.bb.conf debian/tmp/etc/cobalt.conf
 	mkdir -p debian/tmp/var/log/cobalt/
@@ -50,11 +72,8 @@ install: build
 	touch debian/tmp/etc/cobalt.utility
 	# Install wrapper.c
 	make -C src/clients
-	install -m 755 src/clients/wrapper debian/tmp/usr/sbin
-	for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ;\
-		do \
-		ln -sf debian/tmp/usr/sbin/wrapper $file ;\
-		done`
+	install -m 755 src/clients/wrapper debian/tmp/usr/bin
+	for file in `find debian/tmp/usr/bin -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do echo $${file} ; ln -sf wrapper $${file} ;done 
 
 binary-indep: build install
 	# We have nothing to do by default.
