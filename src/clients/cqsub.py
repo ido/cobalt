@@ -119,14 +119,21 @@ if __name__ == '__main__':
             raise SystemExit(1)
         jobspec['attrs'] = {}
         newoptsattrs = {}
-        key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['attrs'])]
-        for kv in key_value_pairs:
-            if len(kv) != 2:
-                print "Improperly formatted argument to attrs : %r" % kv
+        for attr in opts["attrs"].split(":"):
+            if len(attr.split("=")) == 2:
+                key, value = attr.split("=")
+                jobspec["attrs"].update({key:value})
+                newoptsattrs.update({key:value})
+            elif len(attr.split("=")) == 1:
+                if attr[:3] == "no_":
+                    jobspec["attrs"].update({attr[3:]:"false"})
+                    newoptsattrs.update({attr[3:]:"false"})
+                else:
+                    jobspec["attrs"].update({attr:"true"})
+                    newoptsattrs.update({attr:"true"})
+            else:
+                print "Improperly formatted argument to attrs : %s" % attr
                 sys.exit(1)
-        for key, value in key_value_pairs:
-            jobspec['attrs'].update({key:value})
-            newoptsattrs.update({key:value})
         opts['attrs'] = newoptsattrs
     else:
         opts['attrs'] = {}

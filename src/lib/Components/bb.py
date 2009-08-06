@@ -76,10 +76,9 @@ class BBProcessGroup(ProcessGroup):
             except OSError:
                 logger.exception("Failed to set umask to %s" % self.umask)
         nodes_file_path = self.nodefile[1]
-        app_envs = []
+        os.environ["COBALT_NODES_FILE"] = nodes_file_path
         for key, value in self.env.iteritems():
-            app_envs.append((key, value))            
-        envs = " ".join(["%s=%s" % x for x in app_envs])
+            os.environ[key] = value
         atexit._atexit = []
         stdin = open(self.stdin or "/dev/null", "r")
         os.dup2(stdin.fileno(), sys.__stdin__.fileno())
@@ -97,12 +96,9 @@ class BBProcessGroup(ProcessGroup):
             logger.exception(("Process Group %s: error opening stderr " +
                               "file %s (stderr will be lost)")
                              % (self.id, self.stderr)) 
-        cmd = (self.executable, self.executable, "--nodes_file",
-               nodes_file_path)
-        if envs:
-            cmd = cmd + ("--env", envs)
+        cmd = (self.executable, self.executable)
         if self.args:
-            cmd = cmd + ("--args", self.args)
+            cmd = cmd + (self.args)
         try:
             cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
             print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
