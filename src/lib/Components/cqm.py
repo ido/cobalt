@@ -76,6 +76,8 @@ import os
 import pwd
 import sys
 import time
+import math
+import types
 import xmlrpclib
 import ConfigParser
 import sets
@@ -112,6 +114,13 @@ if not config.has_section('cqm'):
 def get_cqm_config(option, default):
     try:
         value = config.get('cqm', option)
+    except ConfigParser.NoOptionError:
+        value = default
+    return value
+
+def get_bgsched_config(option, default):
+    try:
+        value = config.get('bgsched', option)
     except ConfigParser.NoOptionError:
         value = default
     return value
@@ -287,7 +296,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "attrs"
+        "has_completed", "sm_state", "score", "attrs",
     ]
 
     _states = [
@@ -531,6 +540,8 @@ class Job (StateMachine):
 
         self.__admin_hold = False
         self.__user_hold = False
+        
+        self.score = 0.0
 
         self.__resource_nodects = []
         self.__timers = dict(
@@ -2426,6 +2437,13 @@ class QueueManager(Component):
         self.id_gen = IncrID()
         global cqm_id_gen
         cqm_id_gen = self.id_gen
+        
+        self.user_utility_functions = {}
+        self.builtin_utility_functions = {}
+
+        self.define_builtin_utility_functions()
+        self.define_user_utility_functions()
+
 
     def __getstate__(self):
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3}
@@ -2444,6 +2462,13 @@ class QueueManager(Component):
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
         self.lock = Lock()
         self.statistics = Statistics()
+        
+        self.user_utility_functions = {}
+        self.builtin_utility_functions = {}
+
+        self.define_builtin_utility_functions()
+        self.define_user_utility_functions()
+
 
     def __save_me(self):
         Component.save(self)
@@ -2509,6 +2534,9 @@ class QueueManager(Component):
             for waiting_job in self.Queues.get_jobs([{'state':"dep_hold"}]):
                 if str(job.jobid) in waiting_job.all_dependencies:
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
+                    
+                    if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
+                        waiting_job.score = max(waiting_job.score, get_cqm_config('dep_frac', 0.5)*job.score)
 
         # remove the job from the queue
         #
@@ -2683,3 +2711,131 @@ class QueueManager(Component):
         self.cqp.perform_default_parse()
         return self.cqp.q_get(data)
     get_history = exposed(get_history)
+
+
+
+    def define_user_utility_functions(self):
+        self.logger.info("building user utility functions")
+        self.user_utility_functions.clear()
+        filename = os.path.expandvars(get_bgsched_config("utility_file", ""))
+        try:
+            f = open(filename)
+        except:
+            self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
+            return
+        
+        str = f.read()
+        
+        try:
+            code = compile(str, filename, 'exec')
+        except:
+            self.logger.error("Problem compiling utility function definitions.", exc_info=True)
+            return
+        
+        globals = {'math':math, 'time':time}
+        locals = {}
+        try:
+            exec code in globals, locals
+        except:
+            self.logger.error("Problem executing utility function definitions.", exc_info=True)
+            
+        for thing in locals.values():
+            if type(thing) is types.FunctionType:
+                if thing.func_name in self.builtin_utility_functions:
+                    self.logger.error("Attempting to overwrite builtin utility function '%s'.  User version discarded." % \
+                        thing.func_name)
+                else:
+                    self.user_utility_functions[thing.func_name] = thing
+    define_user_utility_functions = exposed(define_user_utility_functions)
+    
+    def adjust_job_scores(self, specs, score):
+        if score[0] in ["-", "+"]:
+            absolute = False
+        else:
+            absolute = True
+        
+        delta = float(score)
+        
+        results = []    
+        for job in self.Queues.get_jobs(specs):
+            if absolute:
+                job.score = delta
+            else:
+                job.score += delta
+            results.append(job.jobid)
+        
+        return results
+    adjust_job_scores = exposed(adjust_job_scores)
+            
+    def define_builtin_utility_functions(self):
+        self.logger.info("building builtin utility functions")
+        self.builtin_utility_functions.clear()
+        
+        # I think this duplicates cobalt's old scheduling policy
+        # higher queue priorities win, with jobid being the tie breaker
+        def default():
+            val = queue_priority + 0.1
+            return val
+    
+        def high_prio():
+            val = 1.0
+            return val
+    
+        self.builtin_utility_functions["default"] = default
+        self.builtin_utility_functions["high_prio"] = high_prio
+        
+        
+    def compute_utility_scores (self):
+        utility_scores = []
+        current_time = time.time()
+            
+        for job in self.Queues.get_jobs([{'is_runnable':True}]):    
+            utility_name = self.Queues[job.queue].policy
+            args = {'queued_time':current_time - float(job.submittime), 
+                    'wall_time': 60*float(job.walltime), 
+                    'size': float(job.nodes),
+                    'user_name': job.user,
+                    'project': job.project,
+                    'queue_priority': int(self.Queues[job.queue].priority),
+                    #'machine_size': max_nodes,
+                    'jobid': int(job.jobid),
+                    'score': job.score,
+                    'state': job.state,
+                    }
+            try:
+                if utility_name in self.builtin_utility_functions:
+                    utility_func = self.builtin_utility_functions[utility_name]
+                else:
+                    utility_func = self.user_utility_functions[utility_name]
+                utility_func.func_globals.update(args)
+                score = utility_func()
+            except KeyError:
+                # do something sensible when the requested utility function doesn't exist
+                # probably go back to the "default" one
+                
+                # and if we get here, try to fix it and throw away this scheduling iteration
+                self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
+                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
+                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                return
+            except:
+                # do something sensible when the requested utility function explodes
+                # probably go back to the "default" one
+                
+                # and if we get here, try to fix it and throw away this scheduling iteration
+                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
+                    exc_info=True)
+                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
+                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                return
+            
+            try:
+                job.score += score
+            except:
+                self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
+                    exc_info=True)
+                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
+                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                return
+
+    compute_utility_scores = automatic(compute_utility_scores, float(get_cqm_config('compute_utility_interval', 10)))

@@ -7,8 +7,6 @@ import logging
 import os.path
 import sys
 import time
-import math
-import types
 import ConfigParser
 import threading
 import xmlrpclib
@@ -220,12 +218,13 @@ class Job (ForeignData):
     
     fields = ForeignData.fields + [
         "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user", "submittime", 
-        "starttime", "project", 'is_runnable', 'is_active', 'has_resources', 'attrs',
+        "starttime", "project", 'is_runnable', 'is_active', 'has_resources', "score", 'attrs',
     ]
     
     def __init__ (self, spec):
         ForeignData.__init__(self, spec)
         spec = spec.copy()
+        print spec
         self.partition = "none"
         self.nodes = spec.pop("nodes", None)
         self.location = spec.pop("location", None)
@@ -241,7 +240,11 @@ class Job (ForeignData):
         self.is_runnable = spec.pop("is_runnable", None)
         self.is_active = spec.pop("is_active", None)
         self.has_resources = spec.pop("has_resources", None)
+<<<<<<< .mine
+        self.score = spec.pop("score", 0.0)
+=======
         self.attrs = spec.pop("attrs", {})
+>>>>>>> .r1647
         
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -252,7 +255,11 @@ class JobDict(ForeignDataDict):
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user', 'submittime', 'starttime', 'project',
+<<<<<<< .mine
+                  'is_runnable', 'is_active', 'has_resources', 'score']
+=======
                   'is_runnable', 'is_active', 'has_resources', 'attrs', ]
+>>>>>>> .r1647
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
@@ -319,15 +326,10 @@ class BGSched (Component):
         self.reservations = ReservationDict()
         self.queues = QueueDict()
         self.jobs = JobDict()
-        self.sched_info = {}
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.active = True
-        self.user_utility_functions = {}
-        self.builtin_utility_functions = {}
     
-        self.define_builtin_utility_functions()
-        self.define_user_utility_functions()
         self.get_current_time = time.time
 
     def __getstate__(self):
@@ -343,14 +345,9 @@ class BGSched (Component):
         
         self.queues = QueueDict()
         self.jobs = JobDict()
-        self.sched_info = {}
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
-        self.user_utility_functions = {}
-        self.builtin_utility_functions = {}
         
-        self.define_builtin_utility_functions()
-        self.define_user_utility_functions()
         self.get_current_time = time.time
         self.lock = threading.Lock()
         self.statistics = Statistics()
@@ -358,8 +355,8 @@ class BGSched (Component):
 
 
     # order the jobs with biggest utility first
-    def utilitycmp(self, tuple1, tuple2):
-        return -cmp(tuple1[1], tuple2[1])
+    def utilitycmp(self, job1, job2):
+        return -cmp(job1.score, job2.score)
     
     def prioritycmp(self, job1, job2):
         """Compare 2 jobs first using queue priority and then first-in, first-out."""
@@ -480,23 +477,18 @@ class BGSched (Component):
                 if not self.started_jobs.has_key(j.jobid) and cur_res.job_within_reservation(j):
                     active_jobs.append(j)
     
-            utility_scores = self._compute_utility_scores(active_jobs, self.get_current_time())
-            if not utility_scores:
-                # if we've got no utility scores, either there were no active_jobs
-                # or an error occurred -- either way, give up now
+            if not active_jobs:
                 continue
-            utility_scores.sort(self.utilitycmp)
+            active_jobs.sort(self.utilitycmp)
             
             job_location_args = []
-            for tup in utility_scores:
-                job = tup[0]
+            for job in active_jobs:
                 job_location_args.append( 
                     { 'jobid': str(job.jobid), 
                       'nodes': job.nodes, 
                       'queue': job.queue, 
                       'required': cur_res.partitions.split(":"),
-                      'utility_score': tup[1],
-                      'threshold': tup[2],
+                      'utility_score': job.score,
                       'walltime': job.walltime,
                       'attrs': job.attrs,
                     } )
@@ -525,57 +517,6 @@ class BGSched (Component):
         self.started_jobs[job.jobid] = self.get_current_time()
 
 
-    def _compute_utility_scores (self, active_jobs, current_time, drain_wait=0):
-        utility_scores = []
-            
-        # tack on a 0 so the list is never empty    
-        # max_nodes = max([int(p.size) for p in self.partitions.values()] + [0])
-        
-        for job in active_jobs:
-            utility_name = self.queues[job.queue].policy
-            args = {'queued_time':current_time - float(job.submittime), 
-                    'wall_time': 60*float(job.walltime), 
-                    'size': float(job.nodes),
-                    'user_name': job.user,
-                    'project': job.project,
-                    'queue_priority': int(self.queues[job.queue].priority),
-                    #'machine_size': max_nodes,
-                    'jobid': int(job.jobid),
-                    'drain_wait': drain_wait,
-                    }
-            try:
-                if utility_name in self.builtin_utility_functions:
-                    utility_func = self.builtin_utility_functions[utility_name]
-                else:
-                    utility_func = self.user_utility_functions[utility_name]
-                utility_func.func_globals.update(args)
-                score = utility_func()
-            except KeyError:
-                # do something sensible when the requested utility function doesn't exist
-                # probably go back to the "default" one
-                
-                # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
-                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
-                return
-            except:
-                # do something sensible when the requested utility function explodes
-                # probably go back to the "default" one
-                
-                # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
-                    exc_info=True)
-                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
-                return
-            
-            if type(score) is not types.TupleType:
-                score = (score, 0)
-            
-            self.sched_info[job.jobid] = str(score)    
-            utility_scores.append( (job, ) + score)
-        return utility_scores
 
     def schedule_jobs (self):
         '''look at the queued jobs, and decide which ones to start'''
@@ -613,9 +554,6 @@ class BGSched (Component):
             if (now - self.started_jobs[job_name]) > 60:
                 del self.started_jobs[job_name]
 
-        # cleanup the sched_info information if a job is no longer listed as "active"
-        self.sched_info = {}
-        
         active_queues = []
         spruce_queues = []
         res_queues = set()
@@ -645,6 +583,7 @@ class BGSched (Component):
             return
         
         for eq_class in equiv:
+            # recall that is_runnable is True for certain types of holds
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in active_queues \
                 if queue.name in eq_class['queues']])
             active_jobs = []
@@ -670,7 +609,6 @@ class BGSched (Component):
             # completely terminated.  the difference is likely to be slight unless the job epilogue scripts are heavy weight.
             temp_jobs = [job for job in self.jobs.q_get([{'has_resources':True}]) if job.queue in eq_class['queues']]
             end_times = []
-            drain_end_times = []
             for job in temp_jobs:
                 # take the max so that jobs which have gone overtime and are being killed
                 # continue to cast a small backfilling shadow (we need this for the case
@@ -678,7 +616,6 @@ class BGSched (Component):
                 # allows things to be backfilled into the drained partition)
                 end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
                 end_times.append([job.location, end_time])
-                drain_end_times.append(end_time)
             
             for res_name in eq_class['reservations']:
                 cur_res = reservations_cache[res_name]
@@ -691,29 +628,17 @@ class BGSched (Component):
                         done_after += cur_res.cycle
                     end_time = now + done_after
                 if cur_res.is_active():
-                    drain_end_times.append(end_time)
                     for part_name in cur_res.partitions.split(":"):
                         end_times.append([[part_name], end_time])
     
             
-            if drain_end_times:
-                max_drain_wait = max(drain_end_times) - now
-            else:
-                max_drain_wait = 0            
-            
-            utility_scores = self._compute_utility_scores(active_jobs, now, max_drain_wait)
-            if not utility_scores:
-                # if we've got no utility scores, either there were no active_jobs
-                # or an error occurred -- either way, go on to the next equivalence class
+            if not active_jobs:
                 continue
-            utility_scores.sort(self.utilitycmp)
-            
-
+            active_jobs.sort(self.utilitycmp)
             
             # now smoosh lots of data together to be passed to the allocator in the system component
             job_location_args = []
-            for tup in utility_scores:
-                job = tup[0]
+            for job in active_jobs:
                 forbidden_locations = set()
                 for res_name in eq_class['reservations']:
                     cur_res = reservations_cache[res_name]
@@ -725,8 +650,7 @@ class BGSched (Component):
                       'nodes': job.nodes, 
                       'queue': job.queue, 
                       'forbidden': list(forbidden_locations),
-                      'utility_score': tup[1],
-                      'threshold': tup[2],
+                      'utility_score': job.score,
                       'walltime': job.walltime,
                       'attrs': job.attrs,
                     } )
@@ -746,14 +670,6 @@ class BGSched (Component):
     schedule_jobs = locking(automatic(schedule_jobs))
 
     
-    def get_sched_info(self):
-        """Get information about why jobs aren't running."""
-        ret = {}
-        for k in self.sched_info:
-            ret[str(k)] = self.sched_info[k]
-        return ret
-    get_sched_info = exposed(get_sched_info)
-
     def enable(self):
         """Enable scheduling"""
         self.active = True
@@ -764,53 +680,3 @@ class BGSched (Component):
         self.active = False
     disable = exposed(disable)
 
-    def define_user_utility_functions(self):
-        self.logger.info("building user utility functions")
-        self.user_utility_functions.clear()
-        filename = os.path.expandvars(self.config.get("utility_file"))
-        try:
-            f = open(filename)
-        except:
-            self.logger.error("Can't read utility function definitions from file %s" % self.config.get("utility_file"))
-            return
-        
-        str = f.read()
-        
-        try:
-            code = compile(str, filename, 'exec')
-        except:
-            self.logger.error("Problem compiling utility function definitions.", exc_info=True)
-            return
-        
-        globals = {'math':math, 'time':time}
-        locals = {}
-        try:
-            exec code in globals, locals
-        except:
-            self.logger.error("Problem executing utility function definitions.", exc_info=True)
-            
-        for thing in locals.values():
-            if type(thing) is types.FunctionType:
-                if thing.func_name in self.builtin_utility_functions:
-                    self.logger.error("Attempting to overwrite builtin utility function '%s'.  User version discarded." % \
-                        thing.func_name)
-                else:
-                    self.user_utility_functions[thing.func_name] = thing
-    define_user_utility_functions = exposed(define_user_utility_functions)
-            
-    def define_builtin_utility_functions(self):
-        self.logger.info("building builtin utility functions")
-        self.builtin_utility_functions.clear()
-        
-        # I think this duplicates cobalt's old scheduling policy
-        # higher queue priorities win, with jobid being the tie breaker
-        def default():
-            val = queue_priority + (1.0/(jobid+1))
-            return (val, 0)
-    
-        def high_prio():
-            val = queued_time
-            return (val, 0)
-    
-        self.builtin_utility_functions["default"] = default
-        self.builtin_utility_functions["high_prio"] = high_prio

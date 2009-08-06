@@ -19,10 +19,28 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--sort <fields>] [--header <fields>] [--schedinfo] <jobid> <jobid>\n" + \
+__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--sort <fields>] [--header <fields>] [--reverse] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>\n" + \
               "       cqstat [--version]"
 
+
+def human_format(x):
+    # return x
+    units = ['  ', ' K', ' M', ' G', ' T', ' P']
+    dividend = 1000.0
+    count = 0
+    stuff = x
+
+    while True:
+        if stuff < dividend:
+            return "%5.1f%s" % (max(stuff, 0.1), units[count])
+
+        count += 1
+        if count >= len(units):
+            return "%5.1f%s" % (max(stuff, 0.1), units[-1])
+
+        stuff = stuff / dividend
+        
 def get_elapsed_time(starttime, endtime):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
@@ -70,7 +88,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
-               'q':'q', 'schedinfo':'schedinfo'}
+               'q':'q', 'reverse':'reverse'}
     doptions = {'header':'header', 'sort':'sort'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
@@ -107,60 +125,7 @@ if __name__ == '__main__':
     if opts['version']:
         print "cqstat %s" % __revision__
         sys.exit(0)
-    
-    if opts['schedinfo']:
-        print "The most recent scheduling attempt reports:\n"
-        try:
-            cqm = ComponentProxy("queue-manager", defer=False)
-        except:
-            print >> sys.stderr, "Failed to connect to queue manager"
-            sys.exit(2)
-        try:
-            sched = ComponentProxy("scheduler", defer=False)
-        except:
-            print >> sys.stderr, "Failed to connect to scheduler"
-            sys.exit(2)
-        jobs = cqm.get_jobs([{'jobid':"*", 'queue':"*", 'is_active':"*", 'has_completed':False, 'user_hold':"*", 'admin_hold':"*",
-                              'dependencies':"*"}])
-        queues = cqm.get_queues([{'name':"*", 'state':"*"}])
-        sched_info = sched.get_sched_info()
         
-        for job in jobs:
-            if len(args) > 0:
-                if str(job['jobid']) not in args:
-                    continue
-                
-            print "job", job['jobid'], ":"
-            print "    ",
-            if job['is_active']:
-                hold_msg = ""
-                if job['admin_hold'] == True or job['user_hold'] == True:
-                    hold_msg = " (hold pending)"
-                print "the job is running%s" % (hold_msg,)
-            elif job['admin_hold'] == True or job['user_hold'] == True:
-                print "the job has a hold on it"
-            elif job['dependencies']:
-                print "the job has dependencies:", job['dependencies']
-            elif [q['state'] for q in queues if q['name']==job['queue']][0] != 'running':
-                print "the queue '%s' isn't running" % job['queue']
-            elif sched_info.has_key(str(job['jobid'])):
-                print sched_info[str(job['jobid'])]
-            elif job['queue'].startswith("R."):
-                res_name = job['queue'][2:]
-                res_list = sched.get_reservations([{'name':res_name, 'active':"*"}])
-                if res_list and not res_list[0]['active']:
-                    print "the reservation '%s' is not active" % res_name
-                else:
-                    print "the job is waiting in an active reservation '%s'" % res_name
-                
-            else:
-                print "maybe the potential locations for the job are blocked or busy?"
-
-        if len(args) and not jobs:
-            sys.exit(1)
-        else:
-            sys.exit(0)
-    
     Cobalt.Logging.setup_logging('cqstat', to_syslog=False, level=level)
 
     jobid = None
@@ -180,7 +145,7 @@ if __name__ == '__main__':
                       'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
                       'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project', 'Dependencies', 'short_state', 'Notify']
+                      'Project', 'Dependencies', 'short_state', 'Notify', 'Score']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
@@ -300,10 +265,11 @@ if __name__ == '__main__':
 
     field = opts['sort'] or "JobID"
     fields = [f.lower() for f in field.split(":")]
+    lower_case_header = [str(h).lower() for h in header]
     idxes = []
     for f in fields:
         try:
-            idx = [str(h).lower() for h in header].index(f)
+            idx = lower_case_header.index(f)
             idxes.append(idx)
         except ValueError:
             pass
@@ -312,7 +278,10 @@ if __name__ == '__main__':
 
     def _my_cmp(left, right):
         for idx in idxes:
-            val = cmp(left[idx], right[idx])
+            try:
+                val = cmp(float(left[idx]), float(right[idx]))
+            except:
+                val = cmp(left[idx], right[idx])
             if val == 0:
                 continue
             else:
@@ -322,9 +291,18 @@ if __name__ == '__main__':
     
     output.sort(_my_cmp)
     
-    if "short_state" in header:
-        idx = header.index("short_state")
+    if opts['reverse']:
+        output.reverse()
+    
+    if "short_state" in lower_case_header:
+        idx = lower_case_header.index("short_state")
         header[idx] = "S"
+    
+    if "score" in lower_case_header:
+        idx = lower_case_header.index("score")
+        for line in output:
+            line[idx] = human_format(float(line[idx]))
+        
     
     if opts['long']:
         Cobalt.Util.print_vertical([tuple(x) for x in [header] + output])

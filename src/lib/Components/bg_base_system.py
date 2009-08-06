@@ -694,10 +694,6 @@ class BGBaseSystem (Component):
             for jj in range(idx, len(arg_list)):
                 job = arg_list[jj]
                 
-                # this job isn't good enough!
-                if job['utility_score'] < winning_job['threshold']:
-                    break
-
                 if job['jobid'] not in cannot_start:
                     partition_name = self._find_job_location(job, drain_partitions)
                     if partition_name:

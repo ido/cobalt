@@ -247,9 +247,6 @@ class ClusterBaseSystem (Component):
         
         # first time through, try for starting jobs based on utility scores
         for args in arg_list:
-            if args['utility_score'] < winner['threshold']:
-                break
-            
             location_data = self._find_job_location(args)
             if location_data:
                 best_location_dict.update(location_data)

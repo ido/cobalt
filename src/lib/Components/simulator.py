@@ -410,8 +410,14 @@ class Simulator (BGBaseSystem):
     
     def _mpirun (self, process_group):
         argv = process_group._get_argv()
-        stdout = open(process_group.stdout or "/dev/null", "a")
-        stderr = open(process_group.stderr or "/dev/null", "a")
+        try:
+            stdout = open(process_group.stdout or "/dev/null", "a")
+        except:
+            stdout = open("/dev/null", "a")
+        try:
+            stderr = open(process_group.stderr or "/dev/null", "a")
+        except:
+            stderr = open("/dev/null", "a")
         
         try:
             cobalt_log_file = open(process_group.cobalt_log_file or "/dev/null", "a")
