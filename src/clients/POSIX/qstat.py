@@ -26,7 +26,6 @@ __helpmsg__ = "Usage: qstat [-d] [-f] [-l] [--sort <fields>] [--header <fields>]
 
 
 def human_format(x):
-    # return x
     units = ['  ', ' K', ' M', ' G', ' T', ' P']
     dividend = 1000.0
     count = 0
