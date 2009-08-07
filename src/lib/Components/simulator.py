@@ -1,7 +1,7 @@
 """Hardware abstraction layer for the system on which process groups are run.
 
 Classes:
-ProcessGroup -- virtual process group running on the system
+BGSimProcessGroup -- virtual process group running on the system
 Simulator -- simulated system component
 """
 
@@ -30,14 +30,14 @@ import Cobalt.Data
 from Cobalt.Components import bg_base_system
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
-from Cobalt.Components.bg_base_system import NodeCard, Partition, PartitionDict, ProcessGroupDict, BGBaseSystem
+from Cobalt.Components.bg_base_system import NodeCard, Partition, PartitionDict, BGProcessGroupDict, BGBaseSystem
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
-
+from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 
 __all__ = [
-    "ProcessGroup", 
+    "BGSimProcessGroup", 
     "Simulator",
 ]
 
@@ -46,9 +46,13 @@ logger = logging.getLogger(__name__)
 
 
 
-class ProcessGroup (bg_base_system.ProcessGroup):
+class BGSimProcessGroup(ProcessGroup):
+    """Process Group modified for Blue Gene Simulator"""
+
     def __init__(self, spec):
-        bg_base_system.ProcessGroup.__init__(self, spec)
+        ProcessGroup.__init__(self, spec, logger)
+        self.nodect = None
+        self.script_id = None
         self.signals = []
     
     def _get_argv (self, config_files=None):
@@ -119,7 +123,7 @@ class Simulator (BGBaseSystem):
 
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
-        self.process_groups.item_cls = ProcessGroup
+        self.process_groups.item_cls = BGSimProcessGroup
         self.config_file = kwargs.get("config_file", None)
         self.failed_components = sets.Set()
         if self.config_file is not None:
@@ -144,8 +148,8 @@ class Simulator (BGBaseSystem):
         self._managed_partitions = state['managed_partitions']
         self.config_file = state['config_file']
         self._partitions = PartitionDict()
-        self.process_groups = ProcessGroupDict()
-        self.process_groups.item_cls = ProcessGroup
+        self.process_groups = BGProcessGroupDict()
+        self.process_groups.item_cls = BGSimProcessGroup
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
         self.failed_components = sets.Set()

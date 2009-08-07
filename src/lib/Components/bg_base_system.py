@@ -14,19 +14,18 @@ import time
 import xmlrpclib
 import copy
 import Cobalt
-from Cobalt.Data import Data, DataDict, IncrID
-from Cobalt.Exceptions import DataCreationError, JobValidationError, ComponentLookupError
+from Cobalt.Data import Data, DataDict
+from Cobalt.Exceptions import JobValidationError, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 import sets, thread, ConfigParser
 from Cobalt.Proxy import ComponentProxy
+from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 
 
 __all__ = [
     "NodeCard",
     "Partition",
     "PartitionDict",
-    "ProcessGroup",
-    "ProcessGroupDict", 
     "BGBaseSystem",
 ]
 
@@ -131,74 +130,22 @@ class PartitionDict (DataDict):
     item_cls = Partition
     key = "name"
 
-class ProcessGroup (Data):
-    required_fields = ['jobid', 'user', 'executable', 'args', 'location', 'size', 'cwd']
-    fields = Data.fields + [
-        "id", "jobid", "user", "size", "nodect", "cwd", "executable", "env", "args", "location",
-        "head_pid", "stdin", "stdout", "stderr", "exit_status", "state",
-        "mode", "kernel", "kerneloptions", "true_mpi_args",
-    ]
-
-    def __init__(self, spec):
-        Data.__init__(self, spec)
-        self.id = spec.get("id")
-        self.jobid = spec.get("jobid")
-        self.head_pid = None
-        self.stdin = spec.get('stdin')
-        self.stdout = spec.get('stdout')
-        self.stderr = spec.get('stderr')
-        self.cobalt_log_file = spec.get('cobalt_log_file')
-        self.umask = spec.get('umask')
-        self.exit_status = None
-        self.script_id = None
-        self.location = spec.get('location') or []
-        self.user = spec.get('user', "")
-        self.executable = spec.get('executable')
-        self.cwd = spec.get('cwd')
-        self.size = spec.get('size')
-        self.nodect = None
-        self.mode = spec.get('mode', 'co')
-        self.args = " ".join(spec.get('args') or [])
-        self.kernel = spec.get('kernel')
-        self.kerneloptions = spec.get('kerneloptions')
-        self.env = spec.get('env') or {}
-        self.true_mpi_args = spec.get('true_mpi_args')
-
-    def _get_state (self):
-        if self.exit_status is None:
-            return "running"
-        else:
-            return "terminated"
-    
-    state = property(_get_state)
 
 
-class ProcessGroupDict (DataDict):
-    """Default container for process groups.
-    
-    Keyed by process group id.
-    
-    When instantiating the class, be sure to explicitly set the item_cls attribute.
-    """
-    
-    item_cls = None
-    key = "id"
-    
-    def __init__ (self):
-        self.id_gen = IncrID()
- 
-    def q_add (self, specs, callback=None, cargs={}):
-        for spec in specs:
-            if spec.get("id", "*") != "*":
-                raise DataCreationError("cannot specify an id")
-            spec['id'] = self.id_gen.next()
-        return DataDict.q_add(self, specs)
+class BGProcessGroupDict(ProcessGroupDict):
+    """ProcessGroupDict modified for Blue Gene systems"""
+
+    def __init__(self):
+        ProcessGroupDict.__init__(self)
 
     def find_by_jobid(self, jobid):
+        """Find process groups by jobid"""
         for id, pg in self.iteritems():
             if pg.jobid == jobid:
                 return pg
         return None
+
+
 
 class BGBaseSystem (Component):
     """base system class.
@@ -215,7 +162,7 @@ class BGBaseSystem (Component):
         Component.__init__(self, *args, **kwargs)
         self._partitions = PartitionDict()
         self._managed_partitions = sets.Set()
-        self.process_groups = ProcessGroupDict()
+        self.process_groups = BGProcessGroupDict()
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
         self.pending_diags = dict()

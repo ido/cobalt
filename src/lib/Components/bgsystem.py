@@ -25,25 +25,28 @@ except NameError:
 
 import Cobalt
 import Cobalt.Data
-from Cobalt.Components import bg_base_system
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
-from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, ProcessGroupDict, BGBaseSystem, JobValidationError
+from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, BGProcessGroupDict, BGBaseSystem, JobValidationError
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
+from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 
 
 __all__ = [
-    "ProcessGroup",
+    "BGProcessGroup",
     "Simulator",
 ]
 
 logger = logging.getLogger(__name__)
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
-class ProcessGroup (bg_base_system.ProcessGroup):
+class BGProcessGroup(ProcessGroup):
+    """ProcessGroup modified by Blue Gene systems"""
+    fields = ProcessGroup.fields + ["nodect", "script_id"]
+
     _configfields = ['mpirun']
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
@@ -57,9 +60,12 @@ class ProcessGroup (bg_base_system.ProcessGroup):
         sys.exit(1)
     
     def __init__(self, spec):
-        bg_base_system.ProcessGroup.__init__(self, spec)
+        ProcessGroup.__init__(self, spec, logger)
+        self.nodect = None
+        self.script_id = None
     
-    def _mpirun (self):
+    def _runjob (self):
+        """Runs a job"""
         #check for valid user/group
         try:
             userid, groupid = pwd.getpwnam(self.user)[2:4]
@@ -145,23 +151,6 @@ class ProcessGroup (bg_base_system.ProcessGroup):
                          (self.id, self.user, self.cobalt_log_file))
 
         os.execl(*cmd)
-    
-    def start (self):
-        
-        """Start the process group.
-        
-        Fork for mpirun.
-        """
-
-        child_pid = os.fork()
-        if not child_pid:
-            try:
-                self._mpirun()
-            except:
-                logger.error("unable to start mpirun", exc_info=1)
-                os._exit(1)
-        else:
-            self.head_pid = child_pid
 
 
 
@@ -205,7 +194,7 @@ class BGSystem (BGBaseSystem):
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
         sys.setrecursionlimit(5000)
-        self.process_groups.item_cls = ProcessGroup
+        self.process_groups.item_cls = BGProcessGroup
         self.diag_pids = dict()
         self.configure()
         
@@ -231,8 +220,8 @@ class BGSystem (BGBaseSystem):
         sys.setrecursionlimit(5000)
         self._managed_partitions = state['managed_partitions']
         self._partitions = PartitionDict()
-        self.process_groups = ProcessGroupDict()
-        self.process_groups.item_cls = ProcessGroup
+        self.process_groups = BGProcessGroupDict()
+        self.process_groups.item_cls = BGProcessGroup
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
         self.pending_diags = dict()
