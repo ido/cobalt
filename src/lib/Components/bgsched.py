@@ -240,11 +240,8 @@ class Job (ForeignData):
         self.is_runnable = spec.pop("is_runnable", None)
         self.is_active = spec.pop("is_active", None)
         self.has_resources = spec.pop("has_resources", None)
-<<<<<<< .mine
         self.score = spec.pop("score", 0.0)
-=======
         self.attrs = spec.pop("attrs", {})
->>>>>>> .r1647
         
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -255,11 +252,7 @@ class JobDict(ForeignDataDict):
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user', 'submittime', 'starttime', 'project',
-<<<<<<< .mine
-                  'is_runnable', 'is_active', 'has_resources', 'score']
-=======
-                  'is_runnable', 'is_active', 'has_resources', 'attrs', ]
->>>>>>> .r1647
+                  'is_runnable', 'is_active', 'has_resources', 'score', 'attrs', ]
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
