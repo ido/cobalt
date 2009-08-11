@@ -157,6 +157,7 @@ class Simulator (BGBaseSystem):
         self.failed_diags = list()
         self.bridge_in_error = False
         self.cached_partitions = None
+        self.offline_partitions = []
         if self.config_file is not None:
             self.configure(self.config_file)
 

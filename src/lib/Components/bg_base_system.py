@@ -169,6 +169,7 @@ class BGBaseSystem (Component):
         self.failed_diags = list()
         self.bridge_in_error = False
         self.cached_partitions = None
+        self.offline_partitions = []
 
     def _get_partitions (self):
         return PartitionDict([
@@ -554,11 +555,14 @@ class BGBaseSystem (Component):
         defined_sizes = {}
         for target_partition in self.cached_partitions.itervalues():
             usable = True
-            for part in self.cached_partitions.itervalues():
-                if not part.functional:
-                    if target_partition.name in part.children or target_partition.name in part.parents:
-                        usable = False
-                        break
+            if target_partition.name in self.offline_partitions:
+                usable = False
+            else:
+                for part in self.cached_partitions.itervalues():
+                    if not part.functional:
+                        if target_partition.name in part.children or target_partition.name in part.parents:
+                            usable = False
+                            break
 
             for queue_name in target_partition.queue.split(":"):
                 if not per_queue.has_key(queue_name):

@@ -230,6 +230,7 @@ class BGSystem (BGBaseSystem):
         self.pending_script_waits = sets.Set()
         self.bridge_in_error = False
         self.cached_partitions = None
+        self.offline_partitions = []
 
         self.configure()
         if 'partition_flags' in state:
@@ -413,6 +414,7 @@ class BGSystem (BGBaseSystem):
 
             # update the state of each partition
             self._partitions_lock.acquire()
+            self.offline_partitions = []
             try:
                 for partition in system_def:
                     if self._partitions.has_key(partition.id):
@@ -436,13 +438,13 @@ class BGSystem (BGBaseSystem):
                         for nc in p.node_cards:
                             if nc.used_by:
                                 p.state = "blocked (%s)" % nc.used_by
-                                break
                             if nc.state != "RM_NODECARD_UP":
                                 p.state = "hardware offline: nodecard %s" % nc.id
-                                break 
+                                self.offline_partitions.append(p.name)
                         for s in p.switches:
                             if s in busted_switches:
                                 p.state = "hardware offline: switch %s" % s 
+                                self.offline_partitions.append(p.name)
                         for dep_name in p._wiring_conflicts:
                             if self._partitions[dep_name].state == "busy":
                                 p.state = "blocked-wiring (%s)" % dep_name
@@ -469,7 +471,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("error in update_partition_state", exc_info=True)
                         
             self._partitions_lock.release()
-            
+
             time.sleep(10)
 
     def _validate_kernel(self, kernel):
