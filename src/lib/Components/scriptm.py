@@ -182,6 +182,7 @@ class ProcessGroup(Data):
                 'true_mpi_args':true_mpi_args, 
                 'env':{'path':self.path},
                 'size':0,
+                'args':[],
                 'executable':"this will be ignored"}])
         except (ComponentLookupError, xmlrpclib.Fault):
             self.log.error("Job %s: Failed to start up user script job" % (self.jobid))
