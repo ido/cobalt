@@ -296,7 +296,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs",
+        "has_completed", "sm_state", "score", "attrs", "has_resources",
     ]
 
     _states = [
@@ -2355,7 +2355,7 @@ class Queue (Data):
         for job in self.jobs:
             job.max_running = False
             if unum.get(job.user, 0) >= int(self.restrictions["maxrunning"].value):
-                if job.has_resources:
+                if not job.has_resources:
                     job.max_running = True
 
 
