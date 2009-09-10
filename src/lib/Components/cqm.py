@@ -1567,6 +1567,9 @@ class Job (StateMachine):
         self.__timers['queue'].start()
         self.__timers['current_queue'].start()
 
+        # reset the job's score to 0 after preempting it
+        self.score = 0.0
+        
         # if a pending hold exists, then change to the preempted hold state; otherwise change to the preempted state
         if self.admin_hold or self.user_hold:
             if not self.__timers.has_key('hold'):
