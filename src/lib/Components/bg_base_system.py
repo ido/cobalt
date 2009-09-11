@@ -481,6 +481,8 @@ class BGBaseSystem (Component):
             for p in available_partitions.copy():
                 if p.size != desired_size:
                     available_partitions.remove(p)
+                elif p.name in self._not_functional_set:
+                    available_partitions.remove(p)
         else:
             for p in self.possible_locations(nodes, queue):
                 skip = False
@@ -544,15 +546,20 @@ class BGBaseSystem (Component):
         else:
             return []
 
-    # this function builds two things, namely a pair of dictionaries keyed by queue names
+    # this function builds three things, namely a pair of dictionaries keyed by queue names, and a set of 
+    # partition names which are not functional
+    #
     # self._defined_sizes maps queue names to an ordered list of partition sizes available in that queue
     #     for all schedulable partitions (even if currently offline and not functional)
     # self._locations_cache maps queue names to dictionaries which map partition sizes to partition objects;
     #     this structure will only contain partitions which are fully online, so we don't try to drain a
     #     broken partition
+    # self._not_functional_set contains names of partitions which are not functional (either themselves, or
+    #     a parent or child) 
     def _build_locations_cache(self):
         per_queue = {}
         defined_sizes = {}
+        not_functional_set = set()
         for target_partition in self.cached_partitions.itervalues():
             usable = True
             if target_partition.name in self.offline_partitions:
@@ -560,8 +567,10 @@ class BGBaseSystem (Component):
             else:
                 for part in self.cached_partitions.itervalues():
                     if not part.functional:
+                        not_functional_set.add(part.name)
                         if target_partition.name in part.children or target_partition.name in part.parents:
                             usable = False
+                            not_functional_set.add(target_partition.name)
                             break
 
             for queue_name in target_partition.queue.split(":"):
@@ -580,8 +589,8 @@ class BGBaseSystem (Component):
             defined_sizes[q_name] = sorted(defined_sizes[q_name])
         
         self._defined_sizes = defined_sizes
-        self._locations_cache = per_queue    
-    
+        self._locations_cache = per_queue
+        self._not_functional_set = not_functional_set
     
     def find_job_location(self, arg_list, end_times):
         best_partition_dict = {}
