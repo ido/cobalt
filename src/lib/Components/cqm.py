@@ -2539,7 +2539,7 @@ class QueueManager(Component):
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
                     
                     if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
-                        waiting_job.score = max(waiting_job.score, get_cqm_config('dep_frac', 0.5)*job.score)
+                        waiting_job.score = max(waiting_job.score, float(get_cqm_config('dep_frac', 0.5))*job.score)
 
         # remove the job from the queue
         #
