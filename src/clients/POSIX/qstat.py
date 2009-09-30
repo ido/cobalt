@@ -157,7 +157,8 @@ if __name__ == '__main__':
                       'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
                       'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
-                      'Project', 'Dependencies', 'short_state', 'Notify', 'Score']
+                      'Project', 'Dependencies', 'short_state', 'Notify', 
+                      'Score', 'Maxtasktime', 'attrs',]
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 

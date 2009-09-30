@@ -320,6 +320,10 @@ class BGBaseSystem (Component):
                 spec['mode'] = 'co'
         if spec['mode'] not in job_types:
             raise JobValidationError("Invalid mode")
+        if spec['attrs'].has_key("location"):
+            p_name = spec['attrs']['location']
+            if not self.partitions.has_key(p_name):
+                raise JobValidationError("Partition %s not found" % p_name)
         if not spec['proccount']:
             if spec.get('mode', 'co') == 'vn':
                 if sys_type == 'bgl':
@@ -458,6 +462,11 @@ class BGBaseSystem (Component):
         best_partition = None
         
         available_partitions = set()
+        
+        requested_location = None
+        if args['attrs'].has_key("location"):
+            requested_location = args['attrs']['location']
+                
         if required:
             # whittle down the list of required partitions to the ones of the proper size
             # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
@@ -483,6 +492,8 @@ class BGBaseSystem (Component):
                     available_partitions.remove(p)
                 elif p.name in self._not_functional_set:
                     available_partitions.remove(p)
+                elif requested_location and p.name != requested_location:
+                    available_partitions.remove(p)
         else:
             for p in self.possible_locations(nodes, queue):
                 skip = False
@@ -491,7 +502,8 @@ class BGBaseSystem (Component):
                         skip = True
                         break
                 if not skip:
-                    available_partitions.add(p)
+                    if (not requested_location) or (p.name == requested_location):
+                        available_partitions.add(p)
         
         available_partitions -= drain_partitions
         now = time.time()
@@ -519,6 +531,12 @@ class BGBaseSystem (Component):
 
 
     def _find_drain_partition(self, job):
+        # if the user requested a particular partition, we only try to drain that one
+        if job['attrs'].has_key("location"):
+            target_name = job['attrs']['location']
+            print "we're going to drain", target_name
+            return self.cached_partitions.get(target_name, None)
+        
         drain_partition = None
         locations = self.possible_locations(job['nodes'], job['queue'])
         
