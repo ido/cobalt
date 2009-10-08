@@ -277,7 +277,7 @@ if __name__ == '__main__':
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]
                   for j in response]
 
-    field = opts['sort'] or "JobID"
+    field = opts['sort'] or "score"
     fields = [f.lower() for f in field.split(":")]
     lower_case_header = [str(h).lower() for h in header]
     idxes = []
