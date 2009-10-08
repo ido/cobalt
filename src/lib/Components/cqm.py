@@ -541,7 +541,7 @@ class Job (StateMachine):
         self.__admin_hold = False
         self.__user_hold = False
         
-        self.score = 0.0
+        self.score = float(spec.get("score", 0.0))
 
         self.__resource_nodects = []
         self.__timers = dict(
