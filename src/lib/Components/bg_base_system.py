@@ -534,7 +534,6 @@ class BGBaseSystem (Component):
         # if the user requested a particular partition, we only try to drain that one
         if job['attrs'].has_key("location"):
             target_name = job['attrs']['location']
-            print "we're going to drain", target_name
             return self.cached_partitions.get(target_name, None)
         
         drain_partition = None
