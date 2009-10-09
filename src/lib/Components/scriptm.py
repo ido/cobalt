@@ -30,7 +30,7 @@ class ProcessGroup(Data):
 
     fields = Data.fields + [
         "tag", "name", "location", "state", "user", "stdout", "stderr", "executable", "jobid",
-        "path", "cwd", "args", "env", "stdin", "kerneloptions", "id", "exit_status",
+        "path", "cwd", "args", "env", "stdin", "kerneloptions", "id", "exit_status", "job_size",
     ]
 
     def __init__(self, spec):
@@ -53,6 +53,7 @@ class ProcessGroup(Data):
         self.env = spec.pop("env", None)
         self.stdin = spec.pop("stdin", None)
         self.kerneloptions = spec.pop("kerneloptions", None)
+        self.job_size = spec.pop("size", None)
         self.id = spec.get("id")
         
         self.mpi_system_id = None
@@ -84,6 +85,8 @@ class ProcessGroup(Data):
             # create a nodefile in /tmp
             os.environ['COBALT_NODEFILE'] = self.t.name
             os.environ["COBALT_JOBID"] = str(self.jobid)
+            os.environ["COBALT_PARTNAME"] = self.location[0]
+            os.environ["COBALT_JOBSIZE"] = str(self.job_size)
             os.environ['USER'] = self.user
             os.environ['HOME'] = home_dir
             try:
