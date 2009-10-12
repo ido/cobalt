@@ -39,7 +39,7 @@ if __name__ == '__main__':
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog' }
+                'debuglog':'debuglog', 'attrs':'attrs'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -113,6 +113,31 @@ if __name__ == '__main__':
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
+
+    if opts['attrs'] is not False:
+        if sys.argv.count('--attrs') - command.count('--attrs') > 1:
+            logger.error("Use of multiple --attrs options is not supported.  Specify multiple attributes to match with --attrs FOO=1:BAR=2")
+            raise SystemExit(1)
+        jobspec['attrs'] = {}
+        newoptsattrs = {}
+        for attr in opts["attrs"].split(":"):
+            if len(attr.split("=")) == 2:
+                key, value = attr.split("=")
+                jobspec["attrs"].update({key:value})
+                newoptsattrs.update({key:value})
+            elif len(attr.split("=")) == 1:
+                if attr[:3] == "no_":
+                    jobspec["attrs"].update({attr[3:]:"false"})
+                    newoptsattrs.update({attr[3:]:"false"})
+                else:
+                    jobspec["attrs"].update({attr:"true"})
+                    newoptsattrs.update({attr:"true"})
+            else:
+                print "Improperly formatted argument to attrs : %s" % attr
+                sys.exit(1)
+        opts['attrs'] = newoptsattrs
+    else:
+        opts['attrs'] = {}
 
     try:
         try:
