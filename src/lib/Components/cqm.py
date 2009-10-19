@@ -296,7 +296,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources",
+        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status",
     ]
 
     _states = [
