@@ -163,26 +163,26 @@ class ProcessGroup(Data):
             self.log.error("Signal failure for pgid %s:%s" % (self.jobid, error.strerror))
         return 0
 
-    def invoke_mpi_from_script(self, true_mpi_args):
+    def invoke_mpi_from_script(self, spec):
         '''Run an mpirun job that was invoked by a script.'''
         self.state = 'running'
-        if self.stdout is None:
-            self.outputpath = "%s/%s.output" % (self.cwd, self.jobid)
-        if self.stderr is None:
-            self.errorpath = "%s/%s.error" % (self.cwd, self.jobid)
 
+        stdin = spec.get("stdin", self.stdin)
+        stdout = spec.get("stdout", self.stdout)
+        stderr = spec.get("stderr", self.stderr)
+        
         try:
             pgroup = ComponentProxy("system").add_process_groups([{
                 'jobid':self.jobid,
                 'tag':'process-group',
                 'user':self.user, 
-                'stdout':self.stdout,
-                'stderr':self.stderr,
+                'stdout':stdout,
+                'stderr':stderr,
                 'cobalt_log_file':self.cobalt_log_file,
                 'cwd':self.cwd, 
                 'location': self.location,
-                'stdin':self.stdin,
-                'true_mpi_args':true_mpi_args, 
+                'stdin':stdin,
+                'true_mpi_args':spec['true_mpi_args'], 
                 'env':{'path':self.path},
                 'size':0,
                 'args':[],
@@ -329,7 +329,7 @@ class ScriptManager(Component):
             self.logger.error("invoke_mpi_from_script matched more than one job with spec %r" % spec)
             return -1
         else:
-            jobs[0].invoke_mpi_from_script(spec['true_mpi_args'])
+            jobs[0].invoke_mpi_from_script(spec)
             return jobs[0].mpi_system_id
     invoke_mpi_from_script = locking(exposed(invoke_mpi_from_script))
 

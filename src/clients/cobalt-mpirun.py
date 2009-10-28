@@ -46,7 +46,17 @@ if __name__ == '__main__':
         except ValueError:
             pass
     
-        
+    my_args = ["stdin", "stdout", "stderr"]
+    io_redirect = {}
+    for a in my_args:
+        try:
+            idx = arglist.index("--" + a)
+            value = arglist[idx+1]
+            io_redirect[a] = value
+            arglist = arglist[0:idx] + arglist[idx+2:]
+        except ValueError:
+            io_redirect[a] = None
+
     level = 30
     if '-d' in sys.argv:
         level = 10
@@ -104,7 +114,12 @@ if __name__ == '__main__':
         
     user = pwd.getpwuid(os.getuid())[0]
 
-    jobspec = {'jobid':int(os.environ["COBALT_JOBID"]), 'user':user, 'true_mpi_args':arglist, 'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir']}
+    jobspec = {'jobid':int(os.environ["COBALT_JOBID"]), 'user':user, 'true_mpi_args':arglist, 
+               'walltime':j['walltime'], 'args':[], 'location':j['location'], 'outputdir':j['outputdir'], }
+    for key in io_redirect:
+        if io_redirect[key]:
+            jobspec.update({key: io_redirect[key]})
+               
     try:
         scriptm = ComponentProxy("script-manager", defer=False)
         system = ComponentProxy("system", defer=False)
