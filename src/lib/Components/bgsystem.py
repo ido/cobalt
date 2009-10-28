@@ -107,8 +107,11 @@ class BGProcessGroup(ProcessGroup):
         envs = " ".join(["%s=%s" % x for x in app_envs])
         atexit._atexit = []
 
-        stdin = open(self.stdin or "/dev/null", 'r')
-        os.dup2(stdin.fileno(), sys.__stdin__.fileno())
+        try:
+            stdin = open(self.stdin or "/dev/null", 'r')
+            os.dup2(stdin.fileno(), sys.__stdin__.fileno())
+        except (IOError, OSError), e:
+            logger.error("process group %s: error opening stdin file %s: %s (stdin will be /dev/null)" % (self.id, self.stdin, e))
         try:
             stdout = open(self.stdout or tempfile.mktemp(), 'a')
             os.dup2(stdout.fileno(), sys.__stdout__.fileno())
