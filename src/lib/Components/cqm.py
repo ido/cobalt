@@ -2008,34 +2008,40 @@ class Job (StateMachine):
         return result
 
     def __write_cobalt_log(self, message):
-        try:
-            uid = pwd.getpwnam(self.user)[2]
-        except KeyError:
-            logger.error("Job %s/%s: user name is not valid; skipping output to cobaltlog file" % (self.jobid, self.user))
-            return
-        except Exception, e:
-            logger.exception("Job %s/%s: obtaining the user id failed" % (self.jobid, self.user))
-            return
-
-        try:
-            file_uid = os.stat(self.cobalt_log_file).st_uid
-            if file_uid != uid:
-                logger.error("Job %s/%s: user does not own cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+        if self.cobalt_log_file:
+            try:
+                uid = pwd.getpwnam(self.user)[2]
+            except KeyError:
+                logger.error("Job %s/%s: user name is not valid; skipping output to cobaltlog file", self.jobid, self.user)
                 return
-        except OSError, e:
-            if e.errno != errno.ENOENT:
-                logger.error("Job %s/%s: cannot stat cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+            except:
+                logger.exception("Job %s/%s: obtaining the user id failed", self.jobid, self.user)
                 return
-        except Exception, e:
-            logger.exception("Job %s/%s: stat of cobaltlog file %s failed" % (self.jobid, self.user, self.cobalt_log_file))
-            return
+            
+            try:
+                file_uid = os.stat(self.cobalt_log_file).st_uid
+                if file_uid != uid:
+                    logger.error("Job %s/%s: user does not own cobaltlog file %s", self.jobid, self.user, self.cobalt_log_file)
+                    return
+            except OSError, e:
+                logger.error("Job %s/%s: stat of cobaltlog file %s failed: %s", self.jobid, self.user, self.cobalt_log_file,
+                    e.strerror)
+                return
+            except:
+                logger.exception("Job %s/%s: stat of cobaltlog file %s failed", self.jobid, self.user, self.cobalt_log_file)
+                return
         
-        try:    
-            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
-            print >> cobalt_log_file, message
-            cobalt_log_file.close()
-        except:
-            logger.error("Job %s/%s: unable to open cobaltlog file %s" % (self.jobid, self.user, self.cobalt_log_file))
+            try:    
+                cobalt_log_file = open(self.cobalt_log_file, "a")
+                print >> cobalt_log_file, message
+                cobalt_log_file.close()
+            except IOError, e:
+                logger.error("Job %s/%s: unable to write to cobaltlog file %s: %s", self.jobid, self.user, self.cobalt_log_file, 
+                    e.strerror)
+                return
+            except:
+                logger.exception("Job %s/%s: unable to write to cobaltlog file %s", self.jobid, self.user, self.cobalt_log_file)
+                return
 
     def progress(self):
         '''Run next job step'''
