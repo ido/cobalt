@@ -2699,6 +2699,7 @@ class QueueManager(Component):
             if len(jobs) > 0:
                 failed.append(queue.name)
                 queues.remove(queue)
+        response = []
         if len(queues) > 0:
             response = self.Queues.del_queues([queue.to_rx() for queue in queues])
         if failed:
