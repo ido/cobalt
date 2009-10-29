@@ -275,6 +275,9 @@ bridge.rm_get_partition.restype = check_status
 bridge.rm_free_partition.argtypes = [POINTER(rm_partition_t)]
 bridge.rm_free_partition.restype = check_status
 
+bridge.pm_destroy_partition.argtypes = [pm_partition_id_t]
+bridge.pm_destroy_partition.restype = check_status
+
 if systype == 'BGL':
     RM_PartitionID = 39
     RM_PartitionState = 40
@@ -314,6 +317,8 @@ elif systype == 'BGP':
     RM_PartitionFirstSwitch = 10017
     RM_PartitionNextSwitch = 10018
     RM_PartitionMloaderImg = 10010
+    RM_PartitionCnloadImg = 10011
+    RM_PartitionIoloadImg = 10012
     RM_PartitionOptions = 10009
     RM_PartitionDescription = 10004
     RM_PartitionSmall = 10005
@@ -345,7 +350,10 @@ class Partition (Resource):
     def __del__ (self):
         if self._free:
             bridge.rm_free_partition(self)
-    
+
+    def destroy(self):
+        bridge.pm_destroy_partition(self.id)
+
     def _get_node_cards (self):
         if self.small:
             return self._node_cards
@@ -397,18 +405,23 @@ class Partition (Resource):
     machine_loader_image = property(_get_machine_loader_image)
     
     def _get_compute_node_kernel_image (self):
-        image = self._get_data(RM_PartitionBlrtsImg, c_char_p)
+        if systype == 'BGL':
+            image = self._get_data(RM_PartitionBlrtsImg, c_char_p)
+        else:
+            image = self._get_data(RM_PartitionCnloadImg, c_char_p)
         return free_value(image)
 
-    if systype == 'BGL':
-        compute_node_kernel_image = property(_get_compute_node_kernel_image)
+    compute_node_kernel_image = property(_get_compute_node_kernel_image)
     
     def _get_io_node_kernel_image (self):
-        image = self._get_data(RM_PartitionLinuxImg, c_char_p)
-        return image.value
+        if systype == 'BGL':
+            image = self._get_data(RM_PartitionLinuxImg, c_char_p)
+            return image.value
+        else:
+            image = self._get_data(RM_PartitionIoloadImg, c_char_p)
+            return free_value(image)
 
-    if systype == 'BGL':
-        io_node_kernel_image = property(_get_io_node_kernel_image)
+    io_node_kernel_image = property(_get_io_node_kernel_image)
     
     def _get_ramdisk_image (self):
         image = self._get_data(RM_PartitionRamdiskImg, c_char_p)
