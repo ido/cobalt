@@ -5,6 +5,8 @@ POLL_INTERVAL = 0.1
 ENABLE_LOGGING = True
 LOG_FILE = "test_cqm.log"
 CQM_CONFIG_FILE_ENTRY = """
+[bgsched]
+
 [cqm]
 log_dir: /tmp
 progress_interval: 0.2
