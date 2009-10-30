@@ -663,43 +663,23 @@ class BGBaseSystem (Component):
         
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
-        # the sets draining_jobs and cannot_start are for efficiency, not correctness
-        draining_jobs = set()
-        cannot_start = set()
-        for idx in range(len(arg_list)):
-            winning_job = arg_list[idx]
-            for jj in range(idx, len(arg_list)):
-                job = arg_list[jj]
-                
-                if job['jobid'] not in cannot_start:
-                    partition_name = self._find_job_location(job, drain_partitions)
-                    if partition_name:
-                        best_partition_dict.update(partition_name)
-                        break
-                
-                cannot_start.add(job['jobid'])
-                
-                # we already picked a drain location for the winning job
-                if winning_job['jobid'] in draining_jobs:
-                    continue
-
-                location = self._find_drain_partition(winning_job)
-                if location is not None:
-                    for p_name in location.parents:
-                        drain_partitions.add(self.cached_partitions[p_name])
-                    for p_name in location.children:
-                        drain_partitions.add(self.cached_partitions[p_name])
-                        self.cached_partitions[p_name].draining = True
-                    drain_partitions.add(location)
-                    #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
-                    location.draining = True
-                    draining_jobs.add(winning_job['jobid'])
-                    
-
-            
-            # at this time, we only want to try launching one job at a time
-            if best_partition_dict:
+        
+        for job in arg_list:
+            partition_name = self._find_job_location(job, drain_partitions)
+            if partition_name:
+                best_partition_dict.update(partition_name)
                 break
+            
+            location = self._find_drain_partition(job)
+            if location is not None:
+                for p_name in location.parents:
+                    drain_partitions.add(self.cached_partitions[p_name])
+                for p_name in location.children:
+                    drain_partitions.add(self.cached_partitions[p_name])
+                    self.cached_partitions[p_name].draining = True
+                drain_partitions.add(location)
+                #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
+                location.draining = True
         
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
