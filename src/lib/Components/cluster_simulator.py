@@ -30,9 +30,11 @@ from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
 from Cobalt.Components.cluster_base_system import ProcessGroupDict, ClusterBaseSystem
 from Cobalt.Exceptions import ProcessGroupCreationError
+from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+
 
 __all__ = [
-    "ProcessGroup", 
+    "ClusterProcessGroup", 
     "Simulator",
 ]
 
@@ -41,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class ProcessGroup (cluster_base_system.ProcessGroup):
+class ClusterProcessGroup (ProcessGroup):
     _configfields = ['hostfile']
     _config = ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
@@ -55,7 +57,7 @@ class ProcessGroup (cluster_base_system.ProcessGroup):
         sys.exit(1)
 
     def __init__(self, spec):
-        cluster_base_system.ProcessGroup.__init__(self, spec)
+        ProcessGroup.__init__(self, spec, logger)
         self.signals = []
     
     def _get_argv (self, config_files=None):
@@ -126,7 +128,7 @@ class Simulator (ClusterBaseSystem):
 
     def __init__ (self, *args, **kwargs):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
-        self.process_groups.item_cls = ProcessGroup
+        self.process_groups.item_cls = ClusterProcessGroup
     
     
     
