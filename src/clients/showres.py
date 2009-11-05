@@ -5,38 +5,10 @@ __version__ = '$Version$'
 
 import sys, time
 import math
-import re
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-def _mergelist(locations):
-    '''create a set of dashed-ranges from a node list'''
-    uniq = []
-    reg = re.compile('(\D+)(\d+)')
-    [uniq.append(loc) for loc in locations if loc not in uniq]
-    uniq.sort()
-    retl = [[reg.match(uniq[0]).group(2)]]
-    prefix = reg.match(uniq[0]).group(1)
-    uniq = uniq[1:]
-    while uniq:
-        newnum = reg.match(uniq[0]).group(2)
-        block = [item for item in retl if (int(item[0]) == int(newnum) + 1)
-                 or (int(item[-1]) == int(newnum) -1)]
-        if block:
-            block[0].append(newnum)
-            block[0].sort()
-            uniq = uniq[1:]
-        else:
-            retl.append([newnum])
-            uniq = uniq[1:]
-    retnl = []
-    for item in retl:
-        if len(item) > 1:
-            retnl.append("[%s%s-%s]" % (prefix, item[0], item[-1]))
-        else:
-            retnl.append("%s%s" % (prefix, item[0]))
-    return ','.join(retnl)
 
 def mergelist(location_string, cluster):
     if not cluster:
@@ -44,7 +16,7 @@ def mergelist(location_string, cluster):
 
     locations = location_string.split(":")
 
-    return _mergelist(locations)
+    return Cobalt.Util.merge_nodelist(locations)
 
 if __name__ == '__main__':
     if '--version' in sys.argv:

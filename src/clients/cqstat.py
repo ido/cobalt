@@ -6,7 +6,6 @@ __version__ = '$Version$'
 
 import math
 import os
-import re
 import sys
 import time
 import types
@@ -49,33 +48,6 @@ def get_elapsed_time(starttime, endtime):
     hours, minutes = divmod(minutes, 60)
     return ( "%02d:%02d:%02d" % (hours, minutes, seconds) )
 
-def mergelist(locations):
-    '''create a set of dashed-ranges from a node list'''
-    uniq = []
-    reg = re.compile('(\D+)(\d+)')
-    [uniq.append(loc) for loc in locations if loc not in uniq]
-    uniq.sort()
-    retl = [[reg.match(uniq[0]).group(2)]]
-    prefix = reg.match(uniq[0]).group(1)
-    uniq = uniq[1:]
-    while uniq:
-        newnum = reg.match(uniq[0]).group(2)
-        block = [item for item in retl if (int(item[0]) == int(newnum) + 1) 
-                 or (int(item[-1]) == int(newnum) -1)]
-        if block:
-            block[0].append(newnum)
-            block[0].sort()
-            uniq = uniq[1:]
-        else:
-            retl.append([newnum])
-            uniq = uniq[1:]
-    retnl = []
-    for item in retl:
-        if len(item) > 1:
-            retnl.append("[%s%s-%s]" % (prefix, item[0], item[-1]))
-        else:
-            retnl.append("%s%s" % (prefix, item[0]))
-    return ','.join(retnl)
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -224,7 +196,7 @@ if __name__ == '__main__':
             j['jobid'] = jobidfmt % j['jobid']
             # location
             if isinstance(j['location'], types.ListType) and len(j['location']) > 1:
-                j['location'] = mergelist(j['location'])
+                j['location'] = Cobalt.Util.merge_nodelist(j['location'])
             elif isinstance(j['location'], types.ListType) and len(j['location']) == 1:
                 j['location'] = j['location'][0]
             # queuedtime

@@ -18,6 +18,7 @@ from Cobalt.Exceptions import TimeFormatError, TimerException, ThreadPickledAliv
 import logging
 from threading import Thread
 import inspect
+import re
 
 import Cobalt
 
@@ -107,6 +108,40 @@ def dgetopt(arglist, opt, vopt, msg):
         else:
             ret[vopt[option]] = garg
     return ret, list(args)
+
+def merge_nodelist(locations):
+    '''create a set of dashed-ranges from a node list'''
+    reg = re.compile('(\D+)(\d+)')
+    prefix = reg.match(locations[0]).group(1)
+
+    # create a sorted list of the node numbers
+    uniq = []
+    for name in locations:
+        newnum = int(reg.match(name).group(2))
+        if not newnum in uniq:
+            uniq.append(newnum)
+    uniq.sort()
+
+    # iterate through the sorted list, identifying gaps in the sequential numbers
+    breaks = []
+    start = 0
+    for idx in range(1,len(uniq)):
+        if uniq[idx] != uniq[idx-1] + 1:
+            breaks.append((start,idx-1))
+            start = idx
+            
+    breaks.append((start, idx))
+
+    # produce pretty output for contiguous ranges
+    ret = []
+    for t in breaks:
+        if uniq[t[1]] - uniq[t[0]] > 0:
+            ret.append("[%s%s-%s]" % (prefix, uniq[t[0]], uniq[t[1]]))
+        else:
+            ret.append("%s%s" % (prefix, uniq[t[0]]))
+
+    return ','.join(ret)
+
 
 def dgetopt_long(arglist, opt, vopt, msg):
     '''parse options into a dictionary, long and short options supported'''
