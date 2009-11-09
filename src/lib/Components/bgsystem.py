@@ -317,6 +317,7 @@ class BGSystem (BGBaseSystem):
                 name = partition_def.id,
                 queue = "default",
                 size = NODES_PER_NODECARD * nc_count,
+                bridge_partition = partition_def,
                 node_cards = node_list,
                 switches = [ s.id for s in partition_def.switches ],
                 state = _get_state(partition_def),
@@ -366,6 +367,26 @@ class BGSystem (BGBaseSystem):
             else:
                 return "busy"
 
+        def _start_partition_cleanup(p):
+            self.logger.info("partition %s: marking partition for cleaning", p.name)
+            p.cleanup_pending = True
+            partitions_cleanup.append(p)
+            _set_partition_cleanup_state(p)
+            p.reserved_until = False
+            p.reserved_by = None
+            p.used_by = None
+
+        def _set_partition_cleanup_state(p):
+            p.state = "cleanup"
+            for part in p._children:
+                if part.bridge_partition.state == "RM_PARTITION_FREE":
+                    part.state = "blocked (%s)" % (p.name,)
+                else:
+                    part.state = "cleanup"
+            for part in p._parents:
+                if part.state == "idle":
+                    part.state = "blocked (%s)" % (p.name,)
+
         while True:
             try:
                 system_def = Cobalt.bridge.PartitionList.info_by_filter()
@@ -392,49 +413,63 @@ class BGSystem (BGBaseSystem):
                 if s.state != "RM_SWITCH_UP":
                     busted_switches.append(s.id)
 
-            # first, set all of the nodecards to not busy
+            # set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
                 nc.used_by = ''
 
-            # determine which partitions just became idle...
-            pnames = []
-            self._partitions_lock.acquire()
-            try:
-                for partition in system_def:
-                    if self._partitions.has_key(partition.id) and partition.id in self._managed_partitions:
-                        state = _get_state(partition)
-                        if self._partitions[partition.id].state in ["busy", "starting job"] and state == "idle":
-                            if not self._partitions[partition.id].reserved_until:
-                                pnames.append(partition.id)
-            except:
-                self.logger.exception("Unexpected error occurred while computing list of partitions which just became idle.")
-            finally:
-                self._partitions_lock.release()
-
-            # ...and set their kernels back to the default (while _not_ holding the lock)
-            for pname in pnames:
-                self._clear_kernel(pname)
-
             # update the state of each partition
             self._partitions_lock.acquire()
+            now = time.time()
+            partitions_cleanup = []
             self.offline_partitions = []
             try:
                 for partition in system_def:
                     if self._partitions.has_key(partition.id):
-                        self._partitions[partition.id].state = _get_state(partition)
-                        self._partitions[partition.id]._update_node_cards()
-    
-                now = time.time()
+                        p = self._partitions[partition.id]
+                        p.state = _get_state(partition)
+                        p.bridge_partition = partition
+                        p._update_node_cards()
+                        if p.reserved_until and now > p.reserved_until:
+                            p.reserved_until = None
+
                 for p in self._partitions.values():
-                    if p.state != "busy":
+                    if p.cleanup_pending:
+                        if p.used_by:
+                            # if the partition has a pending cleanup request, then set the state so that cleanup will be
+                            # performed
+                            _start_partition_cleanup(p)
+                        else:
+                            # if the cleanup has already been initiated, then see how it's going
+                            busy = []
+                            parts = list(p._all_children)
+                            parts.append(p)
+                            for part in parts:
+                                if part.bridge_partition.state != "RM_PARTITION_FREE":
+                                    busy.append(part.name)
+                            if len(busy) > 0:
+                                _set_partition_cleanup_state(p)
+                                self.logger.info("partition %s: still cleaning; busy partition(s): %s", p.name, ", ".join(busy))
+                            else:
+                                p.cleanup_pending = False
+                                self.logger.info("partition %s: cleaning complete", p.name)
+                    if p.state == "busy":
+                        # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
+                        if not p.reserved_by:
+                            p.reserved_until = False
+                    elif p.state != "cleanup":
                         if p.reserved_until:
-                            p.state = "starting job"
+                            p.state = "allocated"
                             for part in p._parents:
                                 if part.state == "idle":
-                                    part.state = "blocked by starting job"
+                                    part.state = "blocked (%s)" % (p.name,)
                             for part in p._children:
                                 if part.state == "idle":
-                                    part.state = "blocked by starting job"
+                                    part.state = "blocked (%s)" % (p.name,)
+                        elif p.bridge_partition.state == "RM_PARTITION_FREE" and p.used_by:
+                            # if the job assigned to the partition has completed, then set the state so that cleanup will be
+                            # performed
+                            _start_partition_cleanup(p)
+                            continue
                         for diag_part in self.pending_diags:
                             if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
                                 p.state = "blocked by pending diags"
@@ -449,7 +484,7 @@ class BGSystem (BGBaseSystem):
                                 p.state = "hardware offline: switch %s" % s 
                                 self.offline_partitions.append(p.name)
                         for dep_name in p._wiring_conflicts:
-                            if self._partitions[dep_name].state == "busy":
+                            if self._partitions[dep_name].state in ["busy", "allocated", "cleanup"]:
                                 p.state = "blocked-wiring (%s)" % dep_name
                                 break
                         for part_name in self.failed_diags:
@@ -458,24 +493,53 @@ class BGSystem (BGBaseSystem):
                                 p.state = "failed diags"
                             elif p.name in part.parents or p.name in part.children:
                                 p.state = "blocked by failed diags"
-                        
-                    # when the partition becomes busy, if a script job isn't reserving
-                    # it, then release the reservation
-                    else:
-                        if not p.reserved_by:
-                            p.reserved_until = False
-
-                    if p.reserved_until:
-                        if now > p.reserved_until:
-                            p.reserved_until = False
-                            p.reserved_by = None
-
             except:
                 self.logger.error("error in update_partition_state", exc_info=True)
-                        
+
             self._partitions_lock.release()
 
+            # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
+            for p in partitions_cleanup:
+                self.logger.info("partition %s: starting partition destruction", p.name)
+                pnames = []
+                parts = list(p._all_children)
+                parts.append(p)
+                for part in parts:
+                    try:
+                        bpart = part.bridge_partition
+                        if bpart.state != "RM_PARTITION_FREE":
+                            bpart.destroy()
+                            pnames.append(part.name)
+                    except Cobalt.bridge.IncompatibleState:
+                        pass
+                    except:
+                        self.logger.info("partition %s: an exception occurred while attempting to destroy partition %s",
+                            p.name, part.name)
+                if len(pnames) > 0:
+                    self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames))
+                else:
+                    self.logger.info("partition %s: no partition destruction was required", p.name)
+                try:
+                    self._clear_kernel(p.name)
+                    self.logger.info("partition %s: kernel settings cleared", p.name)
+                except:
+                    self.logger.error("partition %s: failed to clear kernel settings", p.name)
+
             time.sleep(10)
+
+    def _mark_partition_for_cleaning(self, pname, jobid):
+        self._partitions_lock.acquire()
+        try:
+            p = self._partitions[pname]
+            if p.used_by == jobid:
+                p.cleanup_pending = True
+                self.logger.info("partition %s: partition marked for cleanup", pname)
+            elif p.used_by != None:
+                self.logger.info("partition %s: job %s was not the current partition user (%s); partition not marked " + \
+                    "for cleanup", pname, jobid, p.used_by)
+        except:
+            self.logger.exception("partition %s: unexpected exception while marking the partition for cleanup", pname)
+        self._partitions_lock.release()
 
     def _validate_kernel(self, kernel):
         if self.config.get('kernel') != 'true':
@@ -644,6 +708,8 @@ class BGSystem (BGBaseSystem):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
+            if not process_group.true_mpi_args:
+                self._mark_partition_for_cleaning(process_group.location[0], process_group.jobid)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
@@ -662,6 +728,10 @@ class BGSystem (BGBaseSystem):
                         os.kill(int(pg.head_pid), getattr(signal, signame))
                     except OSError, e:
                         self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
+
+                if signame == "SIGKILL" and not pg.true_mpi_args:
+                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
+
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
