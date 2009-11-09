@@ -81,12 +81,17 @@ class Partition (Data):
         # these hold Partition objects
         self._parents = sets.Set()
         self._children = sets.Set()
+        self._all_children = sets.Set()
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
+        self.bridge_partition = None
         self.node_cards = spec.get("node_cards", [])
         self.switches = spec.get("switches", [])
         self.reserved_until = False
         self.reserved_by = None
+        self.used_by = None
+        self.cleanup_pending = False
+
         # this holds partition names
         self._wiring_conflicts = sets.Set()
         self.backfill_time = None
@@ -108,6 +113,11 @@ class Partition (Data):
         return [child.name for child in self._children]
     
     children = property(_get_children)
+    
+    def _get_all_children (self):
+        return [child.name for child in self._all_children]
+    
+    all_children = property(_get_all_children)
     
     def _get_node_card_names (self):
         return [nc.id for nc in self.node_cards]
@@ -262,6 +272,9 @@ class BGBaseSystem (Component):
             self._partitions[p_name]._parents = sets.Set()
             self._partitions[p_name]._children = sets.Set()
 
+        for p in self._partitions.itervalues():
+            p._all_children = sets.Set()
+
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
             
@@ -270,23 +283,28 @@ class BGBaseSystem (Component):
                 if dep_name in self._managed_partitions:
                     p._parents.add(self._partitions[dep_name])
             
-            for other_name in self._managed_partitions:
-                if p.name == other_name:
-                    break
+            for other in self._partitions.itervalues():
+                if p.name == other.name:
+                    continue
 
-                other = self._partitions[other_name]
                 p_set = sets.Set(p.node_cards)
                 other_set = sets.Set(other.node_cards)
 
-                # if p is a subset of other, then p is a child
-                if p_set.intersection(other_set)==p_set:
-                    p._parents.add(other)
-                    other._children.add(p)
-                # if p contains other, then p is a parent
-                elif p_set.union(other_set)==p_set:
-                    p._children.add(other)
-                    other._parents.add(p)
+                if other.name in self._managed_partitions:
+                    # if p is a subset of other, then p is a child; add other to p's list of managed parent partitions, and p to
+                    # other's list of managed child partitions
+                    if p_set.intersection(other_set)==p_set:
+                        p._parents.add(other)
+                        other._children.add(p)
+                    # if p contains other, then p is a parent; add other to p's list of managed child partitions and p to other's
+                    # list of managed parent partitions
+                    elif p_set.union(other_set)==p_set:
+                        p._children.add(other)
+                        other._parents.add(p)
 
+                # if p contains other, then p is a parent; add other to p's list of all child partitions
+                if p_set.union(other_set)==p_set:
+                    p._all_children.add(other)
 
     def validate_job(self, spec):
         """validate a job for submission
@@ -704,16 +722,17 @@ class BGBaseSystem (Component):
                 p.draining = self.cached_partitions[p.name].draining
                 p.backfill_time = self.cached_partitions[p.name].backfill_time
                 
-            for partition_list in best_partition_dict.itervalues():
-                part = self.partitions[partition_list[0]] 
+            for jobid, partition_list in best_partition_dict.iteritems():
+                part = self.partitions[partition_list[0]]
+                part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
-                part.state = "starting job"
+                part.state = "allocated"
                 for p in part._parents:
                     if p.state == "idle":
-                        p.state = "blocked by starting job"
+                        p.state = "blocked (%s)" % (part.name,)
                 for p in part._children:
                     if p.state == "idle":
-                        p.state = "blocked by starting job"
+                        p.state = "blocked (%s)" % (part.name,)
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._partitions_lock.release()
@@ -800,27 +819,32 @@ class BGBaseSystem (Component):
 
     def reserve_resources_until(self, location, new_time, jobid):
         partition_name = location[0]
-        if self.partitions[partition_name].reserved_by:
-            if self.partitions[partition_name].reserved_by != jobid:
-                self.logger.error("job %s wasn't allowed to update the reservation on %s" % (jobid, partition_name))
-                return
         pg = self.process_groups.find_by_jobid(jobid)
         try:
             self._partitions_lock.acquire()
+            used_by = self.partitions[partition_name].used_by
             if new_time:
-                # only adjust partition reservation time for script mode jobs
-                if pg != None and pg.mode == 'script':
-                    self.partitions[partition_name].reserved_until = new_time
-                    self.partitions[partition_name].reserved_by = jobid
-                    self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
-                        time.asctime(time.gmtime(new_time)))
+                if used_by == jobid:
+                    # only adjust partition reservation time for script mode jobs
+                    if pg != None and pg.mode == 'script':
+                        self.partitions[partition_name].reserved_until = new_time
+                        self.partitions[partition_name].reserved_by = jobid
+                        self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
+                            time.asctime(time.gmtime(new_time)))
+                    else:
+                        # FIXME: this will be removed when all jobs reserve the partitions to which they are assigned
+                        self.logger.info("job %s: only script mode jobs may reserve partitions", jobid)
                 else:
-                    # FIXME: this will be removed when all jobs reserve the partitions to which they are assigned
-                    self.logger.info("job %s: only script mode jobs may reserve partitions", jobid)
+                    self.logger.error("job %s wasn't allowed to update the reservation on partition %s (owner=%s)",
+                        jobid, partition_name, used_by)
             else:
-                self.partitions[partition_name].reserved_until = False
-                self.partitions[partition_name].reserved_by = None
-                self.logger.info("reservation on partition '%s' has been removed", partition_name)
+                if used_by == jobid or used_by == None:
+                    self.partitions[partition_name].reserved_until = False
+                    self.partitions[partition_name].reserved_by = None
+                    self.logger.info("reservation on partition '%s' has been removed", partition_name)
+                else:
+                    self.logger.error("job %s wasn't allowed to clear the reservation on partition %s (owner=%s)",
+                        jobid, partition_name, used_by)
         except:
             self.logger.exception("an unexpected error occurred will adjusting the partition reservation time")
         finally:
