@@ -1,0 +1,475 @@
+#
+# cobalt.in / cobalt.pm
+#  The GRAM interface to the Cobalt resource manager
+#  Last Modified: 4/18/07
+#
+#  This module is derived from the Globus GRAM PBS module
+#  derived from the Globus Toolkit v4 (pbs.in or pbs.pm)
+#
+#
+# Portions of this file Copyright 1999-2005 University of Chicago
+# Portions of this file Copyright 1999-2005 The University of Southern California.
+# Portions of this file Copyright 2006-2007 The University of Colorado at Boulder.
+#
+# This file or a portion of this file is licensed under the
+# terms of the Globus Toolkit Public License, found at
+# http://www.globus.org/toolkit/download/license.html.
+# If you redistribute this file, with or without
+# modifications, you must include this notice in the file.
+#
+#  
+
+use Globus::GRAM::Error;
+use Globus::GRAM::JobState;
+use Globus::GRAM::JobManager;
+use Globus::Core::Paths;
+use Globus::GRAM::JobDescription;
+
+use Config;
+
+# NOTE: This package name must match the name of the .pm file!!
+package Globus::GRAM::JobManager::cobalt;
+
+@ISA = qw(Globus::GRAM::JobManager);
+
+my ($mpirun, $cqsub, $cqstat, $cqdel, $cluster, $cpu_per_node, $remote_shell);
+
+BEGIN
+{
+    $mpirun = 'NA';
+    $cqsub =   '@CQSUB@';
+    $cqstat =  '@CQSTAT@';
+    $cqdel = '@CQDEL@';
+    $cluster = 1;
+    $cpu_per_node = 2;
+    $total_node = 1024;
+    $total_cpu = 2048;
+    $remote_shell = 'NA';
+}
+
+sub myceil ($)
+{
+    my $x = shift;
+    ( abs($x-int($x)) < 1E-12 ) ? $x : int($x < 0 ? $x : $x+1.0);
+}
+
+sub submit
+{
+    my $self = shift;
+    my $description = $self->{JobDescription};
+    my $status;
+    my $cobalt_job_script;
+    my $cobalt_job_script_name;
+    my $cobalt_cqsub_err_name ;
+    my $errfile = '';
+    my $job_id;
+    my $rsh_env;
+    my @arguments;
+    my $email_when = '';
+    my $cache_pgm = "$Globus::Core::Paths::bindir/globus-gass-cache";
+    my %library_vars;
+
+
+    $self->log("Entering cobalt submit");
+
+    # check jobtype
+    if(defined($description->jobtype()))
+    {
+	if($description->jobtype !~ /^(mpi|single|multiple)$/)
+	{
+	    return Globus::GRAM::Error::JOBTYPE_NOT_SUPPORTED;
+	}
+    }
+    if( $description->directory eq '')
+    {
+	return Globus::GRAM::Error::RSL_DIRECTORY();
+    }
+    if(chdir $description->directory())
+	{
+	}
+    else
+	{
+        	return Globus::GRAM::Error::BAD_DIRECTORY();
+	}
+
+    $self->nfssync( $description->executable() )
+	unless $description->executable() eq '';
+
+    $self->nfssync( $description->stdin() )
+	unless $description->stdin() eq '';
+    if( $description->executable eq '')
+    {
+	return Globus::GRAM::Error::RSL_EXECUTABLE();
+    }
+    elsif(! -f $description->executable())
+    {
+	return Globus::GRAM::Error::EXECUTABLE_NOT_FOUND();
+    }
+    elsif(! -x $description->executable())
+    {
+	return Globus::GRAM::Error::EXECUTABLE_PERMISSIONS();
+    }
+    elsif( $description->stdin() eq '')
+    {
+	return Globus::GRAM::Error::RSL_STDIN;
+    }
+    elsif(! -r $description->stdin())
+    {
+       return Globus::GRAM::Error::STDIN_NOT_FOUND();
+   }
+
+    $self->log("Determining job max time cpu from job description");
+    if(defined($description->max_cpu_time())) 
+    {
+	$cpu_time = $description->max_cpu_time();
+	$self->log("   using maxcputime of $cpu_time");
+    }
+    elsif(! $cluster && defined($description->max_time()))
+    {
+        $cpu_time = $description->max_time();
+        $self->log("   using maxtime of $cpu_time");
+    }
+    else
+    {
+	$cpu_time = 0;
+	$self->log('   using queue default');
+    }
+
+    $self->log("Determining job max wall time limit from job description");
+    if(defined($description->max_wall_time()))
+    {
+	$wall_time = $description->max_wall_time();
+	$self->log("   using maxwalltime of $wall_time");
+    }
+    elsif($cluster && defined($description->max_time()))
+    {
+       $wall_time = $description->max_time();
+       $self->log("   using maxtime of $wall_time");
+    }
+    else
+    {
+	$wall_time = 0;
+	$self->log('   using queue default');
+    }
+
+    $self->log('Building job script');
+
+    $cobalt_job_script_name = $self->job_dir() . '/scheduler_cobalt_job_script';
+
+    local(*JOB);
+    open( JOB, '>' . $cobalt_job_script_name );
+    print JOB<<"EOF";
+#!/bin/bash
+# Cobalt batch job script built by Globus job manager
+#
+EOF
+
+    print JOB "$cqsub";
+
+    if($description->email_address() ne '')
+    {
+        print JOB ' -N ', $description->email_address();
+    }
+    if($description->emailonabort() eq 'yes')
+    {
+	# not available
+    }
+    if($description->emailonexecution() eq 'yes')
+    {
+	# not available
+    }
+    if($description->emailontermination() eq 'yes')
+    {
+	# not available
+    }
+    if($email_when eq '')
+    {
+	# not available
+    }
+
+    if($description->queue() ne '')
+    {
+        print JOB ' -q ', $description->queue();
+    }
+    if($description->project() ne '')
+    {
+	print JOB ' -p ', $description->project();
+    }
+
+    if($cpu_time != 0)
+    {
+	if($description->jobtype() eq 'multiple')
+	{
+		# not available
+	}
+	else
+	{
+	    $total_cpu_time = $cpu_time;
+	}
+    }
+
+    # check for time in minutes or in HH:MM:SS format
+    if($wall_time != 0 || $waltime =~ /\d+:\d\d:\d\d/)
+    {
+	print JOB " -t ", $wall_time;
+    }
+    else
+    {
+	# default to 10 min if not specified
+	print JOB " -t 10";
+    }
+
+    if($description->max_memory() != 0)
+    {
+	# not available
+    }
+
+    if($description->stdout() ne '' && $description->stdout() ne '/dev/null')
+    {
+        print JOB ' -o ', $description->stdout();
+    }
+
+    if($description->stderr() ne '' && $description->stderr() ne '/dev/null')
+    {
+        print JOB ' -E ', $description->stderr();
+    }
+
+    if($description->stdin() ne '' && $description->stdin() ne '/dev/null')
+    {
+        print JOB ' -i ', $description->stdin();
+    }
+
+    if($description->nodemode() ne '')
+    {
+        if($description->nodemode() eq 'co' || $description->nodemode() eq 'vn')
+        {
+                print JOB ' -m ', $description->node_mode();
+        }
+    }
+
+    if($description->host_count() != 0)
+    {
+        print JOB ' -n ', $description->host_count();
+    }
+    elsif($description->count() != 0)
+    {
+        print JOB ' -n ', $description->count();
+    }
+    else
+    {
+        print JOB ' -n 1';
+    }
+
+    if($description->cpucount() != 0)
+    {
+        # if we are in co mode, the cpu count must be less than the requested node count
+        if($description->nodemode() eq 'co')
+        {
+                if($description->cpucount() <= $description->host_count())
+                {
+                        print JOB ' -c ', $description->cpu_count();
+                }
+                # drop to the host_count
+                else
+                {
+                        print JOB ' -c ', $description->host_count();
+                }
+        }
+        # if we are in vn mode, the requested cpu count must be less than 2x the node count
+        elsif($description->nodemode() eq 'vn')
+        {
+                if($description->cpucount() <= $description->host_count() * 2)
+                {
+                        print JOB ' -c ', $description->cpu_count();
+                }
+                # drop to 2x host_count
+                else
+                {
+                        print JOB ' -c ', $description->host_count() * 2;
+                }
+        }
+        #if the node mode was not specified, fit the cpu count to the correct mode
+        else
+        {
+                # co mode
+                if($description->cpucount() <= $description->host_count())
+                {
+                        print JOB ' -c ', $description->cpu_count();
+                }
+                # vn mode
+                elsif($description->cpucount() <= $description->host_count() * 2)
+                {
+                        print JOB ' -c ', $description->cpu_count();
+                        print JOB ' -m vn';
+                }
+                # drop to the host_count
+                else
+                {
+                        print JOB ' -c ', $description->host_count() * 2;
+                        print JOB ' -m vn';
+                }
+        }
+    }
+
+    $rsh_env = '';
+
+    print JOB " -C ", $description->directory();
+
+    @arguments = $description->arguments();
+
+    foreach(@arguments)
+    {
+        if(ref($_))
+	{
+	    return Globus::GRAM::Error::RSL_ARGUMENTS;
+	}
+    }
+    if($#arguments >= 0)
+    {
+        foreach(@arguments)
+	{
+	    $self->log("Transforming argument \"$_\"\n");
+	    $_ =~ s/\\/\\\\/g;
+	    $_ =~ s/\$/\\\$/g;
+	    $_ =~ s/"/\\\"/g; #"
+	    $_ =~ s/`/\\\`/g; #`
+	    $self->log("Transformed to \"$_\"\n");
+
+	    $args .= '"' . $_ . '" ';
+	}
+    }
+    else
+    {
+	$args = '';
+    }
+
+    if ($description->executable() =~ m|^[^/]|)
+    {
+        $description->add('executable', './' . $description->executable());
+    }
+
+    print JOB " ", $description->executable(), " ", $args;
+
+    # only print the jobid... the last line of the cqsub output
+    print JOB " | tail -n 1\n";
+    
+    # make sure the output files exist
+    if($description->stdout() ne '/dev/null')
+    {
+        print JOB "touch ", $description->stdout(), "\n";
+    }
+    if($description->stderr() ne '/dev/null')
+    {
+        print JOB "touch ", $description->stderr(), "\n";
+    }
+
+    close(JOB);
+   
+
+    chmod(0755, $cobalt_job_script_name);
+    $errfile = "2>$cobalt_qsub_err_name";
+
+    $self->nfssync( $cobalt_job_script_name );
+    $self->log("submitting job -- ./$cobalt_job_script_name $errfile");
+    chomp($job_id = `$cobalt_job_script_name`);
+
+
+    if($? == 0)
+    {
+    $self->log("\$? = $?, job_id = =$job_id=\n");
+        $self->log("job submission successful, setting state to PENDING");
+        $self->log("job_id = $job_id, job_state = " . Globus::GRAM::JobState::PENDING);
+
+    $description->add('jobid', $job_id);
+	return { JOB_STATE => Globus::GRAM::JobState::PENDING,
+	        JOB_ID => $job_id };
+    }
+    else
+    {
+        local(*ERR);
+        open(ERR, "<$cobalt_qsub_err_name");
+        local $/;
+        my $stderr = <ERR>;
+        close(ERR);
+
+        $self->log("qsub returned $job_id");
+        $self->log("qsub stderr $stderr");
+
+        open(ERR, ">" . $description->stderr());
+        print ERR $stderr;
+        close(ERR);
+
+        $stderr =~ s/\n/ /g;
+
+        $self->respond({GT3_FAILURE_MESSAGE => $stderr });
+    }
+
+    return Globus::GRAM::Error::JOB_EXECUTION_FAILED();
+}
+
+sub poll
+{
+    my $self = shift;
+    my $description = $self->{JobDescription};
+
+    $self->log("enter poll()");
+
+    my $job_id = $description->jobid();
+    my $state;
+    my $status_line;
+    my $exit_code;
+
+    $self->log("polling job $job_id");
+
+    # Get job id from the full qstat output.
+    $job_info_line = "$cqstat $job_id | grep -v JobID | egrep -v \"=+\"";
+    $line = `$job_info_line`;
+    $cur_state = (split(" ", $line))[4];
+
+    if(!defined($cur_state))
+    {
+        $state = Globus::GRAM::JobState::DONE;
+    }
+    else
+    {
+        # cur_state is defined if we get here... chomp() will succeed
+        chomp($cur_state);
+        if($cur_state =~ /queued/)
+        {
+            $state = Globus::GRAM::JobState::PENDING;
+        }
+        elsif($cur_state =~ /hold/)
+        {
+            $state = Globus::GRAM::JobState::SUSPENDED
+        }
+        elsif($cur_state =~ /running/)
+        {
+            $state = Globus::GRAM::JobState::ACTIVE;
+        }
+	elsif($cur_state =~ /done/)
+	{
+	    $state = Globus::GRAM::JobState::DONE;
+	}
+        else
+        {
+            $self->log("qstat returned an unknown response.  Telling JM to ignore this poll");
+            return {};
+        }
+    }
+
+    return {JOB_STATE => $state};
+}
+
+sub cancel
+{
+    my $self = shift;
+    my $description = $self->{JobDescription};
+    my $job_id = $description->jobid();
+
+    $self->log("cancel job $job_id");
+    $self->fork_and_exec_cmd( $cqdel, $job_id );
+
+    return { JOB_STATE => Globus::GRAM::JobState::FAILED }
+}
+
+1;
