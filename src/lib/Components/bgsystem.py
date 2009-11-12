@@ -156,6 +156,13 @@ class BGProcessGroup(ProcessGroup):
         os.execl(*cmd)
 
 
+# convenience function used several times below
+def _get_state(bridge_partition):
+    if bridge_partition.state == "RM_PARTITION_FREE":
+        return "idle"
+    else:
+        return "busy"
+ 
 
 class BGSystem (BGBaseSystem):
     
@@ -254,22 +261,75 @@ class BGSystem (BGBaseSystem):
         Component.save(self)
     save_me = automatic(save_me)
 
+    def _get_node_card(self, name, state):
+        if not self.node_card_cache.has_key(name):
+            self.node_card_cache[name] = NodeCard(name, state)
+            
+        return self.node_card_cache[name]
+
+    def _new_partition_dict(self, partition_def, bp_cache={}):
+        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
+        NODES_PER_NODECARD = 32
+
+        node_list = []
+
+        if partition_def.small:
+            bp_name = partition_def.base_partitions[0].id
+            for nc in partition_def._node_cards:
+                node_list.append(self._get_node_card(bp_name + "-" + nc.id, nc.state))
+        else:
+            try:
+                for bp in partition_def.base_partitions:
+                    if bp.id not in bp_cache:
+                        bp_cache[bp.id] = []
+                        for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
+                            bp_cache[bp.id].append(self._get_node_card(bp.id + "-" + nc.id, nc.state))
+                    node_list += bp_cache[bp.id]
+            except BridgeException:
+                print "Error communicating with the bridge during initial config.  Terminating."
+                sys.exit(1)
+
+        d = dict(
+            name = partition_def.id,
+            queue = "default",
+            size = NODES_PER_NODECARD * len(node_list),
+            bridge_partition = partition_def,
+            node_cards = node_list,
+            switches = [ s.id for s in partition_def.switches ],
+            state = _get_state(partition_def),
+        )
+        return d
+
+
+    def _detect_wiring_deps(self, partition, wiring_cache={}):
+        def _kernel():
+            s2 = sets.Set(p.switches)
+
+            if s1.intersection(s2):
+                p._wiring_conflicts.add(partition.name)
+                partition._wiring_conflicts.add(p.name)
+                self.logger.debug("%s and %s havening problems" % (partition.name, p.name))
+
+        s1 = sets.Set(partition.switches)
+
+        if wiring_cache.has_key(partition.size):
+            for p in wiring_cache[partition.size]:
+                if partition.name!=p.name:
+                    _kernel()
+        else:
+            wiring_cache[partition.size] = [partition]
+            for p in self._partitions.values():
+                if p.size==partition.size and partition.name!=p.name:
+                    wiring_cache[partition.size].append(p)
+                    _kernel()
+
+ 
     def configure (self):
         
         """Read partition data from the bridge."""
         
-        def _get_state(bridge_partition):
-            if bridge_partition.state == "RM_PARTITION_FREE":
-                return "idle"
-            else:
-                return "busy"
-    
-        def _get_node_card(name, state):
-            if not self.node_card_cache.has_key(name):
-                self.node_card_cache[name] = NodeCard(name, state)
-                
-            return self.node_card_cache[name]
-            
+   
+           
         self.logger.info("configure()")
         try:
             system_def = Cobalt.bridge.PartitionList.by_filter()
@@ -277,8 +337,6 @@ class BGSystem (BGBaseSystem):
             print "Error communicating with the bridge during initial config.  Terminating."
             sys.exit(1)
 
-        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
-        NODES_PER_NODECARD = 32
                 
         # initialize a new partition dict with all partitions
         #
@@ -286,87 +344,42 @@ class BGSystem (BGBaseSystem):
         
         tmp_list = []
 
-        # this is going to hold partition objects from the bridge (not our own Partition)
         wiring_cache = {}
         bp_cache = {}
         
         for partition_def in system_def:
-            node_list = []
-            nc_count = len(list(partition_def.node_cards))
-            if not wiring_cache.has_key(nc_count):
-                wiring_cache[nc_count] = []
-            wiring_cache[nc_count].append(partition_def)
-
-            if partition_def.small:
-                bp_name = partition_def.base_partitions[0].id
-                for nc in partition_def._node_cards:
-                    node_list.append(_get_node_card(bp_name + "-" + nc.id, nc.state))
-            else:
-                try:
-                    for bp in partition_def.base_partitions:
-                        if bp.id not in bp_cache:
-                            bp_cache[bp.id] = []
-                            for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
-                                bp_cache[bp.id].append(_get_node_card(bp.id + "-" + nc.id, nc.state))
-                        node_list += bp_cache[bp.id]
-                except BridgeException:
-                    print "Error communicating with the bridge during initial config.  Terminating."
-                    sys.exit(1)
-
-            tmp_list.append( dict(
-                name = partition_def.id,
-                queue = "default",
-                size = NODES_PER_NODECARD * nc_count,
-                bridge_partition = partition_def,
-                node_cards = node_list,
-                switches = [ s.id for s in partition_def.switches ],
-                state = _get_state(partition_def),
-            ))
+            tmp_list.append(self._new_partition_dict(partition_def, bp_cache))
         
         partitions.q_add(tmp_list)
-        
+
+        # update object state
+        self._partitions.clear()
+        self._partitions.update(partitions)
+
         # find the wiring deps
         start = time.time()
-        for size in wiring_cache:
-            for p in wiring_cache[size]:
-                s1 = sets.Set( [s.id for s in p.switches] )
-                for other in wiring_cache[size]:
-                    if (p.id == other.id):
-                        continue
+        for p in self._partitions.values():
+            self._detect_wiring_deps(p, wiring_cache)
 
-                    s2 = sets.Set( [s.id for s in other.switches] )
-                    
-                    if s1.intersection(s2):
-                        partitions[p.id]._wiring_conflicts.add(other.id)
-        
         end = time.time()
-        print "took %f seconds to find wiring deps" % (end - start)
+        self.logger.info("took %f seconds to find wiring deps" % (end - start))
  
         # update state information
-        for p in partitions.values():
+        for p in self._partitions.values():
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.used_by:
                         p.state = "blocked (%s)" % nc.used_by
                         break
                 for dep_name in p._wiring_conflicts:
-                    if partitions[dep_name].state == "busy":
+                    if self._partitions[dep_name].state == "busy":
                         p.state = "blocked-wiring (%s)" % dep_name
                         break
         
-        # update object state
-        self._partitions.clear()
-        self._partitions.update(partitions)
-    
+   
     def update_partition_state(self):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
         
-        def _get_state(bridge_partition):
-            if bridge_partition.state == "RM_PARTITION_FREE":
-                return "idle"
-            else:
-                return "busy"
-
         def _start_partition_cleanup(p):
             self.logger.info("partition %s: marking partition for cleaning", p.name)
             p.cleanup_pending = True
@@ -422,8 +435,11 @@ class BGSystem (BGBaseSystem):
             now = time.time()
             partitions_cleanup = []
             self.offline_partitions = []
+            missing_partitions = set(self._partitions.keys())
+            new_partitions = []
             try:
                 for partition in system_def:
+                    missing_partitions.discard(partition.id)
                     if self._partitions.has_key(partition.id):
                         p = self._partitions[partition.id]
                         p.state = _get_state(partition)
@@ -431,6 +447,39 @@ class BGSystem (BGBaseSystem):
                         p._update_node_cards()
                         if p.reserved_until and now > p.reserved_until:
                             p.reserved_until = None
+                    else:
+                        new_partitions.append(partition)
+
+
+                if missing_partitions:
+                    self.logger.debug("missing partitions: %r" % missing_partitions)
+                if new_partitions:
+                    self.logger.debug("new partitions: %r" % new_partitions)
+
+                # remove the missing partitions and their wiring relations
+                need_update = False
+                for pname in missing_partitions:
+                    p = self._partitions[pname]
+                    for dep_name in p._wiring_conflicts:
+                        self.logger.debug("fiddling with: %s" % dep_name)
+                        self._partitions[dep_name]._wiring_conflicts.discard(p.name)
+                    if p.name in self._managed_partitions:
+                        self._managed_partitions.discard(p.name)
+                        need_update = True
+                    del self._partitions[p.name]
+                if need_update:
+                    self.update_relatives()
+
+                bp_cache = {}
+                wiring_cache = {}
+                # throttle the adding of new partitions so updating of
+                # machine state doesn't get bogged down
+                for partition in new_partitions[:16]:
+                    bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
+                    self._partitions.q_add([self._new_partition_dict(bridge_p, bp_cache)])
+                    p = self._partitions[bridge_p.id]
+                    p.bridge_partition = partition
+                    self._detect_wiring_deps(p, wiring_cache)
 
                 for p in self._partitions.values():
                     if p.cleanup_pending:
