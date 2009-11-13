@@ -451,17 +451,13 @@ class BGSystem (BGBaseSystem):
                         new_partitions.append(partition)
 
 
-                if missing_partitions:
-                    self.logger.debug("missing partitions: %r" % missing_partitions)
-                if new_partitions:
-                    self.logger.debug("new partitions: %r" % new_partitions)
-
                 # remove the missing partitions and their wiring relations
                 need_update = False
                 for pname in missing_partitions:
+                    self.logger.info("missing partition removed: %s", pname)
                     p = self._partitions[pname]
                     for dep_name in p._wiring_conflicts:
-                        self.logger.debug("fiddling with: %s" % dep_name)
+                        self.logger.debug("removing wiring dependency from: %s", dep_name)
                         self._partitions[dep_name]._wiring_conflicts.discard(p.name)
                     if p.name in self._managed_partitions:
                         self._managed_partitions.discard(p.name)
@@ -474,7 +470,8 @@ class BGSystem (BGBaseSystem):
                 wiring_cache = {}
                 # throttle the adding of new partitions so updating of
                 # machine state doesn't get bogged down
-                for partition in new_partitions[:16]:
+                for partition in new_partitions[:8]:
+                    self.logger.info("new partition found: %s", partition.id)
                     bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._partitions.q_add([self._new_partition_dict(bridge_p, bp_cache)])
                     p = self._partitions[bridge_p.id]
