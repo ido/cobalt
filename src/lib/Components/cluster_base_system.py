@@ -338,11 +338,12 @@ class ClusterBaseSystem (Component):
     
 
     def reserve_resources_until(self, location, time, jobid):
-        partition_name = location[0]
-        try:
-            self.partitions[partition_name].reserved_until = time
-        except:
-            self.logger.error("failed to reserve partition '%s' until '%s'" % (partition_name, time))
+        if time is None:
+            for host in location:
+                self.running_nodes.discard(host)
+                self.logger.info("hasty job kill: freeing %s" % host)
+        else:
+            self.logger.error("failed to reserve location '%r' until '%s'" % (location, time))
     reserve_resources_until = exposed(reserve_resources_until)
 
 

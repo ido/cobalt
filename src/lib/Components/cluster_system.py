@@ -253,7 +253,7 @@ class ClusterSystem (ClusterBaseSystem):
         try:
             for host in pg.location:
                 self.running_nodes.discard(host)
-                self.logger.error("freeing %s" % host)
+                self.logger.info("freeing %s" % host)
             
             if dirty_nodes:    
                 for host in dirty_nodes:
