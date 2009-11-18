@@ -60,14 +60,14 @@ if __name__ == '__main__':
         header = [['Host', 'Queue', 'State']]
         #build output list
         output = []
-        dumb = status.keys()
-        dumb.sort()
-        for host_name in dumb:
+        for t in status:
+            host_name = t[0]
+            status = t[1]
             queues = []
             for q in queue_data:
                 if host_name in queue_data[q]:
                     queues.append(q) 
-            output.append([host_name, ":".join(queues), status[host_name]])
+            output.append([host_name, ":".join(queues), status])
             
         Cobalt.Util.printTabular(header + output)
 

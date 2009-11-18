@@ -40,6 +40,7 @@ class ClusterBaseSystem (Component):
         self.running_nodes = sets.Set()
         self.down_nodes = sets.Set()
         self.queue_assignments = {}
+        self.node_order = {}
         self.config_file = kwargs.get("config_file", None)
         if self.config_file is not None:
             self.configure(self.config_file)
@@ -374,15 +375,21 @@ class ClusterBaseSystem (Component):
     nodes_down = exposed(nodes_down)
 
     def get_node_status(self):
-        status = {}
+        def my_cmp(left, right):
+            return cmp(left[2], right[2])
+        
+        status_list = []
         for n in self.all_nodes:
             if n in self.running_nodes:
-                status[n] = "allocated"
+                status = "allocated"
             elif n in self.down_nodes:
-                status[n] = "down"
+                status = "down"
             else:
-                status[n] = "idle"
-        return status
+                status = "idle"
+            
+            status_list.append( (n, status, self.node_order[n]) )
+        status_list.sort(my_cmp)
+        return status_list
     get_node_status = exposed(get_node_status)
 
     def get_queue_assignments(self):
@@ -425,8 +432,11 @@ class ClusterBaseSystem (Component):
     def configure(self, filename):
         f = open(filename)
         
+        counter = 0
         for line in f:
-            self.all_nodes.add(line.strip())
+            name = line.strip()
+            self.all_nodes.add(name)
+            self.node_order[name] = counter
+            counter += 1
         
         f.close()
-    
