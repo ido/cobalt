@@ -49,6 +49,10 @@ class JobValidationError(Exception):
     log = False
     fault_code = fault_code_counter.next()
 
+class NotSupportedError(Exception):
+    log = False
+    fault_code = fault_code_counter.next()
+
 class JobProcessingError (Exception):
     fault_code = fault_code_counter.next()
     def __init__(self, msg, jobid, user, state, sm_state, sm_event):

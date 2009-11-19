@@ -125,6 +125,7 @@ def merge_nodelist(locations):
     # iterate through the sorted list, identifying gaps in the sequential numbers
     breaks = []
     start = 0
+    idx = 0
     for idx in range(1,len(uniq)):
         if uniq[idx] != uniq[idx-1] + 1:
             breaks.append((start,idx-1))
