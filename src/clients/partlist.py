@@ -9,8 +9,9 @@ import sets
 import time
 from optparse import OptionParser
 import Cobalt.Util
+import xmlrpclib
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import ComponentLookupError, NotSupportedError
 
 helpmsg = '''Usage: partlist [--version]'''
 
@@ -35,7 +36,15 @@ if __name__ == '__main__':
 
     spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*',
              'functional':'*', 'scheduled':'*', 'children':'*', 'backfill_time':"*", 'draining':"*"}]
-    parts = system.get_partitions(spec)
+    try:
+        parts = system.get_partitions(spec)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == NotSupportedError.fault_code:
+            print "incompatible with cluster support:  try nodelist"
+            raise SystemExit, 1
+        else:
+            raise
+
     reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
 
     expanded_parts = {}

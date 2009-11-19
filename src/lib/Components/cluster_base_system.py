@@ -6,7 +6,7 @@ ClusterBaseSystem -- base system component
 
 import time
 import Cobalt
-from Cobalt.Exceptions import  JobValidationError
+from Cobalt.Exceptions import  JobValidationError, NotSupportedError
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 import sets, ConfigParser
@@ -440,3 +440,33 @@ class ClusterBaseSystem (Component):
             counter += 1
         
         f.close()
+
+    # this gets called by bgsched in order to figure out if there are partition overlaps;
+    # it was written to provide the data that bgsched asks for and raises an exception
+    # if you try to ask for more
+    def get_partitions (self, specs):
+        partitions = []
+        for spec in specs:
+            item = {}
+            for n in self.all_nodes:
+                if "name" in spec:
+                    if spec["name"] == '*':
+                        item.update( {"name": n} )
+                    elif spec["name"] == n:
+                        item.update( {"name": n} )
+            
+            if "name" in spec:    
+                spec.pop("name")
+            if "children" in spec:
+                item.update( {"children": []} )
+                spec.pop("children")
+            if "parents" in spec:
+                item.update( {"parents": []} )
+                spec.pop("parents")
+            if spec:
+                raise NotSupportedError("clusters lack information on: %s" % ", ".join(spec.keys()))
+            if item:
+                partitions.append(item)
+        
+        return partitions
+    get_partitions = exposed(get_partitions)
