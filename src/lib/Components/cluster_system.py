@@ -32,7 +32,7 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 class ClusterProcessGroup(ProcessGroup):
-    _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue', 'hostfile']
+    _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue', 'hostfile', 'prologue_timeout']
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('cluster_system'):
@@ -69,17 +69,59 @@ class ClusterProcessGroup(ProcessGroup):
         group_name = grp.getgrgid(groupid)[0]
         
         # run the prologue, while still root
+        processes = []
         for host in self.location:
             h = host.split(":")[0]
             try:
-                os.system("scp %s %s:/var/tmp" % (self.nodefile, h))
+                p = subprocess.Popen(["/usr/bin/scp", self.nodefile, "%s:/var/tmp" % h], stdout=subprocess.PIPE, 
+                                     stderr=subprocess.PIPE)
+                p.host = h
+                p.action = "nodefile copy"
+                processes.append(p)
             except:
                 logger.error("Job %s/%s failed to copy nodefile %s to host %s" % (self.jobid, self.user, self.nodefile, h))
+
             try:
-                os.system("ssh %s %s %s %s %s" % (h, self.config.get("prologue"), self.jobid, self.user, group_name))
+                p = subprocess.Popen(["/usr/bin/ssh", h, self.config.get("prologue"), self.jobid, self.user, group_name], 
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.host = h
+                p.action = "prologue"
+                processes.append(p)
             except:
                 logger.error("Job %s/%s failed to run prologue on host %s" % (self.jobid, self.user, h))
-
+    
+        
+        start = time.time()
+        while True:
+            running = False
+            for p in processes:
+                if p.poll() is None:
+                    running = True
+                    break
+            
+            if not running:
+                break
+            
+            if time.time() - start > float(self.config.get("prologue_timeout")):
+                for p in processes:
+                    if p.poll() is None:
+                        try:
+                            os.kill(p.pid, signal.SIGTERM)
+                            self.logger.error("Job %s/%s %s timed out on host %s", self.jobid, self.user, p.action, p.host)
+                        except:
+                            self.logger.error("%s for %s already terminated", p.action, p.host)
+                break
+            else:
+                time.sleep(5)
+        
+        prologue_failure = []
+        for p in processes:
+            if p.poll() > 0:
+                self.logger.error("%s failed for host %s", p.action, p.host)
+                prologue_failure.append(p.host)
+                self.logger.error("stderr from %s on host %s: [%s]", p.action, p.host, p.stderr.read().strip())
+        
+        # prologue finished
         try:
             os.setgid(groupid)
             os.setuid(userid)
@@ -105,6 +147,13 @@ class ClusterProcessGroup(ProcessGroup):
             os.dup2(stderr.fileno(), sys.__stderr__.fileno())
         except (IOError, OSError), e:
             logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, self.stderr, e))
+
+        # wait to do this here, so we can write a message in the .error file
+        if prologue_failure:
+            print >> stderr, "COBALT: job %s prologue failed for hosts: %s" % (self.jobid, " ".join(prologue_failure))
+            print >> stderr, "COBALT: execution aborted"
+            stderr.flush()
+            os._exit(1)
 
         rank0 = self.location[0].split(":")[0]
         cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
@@ -217,7 +266,8 @@ class ClusterSystem (ClusterBaseSystem):
         for host in pg.location:
             h = host.split(":")[0]
             try:
-                p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), str(pg.jobid), pg.user, group_name])
+                p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), str(pg.jobid), pg.user, group_name], 
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.host = h
                 processes.append(p)
             except:
@@ -247,6 +297,11 @@ class ClusterSystem (ClusterBaseSystem):
                 break
             else:
                 time.sleep(5)
+
+        for p in processes:
+            if p.poll() > 0:
+                self.logger.error("epilogue failed for host %s", p.host)
+                self.logger.error("stderr from epilogue on host %s: [%s]", p.host, p.stderr.read().strip())
             
             
         self.lock.acquire()
