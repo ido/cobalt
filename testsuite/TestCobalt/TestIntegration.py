@@ -87,7 +87,7 @@ class TestIntegration (object):
         job = jobs[0]
         jobid = job['jobid']
         job_location_args = [{'jobid':jobid, 'nodes':job['nodes'], 'queue':job['queue'], 'utility_score':1, 'threshold': 1,
-            'walltime':job['walltime']}]
+            'walltime':job['walltime'], 'attrs': {}}]
         locations = simulator.find_job_location(job_location_args, [])
         assert locations.has_key(jobid)
     
@@ -125,7 +125,7 @@ class TestIntegration (object):
         job = jobs[0]
         jobid = job['jobid']
         job_location_args = [{'jobid':jobid, 'nodes': job['nodes'], 'queue': job['queue'], 'utility_score': 1, 'threshold': 1,
-            'walltime': job['walltime']}]
+            'walltime': job['walltime'], 'attrs': {}}]
         locations = simulator.find_job_location(job_location_args, [])
         assert locations.has_key(jobid)
 

@@ -446,7 +446,8 @@ class BGSystem (BGBaseSystem):
                         p.bridge_partition = partition
                         p._update_node_cards()
                         if p.reserved_until and now > p.reserved_until:
-                            p.reserved_until = None
+                            p.reserved_until = False
+                            p.reserved_by = None
                     else:
                         new_partitions.append(partition)
 

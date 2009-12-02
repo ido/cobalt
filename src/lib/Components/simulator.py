@@ -121,6 +121,9 @@ class Simulator (BGBaseSystem):
     
     logger = logger
 
+    MIN_RUN_TIME = 60
+    MAX_RUN_TIME = 180
+
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = BGSimProcessGroup
@@ -265,7 +268,7 @@ class Simulator (BGBaseSystem):
                     s2 = sets.Set( other.switches )
                     
                     if s1.intersection(s2):
-                        print "found a wiring dep between %s and %s" % (p.name, other.name)
+                        self.logger.info("found a wiring dep between %s and %s", p.name, other.name)
                         partitions[p.name]._wiring_conflicts.add(other.name)
         
             
@@ -287,7 +290,7 @@ class Simulator (BGBaseSystem):
         except KeyError:
             self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
             return False
-        if partition.state != "starting job":
+        if partition.state != "allocated":
             self.logger.error("reserve_partition(%r, %r) [%s]" % (name, size, partition.state))
             return False
         if not partition.functional:
@@ -425,11 +428,12 @@ class Simulator (BGBaseSystem):
             stderr = open("/dev/null", "a")
         
         try:
-            cobalt_log_file = open(process_group.cobalt_log_file or "/dev/null", "a")
+            clfn = process_group.cobalt_log_file or "/dev/null"
+            cobalt_log_file = open(clfn, "a")
             print >> cobalt_log_file, "%s\n" % " ".join(argv[1:])
             cobalt_log_file.close()
         except:
-            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % (process_group.id, process_group.user, process_group.cobalt_log_file))
+            logger.error("Job %s/%s: unable to open cobaltlog file %s", process_group.id, process_group.user, clfn, exc_info = True)
         
         try:
             partition = argv[argv.index("-partition") + 1]
@@ -529,10 +533,10 @@ class Simulator (BGBaseSystem):
         print >> stdout, "Running process_group: %s" % " ".join(argv)
         
         start_time = time.time()
-        run_time = random.randint(60, 180)
+        run_time = random.randint(self.MIN_RUN_TIME, self.MAX_RUN_TIME)
         my_exit_status = 0
          
-        print "running for about %f seconds" % run_time
+        self.logger.info("process group %d running for about %f seconds", process_group.id, run_time)
         while time.time() < (start_time + run_time):
             if "SIGKILL" in process_group.signals:
                 process_group.exit_status = 1
@@ -580,17 +584,24 @@ class Simulator (BGBaseSystem):
             for p in self._partitions.values():
                 if p.state != "busy":
                     p.state = "idle"
+                if p.reserved_until and now > p.reserved_until:
+                    p.reserved_until = None
+                    p.reserved_by = None
                     
             for p in self._partitions.values():
-                if p.state != "busy":
+                if p.state == "busy":
+                    # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
+                    if not p.reserved_by:
+                        p.reserved_until = False
+                else:
                     if p.reserved_until:
-                        p.state = "starting job"
+                        p.state = "allocated"
                         for part in p._parents:
                             if part.state == "idle":
-                                part.state = "blocked by starting job"
+                                part.state = "blocked (%s)" % (p.name,)
                         for part in p._children:
                             if part.state == "idle":
-                                part.state = "blocked by starting job"
+                                part.state = "blocked (%s)" % (p.name,)
                     for diag_part in self.pending_diags:
                         if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
                             p.state = "blocked by pending diags"
@@ -599,7 +610,7 @@ class Simulator (BGBaseSystem):
                             p.state = "blocked (%s)" % nc.used_by
                             break
                     for dep_name in p._wiring_conflicts:
-                        if self._partitions[dep_name].state == "busy":
+                        if self._partitions[dep_name].state in ["allocated", "busy"]:
                             p.state = "blocked-wiring (%s)" % dep_name
                             break
                     for part_name in self.failed_diags:
@@ -608,11 +619,6 @@ class Simulator (BGBaseSystem):
                             p.state = "failed diags"
                         elif p.name in part.parents or p.name in part.children:
                             p.state = "blocked by failed diags"
-    
-                if p.reserved_until:
-                    if now > p.reserved_until:
-                        p.reserved_until = False
-                        p.reserved_by = None
         except:
             self.logger.error("error in update_partition_state", exc_info=True)
         
