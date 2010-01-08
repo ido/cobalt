@@ -97,6 +97,8 @@ if __name__ == '__main__':
     if "-cwd" not in arglist and "-free" not in arglist:
         arglist = ['-cwd', os.getcwd()] + arglist
 
+    # Add cobalt jobid environment variable to script job
+    arglist = ['-env', 'COBALT_JOBID='+os.environ["COBALT_JOBID"]] + arglist
     
     if "-np" in sys.argv:
         idx = sys.argv.index("-np")
