@@ -108,21 +108,26 @@ class BGProcessGroup(ProcessGroup):
         atexit._atexit = []
 
         try:
-            stdin = open(self.stdin or "/dev/null", 'r')
-            os.dup2(stdin.fileno(), sys.__stdin__.fileno())
-        except (IOError, OSError), e:
+            stdin = open(self.stdin, 'r')
+        except (IOError, OSError, TypeError), e:
             logger.error("process group %s: error opening stdin file %s: %s (stdin will be /dev/null)" % (self.id, self.stdin, e))
+            stdin = open("/dev/null", 'r')
+        os.dup2(stdin.fileno(), sys.__stdin__.fileno())
+        
         try:
-            stdout = open(self.stdout or tempfile.mktemp(), 'a')
-            os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-        except (IOError, OSError), e:
+            stdout = open(self.stdout, 'a')
+        except (IOError, OSError, TypeError), e:
             logger.error("process group %s: error opening stdout file %s: %s (stdout will be lost)" % (self.id, self.stdout, e))
+            stdout = open("/dev/null", 'a')
+        os.dup2(stdout.fileno(), sys.__stdout__.fileno())
+        
         try:
-            stderr = open(self.stderr or tempfile.mktemp(), 'a')
-            os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-        except (IOError, OSError), e:
+            stderr = open(self.stderr, 'a')
+        except (IOError, OSError, TypeError), e:
             logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, self.stderr, e))
-
+            stderr = open("/dev/null", 'a')
+        os.dup2(stderr.fileno(), sys.__stderr__.fileno())
+        
         cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
               '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
                '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
