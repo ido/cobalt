@@ -82,13 +82,13 @@ class ClusterProcessGroup(ProcessGroup):
                 logger.error("Job %s/%s failed to copy nodefile %s to host %s" % (self.jobid, self.user, self.nodefile, h))
 
             try:
-                p = subprocess.Popen(["/usr/bin/ssh", h, self.config.get("prologue"), self.jobid, self.user, group_name], 
+                p = subprocess.Popen(["/usr/bin/ssh", h, self.config.get("prologue"), str(self.jobid), self.user, group_name], 
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.host = h
                 p.action = "prologue"
                 processes.append(p)
             except:
-                logger.error("Job %s/%s failed to run prologue on host %s" % (self.jobid, self.user, h))
+                logger.error("Job %s/%s failed to run prologue on host %s" , self.jobid, self.user, h, exc_info=True)
     
         
         start = time.time()
@@ -271,7 +271,7 @@ class ClusterSystem (ClusterBaseSystem):
                 p.host = h
                 processes.append(p)
             except:
-                self.logger.error("Job %s/%s failed to run epilogue on host %s" % (pg.jobid, pg.user, h))
+                self.logger.error("Job %s/%s failed to run epilogue on host %s", pg.jobid, pg.user, h, exc_info=True)
         
         start = time.time()
         dirty_nodes = []
