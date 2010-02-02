@@ -351,7 +351,7 @@ EOF
     print JOB " ", $description->executable(), " ", $args;
 
     # only print the jobid... the last line of the cqsub output
-    print JOB " | tail -n 1\n";
+    print JOB " 2>&1 | tail -n 1\n";
     
     # make sure the output files exist
     if($description->stdout() ne '/dev/null')
