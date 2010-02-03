@@ -77,7 +77,7 @@ def end (job_id,
          ctime, qtime, etime, start, exec_host,
          resource_list, session, end, exit_status, resources_used,
          account=None, resvname=None, resv_id=None, alt_id=None,
-         accounting_id=None):
+         accounting_id=None, total_etime=None, priority_core_hours=None):
     
     """Job ended (terminated execution).
     
@@ -124,6 +124,14 @@ def end (job_id,
         message['resvID'] = resv_id
     if alt_id is not None:
         message['accounting_id'] = accounting_id
+    if total_etime is not None:
+        message['approx_total_etime'] = int(total_etime)
+        
+    if priority_core_hours is not None:
+        message['priority_core_hours'] = int(priority_core_hours)
+    else:
+        message['priority_core_hours'] = 0
+        
     return entry("E", job_id, message)
 
 

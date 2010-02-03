@@ -562,6 +562,9 @@ class Job (StateMachine):
             self.admin_hold = True
         if spec.get("user_hold", False):
             self.user_hold = True
+            
+        self.total_etime = 0.0
+        self.priority_core_hours = None
     # end def __init__()
 
     def __getstate__(self):
@@ -578,6 +581,15 @@ class Job (StateMachine):
         if not self.__timers.has_key('current_queue'):
             self.__timers['current_queue'] = Timer()
             self.__timers['current_queue'].start()
+
+        # special case to handle missing data from old state files
+        if not state.has_key("total_etime"):
+            self.logger.info("old job missing total_etime")
+            self.total_etime = 0.0
+    
+        if not state.has_key("priority_core_hours"):
+            self.logger.info("old job missing priority_core_hours")
+            self.priority_core_hours = None
     
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
@@ -1779,6 +1791,9 @@ class Job (StateMachine):
             exit_status = self.exit_status
         else:
             exit_status = "unknown"
+            
+        optional['total_etime'] = self.total_etime
+        optional['priority_core_hours'] = self.priority_core_hours
         # group and session are unknown
         accounting_logger.info(accounting.end(self.jobid, self.user,
             "unknown", self.jobname, self.queue,
@@ -2452,6 +2467,8 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
+        
+        self.score_timestamp = None
 
 
     def __getstate__(self):
@@ -2478,6 +2495,7 @@ class QueueManager(Component):
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
 
+        self.score_timestamp = None
 
     def __save_me(self):
         Component.save(self)
@@ -2798,8 +2816,9 @@ class QueueManager(Component):
     def compute_utility_scores (self):
         utility_scores = []
         current_time = time.time()
-            
-        for job in self.Queues.get_jobs([{'is_runnable':True}]):    
+
+        queued_jobs = self.Queues.get_jobs([{'is_runnable':True}]) 
+        for job in queued_jobs:    
             utility_name = self.Queues[job.queue].policy
             args = {'queued_time':current_time - float(job.submittime), 
                     'wall_time': 60*float(job.walltime), 
@@ -2847,5 +2866,18 @@ class QueueManager(Component):
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
                 self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
                 return
+
+        if self.score_timestamp:
+            dt = current_time - self.score_timestamp
+            queued_jobs.sort( lambda left, right: -cmp(left.score, right.score) )
+            core_hours = 0.0
+            for job in queued_jobs:
+                if job.priority_core_hours is None:
+                    job.priority_core_hours = core_hours
+                job.total_etime += dt
+                
+                core_hours += (4*job.nodes*job.walltime/60.0)
+            
+        self.score_timestamp = current_time
 
     compute_utility_scores = automatic(compute_utility_scores, float(get_cqm_config('compute_utility_interval', 10)))
