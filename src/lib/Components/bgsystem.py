@@ -740,14 +740,31 @@ class BGSystem (BGBaseSystem):
                 pid, status = os.waitpid(-1, os.WNOHANG)
             except OSError: # there are no child processes
                 break
-            if pid == 0: # there are no zombie processes
+            status = 0
+            signum = 0
+            core_dump = False
+            if os.WIFEXITED(status):
+                status = os.WEXITSTATUS(status)
+            elif os.WIFSIGNALED(status):
+                signum = os.WTERMSIG(status)
+                if os.WCOREDUMP(status):
+                    core_dump = True
+            else:
                 break
-            status = status >> 8
             for each in self.process_groups.itervalues():
                 if each.head_pid == pid:
-                    each.exit_status = status
-                    self.logger.info("process group %i: job %s/%s exited with status %i" % \
-                        (each.id, each.jobid, each.user, status))
+                    if signum == 0:
+                        each.exit_status = status
+                        self.logger.info("process group %i: job %s/%s exited with status %i", 
+                            each.id, each.jobid, each.user, status)
+                    else:
+                        each.exit_status = 128 + signum
+                        if core_dump:
+                            core_dump_str = ", core dumped"
+                        else:
+                            core_dump_str = ""
+                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
+                            each.id, each.jobid, each.user, signum, core_dump_str)
             if pid in self.diag_pids:
                 part, test = self.diag_pids[pid]
                 del self.diag_pids[pid]
