@@ -44,13 +44,11 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-
-
 class BGSimProcessGroup(ProcessGroup):
     """Process Group modified for Blue Gene Simulator"""
 
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger)
+        ProcessGroup.__init__(self, spec, logger, None)
         self.nodect = None
         self.script_id = None
         self.signals = []

@@ -17,6 +17,8 @@ import time
 import thread
 import threading
 import xmlrpclib
+import multiprocessing as mp
+import Queue
 import ConfigParser
 try:
     set = set
@@ -33,6 +35,7 @@ from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, BGProcessG
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+from Cobalt.DataTypes.ProcessGroup import forker as process_forker
 
 
 __all__ = [
@@ -42,6 +45,9 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
+
+# module level?  yuck
+forker_cmd_q = mp.Queue()
 
 class BGProcessGroup(ProcessGroup):
     """ProcessGroup modified by Blue Gene systems"""
@@ -60,9 +66,76 @@ class BGProcessGroup(ProcessGroup):
         sys.exit(1)
     
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger)
+        ProcessGroup.__init__(self, spec, logger, forker_cmd_q)
         self.nodect = None
         self.script_id = None
+
+
+    def prefork (self):
+        ret = {}
+        
+        #check for valid user/group
+        try:
+            userid, groupid = pwd.getpwnam(self.user)[2:4]
+        except KeyError:
+            raise ProcessGroupCreationError("error getting uid/gid")
+        
+        ret["userid"] = userid
+        ret["groupid"] = groupid
+        ret["umask"] = self.umask
+        
+        try:
+            partition = self.location[0]
+        except IndexError:
+            raise ProcessGroupCreationError("no location")
+
+        kerneloptions = self.kerneloptions
+
+        # export subset of MPIRUN_* variables to mpirun's environment
+        # we explicitly state the ones we want since some are "dangerous"
+        exportenv = [ 'MPIRUN_CONNECTION', 'MPIRUN_KERNEL_OPTIONS',
+                      'MPIRUN_MAPFILE', 'MPIRUN_START_GDBSERVER',
+                      'MPIRUN_LABEL', 'MPIRUN_NW', 'MPIRUN_VERBOSE',
+                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE' ]
+        postfork_env = {}
+        app_envs = []
+        for key, value in self.env.iteritems():
+            if key in exportenv:
+                postfork_env[key] = value
+            else:
+                app_envs.append((key, value))
+            
+        envs = " ".join(["%s=%s" % x for x in app_envs])
+
+        ret["postfork_env"] = postfork_env
+        ret["stdin"] = self.stdin
+        ret["stdout"] = self.stdout
+        ret["stderr"] = self.stderr
+        
+        cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
+              '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
+               '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
+               '-exe', self.executable)
+        if self.args:
+            cmd = cmd + ('-args', self.args)
+        if envs:
+            cmd = cmd + ('-env',  envs)
+        if kerneloptions:
+            cmd = cmd + ('-kernel_options', kerneloptions)
+        
+        # If this mpirun command originated from a user script, its arguments
+        # have been passed along in a special attribute.  These arguments have
+        # already been modified to include the partition that cobalt has selected
+        # for the job, and can just replace the arguments built above.
+        if self.true_mpi_args:
+            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
+    
+        ret["id"] = self.id
+        ret["cobalt_log_file"] = self.cobalt_log_file
+        ret["cmd" ] = cmd
+
+        return ret
+
     
     def _runjob (self):
         """Runs a job"""
@@ -212,7 +285,8 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = BGProcessGroup
         self.diag_pids = dict()
         self.configure()
-        
+        # initiate the process before starting any threads
+        self.forker_process = mp.Process(target=process_forker, args=(forker_cmd_q,))
         thread.start_new_thread(self.update_partition_state, tuple())
     
     def __getstate__(self):
@@ -258,6 +332,8 @@ class BGSystem (BGBaseSystem):
                     logger.info("Partition %s is no longer defined" % pname)
         
         self.update_relatives()
+        # initiate the process before starting any threads
+        self.forker_process = mp.Process(target=process_forker, args=(forker_cmd_q,))
         thread.start_new_thread(self.update_partition_state, tuple())
         self.lock = threading.Lock()
         self.statistics = Statistics()
@@ -735,6 +811,40 @@ class BGSystem (BGBaseSystem):
     get_process_groups = exposed(query(get_process_groups))
     
     def _get_exit_status (self):
+        resp_q = mp.Manager().Queue()
+        forker_cmd_q.put( ("active_list", None, resp_q) )
+        try:
+            running = resp_q.get(timeout=5)
+        except Queue.Empty:
+            self.logger.error("failed call for active_list from forker process")
+            return
+
+        for each in self.process_groups.itervalues():
+            if each.head_pid not in running:
+                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
+                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
+                # maybe the second choice is better
+                forker_cmd_q.put( ("get_status", each.head_pid, resp_q) )
+                try:
+                    dead = resp_q.get(timeout=5)
+                except Queue.Empty:
+                    self.logger.error("failed call for get_status from forker process for pg %s", each.head_pid)
+                    return
+                
+                each.exit_status = dead.exit_status
+                if dead.signum == 0:
+                    self.logger.info("process group %i: job %s/%s exited with status %i", 
+                        each.id, each.jobid, each.user, status)
+                else:
+                    if dead.core_dump:
+                        core_dump_str = ", core dumped"
+                    else:
+                        core_dump_str = ""
+                    self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
+                        each.id, each.jobid, each.user, dead.signum, core_dump_str)
+
+                
+        block_comment = """
         while True:
             try:
                 pid, status = os.waitpid(-1, os.WNOHANG)
@@ -771,6 +881,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.info("Diagnostic %s on %s finished. rc=%d" % \
                                  (test, part.name, status))
                 self.finish_diags(part, test, status)
+        """
     _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
@@ -793,10 +904,7 @@ class BGSystem (BGBaseSystem):
                     except (ComponentLookupError, xmlrpclib.Fault):
                         self.logger.error("Failed to communicate with script manager when killing job")
                 else:
-                    try:
-                        os.kill(int(pg.head_pid), getattr(signal, signame))
-                    except OSError, e:
-                        self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
+                    forker_cmd_q.put( ("signal", {"pid": pg.head_pid, "signame": signame, "id": pg.id }, None) )
 
                 if signame == "SIGKILL" and not pg.true_mpi_args:
                     self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
