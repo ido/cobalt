@@ -115,6 +115,7 @@ if __name__ == '__main__':
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
                       'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
+                      'ErrorPath', 'OutputPath',                      
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'Dependencies', 'short_state', 'Notify',
                       'Score', 'Maxtasktime', 'attrs', ]
@@ -230,6 +231,9 @@ if __name__ == '__main__':
             
             # make the SubmitTime readable by humans
             j['submittime'] = time.ctime(float(j['submittime']))
+            
+            j['outputpath'] = outputpath
+            j['errorpath'] = j.get('errorpath')
 
         # any header that was not present in the query response has value set to '-'
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]
