@@ -4,10 +4,12 @@ __revision__ = "$Revision$"
 
 
 import os
-import signal
+import sys
 import atexit
+import signal
 import logging
 import Queue
+import multiprocessing as mp
 
 import Cobalt.Logging
 from Cobalt.Data import Data, DataDict, IncrID
@@ -17,7 +19,7 @@ class Child(object):
     def __init__(self):
         self.pid = None
         self.exit_status = None
-        self.signum = None
+        self.signum = 0
         self.core_dump = False
         
 def forker(cmd_q):
@@ -35,7 +37,10 @@ def forker(cmd_q):
                 pid, status = os.waitpid(-1, os.WNOHANG)
             except OSError: # there are no child processes
                 break
-            status = 0
+            # this is how waitpid + WNOHANG reports things are running
+            # but not yet dead
+            if pid == 0:
+                break
             signum = 0
             core_dump = False
             if os.WIFEXITED(status):
@@ -47,7 +52,7 @@ def forker(cmd_q):
             else:
                 break
             
-            for each in children:
+            for each in children.itervalues():
                 if each.pid == pid:
                     if signum == 0:
                         each.exit_status = status
@@ -58,7 +63,6 @@ def forker(cmd_q):
 
         # now handle the request
         if cmd == "fork":
-            logger.error("trying to fork")
             child_pid = os.fork()
             if not child_pid:
                 try:
@@ -87,7 +91,7 @@ def forker(cmd_q):
                     except (IOError, OSError, TypeError), e:
                         logger.error("process group %s: error opening stdin file %s: %s (stdin will be /dev/null)" % (pg_id, data["stdin"], e))
                         stdin = open("/dev/null", 'r')
-                    os.dup2(stdin.fileno(), sys.__stdin__.fileno())
+                    os.dup2(stdin.fileno(), 0)
                     
                     try:
                         stdout = open(data["stdout"], 'a')
@@ -122,18 +126,18 @@ def forker(cmd_q):
                     logger.error("Unable to start job", exc_info=1)
                     os._exit(1)
             else:
-                resp_q.put(child_pid)
                 kid = Child()
                 kid.pid = child_pid
                 children[child_pid] = kid
+                resp_q.put(child_pid)
         elif cmd == "signal":
             try:
-                os.kill(int(data["pid"]), getattr(signal, data["signal"]))
+                os.kill(int(data["pid"]), getattr(signal, data["signame"]))
             except OSError, e:
                 logger.error("signal failure for process group %s: %s" % (data["id"], e))
         elif cmd == "active_list":
             ret = []
-            for kid in children:
+            for kid in children.itervalues():
                 if kid.exit_status is None:
                     ret.append(kid.pid)
                     

@@ -287,6 +287,7 @@ class BGSystem (BGBaseSystem):
         self.configure()
         # initiate the process before starting any threads
         self.forker_process = mp.Process(target=process_forker, args=(forker_cmd_q,))
+        self.forker_process.start()
         thread.start_new_thread(self.update_partition_state, tuple())
     
     def __getstate__(self):
@@ -334,6 +335,7 @@ class BGSystem (BGBaseSystem):
         self.update_relatives()
         # initiate the process before starting any threads
         self.forker_process = mp.Process(target=process_forker, args=(forker_cmd_q,))
+        self.forker_process.start()
         thread.start_new_thread(self.update_partition_state, tuple())
         self.lock = threading.Lock()
         self.statistics = Statistics()
@@ -820,7 +822,7 @@ class BGSystem (BGBaseSystem):
             return
 
         for each in self.process_groups.itervalues():
-            if each.head_pid not in running:
+            if each.head_pid not in running and each.exit_status is None:
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
                 # maybe the second choice is better
@@ -831,17 +833,21 @@ class BGSystem (BGBaseSystem):
                     self.logger.error("failed call for get_status from forker process for pg %s", each.head_pid)
                     return
                 
-                each.exit_status = dead.exit_status
-                if dead.signum == 0:
-                    self.logger.info("process group %i: job %s/%s exited with status %i", 
-                        each.id, each.jobid, each.user, status)
+                if dead is None:
+                    self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
+                    each.exit_status = 1234567
                 else:
-                    if dead.core_dump:
-                        core_dump_str = ", core dumped"
+                    each.exit_status = dead.exit_status
+                    if dead.signum == 0:
+                        self.logger.info("process group %i: job %s/%s exited with status %i", 
+                            each.id, each.jobid, each.user, each.exit_status)
                     else:
-                        core_dump_str = ""
-                    self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
-                        each.id, each.jobid, each.user, dead.signum, core_dump_str)
+                        if dead.core_dump:
+                            core_dump_str = ", core dumped"
+                        else:
+                            core_dump_str = ""
+                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
+                            each.id, each.jobid, each.user, dead.signum, core_dump_str)
 
                 
         block_comment = """
