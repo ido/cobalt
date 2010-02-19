@@ -8,155 +8,13 @@ import sys
 import atexit
 import signal
 import logging
-import Queue
-import multiprocessing as mp
 
 import Cobalt.Logging
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError
-
-class Child(object):
-    def __init__(self):
-        self.pid = None
-        self.exit_status = None
-        self.signum = 0
-        self.core_dump = False
-        
-def forker(cmd_q):
-    Cobalt.Logging.setup_logging("forker")
-    logger = logging.getLogger("forker")
-
-    children = {}
-    
-    while True:
-        cmd,data,resp_q = cmd_q.get()
-
-        # before handling each request, check for dead children
-        while True:
-            try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
-            except OSError: # there are no child processes
-                break
-            # this is how waitpid + WNOHANG reports things are running
-            # but not yet dead
-            if pid == 0:
-                break
-            signum = 0
-            core_dump = False
-            if os.WIFEXITED(status):
-                status = os.WEXITSTATUS(status)
-            elif os.WIFSIGNALED(status):
-                signum = os.WTERMSIG(status)
-                if os.WCOREDUMP(status):
-                    core_dump = True
-            else:
-                break
-            
-            for each in children.itervalues():
-                if each.pid == pid:
-                    if signum == 0:
-                        each.exit_status = status
-                    else:
-                        each.exit_status = 128 + signum
-                        each.core_dump = core_dump
-                        each.signum = signum
-
-        # now handle the request
-        if cmd == "fork":
-            child_pid = os.fork()
-            if not child_pid:
-                try:
-                    
-                    pg_id = data["id"]
-                    try:
-                        os.setgid(data["groupid"])
-                        os.setuid(data["userid"])
-                    except OSError:
-                        logger.error("failed to change userid/groupid for process group %s" % (pg_id))
-                        os._exit(1)
-            
-                    if data["umask"] != None:
-                        try:
-                            os.umask(data["umask"])
-                        except:
-                            logger.error("Failed to set umask to %s" % data["umask"])
-
-                    for key, value in data["postfork_env"].iteritems():
-                        os.environ[key] = value
-                        
-                    atexit._atexit = []
-            
-                    try:
-                        stdin = open(data["stdin"], 'r')
-                    except (IOError, OSError, TypeError), e:
-                        logger.error("process group %s: error opening stdin file %s: %s (stdin will be /dev/null)" % (pg_id, data["stdin"], e))
-                        stdin = open("/dev/null", 'r')
-                    os.dup2(stdin.fileno(), 0)
-                    
-                    try:
-                        stdout = open(data["stdout"], 'a')
-                    except (IOError, OSError, TypeError), e:
-                        logger.error("process group %s: error opening stdout file %s: %s (stdout will be lost)" % (pg_id, data["stdout"], e))
-                        stdout = open("/dev/null", 'a')
-                    os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-                    
-                    try:
-                        stderr = open(data["stderr"], 'a')
-                    except (IOError, OSError, TypeError), e:
-                        logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (pg_id, data["stderr"], e))
-                        stderr = open("/dev/null", 'a')
-                    os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-                    
-                    cmd = data["cmd"]
-                    try:
-                        cobalt_log_file = open(data["cobalt_log_file"], "a")
-                        print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
-                        print >> cobalt_log_file, "called with environment:\n"
-                        for key in os.environ:
-                            print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
-                        print >> cobalt_log_file, "\n"
-                        cobalt_log_file.close()
-                    except:
-                        logger.error("process group %s unable to open cobaltlog file %s" % \
-                                     (pg_id, data["cobalt_log_file"]))
-            
-                    os.execl(*cmd)
-                    
-                except:
-                    logger.error("Unable to start job", exc_info=1)
-                    os._exit(1)
-            else:
-                kid = Child()
-                kid.pid = child_pid
-                children[child_pid] = kid
-                resp_q.put(child_pid)
-        elif cmd == "signal":
-            try:
-                os.kill(int(data["pid"]), getattr(signal, data["signame"]))
-            except OSError, e:
-                logger.error("signal failure for process group %s: %s" % (data["id"], e))
-        elif cmd == "active_list":
-            ret = []
-            for kid in children.itervalues():
-                if kid.exit_status is None:
-                    ret.append(kid.pid)
-                    
-            resp_q.put(ret)
-        elif cmd == "get_status":
-            if children.has_key(data):
-                dead = children[data]
-                if dead.exit_status is not None:
-                    del children[data]
-                    resp_q.put(dead)
-                else:
-                    resp_q.put(None)
-            else:
-                resp_q.put(None)
-        elif cmd == "quit":
-            os._exit(0)
+from Cobalt.Proxy import ComponentProxy
 
 
-        
 
 class ProcessGroup(Data):
     """A job that runs on the system
@@ -197,7 +55,7 @@ class ProcessGroup(Data):
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
 
-    def __init__(self, spec, logger, cmd_queue):
+    def __init__(self, spec, logger):
         Data.__init__(self, spec)
         self.tag = "process group"
         self.args = " ".join(spec.get("args", []))
@@ -223,7 +81,6 @@ class ProcessGroup(Data):
         self.user = spec.get("user", "")
 
         self.logger = logger
-        self.cmd_queue = cmd_queue
 
     def _get_state(self):
         """Gets the current 'state' property of the process group"""
@@ -235,14 +92,9 @@ class ProcessGroup(Data):
 
     def start(self):
         """Start the process group by forking to _mpirun()"""
-        resp_q = mp.Manager().Queue()
-        
-        data = self.prefork()
-        
-        self.cmd_queue.put( ("fork", data, resp_q) )
-        
         try:
-            self.head_pid = resp_q.get(timeout=5)
+            data = self.prefork()
+            self.head_pid = ComponentProxy("forker").fork(data)
         except Queue.Empty:
             self.logger.error("problem forking: pg %s did not find a child pid", self.id)
 

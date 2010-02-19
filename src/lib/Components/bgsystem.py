@@ -17,8 +17,6 @@ import time
 import thread
 import threading
 import xmlrpclib
-import multiprocessing as mp
-import Queue
 import ConfigParser
 try:
     set = set
@@ -46,9 +44,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
-# module level?  yuck
-forker_cmd_q = mp.Queue()
-
 class BGProcessGroup(ProcessGroup):
     """ProcessGroup modified by Blue Gene systems"""
     fields = ProcessGroup.fields + ["nodect", "script_id"]
@@ -66,7 +61,7 @@ class BGProcessGroup(ProcessGroup):
         sys.exit(1)
     
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger, forker_cmd_q)
+        ProcessGroup.__init__(self, spec, logger)
         self.nodect = None
         self.script_id = None
 
@@ -286,8 +281,6 @@ class BGSystem (BGBaseSystem):
         self.diag_pids = dict()
         self.configure()
         # initiate the process before starting any threads
-        self.forker_process = mp.Process(target=process_forker, args=(forker_cmd_q,))
-        self.forker_process.start()
         thread.start_new_thread(self.update_partition_state, tuple())
     
     def __getstate__(self):
@@ -334,8 +327,6 @@ class BGSystem (BGBaseSystem):
         
         self.update_relatives()
         # initiate the process before starting any threads
-        self.forker_process = mp.Process(target=process_forker, args=(forker_cmd_q,))
-        self.forker_process.start()
         thread.start_new_thread(self.update_partition_state, tuple())
         self.lock = threading.Lock()
         self.statistics = Statistics()
@@ -813,12 +804,10 @@ class BGSystem (BGBaseSystem):
     get_process_groups = exposed(query(get_process_groups))
     
     def _get_exit_status (self):
-        resp_q = mp.Manager().Queue()
-        forker_cmd_q.put( ("active_list", None, resp_q) )
         try:
-            running = resp_q.get(timeout=5)
-        except Queue.Empty:
-            self.logger.error("failed call for active_list from forker process")
+            running = ComponentProxy("forker").active_list()
+        except:
+            self.logger.error("failed to contact forker component for list of running jobs")
             return
 
         for each in self.process_groups.itervalues():
@@ -826,28 +815,27 @@ class BGSystem (BGBaseSystem):
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
                 # maybe the second choice is better
-                forker_cmd_q.put( ("get_status", each.head_pid, resp_q) )
                 try:
-                    dead = resp_q.get(timeout=5)
+                    dead_dict = ComponentProxy("forker").get_status(each.head_pid)
                 except Queue.Empty:
-                    self.logger.error("failed call for get_status from forker process for pg %s", each.head_pid)
+                    self.logger.error("failed call for get_status from forker component for pg %s", each.head_pid)
                     return
                 
                 if dead is None:
                     self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
                     each.exit_status = 1234567
                 else:
-                    each.exit_status = dead.exit_status
-                    if dead.signum == 0:
+                    each.exit_status = dead_dict["exit_status"]
+                    if dead_dict["signum"] == 0:
                         self.logger.info("process group %i: job %s/%s exited with status %i", 
                             each.id, each.jobid, each.user, each.exit_status)
                     else:
-                        if dead.core_dump:
+                        if dead_dict["core_dump"]:
                             core_dump_str = ", core dumped"
                         else:
                             core_dump_str = ""
                         self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
-                            each.id, each.jobid, each.user, dead.signum, core_dump_str)
+                            each.id, each.jobid, each.user, dead_dict["signum"], core_dump_str)
 
                 
         block_comment = """
@@ -910,7 +898,10 @@ class BGSystem (BGBaseSystem):
                     except (ComponentLookupError, xmlrpclib.Fault):
                         self.logger.error("Failed to communicate with script manager when killing job")
                 else:
-                    forker_cmd_q.put( ("signal", {"pid": pg.head_pid, "signame": signame, "id": pg.id }, None) )
+                    try:
+                        ComponentProxy("forker").signal(pg.head_pid, signame, pg.id)
+                    except:
+                        self.logger.error("Failed to communicate with forker when signalling job")
 
                 if signame == "SIGKILL" and not pg.true_mpi_args:
                     self._mark_partition_for_cleaning(pg.location[0], pg.jobid)

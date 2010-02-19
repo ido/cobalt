@@ -300,8 +300,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.connection.shutdown(1)
    
 
-class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer, 
-                    CobaltXMLRPCDispatcher, object):
+class baseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
     
     """Component XMLRPCServer.
     
@@ -356,23 +355,9 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         self.register = register
         self.register_introspection_functions()
         self.register_function(self.ping)
-        self.task_thread = threading.Thread(target=self._tasks_thread)
         self.logger.info("service available at %s" % self.url)
         self.timeout = timeout
 
-    
-    def _get_register (self):
-        return self._register
-    
-    def _set_register (self, value):
-        old_value = getattr(self, "_register", False)
-        self._register = value
-        if value and not old_value:
-            thread = threading.Thread(target=self._slp_thread)
-            thread.setDaemon(True)
-            thread.start()
-    
-    register = property(_get_register, _set_register)
     
     def register_instance (self, instance, *args, **kwargs):
         CobaltXMLRPCDispatcher.register_instance(self, instance, *args, **kwargs)
@@ -406,7 +391,12 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
             self.logger.error("unregister_with_slp() [%s]" % (e))
         else:
             self.logger.info("unregister_with_slp()")
-    
+
+
+
+
+
+    # these two "thread" functions need to be in a giant while loop inside serve_forever
     def _slp_thread (self, frequency=120):
         try:
             while self.register:
@@ -426,6 +416,10 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
                 time.sleep(self.timeout)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
+    
+    
+    
+    
     
     def server_close (self):
         TCPServer.server_close(self)
@@ -449,6 +443,102 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         self.RequestHandlerClass.credentials = value
     credentials = property(_get_credentials, _set_credentials)
     
+    def serve_forever (self, frequency=120):
+        """Serve single requests until (self.serve == False)."""
+        self.serve = True
+        self.logger.info("serve_forever() [start]")
+        sigint = signal.signal(signal.SIGINT, self._handle_shutdown_signal)
+        sigterm = signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
+        last_register = 0
+
+        try:
+            while self.serve:
+                try:
+                    self.handle_request()
+                except socket.timeout:
+                    pass
+                except:
+                    self.logger.error("Got unexpected error in handle_request",
+                                      exc_info=True)
+                if self.instance and hasattr(self.instance, "do_tasks"):
+                    try:
+                        self.instance.do_tasks()
+                    except:
+                        self.logger.error("Task executaion failure", exc_info=1)
+                        
+                try:
+                    now = time.time()
+                    if self.register and (now - last_register) > frequency:
+                        self.register_with_slp()
+                        last_register = now
+                except:
+                    self.logger.error("register_with_slp failed", exc_info=True)
+                        
+        finally:
+            self.logger.info("serve_forever() [stop]")
+    
+    def shutdown (self):
+        """Signal that automatic service should stop."""
+        self.serve = False
+    
+    def _handle_shutdown_signal (self, signum, frame):
+        self.shutdown()
+    
+    def ping (self, *args):
+        """Echo response."""
+        self.logger.info("ping(%s)" % (", ".join([repr(arg) for arg in args])))
+        return args
+
+
+class XMLRPCServer (SocketServer.ThreadingMixIn, baseXMLRPCServer): 
+    
+    def __init__ (self, server_address, RequestHandlerClass=None,
+                  keyfile=None, certfile=None,
+                  timeout=10,
+                  logRequests=False,
+                  register=True, allow_none=True, encoding=None):
+        
+        
+        baseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
+                                  certfile, timeout, logRequests, register, allow_none, encoding)
+        
+        self.task_thread = threading.Thread(target=self._tasks_thread)
+
+    
+    def _get_register (self):
+        return self._register
+    
+    def _set_register (self, value):
+        old_value = getattr(self, "_register", False)
+        self._register = value
+        if value and not old_value:
+            thread = threading.Thread(target=self._slp_thread)
+            thread.setDaemon(True)
+            thread.start()
+    
+    register = property(_get_register, _set_register)
+    
+    def _slp_thread (self, frequency=120):
+        try:
+            while self.register:
+                self.register_with_slp()
+                time.sleep(frequency)
+        except:
+            self.logger.error("slp_thread failed", exc_info=1)
+
+    def _tasks_thread (self):
+        try:
+            while self.serve:
+                try:
+                    if self.instance and hasattr(self.instance, 'do_tasks'):
+                        self.instance.do_tasks()
+                except:
+                    self.logger.error("Unexpected task failure", exc_info=1)
+                time.sleep(self.timeout)
+        except:
+            self.logger.error("tasks_thread failed", exc_info=1)
+    
+    
     def serve_forever (self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
@@ -470,14 +560,3 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, TCPServer,
         finally:
             self.logger.info("serve_forever() [stop]")
     
-    def shutdown (self):
-        """Signal that automatic service should stop."""
-        self.serve = False
-    
-    def _handle_shutdown_signal (self, signum, frame):
-        self.shutdown()
-    
-    def ping (self, *args):
-        """Echo response."""
-        self.logger.info("ping(%s)" % (", ".join([repr(arg) for arg in args])))
-        return args
