@@ -14,9 +14,12 @@ import os
 import signal
 import socket
 import time
+import atexit
 
 import Cobalt.Logging
 from Cobalt.Components.base import Component, exposed, automatic
+from Cobalt.Data import IncrID
+
 
 
 __all__ = [
@@ -26,7 +29,9 @@ __all__ = [
 
 class Child(object):
     def __init__(self):
+        self.id = None
         self.pid = None
+        self.label = None
         self.exit_status = None
         self.signum = 0
         self.core_dump = False
@@ -58,6 +63,7 @@ class BaseForker (Component):
         """
         Component.__init__(self, *args, **kwargs)
         self.children = {}
+        self.id_gen = IncrID()
 
     
     def fork (self, data):
@@ -66,22 +72,23 @@ class BaseForker (Component):
         Arguments:
         data -- a dictionary of information required while forking
         """
+        label = "%s/%s" % (data["jobid"], data["id"])
         child_pid = os.fork()
         if not child_pid:
             try:
-                pg_id = data["id"]
                 try:
                     os.setgid(data["groupid"])
                     os.setuid(data["userid"])
                 except OSError:
-                    self.logger.error("failed to change userid/groupid for process group %s" % (pg_id))
+                    self.logger.error("task %s: failed to change userid/groupid", label)
                     os._exit(1)
         
                 if data["umask"] != None:
                     try:
                         os.umask(data["umask"])
                     except:
-                        self.logger.error("Failed to set umask to %s" % data["umask"])
+                        self.logger.error("task %s: failed to set umask to %s", 
+                                label, data["umask"])
 
                 for key, value in data["postfork_env"].iteritems():
                     os.environ[key] = value
@@ -89,23 +96,23 @@ class BaseForker (Component):
                 atexit._atexit = []
         
                 try:
-                    stdin = open(data["stdin"], 'r')
+                    stdin = open(data["stdin"] or "/dev/null", 'r')
                 except (IOError, OSError, TypeError), e:
-                    self.logger.error("process group %s: error opening stdin file %s: %s (stdin will be /dev/null)" % (pg_id, data["stdin"], e))
+                    self.logger.error("task %s: error opening stdin file %s: %s (stdin will be /dev/null)", label, data["stdin"], e)
                     stdin = open("/dev/null", 'r')
                 os.dup2(stdin.fileno(), 0)
                 
                 try:
                     stdout = open(data["stdout"], 'a')
                 except (IOError, OSError, TypeError), e:
-                    self.logger.error("process group %s: error opening stdout file %s: %s (stdout will be lost)" % (pg_id, data["stdout"], e))
+                    self.logger.error("task %s: error opening stdout file %s: %s (stdout will be lost)", label, data["stdout"], e)
                     stdout = open("/dev/null", 'a')
                 os.dup2(stdout.fileno(), sys.__stdout__.fileno())
                 
                 try:
                     stderr = open(data["stderr"], 'a')
                 except (IOError, OSError, TypeError), e:
-                    self.logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (pg_id, data["stderr"], e))
+                    self.logger.error("task %s: error opening stderr file %s: %s (stderr will be lost)", label, data["stderr"], e)
                     stderr = open("/dev/null", 'a')
                 os.dup2(stderr.fileno(), sys.__stderr__.fileno())
                 
@@ -119,34 +126,42 @@ class BaseForker (Component):
                     print >> cobalt_log_file, "\n"
                     cobalt_log_file.close()
                 except:
-                    self.logger.error("process group %s unable to open cobaltlog file %s" % \
-                                 (pg_id, data["cobalt_log_file"]))
+                    self.logger.error("task %s: unable to open cobaltlog file %s", 
+                                 label, data["cobalt_log_file"])
         
                 os.execl(*cmd)
                 
             except:
-                self.logger.error("Unable to start job", exc_info=1)
+                self.logger.error("task %s: unable to start", label, exc_info=1)
                 os._exit(1)
         else:
+            local_id = self.id_gen.next()
             kid = Child()
+            kid.id = local_id
             kid.pid = child_pid
-            self.children[child_pid] = kid
-
-            return child_pid
+            kid.label = "%s/%s" % (label, local_id)
+            self.children[local_id] = kid
+            self.logger.info("task %s: forked", kid.label)
+            return local_id
     fork = exposed(fork)
     
-    def signal (self, pid, signame, id):
+    def signal (self, local_id, signame):
         """Signal a child process.
         
         Arguments:
-        pid -- pid of the child to signal
+        local_id -- id of the child to signal
         signame -- signal name
-        id -- id of the ProcessGroup (only used for logging)
         """
+        if not self.children.has_key(local_id):
+            self.logger.error("signal found no child with id %s", local_id)
+            return
+
+        kid = self.children[local_id]
+        self.logger.info("task %s: signaling %s", kid.label, signame)
         try:
-            os.kill(int(pid), getattr(signal, signame))
+            os.kill(kid.pid, getattr(signal, signame))
         except OSError, e:
-            self.logger.error("signal failure for process group %s: %s" % (id, e))
+            self.logger.error("task %s: signal failure", kid.label, e)
 
     signal = exposed(signal)
     
@@ -156,23 +171,29 @@ class BaseForker (Component):
         ret = []
         for kid in self.children.itervalues():
             if kid.exit_status is None:
-                ret.append(kid.pid)
+                ret.append(kid.id)
                 
         return ret
     active_list = exposed(active_list)
     
-    def get_status (self, pid):
+    def get_status (self, local_id):
         """Signal a child process.
         
         Arguments:
-        pid -- pid of the child to signal
+        local_id -- id of the child to signal
         """
 
-        if self.children.has_key(pid):
-            dead = self.children[pid]
+        self.logger.info("status requested for task id %s", local_id)
+        if self.children.has_key(local_id):
+            dead = self.children[local_id]
             if dead.exit_status is not None:
-                del self.children[pid]
+                del self.children[local_id]
+                self.logger.info("task %s: status returned", dead.label)
                 return dead.__dict__
+            else:
+                self.logger.info("task %s: still running", dead.label)
+        else:
+            self.logger.info("task id %s: not found", local_id)
             
         return None
     get_status = exposed(get_status)
@@ -182,7 +203,6 @@ class BaseForker (Component):
         """Call os.waitpid to status of dead processes.
         """
         while True:
-            self.logger.error("i am waiting")
             try:
                 pid, status = os.waitpid(-1, os.WNOHANG)
             except OSError: # there are no child processes
@@ -195,16 +215,20 @@ class BaseForker (Component):
             core_dump = False
             if os.WIFEXITED(status):
                 status = os.WEXITSTATUS(status)
-            elif os.WIFSIGNALED(status):
-                signum = os.WTERMSIG(status)
-                if os.WCOREDUMP(status):
-                    core_dump = True
+                if os.WIFSIGNALED(status):
+                    signum = os.WTERMSIG(status)
+                    if os.WCOREDUMP(status):
+                        core_dump = True
             else:
                 break
             
-            self.logger.error("%s died with status %s", pid, status)
+            if signum:
+                self.logger.info("pid %s died with status %s and signal %s", pid, status, signum)
+            else:
+                self.logger.info("pid %s died with status %s", pid, status)
             for each in self.children.itervalues():
                 if each.pid == pid:
+                    self.logger.info("task %s: dead pid %s matches", each.label, pid)
                     if signum == 0:
                         each.exit_status = status
                     else:

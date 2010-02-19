@@ -33,7 +33,6 @@ from Cobalt.Components.bg_base_system import NodeCard, PartitionDict, BGProcessG
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
-from Cobalt.DataTypes.ProcessGroup import forker as process_forker
 
 
 __all__ = [
@@ -126,6 +125,7 @@ class BGProcessGroup(ProcessGroup):
             cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
     
         ret["id"] = self.id
+        ret["jobid"] = self.jobid
         ret["cobalt_log_file"] = self.cobalt_log_file
         ret["cmd" ] = cmd
 
@@ -821,7 +821,7 @@ class BGSystem (BGBaseSystem):
                     self.logger.error("failed call for get_status from forker component for pg %s", each.head_pid)
                     return
                 
-                if dead is None:
+                if dead_dict is None:
                     self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
                     each.exit_status = 1234567
                 else:
@@ -899,7 +899,7 @@ class BGSystem (BGBaseSystem):
                         self.logger.error("Failed to communicate with script manager when killing job")
                 else:
                     try:
-                        ComponentProxy("forker").signal(pg.head_pid, signame, pg.id)
+                        ComponentProxy("forker").signal(pg.head_pid, signame)
                     except:
                         self.logger.error("Failed to communicate with forker when signalling job")
 

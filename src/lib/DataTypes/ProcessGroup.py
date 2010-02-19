@@ -5,7 +5,6 @@ __revision__ = "$Revision$"
 
 import os
 import sys
-import atexit
 import signal
 import logging
 
@@ -95,7 +94,7 @@ class ProcessGroup(Data):
         try:
             data = self.prefork()
             self.head_pid = ComponentProxy("forker").fork(data)
-        except Queue.Empty:
+        except:
             self.logger.error("problem forking: pg %s did not find a child pid", self.id)
 
     def prefork (self):

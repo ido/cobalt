@@ -9,6 +9,6 @@ from Cobalt.Components.base import run_component
 
 if __name__ == "__main__":
     try:
-        run_component(BaseForker)
+        run_component(BaseForker, single_threaded=True)
     except KeyboardInterrupt:
         sys.exit(1)

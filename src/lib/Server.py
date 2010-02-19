@@ -300,7 +300,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.connection.shutdown(1)
    
 
-class baseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
+class BaseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
     
     """Component XMLRPCServer.
     
@@ -490,7 +490,7 @@ class baseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
         return args
 
 
-class XMLRPCServer (SocketServer.ThreadingMixIn, baseXMLRPCServer): 
+class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer): 
     
     def __init__ (self, server_address, RequestHandlerClass=None,
                   keyfile=None, certfile=None,
@@ -499,7 +499,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, baseXMLRPCServer):
                   register=True, allow_none=True, encoding=None):
         
         
-        baseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
+        BaseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
                                   certfile, timeout, logRequests, register, allow_none, encoding)
         
         self.task_thread = threading.Thread(target=self._tasks_thread)

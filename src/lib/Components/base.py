@@ -20,7 +20,7 @@ import xmlrpclib
 import Cobalt
 import Cobalt.Proxy
 import Cobalt.Logging
-from Cobalt.Server import XMLRPCServer, find_intended_location
+from Cobalt.Server import BaseXMLRPCServer, XMLRPCServer, find_intended_location
 from Cobalt.Data import get_spec_fields
 from Cobalt.Exceptions import NoExposedMethod
 from Cobalt.Statistics import Statistics
@@ -37,7 +37,8 @@ def state_file_location():
     return state_dir
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}, extra_getopt='', time_out=10):
+                   cls_kwargs={}, extra_getopt='', time_out=10,
+                   single_threaded=False):
     if argv is None:
         argv = sys.argv
     try:
@@ -105,7 +106,11 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     except:
         keypath = '/etc/cobalt.key'
 
-    server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
+    if single_threaded:
+        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=keypath,
+                          register=register, timeout=time_out)
+    else:
+        server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
                           register=register, timeout=time_out)
     server.register_instance(component)
     
