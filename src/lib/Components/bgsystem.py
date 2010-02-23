@@ -7,6 +7,7 @@ BGSystem -- Blue Gene system component
 
 import atexit
 import pwd
+import grp
 import sets
 import logging
 import sys
@@ -68,14 +69,23 @@ class BGProcessGroup(ProcessGroup):
     def prefork (self):
         ret = {}
         
-        #check for valid user/group
+        # check for valid user/group
         try:
             userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:
             raise ProcessGroupCreationError("error getting uid/gid")
-        
+
         ret["userid"] = userid
-        ret["groupid"] = groupid
+        ret["primary_group"] = groupid
+        
+        # get supplementary groups
+        supplementary_group_ids = []
+        for g in grp.getgrall():
+            if self.user in g.gr_mem:
+                supplementary_group_ids.append(g.gr_gid)
+        
+        ret["other_groups"] = supplementary_group_ids
+        
         ret["umask"] = self.umask
         
         try:
