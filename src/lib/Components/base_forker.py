@@ -76,18 +76,20 @@ class BaseForker (Component):
         child_pid = os.fork()
         if not child_pid:
             try:
+                # only root can call os.setgroups so we need to do this
+                # before calling os.setuid
+                try:
+                    os.setgroups(data["other_groups"])
+                except:
+                    self.logger.error("task %s: failed to set supplementary groups", label, exc_info=True)
+ 
                 try:
                     os.setgid(data["primary_group"])
                     os.setuid(data["userid"])
                 except OSError:
                     self.logger.error("task %s: failed to change userid/groupid", label)
                     os._exit(1)
-                
-                try:
-                    os.setgroups(data["other_groups"])
-                except:
-                    self.logger.error("task %s: failed to set supplementary groups", label)
-                        
+                       
                 if data["umask"] != None:
                     try:
                         os.umask(data["umask"])
