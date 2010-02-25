@@ -61,8 +61,8 @@ class JobProcessingError (Exception):
         self.jobid = jobid
         self.user = user
         self.state = state
-        self.sm_state = state
-        self.sm_event = event
+        self.sm_state = sm_state
+        self.sm_event = sm_event
 
 class JobPreemptionError (Exception):
     log = False

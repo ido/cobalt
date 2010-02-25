@@ -15,7 +15,7 @@ nodes that can be requested.
 '''
 __revision__ = '$Revision$'
 
-import logging, os, pwd, signal, sys, tempfile, time
+import logging, os, pwd, signal, sys, tempfile, time, grp
 import xmlrpclib
 
 import Cobalt.Logging
@@ -89,6 +89,16 @@ class ProcessGroup(Data):
             os.environ["COBALT_JOBSIZE"] = str(self.job_size)
             os.environ['USER'] = self.user
             os.environ['HOME'] = home_dir
+            # get supplementary groups
+            supplementary_group_ids = []
+            for g in grp.getgrall():
+                if self.user in g.gr_mem:
+                    supplementary_group_ids.append(g.gr_gid)
+            try:
+                os.setgroups([])
+                os.setgroups(supplementary_group_ids)
+            except:
+                self.log.error("Failed to set supplementary groups for PG %s", self.jobid, exc_info=True)
             try:
                 os.setgid(groupid)
                 os.setuid(userid)

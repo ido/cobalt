@@ -548,8 +548,6 @@ class BGSystem (BGBaseSystem):
                         self._managed_partitions.discard(p.name)
                         need_update = True
                     del self._partitions[p.name]
-                if need_update:
-                    self.update_relatives()
 
                 bp_cache = {}
                 wiring_cache = {}
@@ -562,6 +560,10 @@ class BGSystem (BGBaseSystem):
                     p = self._partitions[bridge_p.id]
                     p.bridge_partition = partition
                     self._detect_wiring_deps(p, wiring_cache)
+
+                # if partitions were added or removed, then update the relationships between partitions
+                if len(missing_partitions) > 0 or len(new_partitions) > 0:
+                    self.update_relatives()
 
                 for p in self._partitions.values():
                     if p.cleanup_pending:
@@ -821,7 +823,7 @@ class BGSystem (BGBaseSystem):
             return
 
         for each in self.process_groups.itervalues():
-            if each.head_pid not in running and each.exit_status is None:
+            if each.head_pid not in running and each.exit_status is None and each.mode != "script":
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
                 # maybe the second choice is better
