@@ -537,7 +537,6 @@ class BGSystem (BGBaseSystem):
 
 
                 # remove the missing partitions and their wiring relations
-                need_update = False
                 for pname in missing_partitions:
                     self.logger.info("missing partition removed: %s", pname)
                     p = self._partitions[pname]
@@ -546,7 +545,6 @@ class BGSystem (BGBaseSystem):
                         self._partitions[dep_name]._wiring_conflicts.discard(p.name)
                     if p.name in self._managed_partitions:
                         self._managed_partitions.discard(p.name)
-                        need_update = True
                     del self._partitions[p.name]
 
                 bp_cache = {}
