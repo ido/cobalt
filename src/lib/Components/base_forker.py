@@ -79,6 +79,7 @@ class BaseForker (Component):
                 # only root can call os.setgroups so we need to do this
                 # before calling os.setuid
                 try:
+                    os.setgroups([])
                     os.setgroups(data["other_groups"])
                 except:
                     self.logger.error("task %s: failed to set supplementary groups", label, exc_info=True)
