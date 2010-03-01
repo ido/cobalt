@@ -584,11 +584,11 @@ class Job (StateMachine):
 
         # special case to handle missing data from old state files
         if not state.has_key("total_etime"):
-            self.logger.info("old job missing total_etime")
+            logger.info("old job missing total_etime")
             self.total_etime = 0.0
     
         if not state.has_key("priority_core_hours"):
-            self.logger.info("old job missing priority_core_hours")
+            logger.info("old job missing priority_core_hours")
             self.priority_core_hours = None
     
     def __task_signal(self, retry = True):
