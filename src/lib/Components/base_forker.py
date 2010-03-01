@@ -50,6 +50,7 @@ class BaseForker (Component):
     """
     
     name = "forker"
+    implementation = "bgforker"
     
     # A default logger for the class is placed here.
     # Assigning an instance-level logger is supported,
