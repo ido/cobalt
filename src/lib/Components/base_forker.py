@@ -222,16 +222,16 @@ class BaseForker (Component):
                 break
             signum = 0
             core_dump = False
-            status = None
+            exit_status = None
             if os.WIFEXITED(status):
-                status = os.WEXITSTATUS(status)
-            if os.WIFSIGNALED(status):
-                status = os.WEXITSTATUS(status)
+                exit_status = os.WEXITSTATUS(status)
+            elif os.WIFSIGNALED(status):
                 signum = os.WTERMSIG(status)
                 if os.WCOREDUMP(status):
                     core_dump = True
-
-            if status is None:
+                exit_status = 128 + signum
+                
+            if exit_status is None:
                 self.logger.info("pid %s died but had no status", pid)
                 break
             
@@ -242,10 +242,7 @@ class BaseForker (Component):
             for each in self.children.itervalues():
                 if each.pid == pid:
                     self.logger.info("task %s: dead pid %s matches", each.label, pid)
-                    if signum == 0:
-                        each.exit_status = status
-                    else:
-                        each.exit_status = 128 + signum
-                        each.core_dump = core_dump
-                        each.signum = signum
+                    each.exit_status = exit_status
+                    each.core_dump = core_dump
+                    each.signum = signum
     wait = automatic(wait)
