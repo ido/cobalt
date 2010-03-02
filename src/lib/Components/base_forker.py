@@ -150,7 +150,7 @@ class BaseForker (Component):
             kid.pid = child_pid
             kid.label = "%s/%s" % (label, local_id)
             self.children[local_id] = kid
-            self.logger.info("task %s: forked", kid.label)
+            self.logger.info("task %s: forked with pid %s", kid.label, kid.pid)
             return local_id
     fork = exposed(fork)
     
@@ -166,11 +166,11 @@ class BaseForker (Component):
             return
 
         kid = self.children[local_id]
-        self.logger.info("task %s: signaling %s", kid.label, signame)
+        self.logger.info("task %s: sending %s to pid %s", kid.label, signame, kid.pid)
         try:
             os.kill(kid.pid, getattr(signal, signame))
-        except OSError, e:
-            self.logger.error("task %s: signal failure", kid.label, e)
+        except OSError:
+            self.logger.error("task %s: signal failure", kid.label, exc_info=True)
 
     signal = exposed(signal)
     
@@ -222,13 +222,17 @@ class BaseForker (Component):
                 break
             signum = 0
             core_dump = False
+            status = None
             if os.WIFEXITED(status):
                 status = os.WEXITSTATUS(status)
-                if os.WIFSIGNALED(status):
-                    signum = os.WTERMSIG(status)
-                    if os.WCOREDUMP(status):
-                        core_dump = True
-            else:
+            if os.WIFSIGNALED(status):
+                status = os.WEXITSTATUS(status)
+                signum = os.WTERMSIG(status)
+                if os.WCOREDUMP(status):
+                    core_dump = True
+
+            if status is None:
+                self.logger.info("pid %s died but had no status", pid)
                 break
             
             if signum:
