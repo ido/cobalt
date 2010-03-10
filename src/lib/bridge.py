@@ -48,6 +48,9 @@ rm_component_id_t = c_char_p
 bridge.rm_get_data.argtypes = [rm_element_t, c_int, c_void_p]
 bridge.rm_get_data.restype = check_status
 
+bridge.rm_set_data.argtypes = [rm_element_t, c_int, c_void_p]
+bridge.rm_set_data.restype = check_status
+
 
 class BridgeException (Exception):
     
@@ -104,6 +107,7 @@ class InconsistentData (BridgeException):
 
 
 class Resource (object):
+    _free = False
     
     def __init__ (self, element_pointer, **kwargs):
         self._as_parameter_ = element_pointer
@@ -113,6 +117,9 @@ class Resource (object):
         data = ctype()
         bridge.rm_get_data(self, field, byref(data))
         return data
+
+    def _set_data (self, field, data):
+        bridge.rm_set_data(self, field, byref(data))
 
 
 class ElementGenerator (object):
@@ -933,6 +940,12 @@ class JobList (Resource, list):
         bridge.rm_get_jobs(c_int(flag), byref(element_pointer))
         return cls(element_pointer, free=True)
     
+    @classmethod
+    def by_filter (cls, job_filter):
+        element_pointer = cls._ctype()
+        bridge.rm_get_filtered_jobs(job_filter, byref(element_pointer))
+        return cls(element_pointer, free=True)
+    
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
         self.extend(ElementGenerator(self, Job, RM_JobListSize, RM_JobListFirstJob, RM_JobListNextJob))
@@ -959,6 +972,10 @@ rm_job_runtime_t = c_int
 rm_job_computenodes_used_t = c_int
 rm_job_exitstatus_t = c_int
 rm_signal_t = c_int
+rm_job_user_uid_t = c_int
+rm_job_user_gid_t = c_int
+rm_job_location_t = c_char_p
+pm_pool_id_t = c_char_p
 
 if systype == 'BGL':
     RM_JobState = 64
@@ -1008,6 +1025,23 @@ elif systype == 'BGP':
     RM_JobEndTime = 12017
     RM_JobRunTime = 12018
     RM_JobComputeNodesUsed = 12019
+    RM_JobUserUid = 12021
+    RM_JobUserGid = 12022
+    RM_JobLocation = 12023
+    RM_JobPoolID = 12024
+
+RM_JOB_IDLE = 0
+RM_JOB_STARTING = 1
+RM_JOB_RUNNING = 2
+RM_JOB_TERMINATED = 3
+RM_JOB_KILLED = 4
+RM_JOB_ERROR = 5
+RM_JOB_DYING = 6
+RM_JOB_DEBUG = 7
+RM_JOB_LOAD = 8
+RM_JOB_LOADED = 9
+RM_JOB_BEGIN = 10
+RM_JOB_ATTACH = 11
 
 bridge.rm_get_job.argtypes = [db_job_id_t, POINTER(POINTER(rm_job_t))]
 bridge.rm_get_job.restype = check_status
@@ -1191,3 +1225,79 @@ class Job (Resource):
         return exit_status.value
     
     exit_status = property(_get_exit_status)
+
+    def _get_user_uid(self):
+        uid = self._get_data(RM_JobUserUid, rm_job_user_uid_t)
+        return uid.value
+
+    user_uid = property(_get_user_uid)
+
+    def _get_user_gid(self):
+        uid = self._get_data(RM_JobUserGid, rm_job_user_gid_t)
+        return gid.value
+
+    user_gid = property(_get_user_gid)
+
+    def _get_location(self):
+        location = self._get_data(RM_JobLocation, rm_job_location_t)
+        return free_value(location)
+
+    location = property(_get_location)
+
+    def _get_pool_id(self):
+        pool_id = self._get_data(RM_JobPoolID, pm_pool_id_t)
+        return free_value(pool_id)
+
+    pool_id = property(_get_pool_id)
+ 
+
+class rm_job_filter_t (Structure):
+    _fields_ = []
+
+RM_JobFilterID = 13000
+RM_JobFilterPartitionID = 13001
+RM_JobFilterState = 13002
+RM_JobFilterExecutable = 13003
+RM_JobFilterUserName = 13004
+RM_JobFilterDBJobID = 13006
+RM_JobFilterOutDir = 13007
+RM_JobFilterMode = 13008
+RM_JobFilterStartTime = 13009
+RM_JobFilterLocation = 13010
+RM_JobFilterPoolID = 13011
+RM_JobFilterType = 13012
+
+RM_SMP_MODE = 0
+RM_DUAL_MODE = 1
+RM_VIRTUAL_NODE_MODE = 2
+
+JOB_TYPE_HPC_FLAG = 0x0001 
+JOB_TYPE_HTC_FLAG = 0x0002 
+JOB_TYPE_ALL_FLAG = 0x0003
+
+bridge.rm_new_job_filter.argtypes = [POINTER(POINTER(rm_job_filter_t))]
+bridge.rm_new_job_filter.restype = check_status
+
+bridge.rm_get_filtered_jobs.argtypes = [POINTER(rm_job_filter_t), POINTER(POINTER(rm_job_list_t))]
+bridge.rm_get_filtered_jobs.restype = check_status
+
+bridge.rm_free_job_filter.argtypes = [POINTER(rm_job_filter_t)]
+bridge.rm_free_job_filter.restype = check_status
+
+class JobFilter (Resource):
+    _ctype = POINTER(rm_job_filter_t)
+
+    def __init__(self):
+        element_pointer = self._ctype()
+        bridge.rm_new_job_filter(byref(element_pointer))
+        Resource.__init__(self, element_pointer, free=True)
+
+    def __del__ (self):
+        if self._free:
+            bridge.rm_free_job_filter(self)
+    
+    def _set_job_state(self, value):
+        data = rm_job_state_t(value)
+        self._set_data(RM_JobFilterState, data)
+
+    job_state = property(None, _set_job_state)
