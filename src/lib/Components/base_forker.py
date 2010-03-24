@@ -15,11 +15,32 @@ import signal
 import socket
 import time
 import atexit
+import ConfigParser
+
 
 import Cobalt.Logging
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.Data import IncrID
 
+
+config = ConfigParser.ConfigParser()
+config.read(Cobalt.CONFIG_FILES)
+
+# A default logger for the component is instantiated here.
+module_logger = logging.getLogger("Cobalt.Components.BaseForker")
+
+def get_forker_config(option, default):
+    try:
+        value = config.get('forker', option)
+    except Exception, e:
+        if isinstance(e, ConfigParser.NoSectionError):
+            module_logger.info("[forker] section missing from cobalt.conf")
+            value = default
+        elif isinstance(e, ConfigParser.NoOptionError):
+            value = default
+        else:
+            raise e
+    return value
 
 
 __all__ = [
@@ -55,7 +76,7 @@ class BaseForker (Component):
     # A default logger for the class is placed here.
     # Assigning an instance-level logger is supported,
     # and expected in the case of multiple instances.
-    logger = logging.getLogger("Cobalt.Components.BaseForker")
+    logger = module_logger
     
     def __init__ (self, *args, **kwargs):
         """Initialize a new BaseForker.
@@ -111,23 +132,65 @@ class BaseForker (Component):
                     stdin = open("/dev/null", 'r')
                 os.dup2(stdin.fileno(), 0)
                 
+                new_out = None
                 try:
                     stdout = open(data["stdout"], 'a')
                 except (IOError, OSError, TypeError), e:
-                    self.logger.error("task %s: error opening stdout file %s: %s (stdout will be lost)", label, data["stdout"], e)
-                    stdout = open("/dev/null", 'a')
+                    self.logger.error("task %s: error opening stdout file %s: %s", label, data["stdout"], e)
+                    output_to_devnull = False
+                    try:
+                        scratch_dir = get_forker_config("scratch_dir", None)
+                        if scratch_dir:
+                            new_out = os.path.join(scratch_dir, "%s.output" % data["jobid"])
+                            self.logger.error("task %s: sending stdout to scratch_dir %s", label, new_out)
+                            stdout = open(new_out, 'a')
+                        else:
+                            self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stdout")
+                            output_to_devnull = True
+                    except Exception, e:
+                        output_to_devnull = True
+                        self.logger.error("task %s: error opening stdout file %s: %s", label, new_out, e)
+                                          
+                    if output_to_devnull:
+                        stdout = open("/dev/null", 'a')
+                        new_out = "/dev/null"
+                        self.logger.error("task %s: sending stdout to /dev/null", label)
                 os.dup2(stdout.fileno(), sys.__stdout__.fileno())
                 
+                new_err = None
                 try:
                     stderr = open(data["stderr"], 'a')
                 except (IOError, OSError, TypeError), e:
-                    self.logger.error("task %s: error opening stderr file %s: %s (stderr will be lost)", label, data["stderr"], e)
-                    stderr = open("/dev/null", 'a')
+                    self.logger.error("task %s: error opening stderr file %s: %s", label, data["stderr"], e)
+                    error_to_devnull = False
+                    try:
+                        scratch_dir = get_forker_config("scratch_dir", None)
+                        if scratch_dir:
+                            new_err = os.path.join(scratch_dir, "%s.error" % data["jobid"])
+                            self.logger.error("task %s: sending stderr to scratch_dir %s", label, new_err)
+                            stderr = open(new_err, 'a')
+                        else:
+                            self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stderr")
+                            error_to_devnull = True
+                    except Exception, e:
+                        error_to_devnull = True
+                        self.logger.error("task %s: error opening stderr file %s: %s", label, new_err, e)
+                                          
+                    if error_to_devnull:
+                        stderr = open("/dev/null", 'a')
+                        new_err = "/dev/null"
+                        self.logger.error("task %s: sending stderr to /dev/null", label)
                 os.dup2(stderr.fileno(), sys.__stderr__.fileno())
                 
                 cmd = data["cmd"]
                 try:
                     cobalt_log_file = open(data["cobalt_log_file"], "a")
+                    if new_out:
+                        print >> cobalt_log_file, "failed to open %s" % data["stdout"]
+                        print >> cobalt_log_file, "stdout sent to %s\n" % new_out
+                    if new_err:
+                        print >> cobalt_log_file, "failed to open %s" % data["stderr"]
+                        print >> cobalt_log_file, "stderr sent to %s\n" % new_err
                     print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
                     print >> cobalt_log_file, "called with environment:\n"
                     for key in os.environ:
