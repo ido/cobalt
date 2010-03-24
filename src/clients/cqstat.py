@@ -18,7 +18,7 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
-__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [--sort <fields>] [--header <fields>] [--reverse] <jobid> <jobid>\n" + \
+__helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [-u username] [--sort <fields>] [--header <fields>] [--reverse] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>\n" + \
               "       cqstat [--version]"
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     options = {'d':'debug', 'f':'full', 'l':'long', 'version':'version',
                'q':'q', 'reverse':'reverse'}
-    doptions = {'header':'header', 'sort':'sort'}
+    doptions = {'header':'header', 'sort':'sort', 'u':'user'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
 
@@ -128,6 +128,10 @@ if __name__ == '__main__':
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(2)
 
+    user_name = '*'
+    if opts['user']:
+        user_name = opts['user']
+
     if opts['q']:  # querying for queues
         query = [{'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
@@ -170,6 +174,7 @@ if __name__ == '__main__':
                     for x in query_dependencies[h]:
                         if x not in header:
                             q.update({x.lower():'*'})
+            q["user"] = user_name
         response = cqm.get_jobs(query)
         
     if len(args) and not response:
