@@ -85,6 +85,7 @@ import signal
 import thread
 from threading import Thread, Lock
 import traceback
+import string
 
 import Cobalt
 import Cobalt.Util
@@ -513,6 +514,9 @@ class Job (StateMachine):
         self.cobalt_log_file = spec.get("cobalt_log_file")
         if not self.cobalt_log_file:
             self.cobalt_log_file = "%s/%s.cobaltlog" % (self.outputdir, self.jobid)
+        else:
+            t = string.Template(self.cobalt_log_file)
+            self.cobalt_log_file = t.safe_substitute(jobid=self.jobid)
         self.path = spec.get("path")
         self.mode = spec.get("mode", "co")
         self.envs = spec.get("envs", {})
@@ -1050,8 +1054,14 @@ class Job (StateMachine):
         # set the output and error filenames (BRT: why is this not done in __init__?)
         if not self.outputpath:
             self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
+        else:
+            t = string.Template(self.outputpath)
+            self.outputpath = t.safe_substitute(jobid=self.jobid)
         if not self.errorpath:
             self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
+        else:
+            t = string.Template(self.errorpath)
+            self.errorpath = t.safe_substitute(jobid=self.jobid)
 
         # add the cobolt job id to the list of environment variables
         self.envs['COBALT_JOBID'] = str(self.jobid)

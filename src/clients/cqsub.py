@@ -15,6 +15,7 @@ import xmlrpclib
 import ConfigParser
 import re
 import logging
+import string
 
 import Cobalt
 import Cobalt.Logging
@@ -253,6 +254,8 @@ if __name__ == '__main__':
         
         if jobspec.has_key('cobalt_log_file'):
             filename = jobspec['cobalt_log_file']
+            t = string.Template(filename)
+            filename = t.safe_substitute(jobid=job[0]['jobid'])
         else:
             filename = "%s/%s.cobaltlog" % (jobspec['outputdir'], job[0]['jobid'])
 
