@@ -2889,7 +2889,7 @@ class QueueManager(Component):
                     job.priority_core_hours = core_hours
                 job.total_etime += dt
                 
-                core_hours += (4*job.nodes*job.walltime/60.0)
+                core_hours += (4*int(job.nodes)*float(job.walltime)/60.0)
             
         self.score_timestamp = current_time
 
