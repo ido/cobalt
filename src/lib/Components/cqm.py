@@ -2620,7 +2620,7 @@ class QueueManager(Component):
             #if update "user_hold" alone, do not check MaxQueued restriction
             if newattr.keys() == ['user_hold']:            
                 job.update(newattr)
-            elif self.Queues[job.queue].can_queue(test):
+            elif self.Queues[test["queue"]].can_queue(test):
                 job.update(newattr)
         return self.Queues.get_jobs(specs, _set_jobs, updates)
     set_jobs = exposed(query(set_jobs))
@@ -2645,7 +2645,10 @@ class QueueManager(Component):
             
             movelist = []
             for job in q.jobs.q_get(specs):
-                if new_q.can_queue(job.to_rx()):
+                test = job.to_rx()
+                # update this just so the Restriction object can report errors correctly
+                test["queue"] = new_q_name
+                if new_q.can_queue(test):
                     movelist.append(job)
                 else:
                     logger.error("attempted to move a job to queue'%s' which will not accept it" % new_q_name)
