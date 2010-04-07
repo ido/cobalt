@@ -569,6 +569,7 @@ class Job (StateMachine):
             
         self.total_etime = 0.0
         self.priority_core_hours = None
+        self.dep_fail = False
     # end def __init__()
 
     def __getstate__(self):
@@ -595,6 +596,10 @@ class Job (StateMachine):
             logger.info("old job missing priority_core_hours")
             self.priority_core_hours = None
     
+        if not state.has_key("dep_fail"):
+            logger.info("old job missing dep_fail")
+            self.dep_fail = False
+            
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
@@ -1911,7 +1916,10 @@ class Job (StateMachine):
     def __get_job_state(self):
         if self.__sm_state in ('Ready', 'Preempted'):
             if self.has_dep_hold:
-                return "dep_hold"
+                if self.dep_fail:
+                    return "dep_fail"
+                else:
+                    return "dep_hold"
             if self.max_running:
                 return "maxrun_hold"
         if self.__sm_state == 'Ready':
@@ -2622,6 +2630,7 @@ class QueueManager(Component):
                 job.update(newattr)
             elif self.Queues[test["queue"]].can_queue(test):
                 job.update(newattr)
+                self.check_dep_fail()
         return self.Queues.get_jobs(specs, _set_jobs, updates)
     set_jobs = exposed(query(set_jobs))
 
@@ -2894,3 +2903,20 @@ class QueueManager(Component):
         self.score_timestamp = current_time
 
     compute_utility_scores = automatic(compute_utility_scores, float(get_cqm_config('compute_utility_interval', 10)))
+    
+    def check_dep_fail(self):
+        queued_jobs = self.Queues.get_jobs([{'jobid': '*'}])
+        for job in queued_jobs:
+            job.dep_fail = False
+            pending = sets.Set(job.all_dependencies).difference(sets.Set(job.satisfied_dependencies))
+            for jobid_str in pending:
+                try:
+                    jobid = int(jobid_str)
+                except:
+                    job.dep_fail = True
+                    break
+            
+                if not self.Queues.get_jobs([{'jobid': jobid}]):
+                    job.dep_fail = True
+                    break
+    check_dep_fail = automatic(check_dep_fail, period=60)
