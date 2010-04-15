@@ -49,133 +49,56 @@ class ClusterProcessGroup(ProcessGroup):
         ProcessGroup.__init__(self, spec, logger)
         self.nodefile = ""
         self.start()
+        
     
-    def _runjob(self):
-        # create the nodefile
-        self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
-        fd = open(self.nodefile, "w")
-        for host in self.location:
-            fd.write(host + "\n")
-        fd.close()
-
-        #check for valid user/group
+    def prefork (self):
+        ret = {}
+        
+        # check for valid user/group
         try:
-            tmp_data = pwd.getpwnam(self.user)
-            userid = tmp_data.pw_uid
-            groupid = tmp_data.pw_gid
+            userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:
             raise ProcessGroupCreationError("error getting uid/gid")
 
-        group_name = grp.getgrgid(groupid)[0]
+        ret["userid"] = userid
+        ret["primary_group"] = groupid
         
-        # run the prologue, while still root
-        processes = []
-        for host in self.location:
-            h = host.split(":")[0]
-            try:
-                p = subprocess.Popen(["/usr/bin/scp", self.nodefile, "%s:/var/tmp" % h], stdout=subprocess.PIPE, 
-                                     stderr=subprocess.PIPE)
-                p.host = h
-                p.action = "nodefile copy"
-                processes.append(p)
-            except:
-                logger.error("Job %s/%s failed to copy nodefile %s to host %s" % (self.jobid, self.user, self.nodefile, h))
-
-            try:
-                p = subprocess.Popen(["/usr/bin/ssh", h, self.config.get("prologue"), str(self.jobid), self.user, group_name], 
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                p.host = h
-                p.action = "prologue"
-                processes.append(p)
-            except:
-                logger.error("Job %s/%s failed to run prologue on host %s" , self.jobid, self.user, h, exc_info=True)
-    
+        self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
         
-        start = time.time()
-        while True:
-            running = False
-            for p in processes:
-                if p.poll() is None:
-                    running = True
-                    break
-            
-            if not running:
-                break
-            
-            if time.time() - start > float(self.config.get("prologue_timeout")):
-                for p in processes:
-                    if p.poll() is None:
-                        try:
-                            os.kill(p.pid, signal.SIGTERM)
-                            self.logger.error("Job %s/%s %s timed out on host %s", self.jobid, self.user, p.action, p.host)
-                        except:
-                            self.logger.error("%s for %s already terminated", p.action, p.host)
-                break
-            else:
-                time.sleep(5)
+        # get supplementary groups
+        supplementary_group_ids = []
+        for g in grp.getgrall():
+            if self.user in g.gr_mem:
+                supplementary_group_ids.append(g.gr_gid)
         
-        prologue_failure = []
-        for p in processes:
-            if p.poll() > 0:
-                self.logger.error("%s failed for host %s", p.action, p.host)
-                prologue_failure.append(p.host)
-                self.logger.error("stderr from %s on host %s: [%s]", p.action, p.host, p.stderr.read().strip())
+        ret["other_groups"] = supplementary_group_ids
         
-        # prologue finished
+        ret["umask"] = self.umask
+        
         try:
-            os.setgid(groupid)
-            os.setuid(userid)
-        except OSError:
-            logger.error("failed to change userid/groupid for process group %s" % (self.id))
-            os._exit(1)
+            rank0 = self.location[0].split(":")[0]
+        except IndexError:
+            raise ProcessGroupCreationError("no location")
+
+        kerneloptions = self.kerneloptions
+
+        ret["postfork_env"] = self.env
+        ret["stdin"] = self.stdin
+        ret["stdout"] = self.stdout
+        ret["stderr"] = self.stderr
         
-        if self.umask != None:
-            try:
-                os.umask(self.umask)
-            except:
-                logger.error("Failed to set umask to %s" % self.umask)
-
-        stdin = open(self.stdin or "/dev/null", 'r')
-        os.dup2(stdin.fileno(), sys.__stdin__.fileno())
-        try:
-            stdout = open(self.stdout or tempfile.mktemp(), 'a')
-            os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-        except (IOError, OSError), e:
-            logger.error("process group %s: error opening stdout file %s: %s (stdout will be lost)" % (self.id, self.stdout, e))
-        try:
-            stderr = open(self.stderr or tempfile.mktemp(), 'a')
-            os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-        except (IOError, OSError), e:
-            logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, self.stderr, e))
-
-        # wait to do this here, so we can write a message in the .error file
-        if prologue_failure:
-            print >> stderr, "COBALT: job %s prologue failed for hosts: %s" % (self.jobid, " ".join(prologue_failure))
-            print >> stderr, "COBALT: execution aborted"
-            stderr.flush()
-            os._exit(1)
-
-        rank0 = self.location[0].split(":")[0]
         cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
         cmd = ("/usr/bin/ssh", "/usr/bin/ssh", rank0, cmd_string)
+
         
-        # If this mpirun command originated from a user script, its arguments
-        # have been passed along in a special attribute.  These arguments have
-        # already been modified to include the partition that cobalt has selected
-        # for the job, and can just replace the arguments built above.
-        if self.true_mpi_args:
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
+        ret["id"] = self.id
+        ret["jobid"] = self.jobid
+        ret["cobalt_log_file"] = self.cobalt_log_file
+        ret["cmd" ] = cmd
+
+        return ret
+
     
-        try:
-            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
-            print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
-            cobalt_log_file.close()
-        except:
-            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % \
-                         (self.id, self.user, self.cobalt_log_file))
-
-        os.execl(*cmd)
-
 
 
 class ClusterSystem (ClusterBaseSystem):
@@ -221,18 +144,39 @@ class ClusterSystem (ClusterBaseSystem):
     get_process_groups = exposed(query(get_process_groups))
     
     def _get_exit_status (self):
-        for each in self.process_groups.itervalues():
-            try:
-                pid, status = os.waitpid(each.head_pid, os.WNOHANG)
-            except OSError: # the child has terminated
-                continue
+        try:
+            running = ComponentProxy("forker").active_list()
+        except:
+            self.logger.error("failed to contact forker component for list of running jobs")
+            return
 
-            # if the child has terminated
-            if each.head_pid == pid:
-                status = status >> 8
-                each.exit_status = status
-                self.logger.info("pg %i exited with status %i" % (each.id, status))
-                    
+        for each in self.process_groups.itervalues():
+            if each.head_pid not in running and each.exit_status is None:
+                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
+                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
+                # maybe the second choice is better
+                try:
+                    dead_dict = ComponentProxy("forker").get_status(each.head_pid)
+                except Queue.Empty:
+                    self.logger.error("failed call for get_status from forker component for pg %s", each.head_pid)
+                    return
+                
+                if dead_dict is None:
+                    self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
+                    each.exit_status = 1234567
+                else:
+                    each.exit_status = dead_dict["exit_status"]
+                    if dead_dict["signum"] == 0:
+                        self.logger.info("process group %i: job %s/%s exited with status %i", 
+                            each.id, each.jobid, each.user, each.exit_status)
+                    else:
+                        if dead_dict["core_dump"]:
+                            core_dump_str = ", core dumped"
+                        else:
+                            core_dump_str = ""
+                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
+                            each.id, each.jobid, each.user, dead_dict["signum"], core_dump_str)
+    
     _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
@@ -246,10 +190,12 @@ class ClusterSystem (ClusterBaseSystem):
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
-            try:
-                os.kill(int(pg.head_pid), getattr(signal, signame))
-            except OSError, e:
-                self.logger.error("signal failure for process group %s: %s" % (pg.id, e))
+            if pg.exit_status is None:
+                try:
+                    ComponentProxy("forker").signal(pg.head_pid, signame)
+                except:
+                    self.logger.error("Failed to communicate with forker when signalling job")
+
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
