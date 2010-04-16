@@ -25,6 +25,7 @@ except ImportError:
 
 import Cobalt
 import Cobalt.Data
+import Cobalt.Util
 from Cobalt.Components import cluster_base_system
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
@@ -157,7 +158,7 @@ class Simulator (ClusterBaseSystem):
         self.logger.info("wait_process_groups(%r)" % (specs))
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            print "finished on hosts:", self.process_groups[process_group.id].location
+            self.logger.info("finished on hosts: %s", Cobalt.Util.merge_nodelist(self.process_groups[process_group.id].location))
             for host in self.process_groups[process_group.id].location:
                 self.running_nodes.discard(host)
             del self.process_groups[process_group.id]
