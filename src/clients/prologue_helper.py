@@ -57,6 +57,7 @@ for host in location:
         logging.error("Job %s/%s failed to run prologue on host %s" , jobid, user, h, exc_info=True)
 
 
+prologue_failure = []
 start = time.time()
 while True:
     running = False
@@ -71,16 +72,16 @@ while True:
     if time.time() - start > prologue_timeout:
         for p in processes:
             if p.poll() is None:
+                logging.error("Job %s/%s %s timed out on host %s", jobid, user, p.action, p.host)
+                prologue_failure.append(p.host)
                 try:
                     os.kill(p.pid, signal.SIGTERM)
-                    logging.error("Job %s/%s %s timed out on host %s", jobid, user, p.action, p.host)
                 except:
                     logging.error("%s for %s already terminated", p.action, p.host)
         break
     else:
         time.sleep(5)
 
-prologue_failure = []
 for p in processes:
     if p.poll() > 0:
         logging.error("%s failed for host %s", p.action, p.host)

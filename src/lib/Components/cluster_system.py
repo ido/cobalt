@@ -18,10 +18,12 @@ import ConfigParser
 import subprocess
 import Cobalt
 import Cobalt.Data
+import Cobalt.Util
 from Cobalt.Components.base import exposed, automatic, query, locking
 from Cobalt.Exceptions import ProcessGroupCreationError
 from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+from Cobalt.Proxy import ComponentProxy
 
 
 __all__ = [
@@ -127,15 +129,19 @@ class ClusterSystem (ClusterBaseSystem):
         
     
     def add_process_groups (self, specs):
-        
         """Create a process group.
         
         Arguments:
         spec -- dictionary hash specifying a process group to start
         """
-        
-        return self.process_groups.q_add(specs)
-    
+
+        self.logger.info("add_process_groups(%r)", specs)
+        process_groups = self.process_groups.q_add(specs)
+        for pgroup in process_groups:
+            self.logger.info("job %s/%s: process group %s created to track script", 
+                    pgroup.jobid, pgroup.user, pgroup.id)
+
+        return process_groups
     add_process_groups = exposed(query(add_process_groups))
     
     def get_process_groups (self, specs):
@@ -147,7 +153,7 @@ class ClusterSystem (ClusterBaseSystem):
         try:
             running = ComponentProxy("forker").active_list()
         except:
-            self.logger.error("failed to contact forker component for list of running jobs")
+            self.logger.error("failed to contact forker component for list of running jobs", exc_info=True)
             return
 
         for each in self.process_groups.itervalues():
@@ -252,13 +258,14 @@ class ClusterSystem (ClusterBaseSystem):
             
         self.lock.acquire()
         try:
+            self.logger.info("job finished on %s", Cobalt.Util.merge_nodelist(pg.location))
             for host in pg.location:
                 self.running_nodes.discard(host)
-                self.logger.info("freeing %s" % host)
             
             if dirty_nodes:    
                 for host in dirty_nodes:
                     self.down_nodes.add(host)
+                    self.logger.info("epilogue timed out, marking host %s down" % host)
                 p = subprocess.Popen([pg.config.get("epi_epilogue"), str(pg.jobid), pg.user, group_name] + dirty_nodes)
             
             del self.process_groups[pg.id]
