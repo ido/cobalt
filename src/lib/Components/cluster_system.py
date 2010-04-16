@@ -127,6 +127,10 @@ class ClusterSystem (ClusterBaseSystem):
         self.process_groups.item_cls = ClusterProcessGroup
 
         
+    def __setstate__(self, state):
+        ClusterBaseSystem.__setstate__(self, state)
+        self.process_groups.item_cls = ClusterProcessGroup
+
     
     def add_process_groups (self, specs):
         """Create a process group.
