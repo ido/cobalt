@@ -153,7 +153,7 @@ class ClusterSystem (ClusterBaseSystem):
         try:
             running = ComponentProxy("forker").active_list()
         except:
-            self.logger.error("failed to contact forker component for list of running jobs", exc_info=True)
+            self.logger.error("failed to contact forker component for list of running jobs")
             return
 
         for each in self.process_groups.itervalues():

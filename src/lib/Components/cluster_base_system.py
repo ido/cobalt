@@ -6,9 +6,11 @@ ClusterBaseSystem -- base system component
 
 import time
 import Cobalt
+import threading
 from Cobalt.Exceptions import  JobValidationError, NotSupportedError
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
+from Cobalt.Statistics import Statistics
 import sets, ConfigParser
 
 __all__ = [
@@ -41,16 +43,39 @@ class ClusterBaseSystem (Component):
         self.down_nodes = sets.Set()
         self.queue_assignments = {}
         self.node_order = {}
-        self.config_file = kwargs.get("config_file", None)
-        if self.config_file is not None:
-            self.configure(self.config_file)
-        else:
-            try:
-                self.configure(CP.get("cluster_system", "hostfile"))
-            except:
-                self.logger.error("unable to load hostfile")
+        try:
+            self.configure(CP.get("cluster_system", "hostfile"))
+        except:
+            self.logger.error("unable to load hostfile")
         self.queue_assignments["default"] = sets.Set(self.all_nodes)
 
+
+    def __getstate__(self):
+        return {"queue_assignments": self.queue_assignments, "version": 1, 
+                "down_nodes": self.down_nodes }
+
+
+    def __setstate__(self, state):
+        self.queue_assignments = state["queue_assignments"]
+        self.down_nodes = state["down_nodes"]
+
+        self.process_groups = ProcessGroupDict()
+        self.pending_diags = dict()
+        self.failed_diags = list()
+        self.all_nodes = sets.Set()
+        self.running_nodes = sets.Set()
+        self.node_order = {}
+        try:
+            self.configure(CP.get("cluster_system", "hostfile"))
+        except:
+            self.logger.error("unable to load hostfile")
+        self.lock = threading.Lock()
+        self.statistics = Statistics()
+
+
+    def save_me(self):
+        Component.save(self)
+    save_me = automatic(save_me)
 
 
     def validate_job(self, spec):

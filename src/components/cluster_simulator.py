@@ -5,6 +5,6 @@ from Cobalt.Components.base import run_component
 
 if __name__ == "__main__":
     try:
-        run_component(Simulator)
+        run_component(Simulator, state_name="cluster_simulator")
     except KeyboardInterrupt:
         pass

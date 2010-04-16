@@ -94,6 +94,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             component = cPickle.load(open(state_file_name))
         except:
             component = component_cls(**cls_kwargs)
+            component.logger.error("unable to load state from %s", state_file_name, exc_info=True)
         component.statefile = state_file_name
     else:
         component = component_cls(**cls_kwargs)
