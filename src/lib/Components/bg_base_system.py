@@ -32,6 +32,11 @@ __all__ = [
 CP = ConfigParser.ConfigParser()
 CP.read(Cobalt.CONFIG_FILES)
 
+try:
+    max_drain_hours = float(CP.get('bgsystem', 'max_drain_hours'))
+except:
+    max_drain_hours = float(sys.maxint)
+
 class NodeCard (object):
     """node cards make up Partitions"""
     def __init__(self, name, state="RM_NODECARD_UP"):
@@ -563,6 +568,12 @@ class BGBaseSystem (Component):
             else:
                 if p.backfill_time < drain_partition.backfill_time:
                     drain_partition = p
+        
+        if drain_partition:
+            # don't try to drain for an entire weekend 
+            hours = (drain_partition.backfill_time - time.time()) / 3600.0
+            if hours > max_drain_hours:
+                drain_partition = None
 
         return drain_partition
 
