@@ -526,6 +526,7 @@ class Job (StateMachine):
         self.all_dependencies = spec.get("all_dependencies")
         if self.all_dependencies:
             self.all_dependencies = self.all_dependencies.split(":")
+            logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
         else:
             self.all_dependencies = []
         self.satisfied_dependencies = []
@@ -2385,6 +2386,8 @@ class Queue (Data):
         if not self.restrictions.has_key("maxrunning"):
             # if it *was* there and was removed, we better clean up
             for job in self.jobs:
+                if job.max_running:
+                    logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                 job.max_running = False
             return
         unum = dict()
@@ -2395,12 +2398,14 @@ class Queue (Data):
                 unum[job.user] = unum[job.user] + 1
 
         for job in self.jobs:
+            old = job.max_running
             job.max_running = False
             if unum.get(job.user, 0) >= int(self.restrictions["maxrunning"].value):
                 if not job.has_resources:
                     job.max_running = True
-
-
+            if old != job.max_running:
+                logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
+                
 class QueueDict(DataDict):
     item_cls = Queue
     key = "name"
@@ -2581,6 +2586,7 @@ class QueueManager(Component):
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
                     
                     if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
+                        logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
                         waiting_job.score = max(waiting_job.score, float(get_cqm_config('dep_frac', 0.5))*job.score)
 
         # remove the job from the queue
@@ -2630,6 +2636,12 @@ class QueueManager(Component):
                 job.update(newattr)
             elif self.Queues[test["queue"]].can_queue(test):
                 job.update(newattr)
+                if newattr.has_key("all_dependencies"):
+                    if job.all_dependencies:
+                        message = ":".join(job.all_dependencies)
+                    else:
+                        message = "[]"
+                    logger.info("Job %s/%s: dependencies set to %s", job.jobid, job.user, message) 
                 self.check_dep_fail()
         return self.Queues.get_jobs(specs, _set_jobs, updates)
     set_jobs = exposed(query(set_jobs))
