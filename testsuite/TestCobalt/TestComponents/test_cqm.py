@@ -300,30 +300,23 @@ class TestCQMJobManagement (TestCQMComponent):
         self.cqm.add_jobs([{'queue':"default", 'jobname':"hello"}])
         
         try:
-            self.cqm.move_jobs([{'jobname':"hello"}], "default")
-        except QueueError:
-            pass
-        else:
-            assert not "moving a job to the same queue should cause an exception"
-            
-        try:
-            self.cqm.move_jobs([{'jobname':"hello"}], "jonx")
+            self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "jonx"})
         except QueueError:
             pass
         else:
             assert not "moving a job to a non-existent queue should cause an exception"
                                  
-        self.cqm.move_jobs([{'jobname':"hello"}], "foo")
+        self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "foo"})
         r = self.cqm.get_jobs([{'jobname':"hello", 'queue':"*"}])
         assert len(r) == 1
         assert r[0].queue == "foo"
         
         try:
-            self.cqm.move_jobs([{'jobname':"hello"}], "restricted")
+            self.cqm.set_jobs([{'jobname':"hello"}], {'queue': "restricted"})
         except QueueError:
             pass
         else:
-            assert not "a job failing can_queue should prevent the move_jobs from succeeding"
+            assert not "a job failing can_queue should prevent the set_jobs from succeeding"
             
 
 class Task (Data):

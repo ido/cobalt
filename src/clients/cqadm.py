@@ -258,7 +258,6 @@ if __name__ == '__main__':
                 raise
     else:
         updates = {}
-        new_q_name = None
         if opts['hold']:
             updates['admin_hold'] = True
             if not spec:
@@ -284,7 +283,7 @@ if __name__ == '__main__':
 #                c['state'] = 'user hold'
 #            spec += copy
         if opts['queue']:
-            new_q_name = opts['queue']
+            updates['queue'] = opts['queue']
         if opts['index']:
             updates['index'] = opts['index']
         if opts['time']:
@@ -298,8 +297,6 @@ if __name__ == '__main__':
             response = []
             if updates:
                 response = cqm.set_jobs(spec, updates)
-            if new_q_name:
-                response += cqm.move_jobs(spec, new_q_name)
         except xmlrpclib.Fault, flt:
             response = []
             if flt.faultCode == 30 or flt.faultCode == 42:
@@ -307,6 +304,7 @@ if __name__ == '__main__':
                 raise SystemExit, 1
             else:
                 print flt.faultString
+                raise SystemExit, 1
     if not response:
         Cobalt.Logging.logging.error("Failed to match any jobs or queues")
     else:

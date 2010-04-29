@@ -62,7 +62,7 @@ if __name__ == '__main__':
         except:
             logger.error("jobid must be an integer")
             sys.exit(1)
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*', 'queue':'*', 'procs':'*',
+    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*', 'procs':'*',
              'nodes':'*', 'is_active':"*"} for jobid in args]
     updates = {}
     nc = 0
@@ -228,6 +228,11 @@ if __name__ == '__main__':
         try:
             cqm.set_jobs([original_spec], jobinfo)
             response = True
+            for key in jobinfo:
+                if not original_spec.has_key(key):
+                    print "%s set to %s" % (key, jobinfo[key])
+                elif jobinfo[key] != original_spec[key]:
+                    print "%s changed from %s to %s" % (key, original_spec[key], jobinfo[key])
         except xmlrpclib.Fault, flt:
             print >> sys.stderr, flt.faultString
             response = True

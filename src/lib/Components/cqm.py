@@ -555,7 +555,7 @@ class Job (StateMachine):
             user = Timer(),
         )
 
-        # setting the queue with cause updated accounting records to be written and the current queue timer to be restarted, so
+        # setting the queue will cause updated accounting records to be written and the current queue timer to be restarted, so
         # this needs to be done only after the object has been initialized
         self.queue = spec.get("queue", "default")
         self.__timers['queue'].start()
@@ -2628,61 +2628,46 @@ class QueueManager(Component):
     get_jobs = exposed(query(get_jobs))
 
     def set_jobs(self, specs, updates):
-        def _set_jobs(job, newattr):
+        joblist = self.Queues.get_jobs(specs)
+        
+        new_q_name = None
+        if updates.has_key("queue"):
+            new_q_name = updates["queue"]
+            if new_q_name not in self.Queues:
+                logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
+                raise QueueError, "Error: queue '%s' does not exist" % new_q_name
+        
+            for job in joblist:
+                if job.is_active or job.has_completed:
+                    raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
+
+        for job in joblist:
+            old_q_name = job.queue
             test = job.to_rx()
-            test.update(newattr)
+            test.update(updates)
             #if update "user_hold" alone, do not check MaxQueued restriction
-            if newattr.keys() == ['user_hold']:            
-                job.update(newattr)
+            if updates.keys() == ['user_hold']:            
+                job.update(updates)
             elif self.Queues[test["queue"]].can_queue(test):
-                job.update(newattr)
-                if newattr.has_key("all_dependencies"):
+                job.update(updates)
+                if updates.has_key("all_dependencies"):
                     if job.all_dependencies:
                         message = ":".join(job.all_dependencies)
                     else:
                         message = "[]"
                     logger.info("Job %s/%s: dependencies set to %s", job.jobid, job.user, message) 
                 self.check_dep_fail()
-        return self.Queues.get_jobs(specs, _set_jobs, updates)
+
+                # only do this if the new queue can accept this job
+                if new_q_name:
+                    new_q = self.Queues[new_q_name]
+                    self.Queues[old_q_name].jobs.remove(job)
+                    new_q.jobs.append(job)
+                    new_q.update_max_running()
+            
+        return joblist    
     set_jobs = exposed(query(set_jobs))
 
-    def move_jobs(self, specs, new_q_name):
-        if new_q_name not in self.Queues:
-            logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
-            raise QueueError, "Error: queue '%s' does not exist" % new_q_name
-        new_q = self.Queues[new_q_name]
-        
-        for job in self.Queues.get_jobs(specs):
-            if job.queue == new_q_name:
-                raise QueueError, "job %d already in queue '%s'" % (job.jobid, new_q_name)
-            if job.is_active or job.has_completed:
-                raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
-        
-        results = []
-        for q in self.Queues.itervalues():
-            # don't look in the target queue.  you'll go blind.
-            if q.name == new_q_name:
-                continue
-            
-            movelist = []
-            for job in q.jobs.q_get(specs):
-                test = job.to_rx()
-                # update this just so the Restriction object can report errors correctly
-                test["queue"] = new_q_name
-                if new_q.can_queue(test):
-                    movelist.append(job)
-                else:
-                    logger.error("attempted to move a job to queue'%s' which will not accept it" % new_q_name)
-                    raise QueueError, "Error: queue '%s' will not accept job %r" % (new_q_name, job.to_rx())
-                    
-            for job in movelist:
-                q.jobs.remove(job)
-                job.queue = new_q.name
-                new_q.jobs.append(job)
-                results.append(job)
-                new_q.update_max_running()
-        return results
-    move_jobs = exposed(query(move_jobs))
 
     def run_jobs(self, specs, nodelist):
         def _run_jobs(job, nodes):

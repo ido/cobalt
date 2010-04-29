@@ -80,7 +80,7 @@ if __name__ == '__main__':
         for filt in filters:
             Cobalt.Util.processfilter(filt, jobinfo)
         try:
-            [job] = cqm.move_jobs([original_spec], jobinfo['queue'])
+            [job] = cqm.set_jobs([original_spec], jobinfo)
             response.append("moved job %d to queue '%s'" % (job.get('jobid'), job.get('queue')))
         except xmlrpclib.Fault, flt:
             response.append(flt.faultString)
