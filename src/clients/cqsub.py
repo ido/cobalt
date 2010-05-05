@@ -10,7 +10,6 @@ import sys
 import pwd
 import os.path
 import popen2
-import stat
 import xmlrpclib
 import ConfigParser
 import re
@@ -108,10 +107,8 @@ if __name__ == '__main__':
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
-    script_mode = os.stat(command[0])[stat.ST_MODE]
-    if not (script_mode & stat.S_IXUSR or \
-                script_mode & stat.S_IXGRP or script_mode & stat.S_IXOTH):
-        logger.error("Script %s is not executable" % command[0])
+    if not os.access(command[0], os.X_OK):
+        logger.error("command %s is not executable" % command[0])
         sys.exit(1)
     if opts['attrs'] is not False:
         if sys.argv.count('--attrs') - command.count('--attrs') > 1:
