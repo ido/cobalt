@@ -107,7 +107,7 @@ if __name__ == '__main__':
     for field in ['kernel', 'queue']:
         if not opts[field]:
             opts[field] = 'default'
-    if not os.access(command[0], os.X_OK):
+    if not os.access(command[0], os.X_OK | os.R_OK):
         logger.error("command %s is not executable" % command[0])
         sys.exit(1)
     if opts['attrs'] is not False:

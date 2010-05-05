@@ -104,7 +104,7 @@ if __name__ == '__main__':
         logger.error("command %s not found, or is not a file" % command[0])
         sys.exit(1)
 
-    if not os.access(command[0], os.X_OK):
+    if not os.access(command[0], os.X_OK | os.R_OK):
         logger.error("command %s is not executable" % command[0])
         sys.exit(1)
     for field in ['kernel', 'queue']:
