@@ -7,27 +7,37 @@ __version__ = '$Version$'
 import getopt, os, pwd, sys, time
 import xmlrpclib
 import Cobalt.Logging, Cobalt.Util
+import optparse
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
 usehelp = "Usage:\nqrls [--version] <jobid> <jobid>"
 
 if __name__ == '__main__':
-    if '--version' in sys.argv:
+    p = optparse.OptionParser(usage="%prog [options] <jobid> <jobid>",
+            description="Removes user_hold state set by qhold.  Can instead clear job dependencies by using the --dependencies flag.")
+    
+    p.add_option("-v", "--version", action="store_true", dest="version", help="show version information")
+    p.add_option("-d", action="store_true", dest="debug", help="debug level logging")
+    p.add_option("--dependencies", action="store_true", dest="deps", help="clear all job dependencies")
+    
+    if len(sys.argv) == 1:
+        p.print_help()
+        sys.exit(1)
+        
+    opt, args = p.parse_args()
+
+    if opt.version:
         print "qrls %s" % __revision__
         print "cobalt %s" % __version__
-        raise SystemExit, 0
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f')
-    except getopt.GetoptError, gerr:
-        print gerr
-        print usehelp
-        raise SystemExit, 1
+        sys.exit(0)
+    
     if len(args) < 1:
-        print usehelp
-        raise SystemExit, 1
+        p.print_help()
+        sys.exit(1)
+    
     level = 30
-    if '-d' in sys.argv:
+    if opt.debug:
         level = 10
     user = pwd.getpwuid(os.getuid())[0]
     Cobalt.Logging.setup_logging('qrls', to_syslog=False, level=level)
@@ -47,7 +57,7 @@ if __name__ == '__main__':
             all_jobs.add(args[i])
         except:
             logger.error("jobid must be an integer")
-            raise SystemExit, 1
+            sys.exit(1)
         
     check_specs = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_hold':'*'} for jobid in args]
 
@@ -60,13 +70,23 @@ if __name__ == '__main__':
     jobs_existed = [j.get('jobid') for j in check_response]
     all_jobs = all_jobs.union(set(jobs_existed))
     update_specs = [{'tag':'job', 'user':user, 'jobid':jobid, 'user_hold':"*", 'is_active':"*"} for jobid in jobs_existed]
-    updates = {'user_hold':False}
+    
+    if opt.deps:
+        updates = {'all_dependencies': []}
+    else:
+        updates = {'user_hold':False}
 
     try:
         update_response = cqm.set_jobs(update_specs, updates)
     except xmlrpclib.Fault, flt:
         print flt.faultString
         raise SystemExit, 1
+    
+    if opt.deps:
+        print "   Removed dependencies from jobs: "
+        for j in update_response:
+            print "      %s" % j.get("jobid")
+        sys.exit(0)
 
     jobs_found = [j.get('jobid') for j in update_response]
     jobs_not_found = list(all_jobs.difference(set(jobs_existed)))
