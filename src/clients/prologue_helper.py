@@ -34,6 +34,11 @@ user = args["user"]
 location = args["location"].split(":")
 jobid = args["jobid"]
 
+fd = open(nodefile, "w")
+for host in location:
+    fd.write(host + "\n")
+fd.close()
+
 # run the prologue, while still root
 processes = []
 for host in location:

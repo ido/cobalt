@@ -51,6 +51,7 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_simulator.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/nodeadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/perfdata.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/prologue_helper.py %${RPM_BUILD_ROOT}%{_sbindir}
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/test*
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/brun.py
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/bstat.py
