@@ -630,24 +630,26 @@ class BGSystem (BGBaseSystem):
             self._partitions_lock.release()
 
             # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
+            pnames_cleaned = []
             for p in partitions_cleanup:
                 self.logger.info("partition %s: starting partition destruction", p.name)
-                pnames = []
+                pnames_destroyed = []
                 parts = list(p._all_children)
                 parts.append(p)
                 for part in parts:
+                    pnames_cleaned.append(part.name)
                     try:
                         bpart = part.bridge_partition
                         if bpart.state != "RM_PARTITION_FREE":
                             bpart.destroy()
-                            pnames.append(part.name)
+                            pnames_destroyed.append(part.name)
                     except Cobalt.bridge.IncompatibleState:
                         pass
                     except:
                         self.logger.info("partition %s: an exception occurred while attempting to destroy partition %s",
                             p.name, part.name)
-                if len(pnames) > 0:
-                    self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames))
+                if len(pnames_destroyed) > 0:
+                    self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
                 else:
                     self.logger.info("partition %s: no partition destruction was required", p.name)
                 try:
@@ -655,6 +657,16 @@ class BGSystem (BGBaseSystem):
                     self.logger.info("partition %s: kernel settings cleared", p.name)
                 except:
                     self.logger.error("partition %s: failed to clear kernel settings", p.name)
+            job_filter = Cobalt.bridge.JobFilter()
+            job_filter.job_type = Cobalt.bridge.JOB_TYPE_ALL_FLAG
+            jobs = Cobalt.bridge.JobList.by_filter(job_filter)
+            for job in jobs:
+                if job.partition_id in pnames_cleaned:
+                    try:
+                        job.cancel()
+                        self.logger.info("partition %s: task %d canceled", job.partition_id, job.db_id)
+                    except (Cobalt.bridge.IncompatibleState, Cobalt.bridge.JobNotFound):
+                        pass
 
             time.sleep(10)
 

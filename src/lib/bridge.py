@@ -1259,21 +1259,23 @@ RM_JobFilterPartitionID = 13001
 RM_JobFilterState = 13002
 RM_JobFilterExecutable = 13003
 RM_JobFilterUserName = 13004
-RM_JobFilterDBJobID = 13006
-RM_JobFilterOutDir = 13007
-RM_JobFilterMode = 13008
-RM_JobFilterStartTime = 13009
-RM_JobFilterLocation = 13010
-RM_JobFilterPoolID = 13011
-RM_JobFilterType = 13012
+RM_JobFilterDBJobID = 13005
+RM_JobFilterOutDir = 13006
+RM_JobFilterMode = 13007
+RM_JobFilterStartTime = 13008
+RM_JobFilterLocation = 13009
+RM_JobFilterPoolID = 13010
+RM_JobFilterType = 13011
 
 RM_SMP_MODE = 0
 RM_DUAL_MODE = 1
 RM_VIRTUAL_NODE_MODE = 2
 
-JOB_TYPE_HPC_FLAG = 0x0001 
-JOB_TYPE_HTC_FLAG = 0x0002 
-JOB_TYPE_ALL_FLAG = 0x0003
+JOB_TYPE_HPC_FLAG = 1 
+JOB_TYPE_HTC_FLAG = 2
+JOB_TYPE_ALL_FLAG = 3
+
+rm_job_type_flag_t = c_int
 
 bridge.rm_new_job_filter.argtypes = [POINTER(POINTER(rm_job_filter_t))]
 bridge.rm_new_job_filter.restype = check_status
@@ -1301,3 +1303,16 @@ class JobFilter (Resource):
         self._set_data(RM_JobFilterState, data)
 
     job_state = property(None, _set_job_state)
+
+    def _set_job_type(self, value):
+        data = rm_job_type_flag_t(value)
+        self._set_data(RM_JobFilterType, data)
+
+    job_type = property(None, _set_job_type)
+
+    def _set_partition_id(self, value):
+        self._partition_id = value
+        data = pm_partition_id_t(self._partition_id)
+        self._set_data(RM_JobFilterPartitionID, data)
+
+    partition_id = property(None, _set_partition_id)

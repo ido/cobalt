@@ -132,7 +132,7 @@ if __name__ == '__main__':
                     args = eval(flt.faultString)
                     exc = JobDeleteError(*args)
                     print >>sys.stderr, "Job %s: ERROR - %s" % (exc.jobid, exc.message)
-                    raise SystemExit, exit_code
+                    raise SystemExit, 1
                 else:
                     raise
     elif opts['run']:
