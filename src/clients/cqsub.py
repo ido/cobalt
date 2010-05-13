@@ -218,6 +218,7 @@ if __name__ == '__main__':
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
 
     if opts['dependencies']:
+        Cobalt.Util.check_dependencies(opts['dependencies'])
         jobspec['all_dependencies'] = opts['dependencies']
     try:
         filters = CP.get('cqm', 'filters').split(':')

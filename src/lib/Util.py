@@ -21,8 +21,30 @@ import inspect
 import re
 
 import Cobalt
+from Cobalt.Proxy import ComponentProxy
 
 logger = logging.getLogger('Util')
+
+
+def check_dependencies(dependency_string):
+    deps = set(dependency_string.split(":"))
+    
+    query = []
+    for dep in deps:
+        try:
+            query.append({"jobid": int(dep)})
+        except:
+            pass
+    
+    jobs = ComponentProxy("queue-manager").get_jobs(query)
+    
+    job_ids = set( [str(j["jobid"]) for j in jobs] )
+    
+    missing = deps.difference(job_ids)
+    
+    if missing:
+        print "WARNING: dependencies %s do not match jobs currently in the queue" % ":".join(missing)
+    
 
 def get_time(date_string):
     '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, or DD:HH:MM:SS, and return the total number of minutes.  Raise an exception for bad values.'''

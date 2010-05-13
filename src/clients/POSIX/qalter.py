@@ -171,6 +171,7 @@ if __name__ == '__main__':
     if opts['held']:
         updates.update({'user_hold':True})
     if opts['dependencies']:
+        Cobalt.Util.check_dependencies(opts['dependencies'])
         deps = opts['dependencies']
         if deps and deps.lower() != "none":
             deps = deps.split(":")
@@ -230,7 +231,10 @@ if __name__ == '__main__':
             response = True
             for key in jobinfo:
                 if not original_spec.has_key(key):
-                    print "%s set to %s" % (key, jobinfo[key])
+                    if key == "all_dependencies":
+                        print "dependencies set to %s" % ":".join(jobinfo[key])
+                    else:
+                        print "%s set to %s" % (key, jobinfo[key])
                 elif jobinfo[key] != original_spec[key]:
                     print "%s changed from %s to %s" % (key, original_spec[key], jobinfo[key])
         except xmlrpclib.Fault, flt:
