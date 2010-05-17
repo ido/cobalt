@@ -270,7 +270,7 @@ class RunScriptsThread (PickleAwareThread):
         as the list provided during initialization.  the exception would be if the object was pickled and the reconstituted
         before the last script finished.
         '''
-        return [result['script'] for result in results]
+        return [result['script'] for result in self.results]
 
     scripts_completed = property(__get_scripts_completed)
 

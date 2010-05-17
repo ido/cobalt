@@ -598,8 +598,10 @@ class PickleAwareThread (object):
 
     def __run_thread(self):
         self.__started = True
-        self.run()
-        self.__stopped = True
+        try:
+            self.run()
+        finally:
+            self.__stopped = True
 
     def run(self):
         if self.__target:
