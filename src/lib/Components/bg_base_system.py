@@ -503,7 +503,7 @@ class BGBaseSystem (Component):
             for p in available_partitions:            
                 possible.add(p.size)
                 
-            desired_size = 64
+            desired_size = 0
             job_nodes = int(nodes)
             for psize in sorted(possible):
                 if psize >= job_nodes:
@@ -579,7 +579,7 @@ class BGBaseSystem (Component):
 
 
     def possible_locations(self, job_nodes, q_name):
-        desired_size = 64
+        desired_size = 0
         job_nodes = int(job_nodes)
         if self._defined_sizes.has_key(q_name):
             for psize in self._defined_sizes[q_name]:
