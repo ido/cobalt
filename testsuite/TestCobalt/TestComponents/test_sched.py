@@ -328,9 +328,9 @@ class TestBGSched(object):
     def test_enable_and_disable(self):
         sched = BGSched()
         assert sched.active
-        sched.disable()
+        sched.disable("crusher")
         assert not sched.active
-        sched.enable()
+        sched.enable("crusher")
         assert sched.active
        
     def test_prioritycmp(self):

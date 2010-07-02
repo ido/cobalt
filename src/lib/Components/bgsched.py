@@ -61,7 +61,7 @@ class Reservation (Data):
         if spec.has_key("users"):
             qm = ComponentProxy("queue-manager")
             try:
-                qm.set_queues([{'name':self.queue,}], {'users':spec['users']})
+                qm.set_queues([{'name':self.queue,}], {'users':spec['users']}, "bgsched")
             except ComponentLookupError:
                 logger.error("unable to contact queue manager when updating reservation users")
                 raise
@@ -176,7 +176,7 @@ class ReservationDict (DataDict):
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:
-                    qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'policy':DEFAULT_RESERVATION_POLICY}])
+                    qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'policy':DEFAULT_RESERVATION_POLICY}], "bgsched")
                 except Exception, e:
                     logger.error("unable to add reservation queue %s (%s)" % \
                                  (reservation.queue, e))
@@ -187,7 +187,7 @@ class ReservationDict (DataDict):
                 # we can't set the users list using add_queues, so we want to call set_queues even if bgsched
                 # just created the queue
                 qm.set_queues([{'name':reservation.queue}],
-                              {'state':"running", 'users':reservation.users})
+                              {'state':"running", 'users':reservation.users}, "bgsched")
             except Exception, e:
                 logger.error("unable to update reservation queue %s (%s)" % \
                              (reservation.queue, e))
@@ -204,7 +204,7 @@ class ReservationDict (DataDict):
                 if reservation.createdQueue and reservation.queue in queues and \
                 not self.q_get([{'queue':reservation.queue}])]
         try:
-            qm.set_queues(spec, {'state':"dead"})
+            qm.set_queues(spec, {'state':"dead"}, "bgsched")
         except Exception, e:
             logger.error("problem disabling reservation queue (%s)" % e)
         return reservations
@@ -663,13 +663,15 @@ class BGSched (Component):
     schedule_jobs = locking(automatic(schedule_jobs))
 
     
-    def enable(self):
+    def enable(self, user_name):
         """Enable scheduling"""
+        self.logger.info("%s enabling scheduling", user_name)
         self.active = True
     enable = exposed(enable)
 
-    def disable(self):
+    def disable(self, user_name):
         """Disable scheduling"""
+        self.logger.info("%s disabling scheduling", user_name)
         self.active = False
     disable = exposed(disable)
 

@@ -286,7 +286,7 @@ class TestCQMJobManagement (TestCQMComponent):
         # create a local QueueManager so that we can be sure no jobids have been used
         id = Cobalt.Components.cqm.cqm_id_gen.get() + 10
         self.cqm.add_queues([{'name':"default"}])
-        self.cqm.set_jobid(id)
+        self.cqm.set_jobid(id, "crusher")
         self.cqm.add_jobs([{'queue':"default"}])
         r = self.cqm.get_jobs([{'jobid':id}])
         assert len(r) == 1

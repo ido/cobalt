@@ -227,7 +227,7 @@ if __name__ == '__main__':
         for filt in filters:
             Cobalt.Util.processfilter(filt, jobinfo)
         try:
-            cqm.set_jobs([original_spec], jobinfo)
+            cqm.set_jobs([original_spec], jobinfo, user)
             response = True
             for key in jobinfo:
                 if not original_spec.has_key(key):

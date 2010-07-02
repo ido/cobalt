@@ -77,7 +77,7 @@ if __name__ == '__main__':
         updates = {'user_hold':False}
 
     try:
-        update_response = cqm.set_jobs(update_specs, updates)
+        update_response = cqm.set_jobs(update_specs, updates, user)
     except xmlrpclib.Fault, flt:
         print flt.faultString
         raise SystemExit, 1

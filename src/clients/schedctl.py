@@ -4,6 +4,7 @@ import sys
 import os
 import optparse
 import Cobalt
+import getpass
 from Cobalt.Proxy import ComponentProxy
 
 
@@ -20,6 +21,7 @@ if __name__ == '__main__':
         p.print_help()
         sys.exit(1)
         
+    whoami = getpass.getuser()
     opt, args = p.parse_args()
     
     try:
@@ -29,12 +31,12 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if opt.stop:
-        sched.disable()
+        sched.disable(whoami)
     elif opt.start:
-        sched.enable()
+        sched.enable(whoami)
     elif opt.reread:
         try:
-            Cobalt.Proxy.ComponentProxy("queue-manager").define_user_utility_functions()
+            Cobalt.Proxy.ComponentProxy("queue-manager").define_user_utility_functions(whoami)
         except:
             print >> sys.stderr, "Failed to connect to queue manager"
             sys.exit(1)
@@ -74,7 +76,7 @@ if __name__ == '__main__':
             sys.exit(1) 
         
         try:
-            response = Cobalt.Proxy.ComponentProxy("queue-manager").adjust_job_scores(specs, new_score)
+            response = Cobalt.Proxy.ComponentProxy("queue-manager").adjust_job_scores(specs, new_score, whoami)
         except:
             print >> sys.stderr, "Failed to connect to queue manager"
             raise

@@ -46,6 +46,7 @@ if __name__ == '__main__':
                 'i':'index', 'policy':'policy', 'run':'run',
                 'setq':'setq', 'time':'time', 'unsetq':'unsetq', 'savestate':'savestate'}
 
+    whoami = getpass.getuser()
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
                                             doptions, __helpmsg__)
 
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     kdata = [item for item in ['--kill', '--delete'] if item in sys.argv]
     if opts['setjobid']:
         try:
-            response = cqm.set_jobid(int(opts['setjobid']))
+            response = cqm.set_jobid(int(opts['setjobid']), whoami)
         except ValueError:
             print "The new jobid must be an integer"
             raise SystemExit, 1
@@ -120,13 +121,12 @@ if __name__ == '__main__':
         else:
             print response
     elif kdata:
-        user = getpass.getuser()
         for cmd in kdata:
             try:
                 if cmd == '--delete':
-                    response = cqm.del_jobs(spec, True, user)
+                    response = cqm.del_jobs(spec, True, whoami)
                 else:
-                    response = cqm.del_jobs(spec, False, user)
+                    response = cqm.del_jobs(spec, False, whoami)
             except xmlrpclib.Fault, flt:
                 if flt.faultCode == JobDeleteError.fault_code:
                     args = eval(flt.faultString)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
             print "Error: cannot find partition named '%s'" % location
             raise SystemExit, 1
         try:
-            response = cqm.run_jobs(spec, location.split(':'))
+            response = cqm.run_jobs(spec, location.split(':'), whoami)
         except xmlrpclib.Fault, flt:
             if flt.faultCode == JobRunError.fault_code:
                 args = eval(flt.faultString)
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             print 'Must specify queue name'
             raise SystemExit, 1
         else:
-            response = cqm.add_queues(spec)
+            response = cqm.add_queues(spec, whoami)
             datatoprint = [('Added Queues', )] + \
                           [(q.get('name'), ) for q in response]
             Cobalt.Util.print_tabular(datatoprint)
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     elif opts['delq']:
         response = []
         try:
-            response = cqm.del_queues(spec, opts['force'])
+            response = cqm.del_queues(spec, opts['force'], whoami)
             datatoprint = [('Deleted Queues', )] + \
                           [(q.get('name'), ) for q in response]
             Cobalt.Util.print_tabular(datatoprint)
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                     print 'Time for ' + prop + ' is not valid, must be in hh:mm:ss or mm format'
             updates.update({prop.lower():val})
         try:
-            response = cqm.set_queues(spec, updates)
+            response = cqm.set_queues(spec, updates, whoami)
         except xmlrpclib.Fault, flt:
             if flt.faultCode == QueueError.fault_code:
                 print flt.faultString
@@ -230,24 +230,23 @@ if __name__ == '__main__':
         for prop in opts['unsetq'].split(' '):
             updates[prop.lower()] = None
 
-        response = cqm.set_queues(spec, updates)
+        response = cqm.set_queues(spec, updates, whoami)
     elif opts['stopq']:
-        response = cqm.set_queues(spec, {'state':'stopped'})
+        response = cqm.set_queues(spec, {'state':'stopped'}, whoami)
     elif opts['startq']:
-        response = cqm.set_queues(spec, {'state':'running'})
+        response = cqm.set_queues(spec, {'state':'running'}, whoami)
     elif opts['drainq']:
-        response = cqm.set_queues(spec, {'state':'draining'})
+        response = cqm.set_queues(spec, {'state':'draining'}, whoami)
     elif opts['killq']:
-        response = cqm.set_queues(spec, {'state':'dead'})
+        response = cqm.set_queues(spec, {'state':'dead'}, whoami)
     elif opts['policy']:
-        response = cqm.set_queues(spec, {'policy':opts['policy']})
+        response = cqm.set_queues(spec, {'policy':opts['policy']}, whoami)
     elif opts['preempt']:
         if not spec:
             print "you must specify a jobid to preempt"
             raise SystemExit, 1
-        user = getpass.getuser()
         try:
-            response = cqm.preempt_jobs(spec, user, opts['force'])
+            response = cqm.preempt_jobs(spec, whoami, opts['force'])
         except xmlrpclib.Fault, flt:
             if flt.faultCode == JobPreemptionError.fault_code:
                 args = eval(flt.faultString)
@@ -296,7 +295,7 @@ if __name__ == '__main__':
         try:
             response = []
             if updates:
-                response = cqm.set_jobs(spec, updates)
+                response = cqm.set_jobs(spec, updates, whoami)
         except xmlrpclib.Fault, flt:
             response = []
             if flt.faultCode == 30 or flt.faultCode == 42:

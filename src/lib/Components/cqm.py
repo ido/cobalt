@@ -2564,8 +2564,9 @@ class QueueManager(Component):
     #
     # job operations
     #
-    def set_jobid(self, jobid):
+    def set_jobid(self, jobid, user_name):
         '''Set next jobid for new job'''
+        logger.info("%s resetting jobid generator to %s", user_name, jobid)
         self.id_gen.set(jobid)
         # print "self : ", self.id_gen.idnum
         # print "module : ", cqm_id_gen.idnum
@@ -2627,8 +2628,10 @@ class QueueManager(Component):
         return self.Queues.get_jobs(specs)
     get_jobs = exposed(query(get_jobs))
 
-    def set_jobs(self, specs, updates):
+    def set_jobs(self, specs, updates, user_name=None):
         joblist = self.Queues.get_jobs(specs)
+        
+        logger.info("%s calling set_jobs on %s with updates %s", user_name, specs, updates)
         
         new_q_name = None
         if updates.has_key("queue"):
@@ -2669,7 +2672,9 @@ class QueueManager(Component):
     set_jobs = exposed(query(set_jobs))
 
 
-    def run_jobs(self, specs, nodelist):
+    def run_jobs(self, specs, nodelist, user_name=None):
+        if user_name:
+            logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
         def _run_jobs(job, nodes):
             job.run(nodes)
             self.Queues[job.queue].update_max_running()
@@ -2697,7 +2702,9 @@ class QueueManager(Component):
     #
     # queue operations
     #
-    def add_queues(self, specs):
+    def add_queues(self, specs, user_name=None):
+        if user_name:
+            logger.info("%s adding queue %s", user_name, specs)
         return self.Queues.add_queues(specs)
     add_queues = exposed(query(add_queues))
     
@@ -2709,7 +2716,7 @@ class QueueManager(Component):
         return self.Queues.can_queue(job_spec)
     can_queue = exposed(can_queue)
 
-    def set_queues(self, specs, updates):
+    def set_queues(self, specs, updates, user_name=None):
         def _setQueues(queue, newattr):
             if 'priority' in newattr:
                 if newattr['priority'] is None:
@@ -2726,14 +2733,17 @@ class QueueManager(Component):
                         del queue.restrictions[key]
                     elif newattr[key] is not None:
                         queue.restrictions[key] = Restriction({'name':key, 'value':newattr[key]}, queue)
+        logger.info("%s calling set_queues on %s with updates %s", user_name, specs, updates)
         return self.Queues.get_queues(specs, _setQueues, updates)
     set_queues = exposed(query(set_queues))
 
-    def del_queues(self, specs, force = False):
+    def del_queues(self, specs, force=False, user_name=None):
         '''Delete queue(s), but check if there are still jobs in the queue'''
         if force:
+            logger.info("%s requested force delete of queue %s", user_name, specs)
             return self.Queues.del_queues(specs)
 
+        logger.info("%s requested delete of queue %s", user_name, specs)
         queues = self.Queues.get_queues(specs)
         
         failed = []
@@ -2742,6 +2752,7 @@ class QueueManager(Component):
             if len(jobs) > 0:
                 failed.append(queue.name)
                 queues.remove(queue)
+                logger.info("queue %s not empty: delete failed", queue.name)
         response = []
         if len(queues) > 0:
             response = self.Queues.del_queues([queue.to_rx() for queue in queues])
@@ -2750,6 +2761,10 @@ class QueueManager(Component):
                 "use 'cqadm -f --delq' to delete the queue(s) and the jobs.\n\nDeleted Queues\n================\n%s") % \
                 (",".join(failed), "\n".join([q.name for q in response]))
         else:
+            if not response:
+                logger.info("%s did not match any queues in del_queues", specs)
+            else:
+                logger.info("deleted queues: %s", ", ".join([ q.name for q in response]))
             return response
     del_queues = exposed(query(del_queues))
 
@@ -2761,8 +2776,11 @@ class QueueManager(Component):
 
 
 
-    def define_user_utility_functions(self):
-        self.logger.info("building user utility functions")
+    def define_user_utility_functions(self, user_name=None):
+        if user_name:
+            self.logger.info("%s requested rebuilding user utility functions", user_name)
+        else:
+            self.logger.info("building user utility functions")
         self.user_utility_functions.clear()
         filename = os.path.expandvars(get_bgsched_config("utility_file", ""))
         try:
@@ -2795,7 +2813,8 @@ class QueueManager(Component):
                     self.user_utility_functions[thing.func_name] = thing
     define_user_utility_functions = exposed(define_user_utility_functions)
     
-    def adjust_job_scores(self, specs, score):
+    def adjust_job_scores(self, specs, score, user_name):
+        self.logger.info("%s updating job scores: %s, %s", user_name, specs, score)
         if score[0] in ["-", "+"]:
             absolute = False
         else:
