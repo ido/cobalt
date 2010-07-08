@@ -83,17 +83,12 @@ def get_time(date_string):
         if len(time_info) == 1:
             if time_info["minutes"] < 0:
                 raise TimeFormatError, "minutes value must not be negative"
-        else:
-            if time_info["minutes"] < 0 or time_info["minutes"] > 59:
-                raise TimeFormatError, "minutes value '%s' outside range [0, 59]" % time_info["minutes"]
+       
 
     if time_info.has_key("hours"):
         if len(time_info) < 4:
             if time_info["hours"] < 0:
                 raise TimeFormatError, "hours value must not be negative"
-        else:
-            if time_info["hours"] < 0 or time_info["hours"] > 23:
-                raise TimeFormatError, "hours value '%s' outside range [0, 23]" % time_info["hours"]
 
     if time_info.has_key("days"):
         if time_info["days"] < 0:
