@@ -4,6 +4,7 @@ import sys
 import optparse
 import Cobalt
 import Cobalt.Util
+import getpass
 from Cobalt.Proxy import ComponentProxy
 
 
@@ -18,7 +19,8 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         p.print_help()
         sys.exit(1)
-        
+    
+    whoami = getpass.getuser()    
     opt, args = p.parse_args()
     
     try:
@@ -32,7 +34,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if opt.down:
-        delta = system.nodes_down(args)
+        delta = system.nodes_down(args, whoami)
         print "nodes marked down:"
         for d in delta:
             print "   %s" % d
@@ -43,7 +45,7 @@ if __name__ == '__main__':
                 print "   %s" % a
     
     elif opt.up:
-        delta = system.nodes_up(args)
+        delta = system.nodes_up(args, whoami)
         print "nodes marked up:"
         for d in delta:
             print "   %s" % d
@@ -72,6 +74,6 @@ if __name__ == '__main__':
         Cobalt.Util.printTabular(header + output)
 
     elif opt.queue:
-        data = system.set_queue_assignments(opt.queue, args)
+        data = system.set_queue_assignments(opt.queue, args, whoami)
         
         print data

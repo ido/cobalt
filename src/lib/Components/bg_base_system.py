@@ -194,8 +194,8 @@ class BGBaseSystem (Component):
     
     partitions = property(_get_partitions)
 
-    def add_partitions (self, specs):
-        self.logger.info("add_partitions(%r)" % (specs))
+    def add_partitions (self, specs, user_name=None):
+        self.logger.info("%s called add_partitions(%r)", user_name, specs)
         specs = [{'name':spec.get("name")} for spec in specs]
         
         self._partitions_lock.acquire()
@@ -235,9 +235,9 @@ class BGBaseSystem (Component):
         return [ p.name for p in parts ]
     verify_locations = exposed(verify_locations)
 
-    def del_partitions (self, specs):
+    def del_partitions (self, specs, user_name=None):
         """Remove partitions from the list of managed partitions"""
-        self.logger.info("del_partitions(%r)" % (specs))
+        self.logger.info("%s called del_partitions(%r)", user_name, specs)
         
         self._partitions_lock.acquire()
         try:
@@ -255,10 +255,10 @@ class BGBaseSystem (Component):
         return partitions
     del_partitions = exposed(query(del_partitions))
 
-    def set_partitions (self, specs, updates):
+    def set_partitions (self, specs, updates, user_name=None):
         """Update random attributes on matching partitions"""
         def _set_partitions(part, newattr):
-            self.logger.info("updating partition %s: %r" % (part.name, newattr))
+            self.logger.info("%s updating partition %s: %r", user_name, part.name, newattr)
             part.update(newattr)
             
         self._partitions_lock.acquire()
@@ -377,7 +377,8 @@ class BGBaseSystem (Component):
         return spec
     validate_job = exposed(validate_job)
         
-    def run_diags(self, partition_list, test_name):
+    def run_diags(self, partition_list, test_name, user_name=None):
+        self.logger.info("%s running diags %s on partitions %s", user_name, test_name, partition_list)
         def size_cmp(left, right):
             return -cmp(left.size, right.size)
         
@@ -440,7 +441,8 @@ class BGBaseSystem (Component):
                 
     handle_pending_diags = automatic(handle_pending_diags)
     
-    def fail_partitions(self, specs):
+    def fail_partitions(self, specs, user_name=None):
+        self.logger.info("%s failing partition %s", user_name, specs)
         parts = self.get_partitions(specs)
         if not parts:
             ret = "no matching partitions found\n"
@@ -456,7 +458,8 @@ class BGBaseSystem (Component):
         return ret
     fail_partitions = exposed(fail_partitions)
     
-    def unfail_partitions(self, specs):
+    def unfail_partitions(self, specs, user_name=None):
+        self.logger.info("%s unfailing partition %s", user_name, specs)
         parts = self.get_partitions(specs)
         if not parts:
             ret = "no matching partitions found\n"

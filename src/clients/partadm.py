@@ -7,6 +7,7 @@ __version__ = '$Version$'
 import sys, getopt, xmlrpclib
 import sets
 import os
+import getpass
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -46,6 +47,8 @@ if __name__ == '__main__':
         print "Failed to connect to system component"
         raise SystemExit, 1
 
+    whoami = getpass.getuser()
+    
     if '-r' in sys.argv:
         partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children':'*'} for name in args])
         parts = args
@@ -59,32 +62,32 @@ if __name__ == '__main__':
     if '-a' in sys.argv:
         func = system.add_partitions
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
-                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], )
+                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], whoami)
     elif '-d' in sys.argv:
         func = system.del_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in parts], )
+        args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
     elif '--enable' in sys.argv:
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'scheduled':True})
+                {'scheduled':True}, whoami)
     elif '--disable' in sys.argv:
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'scheduled':False})
+                {'scheduled':False}, whoami)
     elif '--activate' in sys.argv:
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'functional':True})
+                {'functional':True}, whoami)
     elif '--deactivate' in sys.argv:
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'functional':False})
+                {'functional':False}, whoami)
     elif '--fail' in sys.argv:
         func = system.fail_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in parts], )
+        args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
     elif '--unfail' in sys.argv:
         func = system.unfail_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in parts], )
+        args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
     elif '--xml' in sys.argv:
         func = system.generate_xml
         args = tuple()
@@ -121,7 +124,7 @@ if __name__ == '__main__':
             raise SystemExit, 1
         func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'queue':queue})
+                {'queue':queue}, whoami)
     elif '--dump' in [opt for (opt, arg) in opts]:
         func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
@@ -129,7 +132,7 @@ if __name__ == '__main__':
     elif '--diag' in [opt for (opt, arg)  in opts]:
         func = system.run_diags
         test_name = [arg for (opt, arg) in opts if opt == '--diag'][0]
-        args = (parts, test_name)
+        args = (parts, test_name, whoami)
     else:
         print helpmsg
         raise SystemExit, 1
