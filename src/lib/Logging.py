@@ -16,6 +16,9 @@ import types
 import linecache
 import Cobalt
 import ConfigParser
+import json
+
+from json import JSONEncoder
 
 SYSLOG_LEVEL_DEFAULT = "DEBUG"
 CONSOLE_LEVEL_DEFAULT = "INFO"
@@ -273,3 +276,67 @@ def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d
     handler.setLevel(level)
     handler.setFormatter(logging.Formatter(format))
     logger.addHandler(handler)
+
+
+
+def db_log_to_file(data):
+    
+    out_file = open("json.out", "w")
+    
+    out_file.write(data)
+
+    out_file.close()
+    
+    return
+
+
+
+#allow us to dump relevant data to JSON.  
+#let the database importer figure out what to do with the data.
+class ReportObject(object):
+    
+    def __init__(self, reason, exec_id, item_type, item):
+
+        self.reason = reason #reason for the change
+        self.exec_id = exec_id #id of what is causing change
+        self.item_type = item_type #the type of item being changed
+        self.item = item #this should contain the current state of changed
+        return
+
+    def __str__(self):
+        return self.reason + self.exec_id + self.item_type + self.item.__repr__()
+    def encode(self): #encode into a JSON object, return a string rep of it.       
+        return json.dumps(self, cls=ReportObjectEncoder)
+
+class ReportObjectEncoder(JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, ReportObject):
+            r = ReportStateEncoder()
+            return {'reason' : obj.reason, 
+                    'exec_id' : obj.exec_id, 
+                    'item_type' : obj.item_type,
+                    'item' : r.default(obj.item)}
+        return json.JSONEncoder.default(self, obj)
+
+class ReportStateEncoder(JSONEncoder):
+    
+    #get reservation and eventually jobs and partitions.
+    def default(self, obj):
+        if isinstance(obj, Cobalt.Components.bgsched.Reservation):
+            return {'tag': obj.tag,
+                    'cycle' : obj.cycle,
+                    'users' : obj.users,
+                    'createdQueue': obj.createdQueue,
+                    'partitions': obj.partitions,
+                    'name:' : obj.name,
+                    'start' : obj.start,
+                    'queue' : obj.queue,
+                    'duration' : obj.duration,
+                    'res_id' : obj.res_id}
+        elif isinstance(obj, CobaltComponents.cqm.Job):
+            return "To Be Implemented."
+        return  json.JSONEncoder.default(self, obj)
+              
+        
+        

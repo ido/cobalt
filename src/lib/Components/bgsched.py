@@ -16,11 +16,12 @@ except:
     from sets import Set as set
 
 import Cobalt.Logging, Cobalt.Util
-from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict
+from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 from Cobalt.Statistics import Statistics
+from Cobalt.Logging import ReportObject
 
 import Cobalt.SchedulerPolicies
 
@@ -29,13 +30,15 @@ logger = logging.getLogger("Cobalt.Components.scheduler")
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
+bgsched_id_gen = None
+
 class Reservation (Data):
     
     """Cobalt scheduler reservation."""
     
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
-        "active", "queue", 
+        "active", "queue", "res_id" 
     ]
     
     required = ["name", "start", "duration"]
@@ -51,7 +54,8 @@ class Reservation (Data):
         self.start = spec['start']
         self.queue = spec.get("queue", "R.%s" % self.name)
         self.duration = spec.get("duration")
-        
+        self.res_id = spec.get("res_id")
+
     def _get_active(self):
         return self.is_active()
     
@@ -145,6 +149,9 @@ class Reservation (Data):
     def is_over(self):
         # reservations with a cycle time are never "over"
         if self.cycle:
+            #but it does need a new res_id.
+            if(self.start + self.duration) <= stime:
+                self.res_id = self.id_gen.get()
             return False
         
         stime = time.time()
@@ -160,6 +167,7 @@ class ReservationDict (DataDict):
     item_cls = Reservation
     key = "name"
     
+    
     def q_add (self, *args, **kwargs):
         qm = ComponentProxy("queue-manager")
         try:
@@ -169,7 +177,12 @@ class ReservationDict (DataDict):
             raise
         
         try:
+            specs = args[0]
+            for spec in specs:
+                if "res_id" not in spec or spec['res_id'] == '*':
+                    spec['res_id'] = bgsched_id_gen.get()
             reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)
+
         except KeyError, e:
             raise ReservationError("Error: a reservation named %s already exists" % e)
                 
@@ -301,6 +314,7 @@ class BGSched (Component):
     
     _configfields = ['utility_file']
     _config = ConfigParser.ConfigParser()
+    print Cobalt.CONFIG_FILES
     _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsched'):
         print '''"bgsched" section missing from cobalt config file'''
@@ -324,10 +338,15 @@ class BGSched (Component):
         self.active = True
     
         self.get_current_time = time.time
+        self.id_gen = IncrID()
+        global bgsched_id_gen
+        bgsched_id_gen = self.id_gen
+        
+        
 
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
-                'active':self.active}
+                'active':self.active, 'next_res_id':self.id_gen.idnum+1}
     
     def __setstate__(self, state):
         self.reservations = state['reservations']
@@ -336,6 +355,12 @@ class BGSched (Component):
         else:
             self.active = True
         
+        self.id_gen = IncrID()
+        self.id_gen.set(state['next_res_id'])
+        global bgsched_id_gen
+        bgsched_id_gen = self.id_gen
+        print bgsched_id_gen
+
         self.queues = QueueDict()
         self.jobs = JobDict()
         self.started_jobs = {}
@@ -344,6 +369,7 @@ class BGSched (Component):
         self.get_current_time = time.time
         self.lock = threading.Lock()
         self.statistics = Statistics()
+        
 
 
 
@@ -396,14 +422,23 @@ class BGSched (Component):
         Component.save(self)
     save_me = automatic(save_me)
 
+    #user_name in this context is the user setting/modifying the res.
     def add_reservations (self, specs, user_name):
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
-        return self.reservations.q_add(specs)
+        added_reservations =  self.reservations.q_add(specs)
+        for added_reservation in added_reservations:
+            Cobalt.Logging.db_log_to_file( ReportObject("%s added reservation: %r" % (user_name, specs), user_name, "reservation", added_reservation).encode()) 
+        return added_reservations
+    
     add_reservations = exposed(query(add_reservations))
 
     def del_reservations (self, specs, user_name):
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
-        return self.reservations.q_del(specs)
+        del_reservations = self.reservations.q_del(specs)
+        for del_reservation in del_reservations:
+            Cobalt.Logging.db_log_to_file( ReportObject("%s releasing reservation: %r" % (user_name, specs), user_name, "reservation", del_reservation).encode()) 
+        return del_reservations
+
     del_reservations = exposed(query(del_reservations))
 
     def get_reservations (self, specs):
