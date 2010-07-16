@@ -29,6 +29,24 @@ logger = logging.getLogger("Cobalt.Components.scheduler")
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
+#AdjEst#
+config = ConfigParser.ConfigParser()
+config.read(Cobalt.CONFIG_FILES)
+
+def get_histm_config(option, default):
+    try:
+        value = config.get('histm', option)
+    except ConfigParser.NoOptionError:
+        value = default
+    return value
+
+running_job_walltime_prediction = get_histm_config("running_job_walltime_prediction", "True")    
+if running_job_walltime_prediction in ["True", "true"]:
+    running_job_walltime_prediction = True
+else:
+    running_job_walltime_prediction = False
+ #*AdjEst*    
+
 class Reservation (Data):
     
     """Cobalt scheduler reservation."""
@@ -218,13 +236,14 @@ class Job (ForeignData):
     
     fields = ForeignData.fields + [
         "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user", "submittime", 
-        "starttime", "project", 'is_runnable', 'is_active', 'has_resources', "score", 'attrs',
+        "starttime", "project", 'is_runnable', 'is_active', 'has_resources', "score", 'attrs', 
+        'walltime_p',   #*AdjEst*  
     ]
     
     def __init__ (self, spec):
         ForeignData.__init__(self, spec)
         spec = spec.copy()
-        print spec
+        #print spec
         self.partition = "none"
         self.nodes = spec.pop("nodes", None)
         self.location = spec.pop("location", None)
@@ -232,6 +251,7 @@ class Job (ForeignData):
         self.state = spec.pop("state", None)
         self.index = spec.pop("index", None)
         self.walltime = spec.pop("walltime", None)
+        self.walltime_p = spec.pop("walltime_p", None)   #*AdjEst*
         self.queue = spec.pop("queue", None)
         self.user = spec.pop("user", None)
         self.submittime = spec.pop("submittime", None)
@@ -252,7 +272,9 @@ class JobDict(ForeignDataDict):
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user', 'submittime', 'starttime', 'project',
-                  'is_runnable', 'is_active', 'has_resources', 'score', 'attrs', ]
+                  'is_runnable', 'is_active', 'has_resources', 'score', 'attrs', 
+                  'walltime_p',  #*AdjEst*
+                  ]
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
@@ -509,8 +531,6 @@ class BGSched (Component):
 
         self.started_jobs[job.jobid] = self.get_current_time()
 
-
-
     def schedule_jobs (self):
         '''look at the queued jobs, and decide which ones to start'''
 
@@ -607,9 +627,16 @@ class BGSched (Component):
                 # continue to cast a small backfilling shadow (we need this for the case
                 # that the final job in a drained partition runs overtime -- which otherwise
                 # allows things to be backfilled into the drained partition)
-                end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
+                if running_job_walltime_prediction:
+                    runtime_estimate = float(job.walltime_p)
+                else:
+                    runtime_estimate = float(job.walltime)
+                
+                end_time = max(float(job.starttime) + 60 * runtime_estimate, now + 5*60)   ##*AdjEst*
+                #end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
+                
                 end_times.append([job.location, end_time])
-            
+                
             for res_name in eq_class['reservations']:
                 cur_res = reservations_cache[res_name]
 
@@ -645,6 +672,7 @@ class BGSched (Component):
                       'forbidden': list(forbidden_locations),
                       'utility_score': job.score,
                       'walltime': job.walltime,
+                      'walltime_p': job.walltime_p,  #*AdjEst*
                       'attrs': job.attrs,
                     } )
 
