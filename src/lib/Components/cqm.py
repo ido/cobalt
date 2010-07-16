@@ -127,6 +127,8 @@ def get_bgsched_config(option, default):
     return value
 
 accounting_logdir = os.path.expandvars(get_cqm_config("log_dir", Cobalt.DEFAULT_LOG_DIRECTORY))
+if not os.path.isdir(accounting_logdir):
+    os.system('mkdir %s' % accounting_logdir)
 accounting_logger = logging.getLogger("cqm.accounting")
 accounting_logger.addHandler(
     accounting.DatetimeFileHandler(os.path.join(accounting_logdir, "%Y%m%d")))
