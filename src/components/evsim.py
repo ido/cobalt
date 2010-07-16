@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+
+"""Event Simulator executable."""
+
+import inspect 
+import optparse
+import sys
+
+import Cobalt.Util
+from Cobalt.Components.evsim import EventSimulator
+from Cobalt.Components.bqsim import BGQsim
+from Cobalt.Components.cqsim import ClusterQsim
+from Cobalt.Components.histm import HistoryManager
+from Cobalt.Components.base import run_component
+from Cobalt.Components.slp import TimingServiceLocator
+from Cobalt.Components.scriptm import ScriptManager
+from Cobalt.Components.bgsched import BGSched
+from Cobalt.Components.qsim import Qsimulator
+from Cobalt.Proxy import ComponentProxy, local_components
+from datetime import datetime
+import time
+
+arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval']
+
+def profile_main(opts):
+    '''profile integrated qsim'''
+    import hotshot, hotshot.stats
+    prof = hotshot.Profile("qsim.profile")
+    prof.runcall(integrated_main, opts)
+    
+def integrated_main(options):
+    TimingServiceLocator()
+    
+    print opts.predict
+    
+    if opts.predict:
+        histm = HistoryManager(**options)
+    
+    evsim = EventSimulator(**options)
+    if opts.bgjob:
+        BGQsim(**options)
+    if opts.cjob:
+        ClusterQsim(**options)
+    #evsim.print_events()
+    
+    starttime = datetime.now()
+    starttime_sec = time.time()
+    
+    while not evsim.is_finished():
+        evsim.event_driver()
+    
+    endtime = datetime.now()
+    endtime_sec = time.time()
+    print "----Simulation is finished, please check output log for further analysis.----"
+    print "the simulation lasts %s seconds (~%s minutes)" % (int(endtime_sec - starttime_sec), int((endtime_sec - starttime_sec)/60))
+    #print "from ", starttime.strftime("%Y-%m-%d %H:%M:%S"), " to ", endtime.strftime("%Y-%m-%d %H:%M:%S")
+    
+    
+if __name__ == "__main__":
+    
+    p = optparse.OptionParser()
+
+    p.add_option("-b", "--bgjob", dest="bgjob", type="string",
+        help="file name of the job trace from the Blue Gene system")
+    p.add_option("-c", "--cjob", dest="cjob", type="string",
+        help="file name of the job trace from the cluster system")
+    p.add_option("-p", "--partition", dest="config_file", type="string",
+        help="file name of the partition configuration of the Blue Gene system")
+    p.add_option("-o", "--output", dest="outputlog", type="string",
+        help="featuring string for output log")
+    p.add_option("-j", "--job", dest="bgjob", type="string",
+        help="file name of the job trace (when scheduling for bg system only)")
+    p.add_option("-i", "--interval", dest="interval", type="int",
+        help="seconds to wait at each event")
+    p.add_option("-w", "--walltimep", dest="predict", type="string",
+        help="enable walltime prediction")
+    
+    opts, args = p.parse_args()
+
+    if not opts.bgjob and not opts.cjob:
+        print "Error: Please specify at least one job trace!"
+        p.print_help()
+        sys.exit()
+        
+    if opts.bgjob and not opts.config_file:
+        print "Error: Please specify partition configuration file for the Blue Gene system"
+        p.print_help()
+        sys.exit()
+        
+    options = {}
+    for argname in arg_list:
+        options[argname] = getattr(opts, argname)
+        
+    integrated_main(options)
+    #profile_main(options)
+
+
+             
+    
