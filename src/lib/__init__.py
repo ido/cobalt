@@ -8,8 +8,8 @@ __all__ = ['bridge', 'bgl_rm_api', 'Components', 'Data', 'DataTypes',
 import sys
 import os
 
-DEFAULT_CONFIG_FILES = ("/etc/cobalt.conf", )
-DEFAULT_LOG_DIRECTORY = '/var/log/cobalt'
+DEFAULT_CONFIG_FILES = ("conf/cobalt.conf", )
+DEFAULT_LOG_DIRECTORY = 'log'
 
 if '--config-files' in sys.argv:
     CONFIG_FILES = []
