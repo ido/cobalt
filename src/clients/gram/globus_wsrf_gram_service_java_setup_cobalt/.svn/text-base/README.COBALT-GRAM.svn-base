@@ -1,0 +1,100 @@
+Cobalt-GRAM Integration Packages
+Developed By: Jason Cope
+Email: jason.cope@colorado.edu
+Last Modified: 4/19/2007
+
+Purpose:
+These packages provide the integration code for Globus GRAM to submit,
+ monitor, and kill jobs managed by the Cobalt resource manager. These
+ packages were developed to support the NCAR/CU Blue Gene/L (frost) for use 
+ on the TeraGrid.
+
+Status:
+This is a beta release of these packages.
+
+Description:
+Four components are available with these packages:
+1 - The GRAM JobManager for Cobalt.
+    This is the GRAM Perl module that provides the interface to the 
+    Cobalt command line utilities. This modules extends the generic
+    GRAM JobManager.pm and provides methods to submit, poll, and cancel
+    jobs managed by Cobalt through the GRAM utilities. This modules
+    is used by PRE-WS and WS GRAM.
+
+    To submit jobs, this module generates a shell script with the
+    appropriate cqsub command. This shell script is usually stored in
+    the users ~/.globus directory. For polling jobs, cqstat is invoked
+    periodically. For canceling jobs, cqdel is invoked.
+
+    The setup for this package will search for the Cobalt command line
+    utilities and populate the Perl module with the absolute paths
+    to those tools.
+
+2 - The GRAM Scheduler Event Generator (SEG) for Cobalt.
+    This shared library implemented in C provides callbacks to GRAM
+    for monitoring jobs managed by Cobalt. This library checks for logging
+    information on the status of Cobalt jobs in the Cobalt accounting logs.
+    It monitors the state of all Cobalt jobs and is not limited to those
+    managed by GRAM. When a state change is found for a job (such as queued,
+    executing, deleted, held, done, ...), a GRAM state change function is
+    invoked to indicate that the job has changed states.  
+
+    This component is required for WS GRAM only. It can be run manually
+    by executing
+    $GLOBUS_LOCATION/libexec/globus-scheduler-event-generator -s cobalt \
+      -t <the current epoch time>
+
+3 - The GRAM Scheduler Event Generator (SEG) Setup Package for Cobalt
+    This package performs several setup operations for register the 
+    Cobalt SEG with the release of Globus at $GLOBUS_LOCATION. Of most
+    importance, this package is responsible for setting the path
+    to the Cobalt accounting logs to be used by the Cobalt SEG. This
+    package is required for WS GRAM only.
+
+4 - The WSRF GRAM Service for Cobalt
+    This package register the Cobalt scheduler as valid scheduler that can
+    be invoked by WS GRAM. This package is required for WS GRAM only.
+
+Software Prerequisites:
+- Globus Toolkit 4.0.1
+  - pre-ws or ws gram must be configured
+  - the sudo rules must be installed for ws gram
+  - the host must contain the proprer security files
+
+- >= Java 1.4.2
+
+- >= Ant 1.6.5
+
+- cobalt 0.97.0pre7a
+  - the GRAM Scheduler Event Generator(SEG) depends upon the
+    accounting log files
+
+- >= Perl 5.8 
+
+Install:
+0 - Install as the globus user. The cobalt command line tools need to be
+    in the PATH variable. The Globus Toolkit must also be installed 
+    and configured. Ensure that the Globus environment is properly setup
+    (the $GLOBUS_LOCATION/etc/globus-user-env.{sh,csh} has been sourced).
+
+1 - Set the COBALT_HOME envoironment variable to the cobalt accounting 
+    log directory (where the qm-YYYY_MM_DD.log files are located)
+    On frost.ncar.teragrid.org, this is /bgl/local/logs
+
+2 - Install the GT4 bundles. For pre-ws-gram, install the 
+	globus_gram_job_manager_setup_cobalt package. For ws-gram, 
+	install all four packages
+    gpt-build globus_gram_job_manager_setup_cobalt-0.5.tar.gz  
+    gpt-build globus_scheduler_event_generator_cobalt-0.5.tar.gz <globus flavor> 
+    gpt-build globus_scheduler_event_generator_setup_cobalt-0.5.tar.gz 
+    gpt-build globus_wsrf_gram_service_java_setup_cobalt-0.5.tar.gz
+
+3 - Run the Globus postinstall tools
+    gpt-postinstall 
+
+Tested Platforms (host, cobalt release):
+- frost.ncar.teragrid.org, cobalt 0.97.0pre7a
+
+Troubleshooting:
+- Contact Jason Cope at jason.cope@colorado.edu if you have any questions
+  or encounter any problems using these packages 

@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/repos/cobalt/!svn/ver/1722/trunk/src/lib/DataTypes
+END
+ProcessGroup.py
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/repos/cobalt/!svn/ver/1722/trunk/src/lib/DataTypes/ProcessGroup.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/repos/cobalt/!svn/ver/1622/trunk/src/lib/DataTypes/__init__.py
+END
+Resource.py
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/repos/cobalt/!svn/ver/1626/trunk/src/lib/DataTypes/Resource.py
+END

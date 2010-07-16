@@ -1,0 +1,143 @@
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt
+END
+configure
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/configure
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/Makefile.in
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/LICENSE
+END
+README.COBALT-GRAM
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/README.COBALT-GRAM
+END
+setup-gram-service-cobalt
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/setup-gram-service-cobalt
+END
+AUTHORS
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/AUTHORS
+END
+configure.in
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/configure.in
+END
+globus_automake_post
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/globus_automake_post
+END
+LICENSE.GTPL
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/LICENSE.GTPL
+END
+globus_automake_pre
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/globus_automake_pre
+END
+config.guess
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/config.guess
+END
+config.sub
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/config.sub
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/README
+END
+CREDITS
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/CREDITS
+END
+ltmain.sh
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/ltmain.sh
+END
+globus_automake_post_top
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/globus_automake_post_top
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/Makefile.am
+END
+globus_automake_pre_top
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/globus_automake_pre_top
+END
+missing
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/missing
+END
+dirt.sh
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/dirt.sh
+END
+bootstrap
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/bootstrap
+END
+aclocal.m4
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/aclocal.m4
+END
+install-sh
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_wsrf_gram_service_java_setup_cobalt/install-sh
+END

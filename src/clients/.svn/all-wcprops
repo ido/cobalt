@@ -1,0 +1,209 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/repos/cobalt/!svn/ver/1791/trunk/src/clients
+END
+partadm.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/cobalt/!svn/ver/1791/trunk/src/clients/partadm.py
+END
+cqdel.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1221/trunk/src/clients/cqdel.py
+END
+userres.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/cobalt/!svn/ver/1579/trunk/src/clients/userres.py
+END
+schedctl.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/cobalt/!svn/ver/1788/trunk/src/clients/schedctl.py
+END
+slpstat.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/cobalt/!svn/ver/1221/trunk/src/clients/slpstat.py
+END
+showres.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/cobalt/!svn/ver/1678/trunk/src/clients/showres.py
+END
+releaseres.py
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/repos/cobalt/!svn/ver/1361/trunk/src/clients/releaseres.py
+END
+pstat.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1619/trunk/src/clients/pstat.py
+END
+prologue_helper.py
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/cobalt/!svn/ver/1784/trunk/src/clients/prologue_helper.py
+END
+rstat.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1611/trunk/src/clients/rstat.py
+END
+cqstat.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1751/trunk/src/clients/cqstat.py
+END
+pmrun.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1221/trunk/src/clients/pmrun.py
+END
+partlist.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/cobalt/!svn/ver/1696/trunk/src/clients/partlist.py
+END
+brun.py
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/cobalt/!svn/ver/838/trunk/src/clients/brun.py
+END
+hammer.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1252/trunk/src/clients/hammer.py
+END
+cobalt-mpirun.py
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/repos/cobalt/!svn/ver/1749/trunk/src/clients/cobalt-mpirun.py
+END
+nodelist.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/cobalt/!svn/ver/1695/trunk/src/clients/nodelist.py
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1267/trunk/src/clients/Makefile
+END
+cqwait.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1579/trunk/src/clients/cqwait.py
+END
+cqhist.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1557/trunk/src/clients/cqhist.py
+END
+test-scriptm.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/cobalt/!svn/ver/838/trunk/src/clients/test-scriptm.py
+END
+cobalt-launcher.py
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/cobalt/!svn/ver/1451/trunk/src/clients/cobalt-launcher.py
+END
+bgctl
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/repos/cobalt/!svn/ver/838/trunk/src/clients/bgctl
+END
+test-failure.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/cobalt/!svn/ver/838/trunk/src/clients/test-failure.py
+END
+setres.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1590/trunk/src/clients/setres.py
+END
+nodeadm.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/cobalt/!svn/ver/1791/trunk/src/clients/nodeadm.py
+END
+cdump.py
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/repos/cobalt/!svn/ver/838/trunk/src/clients/cdump.py
+END
+wrapper.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/1590/trunk/src/clients/wrapper.c
+END
+bstat.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1221/trunk/src/clients/bstat.py
+END
+cqsub.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1785/trunk/src/clients/cqsub.py
+END
+bbpmtest.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/cobalt/!svn/ver/1345/trunk/src/clients/bbpmtest.py
+END
+radm.py
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/repos/cobalt/!svn/ver/1613/trunk/src/clients/radm.py
+END
+cqadm.py
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1788/trunk/src/clients/cqadm.py
+END
+perfdata.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/cobalt/!svn/ver/1462/trunk/src/clients/perfdata.py
+END

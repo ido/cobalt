@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import Cobalt.bridge, getopt, sys
+
+def matchFilters(filters, path):
+    if not filters:
+        return True
+    for f in filters:
+        f_flds = f.split(':')
+        p_flds = path.split(':')
+        fchk = [i for i in range(len(f_flds)) if f_flds[i] != '*']
+        if False not in \
+           [f_flds[i] == p_flds[i] for i in fchk]:
+            return True
+    return False
+
+if __name__ == '__main__':
+    try:
+        opts, filters = getopt.getopt(sys.argv[1:], 's:q:')
+    except:
+        print "Usage:\nbgbtl -s <value> -q <qvalue> <filter1> <filter2>"
+        raise SystemExit, 1
+
+    mode = 'read'
+    if [opt for opt in opts if opt[0] == '-s']:
+        mode = 'set'
+        sval = [opt[1] for opt in opts if opt[0] == '-s'][0]
+    qval = False
+    if [opt for opt in opts if opt[0] == '-q']:
+        qval = [opt[1] for opt in opts if opt[0] == '-q'][0]
+    parts = bridge.PartList()
+    jobs = bridge.JobList()
+
+    for (prefix, objlist) in [("partition", parts), ("job", jobs)]:
+        for obj in objlist:
+            for key in obj.Visible():
+                fullkey = "%s:%s:%s" % (prefix, obj.id, key)
+                if matchFilters(filters, fullkey):
+                    if qval:
+                        if getattr(obj, key) != qval:
+                            continue
+                    if mode == 'read':
+                        print "%s=%s" % (fullkey, getattr(obj, key))
+                    else:
+                        # mode = set
+                        setattr(obj, key, sval)
+                        print "%s=%s" % (fullkey, sval)
+

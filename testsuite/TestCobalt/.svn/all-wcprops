@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/cobalt/!svn/ver/1788/trunk/testsuite/TestCobalt
+END
+TestData.py
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/cobalt/!svn/ver/1579/trunk/testsuite/TestCobalt/TestData.py
+END
+test_accounting.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/cobalt/!svn/ver/1407/trunk/testsuite/TestCobalt/test_accounting.py
+END
+TestUtil.py
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/cobalt/!svn/ver/1579/trunk/testsuite/TestCobalt/TestUtil.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/cobalt/!svn/ver/1579/trunk/testsuite/TestCobalt/__init__.py
+END
+TestIntegration.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/cobalt/!svn/ver/1699/trunk/testsuite/TestCobalt/TestIntegration.py
+END
+TestStateMachine.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/cobalt/!svn/ver/1579/trunk/testsuite/TestCobalt/TestStateMachine.py
+END
+TestServer.py
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/repos/cobalt/!svn/ver/1526/trunk/testsuite/TestCobalt/TestServer.py
+END

@@ -1,0 +1,143 @@
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup
+END
+configure
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/configure
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/Makefile.in
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/LICENSE
+END
+README.COBALT-GRAM
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/README.COBALT-GRAM
+END
+AUTHORS
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/AUTHORS
+END
+configure.in
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/configure.in
+END
+globus_automake_post
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/globus_automake_post
+END
+LICENSE.GTPL
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/LICENSE.GTPL
+END
+globus_automake_pre
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/globus_automake_pre
+END
+setup-seg-cobalt.pl
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/setup-seg-cobalt.pl
+END
+config.guess
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/config.guess
+END
+config.sub
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/config.sub
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/README
+END
+CREDITS
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/CREDITS
+END
+ltmain.sh
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/ltmain.sh
+END
+globus_automake_post_top
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/globus_automake_post_top
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/Makefile.am
+END
+globus_automake_pre_top
+K 25
+svn:wc:ra_dav:version-url
+V 119
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/globus_automake_pre_top
+END
+missing
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/missing
+END
+dirt.sh
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/dirt.sh
+END
+bootstrap
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/bootstrap
+END
+aclocal.m4
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/aclocal.m4
+END
+install-sh
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/cobalt/!svn/ver/838/trunk/src/clients/gram/globus_scheduler_event_generator_cobalt_setup/install-sh
+END
