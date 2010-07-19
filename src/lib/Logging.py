@@ -281,7 +281,7 @@ def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d
 
 def db_log_to_file(data):
     
-    out_file = open("json.out", "w")
+    out_file = open("json.out", "a")
     
     out_file.write(data)
 
@@ -333,7 +333,8 @@ class ReportStateEncoder(JSONEncoder):
                     'start' : obj.start,
                     'queue' : obj.queue,
                     'duration' : obj.duration,
-                    'res_id' : obj.res_id}
+                    'res_id' : obj.res_id,
+                    'running' : obj.active}
         elif isinstance(obj, CobaltComponents.cqm.Job):
             return "To Be Implemented."
         return  json.JSONEncoder.default(self, obj)

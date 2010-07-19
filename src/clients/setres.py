@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+bg#!/usr/bin/env python
 
 '''Setup reservations in the scheduler'''
 __revision__ = '$Id$'

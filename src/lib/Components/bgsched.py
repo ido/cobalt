@@ -21,7 +21,7 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 from Cobalt.Statistics import Statistics
-from Cobalt.Logging import ReportObject
+from Cobalt.Logging import ReportObject, db_log_to_file
 
 import Cobalt.SchedulerPolicies
 
@@ -42,7 +42,9 @@ class Reservation (Data):
     ]
     
     required = ["name", "start", "duration"]
-    
+
+    global bgsched_id_gen
+
     def __init__ (self, spec):
         Data.__init__(self, spec)
         self.tag = spec.get("tag", "reservation")
@@ -55,6 +57,10 @@ class Reservation (Data):
         self.queue = spec.get("queue", "R.%s" % self.name)
         self.duration = spec.get("duration")
         self.res_id = spec.get("res_id")
+
+        self.running = False
+        
+        self.id_gen = bgsched_id_gen
 
     def _get_active(self):
         return self.is_active()
@@ -144,18 +150,26 @@ class Reservation (Data):
         else:
             now = stime - self.start    
         if now <= self.duration:
+            if not self.running:
+                self.running = True
             return True
 
     def is_over(self):
+        
+        stime = time.time()
         # reservations with a cycle time are never "over"
         if self.cycle:
             #but it does need a new res_id.
-            if(self.start + self.duration) <= stime:
+            if((((stime - self.start) % self.cycle) > self.duration) 
+               and self.running):
+                self.running = False
                 self.res_id = self.id_gen.get()
-            return False
+                db_log_to_file(ReportObject("Reservation %s has cycled" % self.name,
+                                            "system", "reservation", self).encode())
+            return False        
         
-        stime = time.time()
         if (self.start + self.duration) <= stime:
+            self.running = False
             return True
         else:
             return False
@@ -311,7 +325,8 @@ class BGSched (Component):
     implementation = "bgsched"
     name = "scheduler"
     logger = logging.getLogger("Cobalt.Components.scheduler")
-    
+
+
     _configfields = ['utility_file']
     _config = ConfigParser.ConfigParser()
     print Cobalt.CONFIG_FILES
@@ -427,7 +442,7 @@ class BGSched (Component):
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
         added_reservations =  self.reservations.q_add(specs)
         for added_reservation in added_reservations:
-            Cobalt.Logging.db_log_to_file( ReportObject("%s added reservation: %r" % (user_name, specs), user_name, "reservation", added_reservation).encode()) 
+            db_log_to_file( ReportObject("%s added reservation: %r" % (user_name, specs), user_name, "reservation", added_reservation).encode()) 
         return added_reservations
     
     add_reservations = exposed(query(add_reservations))
@@ -436,7 +451,7 @@ class BGSched (Component):
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
-            Cobalt.Logging.db_log_to_file( ReportObject("%s releasing reservation: %r" % (user_name, specs), user_name, "reservation", del_reservation).encode()) 
+            db_log_to_file( ReportObject("%s releasing reservation: %r" % (user_name, specs), user_name, "reservation", del_reservation).encode()) 
         return del_reservations
 
     del_reservations = exposed(query(del_reservations))
@@ -446,10 +461,15 @@ class BGSched (Component):
     get_reservations = exposed(query(get_reservations))
 
     def set_reservations(self, specs, updates, user_name):
-        self.logger.info("%s modifying reservation: %r with updates %r" % (user_name, specs, updates))
+        log_str = "%s modifying reservation: %r with updates %r" % (user_name, specs, updates)
+        self.logger.info(log_str)
         def _set_reservations(res, newattr):
             res.update(newattr)
-        return self.reservations.q_get(specs, _set_reservations, updates)
+        mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
+        for mod_reservation in mod_reservations:
+            db_log_to_file(ReportObject(log_str, user_name, "reservation", mod_reservation).encode())
+        return mod_reservations
+        
     set_reservations = exposed(query(set_reservations))
 
     def check_reservations(self):
@@ -568,7 +588,9 @@ class BGSched (Component):
             for res in self.reservations.values():
                 if res.is_over():
                     self.logger.info("reservation %s has ended; removing" % res.name)
-                    self.reservations.q_del([{'name': res.name}])
+                    del_reservations = self.reservations.q_del([{'name': res.name}])
+                    for del_reservation in del_reservations:
+                        db_log_to_file( ReportObject("reservation %s has ended; removing" % res.name, "system", "reservation", del_reservation).encode()) 
     
             reservations_cache = self.reservations.copy()
         except:
