@@ -237,11 +237,11 @@ class ClusterBaseSystem (Component):
     unfail_partitions = exposed(unfail_partitions)
     
     def _find_job_location(self, args):
-        nodes = args['nodes']
+        nodes = int(args['nodes'])
         jobid = args['jobid']
         
         available_nodes = self._get_available_nodes(args)
-            
+   
         if nodes <= len(available_nodes):
             return {jobid: [available_nodes.pop() for i in range(nodes)]}
         else:

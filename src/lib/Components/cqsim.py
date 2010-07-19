@@ -22,21 +22,20 @@ import Cobalt.Util
 
 from Cobalt.Components.base import exposed, query, automatic, locking
 from Cobalt.Components.cqm import QueueDict, Queue
-from Cobalt.Components.simulator import Simulator
+from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.Data import Data, DataList
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Proxy import ComponentProxy, local_components
 from Cobalt.Server import XMLRPCServer, find_intended_location
 
 
-MACHINE_ID = 0
-MACHINE_NAME = "Intrepid"
+MACHINE_ID = 1
+MACHINE_NAME = "EUREKA"
 MAXINT = 2021072587
 MIDPLANE_SIZE = 512
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
-TOTAL_NODES = 40960
 
 OPT_RULE = "A1"  # A0, A1, A2, A3, A4, NORMAL, EVEN
 RECOVERYOPT = 2 # by default, the failed job is sent back to the rear of the queue
@@ -320,38 +319,21 @@ class PBSlogger:
             logger.error("PBSlogger failure : %s" % e)
             
     
-class BGQsim(Simulator):
+class ClusterQsim(ClusterBaseSystem):
     '''Cobalt Queue Simulator for cluster systems'''
     
-    implementation = "bqsim"
-    name = "queue-manager"
-    alias = "system"
+    implementation = "cqsim"
+    name = "cluster-queue-manager"
+    alias = "cluster-system"
     logger = logging.getLogger(__name__)
 
     def __init__(self, *args, **kwargs):
         
-        Simulator.__init__(self, *args, **kwargs)
-         
-        #initialize partitions
+        ClusterBaseSystem.__init__(self, *args, **kwargs)
+                
         self.interval = kwargs.get("interval", 0)
         
-        partnames = self._partitions.keys()
-        self.init_partition(partnames)
-        self.inhibit_small_partitions()
-        self.part_size_list = []
-        #print all partitions
-        for part in self._partitions.itervalues():
-            if part.scheduled == True:
-                print "%s" % (part.name)
-     
-        for part in self.partitions.itervalues():
-            if int(part.size) not in self.part_size_list:
-                if part.size >= MIDPLANE_SIZE:
-                    self.part_size_list.append(int(part.size))
-        self.part_size_list.sort()
-        print self.part_size_list
-        
-        self.workload_file =  kwargs.get("bgjob")
+        self.workload_file =  kwargs.get("cjob")
         self.output_log = kwargs.get("outputlog")
         
         self.event_manager = ComponentProxy("event-manager")
@@ -370,10 +352,6 @@ class BGQsim(Simulator):
         except:
             #self.logger.error("failed to connect to histm component", exc_info=True)
             histm_alive = False
-        
-        if histm_alive:
-            self.history_manager = ComponentProxy("history-manager")
-        else:
             self.walltime_prediction = False
             
         print "walltime_prediction=", self.walltime_prediction   
@@ -390,7 +368,8 @@ class BGQsim(Simulator):
         self.num_busy = 0
         self.num_end = 0
         self.total_job = 0
-        
+        self.total_nodes = len(self.all_nodes)
+                
         self.init_queues()
 
         #initialize PBS-style logger
@@ -406,7 +385,7 @@ class BGQsim(Simulator):
         self.finished = False
         
         #register local alias "system" for this component
-        local_components["system"] = self
+        local_components["cluster-system"] = self
         
         #initialize capacity loss
         self.capacity_loss = 0
@@ -423,9 +402,6 @@ class BGQsim(Simulator):
         #a list of job pairs. each pair is stored in a tuple, bg job first, followed by cluster job
         self.mate_job_list = []
         
-        self.rack_matrix = []
-        self.reset_rack_matrix()
-                                            
         print "Simulation starts:"
         
     def register_alias(self):
@@ -475,30 +451,6 @@ class BGQsim(Simulator):
         
         self.event_manager.add_event(evspec)
         
-    def init_partition(self, namelist):
-        '''add all paritions and apply activate and enable'''
-        func = self.add_partitions
-        args = ([{'tag':'partition', 'name':partname, 'size':"*",
-                  'functional':False, 'scheduled':False, 'queue':"*",
-                  'deps':[]} for partname in namelist],)
-        apply(func, args)
-        
-        func = self.set_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
-                {'scheduled':True, 'functional': True})
-        apply(func, args)
-    
-    def inhibit_small_partitions(self):
-        '''set all partition less than 512 nodes not schedulable and functional'''
-        namelist = []
-        for partition in self._partitions.itervalues():
-            if partition.size < MIDPLANE_SIZE:
-                namelist.append(partition.name)
-        func = self.set_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
-                {'scheduled':False})
-        apply(func, args)
-
     def init_queues(self):
         '''parses the work load log file, initializes queues and sorted time 
         stamp list'''
@@ -648,6 +600,25 @@ class BGQsim(Simulator):
                 print "invalid event type, type=", type
                 return
         self.pbslog.LogMessage(message)
+        
+    def get_jobs(self, specs):
+        '''get a list of running and waiting jobs, invoked by scheduler at each scheduling iteration start'''
+
+        jobs = []
+        
+        if self.event_manager.get_go_next():
+            self.update_job_states(specs, {})
+            
+            self.compute_utility_scores()
+
+        self.event_manager.set_go_next(True)
+        
+        jobs = self.queues.get_jobs([{'tag':"job"}])
+        
+        #print "living jobs:", [job.jobid for job in jobs]
+
+        return jobs
+    get_jobs = exposed(query(get_jobs))
     
     def update_job_states(self, specs, updates):
         '''update the state of the jobs associated to the current time stamp'''
@@ -683,11 +654,8 @@ class BGQsim(Simulator):
                     return 0
                 
                 #release partition
-                for partition in completed_job.location:
-                    self.release_partition(partition)
                 
-                partsize = int(self._partitions[partition].size)
-                self.num_busy -= partsize
+                
                                 
                 #log the job end event
                 jobspec = completed_job.to_rx()
@@ -698,6 +666,10 @@ class BGQsim(Simulator):
                     end = 0
                 end_datetime = sec_to_date(end)   
                 self.log_job_event("E", end_datetime, jobspec)
+                
+                #free nodes
+                self.nodes_up(completed_job.location)
+                self.num_busy -= len(completed_job.location)
                 
                 #delete the job instance from self.queues
                 self.queues.del_jobs([{'jobid':int(Id)}])
@@ -776,24 +748,6 @@ class BGQsim(Simulator):
         print "capacity loss rate=", loss_rate
         return loss_rate        
     
-    def get_jobs(self, specs):
-        '''get a list of jobs, each time triggers time stamp increment and job
-        states update'''
-
-        jobs = []
-        
-        if self.event_manager.get_go_next():
-            self.update_job_states(specs, {})
-            
-            self.compute_utility_scores()
-
-        self.event_manager.set_go_next(True)
-        
-        jobs = self.queues.get_jobs([{'tag':"job"}])
-
-        return jobs
-    get_jobs = exposed(query(get_jobs))
-    
     def _get_job_by_id(self, jobid):
         jobs = self.queues.get_jobs([{'jobid':jobid}])
         if len(jobs) == 1:
@@ -829,11 +783,11 @@ class BGQsim(Simulator):
         '''update the job state and start_time and end_time when cqadm --run
         is issued to a group of jobs'''
         
-        partitions = updates['location']
-        for partition in partitions:
-            self.reserve_partition(partition)
-            partsize = int(self._partitions[partition].size)
-            self.num_busy += partsize
+        nodelist = updates['location']
+        
+        self.nodes_down(nodelist)
+        
+        self.num_busy += len(nodelist)
             
         self.num_running += 1
         self.num_waiting -= 1
@@ -966,243 +920,51 @@ class BGQsim(Simulator):
         self.builtin_utility_functions["default"] = default
         self.builtin_utility_functions["high_prio"] = high_prio
         
-    def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
-        jobid = args['jobid']
-        nodes = args['nodes']
-        queue = args['queue']
-        utility_score = args['utility_score']
-        walltime = args['walltime']
-        walltime_p = args['walltime_p']  #*AdjEst* 
-        forbidden = args.get("forbidden", [])
-        required = args.get("required", [])
-        
-        best_score = sys.maxint
-        best_partition = None
-        
-        available_partitions = set()
-        
-        requested_location = None
-        if args['attrs'].has_key("location"):
-            requested_location = args['attrs']['location']
-                
-        if required:
-            # whittle down the list of required partitions to the ones of the proper size
-            # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
-            # reservation queues aren't assigned like real queues, so that code doesn't find
-            # these
-            for p_name in required:
-                available_partitions.add(self.cached_partitions[p_name])
-                available_partitions.update(self.cached_partitions[p_name]._children)
-
-            possible = set()
-            for p in available_partitions:            
-                possible.add(p.size)
-                
-            desired_size = 64
-            job_nodes = int(nodes)
-            for psize in sorted(possible):
-                if psize >= job_nodes:
-                    desired_size = psize
-                    break
-            
-            for p in available_partitions.copy():
-                if p.size != desired_size:
-                    available_partitions.remove(p)
-                elif p.name in self._not_functional_set:
-                    available_partitions.remove(p)
-                elif requested_location and p.name != requested_location:
-                    available_partitions.remove(p)
-        else:
-            for p in self.possible_locations(nodes, queue):
-                skip = False
-                for bad_name in forbidden:
-                    if p.name==bad_name or bad_name in p.children or bad_name in p.parents:
-                        skip = True
-                        break
-                if not skip:
-                    if (not requested_location) or (p.name == requested_location):
-                        available_partitions.add(p)
-        
-        available_partitions -= drain_partitions
-        now = self.get_current_time()
-        
-        for partition in available_partitions:
-            # if the job needs more time than the partition currently has available, look elsewhere    
-            
-            runtime_estimate = float(walltime_p)   # *Adj_Est*
-            
-            if backfilling:
-                if 60*runtime_estimate > (partition.backfill_time - now):
-                    continue
-                
-            if partition.state == "idle":
-                # let's check the impact on partitions that would become blocked
-                score = 0
-                for p in partition.parents:
-                    if self.cached_partitions[p].state == "idle" and self.cached_partitions[p].scheduled:
-                        score += 1
-                
-                # the lower the score, the fewer new partitions will be blocked by this selection
-                if score < best_score:
-                    best_score = score
-                    best_partition = partition        
-
-        if best_partition:
-            return {jobid: [best_partition.name]}
-
     def find_job_location(self, arg_list, end_times):
-        best_partition_dict = {}
-        
-        if self.bridge_in_error:
-            return {}
-        
-        self.cached_partitions = self.partitions
-
-        # build the cached_partitions structure first
-        self._build_locations_cache()
-
-        # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
-        job_end_times = {}
-        for item in end_times:
-            job_end_times[item[0][0]] = item[1]
-            
-        now = self.get_current_time()
-        for p in self.cached_partitions.itervalues():
-            if p.state == "idle":
-                p.backfill_time = now
-            else:
-                p.backfill_time = now + 5*60
-            p.draining = False
-        
-        for p in self.cached_partitions.itervalues():    
-            if p.name in job_end_times:
-                if job_end_times[p.name] > p.backfill_time:
-                    p.backfill_time = job_end_times[p.name]
-                
-                for parent_name in p.parents:
-                    parent_partition = self.cached_partitions[parent_name]
-                    if p.backfill_time > parent_partition.backfill_time:
-                        parent_partition.backfill_time = p.backfill_time
-        
-        for p in self.cached_partitions.itervalues():
-            if p.backfill_time == now:
-                continue
-            
-            for child_name in p.children:
-                child_partition = self.cached_partitions[child_name]
-                if child_partition.backfill_time == now or child_partition.backfill_time > p.backfill_time:
-                    child_partition.backfill_time = p.backfill_time
-
-        
-        # first time through, try for starting jobs based on utility scores
-        drain_partitions = set()
-        
-        for job in arg_list:
-            partition_name = self._find_job_location(job, drain_partitions)
-            if partition_name:
-                best_partition_dict.update(partition_name)
+        best_location_dict = {}
+        winner = arg_list[0]
+               # first time through, try for starting jobs based on utility scores
+        for args in arg_list:
+            location_data = self._find_job_location(args)
+            if location_data:
+                best_location_dict.update(location_data)
                 break
             
-            location = self._find_drain_partition(job)
-            if location is not None:
-                for p_name in location.parents:
-                    drain_partitions.add(self.cached_partitions[p_name])
-                for p_name in location.children:
-                    drain_partitions.add(self.cached_partitions[p_name])
-                    self.cached_partitions[p_name].draining = True
-                drain_partitions.add(location)
-                #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
-                location.draining = True
-        
         # the next time through, try to backfill, but only if we couldn't find anything to start
-        if not best_partition_dict:
-            
-            # arg_list.sort(self._walltimecmp)
+        if not best_location_dict:
+            job_end_times = {}
+            total = 0
+            for item in sorted(end_times, cmp=self._backfill_cmp):
+                total += len(item[0])
+                job_end_times[total] = item[1]
+    
+            needed = int(winner['nodes']) - len(self._get_available_nodes(winner))
+            now = self.get_current_time() ##different from super function
+            backfill_cutoff = 0
+            for num in sorted(job_end_times):
+                if needed <= num:
+                    backfill_cutoff = job_end_times[num] - now
 
             for args in arg_list:
-                partition_name = self._find_job_location(args, backfilling=True)
-                if partition_name:
+                if 60*float(args['walltime']) > backfill_cutoff:
+                    continue
+                
+                location_data = self._find_job_location(args)
+                if location_data:
+                    best_location_dict.update(location_data)
                     self.logger.info("backfilling job %s" % args['jobid'])
-                    best_partition_dict.update(partition_name)
                     break
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
         # be running jobs very soon
-        #
-        # also, this is the only part of finding a job location where we need to lock anything
-        self._partitions_lock.acquire()
-        try:
-            for p in self.partitions.itervalues():
-                # push the backfilling info from the local cache back to the real objects
-                p.draining = self.cached_partitions[p.name].draining
-                p.backfill_time = self.cached_partitions[p.name].backfill_time
-                
-            for jobid, partition_list in best_partition_dict.iteritems():
-                part = self.partitions[partition_list[0]]
-                part.used_by = int(jobid)
-                part.reserved_until = self.get_current_time() + 5*60
-                part.state = "allocated"
-                for p in part._parents:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-                for p in part._children:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-        except:
-            self.logger.error("error in find_job_location", exc_info=True)
-        self._partitions_lock.release()
-        
-        return best_partition_dict
-    find_job_location = locking(exposed(find_job_location))
+        for location_list in best_location_dict.itervalues():
+            self.running_nodes.update(location_list)
+
+        return best_location_dict
+    find_job_location = exposed(find_job_location)
 
     #display stuff
     
-    def get_midplanes_by_state(self, status):
-        idle_midplane_list = []
-                
-        for partition in self._partitions.itervalues():
-            if partition.size == MIDPLANE_SIZE:
-                if partition.state == status:
-                    idle_midplane_list.append(partition.name)
-                
-        return idle_midplane_list        
-
-    def show_resource(self):
-        '''print rack_matrix'''
-        
-        self.mark_matrix()
-        
-        for row in self.rack_matrix:
-            for rack in row:
-                if rack[0] == 1:
-                    print "*",
-                elif rack[0] == 0:
-                    print GREENS+'X'+ENDC,
-            print '\r'
-            for rack in row:
-                if rack[1] == 1:
-                    print "*",
-                elif rack[1] == 0:
-                    print GREENS+'X'+ENDC,
-            print '\r'
-             
-    def mark_matrix(self):
-        idle_midplanes = self.get_midplanes_by_state('idle')
-        self.reset_rack_matrix()
-        for name in idle_midplanes:  #sample name for a midplane:  ANL-R15-M0-512
-            row = int(name[5])
-            col = int(name[6])
-            M = int(name[9])
-            self.rack_matrix[row][col][M] = 1
-            
-    def reset_rack_matrix(self):
-        self.rack_matrix = [
-                [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
-                [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
-                [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
-                [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
-                [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
-            ]
     
     def print_screen(self, cur_event=""):
         '''print screen, show number of waiting jobs, running jobs, busy_nodes%'''
@@ -1216,8 +978,6 @@ class BGQsim(Simulator):
         current_datetime = self.event_manager.get_current_date_time()
         print "%s %s" % (current_datetime, cur_event)
         
-        self.show_resource()
-         
         print "number of waiting jobs: ", self.num_waiting
         
         waiting_job_bar = REDS
@@ -1235,22 +995,21 @@ class BGQsim(Simulator):
         running_job_bar += ENDC
         print running_job_bar
         
-        midplanes = self.num_busy / 512
-        print "number of busy midplanes: ", midplanes
-        print "system utilization: ", float(self.num_busy) / 40960.0
-        busy_midplane_bar = GREENS
+        print "number of busy midplanes: ", self.num_busy
+        print "system utilization: ", float(self.num_busy) / self.total_nodes
+        busy_node_bar = GREENS
         
         i = 0
-        while i < midplanes:
-            busy_midplane_bar += "x"
+        while i < self.num_busy:
+            busy_node_bar += "x"
             i += 1
-        for j in range(i, 80):
-            busy_midplane_bar += "-"
-        busy_midplane_bar += ENDC
-        busy_midplane_bar += REDS
-        busy_midplane_bar += "|"
-        busy_midplane_bar += ENDC
-        print busy_midplane_bar
+        for j in range(i, self.total_nodes):
+            busy_node_bar += "-"
+        busy_node_bar += ENDC
+        busy_node_bar += REDS
+        busy_node_bar += "|"
+        busy_node_bar += ENDC
+        print busy_node_bar
         print "completed jobs/total jobs:  %s/%s" % (self.num_end, self.total_job)
         
         progress = 100 * self.num_end / self.total_job

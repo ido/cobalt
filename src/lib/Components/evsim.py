@@ -23,6 +23,7 @@ import Cobalt.Cqparse
 import Cobalt.Util
 
 from Cobalt.Components.bgsched import BGSched
+from Cobalt.Components.csched import ClusterSched
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.cqm import QueueDict, Queue
 from Cobalt.Components.simulator import Simulator
@@ -63,11 +64,11 @@ class Sim_bg_Sched (BGSched):
         BGSched.__init__(self, *args, **kwargs)
         self.get_current_time = ComponentProxy("event-manager").get_current_time
                 
-#class Sim_Cluster_Sched (ClusterSched):
-#    
-#    def __init__(self, *args, **kwargs):
-#        ClusterSched.__init__(self, *args, **kwargs)
-#        self.get_current_time = ComponentProxy("event-manager").get_current_time
+class Sim_Cluster_Sched (ClusterSched):
+    
+    def __init__(self, *args, **kwargs):
+        ClusterSched.__init__(self, *args, **kwargs)
+        self.get_current_time = ComponentProxy("event-manager").get_current_time
     
 class SimEvent (Data):
     
@@ -121,7 +122,7 @@ class EventSimulator(Component):
         self.init_tags = [0 for i in range(0,no_of_machine)]
         self.finished = False
         self.bgsched = Sim_bg_Sched()
-        #self.clsched = Sim_Cluster_Sched()
+        self.csched = Sim_Cluster_Sched()
         self.go_next = True
         
     def set_go_next(self, bool_value):
@@ -258,7 +259,9 @@ class EventSimulator(Component):
 #                                            self.get_current_event_type(),
 #                                            self.get_current_event_job(),
 #                                            )
+
         if machine == INTREPID:
             self.bgsched.schedule_jobs()
         if machine == EUREKA:
-            self.clsched.schedule_jobs()
+            print "EUREKA"
+            self.csched.schedule_jobs()
