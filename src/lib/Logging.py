@@ -17,6 +17,7 @@ import linecache
 import Cobalt
 import ConfigParser
 import json
+import threading
 
 from json import JSONEncoder
 
@@ -279,17 +280,30 @@ def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d
 
 
 
+
+
+#wrap up the safety stuff in this.  Also, make sure to get the fifo from
+#a config file
 def db_log_to_file(data):
     
-    out_file = open("json.out", "a")
-    
-    out_file.write(data)
+   ThreadedWrite(data).start()
 
-    out_file.close()
-    
-    return
+   return
 
+class ThreadedWrite(threading.Thread):
 
+    def __init__(self, data):
+        threading.Thread.__init__(self)
+        self.data = data
+        self.daemon = True
+        
+        
+
+    def run(self):
+        #TODO: going to need some good-old try-catch for failover here.
+        out_file = open("json.out", "a")
+        out_file.write(self.data)
+        out_file.close()
 
 #allow us to dump relevant data to JSON.  
 #let the database importer figure out what to do with the data.
@@ -335,9 +349,9 @@ class ReportStateEncoder(JSONEncoder):
                     'duration' : obj.duration,
                     'res_id' : obj.res_id,
                     'running' : obj.active}
-        elif isinstance(obj, CobaltComponents.cqm.Job):
+        #elif isinstance(obj, Cobalt.Components
+        elif isinstance(obj, Cobalt.Components.cqm.Job):
             return "To Be Implemented."
         return  json.JSONEncoder.default(self, obj)
               
-        
         
