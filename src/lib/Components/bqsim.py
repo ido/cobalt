@@ -1000,8 +1000,7 @@ class BGQsim(Simulator):
         for partition in partitions:
             self.reserve_partition(partition)
             partsize = int(self._partitions[partition].size)
-            self.num_busy += partsize
-        
+                    
         for spec in specs:
             self.job_hold_dict[spec['jobid']] = partitions 
                     
