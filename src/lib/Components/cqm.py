@@ -297,7 +297,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status",
+        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac",
     ]
 
     _states = [
@@ -571,6 +571,7 @@ class Job (StateMachine):
         self.total_etime = 0.0
         self.priority_core_hours = None
         self.dep_fail = False
+        self.dep_frac = None
     # end def __init__()
 
     def __getstate__(self):
@@ -600,6 +601,11 @@ class Job (StateMachine):
         if not state.has_key("dep_fail"):
             logger.info("old job missing dep_fail")
             self.dep_fail = False
+            
+        if not state.has_key("dep_frac"):
+            logger.info("old job missing dep_frac")
+            self.dep_frac = None
+            
             
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
@@ -2587,8 +2593,12 @@ class QueueManager(Component):
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
                     
                     if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
-                        logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
-                        waiting_job.score = max(waiting_job.score, float(get_cqm_config('dep_frac', 0.5))*job.score)
+                        logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
+                        if job.dep_frac is None:
+                            new_score = float(get_cqm_config('dep_frac', 0.5))*job.score
+                        else:
+                            new_score = job.dep_frac * job.score
+                        waiting_job.score = max(waiting_job.score, new_score)
 
         # remove the job from the queue
         #

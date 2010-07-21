@@ -118,7 +118,7 @@ if __name__ == '__main__':
                       'ErrorPath', 'OutputPath',                      
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'Dependencies', 'short_state', 'Notify',
-                      'Score', 'Maxtasktime', 'attrs', ]
+                      'Score', 'Maxtasktime', 'attrs', 'dep_frac', ]
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
