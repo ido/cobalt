@@ -218,8 +218,6 @@ class Job (Data):
         self.state = spec.get("state", "invisible")
         self.system_state = ''
         self.starttime = 0
-        #self.arrival_time = 0
-        #self.failure_time = 0
         self.has_resources = False
         self.is_runnable = spec.get("is_runnable", False)
         self.is_visible = False
@@ -344,24 +342,13 @@ class ClusterQsim(ClusterBaseSystem):
             self.walltime_prediction = True
         else:
             self.walltime_prediction = False
-        
-        #print "walltime_prediction =", self.walltime_prediction   
-        histm_alive = False
-        try:
-            histm_alive = ComponentProxy("history-manager").is_alive()
-        except:
-            #self.logger.error("failed to connect to histm component", exc_info=True)
-            histm_alive = False
-            self.walltime_prediction = False
             
-        print "walltime_prediction=", self.walltime_prediction   
-        
         self.time_stamps = [('I', '0', 0, {})]
         self.cur_time_index = 0
         self.queues = SimQueueDict(policy=None)
         
-        self.invisible_job_dict = {}   # for jobs not submitted, {jobid:job_instance}
-        self.invisible_spec_dict = {}   #{jobid: jobspec}
+ #       self.invisible_job_dict = {}   # for jobs not submitted, {jobid:job_instance}
+        self.unsubmitted_job_spec_dict = {}   #{jobid: jobspec}
 
         self.num_running = 0
         self.num_waiting = 0
@@ -398,25 +385,25 @@ class ClusterQsim(ClusterBaseSystem):
                         
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
-    
-        #a list of job pairs. each pair is stored in a tuple, bg job first, followed by cluster job
-        self.mate_job_list = []
         
+        self.coscheduling = kwargs.get("coscheduling", False)
+    
+        if self.coscheduling:
+            self.mate_queue_manager = ComponentProxy("queue-manager")
+            bg_mate_dict = ComponentProxy("queue-manager").get_mate_job_dict()
+            
+            self.mate_job_dict = dict((str(v),int(k)) for k, v in bg_mate_dict.iteritems())
+        else:
+            self.mate_job_dict = {}
+  
+        Var = raw_input("press any Enter to continue...")
+                
         print "Simulation starts:"
         
-    def register_alias(self):
-        '''register alternate name for the Qsimulator, by registering in slp
-        with another name for the same location. in this case 'system' is the
-        alternate name'''
-        try:
-            slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
-        except ComponentLookupError:
-            print >> sys.stderr, "unable to find service-location"
-            qsim_quit()
-        svc_location = slp.locate(self.name)
-        if svc_location:
-            slp.register(self.alias, svc_location)
-    register_alias = automatic(register_alias, 30)
+            
+    def init_mate_job_dict(self):
+        '''initialize mate job dict'''
+        pass
     
     def is_finished(self):
         return self.finished
@@ -531,14 +518,14 @@ class ClusterQsim(ClusterBaseSystem):
         
         #self.add_jobs(specs)
        
-        self.invisible_spec_dict = self.init_invisible_dict(specs)
+        self.unsubmitted_job_spec_dict = self.init_unsubmitted_dict(specs)
         
                         
         self.event_manager.add_init_events(specs, MACHINE_ID)
 
         return 0
     
-    def init_invisible_dict(self, specs):
+    def init_unsubmitted_dict(self, specs):
         #jobdict = {}
         specdict = {}
         for spec in specs:
@@ -633,7 +620,7 @@ class ClusterQsim(ClusterBaseSystem):
         for Id in ids:
             
             if cur_event == "Q":  # Job (Id) is submitted
-                tempspec = self.invisible_spec_dict[Id]
+                tempspec = self.unsubmitted_job_spec_dict[Id]
                 
                 tempspec['state'] = "queued"   #invisible -> queued
                 tempspec['is_runnable'] = True   #False -> True
@@ -643,7 +630,7 @@ class ClusterQsim(ClusterBaseSystem):
                 
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
-                del self.invisible_spec_dict[Id]
+                del self.unsubmitted_job_spec_dict[Id]
 
             elif cur_event=="E":  # Job (Id) is completed
                 joblist = self.queues.get_jobs([{'jobid':int(Id)}])
@@ -652,11 +639,6 @@ class ClusterQsim(ClusterBaseSystem):
                     completed_job = joblist[0]
                 else:
                     return 0
-                
-                #release partition
-                
-                
-                                
                 #log the job end event
                 jobspec = completed_job.to_rx()
                 #print "end jobspec=", jobspec
@@ -764,18 +746,34 @@ class ClusterQsim(ClusterBaseSystem):
         '''get queues'''
         return self.queues.get_queues(specs)
     get_queues = exposed(query(get_queues))
-   
+    
     def run_jobs(self, specs, nodelist):
         '''run a queued job, by updating the job state, start_time and
         end_time, invoked by bgsched'''
         #print "run job ", specs, " on nodes", nodelist
-        if specs:
-            self.start_job(specs, {'location': nodelist})
-            self.print_screen()
+        if specs == None:
+            return 0
+        
+        for spec in specs:
             
-            #set tag false, enable scheduling another job at the same time
-            self.event_manager.set_go_next(False)
+            if self.coscheduling:
+                local_job_id = str(spec.get('jobid'))
+                #check whether there is a mate job
+                mate_job_id = self.mate_job_dict.get(local_job_id, 0)
+                #if mate job exists, get the status of the mate job
+                if mate_job_id > 0:
+                    remote_status = self.get_mate_jobs_status_local(mate_job_id)
+                    print "remote_status=", remote_status
+                #to be inserted co-scheduling handling code
+                else:
+                    pass
             
+            self.start_job([spec], {'location': nodelist})
+        
+        #set tag false, enable scheduling another job at the same time
+        self.event_manager.set_go_next(False)
+        self.print_screen()
+                
         return len(specs)
     run_jobs = exposed(run_jobs)
     
@@ -1025,4 +1023,27 @@ class ClusterQsim(ClusterBaseSystem):
         print progress_bar
         if self.interval:
             time.sleep(self.interval)
-        
+            
+    #coscheduling stuff
+    def get_mate_job_status_remote(self, jobid):
+        '''return mate job status, remote function, invoked by remote component'''
+        local_job = self.get_live_job_by_id(jobid)
+        status_dict = {'jobid':jobid}
+        if local_job:
+            status_dict['can_run'] = local_job.can_run
+            status_dict['hold_resource'] = local_job.hold_resource
+            status_dict['state'] = local_job.state
+        else:
+            status_dict['state'] = 'invisible'
+        return status_dict
+    get_mate_job_status_remote = exposed(get_mate_job_status_remote)
+    
+    def get_mate_jobs_status_local(self, remote_jobid):
+        '''return mate job status, invoked by local functions'''
+        status_dict = {}
+        try:
+            status_dict = self.mate_queue_manager.get_mate_job_status_remote(remote_jobid)
+        except:
+            self.logger.error("failed to connect to remote queue-manager component!")
+            status_dict = {}
+        return status_dict    

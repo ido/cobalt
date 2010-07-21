@@ -33,6 +33,7 @@ MACHINE_ID = 0
 MACHINE_NAME = "Intrepid"
 MAXINT = 2021072587
 MIDPLANE_SIZE = 512
+DEFAULT_VICINITY = 60
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
@@ -335,6 +336,23 @@ class BGQsim(Simulator):
         #initialize partitions
         self.interval = kwargs.get("interval", 0)
         
+        self.coscheduling = kwargs.get("coscheduling", False)
+        self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
+        self.mate_qtime_pairs = []
+        
+        #key=local job id, value=remote mated job id
+        self.mate_job_dict = {}
+        
+        if self.coscheduling:
+            #test whether cqsim is up by checking cluster job trace argument (cjob) 
+            self.cluster_job_trace =  kwargs.get("cjob", None)
+            if self.cluster_job_trace:
+                self.mate_queue_manager = ComponentProxy("cluster-queue-manager")
+                self.mate_qtime_pairs = self.init_mate_qtime_pair(self.cluster_job_trace)
+            else:
+                self.coscheduling = False
+                self.mate_queue_manager = None
+        
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.inhibit_small_partitions()
@@ -355,7 +373,7 @@ class BGQsim(Simulator):
         self.output_log = kwargs.get("outputlog")
         
         self.event_manager = ComponentProxy("event-manager")
-      
+        
         walltime_prediction = get_histm_config("walltime_prediction", False)   # *AdjEst*
         print "walltime_prediction=", walltime_prediction
         if walltime_prediction in ["True", "true"]:
@@ -382,8 +400,8 @@ class BGQsim(Simulator):
         self.cur_time_index = 0
         self.queues = SimQueueDict(policy=None)
         
-        self.invisible_job_dict = {}   # for jobs not submitted, {jobid:job_instance}
-        self.invisible_spec_dict = {}   #{jobid: jobspec}
+#        self.invisible_job_dict = {}   # for jobs not submitted, {jobid:job_instance}
+        self.unsubmitted_job_spec_dict = {}   #{jobid: jobspec}
 
         self.num_running = 0
         self.num_waiting = 0
@@ -392,6 +410,10 @@ class BGQsim(Simulator):
         self.total_job = 0
         
         self.init_queues()
+        
+        if self.coscheduling:
+            self.init_mate_job_dict()
+        
 
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
@@ -420,34 +442,71 @@ class BGQsim(Simulator):
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
     
-        #a list of job pairs. each pair is stored in a tuple, bg job first, followed by cluster job
-        self.mate_job_list = []
-        
         self.rack_matrix = []
         self.reset_rack_matrix()
-                                            
+        
+        #coscheduling stuff
+                                                
         print "Simulation starts:"
         
-    def register_alias(self):
-        '''register alternate name for the Qsimulator, by registering in slp
-        with another name for the same location. in this case 'system' is the
-        alternate name'''
-        try:
-            slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
-        except ComponentLookupError:
-            print >> sys.stderr, "unable to find service-location"
-            qsim_quit()
-        svc_location = slp.locate(self.name)
-        if svc_location:
-            slp.register(self.alias, svc_location)
-    register_alias = automatic(register_alias, 30)
+    def init_mate_qtime_pair(self, mate_job_trace):
+        '''initialize mate job dict'''
+        jobfile = open(mate_job_trace, 'r')
+        
+        qtime_pairs = []
+        
+        for line in jobfile:
+            line = line.strip('\n')
+            line = line.strip('\r')
+            firstparse = line.split(';')
+            if firstparse[1] == 'Q':
+                qtime = date_to_sec(firstparse[0])
+                jobid = int(firstparse[2])
+                qtime_pairs.append((qtime, jobid))
+
+        return qtime_pairs
     
+    def find_mate_id(self, qtime, threshold):
+    
+        mate_subtime = 0
+        ret_id = 0
+        for pair in self.mate_qtime_pairs:
+            if pair[0] > qtime:
+                mate_subtime = pair[0]
+                mate_id = pair[1]
+                break
+
+        if mate_subtime > 0:
+            if mate_subtime - float(qtime) < threshold:
+               ret_id = mate_id
+        return ret_id
+    
+    def init_mate_job_dict(self):
+        '''init mate job dictionary'''
+        
+        temp_dict = {} #remote_id:local_id
+        
+        for id, spec in self.unsubmitted_job_spec_dict.iteritems():
+            id = int(id)
+            submit_time = spec.get('submittime')
+            mate_id = self.find_mate_id(submit_time, self.mate_vicinity)
+            if mate_id > 0:
+                #self.mate_job_dict[spec['jobid']] = int(mateid)
+                if temp_dict.has_key(mate_id):
+                    tmp = temp_dict[mate_id]
+                    if id > tmp:
+                        temp_dict[mate_id] = id
+                else:
+                    temp_dict[mate_id] = id
+        #reserve dict to local_id:remote_id
+        self.mate_job_dict = dict((v,k) for k, v in temp_dict.iteritems())
+        
     def is_finished(self):
         return self.finished
     is_finished = exposed(is_finished)
     
     def get_current_time(self):
-        '''this function overrid the get_current_time in bgsched, bg_base_system, and cluster_base_system'''
+        '''this function overrides get_current_time() in bgsched, bg_base_system, and cluster_base_system'''
         return  self.event_manager.get_current_time()
     
     def get_current_time_sec(self):
@@ -455,6 +514,10 @@ class BGQsim(Simulator):
     
     def get_current_time_date(self):
         return self.event_manager.get_current_date_time()
+    
+    def get_mate_job_dict(self):
+        return self.mate_job_dict
+    get_mate_job_dict = exposed(get_mate_job_dict)
 
     def time_increment(self):
         '''the current time stamp increments by 1'''
@@ -579,14 +642,13 @@ class BGQsim(Simulator):
         
         #self.add_jobs(specs)
        
-        self.invisible_spec_dict = self.init_invisible_dict(specs)
-        
+        self.unsubmitted_job_spec_dict = self.init_unsubmitted_dict(specs)  
                         
         self.event_manager.add_init_events(specs, MACHINE_ID)
 
         return 0
     
-    def init_invisible_dict(self, specs):
+    def init_unsubmitted_dict(self, specs):
         #jobdict = {}
         specdict = {}
         for spec in specs:
@@ -648,6 +710,14 @@ class BGQsim(Simulator):
                 print "invalid event type, type=", type
                 return
         self.pbslog.LogMessage(message)
+        
+    def get_live_job_by_id(self, jobid):
+        '''get waiting or running job instance by jobid'''
+        job = None
+        joblist = self.queues.get_jobs([{'jobid':int(jobid)}])
+        if joblist:
+            job = joblist[0]
+        return job
     
     def update_job_states(self, specs, updates):
         '''update the state of the jobs associated to the current time stamp'''
@@ -662,7 +732,10 @@ class BGQsim(Simulator):
         for Id in ids:
             
             if cur_event == "Q":  # Job (Id) is submitted
-                tempspec = self.invisible_spec_dict[Id]
+                tempspec = self.unsubmitted_job_spec_dict.get(Id, None)
+                
+                if tempspec == None:
+                    continue
                 
                 tempspec['state'] = "queued"   #invisible -> queued
                 tempspec['is_runnable'] = True   #False -> True
@@ -672,16 +745,10 @@ class BGQsim(Simulator):
                 
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
-                del self.invisible_spec_dict[Id]
+                del self.unsubmitted_job_spec_dict[Id]
 
             elif cur_event=="E":  # Job (Id) is completed
-                joblist = self.queues.get_jobs([{'jobid':int(Id)}])
-                
-                if joblist:
-                    completed_job = joblist[0]
-                else:
-                    return 0
-                
+                completed_job = self.get_live_job_by_id(Id)
                 #release partition
                 for partition in completed_job.location:
                     self.release_partition(partition)
@@ -815,13 +882,29 @@ class BGQsim(Simulator):
         '''run a queued job, by updating the job state, start_time and
         end_time, invoked by bgsched'''
         #print "run job ", specs, " on nodes", nodelist
-        if specs:
-            self.start_job(specs, {'location': nodelist})
-            self.print_screen()
+        if specs == None:
+            return 0
+        
+        for spec in specs:
             
-            #set tag false, enable scheduling another job at the same time
-            self.event_manager.set_go_next(False)
+            if self.coscheduling:
+                local_job_id = str(spec.get('jobid'))
+                #check whether there is a mate job
+                mate_job_id = self.mate_job_dict.get(local_job_id, 0)
+                #if mate job exists, get the status of the mate job
+                if mate_job_id > 0:
+                    remote_status = self.get_mate_jobs_status_local(mate_job_id)
+                    print "remote_status=", remote_status
+                #to be inserted co-scheduling handling code
+                else:
+                    pass
             
+            self.start_job([spec], {'location': nodelist})
+        
+        #set tag false, enable scheduling another job at the same time
+        self.event_manager.set_go_next(False)
+        self.print_screen()
+                
         return len(specs)
     run_jobs = exposed(run_jobs)
     
@@ -1207,7 +1290,7 @@ class BGQsim(Simulator):
     def print_screen(self, cur_event=""):
         '''print screen, show number of waiting jobs, running jobs, busy_nodes%'''
         
-        os.system('clear')
+        #os.system('clear')
         
         if PRINT_SCREEN == False:
             print "simulation in progress, please wait"
@@ -1266,4 +1349,28 @@ class BGQsim(Simulator):
         print progress_bar
         if self.interval:
             time.sleep(self.interval)
-        
+            
+    #coscheduling stuff
+    def get_mate_job_status_remote(self, jobid):
+        '''return mate job status, remote function, invoked by remote component'''
+        local_job = self.get_live_job_by_id(jobid)
+        status_dict = {'jobid':jobid}
+        if local_job:
+            status_dict['can_run'] = local_job.can_run
+            status_dict['hold_resource'] = local_job.hold_resource
+            status_dict['state'] = local_job.state
+        else:
+            status_dict['state'] = 'invisible'
+        return status_dict
+    get_mate_job_status_remote = exposed(get_mate_job_status_remote)
+    
+    def get_mate_jobs_status_local(self, remote_jobid):
+        '''return mate job status, invoked by local functions'''
+        status_dict = {}
+        try:
+            status_dict = self.mate_queue_manager.get_mate_job_status_remote(remote_jobid)
+        except:
+            self.logger.error("failed to connect to remote queue-manager component!")
+            status_dict = {}
+        return status_dict         
+             

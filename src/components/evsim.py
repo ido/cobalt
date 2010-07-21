@@ -20,7 +20,7 @@ from Cobalt.Proxy import ComponentProxy, local_components
 from datetime import datetime
 import time
 
-arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval']
+arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval', 'predict', 'coscheduling']
 
 def profile_main(opts):
     '''profile integrated qsim'''
@@ -31,8 +31,6 @@ def profile_main(opts):
 def integrated_main(options):
     TimingServiceLocator()
     
-    print opts.predict
-    
     if opts.predict:
         histm = HistoryManager(**options)
     
@@ -41,20 +39,15 @@ def integrated_main(options):
         BGQsim(**options)
     if opts.cjob:
         ClusterQsim(**options)
-    #evsim.print_events()
     
-    starttime = datetime.now()
     starttime_sec = time.time()
     
     while not evsim.is_finished():
         evsim.event_driver()
-    
-    endtime = datetime.now()
+
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"
     print "the simulation lasts %s seconds (~%s minutes)" % (int(endtime_sec - starttime_sec), int((endtime_sec - starttime_sec)/60))
-    #print "from ", starttime.strftime("%Y-%m-%d %H:%M:%S"), " to ", endtime.strftime("%Y-%m-%d %H:%M:%S")
-    
     
 if __name__ == "__main__":
     
@@ -72,8 +65,10 @@ if __name__ == "__main__":
         help="file name of the job trace (when scheduling for bg system only)")
     p.add_option("-i", "--interval", dest="interval", type="int",
         help="seconds to wait at each event")
-    p.add_option("-w", "--walltimep", dest="predict", type="string",
+    p.add_option("-P", "--prediction", dest="predict", action="store_true", default=False,
         help="enable walltime prediction")
+    p.add_option("-C", "--coscheduling", dest="coscheduling", action="store_true", default=False,
+        help="enable coscheduling")
     
     opts, args = p.parse_args()
 
@@ -93,7 +88,3 @@ if __name__ == "__main__":
         
     integrated_main(options)
     #profile_main(options)
-
-
-             
-    

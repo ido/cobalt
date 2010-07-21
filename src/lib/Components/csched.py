@@ -686,9 +686,7 @@ class ClusterSched (Component):
             except:
                 self.logger.error("failed to connect to system component", exc_info=True)
                 best_partition_dict = {}
-            
-            print "job ", job.jobid, " best_partition=", best_partition_dict
-    
+
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
                 self._start_job(job, best_partition_dict[jobid])

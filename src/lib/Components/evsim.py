@@ -263,5 +263,4 @@ class EventSimulator(Component):
         if machine == INTREPID:
             self.bgsched.schedule_jobs()
         if machine == EUREKA:
-            print "EUREKA"
             self.csched.schedule_jobs()
