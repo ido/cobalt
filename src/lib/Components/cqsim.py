@@ -364,10 +364,10 @@ class ClusterQsim(ClusterBaseSystem):
         self.pbslog = PBSlogger(self.output_log)
         
         #initialize debug logger
-        #if self.output_log:
-        #    self.dbglog = PBSlogger(self.output_log+"-debug")
-        #else:
-        #    self.dbglog = PBSlogger(".debug")
+        if self.output_log:
+            self.dbglog = PBSlogger(self.output_log+"-debug")
+        else:
+            self.dbglog = PBSlogger(".debug")
         
         #finish tag
         self.finished = False
@@ -390,10 +390,9 @@ class ClusterQsim(ClusterBaseSystem):
         self.coscheduling = kwargs.get("coscheduling", False)
     
         if self.coscheduling:
-            self.mate_queue_manager = ComponentProxy("queue-manager")
             bg_mate_dict = ComponentProxy("queue-manager").get_mate_job_dict()
             
-            self.mate_job_dict = dict((str(v),int(k)) for k, v in bg_mate_dict.iteritems())
+            self.mate_job_dict = dict((v,k) for k, v in bg_mate_dict.iteritems())
         else:
             self.mate_job_dict = {}
   
@@ -503,7 +502,7 @@ class ClusterQsim(ClusterBaseSystem):
             spec['start_time'] = '0'
             spec['end_time'] = '0'
             spec['queue'] = "default"
-            spec['has_resource'] = False
+            spec['has_resources'] = False
             spec['is_runnable'] = False
             
             #add the job spec to the spec list            
@@ -588,6 +587,14 @@ class ClusterQsim(ClusterBaseSystem):
                 print "invalid event type, type=", type
                 return
         self.pbslog.LogMessage(message)
+        
+    def get_live_job_by_id(self, jobid):
+        '''get waiting or running job instance by jobid'''
+        job = None
+        joblist = self.queues.get_jobs([{'jobid':int(jobid)}])
+        if joblist:
+            job = joblist[0]
+        return job
         
     def get_jobs(self, specs):
         '''get a list of running and waiting jobs, invoked by scheduler at each scheduling iteration start'''
@@ -760,14 +767,19 @@ class ClusterQsim(ClusterBaseSystem):
         for spec in specs:
             
             if self.coscheduling:
-                local_job_id = str(spec.get('jobid'))
+                local_job_id = spec.get('jobid') #int
                 #check whether there is a mate job
                 mate_job_id = self.mate_job_dict.get(local_job_id, 0)
                 #if mate job exists, get the status of the mate job
                 if mate_job_id > 0:
                     remote_status = self.get_mate_jobs_status_local(mate_job_id)
-                    print "remote_status=", remote_status
+                    
+                    dbgmsg = "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
+                    print dbgmsg
+                    self.dbglog.LogMessage(dbgmsg)
+                    
                 #to be inserted co-scheduling handling code
+                
                 else:
                     pass
             
@@ -1030,25 +1042,71 @@ class ClusterQsim(ClusterBaseSystem):
             time.sleep(self.interval)
 
     #coscheduling stuff
-    def get_mate_job_status_remote(self, jobid):
+    def get_mate_job_status_cqsim(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''
-        local_job = self.get_live_job_by_id(jobid)
-        status_dict = {'jobid':jobid}
-        if local_job:
-            status_dict['can_run'] = local_job.can_run
-            status_dict['hold_resource'] = local_job.hold_resource
-            status_dict['state'] = local_job.state
-        else:
-            status_dict['state'] = 'invisible'
-        return status_dict
-    get_mate_job_status_remote = exposed(get_mate_job_status_remote)
+        #local_job = self.get_live_job_by_id(jobid)
+        ret_dict = {'jobid':jobid}
+        
+        #job = self.get_live_job_by_id(jobid)
+        
+        ret_dict['status'] = self.get_coschedule_status(jobid)
+#        local_job = False
+#        if local_job:#
+#            #status_dict['can_run'] = self.test_can_run(jobid)
+#            #status_dict['hold_resource'] = local_job.hold_resource
+#            status_dict['status'] = self.get_coschedule_status(jobid)
+#        else:
+#            status_dict['status'] = 'invisible'
+        print "cqsim ", ret_dict
+        return ret_dict
+    get_mate_job_status_cqsim = exposed(get_mate_job_status_cqsim)
     
     def get_mate_jobs_status_local(self, remote_jobid):
         '''return mate job status, invoked by local functions'''
         status_dict = {}
         try:
-            status_dict = self.mate_queue_manager.get_mate_job_status_remote(remote_jobid)
+            status_dict = ComponentProxy("queue-manager").get_mate_job_status_bqsim(remote_jobid)
         except:
             self.logger.error("failed to connect to remote queue-manager component!")
-            status_dict = {}
-        return status_dict    
+            status_dict = {'status':'notconnected'}
+        return status_dict
+    
+    def test_can_run(self, jobid):
+        '''test whether a job can start immediately, specifically in following cases:
+          1. highest utility score and resource is available
+          2. not with top priority but can start in non-drained partition when top-priority job is draining
+          3. can be backfilled
+        '''
+        return False
+    
+    def get_coschedule_status(self, jobid):
+        '''return job status regarding coscheduling, 
+           input: jobid
+           output: listed as follows:
+            1. "queuing-can-run"
+                 1.1 highest utility score and resource is available
+                 1.2 not with top priority but can start in non-drained partition when top-priority job is draining
+                 1.3 can be backfilled
+                 1.4 suspend and hold some resources            
+            2. queuing but cannot run
+            3. "unsubmitted"
+            4. "running"
+            5. "ended"
+        '''
+        ret_status = "unknown"
+        job = self.get_live_job_by_id(jobid)
+        if job:  #queuing or running
+            has_resources = job.has_resources
+            is_runnable = job.is_runnable
+            if is_runnable and not has_resources:
+                ret_status = "queuing"
+            if not is_runnable and has_resources:
+                ret_status = "running"
+            if is_runnable and has_resources:
+                ret_status = "holding"
+        else:  #unsubmitted or ended
+            if self.unsubmitted_job_spec_dict.has_key(str(jobid)):
+                ret_status = "unsubmitted"
+            else:
+                ret_status = "ended"
+        return ret_status

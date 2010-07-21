@@ -349,7 +349,6 @@ class BGQsim(Simulator):
             #test whether cqsim is up by checking cluster job trace argument (cjob) 
             
             if self.cluster_job_trace:
-                self.mate_queue_manager = ComponentProxy("cluster-queue-manager")
                 self.mate_qtime_pairs = self.init_mate_qtime_pair(self.cluster_job_trace)
             else:
                 self.coscheduling = False
@@ -416,15 +415,16 @@ class BGQsim(Simulator):
         if self.coscheduling:
             self.init_mate_job_dict()
         
+        print self.mate_job_dict
 
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
         
         #initialize debug logger
-        #if self.output_log:
-        #    self.dbglog = PBSlogger(self.output_log+"-debug")
-        #else:
-        #    self.dbglog = PBSlogger(".debug")
+        if self.output_log:
+            self.dbglog = PBSlogger(self.output_log+"-debug")
+        else:
+            self.dbglog = PBSlogger(".debug")
         
         #finish tag
         self.finished = False
@@ -501,7 +501,7 @@ class BGQsim(Simulator):
                 else:
                     temp_dict[mate_id] = id
         #reserve dict to local_id:remote_id
-        self.mate_job_dict = dict((v,k) for k, v in temp_dict.iteritems())
+        self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
         
     def is_finished(self):
         return self.finished
@@ -628,7 +628,7 @@ class BGQsim(Simulator):
             spec['start_time'] = '0'
             spec['end_time'] = '0'
             spec['queue'] = "default"
-            spec['has_resource'] = False
+            spec['has_resources'] = False
             spec['is_runnable'] = False
             
             #add the job spec to the spec list            
@@ -742,12 +742,15 @@ class BGQsim(Simulator):
                 tempspec['state'] = "queued"   #invisible -> queued
                 tempspec['is_runnable'] = True   #False -> True
                 
+#                self.unsubmitted_job_spec_dict[Id]['state'] = "queued"
+#                self.unsubmitted_job_spec_dict[Id]['is_runnable'] = "True"
+                
                 self.queues.add_jobs([tempspec])
                 self.num_waiting += 1
                 
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
-                del self.unsubmitted_job_spec_dict[Id]
+                #del self.unsubmitted_job_spec_dict[Id]
 
             elif cur_event=="E":  # Job (Id) is completed
                 completed_job = self.get_live_job_by_id(Id)
@@ -771,6 +774,10 @@ class BGQsim(Simulator):
                     end = 0
                 end_datetime = sec_to_date(end)   
                 self.log_job_event("E", end_datetime, jobspec)
+                
+#                self.unsubmitted_job_spec_dict[Id]['state'] = "ended"
+#                self.unsubmitted_job_spec_dict[Id]['is_runnable'] = "False"
+#                self.unsubmitted_job_spec_dict[Id]['has_resource'] = "False"
                 
                 #delete the job instance from self.queues
                 self.queues.del_jobs([{'jobid':int(Id)}])
@@ -896,13 +903,17 @@ class BGQsim(Simulator):
         for spec in specs:
             
             if self.coscheduling:
-                local_job_id = str(spec.get('jobid'))
+                local_job_id = spec.get('jobid') #int
                 #check whether there is a mate job
+                
                 mate_job_id = self.mate_job_dict.get(local_job_id, 0)
+
                 #if mate job exists, get the status of the mate job
                 if mate_job_id > 0:
                     remote_status = self.get_mate_jobs_status_local(mate_job_id)
                     print "remote_status=", remote_status
+                    dbgmsg = "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
+                    self.dbglog.LogMessage(dbgmsg)
                 #to be inserted co-scheduling handling code
                 else:
                     pass
@@ -1362,26 +1373,63 @@ class BGQsim(Simulator):
         print "\n\n"
             
     #coscheduling stuff
-    def get_mate_job_status_remote(self, jobid):
+    def get_mate_job_status_bqsim(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''
-        local_job = self.get_live_job_by_id(jobid)
-        status_dict = {'jobid':jobid}
-        if local_job:
-            status_dict['can_run'] = local_job.can_run
-            status_dict['hold_resource'] = local_job.hold_resource
-            status_dict['state'] = local_job.state
-        else:
-            status_dict['state'] = 'invisible'
-        return status_dict
-    get_mate_job_status_remote = exposed(get_mate_job_status_remote)
+        #local_job = self.get_live_job_by_id(jobid)
+        ret_dict = {'jobid':jobid}
+        
+        #job = self.get_live_job_by_id(jobid)
+        
+        ret_dict['status'] = self.get_coschedule_status(jobid)
+#        local_job = False
+#        if local_job:#
+#            #status_dict['can_run'] = self.test_can_run(jobid)
+#            #status_dict['hold_resource'] = local_job.hold_resource
+#            status_dict['status'] = self.get_coschedule_status(jobid)
+#        else:
+#            status_dict['status'] = 'invisible'
+        print "bqsim ", ret_dict
+        return ret_dict
+    get_mate_job_status_bqsim = exposed(get_mate_job_status_bqsim)
     
     def get_mate_jobs_status_local(self, remote_jobid):
         '''return mate job status, invoked by local functions'''
         status_dict = {}
         try:
-            status_dict = self.mate_queue_manager.get_mate_job_status_remote(remote_jobid)
+            status_dict = ComponentProxy("cluster-queue-manager").get_mate_job_status_cqsim(remote_jobid)
         except:
-            self.logger.error("failed to connect to remote queue-manager component!")
-            status_dict = {}
-        return status_dict         
+            self.logger.error("failed to connect to remote cluster queue-manager component!")
+        return status_dict
+    
+    def get_coschedule_status(self, jobid):
+        '''return job status regarding coscheduling, 
+           input: jobid
+           output: listed as follows:
+            1. "queuing-can-run"
+                 1.1 highest utility score and resource is available
+                 1.2 not with top priority but can start in non-drained partition when top-priority job is draining
+                 1.3 can be backfilled
+                 1.4 suspend and hold some resources            
+            2. queuing but cannot run
+            3. "unsubmitted"
+            4. "running"
+            5. "ended"
+        '''
+        ret_status = "unknown"
+        job = self.get_live_job_by_id(jobid)
+        if job:  #queuing or running
+            has_resources = job.has_resources
+            is_runnable = job.is_runnable
+            if is_runnable and not has_resources:
+                ret_status = "queuing"
+            if not is_runnable and has_resources:
+                ret_status = "running"
+            if is_runnable and has_resources:
+                ret_status = "holding"
+        else:  #unsubmitted or ended
+            if self.unsubmitted_job_spec_dict.has_key(str(jobid)):
+                ret_status = "unsubmitted"
+            else:
+                ret_status = "ended"
+        return ret_status
              
