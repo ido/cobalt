@@ -15,7 +15,8 @@ if __name__ == '__main__':
     p.add_option("--start", action="store_true", dest="start", help="resume scheduling jobs")
     p.add_option("--reread-policy", action="store_true", dest="reread", help="reread the utility function definition file")
     p.add_option("--savestate", dest="savestate", help="write the current state to the specified file")
-    p.add_option("--adjust-score", action="store_true", dest="adjust", help="<jobid> <jobid> [+,-- -]score")
+    p.add_option("--adjust-score", dest="adjust", type="string", help="<jobid> <jobid> adjust the scores of the arguments")
+    p.add_option("--inherit", dest="dep_frac", type="float", help="<jobid> <jobid> control the fraction of the score inheritted by jobs which depend on the arguments")
 
     if len(sys.argv) == 1:
         p.print_help()
@@ -52,27 +53,29 @@ if __name__ == '__main__':
             sys.exit(1)
         else:
             print response
-    elif opt.adjust:
-        if len(args) < 2:
-            print >> sys.stderr, "must specify at least one jobid and a score adjustment"
+
+            
+    # everything below here should operate on <jobid> arguments
+    if not args:
+        print >> sys.stderr, "must specify at least one jobid"
+        sys.exit(1)
+    for i in range(len(args)):
+        if args[i] == '*':
+            continue
+        try:
+            args[i] = int(args[i])
+        except:
+            print >> sys.stderr, "jobid must be an integer, found '%s'" % args[i]
             sys.exit(1)
-        jobids = args[:-1]
-        for i in range(len(jobids)):
-            if jobids[i] == '*':
-                continue
-            try:
-                jobids[i] = int(jobids[i])
-            except:
-                print >> sys.stderr, "jobid must be an integer, found '%s'" % jobids[i]
-                sys.exit(1)
     
-        specs = [{'jobid':jobid} for jobid in jobids]
+    if opt.adjust:
+        specs = [{'jobid':jobid} for jobid in args]
         
         try:
-            new_score = args[-1]
+            new_score = opt.adjust
             float(new_score)
         except:
-            print >> sys.stderr, "numeric argument expected for score adjustment, found '%s'" % args[-1]
+            print >> sys.stderr, "numeric argument expected for score adjustment, found '%s'" % opt.adjust
             sys.exit(1) 
         
         try:
@@ -89,3 +92,19 @@ if __name__ == '__main__':
             for id in response:
                 print id,  
 
+    if opt.dep_frac:
+        specs = [{'jobid':jobid} for jobid in args]
+        
+        try:
+            response = Cobalt.Proxy.ComponentProxy("queue-manager").set_jobs(specs, {"dep_frac": opt.dep_frac}, whoami)
+        except:
+            print >> sys.stderr, "Failed to connect to queue manager"
+            raise
+            sys.exit(1)
+
+        if not response:
+            print "no jobs matched"
+        else:
+            print "updating inheritance for jobs:",
+            for id in response:
+                print id,  
