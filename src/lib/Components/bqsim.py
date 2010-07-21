@@ -343,9 +343,11 @@ class BGQsim(Simulator):
         #key=local job id, value=remote mated job id
         self.mate_job_dict = {}
         
+        self.cluster_job_trace =  kwargs.get("cjob", None)        
+        
         if self.coscheduling:
             #test whether cqsim is up by checking cluster job trace argument (cjob) 
-            self.cluster_job_trace =  kwargs.get("cjob", None)
+            
             if self.cluster_job_trace:
                 self.mate_queue_manager = ComponentProxy("cluster-queue-manager")
                 self.mate_qtime_pairs = self.init_mate_qtime_pair(self.cluster_job_trace)
@@ -749,6 +751,10 @@ class BGQsim(Simulator):
 
             elif cur_event=="E":  # Job (Id) is completed
                 completed_job = self.get_live_job_by_id(Id)
+                
+                if completed_job == None:
+                    continue
+                
                 #release partition
                 for partition in completed_job.location:
                     self.release_partition(partition)
@@ -771,7 +777,9 @@ class BGQsim(Simulator):
                 self.num_running -= 1
                 self.num_end += 1
         
-        self.print_screen(cur_event)
+        if not self.cluster_job_trace:
+            os.system('clear')
+            self.print_screen(cur_event)
                 
         return 0
     
@@ -903,7 +911,7 @@ class BGQsim(Simulator):
         
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
-        self.print_screen()
+        #self.print_screen()
                 
         return len(specs)
     run_jobs = exposed(run_jobs)
@@ -1292,6 +1300,8 @@ class BGQsim(Simulator):
         
         #os.system('clear')
         
+        print "Blue Gene"
+        
         if PRINT_SCREEN == False:
             print "simulation in progress, please wait"
             return            
@@ -1349,6 +1359,7 @@ class BGQsim(Simulator):
         print progress_bar
         if self.interval:
             time.sleep(self.interval)
+        print "\n\n"
             
     #coscheduling stuff
     def get_mate_job_status_remote(self, jobid):

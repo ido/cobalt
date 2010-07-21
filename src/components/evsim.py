@@ -4,6 +4,7 @@
 
 import inspect 
 import optparse
+import os
 import sys
 
 import Cobalt.Util
@@ -36,14 +37,19 @@ def integrated_main(options):
     
     evsim = EventSimulator(**options)
     if opts.bgjob:
-        BGQsim(**options)
+        bqsim = BGQsim(**options)
     if opts.cjob:
-        ClusterQsim(**options)
+        cqsim = ClusterQsim(**options)
     
     starttime_sec = time.time()
     
     while not evsim.is_finished():
         evsim.event_driver()
+        os.system('clear')
+        if opts.bgjob:
+            bqsim.print_screen()
+        if opts.cjob:
+            cqsim.print_screen()
 
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"

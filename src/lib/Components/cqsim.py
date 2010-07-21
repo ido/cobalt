@@ -333,6 +333,7 @@ class ClusterQsim(ClusterBaseSystem):
         
         self.workload_file =  kwargs.get("cjob")
         self.output_log = kwargs.get("outputlog")
+        self.bgjob = kwargs.get("bgjob")
         
         self.event_manager = ComponentProxy("event-manager")
       
@@ -657,9 +658,11 @@ class ClusterQsim(ClusterBaseSystem):
                 self.queues.del_jobs([{'jobid':int(Id)}])
                 self.num_running -= 1
                 self.num_end += 1
-        
-        self.print_screen(cur_event)
                 
+#        if not self.bgjob:
+#            os.system('clear')
+#            self.print_screen(cur_event)
+
         return 0
     
     def run_job_updates(self, jobspec, newattr):
@@ -772,7 +775,7 @@ class ClusterQsim(ClusterBaseSystem):
         
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
-        self.print_screen()
+        #self.print_screen()
                 
         return len(specs)
     run_jobs = exposed(run_jobs)
@@ -967,11 +970,13 @@ class ClusterQsim(ClusterBaseSystem):
     def print_screen(self, cur_event=""):
         '''print screen, show number of waiting jobs, running jobs, busy_nodes%'''
         
-        os.system('clear')
+        #os.system('clear')
         
         if PRINT_SCREEN == False:
             print "simulation in progress, please wait"
             return            
+        
+        print "Cluster" 
         
         current_datetime = self.event_manager.get_current_date_time()
         print "%s %s" % (current_datetime, cur_event)
@@ -993,7 +998,7 @@ class ClusterQsim(ClusterBaseSystem):
         running_job_bar += ENDC
         print running_job_bar
         
-        print "number of busy midplanes: ", self.num_busy
+        print "number of busy nodes: ", self.num_busy
         print "system utilization: ", float(self.num_busy) / self.total_nodes
         busy_node_bar = GREENS
         
@@ -1023,7 +1028,7 @@ class ClusterQsim(ClusterBaseSystem):
         print progress_bar
         if self.interval:
             time.sleep(self.interval)
-            
+
     #coscheduling stuff
     def get_mate_job_status_remote(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''
