@@ -15,8 +15,8 @@ if __name__ == '__main__':
     p.add_option("--start", action="store_true", dest="start", help="resume scheduling jobs")
     p.add_option("--reread-policy", action="store_true", dest="reread", help="reread the utility function definition file")
     p.add_option("--savestate", dest="savestate", help="write the current state to the specified file")
-    p.add_option("--adjust-score", dest="adjust", type="string", help="<jobid> <jobid> adjust the scores of the arguments")
-    p.add_option("--inherit", dest="dep_frac", type="float", help="<jobid> <jobid> control the fraction of the score inheritted by jobs which depend on the arguments")
+    p.add_option("--score", dest="adjust", type="string", help="<jobid> <jobid> adjust the scores of the arguments")
+    p.add_option("--inherit", dest="dep_frac", type="float", help="<jobid> <jobid> control the fraction of the score inherited by jobs which depend on the arguments")
 
     if len(sys.argv) == 1:
         p.print_help()
@@ -88,9 +88,8 @@ if __name__ == '__main__':
         if not response:
             print "no jobs matched"
         else:
-            print "updating scores for jobs:",
-            for id in response:
-                print id,  
+            dumb = [str(id) for id in response]
+            print "updating scores for jobs: %s" % ", ".join(dumb)
 
     if opt.dep_frac:
         specs = [{'jobid':jobid} for jobid in args]
@@ -105,6 +104,5 @@ if __name__ == '__main__':
         if not response:
             print "no jobs matched"
         else:
-            print "updating inheritance for jobs:",
-            for id in response:
-                print id,  
+            dumb = [str(r["jobid"]) for r in response]
+            print "updating inheritance fraction for jobs: %s" % ", ".join(dumb)
