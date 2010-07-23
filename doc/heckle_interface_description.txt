@@ -1,0 +1,30 @@
+The following files are run, in this order:
+     slp.py         Communications component
+     cqm.py         Queue Manager
+     HCI_SO.py      System Object (as root)
+     HCI_forker.py  Forker  (as root)
+     bgsched.py     Scheduler
+     scriptm.py     Script Manager
+     
+     
+The concept behind Cobalt is to collect, prioritize, queue and run jobs submitted by users.
+
+In cqsub, the job is described and created.  In cqm, the job is loaded into the queue.  In the scheduler, the job comes up in the active queue.  In the system object, the location is decided.  In the queue manager, the job is transitioned to running.  In the system object, the job is loaded into a process group, which also loads resource descriptions.  The system object then tells the process group to start.  The process group gathers pre-fork data about its environment and the job it is to run, then passes this data off to the forker.  The forker forks, checks the environment for errors, then runs.
+
+The parent reports where it is at, as well as job stat information, and returns.
+The child asks for ssh login.  It then completes and terminates, is caught in the forker wait process and reported on.
+
+A ##.cobaltlog, ##.output and ##.error files are created.
+
+From there, the queue manager still sees the job as continuing, and something continues to ask the system object to match something, via the rx function.  The queue manager eventually times out and tries to kill the job.  The cqadm can also kill the job in the queue manager.  Either way, the queue manager transitions the job to killing.  This does NOT stop whatever process continues to call the system object for data, nor transition the job to epilogue or terminal.
+
+No further automatic progress happens from there.
+
+THIS IS AN ERROR:  In order to proceed, the system object has to be stopped and killed.  When it is brought back up (regardless of occasion) the job is always transitioned to Terminal (usually from job_epilogue).  Regardless of wall time or elapsed time, the job always goes to terminal.  This does not release the resources directly.
+
+The concept behind Changeling is to 
+
+
+The concept behind Heckle is to manage and dynamically load system images onto multiple machines in a cluster.  It uses node-by-node power management, gpxe images rsync'd onto nodes.  It uses Changeling to ... .  Heckle holds node-specific information, loaded at initialization by a systems administrator.  This, and a built-in rudimentary scheduler, allows Heckle to choose a node based upon hardware or kernel/image.  Kernel images are loaded on-demand; thus any node may be installed fresh with most any image.
+
+In my project, I create an interface between Cobalt and Heckle, to be deployed on the non-homogeneous cluster Breadboard.  Breadboard has 64 nodes, built in three phases, with differing numbers of 
