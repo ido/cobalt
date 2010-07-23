@@ -31,6 +31,9 @@ SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
 bgsched_id_gen = None
+bgsched_cycle_id_gen = None
+
+
 
 class Reservation (Data):
     
@@ -38,12 +41,13 @@ class Reservation (Data):
     
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
-        "active", "queue", "res_id" 
+        "active", "queue", "res_id", "cycle_id" 
     ]
     
     required = ["name", "start", "duration"]
 
     global bgsched_id_gen
+    global bgsched_cycle_id_gen
 
     def __init__ (self, spec):
         Data.__init__(self, spec)
@@ -57,10 +61,16 @@ class Reservation (Data):
         self.queue = spec.get("queue", "R.%s" % self.name)
         self.duration = spec.get("duration")
         self.res_id = spec.get("res_id")
+        self.cycle_id_gen = bgsched_cycle_id_gen
+        if self.cycle:
+            self.cycle_id = spec.get("cycle_id",self.cycle_id_gen.get())
+        else:
+            self.cycle_id = None
 
         self.running = False
         
         self.id_gen = bgsched_id_gen
+        
 
     def _get_active(self):
         return self.is_active()
@@ -68,6 +78,7 @@ class Reservation (Data):
     active = property(_get_active)
     
     def update (self, spec):
+        print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
         if spec.has_key("users"):
             qm = ComponentProxy("queue-manager")
             try:
@@ -76,7 +87,11 @@ class Reservation (Data):
                 logger.error("unable to contact queue manager when updating reservation users")
                 raise
         # try the above first -- if we can't contact the queue-manager, don't update the users
+        if spec.has_key('cycle') and not self.cycle:
+            #we have just turned this into a cyclic reservation and need a cycle_id.
+            spec['cycle_id'] = self.cycle_id_gen.get()
         Data.update(self, spec)
+        print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
 
     
     def overlaps(self, start, duration):
@@ -159,7 +174,7 @@ class Reservation (Data):
         stime = time.time()
         # reservations with a cycle time are never "over"
         if self.cycle:
-            #but it does need a new res_id.
+            #but it does need a new res_id, cycle_id remains constant.
             if((((stime - self.start) % self.cycle) > self.duration) 
                and self.running):
                 self.running = False
@@ -357,11 +372,16 @@ class BGSched (Component):
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
         
+        self.cycle_id_gen = IncrID()
+        global bgsched_cycle_id_gen
+        bgsched_cycle_id_gen = self.cycle_id_gen
+        
         
 
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
-                'active':self.active, 'next_res_id':self.id_gen.idnum+1}
+                'active':self.active, 'next_res_id':self.id_gen.idnum+1, 
+                'next_cycle_id':self.cycle_id_gen.idnum+1}
     
     def __setstate__(self, state):
         self.reservations = state['reservations']
@@ -374,7 +394,11 @@ class BGSched (Component):
         self.id_gen.set(state['next_res_id'])
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
-        print bgsched_id_gen
+        
+        self.cycle_id_gen = IncrID
+        self.cycle_id_gen.set(state['next_cycle_id'])
+        global bgsched_cycle_id_gen
+        bgsched_cycle_id_gen = self.id_gen
 
         self.queues = QueueDict()
         self.jobs = JobDict()
