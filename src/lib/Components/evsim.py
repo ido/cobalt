@@ -23,9 +23,7 @@ import Cobalt.Cqparse
 import Cobalt.Util
 import Cobalt.Components.bgsched
 
-
 from Cobalt.Components.bgsched import BGSched
-from Cobalt.Components.csched import ClusterSched
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Components.cqm import QueueDict, Queue
 from Cobalt.Components.simulator import Simulator
@@ -33,8 +31,6 @@ from Cobalt.Data import Data, DataList
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Proxy import ComponentProxy, local_components
 from Cobalt.Server import XMLRPCServer, find_intended_location
-
-
 
 logging.basicConfig()
 logger = logging.getLogger('evsim')
