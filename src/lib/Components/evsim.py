@@ -21,6 +21,8 @@ import time
 import Cobalt
 import Cobalt.Cqparse
 import Cobalt.Util
+import Cobalt.Components.bgsched
+
 
 from Cobalt.Components.bgsched import BGSched
 from Cobalt.Components.csched import ClusterSched
@@ -31,6 +33,8 @@ from Cobalt.Data import Data, DataList
 from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Proxy import ComponentProxy, local_components
 from Cobalt.Server import XMLRPCServer, find_intended_location
+
+
 
 logging.basicConfig()
 logger = logging.getLogger('evsim')
@@ -64,11 +68,15 @@ class Sim_bg_Sched (BGSched):
         BGSched.__init__(self, *args, **kwargs)
         self.get_current_time = ComponentProxy("event-manager").get_current_time
                 
-class Sim_Cluster_Sched (ClusterSched):
+class Sim_Cluster_Sched (BGSched):
     
     def __init__(self, *args, **kwargs):
-        ClusterSched.__init__(self, *args, **kwargs)
+        BGSched.__init__(self, *args, **kwargs)
         self.get_current_time = ComponentProxy("event-manager").get_current_time
+        self.COMP_QUEUE_MANAGER = "cluster-queue-manager"
+        self.COMP_SYSTEM = "cluster-system"
+        self.queues = Cobalt.Components.bgsched.QueueDict(self.COMP_QUEUE_MANAGER)
+        self.jobs = Cobalt.Components.bgsched.JobDict(self.COMP_QUEUE_MANAGER)
     
 class SimEvent (Data):
     

@@ -29,6 +29,8 @@ logger = logging.getLogger("Cobalt.Components.scheduler")
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
+COMP_QUEUE_MANAGER = "queue-manager"
+
 #AdjEst#
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
@@ -77,7 +79,7 @@ class Reservation (Data):
     
     def update (self, spec):
         if spec.has_key("users"):
-            qm = ComponentProxy("queue-manager")
+            qm = ComponentProxy(self.COMP_QUEUE_MANAGER)
             try:
                 qm.set_queues([{'name':self.queue,}], {'users':spec['users']}, "bgsched")
             except ComponentLookupError:
@@ -179,7 +181,7 @@ class ReservationDict (DataDict):
     key = "name"
     
     def q_add (self, *args, **kwargs):
-        qm = ComponentProxy("queue-manager")
+        qm = ComponentProxy(self.COMP_QUEUE_MANAGER)
         try:
             queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         except ComponentLookupError:
@@ -269,12 +271,15 @@ class JobDict(ForeignDataDict):
     item_cls = Job
     key = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (job)")
-    __function__ = ComponentProxy("queue-manager").get_jobs
+    
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user', 'submittime', 'starttime', 'project',
                   'is_runnable', 'is_active', 'has_resources', 'score', 'attrs', 
                   'walltime_p',  #*AdjEst*
                   ]
+    def __init__(self, queue_manager_name):
+        self.queue_manager_name = queue_manager_name
+        self.__function__ = ComponentProxy(self.queue_manager_name).get_jobs
 
 class Queue(ForeignData):
     fields = ForeignData.fields + [
@@ -288,9 +293,7 @@ class Queue(ForeignData):
         self.state = spec.pop("state", None)
         self.policy = spec.pop("policy", None)
         self.priority = spec.pop("priority", 0)
-        
-        
-
+ 
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
         if self.policy not in Cobalt.SchedulerPolicies.names:
@@ -305,8 +308,11 @@ class QueueDict(ForeignDataDict):
     item_cls = Queue
     key = 'name'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (queue)")
-    __function__ = ComponentProxy("queue-manager").get_queues
+    #__function__ = ComponentProxy(queue_manager_name).get_queues
     __fields__ = ['name', 'state', 'policy', 'priority']
+    def __init__(self, queue_manager_name):
+        self.queue_manager_name = queue_manager_name
+        self.__function__ = ComponentProxy(queue_manager_name).get_queues
 
 #    def Sync(self):
 #        qp = [(q.name, q.policy) for q in self.itervalues()]
@@ -338,15 +344,18 @@ class BGSched (Component):
     
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
+        self.COMP_QUEUE_MANAGER = "queue-manager"
+        self.COMP_SYSTEM = "system"
         self.reservations = ReservationDict()
-        self.queues = QueueDict()
-        self.jobs = JobDict()
+        self.queues = QueueDict(self.COMP_QUEUE_MANAGER)
+        self.jobs = JobDict(self.COMP_QUEUE_MANAGER)
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.active = True
-    
+        
         self.get_current_time = time.time
-
+         
+    
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
                 'active':self.active}
@@ -358,8 +367,8 @@ class BGSched (Component):
         else:
             self.active = True
         
-        self.queues = QueueDict()
-        self.jobs = JobDict()
+        self.queues = QueueDict(self.COMP_QUEUE_MANAGER)
+        self.jobs = JobDict(self.COMP_QUEUE_MANAGER)
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         
@@ -457,7 +466,7 @@ class BGSched (Component):
                 # it will report warnings when one reservation starts at the same time another ends
                 if res1.overlaps(res2.start, res2.duration - 0.00001):
                     # now we need to check for overlap in space
-                    results = ComponentProxy("system").get_partitions(
+                    results = ComponentProxy(self.COMP_SYSTEM).get_partitions(
                         [ {'name': p, 'children': '*', 'parents': '*'} for p in res2.partitions.split(":") ]
                     )
                     for p in res1.partitions.split(":"):
@@ -510,7 +519,7 @@ class BGSched (Component):
 
             # there's no backfilling in reservations
             try:
-                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
+                best_partition_dict = ComponentProxy(self.COMP_SYSTEM).find_job_location(job_location_args, [])
             except:
                 self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
@@ -520,7 +529,7 @@ class BGSched (Component):
                 self._start_job(job, best_partition_dict[jobid])
 
     def _start_job(self, job, partition_list):
-        cqm = ComponentProxy("queue-manager")
+        cqm = ComponentProxy(self.COMP_QUEUE_MANAGER)
         
         try:
             self.logger.info("trying to start job %d on partition %r" % (job.jobid, partition_list))
@@ -590,7 +599,7 @@ class BGSched (Component):
         for cur_res in reservations_cache.values():
             res_info[cur_res.name] = cur_res.partitions
         try:
-            equiv = ComponentProxy("system").find_queue_equivalence_classes(res_info, [q.name for q in active_queues + spruce_queues])
+            equiv = ComponentProxy(self.COMP_SYSTEM).find_queue_equivalence_classes(res_info, [q.name for q in active_queues + spruce_queues])
         except:
             self.logger.error("failed to connect to system component")
             return
@@ -677,7 +686,7 @@ class BGSched (Component):
                     } )
 
             try:
-                best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
+                best_partition_dict = ComponentProxy(self.COMP_SYSTEM).find_job_location(job_location_args, end_times)
             except:
                 self.logger.error("failed to connect to system component", exc_info=True)
                 best_partition_dict = {}
