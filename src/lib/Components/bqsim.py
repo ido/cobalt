@@ -35,7 +35,7 @@ MACHINE_NAME = "Intrepid"
 MAXINT = 2021072587
 MIDPLANE_SIZE = 512
 DEFAULT_VICINITY = 60
-DEFAULT_COSCHEDULE_SCHEME = 1
+DEFAULT_COSCHEDULE_SCHEME = 0
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
@@ -338,9 +338,14 @@ class BGQsim(Simulator):
         #initialize partitions
         self.interval = kwargs.get("interval", 0)
         
-        self.coscheduling = kwargs.get("coscheduling", False)
+        #self.coscheduling = kwargs.get("coscheduling", False)
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
-        self.cosched_scheme = kwargs.get("coscheme", DEFAULT_COSCHEDULE_SCHEME)
+        self.cosched_scheme = kwargs.get("coscheduling", None)
+        if self.cosched_scheme in ["hold", "yield"]:
+            self.coscheduling = True
+        else:
+            self.coscheduling = False
+        
         self.mate_qtime_pairs = []
         
         #key=local job id, value=remote mated job id
@@ -936,9 +941,9 @@ class BGQsim(Simulator):
                     dbgmsg += "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
                     
                     if remote_status in ["queuing", "unsubmitted"]:
-                        if self.cosched_scheme == 0: # hold resource if mate cannot run, favoring job
+                        if self.cosched_scheme == "hold": # hold resource if mate cannot run, favoring job
                             action = "hold"
-                        if self.cosched_scheme == 1: # give up if mate cannot run, favoring sys utilization
+                        if self.cosched_scheme == "yield": # give up if mate cannot run, favoring sys utilization
                             action = "start_both_or_give_up"                        
                     if remote_status == "holding":
                         action = "start_both"

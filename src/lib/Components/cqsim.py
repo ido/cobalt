@@ -35,7 +35,7 @@ MACHINE_NAME = "EUREKA"
 MAXINT = 2021072587
 MIDPLANE_SIZE = 512
 DEFAULT_VICINITY = 60
-DEFAULT_COSCHEDULE_SCHEME = 1
+DEFAULT_COSCHEDULE_SCHEME = 0
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
@@ -339,7 +339,6 @@ class ClusterQsim(ClusterBaseSystem):
         self.bgjob = kwargs.get("bgjob")
         
         self.event_manager = ComponentProxy("event-manager")
-        self.cosched_scheme = kwargs.get("coscheme", DEFAULT_COSCHEDULE_SCHEME)
       
         walltime_prediction = get_histm_config("walltime_prediction", False)   # *AdjEst*
         print "walltime_prediction=", walltime_prediction
@@ -391,7 +390,11 @@ class ClusterQsim(ClusterBaseSystem):
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
         
-        self.coscheduling = kwargs.get("coscheduling", False)
+        self.cosched_scheme = kwargs.get("coscheduling", None)
+        if self.cosched_scheme in ["hold", "yield"]:
+            self.coscheduling = True
+        else:
+            self.coscheduling = False
     
         if self.coscheduling:
             bg_mate_dict = ComponentProxy(REMOTE_QUEUE_MANAGER).get_mate_job_dict()
@@ -806,9 +809,9 @@ class ClusterQsim(ClusterBaseSystem):
                     dbgmsg += "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
                     
                     if remote_status in ["queuing", "unsubmitted"]:
-                        if self.cosched_scheme == 0: # hold resource if mate cannot run, favoring job
+                        if self.cosched_scheme == "hold": # hold resource if mate cannot run, favoring job
                             action = "hold"
-                        if self.cosched_scheme == 1: # give up if mate cannot run, favoring sys utilization
+                        if self.cosched_scheme == "yield": # give up if mate cannot run, favoring sys utilization
                             action = "start_both_or_give_up"                        
                     if remote_status == "holding":
                         action = "start_both"

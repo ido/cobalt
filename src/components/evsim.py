@@ -48,8 +48,12 @@ def integrated_main(options):
         os.system('clear')
         if opts.bgjob:
             bqsim.print_screen()
+            pass
         if opts.cjob:
             cqsim.print_screen()
+            pass
+       
+
 
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"
@@ -73,8 +77,10 @@ if __name__ == "__main__":
         help="seconds to wait at each event")
     p.add_option("-P", "--prediction", dest="predict", action="store_true", default=False,
         help="enable walltime prediction")
-    p.add_option("-C", "--coscheduling", dest="coscheduling", action="store_true", default=False,
-        help="enable coscheduling")
+    p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
+        help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
+    
+    coscheduling_schemes = ["hold", "yield"]
     
     opts, args = p.parse_args()
 
@@ -87,6 +93,12 @@ if __name__ == "__main__":
         print "Error: Please specify partition configuration file for the Blue Gene system"
         p.print_help()
         sys.exit()
+        
+    if opts.coscheduling:
+        if not opts.coscheduling in coscheduling_schemes:
+            print "Error: invalid coscheduling scheme %s. Valid schemes are: %s" % (opts.coscheduling,  coscheduling_schemes)
+            p.print_help()
+            sys.exit()
         
     options = {}
     for argname in arg_list:
