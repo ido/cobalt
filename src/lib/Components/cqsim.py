@@ -34,6 +34,8 @@ MACHINE_ID = 1
 MACHINE_NAME = "EUREKA"
 MAXINT = 2021072587
 MIDPLANE_SIZE = 512
+DEFAULT_VICINITY = 60
+DEFAULT_COSCHEDULE_SCHEME = 1
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
@@ -337,6 +339,7 @@ class ClusterQsim(ClusterBaseSystem):
         self.bgjob = kwargs.get("bgjob")
         
         self.event_manager = ComponentProxy("event-manager")
+        self.cosched_scheme = kwargs.get("coscheme", DEFAULT_COSCHEDULE_SCHEME)
       
         walltime_prediction = get_histm_config("walltime_prediction", False)   # *AdjEst*
         print "walltime_prediction=", walltime_prediction
@@ -396,6 +399,8 @@ class ClusterQsim(ClusterBaseSystem):
             self.mate_job_dict = dict((v,k) for k, v in bg_mate_dict.iteritems())
         else:
             self.mate_job_dict = {}
+            
+        self.givingup_job_list = []
         
   
         Var = raw_input("press any Enter to continue...")
@@ -603,11 +608,14 @@ class ClusterQsim(ClusterBaseSystem):
         return job
         
     def get_jobs(self, specs):
-        '''get a list of running and waiting jobs, invoked by scheduler at each scheduling iteration start'''
+        '''get a list of jobs, each time triggers time stamp increment and job
+        states update'''
 
         jobs = []
         
         if self.event_manager.get_go_next():
+            del self.givingup_job_list[:]
+            
             self.update_job_states(specs, {})
             
             self.compute_utility_scores()
@@ -616,7 +624,14 @@ class ClusterQsim(ClusterBaseSystem):
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
         
-        #print "living jobs:", [job.jobid for job in jobs]
+#        print "ret_job1=", [job.jobid for job in jobs if job.is_runnable == True]
+        
+        #exclude jobs that give up turns (for waiting their mate jobs)
+        if self.givingup_job_list:
+            jobs = [job for job in jobs if job.jobid not in self.givingup_job_list]
+ #           print "give up list=", self.givingup_job_list  
+            
+  #      print "ret_job2=", [job.jobid for job in jobs if job.is_runnable == True]
 
         return jobs
     get_jobs = exposed(query(get_jobs))
@@ -647,7 +662,11 @@ class ClusterQsim(ClusterBaseSystem):
                 del self.unsubmitted_job_spec_dict[Id]
 
             elif cur_event=="E":  # Job (Id) is completed
+                
+                
                 joblist = self.queues.get_jobs([{'jobid':int(Id)}])
+                
+                
                 
                 if joblist:
                     completed_job = joblist[0]
@@ -662,7 +681,6 @@ class ClusterQsim(ClusterBaseSystem):
                     end = 0
                 end_datetime = sec_to_date(end)   
                 self.log_job_event("E", end_datetime, jobspec)
-                
                 #free nodes
                 self.nodes_up(completed_job.location)
                 self.num_busy -= len(completed_job.location)
@@ -774,6 +792,8 @@ class ClusterQsim(ClusterBaseSystem):
             
             action = "start"
             
+            dbgmsg = ""
+            
             if self.coscheduling:
                 local_job_id = spec.get('jobid') #int
                 #check whether there is a mate job
@@ -783,20 +803,23 @@ class ClusterQsim(ClusterBaseSystem):
                 #if mate job exists, get the status of the mate job
                 if mate_job_id > 0:
                     remote_status = self.get_mate_jobs_status_local(mate_job_id).get('status', "unknown")
-                    dbgmsg = "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
+                    dbgmsg += "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
                     
                     if remote_status in ["queuing", "unsubmitted"]:
-                        action = "hold"
-                    
+                        if self.cosched_scheme == 0: # hold resource if mate cannot run, favoring job
+                            action = "hold"
+                        if self.cosched_scheme == 1: # give up if mate cannot run, favoring sys utilization
+                            action = "start_both_or_give_up"                        
                     if remote_status == "holding":
                         action = "start_both"
                     
-                    self.dbglog.LogMessage(dbgmsg)
+                    #self.dbglog.LogMessage(dbgmsg)
                 #to be inserted co-scheduling handling code
                 else:
                     pass
             
             if action == "start":
+                #print "CQSIM-normal: start job %s on nodes %s" % (spec['jobid'], nodelist)
                 self.start_job([spec], {'location': nodelist})
             elif action == "hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
@@ -805,6 +828,32 @@ class ClusterQsim(ClusterBaseSystem):
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
+            elif action == "start_both_or_give_up":
+                #print "CQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
+                
+                try:
+                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                except:
+                    self.logger.error("failed to connect to remote queue-manager component!")
+                    mate_job_can_run = False
+                    print "failed to connect to remote queue-manager component!"
+                if mate_job_can_run:
+                    #now that mate has been started, start local job
+                    #print "++++++++++++cqsim: mate_job %s can run, start local job %s" % (mate_job_id, local_job_id)                    
+                    self.start_job([spec], {'location': nodelist})
+                    #print "local started ", spec.get('jobid')
+                    dbgmsg += "---start both"
+                    
+                else:
+                    #print "cqsim: mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
+                    self.givingup_job_list.append(spec.get('jobid'))  #int
+                    
+                    dbgmsg += " give up run local"
+                self.dbglog.LogMessage(dbgmsg)
+                    
+                
+                #time.sleep(1)
+
                     
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
@@ -812,6 +861,78 @@ class ClusterQsim(ClusterBaseSystem):
                 
         return len(specs)
     run_jobs = exposed(run_jobs)
+    
+        # order the jobs with biggest utility first
+    def utilitycmp(self, job1, job2):
+        return -cmp(job1.score, job2.score)
+    
+    def try_to_run_mate_job(self, _jobid):
+        '''try to run mate job, start all the jobs that can run. If the started
+        jobs include the given mate job, return True else return False.
+        '''
+        mate_job_started = False
+        
+        #start all the jobs that can run
+        while True:
+            running_jobs = [job for job in self.queues.get_jobs([{'has_resources':True}])]
+            
+            end_times = []
+            
+            now = self.get_current_time_sec()
+        
+            for job in running_jobs:
+                end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
+                end_times.append([job.location, end_time])
+  
+            
+            active_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])] #waiting jobs
+            active_jobs.sort(self.utilitycmp)
+                   
+            job_location_args = []
+            for job in active_jobs:
+                if not job.jobid == _jobid and self.mate_job_dict.get(job.jobid, 0) > 0:
+                    #if a job other than given job (_jobid) has mate, skip it.
+                    continue
+                
+                job_location_args.append({'jobid': str(job.jobid),
+                                          'nodes': job.nodes,
+                                          'queue': job.queue,
+                                          'forbidden': [],
+                                          'utility_score': job.score,
+                                          'walltime': job.walltime,
+                                          'walltime_p': job.walltime_p,  #*AdjEst*
+                                          'attrs': job.attrs,
+                 } )
+            
+            
+            if len(job_location_args) == 0:
+                break
+            
+            #print "cqsim queue order=", [item['jobid'] for item in job_location_args]
+            
+            best_partition_dict = self.find_job_location(job_location_args, end_times)
+            
+            if best_partition_dict:
+                #print "best_partition_dict=", best_partition_dict
+                
+                for canrun_jobid in best_partition_dict:
+                    nodelist = best_partition_dict[canrun_jobid]
+                    
+                    if str(_jobid) == canrun_jobid:
+                        mate_job_started = True
+                       
+                    self.start_job([{'tag':"job", 'jobid':int(canrun_jobid)}], {'location':nodelist})
+                    #print "bqsim.try_to_run_mate, start job jobid ", canrun_jobid 
+                     
+                    #insert a new end time
+                    started_job = self.get_live_job_by_id(canrun_jobid)
+                    new_end_time = max(now + 60 * float(started_job.walltime), now + 5*60)                    
+                    end_times.append([started_job.location, new_end_time])
+            else:
+                break
+                                  
+        return mate_job_started
+    try_to_run_mate_job = exposed(try_to_run_mate_job)
     
     def run_holded_job(self, specs):
         '''start holded job'''
@@ -1037,10 +1158,13 @@ class ClusterQsim(ClusterBaseSystem):
                     self.logger.info("backfilling job %s" % args['jobid'])
                     break
 
+#!!!following two lines must be commented for coscheduling feature because giving up may occur. when
+# a job is found location but give up to run, the nodes can't be updated to running status.
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
         # be running jobs very soon
-        for location_list in best_location_dict.itervalues():
-            self.running_nodes.update(location_list)
+#        for location_list in best_location_dict.itervalues():
+#            self.running_nodes.update(location_list)
+
 
         return best_location_dict
     find_job_location = exposed(find_job_location)
@@ -1126,7 +1250,7 @@ class ClusterQsim(ClusterBaseSystem):
 #            status_dict['status'] = self.get_coschedule_status(jobid)
 #        else:
 #            status_dict['status'] = 'invisible'
-        print "cqsim ", ret_dict
+        #print "cqsim ", ret_dict
         return ret_dict
     get_mate_job_status_cqsim = exposed(get_mate_job_status_cqsim)
     
@@ -1177,5 +1301,6 @@ class ClusterQsim(ClusterBaseSystem):
             if self.unsubmitted_job_spec_dict.has_key(str(jobid)):
                 ret_status = "unsubmitted"
             else:
-                ret_status = "ended"
+                ret_status = "unknown"  #ended or no such job
+                del self.mate_job_dict[jobid]
         return ret_status

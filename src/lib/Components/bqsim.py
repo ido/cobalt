@@ -35,6 +35,7 @@ MACHINE_NAME = "Intrepid"
 MAXINT = 2021072587
 MIDPLANE_SIZE = 512
 DEFAULT_VICINITY = 60
+DEFAULT_COSCHEDULE_SCHEME = 1
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
@@ -339,12 +340,15 @@ class BGQsim(Simulator):
         
         self.coscheduling = kwargs.get("coscheduling", False)
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
+        self.cosched_scheme = kwargs.get("coscheme", DEFAULT_COSCHEDULE_SCHEME)
         self.mate_qtime_pairs = []
         
         #key=local job id, value=remote mated job id
         self.mate_job_dict = {}
         #key = jobid, value = nodelist  ['part-or-node-name','part-or-node-name' ]
         self.job_hold_dict = {}  
+        
+        self.givingup_job_list = []
         
         self.cluster_job_trace =  kwargs.get("cjob", None)        
         
@@ -419,7 +423,8 @@ class BGQsim(Simulator):
         if self.coscheduling:
             self.init_mate_job_dict()
         
-        print self.mate_job_dict
+        for k, v in self.mate_job_dict.iteritems():
+            print "%s:%s" % (k, v)
 
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
@@ -450,9 +455,7 @@ class BGQsim(Simulator):
     
         self.rack_matrix = []
         self.reset_rack_matrix()
-        
-        #coscheduling stuff
-                                                
+                                                        
         print "Simulation starts:"
         
     def init_mate_qtime_pair(self, mate_job_trace):
@@ -873,6 +876,8 @@ class BGQsim(Simulator):
         jobs = []
         
         if self.event_manager.get_go_next():
+            del self.givingup_job_list[:]
+            
             self.update_job_states(specs, {})
             
             self.compute_utility_scores()
@@ -880,6 +885,13 @@ class BGQsim(Simulator):
         self.event_manager.set_go_next(True)
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
+        
+        if self.givingup_job_list:
+            jobs = [job for job in jobs if job.jobid not in self.givingup_job_list]
+         #   print "giving up list=", self.givingup_job_list
+            
+        #print "active job2=", [job.jobid for job in jobs]
+        #print "ret_job2=", [job.jobid for job in jobs if job.is_runnable == True]
 
         return jobs
     get_jobs = exposed(query(get_jobs))
@@ -911,7 +923,7 @@ class BGQsim(Simulator):
         for spec in specs:
             
             action = "start"
-            
+            dbgmsg = ""
             if self.coscheduling:
                 local_job_id = spec.get('jobid') #int
                 #check whether there is a mate job
@@ -921,20 +933,22 @@ class BGQsim(Simulator):
                 #if mate job exists, get the status of the mate job
                 if mate_job_id > 0:
                     remote_status = self.get_mate_jobs_status_local(mate_job_id).get('status', "unknown")
-                    dbgmsg = "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
+                    dbgmsg += "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
                     
                     if remote_status in ["queuing", "unsubmitted"]:
-                        action = "hold"
-                        
+                        if self.cosched_scheme == 0: # hold resource if mate cannot run, favoring job
+                            action = "hold"
+                        if self.cosched_scheme == 1: # give up if mate cannot run, favoring sys utilization
+                            action = "start_both_or_give_up"                        
                     if remote_status == "holding":
                         action = "start_both"
                     
-                    self.dbglog.LogMessage(dbgmsg)
                 #to be inserted co-scheduling handling code
                 else:
                     pass
             
             if action == "start":
+                #print "BQSIM-normal start job %s on nodes %s" % (spec['jobid'], nodelist)
                 self.start_job([spec], {'location': nodelist})
             elif action == "hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
@@ -943,13 +957,106 @@ class BGQsim(Simulator):
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
-                 
+            elif action == "start_both_or_give_up":
+                #print "BQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
+                try:
+                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                except:
+                    self.logger.error("failed to connect to remote queue-manager component!")
+                    mate_job_can_run = False
+                if mate_job_can_run:
+                    #now that mate has been started, start local job
+                    #print "-------------bqim: mate_job %s can run, start local job %s" % (mate_job_id, local_job_id)
+                    self.start_job([spec], {'location': nodelist})
+                    #print "local started ", spec.get('jobid')
+                    
+                    dbgmsg += " ###start both"
+                    
+                else:
+                    #print "bqsim mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
+                    self.givingup_job_list.append(spec.get('jobid'))  #int
+                    #self.release_allocated_nodes(nodelist)                    
+                    
+                    dbgmsg += "  --give up run local"
+                self.dbglog.LogMessage(dbgmsg)
+                #time.sleep(1)
+                    
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
         #self.print_screen()
                 
         return len(specs)
     run_jobs = exposed(run_jobs)
+    
+    # order the jobs with biggest utility first
+    def utilitycmp(self, job1, job2):
+        return -cmp(job1.score, job2.score)
+    
+    def try_to_run_mate_job(self, _jobid):
+        '''try to run mate job, start all the jobs that can run. If the started
+        jobs include the given mate job, return True else return False.  _jobid : int
+        '''
+        #print "entered bqsim.try_to_run_mate_job, jobid=", _jobid
+        
+            
+        mate_job_started = False
+        
+        #start all the jobs that can run
+        gohead = True
+        while gohead:
+            running_jobs = [job for job in self.queues.get_jobs([{'has_resources':True}])]
+            
+            end_times = []
+            
+            now = self.get_current_time_sec()
+        
+            for job in running_jobs:
+                end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
+                end_times.append([job.location, end_time])
+            
+            active_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])] #waiting jobs
+            active_jobs.sort(self.utilitycmp)
+                   
+            job_location_args = []
+            for job in active_jobs:
+                if not job.jobid == _jobid and self.mate_job_dict.get(job.jobid, 0) > 0:
+                    #if a job other than given job (_jobid) has mate, skip it.
+                    continue
+                
+                job_location_args.append({'jobid': str(job.jobid),
+                                          'nodes': job.nodes,
+                                          'queue': job.queue,
+                                          'forbidden': [],
+                                          'utility_score': job.score,
+                                          'walltime': job.walltime,
+                                          'walltime_p': job.walltime_p,  #*AdjEst*
+                                          'attrs': job.attrs,
+                 } )
+            
+            
+            if len(job_location_args) == 0:
+                break
+            
+            #print "queue order=", [item['jobid'] for item in job_location_args]
+            
+            best_partition_dict = self.find_job_location(job_location_args, end_times)
+            
+            if best_partition_dict:
+                #print "best_partition_dict=", best_partition_dict
+                
+                for canrun_jobid in best_partition_dict:
+                    nodelist = best_partition_dict[canrun_jobid]
+                    
+                    if str(_jobid) == canrun_jobid:
+                        mate_job_started = True
+                            
+                    self.start_job([{'tag':"job", 'jobid':int(canrun_jobid)}], {'location':nodelist})
+                    #print "bqsim.try_to_run_mate, start job jobid ", canrun_jobid 
+            else:
+                break
+                        
+        return mate_job_started
+    try_to_run_mate_job = exposed(try_to_run_mate_job)
     
     def run_holded_job(self, specs):
         '''start holded job'''
@@ -1130,14 +1237,13 @@ class BGQsim(Simulator):
             return val
         
         def default():
-            '''WFP, supporting coordinated job recovery'''
-                        
+
             wall_time_sec = wall_time*60
                             
             val = ( queued_time / wall_time_sec)**3 * (size/64.0)
             
             return val
-    
+        
         def high_prio():
             val = 1.0
             return val
@@ -1195,7 +1301,7 @@ class BGQsim(Simulator):
             for p in self.possible_locations(nodes, queue):
                 skip = False
                 for bad_name in forbidden:
-                    if p.name==bad_name or bad_name in p.children or bad_name in p.parents:
+                    if p.name == bad_name or bad_name in p.children or bad_name in p.parents:
                         skip = True
                         break
                 if not skip:
@@ -1271,7 +1377,6 @@ class BGQsim(Simulator):
                 child_partition = self.cached_partitions[child_name]
                 if child_partition.backfill_time == now or child_partition.backfill_time > p.backfill_time:
                     child_partition.backfill_time = p.backfill_time
-
         
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
@@ -1309,27 +1414,27 @@ class BGQsim(Simulator):
         # be running jobs very soon
         #
         # also, this is the only part of finding a job location where we need to lock anything
-        self._partitions_lock.acquire()
-        try:
-            for p in self.partitions.itervalues():
-                # push the backfilling info from the local cache back to the real objects
-                p.draining = self.cached_partitions[p.name].draining
-                p.backfill_time = self.cached_partitions[p.name].backfill_time
-                
-            for jobid, partition_list in best_partition_dict.iteritems():
-                part = self.partitions[partition_list[0]]
-                part.used_by = int(jobid)
-                part.reserved_until = self.get_current_time() + 5*60
-                part.state = "allocated"
-                for p in part._parents:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-                for p in part._children:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-        except:
-            self.logger.error("error in find_job_location", exc_info=True)
-        self._partitions_lock.release()
+#        self._partitions_lock.acquire()
+#        try:
+#            for p in self.partitions.itervalues():
+#                # push the backfilling info from the local cache back to the real objects
+#                p.draining = self.cached_partitions[p.name].draining
+#                p.backfill_time = self.cached_partitions[p.name].backfill_time
+#                
+#            for jobid, partition_list in best_partition_dict.iteritems():
+#                part = self.partitions[partition_list[0]]
+#                part.used_by = int(jobid)
+#                part.reserved_until = self.get_current_time() + 5*60
+#                part.state = "allocated"
+#                for p in part._parents:
+#                    if p.state == "idle":
+#                        p.state = "blocked (%s)" % (part.name,)
+#                for p in part._children:
+#                    if p.state == "idle":
+#                        p.state = "blocked (%s)" % (part.name,)
+#        except:
+#            self.logger.error("error in find_job_location", exc_info=True)
+#        self._partitions_lock.release()
         
         return best_partition_dict
     find_job_location = locking(exposed(find_job_location))
@@ -1356,13 +1461,13 @@ class BGQsim(Simulator):
                 if rack[0] == 1:
                     print "*",
                 elif rack[0] == 0:
-                    print GREENS+'X'+ENDC,
+                    print GREENS + 'X' + ENDC,
             print '\r'
             for rack in row:
                 if rack[1] == 1:
                     print "*",
                 elif rack[1] == 0:
-                    print GREENS+'X'+ENDC,
+                    print GREENS + 'X' + ENDC,
             print '\r'
              
     def mark_matrix(self):
@@ -1465,7 +1570,7 @@ class BGQsim(Simulator):
 #            status_dict['status'] = self.get_coschedule_status(jobid)
 #        else:
 #            status_dict['status'] = 'invisible'
-        print "bqsim ", ret_dict
+
         return ret_dict
     get_mate_job_status_bqsim = exposed(get_mate_job_status_bqsim)
     
@@ -1507,6 +1612,43 @@ class BGQsim(Simulator):
             if self.unsubmitted_job_spec_dict.has_key(str(jobid)):
                 ret_status = "unsubmitted"
             else:
-                ret_status = "ended"
+                ret_status = "unknown"  #ended or no such job
+                del self.mate_job_dict[jobid]
         return ret_status
+    
+    def reserve_partition (self, name, size=None):
+        """Reserve a partition and block all related partitions.
+        
+        Arguments:
+        name -- name of the partition to reserve
+        size -- size of the process group reserving the partition (optional)
+        """
+        
+        try:
+            partition = self.partitions[name]
+        except KeyError:
+            self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
+            return False
+#        if partition.state != "allocated":
+#            self.logger.error("reserve_partition(%r, %r) [%s]" % (name, size, partition.state))
+#            return False
+        if not partition.functional:
+            self.logger.error("reserve_partition(%r, %r) [not functional]" % (name, size))
+        if size is not None and size > partition.size:
+            self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
+            return False
+
+        self._partitions_lock.acquire()
+        try:
+            partition.state = "busy"
+            partition.reserved_until = False
+        except:
+            self.logger.error("error in reserve_partition", exc_info=True)
+        self._partitions_lock.release()
+        # explicitly call this, since the above "busy" is instantaneously available
+        self.update_partition_state()
+        
+        self.logger.info("reserve_partition(%r, %r)" % (name, size))
+        return True
+    reserve_partition = exposed(reserve_partition)
              
