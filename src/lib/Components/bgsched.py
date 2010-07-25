@@ -42,7 +42,7 @@ def get_histm_config(option, default):
         value = default
     return value
 
-running_job_walltime_prediction = get_histm_config("running_job_walltime_prediction", "True")    
+running_job_walltime_prediction = get_histm_config("running_job_walltime_prediction", "False")    
 if running_job_walltime_prediction in ["True", "true"]:
     running_job_walltime_prediction = True
 else:
@@ -229,9 +229,6 @@ class ReservationDict (DataDict):
             logger.error("problem disabling reservation queue (%s)" % e)
         return reservations
 
-
-                
-
 class Job (ForeignData):
     
     """A cobalt job."""
@@ -352,7 +349,6 @@ class BGSched (Component):
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.active = True
-        
         self.get_current_time = time.time
          
     
@@ -636,7 +632,7 @@ class BGSched (Component):
                 # continue to cast a small backfilling shadow (we need this for the case
                 # that the final job in a drained partition runs overtime -- which otherwise
                 # allows things to be backfilled into the drained partition)
-                if running_job_walltime_prediction:
+                if self.running_job_walltime_prediction:
                     runtime_estimate = float(job.walltime_p)
                 else:
                     runtime_estimate = float(job.walltime)

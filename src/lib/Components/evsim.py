@@ -62,7 +62,14 @@ class Sim_bg_Sched (BGSched):
     
     def __init__(self, *args, **kwargs):
         BGSched.__init__(self, *args, **kwargs)
+        
         self.get_current_time = ComponentProxy("event-manager").get_current_time
+        
+        predict_scheme = kwargs.get("predict", False)
+        if predict_scheme:
+            self.running_job_walltime_prediction = bool(int(predict_scheme[2]))
+        else:
+            self.running_job_walltime_prediction = False             
                 
 class Sim_Cluster_Sched (BGSched):
     
@@ -73,6 +80,7 @@ class Sim_Cluster_Sched (BGSched):
         self.COMP_SYSTEM = "cluster-system"
         self.queues = Cobalt.Components.bgsched.QueueDict(self.COMP_QUEUE_MANAGER)
         self.jobs = Cobalt.Components.bgsched.JobDict(self.COMP_QUEUE_MANAGER)
+        self.running_job_walltime_prediction = False
     
 class SimEvent (Data):
     
@@ -125,7 +133,8 @@ class EventSimulator(Component):
         self.time_stamp = 0
         self.init_tags = [0 for i in range(0,no_of_machine)]
         self.finished = False
-        self.bgsched = Sim_bg_Sched()
+                
+        self.bgsched = Sim_bg_Sched(**kwargs)
         self.csched = Sim_Cluster_Sched()
         self.go_next = True
         

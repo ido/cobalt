@@ -388,13 +388,19 @@ class BGQsim(Simulator):
         
         self.event_manager = ComponentProxy("event-manager")
         
-        walltime_prediction = get_histm_config("walltime_prediction", False)   # *AdjEst*
-        print "walltime_prediction=", walltime_prediction
-        if walltime_prediction in ["True", "true"]:
+        self.predict_scheme = kwargs.get("predict", False)
+        
+        if self.predict_scheme:
             self.walltime_prediction = True
+            self.predict_queue = bool(int(self.predict_scheme[0]))
+            self.predict_backfill = bool(int(self.predict_scheme[1]))
+            self.predict_running = bool(int(self.predict_scheme[2]))
         else:
             self.walltime_prediction = False
-        
+            self.predict_queue = False
+            self.predict_backfill = False
+            self.predict_running = False
+            
         #print "walltime_prediction =", self.walltime_prediction   
         histm_alive = False
         try:
@@ -1146,7 +1152,8 @@ class BGQsim(Simulator):
         for job in self.queues.get_jobs([{'is_runnable':True}]):    
             utility_name = self.queues[job.queue].policy
             args = {'queued_time':current_time - float(job.submittime), 
-                    'wall_time': 60*float(job.walltime_p),    #  *AdjEst*
+                    'wall_time': 60*float(job.walltime),    
+                    'wall_time_p':  60*float(job.walltime_p), ##  *AdjEst*
                     'size': float(job.nodes),
                     'user_name': job.user,
                     'project': job.project,
@@ -1242,10 +1249,13 @@ class BGQsim(Simulator):
             return val
         
         def default():
-
-            wall_time_sec = wall_time*60
+            '''WFP'''
+            if self.predict_queue:
+                wall_time_sched = wall_time_p
+            else:
+                wall_time_sched = wall_time
                             
-            val = ( queued_time / wall_time_sec)**3 * (size/64.0)
+            val = ( queued_time / wall_time_sched)**3 * (size/64.0)
             
             return val
         
@@ -1318,8 +1328,10 @@ class BGQsim(Simulator):
         
         for partition in available_partitions:
             # if the job needs more time than the partition currently has available, look elsewhere    
-            
-            runtime_estimate = float(walltime_p)   # *Adj_Est*
+            if self.predict_backfill:
+                runtime_estimate = float(walltime_p)   # *Adj_Est*
+            else:
+                runtime_estimate = float(walltime)
             
             if backfilling:
                 if 60*runtime_estimate > (partition.backfill_time - now):
@@ -1564,18 +1576,7 @@ class BGQsim(Simulator):
         '''return mate job status, remote function, invoked by remote component'''
         #local_job = self.get_live_job_by_id(jobid)
         ret_dict = {'jobid':jobid}
-        
-        #job = self.get_live_job_by_id(jobid)
-        
         ret_dict['status'] = self.get_coschedule_status(jobid)
-#        local_job = False
-#        if local_job:#
-#            #status_dict['can_run'] = self.test_can_run(jobid)
-#            #status_dict['hold_resource'] = local_job.hold_resource
-#            status_dict['status'] = self.get_coschedule_status(jobid)
-#        else:
-#            status_dict['status'] = 'invisible'
-
         return ret_dict
     get_mate_job_status_bqsim = exposed(get_mate_job_status_bqsim)
     

@@ -36,6 +36,7 @@ def integrated_main(options):
         histm = HistoryManager(**options)
     
     evsim = EventSimulator(**options)
+    
     if opts.bgjob:
         bqsim = BGQsim(**options)
     if opts.cjob:
@@ -53,8 +54,6 @@ def integrated_main(options):
             cqsim.print_screen()
             pass
        
-
-
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"
     print "the simulation lasts %s seconds (~%s minutes)" % (int(endtime_sec - starttime_sec), int((endtime_sec - starttime_sec)/60))
@@ -73,10 +72,10 @@ if __name__ == "__main__":
         help="featuring string for output log")
     p.add_option("-j", "--job", dest="bgjob", type="string",
         help="file name of the job trace (when scheduling for bg system only)")
-    p.add_option("-i", "--interval", dest="interval", type="int",
+    p.add_option("-i", "--interval", dest="interval", type="float",
         help="seconds to wait at each event")
-    p.add_option("-P", "--prediction", dest="predict", action="store_true", default=False,
-        help="enable walltime prediction")
+    p.add_option("-P", "--prediction", dest="predict", type="string", default=False,
+        help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction. x:queuing, y:backfilling, z:running job")
     p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
         help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
     
@@ -97,6 +96,20 @@ if __name__ == "__main__":
     if opts.coscheduling:
         if not opts.coscheduling in coscheduling_schemes:
             print "Error: invalid coscheduling scheme %s. Valid schemes are: %s" % (opts.coscheduling,  coscheduling_schemes)
+            p.print_help()
+            sys.exit()
+            
+    if opts.predict:
+        invalid = False
+        scheme = opts.predict
+        if not len(scheme)==3:
+            invalid = True
+        else:
+            for s in scheme:
+                if s not in ['0', '1']:
+                    invalid = True
+        if invalid:
+            print "Error: invalid prediction scheme %s. Valid schemes are: xyz, x,y,z=0|1" % (scheme)
             p.print_help()
             sys.exit()
         
