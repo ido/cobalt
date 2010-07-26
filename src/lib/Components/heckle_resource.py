@@ -107,7 +107,7 @@ class ResourceDict(object):
                for res in self.resource_list:
                     retdict['Resources'].append(res._get_dict())
           return retdict
-     def __getitem__( self, name=None ):
+     def __getitem__( self, name ):
           """
           Finds one particular resource by name
           Returns that resource, or False if no resource by that name.
@@ -146,24 +146,14 @@ class ResourceDict(object):
           MUST contain a Name field, and names MUST be unique across the system
           """
           return self.add(attributes=attributes, resource=resource)
-     def add( self, attributes=None, resource=None ):
+     def add( self, attributes ):
           """
           Adds a new Resource to the system
           Attributes is a dictionary of strings, key:value
           MUST contain a Name field, and names MUST be unique across the system
           """
-          try:
-               print "Attributes are %s" % attributes
-          except:
-               pass
-          try:
-               print "Resource is %s" % resource
-          except:
-               pass
-          if (resource and attributes) or not (resource or attributes):
-               retstr = "Object: " + str(resource) + " and Dictionary " + str(attributes)
-               raise Exception("Need ONE thing to compare against!  You gave me %s " % retstr)
-          elif attributes:
+          print "Attributes are %s" % attributes
+          if type(attributes) == DictType:
                if attributes['name'] in self.name_list():
                     raise Exception( "Error: Node %s already in the list" % attributes['name'] )
                else:
@@ -171,22 +161,22 @@ class ResourceDict(object):
                     self.resource_list.append(newResource)
                     self.glossary.append( attributes )
                return True
-          elif resource:
-               if not resource['name']:
-                    raise Exception( "Bad Resource: %s " % resource )
+          elif type(attributes) == Resource:
+               if not attributes['name']:
+                    raise Exception( "Bad Resource: %s " % attribute )
                try:
-                    inlist1 = resource['name'] in self.name_list()
+                    inlist1 = attributes['name'] in self.name_list()
                except:
                     inlist1 = None
                try:
-                    inlist2 = self.resource_list.index(resource)
+                    inlist2 = self.attributes_list.index(attributes)
                except:
                     inlist2 = None
                if inlist1 or inlist2:
-                    raise Exception( "Error: Node already in the list: %s" % resource )
+                    raise Exception( "Error: Node already in the list: %s" % attributes )
                else:
-                    self.resource_list.append( resource )
-                    self.glossary.append( resource._get_dict() )
+                    self.resource_list.append( attributes )
+                    self.glossary.append( attributes._get_dict() )
           return True
      def update( self, attributes=None ):
           """
@@ -244,22 +234,19 @@ class ResourceDict(object):
           Removes a resource from the current system
           Accepts either a dictionary of attributes, or a resource object
           """
-          if (resource and attributes) or not (resource or attributes):
-               retstr = "Object: " + str(resource) + " and Dictionary " + str(attributes)
-               raise Exception("Need ONE thing to compare against!  You gave me %s " % retstr)
-          elif attributes:
+          if type(attributes) == DictType:
                try:
                     resource = self[attributes['name']]
                except:
                     raise Exception("Unknown Resource: %s" % attributes)
-          elif resource:
-               if resource in self.resource_list:
+          elif type(attributes) == Resource:
+               if attributes in self.resource_list:
                     pass
                else:
-                    raise Exception("Unknown Resource: %s" % resource)
-          self.resource_list.remove( resource )
+                    raise Exception("Unknown Resource: %s" % attributes)
+          self.resource_list.remove( attributes )
           return True
-     def __eq__( self, attributes=None ):
+     def __eq__( self, attributes ):
           """
           Returns a list of nodes which match the attributes
           Attributes is a dictionary of strings
@@ -269,7 +256,7 @@ class ResourceDict(object):
                if res == (attributes):
                     retlist.append(res)
           return retlist
-     def __ge__( self, attributes=None ):
+     def __ge__( self, attributes ):
           """
           Returns a list of nodes which are greater than or equal to the attributes
           Attributes is a dictionary of strings
@@ -472,8 +459,8 @@ class Resource(object):
                return self.attribute_list == other._get_attributes()
           elif type(other) == DictType:
                equal = True
-               for att in attributes:
-                    if attributes[att] not in self[att]:
+               for att in other
+                    if other[att] not in self[att]:
                          equal = False
                return equal
           
@@ -503,8 +490,8 @@ class Resource(object):
                                    retvalue = False
           elif type(other) == DictType:
                #print "GE: in attributes"
-               for att in attributes:
-                    val = attributes[att]
+               for att in other:
+                    val = other[att]
                     that = Attributes(att, val)
                     this = self[att]
                     if not this >= that:
