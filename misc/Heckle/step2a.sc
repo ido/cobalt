@@ -42,11 +42,15 @@ sudo cp $COBALT_MISC_PATH/heckle_temp_ProcessGroup.py $SYSTEM_DATATYPES_PATH/hec
 echo "Did heckle_temp_ProcessGroup.py"
 
 
-for component in heckle_forker.py heckle_sched.py; do
-     sudo cp $COBALT_MISC_PATH/$component $SYSTEM_BIN_PATH/$component
-     sudo chmod +x $SYSTEM_BIN_PATH/$component
-     echo "Did reference $component"
-done
+
+sudo cp $COBALT_MISC_PATH/heckle_forker_reference.py $SYSTEM_BIN_PATH/heckle_forker.py
+sudo chmod +x $SYSTEM_BIN_PATH/heckle_forker.py
+echo "Did reference heckle_forker.py"
+
+sudo cp $COBALT_MISC_PATH/heckle_sched_reference.py $SYSTEM_BIN_PATH/heckle_sched.py
+sudo chmod +x $SYSTEM_BIN_PATH/heckle_sched.py
+echo "Did reference heckle_sched.py"
+
 
 for component in copy update commit step2a.sc; do
      cp $COBALT_MISC_PATH/$component $HOME/$component
