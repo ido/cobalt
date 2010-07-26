@@ -180,7 +180,7 @@ class Reservation (Data):
                 self.running = False
                 self.res_id = self.id_gen.get()
                 db_log_to_file(ReportObject("Reservation %s has cycled" % self.name,
-                                            "system", "reservation", self).encode())
+                                            None, "cycled", "reservation", self).encode())
             return False        
         
         if (self.start + self.duration) <= stime:
@@ -466,7 +466,9 @@ class BGSched (Component):
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
         added_reservations =  self.reservations.q_add(specs)
         for added_reservation in added_reservations:
-            db_log_to_file( ReportObject("%s added reservation: %r" % (user_name, specs), user_name, "reservation", added_reservation).encode()) 
+            db_log_to_file( ReportObject("%s added reservation: %r" % (user_name, specs), 
+                                         user_name, "created", "reservation", 
+                                         added_reservation).encode()) 
         return added_reservations
     
     add_reservations = exposed(query(add_reservations))
@@ -475,7 +477,9 @@ class BGSched (Component):
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
-            db_log_to_file( ReportObject("%s releasing reservation: %r" % (user_name, specs), user_name, "reservation", del_reservation).encode()) 
+            db_log_to_file( ReportObject("%s releasing reservation: %r" % (user_name, specs), 
+                                         user_name, "ended", "reservation",
+                                         del_reservation).encode()) 
         return del_reservations
 
     del_reservations = exposed(query(del_reservations))
@@ -491,7 +495,9 @@ class BGSched (Component):
             res.update(newattr)
         mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
         for mod_reservation in mod_reservations:
-            db_log_to_file(ReportObject(log_str, user_name, "reservation", mod_reservation).encode())
+            db_log_to_file(ReportObject(log_str, user_name, 
+                                        "modified", "reservation", 
+                                        mod_reservation).encode())
         return mod_reservations
         
     set_reservations = exposed(query(set_reservations))
@@ -614,7 +620,7 @@ class BGSched (Component):
                     self.logger.info("reservation %s has ended; removing" % res.name)
                     del_reservations = self.reservations.q_del([{'name': res.name}])
                     for del_reservation in del_reservations:
-                        db_log_to_file( ReportObject("reservation %s has ended; removing" % res.name, "system", "reservation", del_reservation).encode()) 
+                        db_log_to_file( ReportObject("reservation %s has ended; removing" % res.name, None, "ended", "reservation", del_reservation).encode()) 
     
             reservations_cache = self.reservations.copy()
         except:

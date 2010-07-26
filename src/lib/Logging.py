@@ -18,6 +18,7 @@ import Cobalt
 import ConfigParser
 import json
 import threading
+import time
 
 from json import JSONEncoder
 
@@ -309,12 +310,15 @@ class ThreadedWrite(threading.Thread):
 #let the database importer figure out what to do with the data.
 class ReportObject(object):
     
-    def __init__(self, reason, exec_id, item_type, item):
+    def __init__(self, message, exec_user, state, item_type, item):
 
-        self.reason = reason #reason for the change
-        self.exec_id = exec_id #id of what is causing change
+        self.message = message #reason for the change
+        self.exec_user = exec_user #id of what is causing change None is cobalt
+        self.state = state #Current state causing message 
         self.item_type = item_type #the type of item being changed
         self.item = item #this should contain the current state of changed
+        self.timestamp = time.time()
+        
         return
 
     def __str__(self):
@@ -327,9 +331,11 @@ class ReportObjectEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ReportObject):
             r = ReportStateEncoder()
-            return {'reason' : obj.reason, 
-                    'exec_id' : obj.exec_id, 
+            return {'message' : obj.message, 
+                    'exec_user' : obj.exec_user, 
                     'item_type' : obj.item_type,
+                    'timestamp' : obj.timestamp,
+                    'state' : obj.state,
                     'item' : r.default(obj.item)}
         return json.JSONEncoder.default(self, obj)
 
@@ -338,17 +344,16 @@ class ReportStateEncoder(JSONEncoder):
     #get reservation and eventually jobs and partitions.
     def default(self, obj):
         if isinstance(obj, Cobalt.Components.bgsched.Reservation):
-            return {'tag': obj.tag,
-                    'cycle' : obj.cycle,
-                    'users' : obj.users,
-                    'createdQueue': obj.createdQueue,
+            return {'cycle' : obj.cycle,
+                    'cycle_id' : obj.cycle_id,
+                    'duration' : obj.duration,
                     'partitions': obj.partitions,
                     'name:' : obj.name,
-                    'start' : obj.start,
                     'queue' : obj.queue,
-                    'duration' : obj.duration,
                     'res_id' : obj.res_id,
-                    'running' : obj.active}
+                    'start' : obj.start,
+                    'tag': obj.tag,
+                    'users' : obj.users}
         #elif isinstance(obj, Cobalt.Components
         elif isinstance(obj, Cobalt.Components.cqm.Job):
             return "To Be Implemented."
