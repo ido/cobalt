@@ -30,6 +30,8 @@ from Cobalt.Server import XMLRPCServer, find_intended_location
 
 REMOTE_QUEUE_MANAGER = "cluster-queue-manager"
 
+WALLTIME_AWARE_CONS = False
+
 MACHINE_ID = 0
 MACHINE_NAME = "Intrepid"
 MAXINT = 2021072587
@@ -466,8 +468,32 @@ class BGQsim(Simulator):
     
         self.rack_matrix = []
         self.reset_rack_matrix()
-                                                        
+        
+        #configure walltime-aware spatial scheduling schemes
+        self.walltime_aware_cons = False
+        self.walltime_aware_aggr = False
+        self.wass_scheme = kwargs.get("wass", "None") 
+        print "wass scheme=", self.wass_scheme
+        if self.wass_scheme == "both":
+            self.walltime_aware_cons = True
+            self.walltime_aware_aggr = True
+        elif self.wass_scheme == "cons":
+            self.walltime_aware_cons = True
+        elif self.wass_scheme == "aggr":
+            self.walltime_aware_aggr = True
+            
+        print "self.walltime_aware_aggr =", self.walltime_aware_aggr
+        print "self.walltime_aware_cons =", self.walltime_aware_cons
+                                                                
         print "Simulation starts:"
+ 
+    def _get_queuing_jobs(self):
+        return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+    queuing_jobs = property(_get_queuing_jobs)
+    
+    def _get_running_jobs(self):
+        return [job for job in self.queues.get_jobs([{'has_resources':True}])]
+    running_jobs = property(_get_running_jobs)
         
     def init_mate_qtime_pair(self, mate_job_trace):
         '''initialize mate job dict'''
@@ -923,6 +949,79 @@ class BGQsim(Simulator):
         '''get queues'''
         return self.queues.get_queues(specs)
     get_queues = exposed(query(get_queues))
+    
+    def equal_partition(self, nodeno1, nodeno2):
+        proper_partsize1 = 0
+        proper_partsize2 = 1        
+        for psize in self.part_size_list:
+            if psize >= nodeno1:
+                proper_partsize1 = psize
+                break
+        for psize in self.part_size_list:
+            if psize >= nodeno2:
+                proper_partsize2 = psize
+                break
+        if proper_partsize1 == proper_partsize2:
+            return True
+        else:
+            return False
+    
+    def run_matched_job(self, jobid, partition):
+        '''implementation of aggresive scheme in sc10 submission'''
+  
+        #get neighbor partition (list) for running
+        partlist = []
+        nbpart = self.get_neighbor_by_partition(partition)
+        if nbpart:
+            nb_partition = self._partitions[nbpart]
+            if nb_partition.state != "idle":
+                #self.dbglog.LogMessage("return point 1")
+                return None
+        else:
+            #self.dbglog.LogMessage("return point 2")
+            return None
+        partlist.append(nbpart)
+                
+        #find a job in the queue whose length matches the top-queue job
+        topjob = self._get_job_by_id(jobid)
+        
+        base_length = float(topjob.walltime)
+        #print "job %d base_length=%s" % (jobid, base_length)
+        base_nodes = int(topjob.nodes)
+        
+        min_diff = MAXINT
+        matched_job = None
+        msg = "queueing jobs=%s" % ([job.jobid for job in self.queuing_jobs])
+        #self.dbglog.LogMessage(msg)
+        
+        for job in self.queuing_jobs:
+            #self.dbglog.LogMessage("job.nodes=%s, base_nodes=%s" % (job.nodes, base_nodes))
+            
+            if self.equal_partition(int(job.nodes), base_nodes):
+                length = float(job.walltime)
+                #self.dbglog.LogMessage("length=%s, base_length=%s" % (length, base_length))
+                if length > base_length:
+                    continue
+                diff = abs(base_length - length)
+                #print "diff=", diff
+                #self.dbglog.LogMessage("diff=%s" % (diff))
+                if diff < min_diff:
+                    min_diff = diff
+                    matched_job = job
+        
+        if matched_job == None:
+            pass
+            #self.dbglog.LogMessage("return point 3")
+        else:
+            self.dbglog.LogMessage(matched_job.jobid)
+                    
+        #run the matched job on the neiborbor partition
+        if matched_job and partlist:
+            self.start_job([{'tag':'job', 'jobid':matched_job.jobid}], {'location':partlist})
+            msg = "job=%s, partition=%s, mached_job=%s, matched_partitions=%s" % (jobid, partition, matched_job.jobid, partlist)
+            self.dbglog.LogMessage(msg)
+        
+        return 1
    
     def run_jobs(self, specs, nodelist):
         '''run a queued job, by updating the job state, start_time and
@@ -935,6 +1034,7 @@ class BGQsim(Simulator):
             
             action = "start"
             dbgmsg = ""
+            
             if self.coscheduling:
                 local_job_id = spec.get('jobid') #int
                 #check whether there is a mate job
@@ -991,6 +1091,9 @@ class BGQsim(Simulator):
                     dbgmsg += "  --give up run local"
                 self.dbglog.LogMessage(dbgmsg)
                 #time.sleep(1)
+                
+            if self.walltime_aware_aggr:
+                self.run_matched_job(spec['jobid'], nodelist[0])
                     
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
@@ -1008,7 +1111,6 @@ class BGQsim(Simulator):
         jobs include the given mate job, return True else return False.  _jobid : int
         '''
         #print "entered bqsim.try_to_run_mate_job, jobid=", _jobid
-        
             
         mate_job_started = False
         
@@ -1266,6 +1368,54 @@ class BGQsim(Simulator):
         self.builtin_utility_functions["default"] = default
         self.builtin_utility_functions["high_prio"] = high_prio
         
+    def get_neighbor_by_partition(self, partname):
+        '''get the neighbor partition by given partition name.
+          note: this functionality is specific to intrepid partition naming and for partition size smaller than 4k'''
+        nbpart = ""
+        partition = self._partitions[partname]
+        partsize = partition.size
+        if partsize == 512:  #e.g. ANL-R12-M0-512  --> ANL-R12-M1-512
+            nbpart = "%s%s%s" % (partname[0:9], 1-int(partname[9]), partname[10:])  #reverse the midplane
+        elif partsize == 1024:  #e.g.  ANL-R12-1024 --> ANL-R13-1024
+            rackno = int(partname[6])
+            if rackno % 2 == 0:  #even
+                nbrackno = rackno + 1
+            else:
+                nbrackno = rackno - 1
+            nbpart = "%s%s%s" % (partname[0:6], nbrackno, partname[7:])    #find the neighbor rack
+        elif partsize == 2048:  #e.g. ANL-R12-R13-2048 --> ANL-R14-R15-2048
+            rackno1 = int(partname[6])
+            rackno2 = int(partname[10])
+            if rackno1 % 4 == 0:  #0, 4 ...
+                nbrackno1 = rackno1 + 2
+                nbrackno2 = rackno2 + 2
+            else:  #2, 6
+                nbrackno1 = rackno1 - 2
+                nbrackno2 = rackno2 - 2
+            nbpart = "%s%s%s%s%s" % (partname[0:6], nbrackno1, partname[7:10], nbrackno2, partname[11:])
+        elif partsize == 4096:  #e.g. ANL-R10-R13-4096 --> ANL-R14-R17-4096
+            rackno1 = int(partname[6])
+            rackno2 = int(partname[10])
+            if rackno1 == 0: 
+                nbrackno1 = rackno1 + 4
+                nbrackno2 = rackno2 + 4
+            elif rackno1 == 4:
+                nbrackno1 = rackno1 - 4
+                nbrackno2 = rackno2 - 4
+            nbpart = "%s%s%s%s%s" % (partname[0:6], nbrackno1, partname[7:10], nbrackno2, partname[11:])
+        return nbpart
+    
+    def get_running_job_by_partition(self, partname):
+        '''return a running job given the partition name'''
+        partition = self._partitions[partname]
+        if partition.state == "idle":
+            return None               
+        for rjob in self.running_jobs:
+            partitions = rjob.location
+            if partname in partitions:
+                return rjob
+        return None
+        
     def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
         jobid = args['jobid']
         nodes = args['nodes']
@@ -1284,7 +1434,7 @@ class BGQsim(Simulator):
         requested_location = None
         if args['attrs'].has_key("location"):
             requested_location = args['attrs']['location']
-                
+               
         if required:
             # whittle down the list of required partitions to the ones of the proper size
             # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
@@ -1325,6 +1475,7 @@ class BGQsim(Simulator):
         
         available_partitions -= drain_partitions
         now = self.get_current_time()
+        best_partition_list = []
         
         for partition in available_partitions:
             # if the job needs more time than the partition currently has available, look elsewhere    
@@ -1347,8 +1498,33 @@ class BGQsim(Simulator):
                 # the lower the score, the fewer new partitions will be blocked by this selection
                 if score < best_score:
                     best_score = score
-                    best_partition = partition        
-
+                    best_partition = partition
+                    
+                    best_partition_list[:] = []
+                    best_partition_list.append(partition)
+                #record equavalent partitions that have same best score
+                elif score == best_score:
+                    best_partition_list.append(partition)
+        
+        if self.walltime_aware_cons and len(best_partition_list) > 1:
+            #print "best_partition_list=", [part.name for part in best_partition_list]
+            #walltime aware job allocation (conservative)         
+            least_diff = MAXINT
+            for partition in best_partition_list:
+                nbpart = self.get_neighbor_by_partition(partition.name)
+                if nbpart:
+                    nbjob = self.get_running_job_by_partition(nbpart)
+                    if nbjob:
+                        nbjob_remain_length = nbjob.starttime + 60*float(nbjob.walltime) - self.get_current_time_sec()
+                        diff = abs(60*float(walltime) - nbjob_remain_length)
+                        if diff < least_diff:
+                            least_diff = diff
+                            best_partition = partition
+                        msg = "jobid=%s, partition=%s, neighbor part=%s, neighbor job=%s, diff=%s" % (jobid, partition.name, nbpart, nbjob.jobid, diff)
+                        self.dbglog.LogMessage(msg)
+            msg = "------------job %s allocated to best_partition %s-------------" % (jobid,  best_partition.name)
+            self.dbglog.LogMessage(msg)
+                            
         if best_partition:
             return {jobid: [best_partition.name]}
 

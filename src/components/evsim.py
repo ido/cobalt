@@ -21,7 +21,7 @@ from Cobalt.Proxy import ComponentProxy, local_components
 from datetime import datetime
 import time
 
-arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval', 'predict', 'coscheduling']
+arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval', 'predict', 'coscheduling', 'wass']
 
 def profile_main(opts):
     '''profile integrated qsim'''
@@ -78,8 +78,11 @@ if __name__ == "__main__":
         help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction. x:queuing, y:backfilling, z:running job")
     p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
         help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
+    p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
+        help="[cons | aggr | both] specify the walltime aware spatial scheduling scheme: cons=conservative scheme, aggr=aggressive scheme, both=cons+aggr")
     
     coscheduling_schemes = ["hold", "yield"]
+    wass_schemes = ["cons", "aggr", "both"]
     
     opts, args = p.parse_args()
 
@@ -95,7 +98,13 @@ if __name__ == "__main__":
         
     if opts.coscheduling:
         if not opts.coscheduling in coscheduling_schemes:
-            print "Error: invalid coscheduling scheme %s. Valid schemes are: %s" % (opts.coscheduling,  coscheduling_schemes)
+            print "Error: invalid coscheduling scheme '%s'. Valid schemes are: %s" % (opts.coscheduling,  coscheduling_schemes)
+            p.print_help()
+            sys.exit()
+            
+    if opts.wass:
+        if not opts.wass in wass_schemes:
+            print "Error: invalid walltime-aware spatial scheduling scheme '%s'. Valid schemes are: %s" % (opts.wass,  wass_schemes)
             p.print_help()
             sys.exit()
             
