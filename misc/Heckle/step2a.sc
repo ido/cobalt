@@ -1,6 +1,6 @@
 #!/bin/bash +x
 
-#Script to copy files to bblogin
+#Script to copy heckle-specific files to bblogin
 
 #copy source code to site packages and dist packages
 
@@ -48,4 +48,6 @@ for component in heckle_forker.py heckle_sched.py; do
      echo "Did reference $component"
 done
 
-cp $COBALT_MISC_PATH/step2a.sc $HOME/step2a.sc
+for component in copy update commit step2a.sc; do
+     cp $COBALT_MISC_PATH/$component $HOME/$component
+done

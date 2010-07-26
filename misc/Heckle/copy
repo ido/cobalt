@@ -38,6 +38,6 @@ for component in heckle_forker.py heckle_sched.py; do
      echo "Did reference $component"
 done
 
-for component in update commit step2a.sc; do
+for component in copy update commit step2a.sc; do
      cp $COBALT_MISC_PATH/$component $HOME/$component
 done
