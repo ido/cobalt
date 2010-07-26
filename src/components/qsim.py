@@ -1,101 +1,130 @@
 #!/usr/bin/env python
 
-"""Queue Simulator executable."""
+"""Event Simulator executable."""
 
 import inspect 
+import optparse
+import os
 import sys
 
 import Cobalt.Util
-from Cobalt.Components.qsim import Qsimulator 
+from Cobalt.Components.evsim import EventSimulator
+from Cobalt.Components.bqsim import BGQsim
+from Cobalt.Components.cqsim import ClusterQsim
+from Cobalt.Components.histm import HistoryManager
 from Cobalt.Components.base import run_component
 from Cobalt.Components.slp import TimingServiceLocator
 from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Components.bgsched import BGSched
 from Cobalt.Components.qsim import Qsimulator
 from Cobalt.Proxy import ComponentProxy, local_components
+from datetime import datetime
+import time
 
-__helpmsg__ = "Usage: qsim -j <jobworkload> -p <partition.xml> [--output=<outputlogfile>]\n" +\
-        "[--weibull --scale=<scale> --shape=<shape>]  [--failurelog=<failurelog>]\n" +\
-        "[--faultaware --sensitivity=sensitivity --specificity=specificity]\n" +\
-        "[--standalone]  [--profile]"
+arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval', 'predict', 'coscheduling', 'wass']
 
-class my_bgsched (BGSched):
-    
-    def __init__(self, *args, **kwargs):
-        BGSched.__init__(self, *args, **kwargs)
-        self.get_current_time = ComponentProxy("queue-manager").get_current_time_sec
-    
-    def do_tasks (self):
-        for name, func in inspect.getmembers(self, callable):
-            if getattr(func, "automatic", False):
-                func()
-        
-def integrated_main(opts):
-    '''run instantiated qsim, together with bgsched, slp,scriptm in one process'''
-    TimingServiceLocator()
-    ScriptManager()
-    qsim = Qsimulator(**opts)
-    bgsched = my_bgsched()
-    while not qsim.is_finished():
-        bgsched.do_tasks()
-        
-def standalone_main(opts):
-    '''run qsim in standalone manner, communicate with other components via socket'''
-    print opts['workload']
-    print opts['config_file']
-    try:
-        run_component(Qsimulator, register=True, 
-                     cls_kwargs=opts, extra_getopt = ':j:p')
-    except KeyboardInterrupt:
-        sys.exit(1)
-        
 def profile_main(opts):
     '''profile integrated qsim'''
     import hotshot, hotshot.stats
     prof = hotshot.Profile("qsim.profile")
     prof.runcall(integrated_main, opts)
     
+def integrated_main(options):
+    TimingServiceLocator()
+    
+    if opts.predict:
+        histm = HistoryManager(**options)
+    
+    evsim = EventSimulator(**options)
+    
+    if opts.bgjob:
+        bqsim = BGQsim(**options)
+    if opts.cjob:
+        cqsim = ClusterQsim(**options)
+    
+    starttime_sec = time.time()
+    
+    while not evsim.is_finished():
+        evsim.event_driver()
+        os.system('clear')
+        if opts.bgjob:
+            bqsim.print_screen()
+            pass
+        if opts.cjob:
+            cqsim.print_screen()
+            pass
+       
+    endtime_sec = time.time()
+    print "----Simulation is finished, please check output log for further analysis.----"
+    print "the simulation lasts %s seconds (~%s minutes)" % (int(endtime_sec - starttime_sec), int((endtime_sec - starttime_sec)/60))
+    
 if __name__ == "__main__":
     
-    options = {'weibull':'weibull', 'faultaware':'faultaware',
-               'standalone':'standalone', 'profile':'profile'}
-    doptions = {'j':'workload', 'p':'config_file', 'failurelog':'failurelog',
-                'scale':'scale', 'shape':'shape', 'P': 'policy',
-                'sensitivity':'sensitivity', 'specificity':'specificity',
-                'output':'outputlog'}
+    p = optparse.OptionParser()
 
-    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:], options,
-                                            doptions, __helpmsg__)
+    p.add_option("-b", "--bgjob", dest="bgjob", type="string",
+        help="file name of the job trace from the Blue Gene system")
+    p.add_option("-c", "--cjob", dest="cjob", type="string",
+        help="file name of the job trace from the cluster system")
+    p.add_option("-p", "--partition", dest="config_file", type="string",
+        help="file name of the partition configuration of the Blue Gene system")
+    p.add_option("-o", "--output", dest="outputlog", type="string",
+        help="featuring string for output log")
+    p.add_option("-j", "--job", dest="bgjob", type="string",
+        help="file name of the job trace (when scheduling for bg system only)")
+    p.add_option("-i", "--interval", dest="interval", type="float",
+        help="seconds to wait at each event")
+    p.add_option("-P", "--prediction", dest="predict", type="string", default=False,
+        help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction. x:queuing, y:backfilling, z:running job")
+    p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
+        help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
+    p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
+        help="[cons | aggr | both] specify the walltime aware spatial scheduling scheme: cons=conservative scheme, aggr=aggressive scheme, both=cons+aggr")
     
-    if not opts['workload'] or not opts['config_file']:
-        print "Error: Please specify job work load file path and partition.xml file path!"
-        print __helpmsg__
+    coscheduling_schemes = ["hold", "yield"]
+    wass_schemes = ["cons", "aggr", "both"]
+    
+    opts, args = p.parse_args()
+
+    if not opts.bgjob and not opts.cjob:
+        print "Error: Please specify at least one job trace!"
+        p.print_help()
         sys.exit()
         
-    if opts['weibull']:
-        if opts['failurelog']:
-            print "Error: you can use Either failure_log Or weibull distribution to simulate failures, specify one of them"
-            print __helpmsg__
+    if opts.bgjob and not opts.config_file:
+        print "Error: Please specify partition configuration file for the Blue Gene system"
+        p.print_help()
+        sys.exit()
+        
+    if opts.coscheduling:
+        if not opts.coscheduling in coscheduling_schemes:
+            print "Error: invalid coscheduling scheme '%s'. Valid schemes are: %s" % (opts.coscheduling,  coscheduling_schemes)
+            p.print_help()
+            sys.exit()
+            
+    if opts.wass:
+        if not opts.wass in wass_schemes:
+            print "Error: invalid walltime-aware spatial scheduling scheme '%s'. Valid schemes are: %s" % (opts.wass,  wass_schemes)
+            p.print_help()
+            sys.exit()
+            
+    if opts.predict:
+        invalid = False
+        scheme = opts.predict
+        if not len(scheme)==3:
+            invalid = True
+        else:
+            for s in scheme:
+                if s not in ['0', '1']:
+                    invalid = True
+        if invalid:
+            print "Error: invalid prediction scheme %s. Valid schemes are: xyz, x,y,z=0|1" % (scheme)
+            p.print_help()
             sys.exit()
         
-        if not opts['scale'] or not opts['shape']:
-            print "Warning: 'scale' and 'shape' parameters not specified,"
-            print "use default scale=2,000,000 shape=0.8"
-            raw_input("Press Enter to continue ")
-    
-    if opts['faultaware']:
-        if not opts['failurelog'] and not opts['weibull']:
-            print "Error: fault-aware simulation, please specify failure-log path OR weibull parameters"
-            print __helpmsg__
-            sys.exit()
-        if not opts['sensitivity'] or not opts['specificity']:
-            print "Warning: 'sensitivity' and 'specificity' parameters not specified,"
-            print "use default sensitivity=0.7 specificity=0.1"
-            raw_input("Press Enter to continue ")
-            
-    if opts['standalone']:
-        standalone_main(opts)
-    elif opts['profile']:
-        profile_main(opts)
-    else:
-        integrated_main(opts)
+    options = {}
+    for argname in arg_list:
+        options[argname] = getattr(opts, argname)
+        
+    integrated_main(options)
+    #profile_main(options)
