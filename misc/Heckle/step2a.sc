@@ -42,7 +42,7 @@ sudo cp $COBALT_MISC_PATH/heckle_temp_ProcessGroup.py $SYSTEM_DATATYPES_PATH/hec
 echo "Did heckle_temp_ProcessGroup.py"
 
 
-for component in
+for component in heckle_forker.py heckle_sched.py; do
      sudo cp $COBALT_MISC_PATH/$component $SYSTEM_BIN_PATH/$component
      sudo chmod +x $SYSTEM_BIN_PATH/$component
      echo "Did reference $component"
