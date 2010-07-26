@@ -222,6 +222,7 @@ class ResourceDict(object):
           if att_type == ListType: 
                for resource in attributes:
                     self.update(attributes[resource])
+                    self.glossary.append(attributes[resource])
           elif att_type == DictType: #if we're dealing with a dictionary for one resource
                name = attributes['name']
                if name in self.keys():
@@ -229,6 +230,8 @@ class ResourceDict(object):
                     self.resource_list[index].update(attributes)
                else:
                     self.resource_list.append(Resource(attributes))
+               self.glossary.append(attributes)
+          self.resource_list.sort(key=lambda x: x['name'])
           return True
      def __sub__(self, attributes=None, resource=None ):
           """
@@ -869,10 +872,10 @@ if __name__=="__main__":
      alist = []
      for value in inlist:
           alist.append(Attribute(**value))
-     attsetup1 = [invalue10, invalue1, invalue3, invalue5, invalue7]
+     attsetup4 = [invalue10, invalue1, invalue3, invalue5, invalue7]
      attsetup2 = [invalue11, invalue1, invalue3, invalue5, invalue7]
      attsetup3 = [invalue12, invalue2, invalue4, invalue6, invalue8]
-     attsetup4 = [invalue13, invalue1, invalue3, invalue5, invalue7, invalue14]
+     attsetup1 = [invalue13, invalue1, invalue3, invalue5, invalue7, invalue14]
 
      #att1 = make_atts( attsetup1 )
      #print "att1 is %s" % att1
@@ -1088,4 +1091,6 @@ if __name__=="__main__":
      print "\n\n\n"
      print "R4 is: %s" % r4._get_dict()
      print "\n\n\n"
+     
+     print "R4 glossary is %s" % r4.glossary
      

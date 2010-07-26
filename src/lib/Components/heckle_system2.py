@@ -282,7 +282,7 @@ class HeckleSystem(Component):
           checklist = spec['attrs']
           checklist['action']=None
           nodecount = spec['nodecount']
-          glossary = self.resource.Glossary
+          glossary = self.resource["Glossary"]
           dnelist = []   # for attributes which do not exist in glossary
           badlist = []   # for attributes in glossary which do not exist
           ##################################
