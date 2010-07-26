@@ -52,19 +52,27 @@ IMAGES = [
 
 
 
-class ResourceDict():
+class ResourceDict(object):
      """
      Object to contain and encapsulate the Resources in the system
      """
-     typestring = "ResourceDict"
      def __init__( self, in_dict=None ):
           self.resource_list = []
           self.glossary = Glossary()
-          if in_dict:
-               ostring = in_dict.typestring
-               if ostring==self.typestring:
-                    for name in in_dict.keys():
-                         self[name] = in_dict[name]
+          if type(in_dict) is DictType:
+               print "Incomming: %s" % in_dict
+               for key in in_dict:
+                    self.add(in_dict[key])
+          if type(in_dict) is ListType:
+               print "Incomming: %s" % in_dict
+               for val in in_dict:
+                    self[val['name']]=val
+          elif type(in_dict) == ResourceDict:
+               print "Incomming: %s" % in_dict
+               for name in in_dict.keys():
+                    self[name] = in_dict[name]
+          else:
+               print "Nothing to do?"
      def __str__( self ):
           """
           Returns a string representation of all resources in the system
@@ -79,15 +87,25 @@ class ResourceDict():
           retstr += "\nGlossary: "
           retstr += str(self.glossary)
           return retstr
-     def _get_dict( self ):
+     def _get_dict( self, glossary=True, resources=True ):
           """
           Returns a dictionary version of the entire Resource Dictionary
+          
           """
+          if glossary and not resources:
+               return self.glossary._get_dict()
+          elif resources and not glossary:
+               retdict = []
+               for res in self.resource_list:
+                    retdict.append(res._get_dict())
+               return retdict
           retdict = {}
-          retdict['Glossary'] = self.glossary._get_dict()
-          retdict['Resources'] = []
-          for res in self.resource_list:
-               retdict['Resources'].append(res._get_dict())
+          if glossary:
+               retdict['Glossary'] = self.glossary._get_dict()
+          if resources:
+               retdict['Resources'] = []
+               for res in self.resource_list:
+                    retdict['Resources'].append(res._get_dict())
           return retdict
      def __getitem__( self, name=None ):
           """
@@ -134,6 +152,14 @@ class ResourceDict():
           Attributes is a dictionary of strings, key:value
           MUST contain a Name field, and names MUST be unique across the system
           """
+          try:
+               print "Attributes are %s" % attributes
+          except:
+               pass
+          try:
+               print "Resource is %s" % resource
+          except:
+               pass
           if (resource and attributes) or not (resource or attributes):
                retstr = "Object: " + str(resource) + " and Dictionary " + str(attributes)
                raise Exception("Need ONE thing to compare against!  You gave me %s " % retstr)
@@ -188,6 +214,10 @@ class ResourceDict():
                     and the value is a dictionary of key:value pairs for attributes, then set these.
                else, return an error.
           """
+          if name:
+               print "RD: SetItem: Name is %s" % name
+          if attributes:
+               print "RD: SetItem:  Attributes is %s" % attributes
           att_type = type(attributes)
           if att_type == ListType: 
                for resource in attributes:
@@ -1045,3 +1075,17 @@ if __name__=="__main__":
      r3 = ResourceDict(r2)
      print "R3 is: %s" % r3._get_dict()
      print "\n\n\n"
+     print "R3 type is %s" %type(r3)
+     print "That matches ResourceDict type: %s" % (type(r3) == ResourceDict)
+     
+     print "Test:  Initialize by a dictionary"
+     dict2 = r2._get_dict(glossary=False)
+     print "Verification:  Type(dict2) is %s" % type(dict2)
+     print "Dict is %s\n\n\n" % dict2
+     r4 = ResourceDict(dict2)
+     print "\n\n"
+     print "R2 is: %s" % r2._get_dict()
+     print "\n\n\n"
+     print "R4 is: %s" % r4._get_dict()
+     print "\n\n\n"
+     
