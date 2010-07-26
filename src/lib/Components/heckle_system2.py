@@ -20,7 +20,7 @@ import tempfile
 from time import sleep
 
 from Cobalt.DataTypes.heckle_temp_ProcessGroup import ProcessGroup, ProcessGroupDict
-from Cobalt.DataTypes.heckle_Resource import Attribute, Resource, ResourceDict
+from Cobalt.DataTypes.heckle_resource import Attribute, Resource, ResourceDict
 from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Exceptions import JobValidationError
 

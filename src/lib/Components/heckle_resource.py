@@ -28,27 +28,27 @@ import re
 import os
 
 
-#HW_FIELDS = ["GPU", "MEM", "DISK", "NET", "IB", "CORES"]  #, "VINTAGE" ]
+HW_FIELDS = ["GPU", "MEM", "DISK", "NET", "IB", "CORES"]  #, "VINTAGE" ]
 
-#CPU = [ "intel", "opteron", "nahalem"]
-#GPU = [ "true" ]
-#MEM = [ "4GB", "12GB", "16GB" ]
-#DISK = [ "1", "4" ]
-#NET = [ "myrinet", "ib" ]
-#IB = [ "qdr", "sdr" ]
-#PACKAGE = [ "CUDA", "LINPACK" ]
-#GROUP = [ "cuda", "nimbus" ]
-#VINTAGE = []
-#CORES = ['1', '4', '16']
+CPU = [ "intel", "opteron", "nahalem"]
+GPU = [ "true" ]
+MEM = [ "4GB", "12GB", "16GB" ]
+DISK = [ "1", "4" ]
+NET = [ "myrinet", "ib" ]
+IB = [ "qdr", "sdr" ]
+PACKAGE = [ "CUDA", "LINPACK" ]
+GROUP = [ "cuda", "nimbus" ]
+VINTAGE = []
+CORES = ['1', '4', '16']
 
-##these are mine
-#IMAGES = [
-     #"ubuntu-lucid-amd64",
-     #"ubuntu-hardy-amd64",
-     #"legacy-pxelinux",
-     #"eucalyptus"
-     #"default-bad"
-     #]
+#these are mine
+IMAGES = [
+     "ubuntu-lucid-amd64",
+     "ubuntu-hardy-amd64",
+     "legacy-pxelinux",
+     "eucalyptus"
+     "default-bad"
+     ]
 
 
 
@@ -92,16 +92,22 @@ class ResourceDict():
                if res['name'] == name:
                     return res
           return False
+     def keys( self ):
+          """
+          Returns a list of strings containing the names of all the nodes
+          Node names must be unique
+          """
+          return self.name_list()
      def name_list( self ):
           """
           Returns a list of strings containing the names of all the nodes
           Node names must be unique
           """
-          return self.resource_list.keys()
-          #name_list = []
-          #for res in self.resource_list:
-               #name_list.append(res['name'][0])
-          #return name_list
+          #return self.resource_list.keys()
+          name_list = []
+          for res in self.resource_list:
+               name_list.append(res['name'])
+          return name_list
      def node_count( self ):
           """
           returns the number of resources / nodes in the current system
@@ -152,46 +158,41 @@ class ResourceDict():
      def update( self, attributes=None ):
           """
           Changes the resource with the attributes named
-          Attributes is a dictionary with key=node name, as a string
+          If attributes is a list or a dictionary, pass on to the set_item function
+          If attributes is None, then call on Heckle to get an updated node status
+          else, return an error.
           """
           att_type = type(attributes)
-          if att_type is DictType:
-               try:
-                    namelist = attributes['name']
-                    for name in namelist:
-                         subatt = attributes
-                         subatt['name']=name
-                         self[name].update(subatt)
-                    return True
-               except:
-                    namelist = attributes.key()
-                    for name in namelist:
-                         vals = attributes[name]
-                         try:
-                              self[name].update(vals)
-                         except:
-                              raise Exception("No node name %s in the resources" % name)
-                    return True
-          elif att_type is ListType:
-               for el in attributes:
-                    self.update(el)
-               return true
+          if att_type is DictType or att_type is ListType:
+               return self.__setitem__(attributes)
+          elif att_type is NoneType:
+               #get attributes from Heckle as list of node dictionaries
+               #self.update(HeckleList)
+               return True
+          else:
+               raise Exception( "ResourceDict:Update only accepts dictionaries or lists of dictionaries; your attribute set for this is %s." % att_type )
      def __setitem__( self, attributes=None ):
           """
+          Sets the resource indicated to the value indicated
+          Attributes is to be a dictionary, or list of dictionaries with each resource having one dictionary.
+          Algorythm:
+               If attributes is a list of resources, then iterate through the list, setting each.
+               If attributes is a dictionary of key:value pair(s), where the key is a resource name
+                    and the value is a dictionary of key:value pairs for attributes, then set these.
+               else, return an error.
           """
-          att_type = type(attributes):
-          if att_type == ListType:
+          
+          
+          att_type = type(attributes)
+          if att_type == ListType: 
                for resource in attributes:
-                    self[resource].update(attributes[resource])
-          elif att_type == DictType:
-               key = attributes['name']
-               name_type = type(key)
-               if name_type == StringType:
-          if key in self.resource_list.keys():
-               old_resource = self.resource_list[key]
-          else:
-               old_resource = Resource(attributes)
-          self.resource_list[key]=old_resource
+                    self.update(attributes[resource])
+          elif att_type == DictType: #if we're dealing with a dictionary for one resource
+               name = attributes['name']
+               if name in self.resource_list.keys():
+                    self.resource_list[name].update(attributes)
+               else:
+                    self.resource_list[name]=Resource(attributes)
           return True
      def __sub__(self, attributes=None, resource=None ):
           """
@@ -259,34 +260,6 @@ class ResourceDict():
                newResource = Resource(line)
                self.add(newResource)
           outfile.close()
-     #def change( self, attributes=None, new_resource=None ):
-          #"""
-          #Changes an existing resource in the system
-          #Attributes is a dictionary of strings, key:value
-          #MUST contain a Name field, and names MUST be unique across the system
-          #If the node name is not in the list, adds the node to the list
-          ###################################
-          ###  Potential for improvement:
-          ###  There exists potential for interruption!
-          ###  Look into ways to make this an atomic operation
-          ###################################
-          #"""
-          #if (new_resource and attributes) or not (new_resource or attributes):
-               #retstr = "Object: " + str(resource) + " and Dictionary " + str(attributes)
-               #raise Exception("Need ONE thing to compare against!  You gave me %s " % retstr)
-          #elif attributes:
-               #new_resource = Resource( attributes )
-          #name = new_resource['name']
-          #try:
-               #existing_resource = self[name]
-               #if existing_resource == new_resource:
-                    #continue
-               #else:
-                    #existing_resource.change(new_resource)
-          #except:
-               #raise Warning("No resource %s found; proceeding with change..." % name)
-               #self.add( existing_resource )
-          #return True
 
 
 
@@ -504,21 +477,6 @@ class Resource():
                     if not this >= that:
                          retvalue = False
           return retvalue
-     #def change( self, other=None ):
-          #"""
-          #Changes an existing resource to the new resource
-          ############################
-          ####  Future Work
-          ####  Make this work!
-          ####
-          ############################
-          #"""
-          #for att in other._get_attributes():
-               #if att in self.attribute_list:
-                    #continue
-               #else:
-                    #name = att['name']
-                    #if name in 
 
 
 
@@ -996,6 +954,13 @@ if __name__=="__main__":
      print "\n\n\n"
      print "R2 is: %s" % r2._get_dict()
      print "\n\n\n"
+     
+     namelist1 = rd.keys()
+     namelist2 = r2.name_list()
+     for name in namelist1:
+          print "dict RD name %s value %s" % (name, rd[name])
+     for name in namelist2:
+          print "dict RD name %s value %s" % (name, r2[name])
      #print "3b)  Find"
      #print "3c)  Assignment"
      #print "\n\n\n\n ######################### \n\n"
