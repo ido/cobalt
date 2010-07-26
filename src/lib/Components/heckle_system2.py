@@ -282,7 +282,7 @@ class HeckleSystem(Component):
           checklist = spec['attrs']
           checklist['action']=None
           nodecount = spec['nodecount']
-          glossary = self.resource["Glossary"]
+          glossary = self.resources.glossary
           dnelist = []   # for attributes which do not exist in glossary
           badlist = []   # for attributes in glossary which do not exist
           ##################################
@@ -298,7 +298,7 @@ class HeckleSystem(Component):
                          badlist.append("%s:%s"%(att, val)) # Bad attribute
                except:
                     dnelist.append(att) #Attribute does not exist
-               retlist = self.resource >= checklist
+               retlist = self.resources >= checklist
                retcount = len(retlist)
                goodlen = retcount >= nodecount
                if goodlen and not badlist and not dnelist:

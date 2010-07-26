@@ -305,7 +305,7 @@ class ResourceDict(object):
 
 
 
-class Resource():
+class Resource(object):
      """
      Representation of a single Node in the Heckle System
      Also acts as a dictionary for attributes it contains
@@ -463,34 +463,28 @@ class Resource():
                if att['name'] == key:
                     retvalue.append(att['value'])
           return retvalue
-     def __eq__( self, other=None, attributes=None ):
+     def __eq__( self, other ):
           """
           Compares the resource to see if they match
           Can check against another Resource or a Dictionary of attributes
           """
-          if (other and attributes) or not (other or attributes):
-               retstr = "Object: " + str(other) + " and Dictionary " + str(attributes)
-               raise Exception("Need ONE thing to compare against!  You gave me %s " % retstr)
-          elif other:
+          if type(other) == Resource:
                return self.attribute_list == other._get_attributes()
-          elif attributes:
+          elif type(other) == DictType:
                equal = True
                for att in attributes:
                     if attributes[att] not in self[att]:
                          equal = False
                return equal
           
-     def __ge__( self, other=None, attributes=None ):
+     def __ge__( self, other ):
           """
           Compares this resource, attribute-by-attribute, against
           another Resource or a Dictionary of attributes.
           Determines if this resource is greater than or equal to the other
           """
           retvalue = True
-          if (other and attributes) or not (other or attributes):
-               retstr = "Object: " + str(other) + " and Dictionary " + str(attributes)
-               raise Exception("Need ONE thing to compare against!  You gave me %s " % retstr)
-          elif other:
+          if type(other) == Resource:
                for that in other._get_attributes():
                     #print "That: name is %s, val is %s" % (that.name, that.value)
                     if that['name'] is 'name':
@@ -507,7 +501,7 @@ class Resource():
                                    pass
                               else:
                                    retvalue = False
-          elif attributes:
+          elif type(other) == DictType:
                #print "GE: in attributes"
                for att in attributes:
                     val = attributes[att]
@@ -519,7 +513,7 @@ class Resource():
 
 
 
-class Attribute():
+class Attribute(object):
      """
      Object which encapsulates any one value of a resource.
      It takes care of its own comparisons and representations
