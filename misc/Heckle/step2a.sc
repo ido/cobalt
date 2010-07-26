@@ -9,7 +9,7 @@ COBALT_PATH=$HOME/cobalt/trunk
 COBALT_COMP_PATH=$COBALT_PATH/src/lib/Components
 COBALT_REFERENCE_PATH=$COBALT_PATH/src/components
 
-COBALT_MISC_PATH=$HCOBALT_PATH/misc/Heckle
+COBALT_MISC_PATH=$COBALT_PATH/misc/Heckle
 
 SYSTEM_LIB_PATH=/usr/lib/python2.6/site-packages/Cobalt
 SYSTEM_COMP_PATH=$SYSTEM_LIB_PATH/Components
