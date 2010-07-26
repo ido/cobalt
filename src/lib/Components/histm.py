@@ -100,15 +100,7 @@ class HistoryManager(Component):
                 ap = self.calculate_Ap_paired(keypair)
                 keystr = "%s:%s" % (keypair[0], keypair[1])
                 self.Ap_dict_paired[keystr] = ap                
-      
-#        for item in self.Ap_dict_proj.keys():
-#            msg = "%s:%s" % (item, self.Ap_dict_proj[item])
-#            print msg
-            
-         #for item in self.Ap_dict_paired.keys():
-#            msg = "%s=%s" % (item, self.Ap_dict_paired[item])
-#            print msg
-        
+
         print "***********Adjusting Parameter Dict Updated***********"
         
     update_Ap_Dict = automatic(update_Ap_Dict, update_interval*3600)

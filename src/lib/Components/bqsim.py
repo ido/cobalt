@@ -91,6 +91,42 @@ def parseline(line):
                 temp[tup[0]] = tup[2]
     return temp
 
+def parseline_alt(line):
+    '''parse a line from alternative format'''
+    def len2 (_input):
+        _input = str(_input)
+        if len(_input) == 1:
+            return "0" + _input
+        else:
+            return _input
+    
+    print line
+    temp= {}
+    splits = line.split(';')
+        
+    for item in splits:
+        tup = item.partition('=')
+        temp[tup[0]] = tup[2]
+    
+    fmtdate = temp['qtime']
+    submittime_sec = date_to_sec(fmtdate, "%Y-%m-%d %H:%M:%S")
+    submittime_date = sec_to_date(submittime_sec)
+    temp['submittime'] = submittime_date
+    start_date = temp['start']
+    start_sec = date_to_sec(start_date, "%Y-%m-%d %H:%M:%S")
+    temp['start'] = start_sec
+    end_date = temp['end']
+    end_sec = date_to_sec(end_date, "%Y-%m-%d %H:%M:%S")
+    temp['end'] = end_sec
+    walltime_sec = temp['Resource_List.walltime']
+    wall_time = int(float(walltime_sec) / 60) 
+    walltime_minutes = len2(wall_time % 60)
+    walltime_hours = len2(wall_time // 60)
+    fmt_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
+    temp['Resource_List.walltime'] = fmt_walltime
+
+    return temp
+
 def parse_work_load(filename):
     '''parse the whole work load file, return a raw job dictionary''' 
     temp = {'jobid':'*', 'submittime':'*', 'queue':'*', 
@@ -99,17 +135,21 @@ def parse_work_load(filename):
     raw_job_dict = {}
     wlf = open(filename, 'r')
     for line in wlf:
+        line = line.strip('\n')
+        line = line.strip('\r')
         if line[0].isdigit():
-            line = line.strip('\n')
-            line = line.strip('\r')
             temp = parseline(line)
-            jobid = temp['jobid']
-            #new job id encountered, add a new entry for this job
-            if not raw_job_dict.has_key(jobid):
-                raw_job_dict[jobid] = temp
-            else:  #not a new job id, update the existing entry
-                raw_job_dict[jobid].update(temp)
+        else:
+            temp = parseline_alt(line)
+        jobid = temp['jobid']
+        #new job id encountered, add a new entry for this job
+        if not raw_job_dict.has_key(jobid):
+            raw_job_dict[jobid] = temp
+        else:  #not a new job id, update the existing entry
+            raw_job_dict[jobid].update(temp)
+            
     return raw_job_dict
+
 
 def tune_workload(specs, frac):
     '''tune workload heavier or lighter'''
@@ -649,6 +689,8 @@ class BGQsim(Simulator):
             
             if tmp.get('start') and tmp.get('end'):
                 act_run_time = float(tmp.get('end')) - float(tmp.get('start'))
+                if act_run_time <= 0:
+                    continue
                 if act_run_time / (float(spec['walltime'])*60) > 1.1:
                     act_run_time = float(spec['walltime'])*60
                 spec['runtime'] = str(round(act_run_time, 1))

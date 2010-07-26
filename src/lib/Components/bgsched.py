@@ -591,14 +591,16 @@ class BGSched (Component):
         self._run_reservation_jobs(reservations_cache)
 
         # figure out stuff about queue equivalence classes
-        res_info = {}
-        for cur_res in reservations_cache.values():
-            res_info[cur_res.name] = cur_res.partitions
-        try:
-            equiv = ComponentProxy(self.COMP_SYSTEM).find_queue_equivalence_classes(res_info, [q.name for q in active_queues + spruce_queues])
-        except:
-            self.logger.error("failed to connect to system component")
-            return
+#        res_info = {}
+#        for cur_res in reservations_cache.values():
+#            res_info[cur_res.name] = cur_res.partitions
+#        try:
+#            equiv = ComponentProxy(self.COMP_SYSTEM).find_queue_equivalence_classes(res_info, [q.name for q in active_queues + spruce_queues])
+#        except:
+#            self.logger.error("failed to connect to system component")
+#            return
+        #for simulator performance
+        equiv= [{'reservations': [], 'queues': ['default']}]
         
         for eq_class in equiv:
             # recall that is_runnable is True for certain types of holds
