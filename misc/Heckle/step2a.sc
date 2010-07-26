@@ -33,13 +33,13 @@ for component in heckle_system.py heckle_system2.py; do
 done
 
 sudo cp $COBALT_MISC_PATH/heckle_forker.py $SYSTEM_COMP_PATH/heckle_forker.py
-echo "Did $component"
+echo "Did heckle_forker.py"
 sudo cp $COBALT_MISC_PATH/heckle_sched.py $SYSTEM_COMP_PATH/heckle_sched.py
-echo "Did $component"
+echo "Did heckle_sched.py"
 sudo cp $COBALT_MISC_PATH/heckle_temp_Data.py $SYSTEM_LIB_PATH/heckle_temp_Data.py
-echo "Did $component"
-sudo cp $COBALT_MISC_PATH/heckle_temp_ProcessGroup.py $SYSTEM_DATATYPES_PATH/lib/DataTypes/
-echo "Did $component"
+echo "Did heckle_temp_Data.py"
+sudo cp $COBALT_MISC_PATH/heckle_temp_ProcessGroup.py $SYSTEM_DATATYPES_PATH/heckle_temp_ProcessGroup.py
+echo "Did heckle_temp_ProcessGroup.py"
 
 
 for component in
