@@ -280,7 +280,7 @@ class HeckleSystem(Component):
           logger.debug( "Heckle System: Validate Job: Specs are %s" % spec )
 
           checklist = spec['attrs']
-          checklist['action']=None
+          del(checklist['action'])
           nodecount = spec['nodecount']
           glossary = self.resources.glossary
           dnelist = []   # for attributes which do not exist in glossary

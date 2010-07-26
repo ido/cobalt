@@ -459,7 +459,7 @@ class Resource(object):
                return self.attribute_list == other._get_attributes()
           elif type(other) == DictType:
                equal = True
-               for att in other
+               for att in other:
                     if other[att] not in self[att]:
                          equal = False
                return equal
@@ -957,7 +957,7 @@ if __name__=="__main__":
      rd = ResourceDict()
      print "RD is now: %s" % rd
      for res in reslist:
-          rd.add(resource=res)
+          rd.add(res)
           print "RD is now: %s" % rd
           print "RD Name List is now: %s" % rd.name_list()
           print "Glossary NameList is now %s " % rd.glossary.name_list()
