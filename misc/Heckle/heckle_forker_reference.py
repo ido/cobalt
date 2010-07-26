@@ -4,8 +4,6 @@
 __revision__ = '$Revision: $'
 
 import sys
-sys.path.append("/usr/lib/python2.6/site-packages")
-print sys.path
 from Cobalt.Components.base import run_component
 from Cobalt.Components.heckle_forker import HeckleForker
 

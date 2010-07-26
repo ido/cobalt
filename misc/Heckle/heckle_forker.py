@@ -11,8 +11,6 @@ fork new processes.
 """
 
 import logging
-import sys
-sys.path.append("/usr/lib/python2.6/site-packages")
 import os
 import signal
 import socket
