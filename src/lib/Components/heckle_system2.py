@@ -20,7 +20,7 @@ import tempfile
 from time import sleep
 
 from Cobalt.DataTypes.heckle_temp_ProcessGroup import ProcessGroup, ProcessGroupDict
-from Cobalt.DataTypes.heckle_resource import Attribute, Resource, ResourceDict
+from Cobalt.Components.heckle_resource import Attribute, Resource, ResourceDict, Glossary
 from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Exceptions import JobValidationError
 
@@ -256,9 +256,10 @@ class HeckleSystem(Component):
           Used to populate the initial state of the resources in the system object
           """
           HICCUP = Heckle_Interface()
-          node_dict = HICCUP.get_all_nodes()
-          for node in self.node_list:
-               node_dict[node] = HICCUP.get_node_properties( self, node_name )
+          self.node_list = HICCUP.NODE_LIST
+          node_dict = {}
+          for node_name in self.node_list:
+               node_dict[node_name] = HICCUP.get_node_properties( node_name )
           return node_dict
      
      

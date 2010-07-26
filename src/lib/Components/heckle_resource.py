@@ -56,9 +56,15 @@ class ResourceDict():
      """
      Object to contain and encapsulate the Resources in the system
      """
-     def __init__( self ):
+     typestring = "ResourceDict"
+     def __init__( self, in_dict=None ):
           self.resource_list = []
           self.glossary = Glossary()
+          if in_dict:
+               ostring = in_dict.typestring
+               if ostring==self.typestring:
+                    for name in in_dict.keys():
+                         self[name] = in_dict[name]
      def __str__( self ):
           """
           Returns a string representation of all resources in the system
@@ -90,7 +96,8 @@ class ResourceDict():
           """
           for res in self.resource_list:
                if res['name'] == name:
-                    return res
+                    print "Returning %s" % res
+                    return res._get_dict()
           return False
      def keys( self ):
           """
@@ -171,7 +178,7 @@ class ResourceDict():
                return True
           else:
                raise Exception( "ResourceDict:Update only accepts dictionaries or lists of dictionaries; your attribute set for this is %s." % att_type )
-     def __setitem__( self, attributes=None ):
+     def __setitem__( self, name=None, attributes=None ):
           """
           Sets the resource indicated to the value indicated
           Attributes is to be a dictionary, or list of dictionaries with each resource having one dictionary.
@@ -181,18 +188,17 @@ class ResourceDict():
                     and the value is a dictionary of key:value pairs for attributes, then set these.
                else, return an error.
           """
-          
-          
           att_type = type(attributes)
           if att_type == ListType: 
                for resource in attributes:
                     self.update(attributes[resource])
           elif att_type == DictType: #if we're dealing with a dictionary for one resource
                name = attributes['name']
-               if name in self.resource_list.keys():
-                    self.resource_list[name].update(attributes)
+               if name in self.keys():
+                    index = self.keys().index(name)
+                    self.resource_list[index].update(attributes)
                else:
-                    self.resource_list[name]=Resource(attributes)
+                    self.resource_list.append(Resource(attributes))
           return True
      def __sub__(self, attributes=None, resource=None ):
           """
@@ -961,6 +967,9 @@ if __name__=="__main__":
           print "dict RD name %s value %s" % (name, rd[name])
      for name in namelist2:
           print "dict RD name %s value %s" % (name, r2[name])
+          
+          
+          
      #print "3b)  Find"
      #print "3c)  Assignment"
      #print "\n\n\n\n ######################### \n\n"
@@ -1026,13 +1035,13 @@ if __name__=="__main__":
 
 
 
-#CPU = [ "intel", "opteron", "nahalem"]
-#GPU = [ "true" ]
-#MEM = [ "4G", "12G", "16G" ]
-#DISK = [ "1", "4" ]
-#NET = [ "myrinet", "ib" ]
-#IB = [ "qdr", "sdr" ]
-#PACKAGE = [ "CUDA", "LINPACK" ]
-#GROUP = [ "cuda", "nimbus" ]
-#VINTAGE = []
-#CORES = ['1', '4', '16']
+     print "Test:  Copying"
+     value = {'name':'bb99', 'oogie':'boogie'}
+     name = value['name']
+     r2[name] = value
+     print "R2 is: %s" % r2._get_dict()
+     print "\n\n\n"
+
+     r3 = ResourceDict(r2)
+     print "R3 is: %s" % r3._get_dict()
+     print "\n\n\n"
