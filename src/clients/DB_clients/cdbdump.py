@@ -94,13 +94,19 @@ if __name__ == '__main__':
 #    database.close()
 
 
- 
+    con_file = ConfigParser.ConfigParser()
+    con_file.read(os.path.join("DB_writer_config"))
 
-    database = DatabaseWriter('COBALT_D', 'richp', 'Bo7[addy', 'richp')
+    fifo_name = con_file.get('cdbdump', 'fifo')
+    login = con_file.get('cdbdump', 'login')
+    pwd = con_file.get('cdbdump', 'pwd')
+    database = con_file.get('cdbdump', 'database')
+    schema = con_file.get('cdbdump', 'schema')
+
+    database = DatabaseWriter(database, login, pwd, schema)
     
     #starting listener.  This may become more sophistocated later
 
-    fifo_name = sys.argv[1]
     pipe = PipeListener(fifo_name)
 
 
@@ -118,7 +124,9 @@ if __name__ == '__main__':
             
             #Add to Database
 
+            print logMsg
             database.addMessage(logMsg)
+            print "Message Added to DB!"
             
 
         #Wash. Rinse. Repeat
