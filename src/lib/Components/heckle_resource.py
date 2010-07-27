@@ -252,6 +252,10 @@ class ResourceDict(object):
           Attributes is a dictionary of strings
           """
           retlist = []
+          if not attributes:
+               attributes = {}
+          attributes['allocatable']='true'
+          attributes['current reservation']=None
           for res in self.resource_list:
                if res == (attributes):
                     retlist.append(res)
