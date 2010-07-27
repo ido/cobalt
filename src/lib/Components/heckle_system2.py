@@ -174,7 +174,7 @@ class HeckleSystem(Component):
           """
           logger.debug( "Heckle System: start_pg: PGP is %s" % pgp )
           nodelist = pgp.location
-          self.resource[nodelist]['action'] = action
+          #self.resource[nodelist]['action'] = action
           self.resource[nodelist]['mac'] = self.resource[nodelist]['mac'].replace("-",":")
           pgp.pinging_nodes.append(nodelist)
      add_process_groups = exposed(query(add_process_groups))
@@ -231,7 +231,7 @@ class HeckleSystem(Component):
           Releases all the Heckle nodes, unreserving them
           """
           logger.debug( "Heckle System: Release %s" % pgp.location )
-          self.resources[pgp.location]['action']='Free'
+          #self.resources[pgp.location]['action']='Free'
           HICCUP= Heckle_Interface()
           HICCUP.free_reserved_node( uid = pgp.uid, node_list=pgp.location )
      
@@ -278,10 +278,15 @@ class HeckleSystem(Component):
                3)  Validate Job versus overall
           """
           logger.debug( "Heckle System: Validate Job: Specs are %s" % spec )
-
-          checklist = spec['attrs']
-          del(checklist['action'])
-          nodecount = spec['nodecount']
+          try:
+               checklist = spec['attrs']
+          except:
+               checklist = {}
+          #del(checklist['action'])
+          try:
+               nodecount = spec['nodecount']
+          except:
+               nodecount = 1
           glossary = self.resources.glossary
           dnelist = []   # for attributes which do not exist in glossary
           badlist = []   # for attributes in glossary which do not exist
@@ -289,6 +294,11 @@ class HeckleSystem(Component):
           ###  Look at this as a future change
           ###  Think:  Refresh Resources Info
           ##################################
+          #1st step:  Are there enough nodes at all?
+          if nodecount >= self.resources.nodecount():
+               pass
+          except:
+               raise Exception( "Validate Job: Not enough nodes; Requested %s, only have %s in the system." % ( nodecount, self.resources.nodecount() )
           for att in checklist:
                val = checklist[att]
                try:
@@ -313,6 +323,7 @@ class HeckleSystem(Component):
                     else:
                          retstr += "Need %s nodes, only have %s nodes:  %s" % (nodecount, retcount, retlist)
                     raise Exception( retstr )
+          return spec
      validate_job = exposed(validate_job)
      
      
