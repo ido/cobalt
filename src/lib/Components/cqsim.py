@@ -97,7 +97,6 @@ def parseline_alt(line):
         else:
             return _input
     
-    print line
     temp= {}
     splits = line.split(';')
         
@@ -442,7 +441,7 @@ class ClusterQsim(ClusterBaseSystem):
         else:
             self.mate_job_dict = {}
             
-        self.givingup_job_list = []
+        self.yielding_job_list = []
         
   
         Var = raw_input("press any Enter to continue...")
@@ -656,7 +655,7 @@ class ClusterQsim(ClusterBaseSystem):
         jobs = []
         
         if self.event_manager.get_go_next():
-            del self.givingup_job_list[:]
+            del self.yielding_job_list[:]
             
             self.update_job_states(specs, {})
             
@@ -669,11 +668,8 @@ class ClusterQsim(ClusterBaseSystem):
 #        print "ret_job1=", [job.jobid for job in jobs if job.is_runnable == True]
         
         #exclude jobs that give up turns (for waiting their mate jobs)
-        if self.givingup_job_list:
-            jobs = [job for job in jobs if job.jobid not in self.givingup_job_list]
- #           print "give up list=", self.givingup_job_list  
-            
-  #      print "ret_job2=", [job.jobid for job in jobs if job.is_runnable == True]
+        if self.yielding_job_list:
+            jobs = [job for job in jobs if job.jobid not in self.yielding_job_list]
 
         return jobs
     get_jobs = exposed(query(get_jobs))
@@ -888,7 +884,7 @@ class ClusterQsim(ClusterBaseSystem):
                     
                 else:
                     #print "cqsim: mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
-                    self.givingup_job_list.append(spec.get('jobid'))  #int
+                    self.yielding_job_list.append(spec.get('jobid'))  #int
                     
                     dbgmsg += " give up run local"
                 self.dbglog.LogMessage(dbgmsg)
@@ -1279,20 +1275,10 @@ class ClusterQsim(ClusterBaseSystem):
     #coscheduling stuff
     def get_mate_job_status_cqsim(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''
-        #local_job = self.get_live_job_by_id(jobid)
         ret_dict = {'jobid':jobid}
         
-        #job = self.get_live_job_by_id(jobid)
-        
         ret_dict['status'] = self.get_coschedule_status(jobid)
-#        local_job = False
-#        if local_job:#
-#            #status_dict['can_run'] = self.test_can_run(jobid)
-#            #status_dict['hold_resource'] = local_job.hold_resource
-#            status_dict['status'] = self.get_coschedule_status(jobid)
-#        else:
-#            status_dict['status'] = 'invisible'
-        #print "cqsim ", ret_dict
+
         return ret_dict
     get_mate_job_status_cqsim = exposed(get_mate_job_status_cqsim)
     
@@ -1318,12 +1304,8 @@ class ClusterQsim(ClusterBaseSystem):
         '''return job status regarding coscheduling, 
            input: jobid
            output: listed as follows:
-            1. "queuing-can-run"
-                 1.1 highest utility score and resource is available
-                 1.2 not with top priority but can start in non-drained partition when top-priority job is draining
-                 1.3 can be backfilled
-                 1.4 suspend and hold some resources            
-            2. queuing but cannot run
+            1. "queuing"
+            2. "holding"
             3. "unsubmitted"
             4. "running"
             5. "ended"

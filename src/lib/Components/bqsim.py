@@ -544,12 +544,26 @@ class BGQsim(Simulator):
         for line in jobfile:
             line = line.strip('\n')
             line = line.strip('\r')
-            firstparse = line.split(';')
-            if firstparse[1] == 'Q':
-                qtime = date_to_sec(firstparse[0])
-                jobid = int(firstparse[2])
-                qtime_pairs.append((qtime, jobid))
-
+            if line[0].isdigit():
+                #pbs-style trace
+                firstparse = line.split(';')
+                if firstparse[1] == 'Q':
+                    qtime = date_to_sec(firstparse[0])
+                    jobid = int(firstparse[2])
+                    qtime_pairs.append((qtime, jobid))
+            else:
+                #alternative trace
+                first_parse = line.split(';')
+                tempdict = {}
+                for item in first_parse:
+                    tup = item.partition('=')
+                    if tup[0] == 'qtime':
+                        qtime = date_to_sec(tup[2], "%Y-%m-%d %H:%M:%S")
+                    if tup[0] == 'jobid':
+                        jobid = tup[2]
+                if jobid and qtime:
+                        qtime_pairs.append((qtime, jobid))
+                    
         return qtime_pairs
     
     def find_mate_id(self, qtime, threshold):
@@ -584,7 +598,7 @@ class BGQsim(Simulator):
                         temp_dict[mate_id] = id
                 else:
                     temp_dict[mate_id] = id
-        #reserve dict to local_id:remote_id
+        #reserve dict to local_id:remote_id to guarantee one-to-one match
         self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
         
     def is_finished(self):
@@ -1645,32 +1659,6 @@ class BGQsim(Simulator):
                     best_partition_dict.update(partition_name)
                     break
 
-        # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
-        # be running jobs very soon
-        #
-        # also, this is the only part of finding a job location where we need to lock anything
-#        self._partitions_lock.acquire()
-#        try:
-#            for p in self.partitions.itervalues():
-#                # push the backfilling info from the local cache back to the real objects
-#                p.draining = self.cached_partitions[p.name].draining
-#                p.backfill_time = self.cached_partitions[p.name].backfill_time
-#                
-#            for jobid, partition_list in best_partition_dict.iteritems():
-#                part = self.partitions[partition_list[0]]
-#                part.used_by = int(jobid)
-#                part.reserved_until = self.get_current_time() + 5*60
-#                part.state = "allocated"
-#                for p in part._parents:
-#                    if p.state == "idle":
-#                        p.state = "blocked (%s)" % (part.name,)
-#                for p in part._children:
-#                    if p.state == "idle":
-#                        p.state = "blocked (%s)" % (part.name,)
-#        except:
-#            self.logger.error("error in find_job_location", exc_info=True)
-#        self._partitions_lock.release()
-        
         return best_partition_dict
     find_job_location = locking(exposed(find_job_location))
 
@@ -1811,12 +1799,8 @@ class BGQsim(Simulator):
         '''return job status regarding coscheduling, 
            input: jobid
            output: listed as follows:
-            1. "queuing-can-run"
-                 1.1 highest utility score and resource is available
-                 1.2 not with top priority but can start in non-drained partition when top-priority job is draining
-                 1.3 can be backfilled
-                 1.4 suspend and hold some resources            
-            2. queuing but cannot run
+            1. "queuing"
+            2. "holding"
             3. "unsubmitted"
             4. "running"
             5. "ended"
