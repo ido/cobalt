@@ -1,0 +1,8 @@
+[cdbdump]
+
+login: richp
+pwd: Bo7[addy
+database: COBALT_D
+schema: COBALT_DB_DEV
+
+fifo: /Users/paulrich/cobalt-dev/src/components/json.out
