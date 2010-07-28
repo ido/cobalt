@@ -113,20 +113,12 @@ if __name__ == '__main__':
     LogMsgDecoder = LogMessageDecoder()
     print "Begin database logging."
     while(True):
-        #loop forever
         
-        #listen on the pipe
         cobaltJSONmessage = pipe.readData()
         
-        if cobaltJSONmessage != "":
-            print cobaltJSONmessage
+        if cobaltJSONmessage != '':
             logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
-            
-            #Add to Database
-
-            print logMsg
             database.addMessage(logMsg)
-            print "Message Added to DB!"
             
 
         #Wash. Rinse. Repeat

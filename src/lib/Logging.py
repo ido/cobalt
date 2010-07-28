@@ -295,7 +295,7 @@ class ThreadedWrite(threading.Thread):
 
     def __init__(self, data):
         threading.Thread.__init__(self)
-        self.data = data
+        self.data = data + "\n"
         self.daemon = True
         
         
@@ -303,6 +303,8 @@ class ThreadedWrite(threading.Thread):
     def run(self):
         #TODO: going to need some good-old try-catch for failover here.
         out_file = open("json.out", "a")
+        print self.data
+        print "****************************"
         out_file.write(self.data)
         out_file.close()
 
@@ -348,7 +350,7 @@ class ReportStateEncoder(JSONEncoder):
                     'cycle_id' : obj.cycle_id,
                     'duration' : obj.duration,
                     'partitions': obj.partitions,
-                    'name:' : obj.name,
+                    'name' : obj.name,
                     'queue' : obj.queue,
                     'res_id' : obj.res_id,
                     'start' : obj.start,

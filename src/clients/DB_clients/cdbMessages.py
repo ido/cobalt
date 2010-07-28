@@ -47,9 +47,12 @@ class ReservationStatus(object):
       return
    
    def __str__(self):
-      return "Tag: %s/n" % self.tag + "Cycle: %s\n" % self.cycle + "Users: %s\n" % self.users + "partitions: %s\n" % self.partitions + "name: %s\n" % self.name + "start: %s\n" % self.start + "queue: %s\n" % self.queue + "duration: %s\n" % self.duration + "res_id: %s\n" % self.res_id + "cycle_id: %s\n" % self.cycle_id
+      return "Tag: %s\n" % self.tag + "Cycle: %s\n" % self.cycle + "Users: %s\n" % self.users + "partitions: %s\n" % self.partitions + "name: %s\n" % self.name + "start: %s\n" % self.start + "queue: %s\n" % self.queue + "duration: %s\n" % self.duration + "res_id: %s\n" % self.res_id + "cycle_id: %s\n" % self.cycle_id
    
    
+
+
+
 class LogMessageDecoder(json.JSONDecoder):
 
    def decode(self, string):

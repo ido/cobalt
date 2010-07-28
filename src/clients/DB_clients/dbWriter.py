@@ -124,41 +124,65 @@ class DatabaseWriter(object):
       return
      
    def __modifyResMsg(self, logMsg):
-      print "This is a work in progress!"
    
+      #get state.  No matter what we need this.
+      reservation_state_record = self.daos['RESERVATION_STATES'].table.getRecord({'NAME': logMsg.state})
+      match = self.daos['RESERVATION_STATES'].search(reservation_state_record)
+      if not match:
+         self.daos['RESERVATION_STATES'].insert(reservation_state_record)
+      else:
+         reservation_state_record.v.ID = match[0]['ID']
+         
+         
+      res_id = self.__get_most_recent_data_id('RESERVATION_DATA', logMsg)      
+ 
+      if ((not res_id) or 
+          ((logMsg.state == 'modified') or 
+           (logMsg.state == 'cycled'))): 
+         
+         #we've gone from modify to add.
+         self.__addResMsg(logMsg)
+         return
+     
       
-      if logMsg.state == 'modified' or logMsg.state == 'cycled': #Most of a reservation can change, duplicate as much data as possible in advance
-         print "Modification caught!"
-      else: #the signifigantly easier case of a system message or deletion.
+      else: #attach a new reservation_progress entry to an extant 
+            #reservation_data entry
          
-         #this had better be here.  If there are no records, cobalt hasn't caught 
-         #its modifying nothing yet.
-         reservation_data_record = self.daos['RESERVATION_DATA'].table.getRecord({
-               'RES_ID': logMsg.item.res_id})
-         res_ids = self.daos['RESERVATION_DATA'].search_most_recent(reservation_data_record)
-
-         print res_ids
-         
-         #get state.  Move this up since it will be needed in all cases!
-         reservation_state_record = self.daos['RESERVATION_STATES'].table.getRecord({'NAME': logMsg.state})
-         match = self.daos['RESERVATION_STATES'].search(reservation_state_record)
-         if not match:
-            self.daos['RESERVATION_STATES'].insert(reservation_state_record)
-         else:
-            reservation_state_record.v.ID = match[0]['ID']
+         #this had better be here.  If there are no records, cobalt hasn't caught on that
+         #its modifying nothing yet.  TODO: Add message if not found.
+            
          
          reservation_prog_record = self.daos['RESERVATION_PROG'].table.getRecord({
-               'RES_ID' : res_ids[0]['ID'],
+               'RES_ID' : res_id,
                'STATE' : reservation_state_record.v.ID,
                'ENTRY_TIME' : logMsg.timestamp,
                'EXEC_USER' : logMsg.exec_user
                })
          self.daos['RESERVATION_PROG'].insert(reservation_prog_record)
 
+
+
+   def __get_most_recent_data_id(self, table, logMsg):
+      """Takes a table name and ID.  Right now reservation specific.
+         Returns an id if one found, if not returns None.
+         Will expand to other record types as they are implemented.
+         Meant to extract ids from x_DATA records."""
+
+      #TODO: make RES_ID generic.
+      data_record = self.daos[table].table.getRecord({
+            'RES_ID': logMsg.item.res_id})
+      res_ids = self.daos[table].search_most_recent(data_record)
+      
+      if not res_ids:
+         return None
+      
+      return res_ids[0].get('ID', None)
+
+   
    def close(self):
       self.db.close()
       
-
+   
    
 class ResStateData(db2util.dao):
    
@@ -172,11 +196,18 @@ class ResStateData(db2util.dao):
       
 
 class ResDataData(db2util.dao):
+
    def search_most_recent (self, record):
-      print record.v.RES_ID
-      SQL = "select reservation_data.id from reservation_prog, reservation_data where reservation_data.id = reservation_prog.res_id and reservation_data.res_id = %d order by entry_time DESC" %record.v.RES_ID
+
+      """Find the most recent version of a reservation data entry."""
+
+      SQL = ("select reservation_data.id" ,
+             "from reservation_prog, reservation_data",
+             "where reservation_data.id = reservation_prog.res_id",
+             "and reservation_data.res_id = %d" % record.v.RES_ID,
+             "order by entry_time DESC") 
       
-      return self.db.getDict(SQL)
+      return self.db.getDict(' '.join(SQL))
    
    def search (self, record):
       
@@ -187,13 +218,4 @@ class ResDataData(db2util.dao):
 
 
 
-#class ResProgData(db2util.dao):
 
-#   def search_most_recent (self, record):
-#      SQL = ("select RESERVATION_DATA.ID ",
-#             "from reservation_data, reservation_prog ",
-#             "where reservation_data.id = reservation_prog.res_id",
-#             " and reservation_prog.RES_ID = %d " % record.v.RES_ID, 
-#             " order by entry_time DESC")
-#      
-#      return self.db.getDict(''.join(SQL))
