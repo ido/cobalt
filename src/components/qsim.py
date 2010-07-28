@@ -21,7 +21,8 @@ from Cobalt.Proxy import ComponentProxy, local_components
 from datetime import datetime
 import time
 
-arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'interval', 'predict', 'coscheduling', 'wass']
+arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
+            'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction']
 
 def profile_main(opts):
     '''profile integrated qsim'''
@@ -72,14 +73,18 @@ if __name__ == "__main__":
         help="featuring string for output log")
     p.add_option("-j", "--job", dest="bgjob", type="string",
         help="file name of the job trace (when scheduling for bg system only)")
-    p.add_option("-i", "--interval", dest="interval", type="float",
+    p.add_option("-s", "--sleep", dest="sleep_interval", type="float",
         help="seconds to wait at each event")
     p.add_option("-P", "--prediction", dest="predict", type="string", default=False,
         help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction. x:queuing, y:backfilling, z:running job")
-    p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
-        help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
     p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
         help="[cons | aggr | both] specify the walltime aware spatial scheduling scheme: cons=conservative scheme, aggr=aggressive scheme, both=cons+aggr")
+    p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
+        help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
+    p.add_option("-F", "--bg_frac", dest="BG_Fraction", type="float", default=False,
+        help="parameter to adjust bg workload. All the interval between job arrivals will be multiplied with the parameter")
+    p.add_option("-f", "--cluster_frac", dest="cluster_fraction", type="float", default=False,
+        help="parameter to adjust cluster workload. All the interval between job arrivals will be multiplied with the parameter")
     
     coscheduling_schemes = ["hold", "yield"]
     wass_schemes = ["cons", "aggr", "both"]

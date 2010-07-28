@@ -47,7 +47,6 @@ OPT_RULE = "A1"  # A0, A1, A2, A3, A4, NORMAL, EVEN
 RECOVERYOPT = 2 # by default, the failed job is sent back to the rear of the queue
 CHECKPOINT = False  #not used in this version
 MTTR = 3600   #time to repair partition(in sec), a failed partition will be available again in MTTR seconds,
-FRACTION = 1  #factor to tune workload, the times between job arrival will be multipled with FRACTION.(1 means no change.) 
 SET_event = set(['I', 'Q', 'S', 'E', 'F', 'R'])
 
 PRINT_SCREEN = True
@@ -171,23 +170,21 @@ def tune_workload(specs, frac):
         lastsubtime =  spec['submittime']
         spec['interval'] = interval
     
-     #tune workload heavy or light
+    #tune workload heavy or light
     
     last_newsubtime = specs[0].get('submittime')
     
     for spec in specs:
         interval = spec['interval']
-        newsubtime = last_newsubtime + frac* interval
+        newsubtime = last_newsubtime + frac * interval
         spec['submittime'] = newsubtime
-        spec['interval'] = frac* interval
+        spec['interval'] = frac * interval
         last_newsubtime = newsubtime    
     
-    print "in adjust: last submit job=", specs[len(specs)-1].get('submittime')
-
 def sec_to_date(sec, dateformat="%m/%d/%Y %H:%M:%S"):
     tmp = datetime.fromtimestamp(sec)
     fmtdate = tmp.strftime(dateformat)
-    return fmtdate    
+    return fmtdate
                       
 def date_to_sec(fmtdate, dateformat="%m/%d/%Y %H:%M:%S"):
     t_tuple = time.strptime(fmtdate, dateformat)
@@ -378,7 +375,9 @@ class BGQsim(Simulator):
         Simulator.__init__(self, *args, **kwargs)
          
         #initialize partitions
-        self.interval = kwargs.get("interval", 0)
+        self.sleep_interval = kwargs.get("sleep_interval", 0)
+        
+        self.cluster_fraction = kwargs.get("BG_Fraction", 1)
         
         #self.coscheduling = kwargs.get("coscheduling", False)
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
@@ -525,6 +524,10 @@ class BGQsim(Simulator):
         print "self.walltime_aware_aggr =", self.walltime_aware_aggr
         print "self.walltime_aware_cons =", self.walltime_aware_cons
                                                                 
+        
+        if not self.cluster_job_trace:
+            Var = raw_input("press any Enter to continue...")
+                
         print "Simulation starts:"
  
     def _get_queuing_jobs(self):
@@ -735,9 +738,9 @@ class BGQsim(Simulator):
             specs.append(spec)
                 
         #adjust workload density
-        if FRACTION != 1:
-            tune_workload(specs, FRACTION)
-            print "workload adjusted: last submit job=", specs[len(specs)-1].get('submittime')
+        if self.cluster_fraction != 1:
+            tune_workload(specs, self.cluster_fraction)
+            print "workload adjusted: last submit job=", sec_to_date(specs[len(specs)-1].get('submittime'))
         
         self.total_job = len(specs)
         print "total job number:", self.total_job
@@ -1773,8 +1776,8 @@ class BGQsim(Simulator):
             progress_bar += "-"
         progress_bar += "|"
         print progress_bar
-        if self.interval:
-            time.sleep(self.interval)
+        if self.sleep_interval:
+            time.sleep(self.sleep_interval)
         print "\n\n"
             
     #coscheduling stuff

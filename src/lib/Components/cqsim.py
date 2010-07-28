@@ -32,22 +32,11 @@ REMOTE_QUEUE_MANAGER = "queue-manager"
 
 MACHINE_ID = 1
 MACHINE_NAME = "EUREKA"
-MAXINT = 2021072587
-MIDPLANE_SIZE = 512
-DEFAULT_VICINITY = 60
-DEFAULT_COSCHEDULE_SCHEME = 0
 
 logging.basicConfig()
 logger = logging.getLogger('Qsim')
 
-OPT_RULE = "A1"  # A0, A1, A2, A3, A4, NORMAL, EVEN
-RECOVERYOPT = 2 # by default, the failed job is sent back to the rear of the queue
-CHECKPOINT = False  #not used in this version
-MTTR = 3600   #time to repair partition(in sec), a failed partition will be available again in MTTR seconds,
-FRACTION = 1  #factor to tune workload, the times between job arrival will be multipled with FRACTION.(1 means no change.) 
 SET_event = set(['I', 'Q', 'S', 'E', 'F', 'R'])
-
-PRINT_SCREEN = True
 
 REDS = '\033[95m'
 YELLOWS = '\033[93m'
@@ -149,7 +138,7 @@ def parse_work_load(filename):
 def tune_workload(specs, frac):
     '''tune workload heavier or lighter'''
     
-    print "inside tune_workload"
+    print "inside tune_workload fraction =", frac
     
     def _subtimecmp(spec1, spec2):
         return cmp(spec1.get('submittime'), spec2.get('submittime'))
@@ -166,19 +155,17 @@ def tune_workload(specs, frac):
         lastsubtime =  spec['submittime']
         spec['interval'] = interval
     
-     #tune workload heavy or light
+    #tune workload heavy or light
     
     last_newsubtime = specs[0].get('submittime')
     
     for spec in specs:
         interval = spec['interval']
-        newsubtime = last_newsubtime + frac* interval
+        newsubtime = last_newsubtime + frac * interval
         spec['submittime'] = newsubtime
-        spec['interval'] = frac* interval
+        spec['interval'] = frac * interval
         last_newsubtime = newsubtime    
     
-    print "in adjust: last submit job=", specs[len(specs)-1].get('submittime')
-
 def sec_to_date(sec, dateformat="%m/%d/%Y %H:%M:%S"):
     tmp = datetime.fromtimestamp(sec)
     fmtdate = tmp.strftime(dateformat)
@@ -370,7 +357,11 @@ class ClusterQsim(ClusterBaseSystem):
         
         ClusterBaseSystem.__init__(self, *args, **kwargs)
                 
-        self.interval = kwargs.get("interval", 0)
+        self.sleep_interval = kwargs.get("sleep_interval", 0)
+        
+        self.fraction = kwargs.get("cluster_fraction")
+        
+        print "self.fraction=", self.fraction
         
         self.workload_file =  kwargs.get("cjob")
         self.output_log = kwargs.get("outputlog")
@@ -557,9 +548,9 @@ class ClusterQsim(ClusterBaseSystem):
             specs.append(spec)
                 
         #adjust workload density
-        if FRACTION != 1:
-            tune_workload(specs, FRACTION)
-            print "workload adjusted: last submit job=", specs[len(specs)-1].get('submittime')
+        if self.fraction != 1:
+            tune_workload(specs, self.fraction)
+            print "workload adjusted: last submit job=", sec_to_date(specs[len(specs)-1].get('submittime'))
         
         self.total_job = len(specs)
         print "total job number:", self.total_job
@@ -701,10 +692,7 @@ class ClusterQsim(ClusterBaseSystem):
 
             elif cur_event=="E":  # Job (Id) is completed
                 
-                
                 joblist = self.queues.get_jobs([{'jobid':int(Id)}])
-                
-                
                 
                 if joblist:
                     completed_job = joblist[0]
@@ -1213,12 +1201,6 @@ class ClusterQsim(ClusterBaseSystem):
     def print_screen(self, cur_event=""):
         '''print screen, show number of waiting jobs, running jobs, busy_nodes%'''
         
-        #os.system('clear')
-        
-        if PRINT_SCREEN == False:
-            print "simulation in progress, please wait"
-            return            
-        
         print "Cluster" 
         
         current_datetime = self.event_manager.get_current_date_time()
@@ -1269,8 +1251,8 @@ class ClusterQsim(ClusterBaseSystem):
             progress_bar += "-"
         progress_bar += "|"
         print progress_bar
-        if self.interval:
-            time.sleep(self.interval)
+        if self.sleep_interval:
+            time.sleep(self.sleep_interval)
 
     #coscheduling stuff
     def get_mate_job_status_cqsim(self, jobid):
