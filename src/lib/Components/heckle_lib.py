@@ -569,7 +569,7 @@ class Heckle_Interface():
           """
           #hwlist = list_hardware(session, name=node_name)  #Use if it worked...
           #return hwlist['properties']
-          logger.debug("HICCUP: get_node_properties    &&&&&&&&&&&&")
+#          logger.debug("HICCUP: get_node_properties    &&&&&&&&&&&&")
           props = []
           self.session.expire_all()
           hwlist = list_hardware( self.session )

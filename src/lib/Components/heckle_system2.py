@@ -75,9 +75,8 @@ class HeckleSystem(Component):
           Component.__init__(self, *args, **kwargs)
           self.process_groups = ProcessGroupDict()
           self.process_groups.item_cls = HeckleProcessGroup
-          resource_dict = self._get_all_resources()
-          self.resources = ResourceDict(resource_dict)
-          self.queue_assignments["default"] = resource_dict.keys()
+          self.resources = ResourceDict()
+          self.queue_assignments["default"] = self.resources.keys()
           print "\n\n\n\n"
           print "Queue assignments are: %s" % self.queue_assignments
      
@@ -189,10 +188,10 @@ class HeckleSystem(Component):
           #sleep(20)
           retval = True
           pg_list = [x for x in self.process_groups.itervalues() if (len(x.pinging_nodes) > 0)]
-          HICCUP= Heckle_Interface()
+          self.resources.update()
           for pgp in pg_list:
                for nodename in pgp.pinging_nodes:
-                    teststr = HICCUP.get_node_bootstate(nodename)
+                    teststr = self.resources[nodename]['bootstate']
                     if  teststr == "COMPLETED":
                          logger.debug( "heckle: System: Check Build Done: Removing node %s...%i pinging nodes left" % (nodename, len(pgp.pinging_nodes)-1) )
                          pgp.pinging_nodes.remove(nodename)
@@ -234,6 +233,7 @@ class HeckleSystem(Component):
           #self.resources[pgp.location]['action']='Free'
           HICCUP= Heckle_Interface()
           HICCUP.free_reserved_node( uid = pgp.uid, node_list=pgp.location )
+          self.resources.free( nodes=pgp.location )
      
      
      def get_resources(self, specs={}):
@@ -244,23 +244,12 @@ class HeckleSystem(Component):
           ##################################
           ###  Look at this as a future change
           ##################################
+          specs['current reservation'] = 9999999
+          specs['allocatable'] = 'True'
           res_list = self.resources >= specs
           logger.debug( "Heckle System: Get Resources, resources are %s" % res_list )
           return res_list
      get_resources = exposed(query(get_resources))
-     
-     
-     def _get_all_resources(self):
-          """
-          Returns a dictionary containing the current state of the system from Heckle
-          Used to populate the initial state of the resources in the system object
-          """
-          HICCUP = Heckle_Interface()
-          self.node_list = HICCUP.NODE_LIST
-          node_dict = {}
-          for node_name in self.node_list:
-               node_dict[node_name] = HICCUP.get_node_properties( node_name )
-          return node_dict
      
      
      ##########################################################
@@ -295,10 +284,10 @@ class HeckleSystem(Component):
           ###  Think:  Refresh Resources Info
           ##################################
           #1st step:  Are there enough nodes at all?
-          if nodecount >= self.resources.nodecount():
+          if nodecount >= self.resources.node_count():
                pass
-          except:
-               raise Exception( "Validate Job: Not enough nodes; Requested %s, only have %s in the system." % ( nodecount, self.resources.nodecount() )
+          else:
+               raise Exception( "Validate Job: Not enough nodes; Requested %s, only have %s in the system." % ( nodecount, self.resources.nodecount() ) )
           for att in checklist:
                val = checklist[att]
                try:
@@ -308,6 +297,8 @@ class HeckleSystem(Component):
                          badlist.append("%s:%s"%(att, val)) # Bad attribute
                except:
                     dnelist.append(att) #Attribute does not exist
+               checklist['current reservation'] = 9999999
+               checklist['allocatable'] = 'True'
                retlist = self.resources >= checklist
                retcount = len(retlist)
                goodlen = retcount >= nodecount
@@ -361,16 +352,16 @@ class HeckleSystem(Component):
           def jobsort(job):
                """Used to sort job list by utility score"""
                return job["utility_score"]
-          job_location_args.sort(key=jobsort)
-          
+          job_location_args.sort(key=jobsort)          
           #Try to match jobs to nodes which can run them
-          HICCUP = Heckle_Interface()
           for job in job_location_args:
                if "attrs" not in job or job["attrs"] is None:
                     attrs = {}
                else:
                     attrs = job['attrs']
-               nodecount = job['nodes']
+               attrs['current reservation'] = 9999999
+               attrs['allocatable'] = 'True'
+               nodecount = int(job['nodes'])
                print "Job is %s" % job
                #############################
                ###  Look at this as point of change
@@ -378,13 +369,20 @@ class HeckleSystem(Component):
                ###            Choose node from list
                ###            Remove node from unreserved nodes
                #############################
-               nodelist = self.resources >= "attrs"    # Get Matching Nodes
+               print "Free Nodes is %s" % self.resources.getfreenodes()
+               nodelist = ( self.resources >= attrs )    # Get Matching Node
+               print "Nodelist at this stage is %s" % nodelist
 #               if len(nodelist) >= nodecount:
-               retlist = nodelist[:nodecount-1]
+               print "Nodecount = %s" % nodecount
+               retlist = nodelist[:nodecount]
+               self.resources.allocate(retlist)
+               print "Remaining nodelist is %s" % retlist
 #               else:
 #                    raise Exception ("Something, Not Enough matching Nodes Available")
-          logger.info("heckle: find_job_location: locations are %s" % nodelist )
-          return retlist
+               locations[job["jobid"]]=retlist
+               print "Locations is now: %s" % locations
+          logger.info("heckle: find_job_location: locations are %s" % locations )
+          return locations
      find_job_location = exposed(find_job_location)
      
      
