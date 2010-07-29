@@ -164,7 +164,7 @@ class HeckleSystem(Component):
      #########################################
      
      
-     def _start_pg(self, pgp):
+     def _start_pg(self, pgp, heckle_res_id, uid):
           """
           Populates the process group with its resources
                Gets node information for nodes in process group
@@ -173,8 +173,12 @@ class HeckleSystem(Component):
           """
           logger.debug( "Heckle System: start_pg: PGP is %s" % pgp )
           nodelist = pgp.location
-          #self.resource[nodelist]['action'] = action
-          self.resource[nodelist]['mac'] = self.resource[nodelist]['mac'].replace("-",":")
+          for node in nodelist:
+               node_attributes = self.resources[node]
+               node_attributes['mac'] = node_attributes['mac'].replace("-",":")
+               node_attributes['heckle_res_id'] = heckle_res_id
+               pgp.resource_attributes[node] = node_attributes._get_dict()
+          pgp.uid = uid     
           pgp.pinging_nodes.append(nodelist)
      add_process_groups = exposed(query(add_process_groups))
      
@@ -238,7 +242,7 @@ class HeckleSystem(Component):
      
      def get_resources(self, specs={}):
           """
-          Returns a list of names for all the resources (nodes) which match the given specs.
+          Returns a list of names for all the FREE resources (nodes) which match the given specs.
           """
           logger.debug( "Heckle System: Get Resources, specs are %s" % specs )
           ##################################
@@ -362,23 +366,23 @@ class HeckleSystem(Component):
                attrs['current reservation'] = 9999999
                attrs['allocatable'] = 'True'
                nodecount = int(job['nodes'])
-               print "Job is %s" % job
+               print "Heckle System: Find Job Location: Job is %s" % job
                #############################
                ###  Look at this as point of change
                ###  Think:  For node in unreserved nodes
                ###            Choose node from list
                ###            Remove node from unreserved nodes
                #############################
-               print "Free Nodes is %s" % self.resources.getfreenodes()
+               print "Heckle System: Find Job Location: Free Nodes is %s" % self.resources.getfreenodes()
                nodelist = ( self.resources >= attrs )    # Get Matching Node
                print "Nodelist at this stage is %s" % nodelist
-#               if len(nodelist) >= nodecount:
-               print "Nodecount = %s" % nodecount
-               retlist = nodelist[:nodecount]
-               self.resources.allocate(retlist)
-               print "Remaining nodelist is %s" % retlist
-#               else:
-#                    raise Exception ("Something, Not Enough matching Nodes Available")
+               if len(nodelist) >= nodecount:
+                    print "Nodecount = %s" % nodecount
+                    retlist = nodelist[:nodecount]
+                    self.resources.allocate(retlist)
+                    print "Heckle System: Find Job Location: Remaining nodelist is %s" % retlist
+               else:
+                    raise Exception ("Heckle System: find_job_locations: Not Enough matching Nodes Available")
                locations[job["jobid"]]=retlist
                print "Locations is now: %s" % locations
           logger.info("heckle: find_job_location: locations are %s" % locations )

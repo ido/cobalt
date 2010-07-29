@@ -67,19 +67,20 @@ class ResourceDict(object):
           self.resource_dict = {}
           self.glossary = Glossary()
           if type(in_dict) is DictType:
-               print "Incomming: %s" % in_dict
+               #print "Incomming: %s" % in_dict
                for key in in_dict:
                     self.add(in_dict[key])
           if type(in_dict) is ListType:
-               print "Incomming: %s" % in_dict
+               #print "Incomming: %s" % in_dict
                for val in in_dict:
                     self[val['name']]=val
           elif type(in_dict) == ResourceDict:
-               print "Incomming: %s" % in_dict
+               #print "Incomming: %s" % in_dict
                for name in in_dict.keys():
                     self[name] = in_dict[name]
           else:
-               print "Nothing to do?"
+               #print "Nothing to do?"
+               pass
           self.update()
      def __str__( self ):
           """
@@ -110,10 +111,10 @@ class ResourceDict(object):
           Finds one particular resource by name
           Returns that resource, or False if no resource by that name.
           """
+          #print "RD: __getitem__: Looking for name %s" % name       #in keys %s" % (str(name), self.keys())
           if name in self.keys():
-               print "Keys are: %s" % self.keys()
-               print "Looking for name %s" % str(name)
-               return self.resource_dict[str(name)]
+               #print "RD: __getitem__: Found name %s" % name
+               return self.resource_dict[name]
           else:
                raise Exception ( "RD: GetItem: No resource named %s exists." % name )
      def keys( self ):
@@ -147,33 +148,38 @@ class ResourceDict(object):
           Attributes is a dictionary of strings, key:value
           MUST contain a Name field, and names MUST be unique across the system
           """
-          print "Attributes are %s" % attributes
+          #print "Attributes are %s" % attributes
           if type(attributes) == ListType:
                for att in attributes:
                     self.add(att)
           if type(attributes) == DictType:
                attributes = Resource( attributes )
           if type(attributes) == Resource:
-               if 'name' not in attributes.__dict__.keys():
-                    raise Exception( "Resource Dictionary: Add: Bad Resource, no name: %s " % attribute )
+               if len(self.resource_dict) == 0:
+                    self.resource_dict = { attributes.name:attributes }
                else:
-                    name = attributes['name'].value
-                    self.resource_dict[name] =  attributes
-                    self.glossary.append( attributes._get_dict() )
-               return True
+                    name = attributes.name
+                    if name in self.keys():
+                         self.resource_dict[name].update( attributes )
+                    else:
+                         self.resource_dict[name]= attributes
           else:
                raise Exception( "Resource Dictionary: Add: Something else happened... %s" % attribute )
-     def update( self, attributes=None ):
+     def update( self, attributes=None, nodelist=None ):
           """
           Changes the resource with the attributes named
           If attributes is a list or a dictionary, pass on to the set_item function
           If attributes is None, then call on Heckle to get an updated node status
           else, return an error.
           """
-          print "RD: Updating: %s :  %s" % (type(attributes), attributes)
+          #try:
+          #     print "RD: Updating: Resource %s of type %s" % ( attributes['name'], type(attributes) )
+          #except:
+          #     pass
           att_type = type(attributes)
           if att_type is DictType:
-               self.update( Resource( attributes ) )
+               new_resource = Resource( attributes )
+               self.update( new_resource )
           elif att_type is Resource:
                name = attributes['name'].value
                if name in self.keys():
@@ -181,13 +187,13 @@ class ResourceDict(object):
                     self[name].update( attributes )
                else:
                     print "RD: Update: Goind to add %s" % name
-                    self.add( attributes)
+                    self.add( attributes )
           elif att_type is ListType:
                for att in attributes:
                     resource = Resource( att )
                     self.update( resource )
           elif att_type is NoneType:
-               self.get_heckle_list()
+               self.get_heckle_list( nodelist=nodelist )
                return True
           else:
                raise Exception( "ResourceDict:Update: Attributes must be dictionary or lists of dictionaries; your attribute set for this is %s." % att_type )
@@ -205,13 +211,13 @@ class ResourceDict(object):
                ###
           """
           if name:
- #              print "RD: SetItem: Name is %s" % name
+ #              #print "RD: SetItem: Name is %s" % name
                pass
           if attributes:
- #              print "RD: SetItem:  Attributes is %s" % attributes
+ #              #print "RD: SetItem:  Attributes is %s" % attributes
                pass
           att_type = type(attributes)
- #         print "Attributes type is %s" % att_type
+ #         #print "Attributes type is %s" % att_type
           if att_type == Resource:
                self.resource_dict[attribute['name']].update(attribute)
           if att_type == ListType:              # if we're dealing with a list of resources to set
@@ -219,7 +225,7 @@ class ResourceDict(object):
                     self.update(attributes[resource])
                     self.glossary.append(attributes[resource])
           elif att_type == DictType:            # if we're dealing with a dictionary for one resource
-  #             print "Add %s as dictionary" % attributes['name']
+  #             #print "Add %s as dictionary" % attributes['name']
                name = attributes['name']
                if name not in self.keys():
                     self.glossary.append(attributes)    #Add to glossary if new
@@ -250,11 +256,11 @@ class ResourceDict(object):
           This function returns a list of nodes marked free in the system
           """
           name_list = []
-          #print "Resource Dict is: %s" % self.resource_dict
-#          print "#####  Type is %s" % type(self.resource_dict)
+          ##print "Resource Dict is: %s" % self.resource_dict
+#          #print "#####  Type is %s" % type(self.resource_dict)
           for res in self.resource_dict:
-#               print "getfreenodes: res is %s of type %s" % (res, type(res))
-#               print "self.res is %s with values %s" % (type(self[res]), self[res])
+#               #print "getfreenodes: res is %s of type %s" % (res, type(res))
+#               #print "self.res is %s with values %s" % (type(self[res]), self[res])
                if self[res].isfree():
                     name_list.append(res)
           return sorted(name_list)
@@ -267,14 +273,19 @@ class ResourceDict(object):
           if not job_id:
                job_id = BUSY_NODE
           for node in nodes:
-               print "&&&&&&&&&&&      Found it!  Node %s is %s, switch to %s" % (node, self[node][FREE_VAR], job_id)
+               #print "&&&&&&&&&&&      Found it!  Node %s is %s, switch to %s" % (node, self[node][FREE_VAR], job_id)
                old_resource = self[node]
-               print "Type of old resource is %s, for value %s" % (type(old_resource), old_resource[FREE_VAR])
-               old_resource.update( Attribute( FREE_VAR, job_id ) )
+               #print "Type of old resource is %s, for value %s" % (type(old_resource), old_resource[FREE_VAR])
+               new_att = Attribute()
+               new_att.name = FREE_VAR
+               new_att.value = job_id
+               att2 = Attribute( FREE_VAR, job_id )
+               #print "Allocate: comparing them yeilds %s" % (new_att == att2)
+               old_resource.update( att2 )
 #               old_resource[FREE_VAR] = job_id
-               print "Old resource now reads %s" % old_resource[FREE_VAR]
+               #print "Old resource now reads %s" % old_resource[FREE_VAR]
                self[node].update(old_resource)
-               print "Node %s now reads %s" % (node, self[node][FREE_VAR])
+               #print "Node %s now reads %s" % (node, self[node][FREE_VAR])
           return True
      def free( self, nodes, job_id=None):
           """
@@ -285,35 +296,54 @@ class ResourceDict(object):
           for node in nodes:
                self[node][FREE_VAR] = FREE_NODE
           return True
-     def __eq__( self, attributes ):
+     def __eq__( self, attributes, scored=False ):
           """
           Returns a list of nodes which match the attributes
           Attributes is a dictionary of strings
           """
           retlist = []
           other = Resource( attributes )
-          print "RD: __eq__: Attributes are %s, and of type %s" % (other, type(other))
+          #print "RD: __eq__: Attributes are %s, and of type %s" % (other, type(other))
           for key in self.keys():
                if self[key] == other:
                     retlist.append(key)
-          print "RD: __eq__:  Returning %s" % retlist
+          #print "RD: __eq__:  Returning %s" % retlist
+          if scored:
+               retlist = self.Glossary.scorelist( retlist )
+          else:
+               def resourcesort( key2 ):
+                    print "Key is %s, Name is: %s" % (key2, self[key2].name)
+                    return self[key].name
+               retlist.sort( key2=resourcesort )
+               #pass
           return retlist
-     def __ge__( self, attributes ):
+     def __ge__( self, attributes, scored=False ):
           """
           Returns a list of nodes which are greater than or equal to the attributes
           Attributes is a dictionary of strings
           """
           retlist = []
-          print "RD:__ge__:Attributes are %s, and of type %s" % (attributes, type(attributes))
+          #print "RD:__ge__:Attributes are %s, and of type %s" % (attributes, type(attributes))
           other = Resource( attributes )
           print "RD:__ge__:Other is %s, and of type %s" % (other, type(other))
           for key in self.keys():
+               retval = self[key]
+               print "RD:__ge__: Comparing to node %s" % self[key]
                if self[key] >= other:
-                    print "RD: __ge__: Found Node %s with free variable %s versus %s" % (key, self[key][FREE_VAR], attributes[FREE_VAR])
-#                    print "RD: __ge__: Type self[key] is %s, other is %s" % ( type(self[key]), type(other) )
+                    #print "RD: __ge__: Found Node %s with free variable %s versus %s" % (key, self[key][FREE_VAR], attributes[FREE_VAR])
+#                    #print "RD: __ge__: Type self[key] is %s, other is %s" % ( type(self[key]), type(other) )
                     retlist.append(key
 )
           print "__ge__: Returning %s" % retlist
+          if scored:
+               retlist = self.Glossary.scorelist( retlist )
+          else:
+               def resourcesort( key2 ):
+                    newres = self[key2]
+                    print "Key is %s, Name is: %s" % (key2, newres.name)
+                    return newres.name
+               retlist.sort( key=resourcesort )
+               #pass
           return retlist
      def backup( self ):
           """
@@ -334,26 +364,29 @@ class ResourceDict(object):
           for line in infile:
                self.add( Resource( line ))
           outfile.close()
-     def get_heckle_list( self ):
+     def get_heckle_list( self, nodelist=None ):
           """
           Gets the current state and status of everything in Heckle
           """
-          print "\n\nUpdating from Heckle...\n\n"
+          #print "\n\nUpdating from Heckle...\n\n"
           HICCUP = Heckle_Interface()
-          node_list = HICCUP.NODE_LIST
+          if not nodelist:
+               node_list = HICCUP.NODE_LIST
           node_list.sort()
-          print "Node List is: %s" % node_list
+          #print "Node List is: %s" % node_list
           for node_name in node_list:
                node_value = HICCUP.get_node_properties( node_name )
-               print "Updating: %s has value %s" % (node_name, node_value[FREE_VAR])
+               #print "Updating: %s has value %s" % (node_name, node_value[FREE_VAR])
                if str(node_value[FREE_VAR]) == 'None':
-#                    print "Bingo!"
+#                    #print "Bingo!"
                     node_value[FREE_VAR] = FREE_NODE
                elif not node_value[FREE_VAR]:
-#                    print "Other One!"
+#                    #print "Other One!"
                     node_value[FREE_VAR] = FREE_NODE
                resource = Resource( node_value )
                self.update( resource )
+          print "RD: Update from Heckle: %s" % nodelist
+          return True
 
 
 
@@ -373,21 +406,31 @@ class Resource(object):
           KISS
           """
           self.attribute_list = []
+          self.attribute_list.append( Attribute( 'name', 'Default' ) )
           #print "Attributes are: %s" % attributes
-          for key in attributes.keys():
-               print "Resource:__INIT__: Adding %s:%s" % (key, attributes[key])
-               add_attribute = Attribute( key, attributes[key] )
-               print "That new attribute is now %s" % add_attribute
-               self.add_attribute( add_attribute )
-          if 'name' not in self.keys():
-               self.name = "Default"
+          if not attributes:
+               pass
+          else:
+               if type(attributes) == Attribute:
+                    self.__setitem__( attributes )
+               elif type( attributes ) == Resource:
+                    for key in attributes.keys():
+                         new_att = Attribute( attributes[key] )
+                         print "Resource:__INIT__: Adding Attribute %s:%s:%s" % (new_att.name, type(new_att), new_att.value)
+                         self.__setitem__( new_att )
+                         print "Resource:__INIT__: That attribute now reads %s" % self[key]
+               elif type( attributes ) == DictType:
+                    for key in attributes.keys():
+                         new_att = Attribute( key, attributes[key] )
+                         self.__setitem__( new_att )
+
      def get_index( self, name):
           """
           Returns the index of the key in the resource list
           """
           for att in self.attribute_list:
                if att.name == name:
-                    print "Found it!"
+                    #print "Found it!"
                     return self.attribute_list.index(att)
           else:
                return -1
@@ -411,7 +454,7 @@ class Resource(object):
 #         #print "Debug: Name is %s" % name
           try:
                index = self.get_index(name)
-               print "RD: Get Item: Found %s at %s" % (name, index)
+               #print "RD: Get Item: Found %s at %s" % (name, index)
                return self.attribute_list[index]
           except Exception as ee:
                raise Exception("RD: GetItem: Value %s does not exist: %s" % (name, ee))
@@ -421,10 +464,19 @@ class Resource(object):
           Adds the key:value pair to the attributes
           Will not add duplicate keys
           """
-          try:
-               self[key] = Attribute( key, value )
-          except:
-               self.add_attribute(key, value)
+          if type(key) == Attribute:
+               new_att = key
+               key = new_att.name
+          elif type(key) == DictType:
+               new_att = Attribute( key['name'], key['value'] )
+               key = key['name']
+          else:
+               new_att = Attribute( key, value )
+          index = self.get_index( key )
+          if index:
+               self.attribute_list[index] = new_att
+          else:
+               self.attribute_list.append( new_att )
           return True
      def __add__(self, key, value ):
           """
@@ -438,32 +490,33 @@ class Resource(object):
           Absolutely adds the key:value pair to the attributes
           Will add duplicate values
           """
-          print "Resource:Add_attribute: New Attribute is %s -- %s" % ( attribute.name, attribute.value )
+          #print "Resource:Add_attribute: New Attribute is %s -- %s" % ( attribute.name, attribute.value )
           key = attribute.name
           index = self.get_index( attribute.name )
           print "Index is: %s" % index
           if index >-1:
                print "Resource:Add_attribute: Pre: Exists, is %s of type %s" % (self[key], type(self[key]))
-               self[key].add( attribute )
+               self[key].add( attribute.value )
           else:
                print "Resource:Add_attribute: Does not currently exist, adding..."
                self.attribute_list.append( attribute )
-          print "Resource: Add: POST: Key is %s, value is now %s" % (key, self[key].value)
+          print "Resource: Add_attribute: POST: Key is %s, value is now %s" % (key, self[key].value)
           return True
      def update( self, attributes ):
           """
           Updates an item in the current resource
           Attributes is a dictionary or resource object, with key:value pairs
           """
-          print "Resource: Update: attributes are %s" % attributes
+          #print "Resource: Update: attributes are %s" % attributes
           newRes = Resource( attributes )
-          print "Resource: Update: New resource is %s" % newRes
+          #print "Resource: Update: New resource is %s" % newRes
           keylist = newRes.keys()
           for key in newRes.keys():
-               try:
-                    self[key].update(newRes[key])
-               except:
-                    print "newRes[key] is of type %s" % type(newRes[key])
+               if key == 'name':
+                    pass
+               elif key in self.keys():
+                    self.__setitem__( newRes[key] )
+               else:
                     self.add_attribute(newRes[key])
           return True
      def del_attribute( self, key ):
@@ -489,14 +542,10 @@ class Resource(object):
      def keys( self ):
           """
           Returns a list of unique keys for the attributes in this Resource
-          Does NOT include Name.
           """
           return_list = []
           for attribute in self.attribute_list:
-               if attribute.name == 'name':
-                    pass
-               else:
-                    return_list.append( attribute.name )
+               return_list.append( attribute.name )
           return return_list
      def _get_value( self, key ):
           """
@@ -516,14 +565,17 @@ class Resource(object):
   #        print "Resource: __eq__: %s" % other
           other_resource = Resource(other)
           for key in other_resource.keys():
-               try:
-                    if self[key] == other_resource[key]:
-                         pass
-                    else:
+               if key == 'name':
+                    pass
+               else:
+                    try:
+                         if self[key] == other_resource[key]:
+                              pass
+                         else:
+                              return False
+                    except:
                          return False
-               except:
-                    return False
-          print "Resource: __eq__: %s == %s reads True" % (self[FREE_VAR], other_resource[FREE_VAR])
+          #print "Resource: __eq__: %s == %s reads True" % (self[FREE_VAR], other_resource[FREE_VAR])
           return True
                     
      def __ge__( self, other ):
@@ -536,14 +588,17 @@ class Resource(object):
           other_resource = Resource(other)
           keylist = other_resource.keys()
           for key in keylist:
-               try:
-                    if self[key] >= other[key]:
-                         pass
-                    else:
+               if key == 'name':
+                    pass
+               else:
+                    try:
+                         if self[key] >= other[key]:
+                              pass
+                         else:
+                              return False
+                    except:
                          return False
-               except:
-                    return False
-          print "Resource: __ge__: %s >= %s reads True" % (self[FREE_VAR], other[FREE_VAR])
+          #print "Resource: __ge__: %s >= %s reads True" % (self[FREE_VAR], other[FREE_VAR])
           return True
      
 
@@ -555,22 +610,24 @@ class Attribute(object):
      It takes care of its own comparisons and representations
      Accepts strings, or list of strings
      """
-     def __init__( self, name="Default", value="", *args ):
-          self.name = name
-          self.value = value
-          if args:
-               if type(args) == Attribute:
-                    self.name = args.name
-                    self.value = args.value
-               else:
-                    raise Warning( "Attribute: Init: Unknown initializer %s, of type %s" % args )
+     def __init__( self, name="Default", value="" ):
+          self.name = ""
+          self.value = ""
+          if type(name) == Attribute:
+               self.name = name.name
+               self.value = name.value
           else:
                self.__setitem__( name, value )
+     def __repr__( self ):
+          """
+          """
+          return str(self.value)
      def __str__( self ):
           """
           Returns the string representation of the current object
           """
-          return "'%s':'%s'" % (self.name, self.value)
+          return str(self.value)
+          #return "'%s':'%s'" % (self.name, self.value)
      def __getitem__( self, name ):
           """
           Allows getting an item by subscription
@@ -602,18 +659,23 @@ class Attribute(object):
                     raise Exception( "You're trying to turn a %s into a %s!" % (self.name, name) )
           except:
                self.name = name
-               self.value = value
+               self.value = str(value)
           return True
      def __setattr__( self, name, value ):
           """
           ABSOLUTELY replaces the value with the intended value
           """
+          if type(value) == ListType:
+               for val in value:
+                    val = str(val)
+          else:
+               value = str(value)
           self.__dict__[name] = value
      def add( self, attribute ):
           """
           Adds an attribute to the current, if it matches.
           """
-          print "Attribute: Add: Adding %s of type %s" % ( attribute, type(attribute))
+          #print "Attribute: Add: Adding %s of type %s" % ( attribute, type(attribute))
           if type(attribute) == Attribute or type(attribute) == DictType:
                return self.__add__( attribute['value'] )
           else:
@@ -623,29 +685,23 @@ class Attribute(object):
           """
           Adds the value to the current value, turning it into a list.
           """
-          try:
-               if type(self.value) == ListType:
-                    if type(value) == ListType:
-                         self.value.extend(value)
-                    else:
-                         self.value.append(value)
+          if type(value) == ListType:
+               if len(value) == 1:
+                    self.__add__(value[0])
                else:
-                    if type(value) == ListType:
-                         if len(value) > 1:
-                              self.value = (value.extend(self.value))
-                         else:
-                              self.value = value[0]
-                    else:
-                         self.value = value.extend(self.value)
-          except:
-               self.value = value
-          try:
-               for val in self.value:
-                    val = str(val)
+                    for val in value:
+                         val = str(val)
+                    value.extend(self.value)
+                    self.value = value
+          else:
+               if not self.value:
+                    self.value = str(value)
+               elif type(self.value) == ListType:
+                    self.value.extend(value)
+               else:
+                    self.value = [self.value, str(value)]
+          if type(self.value) == ListType:
                self.value.sort()
-          except:
-               pass
-          return True
      def setvalue( self, name, value=None ):
           """
           Sets the value of the current attribute to the one passed in.
@@ -677,24 +733,32 @@ class Attribute(object):
                [2,3] >= [2,1] = (2>=2 or 2>=1) and (3>=2 or 3>=1) = True and True = True
                [1,2] >= [2,3] = (1>=2 or 1>=3) and (2>=2 or 2>=3) = False and True = False
           """
-          print "Attribute: __ge__: Other is %s of type %s" % ( other, type(other) )
+          #print "Attribute: __ge__: Other is %s of type %s" % ( other, type(other) )
           selfvalue = self.value
-          othervalue = other.getvalue()
+          othervalue = other.value
           if selfvalue == othervalue:
                return True
 
           def eval(sval, oval):
                """ Evaluates using the sorted_nicely function"""
-               print "Comparing %s with %s" % (sval, oval)
-               print "Types are %s and %s" % (type(sval), type(oval))
+               #print "Comparing %s with %s" % (sval, oval)
+               #print "Types are %s and %s" % (type(sval), type(oval))
                slist = sorted_nicely([sval, oval])
-               return (slist.index(sval) >= slist.index(oval))
+               sindex = slist.index(sval)
+               oindex = slist.index(oval)
+               retval = (sindex <= oindex)
+               #print "Self Index %s >= other index %s yeilds %s" % (sindex, oindex, retval)
+               #print "Evaluates as %s" % retval
+               return retval
 
           def eval_list(key, list):
                """ Evaluates or(key>=list member)"""
                for val in list:
                     if eval(key, list):
+                         #print "Is True!"
                          return True
+               #print "Is False"
+               return False
 
           if type(selfvalue) == ListType:          # loop through self and 'And' all the evaluations
                for sval in selfvalue:
@@ -906,8 +970,19 @@ class Glossary():
                weight = self.weight(key)
                tempscore = ival * weight
               #print "ival is %s, weight is %s, so partial score is %s" % (ival, weight, tempscore)
-         #print "This place has Temp Score of %s" % tempscore
+          print "This place %s has Temp Score of %s" % ( to_be_scored['name'] , tempscore)
           return tempscore
+     def scorelist( self, inlist ):
+          """
+          Takes in a list, and returns it sorted by score
+          """
+          scorelist = []
+          for resource in inlist:
+               score = self.score(resource)
+               scorelist.append( (resource, score) )
+          scorelist.sort( key=lambda x: x[1] )
+          # Randomize?
+          return scorelist
 
 
 def make_big( key, value ):
