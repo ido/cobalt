@@ -28,7 +28,10 @@ from Cobalt.Components.heckle_processgroup import *
 
 from heckle.lib.util import createSessionInstance
 
-from Cobalt.Components.heckle_lib import *
+try:
+     from Cobalt.Components.heckle_lib import *
+except:
+     from heckle_sim import *
 
 import threading
 

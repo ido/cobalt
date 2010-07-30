@@ -66,29 +66,36 @@ class ResourceDict(object):
      def __init__( self, in_dict=None ):
           self.resource_dict = {}
           self.glossary = Glossary()
-          if type(in_dict) is DictType:
+          print "RD:__INIT__: type %s, value %s" % (type(in_dict), in_dict)
+          if type(in_dict) is NoneType:
+               pass
+          elif type(in_dict) is DictType:
                #print "Incomming: %s" % in_dict
                for key in in_dict:
                     self.add(in_dict[key])
-          if type(in_dict) is ListType:
+          elif type(in_dict) is ListType:
                #print "Incomming: %s" % in_dict
                for val in in_dict:
                     self[val['name']]=val
+          elif type(in_dict) is Resource:
+               name = in_dict['name']
+               print "RD:__INIT__: Resource, name is %s" % name
+               self.resource_dict[name] = in_dict
+               print "Resources are now: " % self.resource_dict
           elif type(in_dict) == ResourceDict:
                #print "Incomming: %s" % in_dict
                for name in in_dict.keys():
                     self[name] = in_dict[name]
           else:
-               #print "Nothing to do?"
-               pass
-          self.update()
+               raise Exception( "RD: Incorrect assignment type %s; only takes Resource or Dictionary, or list therein." % type(in_dict) )
+          #self.update()
      def __str__( self ):
           """
           Returns a string representation of all resources in the system
           """
           retstr = "Resources: ["
           res_len = str(self.resource_dict)
-          retstr += "\nGlossary: "
+          retstr += "]\nGlossary: "
           retstr += str(self.glossary)
           return retstr
      def _get_dict( self, glossary=True, resources=True ):
@@ -111,12 +118,22 @@ class ResourceDict(object):
           Finds one particular resource by name
           Returns that resource, or False if no resource by that name.
           """
-          #print "RD: __getitem__: Looking for name %s" % name       #in keys %s" % (str(name), self.keys())
+          print "RD: __getitem__: Looking for name %s of type %s" % (name, type(name) )
           if name in self.keys():
-               #print "RD: __getitem__: Found name %s" % name
-               return self.resource_dict[name]
+               print "RD: __getitem__: Found name %s" % name
+               print "Index is %s" % self.keys().index(name)
+               print "Index is %s" % self.resource_dict.keys().index(name)
+               print "Resource Dict is %s" % self.resource_dict
+               resource = self.resource_dict[name]
+               print "RD:__getitem__: Returning type %s, value %s" % (type(resource), resource)
+               return resource
           else:
                raise Exception ( "RD: GetItem: No resource named %s exists." % name )
+     def __getattr__( self, name ):
+          """
+          """
+          print "RD:_getattr_: %s" % name
+          return self.__dict__[name]
      def keys( self ):
           """
           Returns a list of strings containing the names of all the nodes
@@ -148,23 +165,27 @@ class ResourceDict(object):
           Attributes is a dictionary of strings, key:value
           MUST contain a Name field, and names MUST be unique across the system
           """
-          #print "Attributes are %s" % attributes
+          print "RD:Add: Attributes of type %s are %s" % (type(attributes), attributes)
           if type(attributes) == ListType:
                for att in attributes:
                     self.add(att)
           if type(attributes) == DictType:
                attributes = Resource( attributes )
           if type(attributes) == Resource:
-               if len(self.resource_dict) == 0:
-                    self.resource_dict = { attributes.name:attributes }
+               name = attributes.name
+               print "RD:Add: Looking for %s" % name
+               if name in self.keys():
+                    print "RD:Add: %s is found, updating" % name
+                    self.resource_dict[name].update( attributes )
                else:
-                    name = attributes.name
-                    if name in self.keys():
-                         self.resource_dict[name].update( attributes )
-                    else:
-                         self.resource_dict[name]= attributes
+                    print "RD:Add: %s not found, adding to list" % name
+                    self.resource_dict[name]= attributes
+                    print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& Done &&&&&&&&&&&&&&&&&&&&&"
+               print "RD1:%s" % self.resource_dict[name]
+               print "RD2:%s" % self.keys()
+               print "%s" % self[name]
           else:
-               raise Exception( "Resource Dictionary: Add: Something else happened... %s" % attribute )
+               raise Exception( "Resource Dictionary: Add: Something else happened... %s" % attributes )
      def update( self, attributes=None, nodelist=None ):
           """
           Changes the resource with the attributes named
@@ -181,8 +202,10 @@ class ResourceDict(object):
                new_resource = Resource( attributes )
                self.update( new_resource )
           elif att_type is Resource:
+               print "RD: Update: Resource is %s" % attributes
                name = attributes['name'].value
                if name in self.keys():
+                    print "RD: Update: Keys are %s" % self.keys()
                     print "RD: Update: Going to update %s" % name
                     self[name].update( attributes )
                else:
@@ -368,23 +391,37 @@ class ResourceDict(object):
           """
           Gets the current state and status of everything in Heckle
           """
-          #print "\n\nUpdating from Heckle...\n\n"
+          print "\n\nUpdating from Heckle...\n\n"
           HICCUP = Heckle_Interface()
           if not nodelist:
                node_list = HICCUP.NODE_LIST
           node_list.sort()
-          #print "Node List is: %s" % node_list
+          print "RD: GHL: Node List is: %s" % node_list
+          keylist = self.keys()
+          print "RD: GHL: current node list is %s" % keylist
           for node_name in node_list:
                node_value = HICCUP.get_node_properties( node_name )
-               #print "Updating: %s has value %s" % (node_name, node_value[FREE_VAR])
+               print "Type of values is %s" % type(node_value)
+               print "RD: GHL: %s has value %s" % ( node_name, node_value )
+               print "Name is %s" % node_value['name']
                if str(node_value[FREE_VAR]) == 'None':
-#                    #print "Bingo!"
+                    #print "Bingo!"
                     node_value[FREE_VAR] = FREE_NODE
                elif not node_value[FREE_VAR]:
-#                    #print "Other One!"
+                    #print "Other One!"
                     node_value[FREE_VAR] = FREE_NODE
-               resource = Resource( node_value )
-               self.update( resource )
+               resource = Resource( node_value )                         
+               print "RD: GHL: Resource %s / %s is now %s" % ( resource['name'], resource.name, resource )
+               resource_keylist = resource.keys()
+               for res_key in resource_keylist:
+                    print "Value %s is %s" % (res_key, resource[res_key])
+               if node_name in keylist:
+                    print "RD:GHD: Nodename %s in keylist, updating" % node_name
+                    self.update( resource )
+               else:
+                    print "RD:GHD: Nodename %s not in keylist, adding" % node_name
+                    self.add( resource )
+               print "RD: get_heckle_list: node now reads %s" % self[node_name]
           print "RD: Update from Heckle: %s" % nodelist
           return True
 
@@ -398,7 +435,6 @@ class Resource(object):
      Representation of a single Node in the Heckle System
      Also acts as a dictionary for attributes it contains
      """
-     typestr = "Resource"
      def __init__( self, attributes=None ):
           """
           Initializes values
@@ -414,16 +450,26 @@ class Resource(object):
                if type(attributes) == Attribute:
                     self.__setitem__( attributes )
                elif type( attributes ) == Resource:
-                    for key in attributes.keys():
-                         new_att = Attribute( attributes[key] )
-                         print "Resource:__INIT__: Adding Attribute %s:%s:%s" % (new_att.name, type(new_att), new_att.value)
-                         self.__setitem__( new_att )
-                         print "Resource:__INIT__: That attribute now reads %s" % self[key]
-               elif type( attributes ) == DictType:
-                    for key in attributes.keys():
+                    keylist = attributes.keys()
+                    print "Resource:__INIT__:Resource: keys are %s" % keylist
+                    for key in keylist:
                          new_att = Attribute( key, attributes[key] )
+                         print "Resource:__INIT__:Resource: Adding Attribute %s:%s:%s" % (new_att.name, type(new_att), new_att.value)
                          self.__setitem__( new_att )
-
+                         print "Resource:__INIT__:Resource: That attribute now reads %s" % self[key]
+               elif type( attributes ) == DictType:
+                    print "Resource: __INIT__:Dict: attribute is %s" % attributes
+                    keylist = attributes.keys()
+                    print "Resource:__INIT__:Dict: keylist is %s" % keylist
+                    for key in keylist:
+                         new_att = Attribute( key, attributes[key] )
+                         print "Resource: __INIT__:Dict: attribute now reads %s" % new_att
+                         if key in self.keys():
+                              self.attribute_list.remove( self.attribute_list[ self.get_index( key ) ] )
+                         self.attribute_list.append( new_att )
+                         print "Resource:__INIT__:Dict: Resource attribute now reads %s" % self[key]
+                         if not self[key] == new_att:
+                              print "Resource:__INIT__:Dict: #### WARNING ##### Values %s and %s do not match!" % (self[key], new_att)
      def get_index( self, name):
           """
           Returns the index of the key in the resource list
@@ -498,7 +544,7 @@ class Resource(object):
                print "Resource:Add_attribute: Pre: Exists, is %s of type %s" % (self[key], type(self[key]))
                self[key].add( attribute.value )
           else:
-               print "Resource:Add_attribute: Does not currently exist, adding..."
+               print "Resource:Add_attribute: %s Does not currently exist, adding..." % key
                self.attribute_list.append( attribute )
           print "Resource: Add_attribute: POST: Key is %s, value is now %s" % (key, self[key].value)
           return True
@@ -511,6 +557,7 @@ class Resource(object):
           newRes = Resource( attributes )
           #print "Resource: Update: New resource is %s" % newRes
           keylist = newRes.keys()
+          print "Resource: Update: Keylist is %s" % keylist
           for key in newRes.keys():
                if key == 'name':
                     pass
@@ -534,11 +581,6 @@ class Resource(object):
           """
           #print "get attribute Key is %s" % key
           return self[key]
-     def __getattr__( self ):
-          """
-          Returns the attribute list of this resource
-          """
-          return self.keys()
      def keys( self ):
           """
           Returns a list of unique keys for the attributes in this Resource
@@ -1044,45 +1086,94 @@ def make_atts( invalues ):
      #else:
           #print "True"
 
-
-
+class tempclass( object ):
+     def __init__( self, other=None ):
+          othertype = type(other)
+          if othertype is tempclass:
+               self.__dict__ = other.__dict__
+          elif othertype is Resource:
+               name = other.name
+               self.__dict__[name] = other
+          elif othertype is ListType:
+               for element in other:
+                    element = Resource( element )
+                    name = element.name
+                    self.__dict__[name] = element
+          elif othertype is DictType:
+               other = Resource( other )
+               name = other.name
+               self.__dict__[name] = other
+          elif othertype is NoneType:
+               pass
+          else:
+               raise Exception( "RD:__init__: Invalid Type %s for value %s" % (type(other), other) )
+          self.Glossary = Glossary()
+     def __str__( self ):
+          return str(self.__dict__)
+     def keys( self ):
+          keylist = self.__dict__.keys()
+          keylist.remove('Glossary')
+          return keylist
+     def __getattr__( self, name ):
+          return self.__dict__[name]
+     def __getitem__( self, name ):
+          return self.__dict__[name]
+     def __setattr__( self, name, value ):
+          self.__dict__[name] = value
+     def __setitem__( self, name, value ):
+          self.__dict__[name] = value
+                                  
 
 
 
 if __name__=="__main__":
-     
+     tc = tempclass()
+     print "TC is %s" % tc
+     i1 = {'name':'bb01', 'val':'oogie'}
+     i2 = {'name':'bb02', 'val':'boogie'}
+     r1 = Resource( i1 )
+     print "R1 is %s: %s" % ( r1.name, r1.val )
+     r2 = Resource( i2 )
+     print "R2 is %s: %s" % ( r2.name, r2.val )
+     tc2 = tempclass( [r1, r2] )
+     print "TC2 is now %s" % tc2
+     print tc2.keys()
+     print tc2['r1']
+     print tc2['r2']
+     print tc2.r1
+     print tc2.r2
      
      
      ############   Setup  #######################
-     invalue1 = {'name':'alpha', 'value':'ALPHA'}
-     invalue2 = {'name':'alpha', 'value':'BETA'}
-     invalue3 = {'name':'CORES', 'value':'1'}
-     invalue4 = {'name':'CORES', 'value':'4'}
-     invalue5 = {'name':'MEM', 'value':'4gb'}
-     invalue6 = {'name':'MEM', 'value':'12gb'}
-     invalue7 = {'name':'NET', 'value':'1'}
-     invalue8 = {'name':'NET', 'value':'2'}
-     invalue10 = {'name':'name', 'value':'bb01'}
-     invalue11 = {'name':'name', 'value':'bb02'}
-     invalue12 = {'name':'name', 'value':'bb03'}
-     invalue13 = {'name':'name', 'value':'bb04'}
-     invalue14 = {'name':'GPU', 'value':'true'}
+#     invalue1 = {'name':'alpha', 'value':'ALPHA'}
+#     invalue2 = {'name':'alpha', 'value':'BETA'}
+#     invalue3 = {'name':'CORES', 'value':'1'}
+#     invalue4 = {'name':'CORES', 'value':'4'}
+#     invalue5 = {'name':'MEM', 'value':'4gb'}
+#     invalue6 = {'name':'MEM', 'value':'12gb'}
+#     invalue7 = {'name':'NET', 'value':'1'}
+#     invalue8 = {'name':'NET', 'value':'2'}
+#     invalue10 = {'name':'name', 'value':'bb01'}
+#     invalue11 = {'name':'name', 'value':'bb02'}
+#     invalue12 = {'name':'name', 'value':'bb03'}
+#     invalue13 = {'name':'name', 'value':'bb04'}
+#     invalue14 = {'name':'GPU', 'value':'true'}
 
 
-     att1 = {'name':'bb01', 'MEMORY':'4G', 'DISK':'1'}
-     att2 = {'name':'bb02', 'MEMORY':'4G', 'DISK':'4'}
-     att3 = {'name':'bb03', 'MEMORY':'12G', 'DISK':'1'}
-     att4 = {'name':'bb04', 'MEMORY':'12G', 'DISK':'4'}
+#     att1 = {'name':'bb01', 'MEMORY':'4G', 'DISK':'1'}
+#     att2 = {'name':'bb02', 'MEMORY':'4G', 'DISK':'4'}
+#     att3 = {'name':'bb03', 'MEMORY':'12G', 'DISK':'1'}
+#     att4 = {'name':'bb04', 'MEMORY':'12G', 'DISK':'4'}
 
-     indict = [('alpha', 'ALPHA'), ('alpha', 'BETA'), ('CORES', '1'), ('CORES', '4'), ('MEM', '4gb'), ('MEM', '12gb'), ('NET', '1'), ('NET', '2')]
-     inlist = [invalue1, invalue2, invalue3, invalue4, invalue5, invalue6, invalue7, invalue8]
-     alist = []
-     for value in inlist:
-          alist.append(Attribute(**value))
-     attsetup4 = [invalue10, invalue1, invalue3, invalue5, invalue7]
-     attsetup2 = [invalue11, invalue1, invalue3, invalue5, invalue7]
-     attsetup3 = [invalue12, invalue2, invalue4, invalue6, invalue8]
-     attsetup1 = [invalue13, invalue1, invalue3, invalue5, invalue7, invalue14]
+#     indict = [('alpha', 'ALPHA'), ('alpha', 'BETA'), ('CORES', '1'), ('CORES', '4'), ('MEM', '4gb'), ('MEM', '12gb'), ('NET', '1'), ('NET', '2')]
+#     inlist = [invalue1, invalue2, invalue3, invalue4, invalue5, invalue6, invalue7, invalue8]
+#     alist = []
+#     for value in inlist:
+#          alist.append(Attribute(**value))
+#     attsetup4 = [invalue10, invalue1, invalue3, invalue5, invalue7]
+#     attsetup2 = [invalue11, invalue1, invalue3, invalue5, invalue7]
+#     attsetup3 = [invalue12, invalue2, invalue4, invalue6, invalue8]
+#     attsetup1 = [invalue13, invalue1, invalue3, invalue5, invalue7, invalue14]
 
      #att1 = make_atts( attsetup1 )
      #print "att1 is %s" % att1
@@ -1093,62 +1184,62 @@ if __name__=="__main__":
      #att4 = make_atts( attsetup4 )
      #print "att4 is %s" % att4
 
-     res1 = Resource(att1)
-     res2 = Resource(att2)
-     res3 = Resource(att3)
-     res4 = Resource(att4)
-     reslist = [res1, res2, res3, res4]
+#     res1 = Resource(att1)
+#     res2 = Resource(att2)
+#     res3 = Resource(att3)
+#     res4 = Resource(att4)
+#     reslist = [res1, res2, res3, res4]
 
 
 
 
 
-     applist = []
-     appdict1 = {'name':'bb01', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict1)
-     appdict2 = {'name':'bb02', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict2)
-     appdict3 = {'name':'bb03', 'CPU':'opteron', 'CORES':'1', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict3)
-     appdict4 = {'name':'bb04', 'CPU':'nahalem', 'CORES':'4', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict4)
-     appdict5 = {'name':'bb05', 'CPU':'nahalem', 'CORES':'16', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict5)
-     appdict6 = {'name':'bb06', 'CPU':'nahalem', 'CORES':'1', 'MEM':'12GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict6)
-     appdict7 = {'name':'bb07', 'CPU':'nahalem', 'CORES':'1', 'MEM':'16GB', 'kernel':"ubuntu-lucid-amd64"}
-     applist.append(appdict7)
-     appdict11 = {'name':'bb11', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'GPU':'true'}
-     applist.append(appdict11)
-     appdict12 = {'name':'bb12', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'GPU':'true'}
-     applist.append(appdict12)
-     appdict13 = {'name':'bb13', 'CPU':'opteron', 'CORES':'1', 'MEM':'4GB', 'GPU':'true'}
-     applist.append(appdict13)
-     appdict14 = {'name':'bb14', 'CPU':'nahalem', 'CORES':'4', 'MEM':'4GB', 'GPU':'true'}
-     applist.append(appdict14)
-     appdict15 = {'name':'bb15', 'CPU':'nahalem', 'CORES':'16', 'MEM':'4GB', 'GPU':'true'}
-     applist.append(appdict15)
-     appdict16 = {'name':'bb16', 'CPU':'nahalem', 'CORES':'1', 'MEM':'12GB', 'GPU':'true'}
-     applist.append(appdict16)
-     appdict17 = {'name':'bb17', 'CPU':'nahalem', 'CORES':'1', 'MEM':'16GB', 'GPU':'true'}
-     applist.append(appdict17)
+#     applist = []
+#     appdict1 = {'name':'bb01', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict1)
+#     appdict2 = {'name':'bb02', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict2)
+#     appdict3 = {'name':'bb03', 'CPU':'opteron', 'CORES':'1', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict3)
+#     appdict4 = {'name':'bb04', 'CPU':'nahalem', 'CORES':'4', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict4)
+#     appdict5 = {'name':'bb05', 'CPU':'nahalem', 'CORES':'16', 'MEM':'4GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict5)
+#     appdict6 = {'name':'bb06', 'CPU':'nahalem', 'CORES':'1', 'MEM':'12GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict6)
+#     appdict7 = {'name':'bb07', 'CPU':'nahalem', 'CORES':'1', 'MEM':'16GB', 'kernel':"ubuntu-lucid-amd64"}
+#     applist.append(appdict7)
+#     appdict11 = {'name':'bb11', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'GPU':'true'}
+#     applist.append(appdict11)
+#     appdict12 = {'name':'bb12', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'GPU':'true'}
+#     applist.append(appdict12)
+#     appdict13 = {'name':'bb13', 'CPU':'opteron', 'CORES':'1', 'MEM':'4GB', 'GPU':'true'}
+#     applist.append(appdict13)
+#     appdict14 = {'name':'bb14', 'CPU':'nahalem', 'CORES':'4', 'MEM':'4GB', 'GPU':'true'}
+#     applist.append(appdict14)
+#     appdict15 = {'name':'bb15', 'CPU':'nahalem', 'CORES':'16', 'MEM':'4GB', 'GPU':'true'}
+#     applist.append(appdict15)
+#     appdict16 = {'name':'bb16', 'CPU':'nahalem', 'CORES':'1', 'MEM':'12GB', 'GPU':'true'}
+#     applist.append(appdict16)
+#     appdict17 = {'name':'bb17', 'CPU':'nahalem', 'CORES':'1', 'MEM':'16GB', 'GPU':'true'}
+#     applist.append(appdict17)
 
-     appdict21 = {'name':'bb21', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"eucalyptus"}
-     applist.append(appdict21)
-     appdict22 = {'name':'bb22', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"eucalyptus"}
-     applist.append(appdict22)
-     appdict23 = {'name':'bb23', 'CPU':'opteron', 'CORES':'1', 'MEM':'4GB', 'kernel':"eucalyptus"}
-     applist.append(appdict23)
-     appdict24 = {'name':'bb24', 'CPU':'nahalem', 'CORES':'4', 'MEM':'4GB', 'kernel':"eucalyptus"}
-     applist.append(appdict24)
-     appdict25 = {'name':'bb25', 'CPU':'nahalem', 'CORES':'16', 'MEM':'4GB', 'kernel':"eucalyptus"}
-     applist.append(appdict25)
-     appdict26 = {'name':'bb26', 'CPU':'nahalem', 'CORES':'1', 'MEM':'12GB', 'kernel':"eucalyptus"}
-     applist.append(appdict26)
+#     appdict21 = {'name':'bb21', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"eucalyptus"}
+#     applist.append(appdict21)
+#     appdict22 = {'name':'bb22', 'CPU':'nahalem', 'CORES':'1', 'MEM':'4GB', 'kernel':"eucalyptus"}
+#     applist.append(appdict22)
+#     appdict23 = {'name':'bb23', 'CPU':'opteron', 'CORES':'1', 'MEM':'4GB', 'kernel':"eucalyptus"}
+#     applist.append(appdict23)
+#     appdict24 = {'name':'bb24', 'CPU':'nahalem', 'CORES':'4', 'MEM':'4GB', 'kernel':"eucalyptus"}
+#     applist.append(appdict24)
+#     appdict25 = {'name':'bb25', 'CPU':'nahalem', 'CORES':'16', 'MEM':'4GB', 'kernel':"eucalyptus"}
+#     applist.append(appdict25)
+#     appdict26 = {'name':'bb26', 'CPU':'nahalem', 'CORES':'1', 'MEM':'12GB', 'kernel':"eucalyptus"}
+#     applist.append(appdict26)
      appdict27 = {'name':'bb27', 'CPU':'nahalem', 'CORES':'1', 'MEM':'16GB', 'kernel':"eucalyptus"}
-     applist.append(appdict27)
+#     applist.append(appdict27)
 
-     maxapp = {'name':'bb99', 'CPU':'nahalem', 'CORES':'16', 'MEM':'16GB', 'DISK':'4', 'NET':'ib', 'IB':['sdr', 'qdr'], 'GPU':'true', 'kernel':"eucalyptus"}
+#     maxapp = {'name':'bb99', 'CPU':'nahalem', 'CORES':'16', 'MEM':'16GB', 'DISK':'4', 'NET':'ib', 'IB':['sdr', 'qdr'], 'GPU':'true', 'kernel':"eucalyptus"}
 
 
 
@@ -1178,35 +1269,81 @@ if __name__=="__main__":
      
      
      print "Step 3:  Test the Resource Dictionary"
-     
      print "3a)  Assignment"
-     rd = ResourceDict()
-     print "RD is now: %s" % rd
-     for res in reslist:
-          rd.add(res)
-          print "RD is now: %s" % rd
-          print "RD Name List is now: %s" % rd.name_list()
-          print "Glossary NameList is now %s " % rd.glossary.name_list()
-          print "\n\n\n"
-          
-          
-     print "RD as dictionary:  "
-     print rd._get_dict()
-     print "Done"
-     print "\n\n\n"
-     print "Test:  Assignment of Resource Dictionary"
-     r2 = rd
-     print "RD is: %s" % rd._get_dict()
-     print "\n\n\n"
-     print "R2 is: %s" % r2._get_dict()
-     print "\n\n\n"
+ #    print "Type of appdict27 is %s" % type(appdict27)
+ #    appres = Resource( appdict27)
+ #    print "Type of appres is %s, value %s" % (type(appres), appres)
+ #    rd = ResourceDict( appres )
+ #    print "RD is now %s" % rd
+
+
+#     print "\n\n\n\n\n"
+
+#     bb01 = {'status': 'READY FOR USE', 'disabled': 'False', 'compatable_images': "['lucid-clone', 'ubuntu-lucid-amd64-pxe', 'ubuntu-hardy-amd64', 'ubuntu-hardy-amd64-cuda31', 'ubuntu-lucid-xen', 'ubuntu-lucid-cuda', 'ubuntu-lucid-amd64', 'ubuntu-hardy-i386', 'ubuntu-gridftp', 'eucalyptus', 'eucalyptus-dev', 'legacy-pxelinux-pxe', 'centos-5.4-x86_64', 'lucid-amd64-cuda31-ib']", 'DISKS': "['4']", 'name': 'bb01.mcs.anl.gov', 'bootstate': 'COMPLETED', 'MEM': "['4G']", 'reservations': '[915L]', 'image': 'ubuntu-hardy-amd64', 'allocatable': 'True', 'CPU': "['opteron']", 'hardware': 'phase1', 'held': 'True', 'mac': '00:17:31:F9:C8:7F', 'address': '140.221.37.31', 'CORES': "['4']", 'NET': "['myrinet', 'ib']", 'IB': "['sdr']", 'power_interfaces': "[{'controller': 'radix-pwr11', 'port': '.AA3'}]", 'current reservation': '915', 'stage': 'boot'}
+#     bb01res = Resource( bb01 )
+#     print "bb01res is now %s" % bb01res
+#     rd.add( bb01res )
+#     print "rd is now %s" % rd
+
      
-     namelist1 = rd.keys()
-     namelist2 = r2.name_list()
-     for name in namelist1:
-          print "dict RD name %s value %s" % (name, rd[name])
-     for name in namelist2:
-          print "dict RD name %s value %s" % (name, r2[name])
+
+
+#     outres = rd['bb01.mcs.anl.gov']
+#     if outres == bb01res:
+#          print "Matches"
+#     else:
+#          print "Does not Match:"
+#          print "Outres is  :%s" % outres
+#          print "bb01res is :%s" % bb01res
+#     rd.update()
+#     print "RD is now %s" % rd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     #print "RD is now: %s" % rd
+     #for res in reslist:
+     #     rd.add(res)
+     #     print "RD is now: %s" % rd
+     #     print "RD Name List is now: %s" % rd.name_list()
+     #     print "Glossary NameList is now %s " % rd.glossary.name_list()
+     #     print "\n\n\n"
+          
+          
+     #print "RD as dictionary:  "
+     #print rd._get_dict()
+     #print "Done"
+     #print "\n\n\n"
+     #print "Test:  Assignment of Resource Dictionary"
+     #r2 = rd
+     #print "RD is: %s" % rd._get_dict()
+     #print "\n\n\n"
+     #print "R2 is: %s" % r2._get_dict()
+     #print "\n\n\n"
+     
+     #namelist1 = rd.keys()
+     #namelist2 = r2.name_list()
+     #for name in namelist1:
+     #     print "dict RD name %s value %s" % (name, rd[name])
+     #for name in namelist2:
+     #     print "dict RD name %s value %s" % (name, r2[name])
           
           
           
@@ -1275,29 +1412,29 @@ if __name__=="__main__":
 
 
 
-     print "Test:  Copying"
-     value = {'name':'bb99', 'oogie':'boogie'}
-     name = value['name']
-     r2[name] = value
-     print "R2 is: %s" % r2._get_dict()
-     print "\n\n\n"
+     #print "Test:  Copying"
+     #value = {'name':'bb99', 'oogie':'boogie'}
+     #name = value['name']
+     #r2[name] = value
+     #print "R2 is: %s" % r2._get_dict()
+     #print "\n\n\n"
 
-     r3 = ResourceDict(r2)
-     print "R3 is: %s" % r3._get_dict()
-     print "\n\n\n"
-     print "R3 type is %s" %type(r3)
-     print "That matches ResourceDict type: %s" % (type(r3) == ResourceDict)
+     #r3 = ResourceDict(r2)
+     #print "R3 is: %s" % r3._get_dict()
+     #print "\n\n\n"
+     #print "R3 type is %s" %type(r3)
+     #print "That matches ResourceDict type: %s" % (type(r3) == ResourceDict)
      
-     print "Test:  Initialize by a dictionary"
-     dict2 = r2._get_dict(glossary=False)
-     print "Verification:  Type(dict2) is %s" % type(dict2)
-     print "Dict is %s\n\n\n" % dict2
-     r4 = ResourceDict(dict2)
-     print "\n\n"
-     print "R2 is: %s" % r2._get_dict()
-     print "\n\n\n"
-     print "R4 is: %s" % r4._get_dict()
-     print "\n\n\n"
+     #print "Test:  Initialize by a dictionary"
+     #dict2 = r2._get_dict(glossary=False)
+     #print "Verification:  Type(dict2) is %s" % type(dict2)
+     #print "Dict is %s\n\n\n" % dict2
+     #r4 = ResourceDict(dict2)
+     #print "\n\n"
+     #print "R2 is: %s" % r2._get_dict()
+     #print "\n\n\n"
+     #print "R4 is: %s" % r4._get_dict()
+     #print "\n\n\n"
      
-     print "R4 glossary is %s" % r4.glossary
+     #print "R4 glossary is %s" % r4.glossary
      
