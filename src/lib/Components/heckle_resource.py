@@ -394,12 +394,12 @@ class ResourceDict(object):
           print "\n\nUpdating from Heckle...\n\n"
           HICCUP = Heckle_Interface()
           if not nodelist:
-               node_list = HICCUP.NODE_LIST
-          node_list.sort()
+               nodelist = HICCUP.NODE_LIST
+          nodelist.sort()
           print "RD: GHL: Node List is: %s" % node_list
           keylist = self.keys()
           print "RD: GHL: current node list is %s" % keylist
-          for node_name in node_list:
+          for node_name in nodelist:
                node_value = HICCUP.get_node_properties( node_name )
                print "Type of values is %s" % type(node_value)
                print "RD: GHL: %s has value %s" % ( node_name, node_value )
@@ -557,14 +557,19 @@ class Resource(object):
                     self.update(val)
           elif othertype == Attribute:
                name = attributes.name
+               print "oogie! Name is %s" % name
                if name in self.keys() and not name == 'name':
-                    self[name].update( attributes )
+                    update_att = self[name]
+                    print "Current is %s:%s" % (update_att.name, update_att.value)
+                    update_att.set_attribute( attributes )
                elif not name in self.keys():
                     self.__setattr__( attributes )
           elif othertype == Resource:
                keylist = attributes.keys()
+               keylist.remove('name')
                for key in keylist:
-                    self.update( attributes[key] )
+                    update_att = attributes[key]
+                    self.update( update_att )
           elif othertype == DictType:
                if attributes.keys() == ['name', 'value']:
                     new_att = Attribute( attributes )
@@ -689,6 +694,11 @@ class Attribute(object):
                return self.__dict__[name]
           except:
                return False
+     def set_attribute( self, attribute ):
+          """
+          """
+          if type(attribute) == Attribute and self.name == attribute.name:
+               self.value = attribute.value
      def __setitem__( self, name, value=None ):
           """
           Direct assignment of an item
@@ -700,6 +710,8 @@ class Attribute(object):
                          self.value = []
                          for val in value:
                               self.value.append(str(val))
+                    elif type(name) == Attribute:
+                         self.value = name.value
                     else:
                          self.value = str(value)
                else:
@@ -728,7 +740,10 @@ class Attribute(object):
                return self.__add__( attribute['value'] )
           else:
                return self.__add__( attribute )
-                    
+     def update( self, attribute):
+          """
+          """
+          self.setvalue( attribute )
      def __add__( self, value):
           """
           Adds the value to the current value, turning it into a list.
@@ -1131,8 +1146,19 @@ class tempclass( object ):
           return keylist
      def __getitem__( self, name ):
           return self.__dict__[ name ]
+     def add_resource( self, resource ):
+          name = resource.name
+          value = resource
+          print "Add_resource: Name is %s, value is %s" % (name, value)
+          self.__setitem__( name, value )
      def __setitem__( self, name, value ):
+          name = str(name)
+          print "__setitem__: name %s, value %s" % (name, value)
           self.__dict__[name] = value
+          if self.__dict__[name] == value:
+               print "Ok"
+          else:
+               print "Failure: something didn't go right"
      def printthings( self ):
           keylist = self.keys()
           print "Begin:  Keylist is %s" % keylist
@@ -1167,13 +1193,63 @@ class tempclass( object ):
                     return_node_list.append( self[node].name )
           #order list
           return return_node_list
-     def update( self, nodelist=self.keys() ):
+     def update( self, other=None  ):
           """
           """
-#          for node in nodelist:
-          pass
+          if type(other) == Resource:
+               name = str(other.name)
+               print "Before:  self is %s of type %s" % ( self[name], type(self[name]) )
+               print "Before: other is %s of type %s" % ( other, type(other) )
+               otherres = self[name]
+               otherres.update(other)
+               print "After: %s" % otherres
+          elif type(other) == ListType:
+               if type(other[0]) == Resource:
+                    for node in other:
+                         self.update( node )
+               else:
+                    self.get_heckle_list( other )
+          else:
+               self.get_heckle_list( )
                
-                    
+     def get_heckle_list( self, nodelist=None ):
+          """                                                                                                                       
+          Gets the current state and status of everything in Heckle                                                                 
+          """
+          print "\n\nUpdating from Heckle...\n\n"
+          HICCUP = Heckle_Interface()
+          if not nodelist:
+               nodelist = HICCUP.NODE_LIST
+          nodelist.sort()
+          print "RD: GHL: Node List is: %s" % nodelist
+          keylist = self.keys()
+          print "RD: GHL: current node list is %s" % keylist
+          for node_name in nodelist:
+               node_value = HICCUP.get_node_properties( node_name )
+               print "Type of name %s is values is %s" % (node_name, type(node_value))
+               print "RD: GHL: %s has value %s" % ( node_name, node_value )
+               print "Name is %s" % node_value['name']
+               if str(node_value[FREE_VAR]) == 'None':
+                    #print "Bingo!"                                                                                                
+                    node_value[FREE_VAR] = FREE_NODE
+               elif not node_value[FREE_VAR]:
+                    #print "Other One!"                                                                                            
+                    node_value[FREE_VAR] = FREE_NODE
+               resource = Resource( node_value )
+               print "RD: GHL: Resource %s / %s is now %s" % ( resource['name'], resource.name, resource )
+               resource_keylist = resource.keys()
+               for res_key in resource_keylist:
+                    print "Value %s is %s" % (res_key, resource[res_key])
+               if node_name in keylist:
+                    print "RD:GHD: Nodename %s in keylist, updating" % node_name
+                    self.update( resource )
+               else:
+                    print "RD:GHD: Nodename %s not in keylist, adding" % node_name
+                    self.add_resource( resource )
+               print "RD: GHD: Keys are now %s" % self.keys()
+               print "RD: get_heckle_list: node now reads %s" % self[node_name]
+          print "RD: Update from Heckle: %s" % nodelist
+          return True                    
                                   
 
 
@@ -1185,6 +1261,8 @@ if __name__=="__main__":
      i2 = {'name':'bb02', 'payload':'2'}
      i3 = {'name':'bb03', 'payload':'3'}
      i4 = {'name':'bbo4', 'payload':'4'}
+     i5 = {'name':'bb01', 'payload':'5'}
+     i6 = {'name':'bb06', 'payload':'6'}
      test1 = Attribute( 'payload', '3' )
      test2 = Attribute( 'payload', '6' )
      test1
@@ -1194,16 +1272,41 @@ if __name__=="__main__":
      print "R2 is %s: %s" % ( r2.name, r2.payload )
      r3 = Resource( i3 )
      r4 = Resource( i4 )
+     r5 = Resource( i5 )
+     r6 = Resource( i6 )
      tc2 = tempclass( [r1, r2, r3, r4] )
      print "TC2 is now %s" % tc2
      tc2.printthings()
+     print "\n\n\n Testing Equality: \n\n" 
 #     print "As-Dict: %s" % tc2.as_dict()
      print "Keys:", tc2.keys()
      print "Test 1:  Value is %s" % test1
      alist = tc2 == test1
+     print "\n\n\n Testing >=: \n\n"
      print "Equal evaluates as %s" % alist
      alist = tc2 >= test1
      print "GE as: %s" % alist
+     print "\n\n\n Testing update\n\n" 
+     tc2.update( r5 )
+     print "\n\n\n Testing Heckle Update: One Node \n\n"
+     tc2.update( ['bb01.mcs.anl.gov'] )
+     print "After:"
+     print tc2['bb01.mcs.anl.gov']
+     print "Testing re-update: bb01"
+     before = tc2['bb01.mcs.anl.gov']
+     tc2.update( ['bb01.mcs.anl.gov'] )
+     print "After:"
+     print tc2['bb01.mcs.anl.gov']
+     after = tc2['bb01.mcs.anl.gov']
+     if before == after:
+          print "Yippee!"
+     else:
+          print "Problem..."
+     print "\n\n\n Testing Heckle Update:  All \n\n"
+     tc2.update()
+     print tc2.keys()
+
+     
 
      
      
