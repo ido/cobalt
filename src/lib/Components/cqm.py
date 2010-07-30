@@ -86,6 +86,7 @@ import thread
 from threading import Thread, Lock
 import traceback
 import string
+import json
 
 import Cobalt
 import Cobalt.Util
@@ -100,7 +101,7 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
     JobRunError, JobPreemptionError, JobDeleteError)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
-
+from Cobalt.Logging import db_log_to_file, ReportObject
 
 logger = logging.getLogger('cqm')
 
@@ -571,6 +572,7 @@ class Job (StateMachine):
         self.total_etime = 0.0
         self.priority_core_hours = None
         self.dep_fail = False
+
     # end def __init__()
 
     def __getstate__(self):
@@ -672,7 +674,7 @@ class Job (StateMachine):
         except:
             self.__sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
-            return Job.__rc_unknown
+            look at return Job.__rc_unknown
 
         return Job.__rc_success
 
@@ -852,9 +854,13 @@ class Job (StateMachine):
                 self.__signal_timer = Timer()
             self.__signal_timer.start()
             self.__sm_state = 'Preempting'
+            db_log_to_file(ReportObject(("Preempting job %s" % self.jobid),
+                                    None, "preempting", "job", job).encode())
             return True
         else:
             self.__sm_state = 'Preempt_Retry'
+            db_log_to_file(ReportObject(("Problem preempting job %s, retrying." % self.jobid),
+                                    None, "preempting", "job", job).encode())
             return False
 
     def __sm_start_resource_epilogue_scripts(self, new_state = 'Resource_Epilogue'):
@@ -862,13 +868,17 @@ class Job (StateMachine):
         self.__sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
         self.__sm_scripts_thread.start()
         self.__sm_state = new_state
+        db_log_to_file(ReportObject(("beginning resource epilogue."),
+                                    None, "resource_epi_start", "job", job).encode())
 
     def __sm_start_job_epilogue_scripts(self, new_state = 'Job_Epilogue'):
         job_scripts = get_cqm_config('job_postscripts', "").split(':')
         self.__sm_scripts_thread = RunScriptsThread(job_scripts, self, self.fields)
         self.__sm_scripts_thread.start()
         self.__sm_state = new_state
-
+        db_log_to_file(ReportObject(("beginning job epilogue."),
+                                    None, "job_epi_start", "job", job).encode())
+        
     def __sm_scripts_are_finished(self, type):
         try:
             if self.__sm_scripts_thread.isAlive():
@@ -889,6 +899,13 @@ class Job (StateMachine):
                 err_msg = ("\n" + result['err']).replace("\n", "\n    ").rstrip()
                 self.__sm_log_warn("return code from %s %s was %d; error text follows:%s" % \
                     (type, result['script'], result['rc'], err_msg))
+        #PMR: shold errors from epilogue somehow be captured?
+        if type == 'prescript':
+            db_log_to_file(ReportObject("Prologue completed.", None, "script_finished", "job", job).encode())
+        elif type == 'resource postscript':
+            db_log_to_file(ReportObject("Resource postscript completed.", None, "script_finished", "job", job).encode())
+        elif type == 'job postscript':
+            db_log_to_file(ReportObject("Job Postscript completed.", None, "script_finished", "job", job).encode())
         return True
 
     def __sm_common_queued__hold(self, hold_state, args):
@@ -913,6 +930,9 @@ class Job (StateMachine):
         self.__timers['hold'].start()
         self.__sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
         self.__sm_state = hold_state
+        db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
+                                    None, "%s_hold" % args['type'], "job", job).encode())
+        
 
     def __sm_common_queued__release(self, args):
         '''handle attempt to erroneously release a job in the queued state'''
@@ -943,6 +963,8 @@ class Job (StateMachine):
 
         if activity:
             self.__sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
+            db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
+                                        None, "%s_hold" % args['type'], "job", job).encode())
         else:
             self.__sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
@@ -967,6 +989,8 @@ class Job (StateMachine):
 
         if activity:
             self.__sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
+             db_log_to_file(ReportObject("%s hold released on job %s." % (args['type'], self.jobid), 
+                                        None, "%s_hold_release" % args['type'], "job", job).encode())
         else:
             self.__sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
             
@@ -975,6 +999,9 @@ class Job (StateMachine):
             self.__timers['hold'].stop()
             self.etime = time.time()
             self.__sm_state = queued_state
+            #db_log_to_file(ReportObject("all holds released on job %s. Requeueing" % 
+            #                            (args['type'], self.jobid), 
+            #                            None, "hold_release", "job", job).encode())
 
     def __sm_ready__run(self, args):
         '''prepare a job for execution'''
@@ -1017,7 +1044,8 @@ class Job (StateMachine):
         if self.project:
             logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
                 ":".join(self.location)))
-            self.acctlog.LogMessage("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
+            self.acctlog.LogMessage("Job %
+s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
                 ":".join(self.location)))
         else:
             logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, ":".join(self.location)))
@@ -1079,6 +1107,8 @@ class Job (StateMachine):
         self.__sm_scripts_thread.start()
 
         self.__sm_state = 'Prologue'
+        db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
+                                    None, "starting", "job", job).encode())
 
     def __sm_ready__hold(self, args):
         '''place a hold on a job in the queued state'''
@@ -1235,12 +1265,18 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self.__sm_state = 'Running'
             self.task_running = True
+             db_log_to_file(ReportObject(("Run start."),
+                                         None, "running", "job", job).encode())
         elif rc == Job.__rc_retry:
             self.__sm_state = 'Run_Retry'
+            db_log_to_file(ReportObject(("Run start is being retried."),
+                                        None, "run_retrying", "job", job).encode())
         else:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
             self.__sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
             self.__sm_start_resource_epilogue_scripts()
+            db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
+                                        None, "failed", "job", job).encode())
 
     def __sm_release_resources_retry__progress(self, args):
         self.__sm_log_info("retrying release of resources")
@@ -1255,10 +1291,14 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self.__sm_state = 'Running'
             self.task_running = True
+             db_log_to_file(ReportObject(("Run start."),
+                                         None, "started", "job", job).encode())
         elif rc != Job.__rc_retry:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
             self.__sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
             self.__sm_start_resource_epilogue_scripts()
+            db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
+                                        None, "failed", "job", job).encode())
 
     def __sm_run_retry__kill(self, args):
         '''user delete requested while job was waiting to retry executing task'''
@@ -1270,6 +1310,9 @@ class Job (StateMachine):
 
         # start the resource epilogue scripts
         self.__sm_start_resource_epilogue_scripts()
+        db_log_to_file(ReportObject(("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
+                                         (args['signal'], args['user'])),
+                                     args['user'], "failed", "job", job).encode())
 
     def __sm_running__progress(self, args):
         '''
@@ -1289,7 +1332,7 @@ class Job (StateMachine):
     def __sm_running__kill(self, args):
         '''user delete requested while job is executing a task'''
         self.__sm_signaling_info_set_user_delete(args['signal'], args['user'])
-        self.__sm_kill_task()
+        self.__sm_kill_task() #current
 
     def __sm_running__task_end(self, args):
         '''task completed normally'''
@@ -2084,9 +2127,11 @@ class Job (StateMachine):
         except:
             self.__sm_log_exception(None, "an exception occurred during a progress event")
 
-    def run(self, nodelist):
+    def run(self, nodelist, user = None):
         try:
             self.trigger_event("Run", {'nodelist' : nodelist})
+            db_log_to_file(ReportObject(("Run start requested by %s." % user),
+                                        user, "started", "job", job).encode())
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self.__sm_state)
@@ -2104,6 +2149,9 @@ class Job (StateMachine):
             args['force'] = True
         try:
             self.trigger_event('Preempt', args)
+            if user:
+                db_log_to_file(ReportObject(("Preemption requested by %s." % user),
+                                        user, "preempted", "job", job).encode())
         except JobPreemptionError:
             raise
         except StateMachineIllegalEventError:
@@ -2178,7 +2226,9 @@ class Job (StateMachine):
                         (self.jobid, self.user, self.nodes, user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
                         (self.jobid, self.user, self.nodes, user, stats))
-
+                db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
+                                                (self.jobid, self.user, self.nodes, user, stats),
+                                            user, "killed", "job", job).encode())
     def task_end(self):
         '''handle the completion of a task'''
         self.task_running = False
@@ -2196,7 +2246,11 @@ class JobList(DataList):
         for spec in specs:
             if "jobid" not in spec or spec['jobid'] == "*":
                 spec['jobid'] = self.id_gen.next()
-        return DataList.q_add(self, specs, callback, cargs)
+        jobs_added = DataList.q_add(self, specs, callback, cargs)
+        if jobs_added:
+            db_log_to_file(ReportObject(("%s created job: %s", spec['user'], spec['jobid']),
+                                    spec['user'], "created", "job", job).encode())
+        return 
     
 
 class Restriction (Data):
@@ -2667,7 +2721,9 @@ class QueueManager(Component):
                     self.Queues[old_q_name].jobs.remove(job)
                     new_q.jobs.append(job)
                     new_q.update_max_running()
-            
+        db_log_to_file(ReportObject(("%s modified job: %s, %s", user_name, specs, updates),
+                                    user_name, "modified", "job", job).encode())
+
         return joblist    
     set_jobs = exposed(query(set_jobs))
 
@@ -2675,7 +2731,7 @@ class QueueManager(Component):
     def run_jobs(self, specs, nodelist, user_name=None):
         if user_name:
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
-        def _run_jobs(job, nodes):
+        def _run_jobs(job, nodes, user_name):
             job.run(nodes)
             self.Queues[job.queue].update_max_running()
         return self.Queues.get_jobs(specs, _run_jobs, nodelist)
@@ -2829,7 +2885,12 @@ class QueueManager(Component):
             else:
                 job.score += delta
             results.append(job.jobid)
-        
+        db_log_to_file(ReportObject(("%s updating job scores: %s, %s", user_name, specs, score),
+                                    user_name,
+                                    "modified",
+                                    "job",
+                                    job).encode())
+                                    
         return results
     adjust_job_scores = exposed(adjust_job_scores)
             

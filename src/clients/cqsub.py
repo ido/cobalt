@@ -266,4 +266,4 @@ if __name__ == '__main__':
             logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
             logger.error("         %s" % e.strerror)
     else:
-        logger.error("failed to create teh job.  maybe a queue isn't there")
+        logger.error("failed to create the job.  maybe a queue isn't there")

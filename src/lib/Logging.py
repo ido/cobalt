@@ -22,6 +22,7 @@ import time
 
 from json import JSONEncoder
 
+
 SYSLOG_LEVEL_DEFAULT = "DEBUG"
 CONSOLE_LEVEL_DEFAULT = "INFO"
 
@@ -303,8 +304,6 @@ class ThreadedWrite(threading.Thread):
     def run(self):
         #TODO: going to need some good-old try-catch for failover here.
         out_file = open("json.out", "a")
-        print self.data
-        print "****************************"
         out_file.write(self.data)
         out_file.close()
 
@@ -342,6 +341,9 @@ class ReportObjectEncoder(JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 class ReportStateEncoder(JSONEncoder):
+
+    import Cobalt.Components.bgsched
+    import Cobalt.Components.cqm
     
     #get reservation and eventually jobs and partitions.
     def default(self, obj):
@@ -358,7 +360,15 @@ class ReportStateEncoder(JSONEncoder):
                     'users' : obj.users}
         #elif isinstance(obj, Cobalt.Components
         elif isinstance(obj, Cobalt.Components.cqm.Job):
-            return "To Be Implemented."
+            exclude_keys = ['_StateMachine__seas', 'stageid', 
+                            'stagein', 'stageout', 'url']
+            classAttrTable = {}
+            for key in obj.__dict__.keys():
+                if key not in exclude_keys:
+                    classAttrTable[key] = obj.__dict__[key].__str__()
+                
+            return classAttrTable
+
         return  json.JSONEncoder.default(self, obj)
               
         
