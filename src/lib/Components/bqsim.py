@@ -152,9 +152,7 @@ def parse_work_load(filename):
 
 def tune_workload(specs, frac):
     '''tune workload heavier or lighter'''
-    
-    print "inside tune_workload"
-    
+  
     def _subtimecmp(spec1, spec2):
         return cmp(spec1.get('submittime'), spec2.get('submittime'))
     
@@ -377,7 +375,9 @@ class BGQsim(Simulator):
         #initialize partitions
         self.sleep_interval = kwargs.get("sleep_interval", 0)
         
-        self.cluster_fraction = kwargs.get("BG_Fraction", 1)
+        self.fraction = kwargs.get("BG_Fraction", 1)
+        
+        print "self.fraction=", self.fraction
         
         #self.coscheduling = kwargs.get("coscheduling", False)
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
@@ -413,16 +413,16 @@ class BGQsim(Simulator):
         self.inhibit_small_partitions()
         self.part_size_list = []
         #print all partitions
-        for part in self._partitions.itervalues():
-            if part.scheduled == True:
-                print "%s" % (part.name)
+#        for part in self._partitions.itervalues():
+#            if part.scheduled == True:
+#                print "%s" % (part.name)
      
         for part in self.partitions.itervalues():
             if int(part.size) not in self.part_size_list:
                 if part.size >= MIDPLANE_SIZE:
                     self.part_size_list.append(int(part.size))
         self.part_size_list.sort()
-        print self.part_size_list
+        #print self.part_size_list
         
         self.workload_file =  kwargs.get("bgjob")
         self.output_log = kwargs.get("outputlog")
@@ -455,8 +455,6 @@ class BGQsim(Simulator):
         else:
             self.walltime_prediction = False
             
-        print "walltime_prediction=", self.walltime_prediction   
-        
         self.time_stamps = [('I', '0', 0, {})]
         self.cur_time_index = 0
         self.queues = SimQueueDict(policy=None)
@@ -511,8 +509,8 @@ class BGQsim(Simulator):
         #configure walltime-aware spatial scheduling schemes
         self.walltime_aware_cons = False
         self.walltime_aware_aggr = False
-        self.wass_scheme = kwargs.get("wass", "None") 
-        print "wass scheme=", self.wass_scheme
+        self.wass_scheme = kwargs.get("wass", None) 
+        
         if self.wass_scheme == "both":
             self.walltime_aware_cons = True
             self.walltime_aware_aggr = True
@@ -521,15 +519,23 @@ class BGQsim(Simulator):
         elif self.wass_scheme == "aggr":
             self.walltime_aware_aggr = True
             
-        print "self.walltime_aware_aggr =", self.walltime_aware_aggr
-        print "self.walltime_aware_cons =", self.walltime_aware_cons
-                                                                
+        if self.wass_scheme:
+            print "walltime aware job allocation enabled, scheme = ", self.wass_scheme
+        
+        if self.walltime_prediction:
+            print "walltime prediction enabled, scheme = ", self.predict_scheme
+            
+        if self.coscheduling:
+            print "co-scheduling enabled, scheme = ", self.cosched_scheme
+            
+        if self.fraction != 1:
+            print "job arrival intervals adjusted, fraction = ", self.fraction
         
         if not self.cluster_job_trace:
             Var = raw_input("press any Enter to continue...")
                 
         print "Simulation starts:"
- 
+    
     def _get_queuing_jobs(self):
         return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
     queuing_jobs = property(_get_queuing_jobs)
@@ -738,8 +744,8 @@ class BGQsim(Simulator):
             specs.append(spec)
                 
         #adjust workload density
-        if self.cluster_fraction != 1:
-            tune_workload(specs, self.cluster_fraction)
+        if self.fraction != 1:
+            tune_workload(specs, self.fraction)
             print "workload adjusted: last submit job=", sec_to_date(specs[len(specs)-1].get('submittime'))
         
         self.total_job = len(specs)
@@ -1367,7 +1373,7 @@ class BGQsim(Simulator):
         try:
             f = open(filename)
         except:
-            self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
+            #self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
             return
         
         str = f.read()

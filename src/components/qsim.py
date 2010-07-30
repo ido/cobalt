@@ -129,7 +129,8 @@ if __name__ == "__main__":
         
     options = {}
     for argname in arg_list:
-        options[argname] = getattr(opts, argname)
+        if getattr(opts, argname):
+            options[argname] = getattr(opts, argname)
         
     integrated_main(options)
     #profile_main(options)
