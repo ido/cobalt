@@ -441,13 +441,13 @@ class Resource(object):
           Attributes is a dictionary of key:value for each attribute
           KISS
           """
-          self.attribute_list = []
-          self.attribute_list.append( Attribute( 'name', 'Default' ) )
+          self.__dict__['name'] = 'Default'
           #print "Attributes are: %s" % attributes
           if not attributes:
                pass
           else:
                if type(attributes) == Attribute:
+                    print "Resource:__INIT__:Attribute: %s" % attributes
                     self.__setitem__( attributes )
                elif type( attributes ) == Resource:
                     keylist = attributes.keys()
@@ -461,70 +461,67 @@ class Resource(object):
                     print "Resource: __INIT__:Dict: attribute is %s" % attributes
                     keylist = attributes.keys()
                     print "Resource:__INIT__:Dict: keylist is %s" % keylist
-                    for key in keylist:
-                         new_att = Attribute( key, attributes[key] )
-                         print "Resource: __INIT__:Dict: attribute now reads %s" % new_att
-                         if key in self.keys():
-                              self.attribute_list.remove( self.attribute_list[ self.get_index( key ) ] )
-                         self.attribute_list.append( new_att )
-                         print "Resource:__INIT__:Dict: Resource attribute now reads %s" % self[key]
-                         if not self[key] == new_att:
-                              print "Resource:__INIT__:Dict: #### WARNING ##### Values %s and %s do not match!" % (self[key], new_att)
-     def get_index( self, name):
+                    if self.dict_is_attribute( attributes):
+                         print "Resource:__INIT__:Dict: As Attribute %s" % attributes
+                         new_att = Attribute( attributes )
+                         self.__setitem__( new_att )
+                    else:
+                         print "Resource:__INIT__:Dict: As Resource"
+                         for key in keylist:
+                              name = key
+                              value = attributes[key]
+                              print "Resource:__INIT__:Dict:Res: Setting name=%s, value = %s" % (name, value)
+                              new_att = Attribute( name, value )
+                              print "Resource: __INIT__:Dict: attribute %s now reads %s" % (name, new_att.value)
+                              self.__setitem__( new_att )
+               else:
+                    raise Exception( "Resource:__INIT__: Cannot set of type %s for %s" % ( type( attributes ), attributes ) )
+     def dict_is_attribute( self, value ):
           """
-          Returns the index of the key in the resource list
           """
-          for att in self.attribute_list:
-               if att.name == name:
-                    #print "Found it!"
-                    return self.attribute_list.index(att)
+          if value.keys() == ['name', 'value']:
+               return True
           else:
-               return -1
+               return False
      def __str__( self ):
           """
           Returns a string representation of the object
           """
-          return str(self._get_dict())
+          return str(self.__dict__)
      def _get_dict( self ):
           """
           Returns a dictionary representation of the object
           """
-          retdict = {}
-          for att in self.attribute_list:
-               retdict[att['name']] = att.value
-          return retdict
+          return self.__dict__
+     def __getattr__( self, name ):
+          try:
+               return self.__dict__[name]
+          except Exception as ee:
+               raise Exception( "RD:__getattr__: Value %s does not exist: %s" % (name, ee) )
      def __getitem__( self, name ):
           """
           Allows getting an item directly by subscription
           """
 #         #print "Debug: Name is %s" % name
           try:
-               index = self.get_index(name)
-               #print "RD: Get Item: Found %s at %s" % (name, index)
-               return self.attribute_list[index]
+               return self.__dict__[name]
           except Exception as ee:
                raise Exception("RD: GetItem: Value %s does not exist: %s" % (name, ee))
-     def __setitem__( self, key, value=None):
+     def __setitem__( self, key, value=None ):
           """
-          Direct Assignment of key-value pairs
-          Adds the key:value pair to the attributes
-          Will not add duplicate keys
           """
           if type(key) == Attribute:
                new_att = key
                key = new_att.name
           elif type(key) == DictType:
-               new_att = Attribute( key['name'], key['value'] )
-               key = key['name']
-          else:
+               new_att = Attribute( key )
+               key = new_att['name']
+          elif type(key) == StrType:
                new_att = Attribute( key, value )
-          index = self.get_index( key )
-          if index:
-               self.attribute_list[index] = new_att
           else:
-               self.attribute_list.append( new_att )
-          return True
-     def __add__(self, key, value ):
+               raise Exception ("Resource:__setattr__: Cannot set of type %s for value %s:%s" % (type(key), key, value ) )
+          self.__dict__[key] = new_att
+     def __add__(self, key, value=None ):
           """
           Absolutely adds the key:value pair to the attributes
           Will add duplicate values
@@ -533,62 +530,63 @@ class Resource(object):
           return self.add_attribute( new_attribute )
      def add_attribute( self, attribute ):
           """
+          Accepts an Attribute type as input
           Absolutely adds the key:value pair to the attributes
+          Except for Name.
           Will add duplicate values
           """
           #print "Resource:Add_attribute: New Attribute is %s -- %s" % ( attribute.name, attribute.value )
-          key = attribute.name
-          index = self.get_index( attribute.name )
-          print "Index is: %s" % index
-          if index >-1:
-               print "Resource:Add_attribute: Pre: Exists, is %s of type %s" % (self[key], type(self[key]))
-               self[key].add( attribute.value )
+          attribute = Attribute( attribute )     #Guarantees that we will be working with an attribute
+          key = attribute.nam
+          keylist = self.keys()
+          if key in keylist:
+               if key == 'name':
+                    self.name = attribute
+               else:
+                    self.update( attribute )
           else:
-               print "Resource:Add_attribute: %s Does not currently exist, adding..." % key
-               self.attribute_list.append( attribute )
-          print "Resource: Add_attribute: POST: Key is %s, value is now %s" % (key, self[key].value)
-          return True
+               self.__setattr__( attribute )
      def update( self, attributes ):
           """
           Updates an item in the current resource
           Attributes is a dictionary or resource object, with key:value pairs
           """
-          #print "Resource: Update: attributes are %s" % attributes
-          newRes = Resource( attributes )
-          #print "Resource: Update: New resource is %s" % newRes
-          keylist = newRes.keys()
-          print "Resource: Update: Keylist is %s" % keylist
-          for key in newRes.keys():
-               if key == 'name':
-                    pass
-               elif key in self.keys():
-                    self.__setitem__( newRes[key] )
+          othertype = type(attributes)
+          if othertype == ListType:
+               for val in attributes:
+                    self.update(val)
+          elif othertype == Attribute:
+               name = attributes.name
+               if name in self.keys() and not name == 'name':
+                    self[name].update( attributes )
+               elif not name in self.keys():
+                    self.__setattr__( attributes )
+          elif othertype == Resource:
+               keylist = attributes.keys()
+               for key in keylist:
+                    self.update( attributes[key] )
+          elif othertype == DictType:
+               if attributes.keys() == ['name', 'value']:
+                    new_att = Attribute( attributes )
+                    self.update( new_att )
                else:
-                    self.add_attribute(newRes[key])
-          return True
+                    new_resource = Resource( attributes )
+                    self.update( new_resource )
+          else:
+               raise Exception( "Resource: Update: Cannot update of type %s for %s" % ( type( attributes ), attributes ) )
      def del_attribute( self, key ):
           """
           Removes a given attribute from the resource
           """
           try:
-               attribute = self[key]
-               self.attribute_list.remove(attribute)
+               del(self.__dict__[key])
           except:
                pass
-     def __getattr__ ( self, key ):
-          """
-          Gets all attribute objects for a given key
-          """
-          #print "get attribute Key is %s" % key
-          return self[key]
      def keys( self ):
           """
           Returns a list of unique keys for the attributes in this Resource
           """
-          return_list = []
-          for attribute in self.attribute_list:
-               return_list.append( attribute.name )
-          return return_list
+          return self.__dict__.keys()
      def _get_value( self, key ):
           """
           Gets all the attribute values for a given key
@@ -598,7 +596,8 @@ class Resource(object):
           """
           This function simply returns those nodes listed as free
           """
-          return self[FREE_VAR] == FREE_NODE
+          retval = ( self[FREE_VAR] == FREE_NODE )
+          return retval
      def __eq__( self, other ):
           """
           Compares the resource to see if they match
@@ -606,7 +605,12 @@ class Resource(object):
           """
   #        print "Resource: __eq__: %s" % other
           other_resource = Resource(other)
-          for key in other_resource.keys():
+          this_key_list = self.keys()
+          print "Resource:_eq_: self keys are %s" % this_key_list
+          other_key_list = other_resource.keys()
+          print "Resource:_eq_: other keys are %s" % other_key_list
+          other_key_list.remove('name')
+          for key in other_key_list:
                if key == 'name':
                     pass
                else:
@@ -689,6 +693,7 @@ class Attribute(object):
           """
           Direct assignment of an item
           """
+          name = str(name)
           try:
                if self.name == name:
                     if type(value) == ListType:
@@ -707,6 +712,7 @@ class Attribute(object):
           """
           ABSOLUTELY replaces the value with the intended value
           """
+          name = str(name)
           if type(value) == ListType:
                for val in value:
                     val = str(val)
@@ -764,7 +770,7 @@ class Attribute(object):
                return other == self.value
           else:
                return False
-#          print "Attribut: EQ: Equating Self %s with Other %s yeilds %s" % (self.value, other.value, yei)
+          print "Attribut: EQ: Equating Self %s with Other %s yeilds %s" % (self.value, other.value, yei)
           return other.value == self.value
      def __ge__( self, other ):
           """
@@ -788,7 +794,7 @@ class Attribute(object):
                slist = sorted_nicely([sval, oval])
                sindex = slist.index(sval)
                oindex = slist.index(oval)
-               retval = (sindex <= oindex)
+               retval = (sindex >= oindex)
                #print "Self Index %s >= other index %s yeilds %s" % (sindex, oindex, retval)
                #print "Evaluates as %s" % retval
                return retval
@@ -1092,16 +1098,16 @@ class tempclass( object ):
           if othertype is tempclass:
                self.__dict__ = other.__dict__
           elif othertype is Resource:
-               name = other.name
+               name = str(other.name)
                self.__dict__[name] = other
           elif othertype is ListType:
                for element in other:
                     element = Resource( element )
-                    name = element.name
+                    name = str(element.name)
                     self.__dict__[name] = element
           elif othertype is DictType:
                other = Resource( other )
-               name = other.name
+               name = str(other.name)
                self.__dict__[name] = other
           elif othertype is NoneType:
                pass
@@ -1110,18 +1116,64 @@ class tempclass( object ):
           self.Glossary = Glossary()
      def __str__( self ):
           return str(self.__dict__)
+     def as_dict( self ):
+          retdict = {}
+          resources = self.__dict__
+          del(resources['Glossary'])
+          retdict['resources'] = resources
+          glossary = self.__dict__['Glossary']
+          retdict['Glossary'] = glossary
+          return retdict
      def keys( self ):
           keylist = self.__dict__.keys()
+          print "Getting Keys: %s" % keylist
           keylist.remove('Glossary')
           return keylist
-     def __getattr__( self, name ):
-          return self.__dict__[name]
      def __getitem__( self, name ):
-          return self.__dict__[name]
-     def __setattr__( self, name, value ):
-          self.__dict__[name] = value
+          return self.__dict__[ name ]
      def __setitem__( self, name, value ):
           self.__dict__[name] = value
+     def printthings( self ):
+          keylist = self.keys()
+          print "Begin:  Keylist is %s" % keylist
+          for key in keylist:
+               print "Key %s for value %s" % (key, self[key])
+          print "Done"
+     def __eq__( self, other ):
+          """
+          """
+          other = Resource( other )
+          print "TC:EQ: Other of type %s is now: %s" % (type(other), other)
+          self_node_list = self.keys()
+          return_node_list = []
+          print "TC:EQ: My key list is %s" % self_node_list
+          for node in self_node_list:
+               thisnode = Resource( self[node] )
+               print "Types are %s and %s" % (type(thisnode), type(other))
+               if thisnode == other:
+                    return_node_list.append( thisnode.name )
+          #order list
+          return return_node_list
+     def __ge__( self, other ):
+          """
+          """
+          other = Resource( other )
+          print "TC:GE: other of type %s evalutes as %s" % ( type(other), other )
+          self_node_list = self.keys()
+          return_node_list = []
+          print "TC:GE: My key list is %s" % self_node_list
+          for node in self_node_list:
+               if self[node] >= other:
+                    return_node_list.append( self[node].name )
+          #order list
+          return return_node_list
+     def update( self, nodelist=self.keys() ):
+          """
+          """
+#          for node in nodelist:
+          pass
+               
+                    
                                   
 
 
@@ -1129,19 +1181,30 @@ class tempclass( object ):
 if __name__=="__main__":
      tc = tempclass()
      print "TC is %s" % tc
-     i1 = {'name':'bb01', 'val':'oogie'}
-     i2 = {'name':'bb02', 'val':'boogie'}
+     i1 = {'name':'bb01', 'payload':'1'}
+     i2 = {'name':'bb02', 'payload':'2'}
+     i3 = {'name':'bb03', 'payload':'3'}
+     i4 = {'name':'bbo4', 'payload':'4'}
+     test1 = Attribute( 'payload', '3' )
+     test2 = Attribute( 'payload', '6' )
+     test1
      r1 = Resource( i1 )
-     print "R1 is %s: %s" % ( r1.name, r1.val )
+     print "R1 is %s: %s" % ( r1.name, r1.payload )
      r2 = Resource( i2 )
-     print "R2 is %s: %s" % ( r2.name, r2.val )
-     tc2 = tempclass( [r1, r2] )
+     print "R2 is %s: %s" % ( r2.name, r2.payload )
+     r3 = Resource( i3 )
+     r4 = Resource( i4 )
+     tc2 = tempclass( [r1, r2, r3, r4] )
      print "TC2 is now %s" % tc2
-     print tc2.keys()
-     print tc2['r1']
-     print tc2['r2']
-     print tc2.r1
-     print tc2.r2
+     tc2.printthings()
+#     print "As-Dict: %s" % tc2.as_dict()
+     print "Keys:", tc2.keys()
+     print "Test 1:  Value is %s" % test1
+     alist = tc2 == test1
+     print "Equal evaluates as %s" % alist
+     alist = tc2 >= test1
+     print "GE as: %s" % alist
+
      
      
      ############   Setup  #######################
