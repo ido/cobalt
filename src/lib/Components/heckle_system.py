@@ -64,22 +64,18 @@ class HeckleSystem(Component):
           find_job_locations:
           find_queue_equivalence_classes:
      """
-     
-     
+          
      name = "system"
      implementation = "HeckleBreadboard"
      queue_assignments = {}
-     
+
      def __init__(self, *args, **kwargs):
-          logger.debug( "Heckle System: init ... %s ... &&&&&&&&&&&&&&&&&&&&&&&&&&&&&  I am here as well &&&&&&&&&&&&&&&&&&&&&&&&&" % threading.current_thread().getName() )
           Component.__init__(self, *args, **kwargs)
           self.process_groups = ProcessGroupDict()
           self.process_groups.item_cls = HeckleProcessGroup
           self.queue_assignments["default"] = self.get_resources()
-          print "\n\n\n\n"
-          print "Queue assignments are: %s" % self.queue_assignments
-     
-     
+          #print "\n\n\n\n"
+          #print "Queue assignments are: %s" % self.queue_assignments
      def __repr__(self):
           """
           printout representation of the class
@@ -97,8 +93,6 @@ class HeckleSystem(Component):
           for element in self.process_groups:
                printstr+= str(element) +"::" + str(self.process_groups[element]) + ", "
           return printstr
-     
-     
      #####################
      # Main set of methods
      #####################
@@ -110,9 +104,7 @@ class HeckleSystem(Component):
           """
           logger.debug( "Heckle System: add_process_groups: Specs are %s" % specs )
           HICCUP= Heckle_Interface()
-          #Debug - Take out to really rebuild
-          ####    Need to check the environment variable for fakebuild
-          try:
+          try:     #  Checking for Fakebuild
                specs[0]['fakebuild'] = specs[0]['env']['fakebuild']
                del specs[0]['env']['fakebuild']
           except:
@@ -125,13 +117,6 @@ class HeckleSystem(Component):
           logger.debug( "Heckle System: heckle_res_id = %i" % heckle_res_id )
           specs[0]['heckle_res_id']=heckle_res_id
           return self.process_groups.q_add(specs, lambda x, _:self._start_pg(x, heckle_res_id = heckle_res_id, uid=uid))
-          #except Exception as hec_except:
-               ## could do something here about problems
-               ##    1)  Kill job, then resubmit job w/o node name(s)
-               ##         Would require access to cqadm via api
-               ##    2)  Put job / node in fail state
-               ##    3)  Simply fail
-               #raise Exception("Heckle System Object: add_process_groups: %s" % hec_except)
      add_process_groups = exposed(query(add_process_groups))
      
      
@@ -146,16 +131,14 @@ class HeckleSystem(Component):
      def signal_process_groups(self, specs, sig):
           """Free the specified process group (set of allocated nodes)"""
           logger.debug( "Heckle System: signal_process_groups: Specs are %s, sig is %s" % (specs, sig) )
-          return self.process_groups.q_get(specs, lambda x, y:x.signal(y),
-                                             sig)
+          return self.process_groups.q_get(specs, lambda x, y:x.signal(y), sig)
      signal_process_groups = exposed(query(signal_process_groups))
      
      
      def wait_process_groups(self, specs):
           """Remove terminated process groups"""
           logger.debug( "Heckle System: wait_process_groups; specs are %s" % specs )
-          return self.process_groups.q_del(specs, lambda x,
-                                             _:self._release_resources(x))
+          return self.process_groups.q_del(specs, lambda x, _:self._release_resources(x))
      wait_process_groups = exposed(query(wait_process_groups))
      
      
@@ -172,12 +155,12 @@ class HeckleSystem(Component):
                Places nodes in the pinging nodes list, to see if they're built
           """
           logger.debug( "Heckle System: start_pg: PGP is %s" % pgp )
+          HICCUP = Heckle_Interface()
           for node in pgp.get('location'):
                node_attributes = {}
                #######################
                ###  Look at this as a possible change
                #######################
-               HICCUP= Heckle_Interface()
                node_atts = HICCUP.get_node_info(node)
                logger.debug( "Heckle System: start_pg: Atts for node %s are %s" % (node, node_atts) )
                node_attributes.update( node_atts )
@@ -202,7 +185,7 @@ class HeckleSystem(Component):
           for pgp in pg_list:
                for nodename in pgp.pinging_nodes:
                     teststr = HICCUP.get_node_bootstate(nodename)
-                    if  teststr == "COMPLETED":
+                    if  teststr == "COMPLETED" or teststr == "READY":
                          logger.debug( "Heckle System: Check Build Done: Removing node %s...%i pinging nodes left" % (nodename, len(pgp.pinging_nodes)-1) )
                          pgp.pinging_nodes.remove(nodename)
                     elif teststr in ["BOOTING", "", ""]:
@@ -214,8 +197,6 @@ class HeckleSystem(Component):
                          #####################
                          ####      Need to figure a better way to fail gracefully on this one...
                          #####################
-                    elif teststr == "READY":
-                         raise Exception("HIC_SO: _check_builds_done: Node says, 'READY'.  The Heckle Reservation is already ready already, skipping pinging.")
                if len(pgp.pinging_nodes) == 0:
                     logger.debug( "Heckle System: Check Build Done: No Pinging Nodes left, Start PG Running.")
                     pgp.start()
@@ -273,10 +254,6 @@ class HeckleSystem(Component):
                3)  Validate Job versus overall
           """
           logger.debug( "Heckle System: Validate Job: Specs are %s" % spec )
-          ##################################
-          ###  Look at this as a future change
-          ###  Think:  Refresh Resources Info
-          ##################################
           HICCUP = Heckle_Interface()
           try:
                kernel = spec['kernel']
@@ -294,9 +271,9 @@ class HeckleSystem(Component):
           #try:
                #valid_job = HICCUP.Valid_Job( **spec )
                #if not valid_job:
-                    #raise Exception("HICCUP:  Not enough nodes")
+                    #raise Exception("System: Validate Job:  Never enough nodes")
           #except:
-               #raise Exception("HICCUP:  Not enough nodes")
+               #raise Exception("System: Validate Job: Never enough nodes")
           return spec
      validate_job = exposed(validate_job)
      
