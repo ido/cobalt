@@ -120,7 +120,7 @@ class HeckleSystem(Component):
           except:
                pass
           print "Heckle System:  add_process_groups: <<<<<<<<<<<<<<<<<<          OK< Debug< This< :  %s" % specs
-          HICCUP= Heckle_Interface()
+          HICCUP= HeckleConnector()
           #try:
           reservation = HICCUP.make_reservation( **(specs[0]) )
           heckle_res_id = reservation.id
@@ -139,7 +139,7 @@ class HeckleSystem(Component):
      
      
      def get_process_groups(self, specs):
-          """Get a list of existing allocations"""
+          """get a list of existing allocations"""
           #logger.debug( "Heckle System: get_process_groups" )
           self._wait()
           return self.process_groups.q_get(specs)
@@ -170,7 +170,7 @@ class HeckleSystem(Component):
      def _start_pg(self, pgp, heckle_res_id, uid):
           """
           Populates the process group with its resources
-               Gets node information for nodes in process group
+               gets node information for nodes in process group
                Updates those attributes
                Places nodes in the pinging nodes list, to see if they're built
           """
@@ -238,7 +238,7 @@ class HeckleSystem(Component):
           """
           logger.debug( "Heckle System: Release %s" % pgp.location )
           #self.resources[pgp.location]['action']='Free'
-          HICCUP= Heckle_Interface()
+          HICCUP= HeckleConnector()
           HICCUP.free_reserved_node( uid = pgp.uid, node_list=pgp.location )
           self.resources.free( nodes=pgp.location )
      
@@ -247,14 +247,14 @@ class HeckleSystem(Component):
           """
           Returns a list of names for all the FREE resources (nodes) which match the given specs.
           """
-          logger.debug( "Heckle System: Get Resources, specs are %s" % specs )
+          logger.debug( "Heckle System: get Resources, specs are %s" % specs )
           ##################################
           ###  Look at this as a future change
           ##################################
           specs['current reservation'] = 9999999
           specs['allocatable'] = 'True'
           res_list = self.resources >= specs
-          logger.debug( "Heckle System: Get Resources, resources are %s" % res_list )
+          logger.debug( "Heckle System: get Resources, resources are %s" % res_list )
           return res_list
      get_resources = exposed(query(get_resources))
      
@@ -377,7 +377,7 @@ class HeckleSystem(Component):
                ###            Remove node from unreserved nodes
                #############################
                print "Heckle System: Find Job Location: Free Nodes is %s" % self.resources.getfreenodes()
-               nodelist = ( self.resources >= attrs )    # Get Matching Node
+               nodelist = ( self.resources >= attrs )    # get Matching Node
                print "Nodelist at this stage is %s" % nodelist
                if len(nodelist) >= nodecount:
                     print "Nodecount = %s" % nodecount

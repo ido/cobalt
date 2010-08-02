@@ -28,7 +28,8 @@ from Cobalt.Components.heckle_processgroup import *
 
 from heckle.lib.util import createSessionInstance
 
-from Cobalt.Components.heckle_lib import *
+#from Cobalt.Components.heckle_lib import *
+from Cobalt.Components.heckle_lib import heckle_lib2
 
 import threading
 
@@ -103,7 +104,7 @@ class HeckleSystem(Component):
           Each dictionary contains the specifications for all the nodes in the process group
           """
           logger.debug( "Heckle System: add_process_groups: Specs are %s" % specs )
-          HICCUP= Heckle_Interface()
+          HICCUP= HeckleConnector()
           try:     #  Checking for Fakebuild
                specs[0]['fakebuild'] = specs[0]['env']['fakebuild']
                del specs[0]['env']['fakebuild']
@@ -121,7 +122,7 @@ class HeckleSystem(Component):
      
      
      def get_process_groups(self, specs):
-          """Get a list of existing allocations"""
+          """get a list of existing allocations"""
           #logger.debug( "Heckle System: get_process_groups" )
           self._wait()
           return self.process_groups.q_get(specs)
@@ -150,12 +151,12 @@ class HeckleSystem(Component):
      def _start_pg(self, pgp, heckle_res_id, uid):
           """
           Populates the process group with its resources
-               Gets node information for nodes in process group
+               gets node information for nodes in process group
                Updates those attributes
                Places nodes in the pinging nodes list, to see if they're built
           """
           logger.debug( "Heckle System: start_pg: PGP is %s" % pgp )
-          HICCUP = Heckle_Interface()
+          HICCUP = HeckleConnector()
           for node in pgp.get('location'):
                node_attributes = {}
                #######################
@@ -181,7 +182,7 @@ class HeckleSystem(Component):
           #sleep(20)
           retval = True
           pg_list = [x for x in self.process_groups.itervalues() if (len(x.pinging_nodes) > 0)]
-          HICCUP= Heckle_Interface()
+          HICCUP= HeckleConnector()
           for pgp in pg_list:
                for nodename in pgp.pinging_nodes:
                     teststr = HICCUP.get_node_bootstate(nodename)
@@ -222,7 +223,7 @@ class HeckleSystem(Component):
           """
           logger.debug( "Heckle System: release" )
           logger.debug( "Heckle System: Locations are: %s" % pgp.location )
-          HICCUP= Heckle_Interface()
+          HICCUP= HeckleConnector()
           HICCUP.free_reserved_node( uid = pgp.uid, node_list=pgp.location )
      
      
@@ -230,11 +231,11 @@ class HeckleSystem(Component):
           """
           Returns a list of names for all the resources (nodes) which match the given specs.
           """
-          logger.debug( "Heckle System: Get Resources" )
+          logger.debug( "Heckle System: get Resources" )
           ##################################
           ###  Look at this as a future change
           ##################################
-          HICCUP= Heckle_Interface()
+          HICCUP= HeckleConnector()
           return HICCUP.list_available_nodes( **specs )
      get_resources = exposed(query(get_resources))
      
@@ -254,26 +255,26 @@ class HeckleSystem(Component):
                3)  Validate Job versus overall
           """
           logger.debug( "Heckle System: Validate Job: Specs are %s" % spec )
-          HICCUP = Heckle_Interface()
+          HICCUP = HeckleConnector()
           try:
                kernel = spec['kernel']
-               valid_kernel = HICCUP.Valid_Kernel( kernel )
+               valid_kernel = HICCUP.validkernel( kernel )
                if not valid_kernel:
                     raise Exception("Heckle System: Validate Job: Bad Kernel")
           except:
                spec['kernel']='default'
           try:
-               valid_hw = HICCUP.Valid_HW( **spec['attrs'] )
+               valid_hw = HICCUP.validhw( **spec['attrs'] )
                if not valid_hw:
                     raise Exception("Heckle System: Validate Job: Bad Hardware Specs: %s" % spec)
           except Exception as strec:
                raise Exception("Heckle System: Validate Job:  Validate Job: %s" % strec)
           #try:
-               #valid_job = HICCUP.Valid_Job( **spec )
+               #valid_job = HICCUP.validjob( **spec )
                #if not valid_job:
-                    #raise Exception("System: Validate Job:  Never enough nodes")
+                    #raise Exception("System: validate Job:  Never enough nodes")
           #except:
-               #raise Exception("System: Validate Job: Never enough nodes")
+               #raise Exception("System: validate Job: Never enough nodes")
           return spec
      validate_job = exposed(validate_job)
      
@@ -284,8 +285,8 @@ class HeckleSystem(Component):
           location list is a list of fully qualified strings of node names
           ex:  nodename.mcs.anl.gov
           """
-          logger.debug("Heckle System: Validate Job: Verify Locations")
-          HICCUP = Heckle_Interface()
+          logger.debug("Heckle System: validate Job: Verify Locations")
+          HICCUP = HeckleConnector()
           heckle_set = set(HICCUP.list_all_nodes())
           location_set = set(location_list)
           if heckle_set >= location_set:
@@ -322,7 +323,7 @@ class HeckleSystem(Component):
           job_location_args.sort(key=jobsort)
           
           #Try to match jobs to nodes which can run them
-          HICCUP = Heckle_Interface()
+          HICCUP = HeckleConnector()
           for job in job_location_args:
                if "attrs" not in job or job["attrs"] is None:
                     job["attrs"] = {}
@@ -333,7 +334,7 @@ class HeckleSystem(Component):
                ###            Choose node from list
                ###            Remove node from unreserved nodes
                #############################
-               resources = HICCUP.find_job_location(**job)  #Get matching nodes
+               resources = HICCUP.find_job_location(**job)  #get matching nodes
                if not resources:
                     continue
                node_list = []
@@ -406,7 +407,7 @@ class HeckleSystem(Component):
           POST:  if good, return locations
                  if not good, raise exception and list bad nodes
           """
-          HICCUP = Heckle_Interface()
+          HICCUP = HeckleConnector()
           heckle_node_set = set(HICCUP.list_all_nodes())
           locs = locations[0]['name']
           logger.debug("Heckle System: get_partitions: raw is are: %s" % locations )
