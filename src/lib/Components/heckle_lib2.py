@@ -123,8 +123,6 @@ class Heckle_Interface():
           logger.debug("HICCUP: Debug: free_reserved_nodes: unreserve yeilds %s" % unreserve( **opts ) )
           self.session.commit()
           return True
-
-
      def kill_reservation( self, uid=None, res_id=None, **kwargs ):
           """
           Removes a reservation from the Heckle System
@@ -142,8 +140,7 @@ class Heckle_Interface():
           logger.debug("HICCUP: Debug: kill_reservation:  unreserve yeilds %s" % unreserve( **opts ) )
           self.session.commit()
           return True
-
-	def get_hw_criteria( self, attrs ):
+     def get_hw_criteria( self, attrs ):
           """
           Converts dictionary in options to query-language required
                for Heckle Hardware Criteria
@@ -153,24 +150,24 @@ class Heckle_Interface():
           logger.debug("HICCUP: Debug: get_hw_criteria: opts are: %s " % opts )
           hw_criteria = []
           options = {}
-		for field in attrs:
-			if field in self.HW_FIELDS and value in self.glossary[field]:
+          for field in attrs:
+               if field in self.HW_FIELDS and value in self.glossary[field]:
                     if field is 'fakebuild':
                          pass
                     else:
                          #print "Found: In HW: ", field, ":", in_kwargs[field]
                          hw_criteria.append(str(field) + str("==") + str(in_kwargs[field]))
-			else:
-				#print "Excluded: ", field, ":" , in_kwargs[field]
-				options[field] = in_kwargs[field]
+               else:
+                    #print "Excluded: ", field, ":" , in_kwargs[field]
+                    options[field] = in_kwargs[field]
           logger.debug("HICCUP: Debug: get_hw_criteria: HW Criteria is:%s, Remaining Options are %s." % (hw_criteria, options) )
           if options:
-			raise Exception( "HICCUP: get_hw_criteria: Bad hardware criteria %s" % options )
-		else:
-			return hw_criteria
+               raise Exception( "HICCUP: get_hw_criteria: Bad hardware criteria %s" % options )
+          else:
+               return hw_criteria
 
 
-     def find_job_location( self, attrs, nodes=0, walltime, start ):
+     def find_job_location( self, attrs, nodes, walltime, start ):
           """
           This function returns a list of nodes which match the attributes that are free for the appropriate time
           attrs is a dictionary of string pairs, key:value, for hardware
@@ -196,24 +193,19 @@ class Heckle_Interface():
 
 
 
-	def list_available_nodes( self, start=None, end=None, kernel='default', attrs={} ):
+     def list_available_nodes( self, start=None, end=None, kernel='default', attrs={} ):
           """
           Returns a list of available nodes which match HW and Time criteria
-          Gameplan:
-               Get list of all nodes
-               Determine allocated nodes
-               return list of unallocated nodes
           """
           #print "HICCUP: list_available_nodes: vals are ", self.__dict__
           opts = {}
           opts['session']=self.session
           opts['start']=start
           opts['end']=end
-		opts['hardware_criteria'] = self.get_hw_criteria( attrs=attrs )
+          opts['hardware_criteria'] = self.get_hw_criteria( attrs=attrs )
           if kernel and not hw_criteria:
                opts['image_criteria'] = kernel
           print "List Options are: ", opts
-          
           nodes = findNodes( **opts )
           return nodes
 
@@ -235,25 +227,25 @@ class Heckle_Interface():
           baddict = {}
           badlist = []
           for attr in attrs:
-			if attr not in self.HW_FIELDS:
-				badlist.update(attr)
+               if attr not in self.HW_FIELDS:
+                    badlist.update(attr)
                if kwargs[attr] not in self.glossary[attr]:
-				baddict[attr] = attrs[attr]
-		if badlist or baddict:
-			raise Exception( "HICCUP: Valid_HW: The following are bad variables: keys %s, value %s" % (badlist, baddict) )
+                    baddict[attr] = attrs[attr]
+          if badlist or baddict:
+               raise Exception( "HICCUP: Valid_HW: The following are bad variables: keys %s, value %s" % (badlist, baddict) )
           return True
 
 
-	def Valid_Job( self, num_nodes=None, kernel=None, **kwargs ):
-		"""
-		This is a bounds check:  Will the job ever run on the system, as-is.
-		"""
-		valid_kernel = self.Valid_Kernel( something )
-		valid_hw = self.Valid_HW( something )
-		valid_job = len(self.list_available_nodes( something )) >= num_nodes
-		if valid_kernel and valid_hw and valid_job:
-			return True
-		return False
+     def Valid_Job( self, num_nodes=None, kernel=None, **kwargs ):
+          """
+          This is a bounds check:  Will the job ever run on the system, as-is.
+          """
+          valid_kernel = self.Valid_Kernel( something )
+          valid_hw = self.Valid_HW( something )
+          valid_job = len(self.list_available_nodes( something )) >= num_nodes
+          if valid_kernel and valid_hw and valid_job:
+               return True
+          return False
 
      
      def GetReservations( self ):
@@ -264,12 +256,12 @@ class Heckle_Interface():
           print reservations
 
 
-	def get_all_nodes( self ):
+     def get_all_nodes( self ):
           """
           Heckle Glossary Function
           Produces a basic list of all the nodes
-		Note: This is specific to Breadboard.
-			For real installation, this would need to read from config file.
+          Note: This is specific to Breadboard.
+          For real installation, this would need to read from config file.
           """
           p = re.compile("bb\d{1,2}")
           all_nodes_list = []
@@ -279,7 +271,7 @@ class Heckle_Interface():
           return all_nodes_list
 
 
-	def glossary( self ):
+     def glossary( self ):
           """
           Heckle Glossary Function
           Gets a basic glossary of all the hardware_criteria
@@ -301,14 +293,14 @@ class Heckle_Interface():
           return propdict
 
 
-	def get_node_properties( self, node_name ):
+     def get_node_properties( self, node_name ):
           """
           Heckle Glossary Function
           Gets all the properties of one node
           """
           #hwlist = list_hardware(session, name=node_name)  #Use if it worked...
           #return hwlist['properties']
-#          logger.debug("HICCUP: get_node_properties    &&&&&&&&&&&&")
+          #          logger.debug("HICCUP: get_node_properties    &&&&&&&&&&&&")
           props = []
           self.session.expire_all()
           hwlist = heckle_list_hardware( self.session )
