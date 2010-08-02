@@ -286,15 +286,13 @@ class HeckleSystem(Component):
           """
           logger.debug("Heckle System: Validate Job: Verify Locations")
           HICCUP = Heckle_Interface()
-          valid_list = HICCUP.list_all_nodes()
-          not_valid_list = []
-          for name in location_list:
-               if name not in valid_list:
-                    not_valid_list.append(name)
-          if not_valid_list:
-               raise Exception("Heckle System: Verify Locations: Invalid location names: %s" % not_valid_list)
-          else:
+          heckle_set = set(HICCUP.list_all_nodes())
+          location_set = set(location_list)
+          if heckle_set >= location_set:
                return location_list
+          else:
+               not_valid_list = list( location_set.difference( heckle_set ) )
+               raise Exception("Heckle System: Verify Locations: Invalid location names: %s" % not_valid_list)
      verify_locations = exposed( verify_locations )
      
      
@@ -409,29 +407,21 @@ class HeckleSystem(Component):
                  if not good, raise exception and list bad nodes
           """
           HICCUP = Heckle_Interface()
-          nodelist = HICCUP.list_all_nodes()
+          heckle_node_set = set(HICCUP.list_all_nodes())
           locs = locations[0]['name']
-          badlocations = []
           logger.debug("Heckle System: get_partitions: raw is are: %s" % locations )
           logger.debug("Heckle System: get_partitions: vals are: %s" % locs )
           if type(locs) == ListType:
-               for location in locs:
-                    if location not in nodelist:
-                         badlocations.append(location)
-                         print "Bad"
-                    else:
-                         print "Good"
+               locset = set(locs)
+               badlocations = locset.difference(heckle_node_set)
+               if badlocations:
+                    raise Exception("Heckle System: get_partition: Bad Locations: %s " % list(badlocations) )
           elif type(locs) == StringType:
                if locs not in nodelist:
                     raise Exception("Heckle System: get_partition: Bad Locations: %s" % locs)
-               else:
-                    pass
           else:
                raise Exception("Heckle System: get_partition: location needs to be string or list of strings, you provided %s : %s" % ( type(locs), locs))
-          if badlocations:
-               raise Exception("Heckle System: get_partition: Bad Locations: %s " % badlocations)
-          else:
-               return locations
+          return locations
      get_partitions = exposed(get_partitions)
      
      

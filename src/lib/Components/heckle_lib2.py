@@ -2,18 +2,19 @@
 
 
 
-
-
+import re
+from types import *
+import logging
+from datetime import datetime, timedelta
 
 
 import heckle.lib.models as HM
 from heckle.lib.heckle_reservations import *
-from heckle.lib.heckle_images import list_image
-from heckle.lib.heckle_hardware import findHardwareByProperty, list_hardware
-from heckle.lib.heckle_allocations import allocate
-from heckle.lib.heckle_users import get_current_user
-from heckle.lib.util import createSessionInstance
-from heckle.lib.heckle_nodes import list_node
+from heckle.lib.heckle_images import list_image as heckle_list_image
+from heckle.lib.heckle_hardware import list_hardware as heckle_list_hardware
+from heckle.lib.heckle_allocations import allocate as heckle_allocate
+from heckle.lib.util import createSessionInstance as heckle_createSessionInstance
+from heckle.lib.heckle_nodes import list_node as heckle_list_node
 
 
 
@@ -47,13 +48,12 @@ class Heckle_Interface():
           Establishes SQLAlchemy session, which is then reused by all calls
           """
           try:
-               self.session = createSessionInstance()
-               #logger.debug("HICCUP: INIT: Session Created")
-               #print "HICCUP:  Session Created."
+               self.session = heckle_createSessionInstance()
           except:
                logger.exception("HICCUP: INIT: Problem Creating a Session.")
                raise Exception("HICCUP: INIT: Problem Creating a Session.")
-          self.GLOSSARY = self.get_glossary( )
+          self.HW_FIELDS = HW_FIELDS
+          self.get_glossary( )
 
 
      def __del__( self ):
@@ -65,16 +65,20 @@ class Heckle_Interface():
      ################################################
 
 
-     def make_reservation( self, location, kernel, walltime, user, fakebuild, **kwargs ):
+     def make_reservation( self, location, kernel, walltime, user, fakebuild, comment=None, **kwargs ):
           """
           Adaptor to make a reservation
           Returns the Heckle Reservation object
+          Variables:
+               location: list of strings, containing names of nodes to make reservation
+               kernel: string, exact name of kernel image to use
+               user: string, user name passed through Cobalt
+               fakebuild: boolean, whether to actually build node or fake build it.
+               comment: string, any comments to make in the reservation
+               kwargs:  Any
           """
-          #Check for required fields in options:
-          #opts = kwargs
           logger.debug("HICCUP: Debug: Make Reservations: Options are %s", self.__dict__ )
-          #Set up variables
-          reservation_criteria = {}
+          reservation_criteria = {} #Build reservation arguments
           reservation_criteria['session']=self.session
           reservation_criteria['start']=datetime.now()
           reservation_criteria['end']=datetime.now() + timedelta( minutes=int(walltime) )
@@ -89,7 +93,7 @@ class Heckle_Interface():
           self.session.commit()
           logger.debug("HICCUP: Debug: Make Reservation: Reservation Made: %s "% reservation )
           #Use Reservation to Allocate
-          allocate_criteria = {}
+          allocate_criteria = {}   #build allocation arguments
           allocate_criteria['session'] = self.session
           allocate_criteria['res_id'] = reservation.id
           allocate_criteria['nodes'] = location
@@ -99,7 +103,7 @@ class Heckle_Interface():
           allocate_criteria['image_name'] = kernel
           allocate_criteria['fakebuild'] = fakebuild
           logger.debug("HICCUP: Debug: Make Reservation: Allocate Properties: %s" % allocate_criteria )
-          allocated_nodes = allocate( **allocate_criteria )
+          allocated_nodes = heckle_allocate( **allocate_criteria )
           logger.debug("HICCUP: Debug: Make Reservation: Nodes Allocated: %s" % allocated_nodes )
           self.session.commit()
           return reservation
@@ -143,14 +147,19 @@ class Heckle_Interface():
           """
           Converts dictionary in options to query-language required
                for Heckle Hardware Criteria
+          attrs is a dict of key:value pairs, of strings.
+          Returns a string in query-language
           """
           logger.debug("HICCUP: Debug: get_hw_criteria: opts are: %s " % opts )
           hw_criteria = []
           options = {}
-		for field in in_kwargs:
+		for field in attrs:
 			if field in self.HW_FIELDS and value in self.glossary[field]:
-				#print "Found: In HW: ", field, ":", in_kwargs[field]
-				hw_criteria.append(str(field) + str("==") + str(in_kwargs[field]))
+                    if field is 'fakebuild':
+                         pass
+                    else:
+                         #print "Found: In HW: ", field, ":", in_kwargs[field]
+                         hw_criteria.append(str(field) + str("==") + str(in_kwargs[field]))
 			else:
 				#print "Excluded: ", field, ":" , in_kwargs[field]
 				options[field] = in_kwargs[field]
@@ -187,7 +196,7 @@ class Heckle_Interface():
 
 
 
-	def list_available_nodes( self, start=None, end=None, kernel='default', attrs ):
+	def list_available_nodes( self, start=None, end=None, kernel='default', attrs={} ):
           """
           Returns a list of available nodes which match HW and Time criteria
           Gameplan:
@@ -200,7 +209,7 @@ class Heckle_Interface():
           opts['session']=self.session
           opts['start']=start
           opts['end']=end
-		opts['hardware_criteria'] = self.get_hw_criteria( in_kwargs=kwargs )
+		opts['hardware_criteria'] = self.get_hw_criteria( attrs=attrs )
           if kernel and not hw_criteria:
                opts['image_criteria'] = kernel
           print "List Options are: ", opts
@@ -214,7 +223,7 @@ class Heckle_Interface():
           Checks to see if the kernel specified is within the list of current images
           """
           logger.debug("HICCUP: Debug: Valid Kernel: Image Name is: %s" % image_name )
-          image_val = list_image( session=self.session, name=image_name)          
+          image_val = heckle_list_image( session=self.session, name=image_name)          
           return image_val
 
 
@@ -225,11 +234,10 @@ class Heckle_Interface():
           logger.debug("HICCUP: Valid_HW: kwargs are: %s" % kwargs )
           baddict = {}
           badlist = []
-          hw_dict = self.GLOSSARY
           for attr in attrs:
-			if attr not in HW_FIELDS:
+			if attr not in self.HW_FIELDS:
 				badlist.update(attr)
-               if kwargs[attr] not in hw_dict[attr]:
+               if kwargs[attr] not in self.glossary[attr]:
 				baddict[attr] = attrs[attr]
 		if badlist or baddict:
 			raise Exception( "HICCUP: Valid_HW: The following are bad variables: keys %s, value %s" % (badlist, baddict) )
@@ -265,20 +273,21 @@ class Heckle_Interface():
           """
           p = re.compile("bb\d{1,2}")
           all_nodes_list = []
-          for node in list_node( self.session ):
+          for node in heckle_list_node( self.session ):
                if p.match(node['name']):
                     all_nodes_list.append(node['name'])
           return all_nodes_list
 
 
-	def get_glossary( self ):
+	def glossary( self ):
           """
           Heckle Glossary Function
           Gets a basic glossary of all the hardware_criteria
           Gets list of all nodes, all hardware
           """
-          self.NODELIST = self.get_all_nodes()
-          hwlist = list_hardware(self.session)
+          self.NODE_LIST = self.get_all_nodes( session )
+          self.NODE_COUNT = len(self.NODE_LIST)
+          hwlist = heckle_list_hardware(self.session)
           propdict = {}
           for name in nodelist:
                for element in hwlist:
@@ -302,25 +311,26 @@ class Heckle_Interface():
 #          logger.debug("HICCUP: get_node_properties    &&&&&&&&&&&&")
           props = []
           self.session.expire_all()
-          hwlist = list_hardware( self.session )
+          hwlist = heckle_list_hardware( self.session )
           for element in hwlist:
                if node_name in element['nodes']:
                     props = element['properties']
                     continue
-          props.update(list_node(self.session, name=node_name)[0])
+          props.update(heckle_list_node(self.session, name=node_name)[0])
           return props
 
 
-	def ChooseNodes( in_list=None, in_numb=None ):
-		"""
-		For now, chooses only the first n nodes in the list
-		regardless of other criteria
-		"""
-		in_numb = int(in_numb)
-		try:
-			return in_list[ :in_numb]
-		except:
-			return []
+     def ChooseNodes( in_list=[], in_numb=None, forbidden=[] ):
+          """
+          For now, chooses only the first n nodes in the list
+          regardless of other criteria
+          """
+          in_numb = int(in_numb)
+          out_list = list( set( in_list ).difference( set( forbidden ) ) )
+          try:
+               return out_list[ :in_numb]
+          except:
+               return []
 
 
 
