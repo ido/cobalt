@@ -56,19 +56,88 @@ class Heckle_Interface():
           self.GLOSSARY = self.get_glossary( )
 
 
+     def __del__( self ):
+          self.session.close()
 
-	def get_usernames( self, uid=None , required=False, **kwargs ):
-          """
-          Returns the usernames object for any one user
-          """
-          #user_objs = self.session.query( HM.User).filter(HM.User.uid == uid ).one()
-          #if user_objs:
-          if uid:
-               usernames = [uid, ]
-          else:
-               raise Exception("HICCUP:  No User Entered")
-          return usernames
+     ################################################
+     ###  These are external methods
+     ###  They are involved in the making and killing of reservations
+     ################################################
 
+
+     def make_reservation( self, location, kernel, walltime, user, fakebuild, **kwargs ):
+          """
+          Adaptor to make a reservation
+          Returns the Heckle Reservation object
+          """
+          #Check for required fields in options:
+          #opts = kwargs
+          logger.debug("HICCUP: Debug: Make Reservations: Options are %s", self.__dict__ )
+          #Set up variables
+          reservation_criteria = {}
+          reservation_criteria['session']=self.session
+          reservation_criteria['start']=datetime.now()
+          reservation_criteria['end']=datetime.now() + timedelta( minutes=int(walltime) )
+          reservation_criteria['node_list']=location
+          reservation_criteria['usernames']=[user,]   #Fix this
+          try:
+               reservation_criteria['comment']=kwargs['comment']
+          except:
+               reservation_criteria["comment"] = "Reserved by: %s" % ', '.join(usernames)
+          logger.debug("HICCUP: Debug: Make Reservation: Reservation Options: %s " % reservation_criteria )
+          reservation = reserve( **reservation_criteria )
+          self.session.commit()
+          logger.debug("HICCUP: Debug: Make Reservation: Reservation Made: %s "% reservation )
+          #Use Reservation to Allocate
+          allocate_criteria = {}
+          allocate_criteria['session'] = self.session
+          allocate_criteria['res_id'] = reservation.id
+          allocate_criteria['nodes'] = location
+          allocate_criteria['num_nodes'] = nodecount
+          allocate_criteria["users_and_keys"]={user:None}
+          allocate_criteria["properties"]=None
+          allocate_criteria['image_name'] = kernel
+          allocate_criteria['fakebuild'] = fakebuild
+          logger.debug("HICCUP: Debug: Make Reservation: Allocate Properties: %s" % allocate_criteria )
+          allocated_nodes = allocate( **allocate_criteria )
+          logger.debug("HICCUP: Debug: Make Reservation: Nodes Allocated: %s" % allocated_nodes )
+          self.session.commit()
+          return reservation
+
+
+     def free_reserved_node( self, uid=None, node_list=None, **kwargs ):
+          """
+          Removes reserved nodes from a Heckle reservation
+          This will free only those nodes specified
+          """
+          logger.debug("HICCUP: Debug: Make Reservation: free_reserved_nodes: Opts are %s " % self.__dict__)
+          username = (self.get_usernames(uid))[0]
+          opts = {}
+          opts["username"]=username
+          opts["session"]=self.session
+          opts["node_names"]=node_list
+          logger.debug("HICCUP: Debug: free_reserved_nodes: unreserve yeilds %s" % unreserve( **opts ) )
+          self.session.commit()
+          return True
+
+
+     def kill_reservation( self, uid=None, res_id=None, **kwargs ):
+          """
+          Removes a reservation from the Heckle System
+          This will free all nodes within the reservation
+          """
+          logger.debug("HICCUP: Debug: kill_reservation: vals are %s" % self.__dict__ )
+          opts = {}
+          username = (self.get_usernames(uid))[0]
+          opts["session"] = self.session
+          opts["username"] = username
+          opts["node_names"] = None
+          opts["reservation"] = res_id
+          opts["force"] = True
+          print "Kill Res: Options Are:", opts
+          logger.debug("HICCUP: Debug: kill_reservation:  unreserve yeilds %s" % unreserve( **opts ) )
+          self.session.commit()
+          return True
 
 	def get_hw_criteria( self, attrs ):
           """
