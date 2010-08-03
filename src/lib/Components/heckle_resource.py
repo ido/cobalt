@@ -30,7 +30,7 @@ import os
 try:
      from Cobalt.Components.heckle_lib import *
 except:
-     pass
+     from heckle_sim import *
 
 
 HW_FIELDS = ["GPU", "MEM", "DISK", "NET", "IB", "CORES"]  #, "VINTAGE" ]

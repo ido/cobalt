@@ -140,6 +140,8 @@ class HeckleConnector( object ):
             heckle_unreserve( **opts ) )
         self.session.commit()
         return True
+
+
     def kill_reservation( self, uid=None, res_id=None, **kwargs ):
         """
         Removes a reservation from the Heckle System
@@ -158,6 +160,8 @@ class HeckleConnector( object ):
             heckle_unreserve( **opts ) )
         self.session.commit()
         return True
+
+
     def get_hw_criteria( self, attrs ):
         """
         Converts dictionary in options to query-language required
@@ -341,6 +345,18 @@ class HeckleConnector( object ):
                 continue
         props.append(heckle_list_node(self.session, name=node_name)[0])
         return props
+    
+    
+    def get_node_bootstate( self, node_name ):
+        """
+        Queries Heckle to get the boot state of a node from heckle
+        Returns as string
+        """
+        logger.debug("HICCUP: get_node_bootstate")
+        node_info = self.get_node_properties( node_name )
+        node_state = node_info["bootstate"]
+        logger.info("HICCUP: get_node_bootstate: bootstate for node %s is %s" % ( node_name, node_state ))
+        return node_state
 
 
 def choosenodes( in_list, in_numb, forbidden ):
