@@ -23,7 +23,7 @@ import time
 
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
-            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 'Anchor', 'anchor']
+            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 'Anchor', 'anchor', 'vicinity']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -129,9 +129,13 @@ if __name__ == "__main__":
         help="file name of the job trace (when scheduling for bg system only)")
     p.add_option("-i", "--interval", dest="sleep_interval", type="float",
         help="seconds to wait at each event when printing screens")
+    p.add_option("-F", "--bg_frac", dest="BG_Fraction", type="float", default=False,
+        help="parameter to adjust bg workload. All the interval between job arrivals will be multiplied with the parameter")
+    p.add_option("-f", "--cluster_frac", dest="cluster_fraction", type="float", default=False,
+        help="parameter to adjust cluster workload. All the interval between job arrivals will be multiplied with the parameter")
     p.add_option(Option("-S", "--Start",
         dest="bg_trace_start", type="date",
-        help="bg job submission times (in job trace) should be after 12.01am on this date. \
+        help="bg job submission times (in job trace) should be after 12.01am on this date.\
         By default it equals to the first job submission time in job trace 'bgjob'"))
     p.add_option(Option("-E", "--End",
         dest="bg_trace_end", type="date",
@@ -152,15 +156,15 @@ if __name__ == "__main__":
         dest="anchor", type="date",
         help="the virtual start date of simulation for bqsim. If not specified, it is same as c_trace_start"))
     p.add_option("-P", "--prediction", dest="predict", type="string", default=False,
-        help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction. x:queuing, y:backfilling, z:running job")
+        help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction for (x:queuing / y:backfilling / z:running) jobs")
     p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
         help="[cons | aggr | both] specify the walltime aware spatial scheduling scheme: cons=conservative scheme, aggr=aggressive scheme, both=cons+aggr")
     p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
         help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
-    p.add_option("-F", "--bg_frac", dest="BG_Fraction", type="float", default=False,
-        help="parameter to adjust bg workload. All the interval between job arrivals will be multiplied with the parameter")
-    p.add_option("-f", "--cluster_frac", dest="cluster_fraction", type="float", default=False,
-        help="parameter to adjust cluster workload. All the interval between job arrivals will be multiplied with the parameter")
+    p.add_option("-v", "--vicinity", dest="vicinity", type="float", default=0.0,
+        help="Threshold to determine mate jobs in coscheduling. \
+        Two jobs can be considered mated only if their submission time difference is smaller than 'vicinity'")
+        
     
     coscheduling_schemes = ["hold", "yield"]
     wass_schemes = ["cons", "aggr", "both"]

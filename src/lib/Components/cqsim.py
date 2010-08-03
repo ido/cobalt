@@ -135,13 +135,12 @@ def parse_work_load(filename):
             
     return raw_job_dict
 
-def tune_workload(specs, frac=1, anchor=0):
-    '''tune workload heavier or lighter, and adjust the start time to anchor'''
-  
-    def _subtimecmp(spec1, spec2):
+def _subtimecmp(spec1, spec2):
         return cmp(spec1.get('submittime'), spec2.get('submittime'))
-    specs.sort(_subtimecmp)
-        
+
+def tune_workload(specs, frac=1, anchor=0):
+    '''tune workload heavier or lighter, and adjust the start time to anchor. specs should be sorted by submission time'''
+
     #calc intervals (the first job's interval=0, the i_th interval is sub_i - sub_{i-1}
     lastsubtime = 0
     for spec in specs:
@@ -426,6 +425,10 @@ class ClusterQsim(ClusterBaseSystem):
             bg_mate_dict = ComponentProxy(REMOTE_QUEUE_MANAGER).get_mate_job_dict()
             self.job_hold_dict = {}
             self.mate_job_dict = dict((v,k) for k, v in bg_mate_dict.iteritems())
+            matejobs = len(self.mate_job_dict.keys())
+            proportion = float(matejobs) / self.total_job
+            print "number mate job pairs: %s, proportion in cluster jobs: %s%%" \
+            % (len(self.mate_job_dict.keys()), round(proportion *100, 1) ) 
         else:
             self.mate_job_dict = {}
             
@@ -478,7 +481,7 @@ class ClusterQsim(ClusterBaseSystem):
         '''parses the work load log file, initializes queues and sorted time 
         stamp list'''
         
-        print "Initializing jobs, one moment please..."
+        print "Initializing cluster jobs, one moment please..."
         
         raw_jobs = parse_work_load(self.workload_file)
         specs = []
@@ -546,6 +549,8 @@ class ClusterQsim(ClusterBaseSystem):
             
             #add the job spec to the spec list            
             specs.append(spec)
+
+        specs.sort(_subtimecmp)
                 
         #adjust workload density and simulation start time
         if self.fraction != 1 or self.anchor !=0 :
@@ -1093,7 +1098,7 @@ class ClusterQsim(ClusterBaseSystem):
         try:
             f = open(filename)
         except:
-            self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
+            #self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
             return
         
         str = f.read()

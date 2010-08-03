@@ -150,13 +150,12 @@ def parse_work_load(filename):
     return raw_job_dict
 
 
-def tune_workload(specs, frac=1, anchor=0):
-    '''tune workload heavier or lighter, and adjust the start time to anchor'''
-  
-    def _subtimecmp(spec1, spec2):
+def _subtimecmp(spec1, spec2):
         return cmp(spec1.get('submittime'), spec2.get('submittime'))
-    specs.sort(_subtimecmp)
-        
+
+def tune_workload(specs, frac=1, anchor=0):
+    '''tune workload heavier or lighter, and adjust the start time to anchor, specs should be sorted by submission time'''
+  
     #calc intervals (the first job's interval=0, the i_th interval is sub_i - sub_{i-1}
     lastsubtime = 0
     for spec in specs:
@@ -389,7 +388,7 @@ class BGQsim(Simulator):
             self.coscheduling = False
         
         self.mate_qtime_pairs = []
-        
+                
         #key=local job id, value=remote mated job id
         self.mate_job_dict = {}
         #key = jobid, value = nodelist  ['part-or-node-name','part-or-node-name' ]
@@ -407,7 +406,7 @@ class BGQsim(Simulator):
             else:
                 self.coscheduling = False
                 self.mate_queue_manager = None
-        
+            
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.inhibit_small_partitions()
@@ -468,10 +467,12 @@ class BGQsim(Simulator):
         
         if self.coscheduling:
             self.init_mate_job_dict()
+            matejobs = len(self.mate_job_dict.keys())
+            proportion = float(matejobs) / self.total_job
+            print "vicinity = %s seconds" % (self.mate_vicinity)
+            print "number mate job pairs: %s, proportion in blue gene jobs: %s%%"\
+             % (len(self.mate_job_dict.keys()), round(proportion *100, 1)) 
         
-        for k, v in self.mate_job_dict.iteritems():
-            print "%s:%s" % (k, v)
-
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
         
@@ -529,8 +530,6 @@ class BGQsim(Simulator):
         
         if not self.cluster_job_trace:
             Var = raw_input("press any Enter to continue...")
-                
-        print "Simulation starts:"
     
     def _get_queuing_jobs(self):
         return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
@@ -671,7 +670,7 @@ class BGQsim(Simulator):
         '''parses the work load log file, initializes queues and sorted time 
         stamp list'''
         
-        print "Initializing jobs, one moment please..."
+        print "Initializing BG jobs, one moment please..."
         
         raw_jobs = parse_work_load(self.workload_file)
         specs = []
@@ -741,13 +740,16 @@ class BGQsim(Simulator):
             
             #add the job spec to the spec list            
             specs.append(spec)
-                
+            
+        specs.sort(_subtimecmp)
+            
         #adjust workload density and simulation start time
         if self.fraction != 1 or self.anchor !=0 :
             tune_workload(specs, self.fraction, self.anchor)
-            print "workload adjusted: "
-            print "first job submitted:", sec_to_date(specs[0].get('submittime'))
-            print "last job submitted:", sec_to_date(specs[len(specs)-1].get('submittime'))
+            
+        print "simulation time span:"
+        print "first job submitted:", sec_to_date(specs[0].get('submittime'))
+        print "last job submitted:", sec_to_date(specs[len(specs)-1].get('submittime'))
         
         self.total_job = len(specs)
         print "total job number:", self.total_job
