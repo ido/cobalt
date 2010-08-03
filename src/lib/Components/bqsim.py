@@ -150,15 +150,14 @@ def parse_work_load(filename):
     return raw_job_dict
 
 
-def tune_workload(specs, frac):
-    '''tune workload heavier or lighter'''
+def tune_workload(specs, frac=1, anchor=0):
+    '''tune workload heavier or lighter, and adjust the start time to anchor'''
   
     def _subtimecmp(spec1, spec2):
         return cmp(spec1.get('submittime'), spec2.get('submittime'))
-    
     specs.sort(_subtimecmp)
         
-    #calc mtbs
+    #calc intervals (the first job's interval=0, the i_th interval is sub_i - sub_{i-1}
     lastsubtime = 0
     for spec in specs:
         if (lastsubtime==0):
@@ -168,16 +167,20 @@ def tune_workload(specs, frac):
         lastsubtime =  spec['submittime']
         spec['interval'] = interval
     
-    #tune workload heavier or lighter
-    
-    last_newsubtime = specs[0].get('submittime')
-    
+    #if anchor is specified, set the first job submission time to anchor
+    if anchor:
+        specs[0]['submittime'] = anchor
+    else:
+        pass
+        
+    last_newsubtime = specs[0].get('submittime')    
     for spec in specs:
         interval = spec['interval']
         newsubtime = last_newsubtime + frac * interval
         spec['submittime'] = newsubtime
         spec['interval'] = frac * interval
-        last_newsubtime = newsubtime    
+        last_newsubtime = newsubtime
+        
     
 def sec_to_date(sec, dateformat="%m/%d/%Y %H:%M:%S"):
     tmp = datetime.fromtimestamp(sec)
@@ -311,10 +314,7 @@ class SimQueueDict(QueueDict):
         for spec in specs:
             if spec['queue'] not in queue_names:
                 spec['queue'] = "default"
-   
-#               self.add_queues([{"name":spec['queue'], "policy":self.policy}])
-#               queue_names.append(spec['queue'])
-               
+              
         results = []
          # add the jobs to the appropriate JobList
         for spec in specs:
@@ -376,11 +376,9 @@ class BGQsim(Simulator):
         self.sleep_interval = kwargs.get("sleep_interval", 0)
         
         self.fraction = kwargs.get("BG_Fraction", 1)
-        
-        self.sim_start = kwargs.get("sim_start", 0)
-        self.sim_end = kwargs.get("sim_end", sys.maxint)
-                
-        print "self.fraction=", self.fraction
+        self.sim_start = kwargs.get("bg_trace_start", 0)
+        self.sim_end = kwargs.get("bg_trace_end", sys.maxint)
+        self.anchor = kwargs.get("Anchor", 0)
         
         #self.coscheduling = kwargs.get("coscheduling", False)
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
@@ -409,16 +407,11 @@ class BGQsim(Simulator):
             else:
                 self.coscheduling = False
                 self.mate_queue_manager = None
-       
         
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.inhibit_small_partitions()
         self.part_size_list = []
-        #print all partitions
-#        for part in self._partitions.itervalues():
-#            if part.scheduled == True:
-#                print "%s" % (part.name)
      
         for part in self.partitions.itervalues():
             if int(part.size) not in self.part_size_list:
@@ -749,10 +742,12 @@ class BGQsim(Simulator):
             #add the job spec to the spec list            
             specs.append(spec)
                 
-        #adjust workload density
-        if self.fraction != 1:
-            tune_workload(specs, self.fraction)
-            print "workload adjusted: last submit job=", sec_to_date(specs[len(specs)-1].get('submittime'))
+        #adjust workload density and simulation start time
+        if self.fraction != 1 or self.anchor !=0 :
+            tune_workload(specs, self.fraction, self.anchor)
+            print "workload adjusted: "
+            print "first job submitted:", sec_to_date(specs[0].get('submittime'))
+            print "last job submitted:", sec_to_date(specs[len(specs)-1].get('submittime'))
         
         self.total_job = len(specs)
         print "total job number:", self.total_job
@@ -996,11 +991,7 @@ class BGQsim(Simulator):
         
         if self.givingup_job_list:
             jobs = [job for job in jobs if job.jobid not in self.givingup_job_list]
-         #   print "giving up list=", self.givingup_job_list
-            
-        #print "active job2=", [job.jobid for job in jobs]
-        #print "ret_job2=", [job.jobid for job in jobs if job.is_runnable == True]
-
+  
         return jobs
     get_jobs = exposed(query(get_jobs))
     

@@ -135,17 +135,14 @@ def parse_work_load(filename):
             
     return raw_job_dict
 
-def tune_workload(specs, frac):
-    '''tune workload heavier or lighter'''
-    
-    print "inside tune_workload fraction =", frac
-    
+def tune_workload(specs, frac=1, anchor=0):
+    '''tune workload heavier or lighter, and adjust the start time to anchor'''
+  
     def _subtimecmp(spec1, spec2):
         return cmp(spec1.get('submittime'), spec2.get('submittime'))
-    
     specs.sort(_subtimecmp)
         
-    #calc mtbs
+    #calc intervals (the first job's interval=0, the i_th interval is sub_i - sub_{i-1}
     lastsubtime = 0
     for spec in specs:
         if (lastsubtime==0):
@@ -155,16 +152,19 @@ def tune_workload(specs, frac):
         lastsubtime =  spec['submittime']
         spec['interval'] = interval
     
-    #tune workload heavy or light
-    
-    last_newsubtime = specs[0].get('submittime')
-    
+    #if anchor is specified, set the first job submission time to anchor
+    if anchor:
+        specs[0]['submittime'] = anchor
+    else:
+        pass
+        
+    last_newsubtime = specs[0].get('submittime')    
     for spec in specs:
         interval = spec['interval']
         newsubtime = last_newsubtime + frac * interval
         spec['submittime'] = newsubtime
         spec['interval'] = frac * interval
-        last_newsubtime = newsubtime    
+        last_newsubtime = newsubtime
     
 def sec_to_date(sec, dateformat="%m/%d/%Y %H:%M:%S"):
     tmp = datetime.fromtimestamp(sec)
@@ -176,10 +176,6 @@ def date_to_sec(fmtdate, dateformat="%m/%d/%Y %H:%M:%S"):
     sec = time.mktime(t_tuple)
     return sec
 
-def qsim_quit():
-    print "pid=", os.getpid()
-    os.kill(os.getpid(), signal.SIGINT)
-    
 def get_bgsched_config(option, default):
     try:
         value = config.get('bgsched', option)
@@ -360,9 +356,9 @@ class ClusterQsim(ClusterBaseSystem):
         self.sleep_interval = kwargs.get("sleep_interval", 0)
         
         self.fraction = kwargs.get("cluster_fraction", 1)
-        
-        self.sim_start = kwargs.get("sim_start", 0)
-        self.sim_end = kwargs.get("sim_end", sys.maxint)
+        self.sim_start = kwargs.get("c_trace_start", 0)
+        self.sim_end = kwargs.get("c_trace_end", sys.maxint)
+        self.anchor = kwargs.get("anchor", 0)
         
         self.workload_file =  kwargs.get("cjob")
         self.output_log = kwargs.get("outputlog")
@@ -551,10 +547,12 @@ class ClusterQsim(ClusterBaseSystem):
             #add the job spec to the spec list            
             specs.append(spec)
                 
-        #adjust workload density
-        if self.fraction != 1:
-            tune_workload(specs, self.fraction)
-            print "workload adjusted: last submit job=", sec_to_date(specs[len(specs)-1].get('submittime'))
+        #adjust workload density and simulation start time
+        if self.fraction != 1 or self.anchor !=0 :
+            tune_workload(specs, self.fraction, self.anchor)
+            print "workload adjusted: "
+            print "first job submitted:", sec_to_date(specs[0].get('submittime'))
+            print "last job submitted:", sec_to_date(specs[len(specs)-1].get('submittime'))
         
         self.total_job = len(specs)
         print "total job number:", self.total_job
@@ -1194,7 +1192,6 @@ class ClusterQsim(ClusterBaseSystem):
         # be running jobs very soon
 #        for location_list in best_location_dict.itervalues():
 #            self.running_nodes.update(location_list)
-
 
         return best_location_dict
     find_job_location = exposed(find_job_location)

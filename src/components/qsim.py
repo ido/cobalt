@@ -23,7 +23,7 @@ import time
 
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
-            'sim_start', 'sim_end']
+            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 'Anchor', 'anchor']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -129,12 +129,28 @@ if __name__ == "__main__":
         help="file name of the job trace (when scheduling for bg system only)")
     p.add_option("-i", "--interval", dest="sleep_interval", type="float",
         help="seconds to wait at each event when printing screens")
+    p.add_option(Option("-S", "--Start",
+        dest="bg_trace_start", type="date",
+        help="bg job submission times (in job trace) should be after 12.01am on this date. \
+        By default it equals to the first job submission time in job trace 'bgjob'"))
+    p.add_option(Option("-E", "--End",
+        dest="bg_trace_end", type="date",
+        help="bg job submission time (in job trace) should be prior to 12.01am on this date \
+        By default it equals to the last job submission time in job trace 'bgjob'"))
     p.add_option(Option("-s", "--start",
-        dest="sim_start", type="date",
-        help="job submission times should be after 12.01am on this date"))
+        dest="c_trace_start", type="date",
+        help="cluster job submission times (in job trace) should be after 12.01am on this date. \
+        By default it equals to the first job submission time in job trace 'cjob'"))
     p.add_option(Option("-e", "--end",
-        dest="sim_end", type="date",
-        help="job submission time should be prior to 12.01am on this date"))
+        dest="c_trace_end", type="date",
+        help="cluster job submission time (in job trace) should be prior to 12.01am on this date \
+        By default it equals to the last job submission time in job trace 'cjob'"))
+    p.add_option(Option("-A", "--Anchor",
+        dest="Anchor", type="date",
+        help="the virtual start date of simulation for bqsim. If not specified, it is same as bg_trace_start"))
+    p.add_option(Option("-a", "--anchor",
+        dest="anchor", type="date",
+        help="the virtual start date of simulation for bqsim. If not specified, it is same as c_trace_start"))
     p.add_option("-P", "--prediction", dest="predict", type="string", default=False,
         help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction. x:queuing, y:backfilling, z:running job")
     p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
@@ -187,15 +203,33 @@ if __name__ == "__main__":
             p.print_help()
             sys.exit()
             
-    if opts.sim_start:
-        print "start date=", opts.sim_start
-        t_tuple = time.strptime(str(opts.sim_start), "%Y-%m-%d %H:%M:%S")
-        opts.sim_start = time.mktime(t_tuple)
-    if opts.sim_end:
-        print "end date=", opts.sim_end
-        t_tuple = time.strptime(str(opts.sim_end), "%Y-%m-%d %H:%M:%S")
-        opts.sim_end = time.mktime(t_tuple)
-                        
+    if opts.bg_trace_start:
+        print "bg trace start date=", opts.bg_trace_start
+        t_tuple = time.strptime(str(opts.bg_trace_start), "%Y-%m-%d %H:%M:%S")
+        opts.bg_trace_start = time.mktime(t_tuple)
+    if opts.bg_trace_end:
+        print "bg trace end date=", opts.bg_trace_end
+        t_tuple = time.strptime(str(opts.bg_trace_end), "%Y-%m-%d %H:%M:%S")
+        opts.bg_trace_end = time.mktime(t_tuple)
+        
+    if opts.c_trace_start:
+        print "cluster trace start date=", opts.c_trace_start
+        t_tuple = time.strptime(str(opts.c_trace_start), "%Y-%m-%d %H:%M:%S")
+        opts.c_trace_start = time.mktime(t_tuple)
+    if opts.c_trace_end:
+        print "cluster trace end date=", opts.c_trace_end
+        t_tuple = time.strptime(str(opts.c_trace_end), "%Y-%m-%d %H:%M:%S")
+        opts.c_trace_end = time.mktime(t_tuple)
+        
+    if opts.Anchor:
+        print "bg simulation start date=", opts.Anchor
+        t_tuple = time.strptime(str(opts.Anchor), "%Y-%m-%d %H:%M:%S")
+        opts.Anchor = time.mktime(t_tuple)
+    if opts.anchor:
+        print "cluster simulation start date=", opts.anchor
+        t_tuple = time.strptime(str(opts.anchor), "%Y-%m-%d %H:%M:%S")
+        opts.anchor = time.mktime(t_tuple)
+                       
     options = {}
     for argname in arg_list:
         if getattr(opts, argname):
