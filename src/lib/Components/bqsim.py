@@ -564,7 +564,7 @@ class BGQsim(Simulator):
                     if tup[0] == 'qtime':
                         qtime = date_to_sec(tup[2], "%Y-%m-%d %H:%M:%S")
                     if tup[0] == 'jobid':
-                        jobid = tup[2]
+                        jobid = int(tup[2])
                 if jobid and qtime:
                         qtime_pairs.append((qtime, jobid))
                     
