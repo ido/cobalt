@@ -8,14 +8,12 @@ resources of the machines themselves.
 from types import ListType, StringType
 import logging
 
-from Cobalt.DataTypes.heckle_temp_ProcessGroup import ProcessGroup
 from Cobalt.DataTypes.heckle_temp_ProcessGroup import ProcessGroupDict
 from Cobalt.DataTypes.Resource import ResourceDict
 from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Exceptions import JobValidationError
 
 from Cobalt.Components.heckle_processgroup import HeckleProcessGroup
-from Cobalt.Components.heckle_processgroup import HeckleProcessGroupDict
 
 
 #from Cobalt.Components.heckle_lib import *
@@ -91,27 +89,40 @@ class HeckleSystem(Component):
     #####################
     def add_process_groups(self, specs):
         """
-        Allocate nodes and add the list of those allocated to the PGDict
-        specs is a list of dictionaries
-        Each dictionary contains the specifications for all the nodes in the process group
+        This function takes the specs (a list of jobs) and initiates each job as
+        a process group.
+        The process group abstracts the actual job into an object, providing a 
+        single point of control and interaction for all the nodes within that job.
+        Each job is described by a dict.  Each dict contains:
+            size:  
+            kernel: a String, the name of the kernel image to load.
+            executable: A string, the name of the command to execute upon the
+                head node; this could be considered the actual job's file.
+            stdin, stdout, stderr:  Three separate strings, each containing
+                the file to use for standard communication with the job as it
+                is running.  May be specified, or False.
+            kerneloptions: A string containing various options for the kernel,
+                or False.
+            args: A list
+            umask: An integer
+            jobid: An integer
+            cobalt_log_file: A string containing the log file to use in the
+                initiation and running of the job itself.
+            location:  List of strings of node / resource names
+            env:  A dict of key:value strings, specifying the environment in
+                which the job is to run on the node
+            id: A number
+            mode:
+            nodect:
+            cwd:  A string, specifying the current working directory in which
+                to run the job on the node
+            walltime:  Integer; the time, in minutes, allocated for the job
+                to run on the node.
+            user:  A string, the name of the user under which this job is to run.
         """
-        LOGGER.debug( 
-        "System:add_process_groups: Specs are %s" % specs )
-        hiccup = HeckleConnector()
-        try:     #  Checking for Fakebuild
-            specs[0]['fakebuild'] = specs[0]['env']['fakebuild']
-            del specs[0]['env']['fakebuild']
-        except:
-            pass
-        print "System: add_process_groups:   %s" % specs
-        #try:
-        reservation = hiccup.make_reservation( **(specs[0]) )
-        heckle_res_id = reservation.id
-        uid = specs[0]['user']
-        LOGGER.debug( "System:heckle_res_id = %i" % heckle_res_id )
-        specs[0]['heckle_res_id'] = heckle_res_id
-        return self.process_groups.q_add(specs, lambda x, _:\
-        self._start_pg(x, heckle_res_id = heckle_res_id, uid=uid))
+        logstr = "System:add_process_groups:"
+        LOGGER.debug( logstr + "Specs are %s" % specs )
+        return self.process_groups.q_add(specs)
     add_process_groups = exposed(query(add_process_groups))
     
     
@@ -143,32 +154,6 @@ class HeckleSystem(Component):
     #########################################
     # Methods for dealing with Process Groups
     #########################################
-    
-    
-    def _start_pg(self, pgp, heckle_res_id, uid):
-        """
-        Populates the process group with its resources
-            gets node information for nodes in process group
-            Updates those attributes
-            Places nodes in the pinging nodes list, to see if they're built
-        """
-        LOGGER.debug( "System:start_pg: PGP is %s" % pgp )
-        hiccup = HeckleConnector()
-        for node in pgp.get('location'):
-            node_attributes = {}
-            #######################
-            ###  Look at this as a possible change
-            #######################
-            node_atts = hiccup.get_node_properties(node)
-            LOGGER.debug( 
-            "System:start_pg: Atts for node %s are %s" % (node, node_atts) )
-            node_attributes.update( node_atts )
-            node_attributes['mac'] = node_attributes['mac'].replace("-", ":")
-            node_attributes['heckle_res_id'] = heckle_res_id
-            pgp.resource_attributes[node] = node_attributes
-            pgp.pinging_nodes.append(node)
-            pgp.uid = uid
-    add_process_groups = exposed(query(add_process_groups))
     
     
     def _check_builds_done(self):
@@ -235,7 +220,8 @@ class HeckleSystem(Component):
     
     def get_resources(self, specs={}):
         """
-        Returns a list of names for all the resources (nodes) which match the given specs.
+        Returns a list of free resources (nodes) which match the given specs.
+        Specs is a dict which describes a job
         """
         LOGGER.debug( "System:get Resources" )
         ##################################
@@ -407,7 +393,7 @@ class HeckleSystem(Component):
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
         return equiv
-        find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
+    find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
     
     
     def get_partitions(self, locations):

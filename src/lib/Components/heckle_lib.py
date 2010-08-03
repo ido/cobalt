@@ -76,7 +76,7 @@ class HeckleConnector():
                raise Exception("HICCUP: INIT: Problem Creating a Session.")
           self.glossary = self.get_glossary( )
           self.hw_fields = self.glossary.keys()
-          self.node_list = self.get_all_nodes( )
+          self.node_list = self.list_all_nodes( )
           self.node_count = len(self.node_list)
 
 
@@ -537,7 +537,7 @@ class HeckleConnector():
           print reservations
      
      
-     def get_all_nodes( self ):
+     def list_all_nodes( self ):
           """
           Heckle Glossary Function
           Produces a basic list of all the nodes
@@ -556,7 +556,7 @@ class HeckleConnector():
           gets a basic glossary of all the hardware_criteria
           gets list of all nodes, all hardware
           """
-          nodelist = self.get_all_nodes()
+          nodelist = self.list_all_nodes()
           hwlist = heckle_list_hardware(self.session)
           propdict = {}
           for name in nodelist:

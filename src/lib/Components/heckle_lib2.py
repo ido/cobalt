@@ -247,9 +247,12 @@ class HeckleConnector( object ):
         Checks to see if the kernel specified is within 
         the list of current images
         """
-        LOGGER.debug("HICCUP:valid Kernel: Image Name is: %s" % kernel )
-        image_val = heckle_list_image( session=self.session, name=kernel)
-        return image_val
+        logstr = "HICCUP:validkernel:"
+        LOGGER.debug( logstr + "Image Name is: %s" % kernel )
+        if not heckle_list_image( session=self.session, name=kernel):
+            raise Exception( logstr + "No valid kernel %s" % kernel )
+        else:
+            return True
 
 
     def validhw( self, attrs ):
@@ -266,8 +269,8 @@ class HeckleConnector( object ):
                 baddict[attr] = attrs[attr]
         if badlist or baddict:
             raise Exception( 
-                "HICCUP:validhw: The following are bad:keys %s, value %s" % \
-                (badlist, baddict) )
+                "HICCUP:validhw: The following are invalid:keys %s, value %s" \
+                % (badlist, baddict) )
         return True
 
 
@@ -291,7 +294,7 @@ class HeckleConnector( object ):
         print reservations
 
 
-    def get_all_nodes( self ):
+    def list_all_nodes( self ):
         """
         Heckle Glossary Function
         Produces a basic list of all the nodes
@@ -312,7 +315,7 @@ class HeckleConnector( object ):
         gets a basic glossary of all the hardware_criteria
         gets list of all nodes, all hardware
         """
-        self.node_list = self.get_all_nodes( )
+        self.node_list = self.list_all_nodes( )
         self.node_count = len(self.node_list)
         hwlist = heckle_list_hardware(self.session)
         propdict = {}
@@ -352,10 +355,10 @@ class HeckleConnector( object ):
         Queries Heckle to get the boot state of a node from heckle
         Returns as string
         """
-        logger.debug("HICCUP: get_node_bootstate")
+        LOGGER.debug("HICCUP: get_node_bootstate")
         node_info = self.get_node_properties( node_name )
         node_state = node_info["bootstate"]
-        logger.info("HICCUP: get_node_bootstate: bootstate for node %s is %s" % ( node_name, node_state ))
+        LOGGER.info("HICCUP: get_node_bootstate: bootstate for node %s is %s" % ( node_name, node_state ))
         return node_state
 
 
