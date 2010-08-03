@@ -176,7 +176,7 @@ if __name__ == "__main__":
     if opts.predict:
         invalid = False
         scheme = opts.predict
-        if not len(scheme)==3:
+        if not len(scheme) == 3:
             invalid = True
         else:
             for s in scheme:
@@ -187,9 +187,6 @@ if __name__ == "__main__":
             p.print_help()
             sys.exit()
             
-                
-
-
     if opts.sim_start:
         print "start date=", opts.sim_start
         t_tuple = time.strptime(str(opts.sim_start), "%Y-%m-%d %H:%M:%S")

@@ -359,9 +359,10 @@ class ClusterQsim(ClusterBaseSystem):
                 
         self.sleep_interval = kwargs.get("sleep_interval", 0)
         
-        self.fraction = kwargs.get("cluster_fraction")
+        self.fraction = kwargs.get("cluster_fraction", 1)
         
-        print "self.fraction=", self.fraction
+        self.sim_start = kwargs.get("sim_start", 0)
+        self.sim_end = kwargs.get("sim_end", sys.maxint)
         
         self.workload_file =  kwargs.get("cjob")
         self.output_log = kwargs.get("outputlog")
@@ -497,7 +498,10 @@ class ClusterQsim(ClusterBaseSystem):
             #convert submittime from "%m/%d/%Y %H:%M:%S" to Unix time sec
             format_sub_time = tmp.get('submittime')
             if format_sub_time:
-                spec['submittime'] = date_to_sec(format_sub_time)
+                qtime = date_to_sec(format_sub_time)
+                if qtime < self.sim_start or qtime > self.sim_end:
+                    continue        
+                spec['submittime'] = qtime
                 #spec['submittime'] = float(tmp.get('qtime'))
                 spec['first_subtime'] = spec['submittime']  #set the first submit time                
             else:
