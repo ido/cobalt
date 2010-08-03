@@ -168,7 +168,7 @@ def tune_workload(specs, frac):
         lastsubtime =  spec['submittime']
         spec['interval'] = interval
     
-    #tune workload heavy or light
+    #tune workload heavier or lighter
     
     last_newsubtime = specs[0].get('submittime')
     
@@ -377,6 +377,9 @@ class BGQsim(Simulator):
         
         self.fraction = kwargs.get("BG_Fraction", 1)
         
+        self.sim_start = kwargs.get("sim_start", 0)
+        self.sim_end = kwargs.get("sim_end", sys.maxint)
+                
         print "self.fraction=", self.fraction
         
         #self.coscheduling = kwargs.get("coscheduling", False)
@@ -691,7 +694,10 @@ class BGQsim(Simulator):
             #convert submittime from "%m/%d/%Y %H:%M:%S" to Unix time sec
             format_sub_time = tmp.get('submittime')
             if format_sub_time:
-                spec['submittime'] = date_to_sec(format_sub_time)
+                qtime = date_to_sec(format_sub_time)
+                if qtime < self.sim_start or qtime > self.sim_end:
+                    continue        
+                spec['submittime'] = qtime
                 #spec['submittime'] = float(tmp.get('qtime'))
                 spec['first_subtime'] = spec['submittime']  #set the first submit time                
             else:
@@ -1719,6 +1725,7 @@ class BGQsim(Simulator):
                 [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
                 [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
             ]
+        #self.rack_matrix = [[[0,0] for i in range(8)] for j in range(5)]
     
     def print_screen(self, cur_event=""):
         '''print screen, show number of waiting jobs, running jobs, busy_nodes%'''
