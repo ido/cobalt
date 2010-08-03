@@ -264,7 +264,19 @@ class HeckleConnector():
           #Check for required fields in options:
           #opts = kwargs
           logger.debug("HICCUP: Debug: Make Reservations: Options are %s", self.__dict__ )
-          
+          print "uid is %s" % uid
+          print "start is %s" % start
+          print "end is %s" % end
+          print "nodecount is %s" % nodecount
+          print "nodelist is %s" % nodelist
+          print "location is %s" % location
+          print "kernel is %s" % kernel
+          print "time is %s" % time
+          print "walltime is %s" % walltime
+          print "user is %s" % user
+          print "attrs is %s" % attrs
+          print "fakebuild is %s" % fakebuild
+          print "kwargs are %s" % kwargs
           reservation_criteria = {}
           if user:
                usernames = [user]

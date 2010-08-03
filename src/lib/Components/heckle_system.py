@@ -171,10 +171,19 @@ class HeckleSystem(Component):
         for pgp in pg_list:
             for nodename in pgp.pinging_nodes:
                 teststr = hiccup.get_node_bootstate(nodename)
-                if  teststr == "COMPLETED" or teststr == "READY":
-                    LOGGER.debug( exstr +
-                    "Removing node %s...%i pinging nodes left" \
-                    % (nodename, len(pgp.pinging_nodes)-1) )
+                if teststr == "READY":
+                    if self.fakebuild:
+                        pgp.pinging_nodes.remove(nodename)
+                        LOGGER.debug( exstr + "Node %s done building; "\
+                             + "%s pinging nodes left" %\
+                             ( nodename, len(pgp.pinging_nodes)-1 ) )
+                    else:
+                        LOGGER.debug( exstr + "Node %s not done yet" %\
+                                          nodename )
+                if  teststr == "COMPLETED":
+                    LOGGER.debug( exstr + 
+                         "Removing node %s...%i pinging nodes left" \
+                              % (nodename, len(pgp.pinging_nodes)-1) )
                     pgp.pinging_nodes.remove(nodename)
                 elif teststr in ["BOOTING", "", ""]:
                     LOGGER.debug( exstr +
@@ -218,7 +227,7 @@ class HeckleSystem(Component):
         hiccup.free_reserved_node( uid = pgp.uid, node_list=pgp.location )
     
     
-    def get_resources(self, specs={}):
+    def get_resources(self, specs=None ):
         """
         Returns a list of free resources (nodes) which match the given specs.
         Specs is a dict which describes a job
@@ -228,7 +237,10 @@ class HeckleSystem(Component):
         ###  Look at this as a future change
         ##################################
         hiccup = HeckleConnector()
-        return hiccup.list_available_nodes( **specs )
+        if not specs:
+            return hiccup.node_list
+        else:
+            return hiccup.list_available_nodes( **specs )
     get_resources = exposed(query(get_resources))
     
     

@@ -48,12 +48,14 @@ class HeckleProcessGroup(ProcessGroup):
         LOGGER.debug( logstr + "Spec is: %s " % spec )
         ProcessGroup.__init__(self, spec, LOGGER)
         hiccup = HeckleConnector()
-        self.location = self.pinging_nodes = spec['location']
+        self.location = spec['location'][:]
+        self.pinging_nodes = spec['location'][:]
+        print "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n Location is: %s, %s, %s\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" % (self.location, self.pinging_nodes, spec['location'])
         # Set up process group attributes
         if not spec['kernel']:
             spec['kernel'] = "default"
         self.kernel = spec['kernel']
-        self.user = spec['uid']
+        self.user = self.uid = spec['user']
         self.resource_attributes = {}
         for loc in self.location:
             self.resource_attributes[loc] = hiccup.get_node_properties( loc )
@@ -61,7 +63,7 @@ class HeckleProcessGroup(ProcessGroup):
             spec['fakebuild'] = spec['env']['fakebuild']
             del spec['env']['fakebuild']
         except:
-            pass
+            spec['fakebuild']=False
         
         # Write nodefile
         self.nodefile = tempfile.mkstemp()
@@ -73,9 +75,9 @@ class HeckleProcessGroup(ProcessGroup):
         res_attrs = ['location', 'kernel', 'walltime', 'user', 'fakebuild'\
             , 'comment']
         res_args = {}
-        for attr in res_attrs:
+        for attr in spec:
             res_args[attr] = spec[attr]
-        reservation = hiccup.make_reservation( **res_args )
+        reservation = hiccup.make_reservation( res_args )
         self.heckle_res_id = reservation.id
         ###  Watch this line... not sure what it does...  Supposed to be in ProcessGroupDict
         self.id_gen = IncrID()
@@ -262,13 +264,13 @@ class HeckleProcessGroup(ProcessGroup):
         self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
         # get supplementary groups
         supplementary_group_ids = []
-        for g in grp.getgrall():
-            if self.user in g.gr_mem:
-                supplementary_group_ids.append(g.gr_gid)
+        for gr in grp.getgrall():
+            if self.user in gr.gr_mem:
+                supplementary_group_ids.append(gr.gr_gid)
         ret["other_groups"] = supplementary_group_ids
         #Set Head Node
         try:
-            rank0 = self.location[0].split(":")[0]
+            rank0 = self.location[0]
         except IndexError:
             raise ProcessGroupCreationError("no location")
         #cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)

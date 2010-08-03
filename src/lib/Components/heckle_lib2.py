@@ -69,14 +69,14 @@ class HeckleConnector( object ):
     ################################################
 
 
-    #def make_reservation( self, locations, kernel, walltime, user, \
+    #def make_reservation( self, location, kernel, walltime, user, \
     #    fakebuild, comment=None ):
     def make_reservation( self, job_dict ):
         """
         Adaptor to make a reservation
         Returns the Heckle Reservation object
         Variables in the job dict:
-            locations: list of strings,
+            location: list of strings,
                 containing names of nodes to make reservation
             kernel: string, exact name of kernel image to use
             user: string, user name passed through Cobalt
@@ -91,13 +91,13 @@ class HeckleConnector( object ):
         reservation_criteria['start'] = datetime.now()
         reservation_criteria['end'] = datetime.now() + \
             timedelta( minutes=int( job_dict['walltime'] ) )
-        reservation_criteria['node_list'] = job_dict['locations']
+        reservation_criteria['node_list'] = job_dict['location']
         reservation_criteria['usernames'] = [job_dict['user'], ]   #Fix this
         try:
             reservation_criteria['comment'] = job_dict['comment']
         except:
             reservation_criteria["comment"] = "Reserved by: %s" % \
-                ', '.join( job_dict['user'] )
+                ', '.join( reservation_criteria['usernames'] )
         LOGGER.debug("HICCUP:make_reservation: Reservation Options: %s "\
             % reservation_criteria )
         reservation = heckle_reserve( **reservation_criteria )
@@ -108,8 +108,8 @@ class HeckleConnector( object ):
         allocate_criteria = {}   #build allocation arguments
         allocate_criteria['session'] = self.session
         allocate_criteria['res_id'] = reservation.id
-        allocate_criteria['nodes'] = job_dict['locations']
-        allocate_criteria['num_nodes'] = len( job_dict['locations'] )
+        allocate_criteria['nodes'] = job_dict['location']
+        allocate_criteria['num_nodes'] = len( job_dict['location'] )
         allocate_criteria["users_and_keys"] = { job_dict['user']:None}
         allocate_criteria["properties"] = None
         allocate_criteria['image_name'] = job_dict['kernel']
@@ -172,6 +172,8 @@ class HeckleConnector( object ):
         LOGGER.debug("HICCUP:get_hw_criteria: opts are: %s " % attrs )
         hw_criteria = []
         options = {}
+        if not attrs:
+            return []
         for field in attrs:
             if field in self.hw_fields and attrs[field] in self.glossary[field]:
                 if field is 'fakebuild':
@@ -192,16 +194,19 @@ class HeckleConnector( object ):
             return hw_criteria
 
 
-    def find_job_location( self, attrs, nodes, walltime, start=None ):
+    def find_job_location( self, attrs, nodes, walltime, start=None, \
+                               forbidden=None, **kwargs ):
         """
         This function returns a list of nodes which match the attributes
-            that are free for the appropriate time
-        attrs is a dictionary of string pairs, key:value, for hardware
-        nodes is integer count of number of nodes desired
-        walltime is time, in seconds, for reservation
+
+        attrs is a dictionary of string pairs, key:value, for hardware requirements
+        nodes is an integer, the count of number of nodes desired
+        walltime is an integer, representing the timetime, in seconds, for reservation
+        forbidden is a list of strings, node names not to use.  (currently not used.)
         
-        To Do:
-            Schedule future start times
+        There may be many other arguments passed in by other functions, unused by this
+        function, which have to be accepted and disregarded; this is accomplished by
+        the **kwargs.
         """
         if not start:
             start = datetime.now()
@@ -215,6 +220,7 @@ class HeckleConnector( object ):
         "HICCUP:find_job_location: Find_Node_Criteria is %s" % node_criteria)
         if nodes > 0:
             appropriate_nodes = heckle_findNodes(**node_criteria )
+            appropriate_nodes.sort()
             LOGGER.debug( 
             "HICCUP:find_job_location: appropriate nodes are %s" %
             appropriate_nodes )
@@ -239,6 +245,7 @@ class HeckleConnector( object ):
             opts['image_criteria'] = kernel
         print "List Options are: ", opts
         nodes = heckle_findNodes(**opts )
+        nodes.sort()
         return nodes
 
 
@@ -255,13 +262,15 @@ class HeckleConnector( object ):
             return True
 
 
-    def validhw( self, attrs ):
+    def validhw( self, attrs=None ):
         """
         Checks to see if the hardware specified matches any existing HW class
         """
         LOGGER.debug("HICCUP:validhw: attrs are: %s" % attrs )
         baddict = {}
         badlist = []
+        if not attrs:
+            return True
         for attr in attrs:
             if attr not in self.hw_fields:
                 badlist.append(attr)
@@ -274,13 +283,13 @@ class HeckleConnector( object ):
         return True
 
 
-    def validjob( self, num_nodes=None, kernel=None, attrs=None ):
+    def validjob( self, num_nodes=0, kernel='default', attrs=None ):
         """
         This is a bounds check:  Will the job ever run on the system, as-is.
         """
         valid_kernel = self.validkernel( kernel )
         valid_hw = self.validhw( attrs )
-        valid_job = len(self.list_available_nodes( attrs )) >= num_nodes
+        valid_job = len(self.list_available_nodes( attrs )) >= int(num_nodes)
         if valid_kernel and valid_hw and valid_job:
             return True
         return False
@@ -306,6 +315,7 @@ class HeckleConnector( object ):
         for node in heckle_list_node( self.session ):
             if regex.match(node['name']):
                 all_nodes_list.append(node['name'])
+        all_nodes_list.sort()
         return all_nodes_list
 
 
@@ -338,16 +348,17 @@ class HeckleConnector( object ):
         """
         #hwlist = list_hardware(session, name=node_name)  #Use if it worked...
         #return hwlist['properties']
+        logstr = "HICCUP:get_node_properties:"
         #          LOGGER.debug("HICCUP:get_node_properties    &&&&&&&&&&&&")
-        props = []
         self.session.expire_all()
-        hwlist = heckle_list_hardware( self.session )
-        for element in hwlist:
-            if node_name in element['nodes']:
-                props = element['properties']
-                continue
-        props.append(heckle_list_node(self.session, name=node_name)[0])
-        return props
+        if node_name in self.node_list:
+            properties = heckle_list_node( session=self.session, name=node_name )[0]
+            properties.update( heckle_list_hardware( session=self.session, name=properties['hardware'] )[0] )
+            properties['mac'] = properties['mac'].replace('-',':')
+            properties['mac'] = ( properties['mac'].upper() )
+            return properties
+        else:
+            raise Exception( logstr + "No node %s recognized" % node_name )
     
     
     def get_node_bootstate( self, node_name ):
