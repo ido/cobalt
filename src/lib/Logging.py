@@ -366,9 +366,21 @@ class ReportStateEncoder(JSONEncoder):
             for key in obj.__dict__.keys():
                 if key not in exclude_keys:
                     classAttrTable[key] = obj.__dict__[key].__str__()
-                
-            return classAttrTable
+                    
+            #Anything as a property.
+            classAttrTable['dep_hold'] = obj.has_dep_hold
 
+            return classAttrTable
+        elif isinstance(obj, Cobalt.Components.cqm.JobProgMsg):
+            return obj.__dict__
+            
+        elif isinstance(obj, Cobalt.Components.cqm.JobDataMsg):
+            retDict = dict(obj.__dict__)
+            retDict['job_prog_msg'] = self.default(obj.job_prog_msg)
+            print obj.__dict__
+            return retDict
+        
         return  json.JSONEncoder.default(self, obj)
               
         
+
