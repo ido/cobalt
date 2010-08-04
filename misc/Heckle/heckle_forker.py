@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Implementations of the forker component.
+"""
+Implementations of the forker component.
 
 Classes:
 BaseForker -- generic implementation
@@ -46,7 +47,7 @@ def get_forker_config(option, default):
 
 
 __all__ = [
-    "heckleForker",
+    "HeckleForker",
 ]
 
 
@@ -73,7 +74,7 @@ class HeckleForker (Component):
     """
     
     name = "forker"
-    implementation = "Heckleforker"
+    implementation = "HeckleForker"
     
     # A default logger for the class is placed here.
     # Assigning an instance-level logger is supported,
@@ -176,6 +177,7 @@ class HeckleForker (Component):
                os.dup2(stderr.fileno(), sys.__stderr__.fileno())
                self.logger.debug("Heckle_FORKER: Fork: The Parent: 3")
                cmd = data["cmd"]
+               os.environ.update( data["environ"] )
                try:
                     cobalt_log_file = open(data["cobalt_log_file"], "a")
                     if new_out:
@@ -196,7 +198,8 @@ class HeckleForker (Component):
                self.logger.debug("Heckle_FORKER: Fork: The Parent: 4, copying")
                #p = subprocess.check_call(args)
                self.logger.debug("Heckle_FORKER: Fork: About to exec with %s" % cmd)
-               os.execl(*cmd)
+               os.execvpe(cmd, (cmd, ), environ)
+               #os.execl(*cmd)
                self.logger.debug("Heckle_FORKER: Fork: Finished Execution")
           else:
                self.logger.debug("Heckle_FORKER: Fork: Child")

@@ -64,7 +64,7 @@ class HeckleProcessGroup(ProcessGroup):
             del spec['env']['fakebuild']
         except:
             spec['fakebuild']=False
-        
+        self.env = spec['env']
         # Write nodefile
         self.nodefile = tempfile.mkstemp()
         os.write(self.nodefile[0], " ".join(self.location))
@@ -122,7 +122,8 @@ class HeckleProcessGroup(ProcessGroup):
         Sets up the environment and execs to the executable script.
         """
         logstr = "ProcessGroup:_runjob:"
-        LOGGER.debug( logstr )
+        startstr = "!  !  !  !  !  !  !  !  !  !  !  !  !  !  !  !  !  !\n"
+        LOGGER.debug( startstr + startstr + logstr + "\n" + startstr + startstr )
         try:
             userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:
@@ -246,14 +247,18 @@ class HeckleProcessGroup(ProcessGroup):
         * Defines user and group info
         * Sets up the command line to run the cobalt launcher program
         """
-        LOGGER.debug("PreFork:")
-        print "Current State is: %s" % self
-        ret = {}
-        # check for valid user/group
-        try:
+        logstr = "ProcessGroup:prefork"
+        LOGGER.debug(logstr)
+        print logstr + "Current State is: %s" % self
+        try:            # check for valid user/group
             userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:
             raise ProcessGroupCreationError("error getting uid/gid")
+        supplementary_group_ids = []
+        for gr in grp.getgrall():
+            if self.user in gr.gr_mem:
+                supplementary_group_ids.append(gr.gr_gid)
+                ret["other_groups"] = supplementary_group_ids
         ret["userid"] = userid
         ret["primary_group"] = groupid
         ret["other_groups"] = []
@@ -261,25 +266,14 @@ class HeckleProcessGroup(ProcessGroup):
         ret["stdin"] = self.stdin
         ret["stdout"] = self.stdout
         ret["stderr"] = self.stderr
-        self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
-        # get supplementary groups
-        supplementary_group_ids = []
-        for gr in grp.getgrall():
-            if self.user in gr.gr_mem:
-                supplementary_group_ids.append(gr.gr_gid)
-        ret["other_groups"] = supplementary_group_ids
-        #Set Head Node
-        try:
-            rank0 = self.location[0]
-        except IndexError:
-            raise ProcessGroupCreationError("no location")
-        #cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
-        cmd_string = "/home/sthompso/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
-        cmd = ("/usr/bin/ssh", "/usr/bin/ssh", rank0, cmd_string)
         ret["id"] = self.id
         ret["jobid"] = self.jobid
         ret["cobalt_log_file"] = self.cobalt_log_file
-        ret["cmd" ] = cmd
-        LOGGER.debug("Command is %s" % ret)
+        self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
+        self.env["COBALT_NODEFILE"] = self.nodefile
+        self.env["COBALT_JOBID"] = self.jobid
+        ret['environment'] = self.env
+        ret["cmd" ] = self.executable
+        LOGGER.debug( logstr + "Command dict is %s" % ret)
         return ret
 
