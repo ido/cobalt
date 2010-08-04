@@ -417,12 +417,17 @@ class ClusterQsim(ClusterBaseSystem):
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
         
-        self.cosched_scheme = kwargs.get("coscheduling", None)
-        if self.cosched_scheme in ["hold", "yield"]:
+        _cosched_scheme = kwargs.get("coscheduling", (0,0))
+        self.cosched_scheme = _cosched_scheme[1]
+        self.cosched_scheme_remote = _cosched_scheme[0]
+        
+        valid_cosched_schemes = ["hold", "yield"]
+        
+        if self.cosched_scheme in valid_cosched_schemes and self.cosched_scheme_remote in valid_cosched_schemes:
             self.coscheduling = True
         else:
             self.coscheduling = False
-    
+        
         if self.coscheduling:
             bg_mate_dict = ComponentProxy(REMOTE_QUEUE_MANAGER).get_mate_job_dict()
             self.job_hold_dict = {}
@@ -440,6 +445,8 @@ class ClusterQsim(ClusterBaseSystem):
         #record yield job ids. update dynamically
         self.yielding_job_list = []
         
+        if self.coscheduling:
+            print "co-scheduling enabled, local scheme=%s, remote scheme=%s" % (self.cosched_scheme, self.cosched_scheme_remote)
   
         Var = raw_input("press any Enter to continue...")
                 
@@ -871,37 +878,52 @@ class ClusterQsim(ClusterBaseSystem):
                 self.start_job([spec], {'location': nodelist})
             elif action == "hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
-                tempjob = self.hold_job([spec], {'location': nodelist})
+                mate_job_can_run = False
+                if self.cosched_scheme_remote == "yield":
+                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
+                    try:
+                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                    except:
+                        self.logger.error("failed to connect to remote queue-manager component!")
+                else:
+                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
+                    pass
+                
+                if mate_job_can_run:
+                    #now that mate has been started, start local job
+                    self.start_job([spec], {'location': nodelist})
+                    dbgmsg += " ###start both"
+                else:
+                    self.hold_job([spec], {'location': nodelist})
             elif action == "start_both":
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
             elif action == "start_both_or_give_up":
-                #print "CQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
-                try:
-                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
-                except:
-                    self.logger.error("failed to connect to remote queue-manager component!")
-                    mate_job_can_run = False
-                    print "failed to connect to remote queue-manager component!"
+                mate_job_can_run = False
+                               
+                if self.cosched_scheme_remote == "yield":
+                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
+                    try:
+                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                    except:
+                        self.logger.error("failed to connect to remote queue-manager component!")
+                else:
+                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
+                    pass
+                        
                 if mate_job_can_run:
                     #now that mate has been started, start local job
-                    #print "++++++++++++cqsim: mate_job %s can run, start local job %s" % (mate_job_id, local_job_id)                    
                     self.start_job([spec], {'location': nodelist})
-                    #print "local started ", spec.get('jobid')
-                    dbgmsg += "---start both"
-                    
+                    dbgmsg += " ###start both"
                 else:
-                    #print "cqsim mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
+                    #mate job cannot run, give up the turn. mark the job as yielding.
                     job_id = spec.get('jobid')
                     self.yielding_job_list.append(job_id)  #int
                     #record the first time this job yields
                     if not self.yielding_job_dict.has_key(job_id):
-                        self.yielding_job_dict[jobid] = self.get_current_time_sec()
-                    
-                    dbgmsg += " give up run local"
-            if len(dbgmsg) > 0:
-                self.dbglog.LogMessage(dbgmsg)
+                        self.yielding_job_dict[job_id] = self.get_current_time_sec()
+                        self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
                                     
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
@@ -1332,3 +1354,8 @@ class ClusterQsim(ClusterBaseSystem):
                 ret_status = "unknown"  #ended or no such job
                 del self.mate_job_dict[jobid]
         return ret_status
+    
+    def print_post_screen(self):
+        '''post screen after simulation completes'''
+        print self.yielding_job_dict
+    print_post_screen = exposed(print_post_screen)

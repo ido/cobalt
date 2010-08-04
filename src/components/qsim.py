@@ -108,6 +108,9 @@ def integrated_main(options):
         if opts.cjob:
             cqsim.print_screen()
             pass
+    
+    bqsim.print_post_screen()
+    cqsim.print_post_screen()
        
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"
@@ -159,13 +162,12 @@ if __name__ == "__main__":
         help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction for (x:queuing / y:backfilling / z:running) jobs")
     p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
         help="[cons | aggr | both] specify the walltime aware spatial scheduling scheme: cons=conservative scheme, aggr=aggressive scheme, both=cons+aggr")
-    p.add_option("-C", "--coscheduling", dest="coscheduling", type="string", default=False,
-        help="[hold | yield] specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run")
+    p.add_option("-C", "--coscheduling", dest="coscheduling", nargs=2, type="string", default=(0,0),
+        help="[x y] (x,y=hold | yield). specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run. x for bqsim, y for cqsim.")
     p.add_option("-v", "--vicinity", dest="vicinity", type="float", default=0.0,
         help="Threshold to determine mate jobs in coscheduling. \
         Two jobs can be considered mated only if their submission time difference is smaller than 'vicinity'")
         
-    
     coscheduling_schemes = ["hold", "yield"]
     wass_schemes = ["cons", "aggr", "both"]
     
@@ -182,7 +184,12 @@ if __name__ == "__main__":
         sys.exit()
         
     if opts.coscheduling:
-        if not opts.coscheduling in coscheduling_schemes:
+        print opts.coscheduling
+        scheme1 = opts.coscheduling[0]
+        if len(opts.coscheduling) == 2:
+            scheme2 = opts.coscheduling[1]
+        
+        if not (scheme1 in coscheduling_schemes and scheme2 in coscheduling_schemes):
             print "Error: invalid coscheduling scheme '%s'. Valid schemes are: %s" % (opts.coscheduling,  coscheduling_schemes)
             p.print_help()
             sys.exit()
@@ -215,7 +222,7 @@ if __name__ == "__main__":
         print "bg trace end date=", opts.bg_trace_end
         t_tuple = time.strptime(str(opts.bg_trace_end), "%Y-%m-%d %H:%M:%S")
         opts.bg_trace_end = time.mktime(t_tuple)
-        
+
     if opts.c_trace_start:
         print "cluster trace start date=", opts.c_trace_start
         t_tuple = time.strptime(str(opts.c_trace_start), "%Y-%m-%d %H:%M:%S")

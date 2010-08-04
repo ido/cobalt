@@ -382,8 +382,15 @@ class BGQsim(Simulator):
         
         #self.coscheduling = kwargs.get("coscheduling", False)
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
-        self.cosched_scheme = kwargs.get("coscheduling", None)
-        if self.cosched_scheme in ["hold", "yield"]:
+        
+        _cosched_scheme = kwargs.get("coscheduling", (0,0))
+        
+        self.cosched_scheme = _cosched_scheme[0]
+        self.cosched_scheme_remote = _cosched_scheme[1]
+        
+        valid_cosched_schemes = ["hold", "yield"]
+        
+        if self.cosched_scheme in valid_cosched_schemes and self.cosched_scheme_remote in valid_cosched_schemes:
             self.coscheduling = True
         else:
             self.coscheduling = False
@@ -529,7 +536,7 @@ class BGQsim(Simulator):
             print "walltime prediction enabled, scheme = ", self.predict_scheme
             
         if self.coscheduling:
-            print "co-scheduling enabled, scheme = ", self.cosched_scheme
+            print "co-scheduling enabled, local scheme=%s, remote scheme=%s" % (self.cosched_scheme, self.cosched_scheme_remote)
             
         if self.fraction != 1:
             print "job arrival intervals adjusted, fraction = ", self.fraction
@@ -1129,7 +1136,7 @@ class BGQsim(Simulator):
                         if self.cosched_scheme == "hold": # hold resource if mate cannot run, favoring job
                             action = "hold"
                         if self.cosched_scheme == "yield": # give up if mate cannot run, favoring sys utilization
-                            action = "start_both_or_give_up"                        
+                            action = "start_both_or_give_up"
                     if remote_status == "holding":
                         action = "start_both"
                     
@@ -1142,34 +1149,55 @@ class BGQsim(Simulator):
                 self.start_job([spec], {'location': nodelist})
             elif action == "hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
-                tempjob = self.hold_job([spec], {'location': nodelist})
+                mate_job_can_run = False
+                if self.cosched_scheme_remote == "yield":
+                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
+                    try:
+                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                    except:
+                        self.logger.error("failed to connect to remote queue-manager component!")
+                else:
+                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
+                    pass
+                
+                if mate_job_can_run:
+                    #now that mate has been started, start local job
+                    self.start_job([spec], {'location': nodelist})
+                    dbgmsg += " ###start both"
+                else:
+                    self.hold_job([spec], {'location': nodelist})
             elif action == "start_both":
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
             elif action == "start_both_or_give_up":
                 #print "BQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
-                try:
-                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
-                except:
-                    self.logger.error("failed to connect to remote queue-manager component!")
-                    mate_job_can_run = False
+                mate_job_can_run = False
+                
+                if self.cosched_scheme_remote == "yield":
+                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
+                    try:
+                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                    except:
+                        self.logger.error("failed to connect to remote queue-manager component!")
+                else:
+                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
+                    pass
+                        
                 if mate_job_can_run:
                     #now that mate has been started, start local job
-                    #print "-------------bqim: mate_job %s can run, start local job %s" % (mate_job_id, local_job_id)
                     self.start_job([spec], {'location': nodelist})
-                    #print "local started ", spec.get('jobid')
                     dbgmsg += " ###start both"
                 else:
-                    #print "bqsim mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
+                    #mate job cannot run, give up the turn. mark the job as yielding.
                     job_id = spec.get('jobid')
                     self.yielding_job_list.append(job_id)  #int
                     #record the first time this job yields
                     if not self.yielding_job_dict.has_key(job_id):
-                        self.yielding_job_dict[jobid] = self.get_current_time_sec()
+                        self.yielding_job_dict[job_id] = self.get_current_time_sec()
+                        self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
                                             
                     #self.release_allocated_nodes(nodelist)                    
-                    dbgmsg += " --give up run local"
             if len(dbgmsg) > 0:
                 self.dbglog.LogMessage(dbgmsg)
                 
@@ -1899,4 +1927,9 @@ class BGQsim(Simulator):
             msg = "%s:%s" % (k, v)
             matelog.LogMessage(msg)
         matelog.closeLog()
+        
+    def print_post_screen(self):
+        '''post screen after simulation completes'''
+        print self.yielding_job_dict
+    print_post_screen = exposed(print_post_screen)
     
