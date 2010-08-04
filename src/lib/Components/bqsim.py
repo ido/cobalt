@@ -224,7 +224,7 @@ class Job (Data):
     '''
     
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
-                            "nodes","runtime", "start_time", "end_time",
+                            "nodes","runtime", "start_time", "end_time", "hold_time", "yield_time"
                             "failure_time", "location", "state", "is_visible", 
                             "args",
                             "user",
@@ -258,6 +258,8 @@ class Job (Data):
         self.remain_time = float(self.runtime)       
         self.start_time = spec.get('start_time', '0')
         self.end_time = spec.get('end_time', '0')
+        self.hold_time = spec.get('hold_time', 0)  #the time the job starts holding (coscheduling only)
+        self.yield_time = spec.get('yield_time', 0) #the time the job first yields (coscheduling only)
         self.state = spec.get("state", "invisible")
         self.system_state = ''
         self.starttime = 0
@@ -357,7 +359,6 @@ class PBSlogger:
             self.logfile.flush()
         except IOError, e:
             logger.error("PBSlogger failure : %s" % e)
-            
     
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -394,7 +395,11 @@ class BGQsim(Simulator):
         #key = jobid, value = nodelist  ['part-or-node-name','part-or-node-name' ]
         self.job_hold_dict = {}  
         
-        self.givingup_job_list = []
+        #record yield jobs's first yielding time, for calculating the extra waiting time
+        self.yielding_job_dict = {}
+        
+        #record yield job ids. update dynamically
+        self.yielding_job_list = []
         
         self.cluster_job_trace =  kwargs.get("cjob", None)        
         
@@ -821,10 +826,19 @@ class BGQsim(Simulator):
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
                  spec['nodes'], log_walltime, ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s" % \
+                if spec['hold_time'] == 0:
+                    holding_time = 0
+                else:
+                    holding_time = spec['start_time'] - spec['hold_time']
+                first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
+                if first_yielding > 0:
+                    yielding_time = spec['start_time'] - first_yielding
+                else:
+                    yielding_time = 0
+                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
                  round(float(spec['end_time']), 1), ":".join(spec['location']),
-                 spec['runtime'])
+                 spec['runtime'], holding_time, yielding_time)
             else:
                 print "invalid event type, type=", eventtype
                 return
@@ -982,7 +996,7 @@ class BGQsim(Simulator):
         jobs = []
         
         if self.event_manager.get_go_next():
-            del self.givingup_job_list[:]
+            del self.yielding_job_list[:]
             
             self.update_job_states(specs, {})
             
@@ -992,8 +1006,8 @@ class BGQsim(Simulator):
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
         
-        if self.givingup_job_list:
-            jobs = [job for job in jobs if job.jobid not in self.givingup_job_list]
+        if self.yielding_job_list:
+            jobs = [job for job in jobs if job.jobid not in self.yielding_job_list]
   
         return jobs
     get_jobs = exposed(query(get_jobs))
@@ -1145,18 +1159,19 @@ class BGQsim(Simulator):
                     #print "-------------bqim: mate_job %s can run, start local job %s" % (mate_job_id, local_job_id)
                     self.start_job([spec], {'location': nodelist})
                     #print "local started ", spec.get('jobid')
-                    
                     dbgmsg += " ###start both"
-                    
                 else:
                     #print "bqsim mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
-                    self.givingup_job_list.append(spec.get('jobid'))  #int
+                    job_id = spec.get('jobid')
+                    self.yielding_job_list.append(job_id)  #int
+                    #record the first time this job yields
+                    if not self.yielding_job_dict.has_key(job_id):
+                        self.yielding_job_dict[jobid] = self.get_current_time_sec()
+                                            
                     #self.release_allocated_nodes(nodelist)                    
-                    
-                    dbgmsg += "  --give up run local"
+                    dbgmsg += " --give up run local"
             if len(dbgmsg) > 0:
                 self.dbglog.LogMessage(dbgmsg)
-                #time.sleep(1)
                 
             if self.walltime_aware_aggr:
                 self.run_matched_job(spec['jobid'], nodelist[0])
@@ -1211,7 +1226,6 @@ class BGQsim(Simulator):
                                           'walltime_p': job.walltime_p,  #*AdjEst*
                                           'attrs': job.attrs,
                  } )
-            
             
             if len(job_location_args) == 0:
                 break
@@ -1288,7 +1302,7 @@ class BGQsim(Simulator):
             partsize = int(self._partitions[partition].size)
                     
         for spec in specs:
-            self.job_hold_dict[spec['jobid']] = partitions 
+            self.job_hold_dict[spec['jobid']] = partitions
                     
         def _hold_job(job, newattr):
             '''callback function to update job start/end time'''
@@ -1308,6 +1322,7 @@ class BGQsim(Simulator):
         updates['is_runnable'] = False
         updates['has_resources'] = False
         updates['state'] = "holding"
+        updates['hold_time'] = self.get_current_time_sec()
 
         updates.update(newattr)
     

@@ -204,7 +204,7 @@ class Job (Data):
     '''
     
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
-                            "nodes","runtime", "start_time", "end_time",
+                            "nodes","runtime", "start_time", "end_time", "hold_time", "yield_time"
                             "failure_time", "location", "state", "is_visible", 
                             "args",
                             "user",
@@ -238,6 +238,8 @@ class Job (Data):
         self.remain_time = float(self.runtime)       
         self.start_time = spec.get('start_time', '0')
         self.end_time = spec.get('end_time', '0')
+        self.hold_time = spec.get('hold_time', 0)  #the time the job starts holding (coscheduling only)
+        self.yield_time = spec.get('yield_time', 0) #the time the job first yields (coscheduling only)
         self.state = spec.get("state", "invisible")
         self.system_state = ''
         self.starttime = 0
@@ -432,6 +434,10 @@ class ClusterQsim(ClusterBaseSystem):
         else:
             self.mate_job_dict = {}
             
+        #record yield jobs's first yielding time, for calculating the extra waiting time
+        self.yielding_job_dict = {}
+        
+        #record yield job ids. update dynamically
         self.yielding_job_list = []
         
   
@@ -629,10 +635,19 @@ class ClusterQsim(ClusterBaseSystem):
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
                  spec['nodes'], log_walltime, ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s" % \
+                if spec['hold_time'] == 0:
+                    holding_time = 0
+                else:
+                    holding_time = spec['start_time'] - spec['hold_time']
+                first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
+                if first_yielding > 0:
+                    yielding_time = spec['start_time'] - first_yielding
+                else:
+                    yielding_time = 0
+                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
                  round(float(spec['end_time']), 1), ":".join(spec['location']),
-                 spec['runtime'])
+                 spec['runtime'], holding_time, yielding_time)
             else:
                 print "---invalid event type, type=", eventtype
                 return
@@ -863,7 +878,6 @@ class ClusterQsim(ClusterBaseSystem):
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
             elif action == "start_both_or_give_up":
                 #print "CQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
-                
                 try:
                     mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
                 except:
@@ -878,8 +892,12 @@ class ClusterQsim(ClusterBaseSystem):
                     dbgmsg += "---start both"
                     
                 else:
-                    #print "cqsim: mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
-                    self.yielding_job_list.append(spec.get('jobid'))  #int
+                    #print "cqsim mate_job %s cannot run, job %s gives up" % (mate_job_id, local_job_id)
+                    job_id = spec.get('jobid')
+                    self.yielding_job_list.append(job_id)  #int
+                    #record the first time this job yields
+                    if not self.yielding_job_dict.has_key(job_id):
+                        self.yielding_job_dict[jobid] = self.get_current_time_sec()
                     
                     dbgmsg += " give up run local"
             if len(dbgmsg) > 0:
@@ -1030,6 +1048,7 @@ class ClusterQsim(ClusterBaseSystem):
         updates['is_runnable'] = False
         updates['has_resources'] = False
         updates['state'] = "holding"
+        updates['hold_time'] = self.get_current_time_sec()
 
         updates.update(newattr)
     
