@@ -162,7 +162,7 @@ if __name__ == "__main__":
         help="[xyz] x,y,z=0|1. x,y,z==1 means to use walltime prediction for (x:queuing / y:backfilling / z:running) jobs")
     p.add_option("-W", "--walltimeaware", dest="wass", type="string", default=False,
         help="[cons | aggr | both] specify the walltime aware spatial scheduling scheme: cons=conservative scheme, aggr=aggressive scheme, both=cons+aggr")
-    p.add_option("-C", "--coscheduling", dest="coscheduling", nargs=2, type="string", default=(0,0),
+    p.add_option("-C", "--coscheduling", dest="coscheduling", nargs=2, type="string", default=False,
         help="[x y] (x,y=hold | yield). specify the coscheduling scheme: 'hold' or 'yield' resource if mate job can not run. x for bqsim, y for cqsim.")
     p.add_option("-v", "--vicinity", dest="vicinity", type="float", default=0.0,
         help="Threshold to determine mate jobs in coscheduling. \
