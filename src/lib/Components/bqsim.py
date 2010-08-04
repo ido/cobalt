@@ -471,7 +471,8 @@ class BGQsim(Simulator):
             proportion = float(matejobs) / self.total_job
             print "vicinity = %s seconds" % (self.mate_vicinity)
             print "number mate job pairs: %s, proportion in blue gene jobs: %s%%"\
-             % (len(self.mate_job_dict.keys()), round(proportion *100, 1)) 
+             % (len(self.mate_job_dict.keys()), round(proportion *100, 1))
+            self.generat_mate_job_log()
         
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
@@ -1153,6 +1154,7 @@ class BGQsim(Simulator):
                     #self.release_allocated_nodes(nodelist)                    
                     
                     dbgmsg += "  --give up run local"
+            if len(dbgmsg) > 0:
                 self.dbglog.LogMessage(dbgmsg)
                 #time.sleep(1)
                 
@@ -1868,4 +1870,18 @@ class BGQsim(Simulator):
         self.logger.info("reserve_partition(%r, %r)" % (name, size))
         return True
     reserve_partition = exposed(reserve_partition)
-             
+    
+    def generat_mate_job_log(self):
+        '''output a file with mate jobs one pair per line'''        
+        
+        #initialize debug logger
+        if self.output_log:
+            matelog = PBSlogger(self.output_log+"-mates")
+        else:
+            matelog = PBSlogger(".mates")
+        
+        for k, v in self.mate_job_dict.iteritems():
+            msg = "%s:%s" % (k, v)
+            matelog.LogMessage(msg)
+        matelog.closeLog()
+    

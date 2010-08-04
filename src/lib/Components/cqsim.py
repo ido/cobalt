@@ -882,12 +882,9 @@ class ClusterQsim(ClusterBaseSystem):
                     self.yielding_job_list.append(spec.get('jobid'))  #int
                     
                     dbgmsg += " give up run local"
+            if len(dbgmsg) > 0:
                 self.dbglog.LogMessage(dbgmsg)
-                    
-                
-                #time.sleep(1)
-
-                    
+                                    
         #set tag false, enable scheduling another job at the same time
         self.event_manager.set_go_next(False)
         #self.print_screen()
