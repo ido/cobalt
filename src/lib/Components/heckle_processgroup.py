@@ -59,6 +59,9 @@ class HeckleProcessGroup(ProcessGroup):
         self.resource_attributes = {}
         for loc in self.location:
             self.resource_attributes[loc] = hiccup.get_node_properties( loc )
+        temp_env = spec['env']['data']
+        del(spec['env']['data'])
+        spec['env'].update(temp_env)
         try:     #  Checking for Fakebuild
             spec['fakebuild'] = spec['env']['fakebuild']
             del spec['env']['fakebuild']
@@ -250,6 +253,7 @@ class HeckleProcessGroup(ProcessGroup):
         logstr = "ProcessGroup:prefork"
         LOGGER.debug(logstr)
         print logstr + "Current State is: %s" % self
+        ret = {}
         try:            # check for valid user/group
             userid, groupid = pwd.getpwnam(self.user)[2:4]
         except KeyError:
