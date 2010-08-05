@@ -128,7 +128,7 @@ class HeckleSystem(Component):
     
     def get_process_groups(self, specs):
         """get a list of existing allocations"""
-        #LOGGER.debug( "System:get_process_groups" )
+        LOGGER.debug( "System:get_process_groups: specs are %s" % specs )
         self._wait()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
@@ -172,7 +172,7 @@ class HeckleSystem(Component):
             for nodename in pgp.pinging_nodes:
                 teststr = hiccup.get_node_bootstate(nodename)
                 if teststr == "READY":
-                    if self.fakebuild:
+                    if 'fakebuild' in pgp.__dict__ and pgp.fakebuild:
                         pgp.pinging_nodes.remove(nodename)
                         LOGGER.debug( exstr + "Node %s done building; "\
                              + "%s pinging nodes left" %\
@@ -199,7 +199,8 @@ class HeckleSystem(Component):
                 #####################
             if len(pgp.pinging_nodes) == 0:
                 LOGGER.debug( 
-    "System:Check Build Done: No Pinging Nodes left, Start PG Running.")
+    "System:Check Build Done: No Pinging Nodes left, Start PG %s Running." \
+        % pgp.jobid)
                 pgp.start()
             else:
                 retval = False
@@ -211,7 +212,8 @@ class HeckleSystem(Component):
         """
         Calls the process group container's wait() method
         """
-        #LOGGER.debug( "System:wait" )
+        waitlen = len( self.process_groups.keys() )
+        LOGGER.debug( "System:_wait:%s process groups." % waitlen )
         for pgp in self.process_groups.itervalues():
             pgp.wait()
     _wait = automatic(_wait)

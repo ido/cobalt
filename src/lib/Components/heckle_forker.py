@@ -13,6 +13,7 @@ fork new processes.
 
 import logging
 import os
+import sys
 import signal
 import socket
 import time
@@ -97,20 +98,20 @@ class HeckleForker (Component):
           Arguments:
                data -- a dictionary of information required while forking
           """
-          
-          print "Pre-Run Copy"
-          #command_line = "scp bbmgt2:/usr/bin/cobalt-launcher.py /usr/bin/cobalt-launcher.py"
-          #args = shlex.split(command_line)
-          
-          print "Forker: Fork data is: %s" % data
+          logstr = "Forker:Fork:"
+          print logstr + "data is: %s" % data
           label = "%s/%s" % (data["jobid"], data["id"])
+          child_pid = 0
+          print "User ID is %s, pid is %s" % (os.getuid(), child_pid)
           child_pid = os.fork()
-          if not child_pid:
-               self.logger.debug("Heckle_FORKER: Fork: The Parent")
+          if child_pid:
+               print "...and User ID is now %s, pid is now %s" % (os.getuid(), child_pid)
+               self.logger.debug( logstr + "Child Start")
                os.setgroups([])
                os.setgroups(data["other_groups"])
                os.setgid(data["primary_group"])
-               os.setuid(data["userid"])
+               #os.setuid(data["userid"])
+               print "post-set: uid is now %s" % os.getuid()
                atexit._atexit = []
                if data["umask"] != None:
                     try:
@@ -119,7 +120,7 @@ class HeckleForker (Component):
                          self.logger.error("task %s: error opening stdin file %s: %s (stdin will be /dev/null)", label, data["stdin"], e)
                          stdin = open("/dev/null", 'r')
                os.dup2(stdin.fileno(), 0)
-               self.logger.debug("Heckle_FORKER: Fork: The Parent: 1")
+               self.logger.debug( logstr + "1" )
                new_out = None
                try:
                     stdout = open(data["stdout"], 'a')
@@ -143,41 +144,41 @@ class HeckleForker (Component):
                          new_out = "/dev/null"
                          self.logger.error("task %s: sending stdout to /dev/null", label)
                os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-               self.logger.debug("Heckle_FORKER: Fork: The Parent: 2")
+               self.logger.debug( logstr + "2" )
                new_err = None
                try:
                     stderr = open(data["stderr"], 'a')
-                    self.logger.debug("Heckle_FORKER: Fork: The Parent: 2aaa")
+                    self.logger.debug( logstr + "2aaa" )
                except (IOError, OSError, TypeError), e:
-                    self.logger.debug("Heckle_FORKER: Fork: The Parent: 2aab")
+                    self.logger.debug( logstr + "2aab" )
                     self.logger.error("task %s: error opening stderr file %s: %s", label, data["stderr"], e)
                     error_to_devnull = False
-                    self.logger.debug("Heckle_FORKER: Fork: The Parent: 2a")
+                    self.logger.debug( logstr + "2a" )
                     try:
                          scratch_dir = get_forker_config("scratch_dir", None)
-                         self.logger.debug("Heckle_FORKER: Fork: The Parent: 2a1")
+                         self.logger.debug( logstr + "2a1")
                          if scratch_dir:
                               new_err = os.path.join(scratch_dir, "%s.error" % data["jobid"])
                               self.logger.error("task %s: sending stderr to scratch_dir %s", label, new_err)
                               stderr = open(new_err, 'a')
                          else:
-                              self.logger.debug("Heckle_FORKER: Fork: The Parent: 2a2")
+                              self.logger.debug( logstr + "2a2" )
                               self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stderr")
                               error_to_devnull = True
                     except Exception, e:
-                         self.logger.debug("Heckle_FORKER: Fork: The Parent: 2a3")
+                         self.logger.debug( logstr + "2a3" )
                          error_to_devnull = True
                          self.logger.error("task %s: error opening stderr file %s: %s", label, new_err, e)
-                    self.logger.debug("Heckle_FORKER: Fork: The Parent: 2b")
+                    self.logger.debug( logstr + "2b" )
                     if error_to_devnull:
                          stderr = open("/dev/null", 'a')
                          new_err = "/dev/null"
-                         self.logger.error("task %s: sending stderr to /dev/null", label)
-               self.logger.debug("Heckle_FORKER: Fork: The Parent: 2 Last!")
+                         self.logger.error( logstr + "task %s: sending stderr to /dev/null", label)
+               self.logger.debug( logstr + "2 Last!" )
                os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-               self.logger.debug("Heckle_FORKER: Fork: The Parent: 3")
+               self.logger.debug( logstr + "3" )
                cmd = data["cmd"]
-               os.environ.update( data["environ"] )
+               environ = data["environment"]
                try:
                     cobalt_log_file = open(data["cobalt_log_file"], "a")
                     if new_out:
@@ -186,30 +187,32 @@ class HeckleForker (Component):
                     if new_err:
                          print >> cobalt_log_file, "failed to open %s" % data["stderr"]
                          print >> cobalt_log_file, "stderr sent to %s\n" % new_err
-                    print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
+                    print >> cobalt_log_file, "command is %s" % cmd
                     print >> cobalt_log_file, "called with environment:\n"
-                    for key in os.environ:
-                         print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
+                    for key in environ:
+                         print >> cobalt_log_file, "%s=%s" % (key, environ[key])
                     print >> cobalt_log_file, "\n"
                     cobalt_log_file.close()
                except:
-                    self.logger.error("task %s: unable to open cobaltlog file %s", 
+                    self.logger.error( logstr + "task %s: unable to open cobaltlog file %s", 
                               label, data["cobalt_log_file"])
-               self.logger.debug("Heckle_FORKER: Fork: The Parent: 4, copying")
+               self.logger.debug( logstr + "4" )
                #p = subprocess.check_call(args)
-               self.logger.debug("Heckle_FORKER: Fork: About to exec with %s" % cmd)
+               os.setuid( data['userid'] )
+               self.logger.debug( logstr + "About to exec with %s" % cmd )
                os.execvpe(cmd, (cmd, ), environ)
                #os.execl(*cmd)
-               self.logger.debug("Heckle_FORKER: Fork: Finished Execution")
+               self.logger.debug( logstr + "Finished Execution" )
+               time.sleep(30)
           else:
-               self.logger.debug("Heckle_FORKER: Fork: Child")
+               self.logger.info( logstr + "Parent" )
                local_id = self.id_gen.next()
                kid = Child()
                kid.id = local_id
                kid.pid = child_pid
                kid.label = "%s/%s" % (label, local_id)
                self.children[local_id] = kid
-               self.logger.info("task %s: forked with pid %s", kid.label, kid.pid)
+               self.logger.info( logstr + "Parent:Task %s: forked with pid %s", kid.label, kid.pid)
                return local_id
     fork = exposed(fork)
     
@@ -253,6 +256,7 @@ class HeckleForker (Component):
         """
 
         self.logger.info("status requested for task id %s", local_id)
+        self.logger.info("current tasks are: %s" % self.children.keys())
         if self.children.has_key(local_id):
             dead = self.children[local_id]
             if dead.exit_status is not None:
