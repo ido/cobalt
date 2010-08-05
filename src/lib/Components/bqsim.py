@@ -39,7 +39,7 @@ MACHINE_NAME = "Intrepid"
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
     
-    implementation = "bqsim"
+    implementation = "qsim"
     name = "queue-manager"
     alias = "system"
     logger = logging.getLogger(__name__)
@@ -56,13 +56,85 @@ class BGQsim(Simulator):
         self.sim_end = kwargs.get("bg_trace_end", sys.maxint)
         self.anchor = kwargs.get("Anchor", 0)
         
-        #self.coscheduling = kwargs.get("coscheduling", False)
+###--------Partition related
+        partnames = self._partitions.keys()
+        self.init_partition(partnames)
+        self.inhibit_small_partitions()
+        self.part_size_list = []
+     
+        for part in self.partitions.itervalues():
+            if int(part.size) not in self.part_size_list:
+                if part.size >= MIDPLANE_SIZE:
+                    self.part_size_list.append(int(part.size))
+        self.part_size_list.sort()
+
+###-------Job related
+        self.workload_file =  kwargs.get("bgjob")
+        self.output_log = MACHINE_NAME + "-" + kwargs.get("outputlog", "")
+        
+        self.event_manager = ComponentProxy("event-manager")
+        
+        self.time_stamps = [('I', '0', 0, {})]
+        self.cur_time_index = 0
+        self.queues = SimQueueDict(policy=None)
+        
+        self.unsubmitted_job_spec_dict = {}   #{jobid: jobspec}
+
+        self.num_running = 0
+        self.num_waiting = 0
+        self.num_busy = 0
+        self.num_end = 0
+        self.total_job = 0
+        
+####------Walltime prediction
+        self.predict_scheme = kwargs.get("predict", False)
+
+        if self.predict_scheme:
+            self.walltime_prediction = True
+            self.predict_queue = bool(int(self.predict_scheme[0]))
+            self.predict_backfill = bool(int(self.predict_scheme[1]))
+            self.predict_running = bool(int(self.predict_scheme[2]))
+        else:
+            self.walltime_prediction = False
+            self.predict_queue = False
+            self.predict_backfill = False
+            self.predict_running = False
+               
+        histm_alive = False
+        try:
+            histm_alive = ComponentProxy("history-manager").is_alive()
+        except:
+            #self.logger.error("failed to connect to histm component", exc_info=True)
+            histm_alive = False
+        
+        if histm_alive:
+            self.history_manager = ComponentProxy("history-manager")
+        else:
+            self.walltime_prediction = False
+        
+#####init jobs (should be after walltime prediction initializing stuff)
+        self.init_queues()
+
+#####------walltime-aware spatial scheduling
+        self.walltime_aware_cons = False
+        self.walltime_aware_aggr = False
+        self.wass_scheme = kwargs.get("wass", None) 
+        
+        if self.wass_scheme == "both":
+            self.walltime_aware_cons = True
+            self.walltime_aware_aggr = True
+        elif self.wass_scheme == "cons":
+            self.walltime_aware_cons = True
+        elif self.wass_scheme == "aggr":
+            self.walltime_aware_aggr = True
+
+###-------CoScheduling start###
+        self.cosched_scheme_tup = kwargs.get("coscheduling", (0,0))
+
         self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
         
-        _cosched_scheme = kwargs.get("coscheduling", (0,0))
-        
-        self.cosched_scheme = _cosched_scheme[0]
-        self.cosched_scheme_remote = _cosched_scheme[1]
+        self.cosched_scheme = self.cosched_scheme_tup[0]
+        self.cosched_scheme_remote = self.cosched_scheme_tup[1]
         
         valid_cosched_schemes = ["hold", "yield"]
         
@@ -88,71 +160,12 @@ class BGQsim(Simulator):
         
         if self.coscheduling:
             #test whether cqsim is up by checking cluster job trace argument (cjob) 
-            
             if self.cluster_job_trace:
                 self.mate_qtime_pairs = self.init_mate_qtime_pair(self.cluster_job_trace)
             else:
                 self.coscheduling = False
                 self.mate_queue_manager = None
-            
-        partnames = self._partitions.keys()
-        self.init_partition(partnames)
-        self.inhibit_small_partitions()
-        self.part_size_list = []
-     
-        for part in self.partitions.itervalues():
-            if int(part.size) not in self.part_size_list:
-                if part.size >= MIDPLANE_SIZE:
-                    self.part_size_list.append(int(part.size))
-        self.part_size_list.sort()
-        #print self.part_size_list
-        
-        self.workload_file =  kwargs.get("bgjob")
-        self.output_log = kwargs.get("outputlog")
-        
-        self.event_manager = ComponentProxy("event-manager")
-        
-        self.predict_scheme = kwargs.get("predict", False)
-        
-        if self.predict_scheme:
-            self.walltime_prediction = True
-            self.predict_queue = bool(int(self.predict_scheme[0]))
-            self.predict_backfill = bool(int(self.predict_scheme[1]))
-            self.predict_running = bool(int(self.predict_scheme[2]))
-        else:
-            self.walltime_prediction = False
-            self.predict_queue = False
-            self.predict_backfill = False
-            self.predict_running = False
-            
-        #print "walltime_prediction =", self.walltime_prediction   
-        histm_alive = False
-        try:
-            histm_alive = ComponentProxy("history-manager").is_alive()
-        except:
-            #self.logger.error("failed to connect to histm component", exc_info=True)
-            histm_alive = False
-        
-        if histm_alive:
-            self.history_manager = ComponentProxy("history-manager")
-        else:
-            self.walltime_prediction = False
-            
-        self.time_stamps = [('I', '0', 0, {})]
-        self.cur_time_index = 0
-        self.queues = SimQueueDict(policy=None)
-        
-#        self.invisible_job_dict = {}   # for jobs not submitted, {jobid:job_instance}
-        self.unsubmitted_job_spec_dict = {}   #{jobid: jobspec}
-
-        self.num_running = 0
-        self.num_waiting = 0
-        self.num_busy = 0
-        self.num_end = 0
-        self.total_job = 0
-        
-        self.init_queues()
-        
+                
         if self.coscheduling:
             self.init_mate_job_dict()
             matejobs = len(self.mate_job_dict.keys())
@@ -161,7 +174,9 @@ class BGQsim(Simulator):
             print "number mate job pairs: %s, proportion in blue gene jobs: %s%%"\
              % (len(self.mate_job_dict.keys()), round(proportion *100, 1))
             self.generat_mate_job_log()
-        
+         
+            
+####----log and other 
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
         
@@ -179,10 +194,7 @@ class BGQsim(Simulator):
         
         #initialize capacity loss
         self.capacity_loss = 0
-                
-        #starting job(id)s at current time stamp. used for calculating capacity loss
-        self.starting_jobs = []
-        
+
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
                         
@@ -191,20 +203,8 @@ class BGQsim(Simulator):
     
         self.rack_matrix = []
         self.reset_rack_matrix()
-        
-        #configure walltime-aware spatial scheduling schemes
-        self.walltime_aware_cons = False
-        self.walltime_aware_aggr = False
-        self.wass_scheme = kwargs.get("wass", None) 
-        
-        if self.wass_scheme == "both":
-            self.walltime_aware_cons = True
-            self.walltime_aware_aggr = True
-        elif self.wass_scheme == "cons":
-            self.walltime_aware_cons = True
-        elif self.wass_scheme == "aggr":
-            self.walltime_aware_aggr = True
             
+####----print some configuration            
         if self.wass_scheme:
             print "walltime aware job allocation enabled, scheme = ", self.wass_scheme
         
@@ -219,85 +219,8 @@ class BGQsim(Simulator):
         
         if not self.cluster_job_trace:
             Var = raw_input("press any Enter to continue...")
-    
-    def _get_queuing_jobs(self):
-        return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
-    queuing_jobs = property(_get_queuing_jobs)
-    
-    def _get_running_jobs(self):
-        return [job for job in self.queues.get_jobs([{'has_resources':True}])]
-    running_jobs = property(_get_running_jobs)
-        
-    def init_mate_qtime_pair(self, mate_job_trace):
-        '''initialize mate job dict'''
-        jobfile = open(mate_job_trace, 'r')
-        
-        qtime_pairs = []
-        
-        for line in jobfile:
-            line = line.strip('\n')
-            line = line.strip('\r')
-            if line[0].isdigit():
-                #pbs-style trace
-                firstparse = line.split(';')
-                if firstparse[1] == 'Q':
-                    qtime = date_to_sec(firstparse[0])
-                    jobid = int(firstparse[2])
-                    qtime_pairs.append((qtime, jobid))
-            else:
-                #alternative trace
-                first_parse = line.split(';')
-                tempdict = {}
-                for item in first_parse:
-                    tup = item.partition('=')
-                    if tup[0] == 'qtime':
-                        qtime = date_to_sec(tup[2], "%Y-%m-%d %H:%M:%S")
-                    if tup[0] == 'jobid':
-                        jobid = int(tup[2])
-                if jobid and qtime:
-                        qtime_pairs.append((qtime, jobid))
-                    
-        return qtime_pairs
-    
-    def find_mate_id(self, qtime, threshold):
-    
-        mate_subtime = 0
-        ret_id = 0
-        for pair in self.mate_qtime_pairs:
-            if pair[0] > qtime:
-                mate_subtime = pair[0]
-                mate_id = pair[1]
-                break
-
-        if mate_subtime > 0:
-            if mate_subtime - float(qtime) < threshold:
-               ret_id = mate_id
-        return ret_id
-    
-    def init_mate_job_dict(self):
-        '''init mate job dictionary'''
-        
-        temp_dict = {} #remote_id:local_id
-        
-        for id, spec in self.unsubmitted_job_spec_dict.iteritems():
-            id = int(id)
-            submit_time = spec.get('submittime')
-            mate_id = self.find_mate_id(submit_time, self.mate_vicinity)
-            if mate_id > 0:
-                #self.mate_job_dict[spec['jobid']] = int(mateid)
-                if temp_dict.has_key(mate_id):
-                    tmp = temp_dict[mate_id]
-                    if id > tmp:
-                        temp_dict[mate_id] = id
-                else:
-                    temp_dict[mate_id] = id
-        #reserve dict to local_id:remote_id to guarantee one-to-one match
-        self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
-        
-    def is_finished(self):
-        return self.finished
-    is_finished = exposed(is_finished)
-    
+            
+##### simulation related
     def get_current_time(self):
         '''this function overrides get_current_time() in bgsched, bg_base_system, and cluster_base_system'''
         return  self.event_manager.get_current_time()
@@ -308,14 +231,6 @@ class BGQsim(Simulator):
     def get_current_time_date(self):
         return self.event_manager.get_current_date_time()
     
-    def get_mate_job_dict(self):
-        return self.mate_job_dict
-    get_mate_job_dict = exposed(get_mate_job_dict)
-
-    def time_increment(self):
-        '''the current time stamp increments by 1'''
-        self.event_manager.clock_increment()
-       
     def insert_time_stamp(self, timestamp, type, info):
         '''insert time stamps in the same order'''
         if type not in SET_event:
@@ -331,30 +246,59 @@ class BGQsim(Simulator):
         
         self.event_manager.add_event(evspec)
         
-    def init_partition(self, namelist):
-        '''add all paritions and apply activate and enable'''
-        func = self.add_partitions
-        args = ([{'tag':'partition', 'name':partname, 'size':"*",
-                  'functional':False, 'scheduled':False, 'queue':"*",
-                  'deps':[]} for partname in namelist],)
-        apply(func, args)
-        
-        func = self.set_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
-                {'scheduled':True, 'functional': True})
-        apply(func, args)
-    
-    def inhibit_small_partitions(self):
-        '''set all partition less than 512 nodes not schedulable and functional'''
-        namelist = []
-        for partition in self._partitions.itervalues():
-            if partition.size < MIDPLANE_SIZE:
-                namelist.append(partition.name)
-        func = self.set_partitions
-        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
-                {'scheduled':False})
-        apply(func, args)
+    def log_job_event(self, eventtype, timestamp, spec):
+        '''log job events(Queue,Start,End) to PBS-style log'''
+        def len2 (_input):
+            _input = str(_input)
+            if len(_input) == 1:
+                return "0" + _input
+            else:
+                return _input
+        if eventtype == 'Q':  #submitted(queued) for the first time
+            message = "%s;Q;%s;queue=%s" % (timestamp, spec['jobid'], spec['queue'])
+        elif eventtype == 'R':  #resume running after failure recovery
+            message = "%s;R;%s" % (timestamp, ":".join(spec['location']))
+        else:
+            wall_time = spec['walltime']
+            walltime_minutes = len2(int(float(wall_time)) % 60)
+            walltime_hours = len2(int(float(wall_time)) // 60)
+            log_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
+            if eventtype == 'S':  #start running 
+                message = "%s;S;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s exec_host=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
+                 spec['nodes'], log_walltime, spec['start_time'], ":".join(spec['location']))
+            elif eventtype == 'H':  #hold some resource  
+                message = "%s;H;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s exec_host=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
+                 spec['nodes'], log_walltime, ":".join(spec['location']))
+            elif eventtype == 'E':  #end
+                if spec['hold_time'] == 0:
+                    holding_time = 0
+                else:
+                    holding_time = spec['start_time'] - spec['hold_time']
+                first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
+                if first_yielding > 0:
+                    yielding_time = spec['start_time'] - first_yielding
+                else:
+                    yielding_time = 0
+                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
+                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
+                 round(float(spec['end_time']), 1), ":".join(spec['location']),
+                 spec['runtime'], holding_time, yielding_time)
+            else:
+                print "invalid event type, type=", eventtype
+                return
+        self.pbslog.LogMessage(message)
 
+##### job/queue related
+    def _get_queuing_jobs(self):
+        return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+    queuing_jobs = property(_get_queuing_jobs)
+    
+    def _get_running_jobs(self):
+        return [job for job in self.queues.get_jobs([{'has_resources':True}])]
+    running_jobs = property(_get_running_jobs)
+    
     def init_queues(self):
         '''parses the work load log file, initializes queues and sorted time 
         stamp list'''
@@ -451,6 +395,16 @@ class BGQsim(Simulator):
 
         return 0
     
+    def add_queues(self, specs):
+        '''add queues'''
+        return self.queues.add_queues(specs)
+    add_queues = exposed(query(add_queues))
+    
+    def get_queues(self, specs):
+        '''get queues'''
+        return self.queues.get_queues(specs)
+    get_queues = exposed(query(get_queues))
+    
     def init_unsubmitted_dict(self, specs):
         #jobdict = {}
         specdict = {}
@@ -461,72 +415,6 @@ class BGQsim(Simulator):
             specdict[jobid] = spec
         return specdict
     
-    def get_walltime_Ap(self, spec):  #*AdjEst*
-        '''get walltime adjusting parameter from history manager component'''
-        
-        projectname = spec.get('project')
-        username = spec.get('user')
-        if prediction_scheme == "paired":
-            return self.history_manager.get_Ap_by_keypair(username, projectname)
-        
-        Ap_proj = self.history_manager.get_Ap('project', projectname)
-        
-        Ap_user = self.history_manager.get_Ap('user', username)
-         
-        if prediction_scheme == "project":
-            return Ap_proj
-        elif prediction_scheme == "user":
-            print "Ap_user==========", Ap_user
-            return Ap_user
-        elif prediction_scheme == "combined":
-            return (Ap_proj + Ap_user) / 2
-        else:
-            return self.history_manager.get_Ap_by_keypair(username, projectname)
-            
-    def log_job_event(self, eventtype, timestamp, spec):
-        '''log job events(Queue,Start,End) to PBS-style log'''
-        def len2 (_input):
-            _input = str(_input)
-            if len(_input) == 1:
-                return "0" + _input
-            else:
-                return _input
-        if eventtype == 'Q':  #submitted(queued) for the first time
-            message = "%s;Q;%s;queue=%s" % (timestamp, spec['jobid'], spec['queue'])
-        elif eventtype == 'R':  #resume running after failure recovery
-            message = "%s;R;%s" % (timestamp, ":".join(spec['location']))
-        else:
-            wall_time = spec['walltime']
-            walltime_minutes = len2(int(float(wall_time)) % 60)
-            walltime_hours = len2(int(float(wall_time)) // 60)
-            log_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
-            if eventtype == 'S':  #start running 
-                message = "%s;S;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s exec_host=%s" % \
-                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
-                 spec['nodes'], log_walltime, spec['start_time'], ":".join(spec['location']))
-            elif eventtype == 'H':  #hold some resource  
-                message = "%s;H;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s exec_host=%s" % \
-                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
-                 spec['nodes'], log_walltime, ":".join(spec['location']))
-            elif eventtype == 'E':  #end
-                if spec['hold_time'] == 0:
-                    holding_time = 0
-                else:
-                    holding_time = spec['start_time'] - spec['hold_time']
-                first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
-                if first_yielding > 0:
-                    yielding_time = spec['start_time'] - first_yielding
-                else:
-                    yielding_time = 0
-                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
-                (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
-                 round(float(spec['end_time']), 1), ":".join(spec['location']),
-                 spec['runtime'], holding_time, yielding_time)
-            else:
-                print "invalid event type, type=", eventtype
-                return
-        self.pbslog.LogMessage(message)
-        
     def get_live_job_by_id(self, jobid):
         '''get waiting or running job instance by jobid'''
         job = None
@@ -534,6 +422,35 @@ class BGQsim(Simulator):
         if joblist:
             job = joblist[0]
         return job
+    
+    def add_jobs(self, specs):
+        '''Add a job'''
+        response = self.queues.add_jobs(specs)
+        return response
+    add_jobs = exposed(query(add_jobs))
+    
+    def get_jobs(self, specs):
+        '''get a list of jobs, each time triggers time stamp increment and job
+        states update'''
+
+        jobs = []
+        
+        if self.event_manager.get_go_next():
+            del self.yielding_job_list[:]
+            
+            self.update_job_states(specs, {})
+            
+            self.compute_utility_scores()
+
+        self.event_manager.set_go_next(True)
+        
+        jobs = self.queues.get_jobs([{'tag':"job"}])
+        
+        if self.yielding_job_list:
+            jobs = [job for job in jobs if job.jobid not in self.yielding_job_list]
+  
+        return jobs
+    get_jobs = exposed(query(get_jobs))
     
     def update_job_states(self, specs, updates):
         '''update the state of the jobs associated to the current time stamp'''
@@ -588,11 +505,7 @@ class BGQsim(Simulator):
                     end = 0
                 end_datetime = sec_to_date(end)   
                 self.log_job_event("E", end_datetime, jobspec)
-                
-#                self.unsubmitted_job_spec_dict[Id]['state'] = "ended"
-#                self.unsubmitted_job_spec_dict[Id]['is_runnable'] = "False"
-#                self.unsubmitted_job_spec_dict[Id]['has_resource'] = "False"
-                
+
                 #delete the job instance from self.queues
                 self.queues.del_jobs([{'jobid':int(Id)}])
                 self.num_running -= 1
@@ -604,187 +517,6 @@ class BGQsim(Simulator):
                 
         return 0
     
-    def run_job_updates(self, jobspec, newattr):
-        ''' return the state updates (including state queued -> running, 
-        setting the start_time, end_time)'''
-        updates = {}
-        
-        #print "enter run_job_updates, jobspec=", jobspec
-        
-        start = self.get_current_time_sec()
-        updates['start_time'] = start
-        updates['starttime'] = start
-
-        updates['state'] = 'running'
-        updates['system_state'] = 'running'
-        updates['is_runnable'] = False
-        updates['has_resources'] = True
-
-        #print self.get_current_time_date(), "run job state change, job", jobspec['jobid'], \
-        #     ":", jobspec['state'], "->", updates['state']
-             
-        #determine whether the job is going to fail before completion
-        location = newattr['location']
-        duration = jobspec['remain_time']
-        
-        end = start + duration
-        updates['end_time'] = end
-        self.insert_time_stamp(end, "E", {'jobid':jobspec['jobid']})
-        
-        updates.update(newattr)
-    
-        return updates
-     
-    def add_jobs(self, specs):
-        '''Add a job'''
-        response = self.queues.add_jobs(specs)
-        return response
-    add_jobs = exposed(query(add_jobs))
-        
-    def current_idle_node(self):
-        '''number of idle nodes'''
-        idle_nodes = 0
-        midplanes = self.get_all_idle_midplanes()
-        idle_nodes = 512 * len(midplanes)
-        return idle_nodes
-    
-    def current_cycle_capacity_loss(self):
-        loss  = 0
-        current_time = self.get_current_time_sec()
-        next_time = self.get_next_time_sec()
-        print "current_time=", current_time
-        print "next_time=", next_time
-        time_length = next_time - current_time
-        idle_node = self.current_idle_node()
-        loss = time_length * idle_node
-        return loss
-    
-    def total_capacity_loss_rate(self):
-        last_stamp = len(self.time_stamps) - 1
-        total_period_sec = self.time_stamps[last_stamp] [2] - self.time_stamps[1][2]
-        total_NH = TOTAL_NODES *  (total_period_sec / 3600)
-            
-        print "total_nodehours=", total_NH
-        print "total loss capcity (node*hour)=", self.capacity_loss / 3600
-        
-        loss_rate = self.capacity_loss /  (total_NH * 3600)
-        
-        print "capacity loss rate=", loss_rate
-        return loss_rate        
-    
-    def get_jobs(self, specs):
-        '''get a list of jobs, each time triggers time stamp increment and job
-        states update'''
-
-        jobs = []
-        
-        if self.event_manager.get_go_next():
-            del self.yielding_job_list[:]
-            
-            self.update_job_states(specs, {})
-            
-            self.compute_utility_scores()
-
-        self.event_manager.set_go_next(True)
-        
-        jobs = self.queues.get_jobs([{'tag':"job"}])
-        
-        if self.yielding_job_list:
-            jobs = [job for job in jobs if job.jobid not in self.yielding_job_list]
-  
-        return jobs
-    get_jobs = exposed(query(get_jobs))
-    
-    def _get_job_by_id(self, jobid):
-        jobs = self.queues.get_jobs([{'jobid':jobid}])
-        if len(jobs) == 1:
-            return jobs[0]
-        else:
-            return None
-   
-    def add_queues(self, specs):
-        '''add queues'''
-        return self.queues.add_queues(specs)
-    add_queues = exposed(query(add_queues))
-    
-    def get_queues(self, specs):
-        '''get queues'''
-        return self.queues.get_queues(specs)
-    get_queues = exposed(query(get_queues))
-    
-    def equal_partition(self, nodeno1, nodeno2):
-        proper_partsize1 = 0
-        proper_partsize2 = 1        
-        for psize in self.part_size_list:
-            if psize >= nodeno1:
-                proper_partsize1 = psize
-                break
-        for psize in self.part_size_list:
-            if psize >= nodeno2:
-                proper_partsize2 = psize
-                break
-        if proper_partsize1 == proper_partsize2:
-            return True
-        else:
-            return False
-    
-    def run_matched_job(self, jobid, partition):
-        '''implementation of aggresive scheme in sc10 submission'''
-  
-        #get neighbor partition (list) for running
-        partlist = []
-        nbpart = self.get_neighbor_by_partition(partition)
-        if nbpart:
-            nb_partition = self._partitions[nbpart]
-            if nb_partition.state != "idle":
-                #self.dbglog.LogMessage("return point 1")
-                return None
-        else:
-            #self.dbglog.LogMessage("return point 2")
-            return None
-        partlist.append(nbpart)
-                
-        #find a job in the queue whose length matches the top-queue job
-        topjob = self._get_job_by_id(jobid)
-        
-        base_length = float(topjob.walltime)
-        #print "job %d base_length=%s" % (jobid, base_length)
-        base_nodes = int(topjob.nodes)
-        
-        min_diff = MAXINT
-        matched_job = None
-        msg = "queueing jobs=%s" % ([job.jobid for job in self.queuing_jobs])
-        #self.dbglog.LogMessage(msg)
-        
-        for job in self.queuing_jobs:
-            #self.dbglog.LogMessage("job.nodes=%s, base_nodes=%s" % (job.nodes, base_nodes))
-            
-            if self.equal_partition(int(job.nodes), base_nodes):
-                length = float(job.walltime)
-                #self.dbglog.LogMessage("length=%s, base_length=%s" % (length, base_length))
-                if length > base_length:
-                    continue
-                diff = abs(base_length - length)
-                #print "diff=", diff
-                #self.dbglog.LogMessage("diff=%s" % (diff))
-                if diff < min_diff:
-                    min_diff = diff
-                    matched_job = job
-        
-        if matched_job == None:
-            pass
-            #self.dbglog.LogMessage("return point 3")
-        else:
-            self.dbglog.LogMessage(matched_job.jobid)
-                    
-        #run the matched job on the neiborbor partition
-        if matched_job and partlist:
-            self.start_job([{'tag':'job', 'jobid':matched_job.jobid}], {'location':partlist})
-            msg = "job=%s, partition=%s, mached_job=%s, matched_partitions=%s" % (jobid, partition, matched_job.jobid, partlist)
-            self.dbglog.LogMessage(msg)
-        
-        return 1
-   
     def run_jobs(self, specs, nodelist):
         '''run a queued job, by updating the job state, start_time and
         end_time, invoked by bgsched'''
@@ -805,7 +537,7 @@ class BGQsim(Simulator):
 
                 #if mate job exists, get the status of the mate job
                 if mate_job_id > 0:
-                    remote_status = self.get_mate_jobs_status_local(mate_job_id).get('status', "unknown")
+                    remote_status = self.get_mate_jobs_status_local(mate_job_id).get('status', "unknown!")
                     dbgmsg += "local=%s;mate=%s;mate_status=%s" % (local_job_id, mate_job_id, remote_status)
                     
                     if remote_status in ["queuing", "unsubmitted"]:
@@ -886,88 +618,6 @@ class BGQsim(Simulator):
                 
         return len(specs)
     run_jobs = exposed(run_jobs)
-    
-    # order the jobs with biggest utility first
-    def utilitycmp(self, job1, job2):
-        return -cmp(job1.score, job2.score)
-    
-    def try_to_run_mate_job(self, _jobid):
-        '''try to run mate job, start all the jobs that can run. If the started
-        jobs include the given mate job, return True else return False.  _jobid : int
-        '''
-        #print "entered bqsim.try_to_run_mate_job, jobid=", _jobid
-            
-        mate_job_started = False
-        
-        #start all the jobs that can run
-        gohead = True
-        while gohead:
-            running_jobs = [job for job in self.queues.get_jobs([{'has_resources':True}])]
-            
-            end_times = []
-            
-            now = self.get_current_time_sec()
-        
-            for job in running_jobs:
-                end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
-                end_times.append([job.location, end_time])
-            
-            active_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])] #waiting jobs
-            active_jobs.sort(self.utilitycmp)
-                   
-            job_location_args = []
-            for job in active_jobs:
-                if not job.jobid == _jobid and self.mate_job_dict.get(job.jobid, 0) > 0:
-                    #if a job other than given job (_jobid) has mate, skip it.
-                    continue
-                
-                job_location_args.append({'jobid': str(job.jobid),
-                                          'nodes': job.nodes,
-                                          'queue': job.queue,
-                                          'forbidden': [],
-                                          'utility_score': job.score,
-                                          'walltime': job.walltime,
-                                          'walltime_p': job.walltime_p,  #*AdjEst*
-                                          'attrs': job.attrs,
-                 } )
-            
-            if len(job_location_args) == 0:
-                break
-            
-            #print "queue order=", [item['jobid'] for item in job_location_args]
-            
-            best_partition_dict = self.find_job_location(job_location_args, end_times)
-            
-            if best_partition_dict:
-                #print "best_partition_dict=", best_partition_dict
-                
-                for canrun_jobid in best_partition_dict:
-                    nodelist = best_partition_dict[canrun_jobid]
-                    
-                    if str(_jobid) == canrun_jobid:
-                        mate_job_started = True
-                            
-                    self.start_job([{'tag':"job", 'jobid':int(canrun_jobid)}], {'location':nodelist})
-                    #print "bqsim.try_to_run_mate, start job jobid ", canrun_jobid 
-            else:
-                break
-                        
-        return mate_job_started
-    try_to_run_mate_job = exposed(try_to_run_mate_job)
-    
-    def run_holded_job(self, specs):
-        '''start holded job'''
-        for spec in specs:
-            jobid = spec.get('jobid')
-            nodelist = self.job_hold_dict.get(jobid, None)
-            if nodelist == None:
-                #print "cannot find holded resources"
-                return
-            #print "start holded job %s on location %s" % (spec['jobid'], nodelist) 
-            self.start_job([spec], {'location':nodelist})
-            del self.job_hold_dict[jobid]
-            
-    run_holded_job = exposed(run_holded_job)
         
     def start_job(self, specs, updates):
         '''update the job state and start_time and end_time when cqadm --run
@@ -997,209 +647,58 @@ class BGQsim(Simulator):
         
         return self.queues.get_jobs(specs, _start_job, updates)
     
-    def hold_job(self, specs, updates):
-        '''hold a job. a holded job is not started but hold some resources that can run itself in the future
-        once its mate job in a remote system can be started immediatly'''
-        partitions = updates['location']
-        for partition in partitions:
-            self.reserve_partition(partition)
-            partsize = int(self._partitions[partition].size)
-                    
-        for spec in specs:
-            self.job_hold_dict[spec['jobid']] = partitions
-                    
-        def _hold_job(job, newattr):
-            '''callback function to update job start/end time'''
-            temp = job.to_rx()
-            newattr = self.hold_job_updates(temp, newattr)
-            temp.update(newattr)
-            job.update(newattr)
-            self.log_job_event('H', self.get_current_time_date(), temp)
-        
-        return self.queues.get_jobs(specs, _hold_job, updates)
-    
-    def hold_job_updates(self, jobspec, newattr):
+    def run_job_updates(self, jobspec, newattr):
         ''' return the state updates (including state queued -> running, 
         setting the start_time, end_time)'''
         updates = {}
         
-        updates['is_runnable'] = False
-        updates['has_resources'] = False
-        updates['state'] = "holding"
-        updates['hold_time'] = self.get_current_time_sec()
+        #print "enter run_job_updates, jobspec=", jobspec
+        
+        start = self.get_current_time_sec()
+        updates['start_time'] = start
+        updates['starttime'] = start
 
+        updates['state'] = 'running'
+        updates['system_state'] = 'running'
+        updates['is_runnable'] = False
+        updates['has_resources'] = True
+             
+        #determine whether the job is going to fail before completion
+        location = newattr['location']
+        duration = jobspec['remain_time']
+        
+        end = start + duration
+        updates['end_time'] = end
+        self.insert_time_stamp(end, "E", {'jobid':jobspec['jobid']})
+        
         updates.update(newattr)
     
         return updates
     
-    def compute_utility_scores (self):
-        utility_scores = []
-        current_time = time.time()
-            
-        for job in self.queues.get_jobs([{'is_runnable':True}]):    
-            utility_name = self.queues[job.queue].policy
-            args = {'queued_time':current_time - float(job.submittime), 
-                    'wall_time': 60*float(job.walltime),    
-                    'wall_time_p':  60*float(job.walltime_p), ##  *AdjEst*
-                    'size': float(job.nodes),
-                    'user_name': job.user,
-                    'project': job.project,
-                    'queue_priority': int(self.queues[job.queue].priority),
-                    #'machine_size': max_nodes,
-                    'jobid': int(job.jobid),
-                    'score': job.score,
-                    'recovering': job.recovering,
-                    'state': job.state,
-                    }
-            try:
-                if utility_name in self.builtin_utility_functions:
-                    utility_func = self.builtin_utility_functions[utility_name]
-                else:
-                    utility_func = self.user_utility_functions[utility_name]
-                utility_func.func_globals.update(args)
-                score = utility_func()
-            except KeyError:
-                # do something sensible when the requested utility function doesn't exist
-                # probably go back to the "default" one
-                
-                # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
-                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
-                return
-            except:
-                # do something sensible when the requested utility function explodes
-                # probably go back to the "default" one
-                # and if we get here, try to fix it and throw away this scheduling iteration
-                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
-                    exc_info=True)
-                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
-                return
-            
-            try:
-                job.score += score
-            except:
-                self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
-                    exc_info=True)
-                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
-                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
-                return
+##### system related   
+    def init_partition(self, namelist):
+        '''add all paritions and apply activate and enable'''
+        func = self.add_partitions
+        args = ([{'tag':'partition', 'name':partname, 'size':"*",
+                  'functional':False, 'scheduled':False, 'queue':"*",
+                  'deps':[]} for partname in namelist],)
+        apply(func, args)
+        
+        func = self.set_partitions
+        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
+                {'scheduled':True, 'functional': True})
+        apply(func, args)
     
-    def define_user_utility_functions(self):
-        self.logger.info("building user utility functions")
-        self.user_utility_functions.clear()
-        filename = os.path.expandvars(get_bgsched_config("utility_file", ""))
-        try:
-            f = open(filename)
-        except:
-            #self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
-            return
-        
-        str = f.read()
-        
-        try:
-            code = compile(str, filename, 'exec')
-        except:
-            self.logger.error("Problem compiling utility function definitions.", exc_info=True)
-            return
-        
-        globals = {'math':math, 'time':time}
-        locals = {}
-        try:
-            exec code in globals, locals
-        except:
-            self.logger.error("Problem executing utility function definitions.", exc_info=True)
-            
-        for thing in locals.values():
-            if type(thing) is types.FunctionType:
-                if thing.func_name in self.builtin_utility_functions:
-                    self.logger.error("Attempting to overwrite builtin utility function '%s'.  User version discarded." % \
-                        thing.func_name)
-                else:
-                    self.user_utility_functions[thing.func_name] = thing
-    define_user_utility_functions = exposed(define_user_utility_functions)
-    
-    def define_builtin_utility_functions(self):
-        self.logger.info("building builtin utility functions")
-        self.builtin_utility_functions.clear()
-        
-        # I think this duplicates cobalt's old scheduling policy
-        # higher queue priorities win, with jobid being the tie breaker
-        def default0():
-            val = queue_priority + 0.1
-            return val
-        
-        def default1():
-            '''FCFS'''
-            val = queued_time
-            return val
-        
-        def default():
-            '''WFP'''
-            if self.predict_queue:
-                wall_time_sched = wall_time_p
-            else:
-                wall_time_sched = wall_time
-                            
-            val = ( queued_time / wall_time_sched)**3 * (size/64.0)
-            
-            return val
-        
-        def high_prio():
-            val = 1.0
-            return val
-    
-        self.builtin_utility_functions["default"] = default
-        self.builtin_utility_functions["high_prio"] = high_prio
-        
-    def get_neighbor_by_partition(self, partname):
-        '''get the neighbor partition by given partition name.
-          note: this functionality is specific to intrepid partition naming and for partition size smaller than 4k'''
-        nbpart = ""
-        partition = self._partitions[partname]
-        partsize = partition.size
-        if partsize == 512:  #e.g. ANL-R12-M0-512  --> ANL-R12-M1-512
-            nbpart = "%s%s%s" % (partname[0:9], 1-int(partname[9]), partname[10:])  #reverse the midplane
-        elif partsize == 1024:  #e.g.  ANL-R12-1024 --> ANL-R13-1024
-            rackno = int(partname[6])
-            if rackno % 2 == 0:  #even
-                nbrackno = rackno + 1
-            else:
-                nbrackno = rackno - 1
-            nbpart = "%s%s%s" % (partname[0:6], nbrackno, partname[7:])    #find the neighbor rack
-        elif partsize == 2048:  #e.g. ANL-R12-R13-2048 --> ANL-R14-R15-2048
-            rackno1 = int(partname[6])
-            rackno2 = int(partname[10])
-            if rackno1 % 4 == 0:  #0, 4 ...
-                nbrackno1 = rackno1 + 2
-                nbrackno2 = rackno2 + 2
-            else:  #2, 6
-                nbrackno1 = rackno1 - 2
-                nbrackno2 = rackno2 - 2
-            nbpart = "%s%s%s%s%s" % (partname[0:6], nbrackno1, partname[7:10], nbrackno2, partname[11:])
-        elif partsize == 4096:  #e.g. ANL-R10-R13-4096 --> ANL-R14-R17-4096
-            rackno1 = int(partname[6])
-            rackno2 = int(partname[10])
-            if rackno1 == 0: 
-                nbrackno1 = rackno1 + 4
-                nbrackno2 = rackno2 + 4
-            elif rackno1 == 4:
-                nbrackno1 = rackno1 - 4
-                nbrackno2 = rackno2 - 4
-            nbpart = "%s%s%s%s%s" % (partname[0:6], nbrackno1, partname[7:10], nbrackno2, partname[11:])
-        return nbpart
-    
-    def get_running_job_by_partition(self, partname):
-        '''return a running job given the partition name'''
-        partition = self._partitions[partname]
-        if partition.state == "idle":
-            return None               
-        for rjob in self.running_jobs:
-            partitions = rjob.location
-            if partname in partitions:
-                return rjob
-        return None
+    def inhibit_small_partitions(self):
+        '''set all partition less than 512 nodes not schedulable and functional'''
+        namelist = []
+        for partition in self._partitions.itervalues():
+            if partition.size < MIDPLANE_SIZE:
+                namelist.append(partition.name)
+        func = self.set_partitions
+        args = ([{'tag':'partition', 'name':partname} for partname in namelist],
+                {'scheduled':False})
+        apply(func, args)
         
     def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
         jobid = args['jobid']
@@ -1390,8 +889,598 @@ class BGQsim(Simulator):
 
         return best_partition_dict
     find_job_location = locking(exposed(find_job_location))
+    
+    def reserve_partition (self, name, size=None):
+        """Reserve a partition and block all related partitions.
+        
+        Arguments:
+        name -- name of the partition to reserve
+        size -- size of the process group reserving the partition (optional)
+        """
+        
+        try:
+            partition = self.partitions[name]
+        except KeyError:
+            self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
+            return False
+#        if partition.state != "allocated":
+#            self.logger.error("reserve_partition(%r, %r) [%s]" % (name, size, partition.state))
+#            return False
+        if not partition.functional:
+            self.logger.error("reserve_partition(%r, %r) [not functional]" % (name, size))
+        if size is not None and size > partition.size:
+            self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
+            return False
 
-    #display stuff
+        self._partitions_lock.acquire()
+        try:
+            partition.state = "busy"
+            partition.reserved_until = False
+        except:
+            self.logger.error("error in reserve_partition", exc_info=True)
+        self._partitions_lock.release()
+        # explicitly call this, since the above "busy" is instantaneously available
+        self.update_partition_state()
+        
+        self.logger.info("reserve_partition(%r, %r)" % (name, size))
+        return True
+    reserve_partition = exposed(reserve_partition)
+    
+    
+#####--------utility functions
+
+    # order the jobs with biggest utility first
+    def utilitycmp(self, job1, job2):
+        return -cmp(job1.score, job2.score)
+    
+    def compute_utility_scores (self):
+        utility_scores = []
+        current_time = time.time()
+            
+        for job in self.queues.get_jobs([{'is_runnable':True}]):    
+            utility_name = self.queues[job.queue].policy
+            args = {'queued_time':current_time - float(job.submittime), 
+                    'wall_time': 60*float(job.walltime),    
+                    'wall_time_p':  60*float(job.walltime_p), ##  *AdjEst*
+                    'size': float(job.nodes),
+                    'user_name': job.user,
+                    'project': job.project,
+                    'queue_priority': int(self.queues[job.queue].priority),
+                    #'machine_size': max_nodes,
+                    'jobid': int(job.jobid),
+                    'score': job.score,
+                    'recovering': job.recovering,
+                    'state': job.state,
+                    }
+            try:
+                if utility_name in self.builtin_utility_functions:
+                    utility_func = self.builtin_utility_functions[utility_name]
+                else:
+                    utility_func = self.user_utility_functions[utility_name]
+                utility_func.func_globals.update(args)
+                score = utility_func()
+            except KeyError:
+                # do something sensible when the requested utility function doesn't exist
+                # probably go back to the "default" one
+                
+                # and if we get here, try to fix it and throw away this scheduling iteration
+                self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
+                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
+                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                return
+            except:
+                # do something sensible when the requested utility function explodes
+                # probably go back to the "default" one
+                # and if we get here, try to fix it and throw away this scheduling iteration
+                self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
+                    exc_info=True)
+                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
+                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                return
+            
+            try:
+                job.score += score
+            except:
+                self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
+                    exc_info=True)
+                self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
+                self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
+                return
+
+    def define_user_utility_functions(self):
+        self.logger.info("building user utility functions")
+        self.user_utility_functions.clear()
+        filename = os.path.expandvars(get_bgsched_config("utility_file", ""))
+        try:
+            f = open(filename)
+        except:
+            #self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
+            return
+        
+        str = f.read()
+        
+        try:
+            code = compile(str, filename, 'exec')
+        except:
+            self.logger.error("Problem compiling utility function definitions.", exc_info=True)
+            return
+        
+        globals = {'math':math, 'time':time}
+        locals = {}
+        try:
+            exec code in globals, locals
+        except:
+            self.logger.error("Problem executing utility function definitions.", exc_info=True)
+            
+        for thing in locals.values():
+            if type(thing) is types.FunctionType:
+                if thing.func_name in self.builtin_utility_functions:
+                    self.logger.error("Attempting to overwrite builtin utility function '%s'.  User version discarded." % \
+                        thing.func_name)
+                else:
+                    self.user_utility_functions[thing.func_name] = thing
+    define_user_utility_functions = exposed(define_user_utility_functions)
+    
+    def define_builtin_utility_functions(self):
+        self.logger.info("building builtin utility functions")
+        self.builtin_utility_functions.clear()
+        
+        # I think this duplicates cobalt's old scheduling policy
+        # higher queue priorities win, with jobid being the tie breaker
+        def default0():
+            val = queue_priority + 0.1
+            return val
+        
+        def default1():
+            '''FCFS'''
+            val = queued_time
+            return val
+        
+        def default():
+            '''WFP'''
+            if self.predict_queue:
+                wall_time_sched = wall_time_p
+            else:
+                wall_time_sched = wall_time
+                            
+            val = ( queued_time / wall_time_sched)**3 * (size/64.0)
+            
+            return val
+        
+        def high_prio():
+            val = 1.0
+            return val
+    
+        self.builtin_utility_functions["default"] = default
+        self.builtin_utility_functions["high_prio"] = high_prio
+          
+    
+#####----waltime prediction stuff
+    def get_walltime_Ap(self, spec):  #*AdjEst*
+        '''get walltime adjusting parameter from history manager component'''
+        
+        projectname = spec.get('project')
+        username = spec.get('user')
+        if prediction_scheme == "paired":
+            return self.history_manager.get_Ap_by_keypair(username, projectname)
+        
+        Ap_proj = self.history_manager.get_Ap('project', projectname)
+        
+        Ap_user = self.history_manager.get_Ap('user', username)
+         
+        if prediction_scheme == "project":
+            return Ap_proj
+        elif prediction_scheme == "user":
+            print "Ap_user==========", Ap_user
+            return Ap_user
+        elif prediction_scheme == "combined":
+            return (Ap_proj + Ap_user) / 2
+        else:
+            return self.history_manager.get_Ap_by_keypair(username, projectname)
+            
+        
+#####---- Walltime-aware Spatial Scheduling part
+    def current_idle_node(self):
+        '''number of idle nodes'''
+        idle_nodes = 0
+        midplanes = self.get_all_idle_midplanes()
+        idle_nodes = 512 * len(midplanes)
+        return idle_nodes
+    
+    def current_cycle_capacity_loss(self):
+        loss  = 0
+        current_time = self.get_current_time_sec()
+        next_time = self.get_next_time_sec()
+        print "current_time=", current_time
+        print "next_time=", next_time
+        time_length = next_time - current_time
+        idle_node = self.current_idle_node()
+        loss = time_length * idle_node
+        return loss
+    
+    def total_capacity_loss_rate(self):
+        last_stamp = len(self.time_stamps) - 1
+        total_period_sec = self.time_stamps[last_stamp] [2] - self.time_stamps[1][2]
+        total_NH = TOTAL_NODES *  (total_period_sec / 3600)
+            
+        print "total_nodehours=", total_NH
+        print "total loss capcity (node*hour)=", self.capacity_loss / 3600
+        
+        loss_rate = self.capacity_loss /  (total_NH * 3600)
+        
+        print "capacity loss rate=", loss_rate
+        return loss_rate        
+
+    def equal_partition(self, nodeno1, nodeno2):
+        proper_partsize1 = 0
+        proper_partsize2 = 1        
+        for psize in self.part_size_list:
+            if psize >= nodeno1:
+                proper_partsize1 = psize
+                break
+        for psize in self.part_size_list:
+            if psize >= nodeno2:
+                proper_partsize2 = psize
+                break
+        if proper_partsize1 == proper_partsize2:
+            return True
+        else:
+            return False
+    
+    def run_matched_job(self, jobid, partition):
+        '''implementation of aggresive scheme in sc10 submission'''
+  
+        #get neighbor partition (list) for running
+        partlist = []
+        nbpart = self.get_neighbor_by_partition(partition)
+        if nbpart:
+            nb_partition = self._partitions[nbpart]
+            if nb_partition.state != "idle":
+                #self.dbglog.LogMessage("return point 1")
+                return None
+        else:
+            #self.dbglog.LogMessage("return point 2")
+            return None
+        partlist.append(nbpart)
+                
+        #find a job in the queue whose length matches the top-queue job
+        topjob = self.get_live_job_by_id(jobid)
+        
+        base_length = float(topjob.walltime)
+        #print "job %d base_length=%s" % (jobid, base_length)
+        base_nodes = int(topjob.nodes)
+        
+        min_diff = MAXINT
+        matched_job = None
+        msg = "queueing jobs=%s" % ([job.jobid for job in self.queuing_jobs])
+        #self.dbglog.LogMessage(msg)
+        
+        for job in self.queuing_jobs:
+            #self.dbglog.LogMessage("job.nodes=%s, base_nodes=%s" % (job.nodes, base_nodes))
+            
+            if self.equal_partition(int(job.nodes), base_nodes):
+                length = float(job.walltime)
+                #self.dbglog.LogMessage("length=%s, base_length=%s" % (length, base_length))
+                if length > base_length:
+                    continue
+                diff = abs(base_length - length)
+                #print "diff=", diff
+                #self.dbglog.LogMessage("diff=%s" % (diff))
+                if diff < min_diff:
+                    min_diff = diff
+                    matched_job = job
+        
+        if matched_job == None:
+            pass
+            #self.dbglog.LogMessage("return point 3")
+        else:
+            self.dbglog.LogMessage(matched_job.jobid)
+                    
+        #run the matched job on the neiborbor partition
+        if matched_job and partlist:
+            self.start_job([{'tag':'job', 'jobid':matched_job.jobid}], {'location':partlist})
+            msg = "job=%s, partition=%s, mached_job=%s, matched_partitions=%s" % (jobid, partition, matched_job.jobid, partlist)
+            self.dbglog.LogMessage(msg)
+        
+        return 1
+    
+    def get_neighbor_by_partition(self, partname):
+        '''get the neighbor partition by given partition name.
+          note: this functionality is specific to intrepid partition naming and for partition size smaller than 4k'''
+        nbpart = ""
+        partition = self._partitions[partname]
+        partsize = partition.size
+        if partsize == 512:  #e.g. ANL-R12-M0-512  --> ANL-R12-M1-512
+            nbpart = "%s%s%s" % (partname[0:9], 1-int(partname[9]), partname[10:])  #reverse the midplane
+        elif partsize == 1024:  #e.g.  ANL-R12-1024 --> ANL-R13-1024
+            rackno = int(partname[6])
+            if rackno % 2 == 0:  #even
+                nbrackno = rackno + 1
+            else:
+                nbrackno = rackno - 1
+            nbpart = "%s%s%s" % (partname[0:6], nbrackno, partname[7:])    #find the neighbor rack
+        elif partsize == 2048:  #e.g. ANL-R12-R13-2048 --> ANL-R14-R15-2048
+            rackno1 = int(partname[6])
+            rackno2 = int(partname[10])
+            if rackno1 % 4 == 0:  #0, 4 ...
+                nbrackno1 = rackno1 + 2
+                nbrackno2 = rackno2 + 2
+            else:  #2, 6
+                nbrackno1 = rackno1 - 2
+                nbrackno2 = rackno2 - 2
+            nbpart = "%s%s%s%s%s" % (partname[0:6], nbrackno1, partname[7:10], nbrackno2, partname[11:])
+        elif partsize == 4096:  #e.g. ANL-R10-R13-4096 --> ANL-R14-R17-4096
+            rackno1 = int(partname[6])
+            rackno2 = int(partname[10])
+            if rackno1 == 0: 
+                nbrackno1 = rackno1 + 4
+                nbrackno2 = rackno2 + 4
+            elif rackno1 == 4:
+                nbrackno1 = rackno1 - 4
+                nbrackno2 = rackno2 - 4
+            nbpart = "%s%s%s%s%s" % (partname[0:6], nbrackno1, partname[7:10], nbrackno2, partname[11:])
+        return nbpart
+    
+    def get_running_job_by_partition(self, partname):
+        '''return a running job given the partition name'''
+        partition = self._partitions[partname]
+        if partition.state == "idle":
+            return None               
+        for rjob in self.running_jobs:
+            partitions = rjob.location
+            if partname in partitions:
+                return rjob
+        return None
+ 
+#####--begin--CoScheduling stuff
+    def init_mate_qtime_pair(self, mate_job_trace):
+        '''initialize mate job dict'''
+        jobfile = open(mate_job_trace, 'r')
+        
+        qtime_pairs = []
+        
+        for line in jobfile:
+            line = line.strip('\n')
+            line = line.strip('\r')
+            if line[0].isdigit():
+                #pbs-style trace
+                firstparse = line.split(';')
+                if firstparse[1] == 'Q':
+                    qtime = date_to_sec(firstparse[0])
+                    jobid = int(firstparse[2])
+                    qtime_pairs.append((qtime, jobid))
+            else:
+                #alternative trace
+                first_parse = line.split(';')
+                tempdict = {}
+                for item in first_parse:
+                    tup = item.partition('=')
+                    if tup[0] == 'qtime':
+                        qtime = date_to_sec(tup[2], "%Y-%m-%d %H:%M:%S")
+                    if tup[0] == 'jobid':
+                        jobid = int(tup[2])
+                if jobid and qtime:
+                        qtime_pairs.append((qtime, jobid))
+                    
+        return qtime_pairs
+    
+    def find_mate_id(self, qtime, threshold):
+    
+        mate_subtime = 0
+        ret_id = 0
+        for pair in self.mate_qtime_pairs:
+            if pair[0] > qtime:
+                mate_subtime = pair[0]
+                mate_id = pair[1]
+                break
+
+        if mate_subtime > 0:
+            if mate_subtime - float(qtime) < threshold:
+               ret_id = mate_id
+        return ret_id
+    
+    def init_mate_job_dict(self):
+        '''init mate job dictionary'''
+        
+        temp_dict = {} #remote_id:local_id
+        
+        for id, spec in self.unsubmitted_job_spec_dict.iteritems():
+            id = int(id)
+            submit_time = spec.get('submittime')
+            mate_id = self.find_mate_id(submit_time, self.mate_vicinity)
+            if mate_id > 0:
+                #self.mate_job_dict[spec['jobid']] = int(mateid)
+                if temp_dict.has_key(mate_id):
+                    tmp = temp_dict[mate_id]
+                    if id > tmp:
+                        temp_dict[mate_id] = id
+                else:
+                    temp_dict[mate_id] = id
+        #reserve dict to local_id:remote_id to guarantee one-to-one match
+        self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
+
+    def get_mate_job_dict(self):
+        return self.mate_job_dict
+    get_mate_job_dict = exposed(get_mate_job_dict)
+    
+    def try_to_run_mate_job(self, _jobid):
+        '''try to run mate job, start all the jobs that can run. If the started
+        jobs include the given mate job, return True else return False.  _jobid : int
+        '''
+        #print "entered bqsim.try_to_run_mate_job, jobid=", _jobid
+            
+        mate_job_started = False
+        
+        #start all the jobs that can run
+        gohead = True
+        while gohead:
+            running_jobs = [job for job in self.queues.get_jobs([{'has_resources':True}])]
+            
+            end_times = []
+            
+            now = self.get_current_time_sec()
+        
+            for job in running_jobs:
+                end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
+                end_times.append([job.location, end_time])
+            
+            active_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])] #waiting jobs
+            active_jobs.sort(self.utilitycmp)
+                   
+            job_location_args = []
+            for job in active_jobs:
+                if not job.jobid == _jobid and self.mate_job_dict.get(job.jobid, 0) > 0:
+                    #if a job other than given job (_jobid) has mate, skip it.
+                    continue
+                
+                job_location_args.append({'jobid': str(job.jobid),
+                                          'nodes': job.nodes,
+                                          'queue': job.queue,
+                                          'forbidden': [],
+                                          'utility_score': job.score,
+                                          'walltime': job.walltime,
+                                          'walltime_p': job.walltime_p,  #*AdjEst*
+                                          'attrs': job.attrs,
+                 } )
+            
+            if len(job_location_args) == 0:
+                break
+            
+            #print "queue order=", [item['jobid'] for item in job_location_args]
+            
+            best_partition_dict = self.find_job_location(job_location_args, end_times)
+            
+            if best_partition_dict:
+                #print "best_partition_dict=", best_partition_dict
+                
+                for canrun_jobid in best_partition_dict:
+                    nodelist = best_partition_dict[canrun_jobid]
+                    
+                    if str(_jobid) == canrun_jobid:
+                        mate_job_started = True
+                            
+                    self.start_job([{'tag':"job", 'jobid':int(canrun_jobid)}], {'location':nodelist})
+                    #print "bqsim.try_to_run_mate, start job jobid ", canrun_jobid 
+            else:
+                break
+                        
+        return mate_job_started
+    try_to_run_mate_job = exposed(try_to_run_mate_job)
+    
+    def run_holded_job(self, specs):
+        '''start holded job'''
+        for spec in specs:
+            jobid = spec.get('jobid')
+            nodelist = self.job_hold_dict.get(jobid, None)
+            if nodelist == None:
+                #print "cannot find holded resources"
+                return
+            #print "start holded job %s on location %s" % (spec['jobid'], nodelist) 
+            self.start_job([spec], {'location':nodelist})
+            del self.job_hold_dict[jobid]
+            
+    run_holded_job = exposed(run_holded_job)
+        
+    def hold_job(self, specs, updates):
+        '''hold a job. a holded job is not started but hold some resources that can run itself in the future
+        once its mate job in a remote system can be started immediatly'''
+        partitions = updates['location']
+        for partition in partitions:
+            self.reserve_partition(partition)
+            partsize = int(self._partitions[partition].size)
+                    
+        for spec in specs:
+            self.job_hold_dict[spec['jobid']] = partitions
+                    
+        def _hold_job(job, newattr):
+            '''callback function to update job start/end time'''
+            temp = job.to_rx()
+            newattr = self.hold_job_updates(temp, newattr)
+            temp.update(newattr)
+            job.update(newattr)
+            self.log_job_event('H', self.get_current_time_date(), temp)
+        
+        return self.queues.get_jobs(specs, _hold_job, updates)
+    
+    def hold_job_updates(self, jobspec, newattr):
+        ''' return the state updates (including state queued -> running, 
+        setting the start_time, end_time)'''
+        updates = {}
+        
+        updates['is_runnable'] = False
+        updates['has_resources'] = False
+        updates['state'] = "holding"
+        updates['hold_time'] = self.get_current_time_sec()
+
+        updates.update(newattr)
+    
+        return updates
+
+    def get_mate_job_status(self, jobid):
+        '''return mate job status, remote function, invoked by remote component'''
+        #local_job = self.get_live_job_by_id(jobid)
+        ret_dict = {'jobid':jobid}
+        ret_dict['status'] = self.get_coschedule_status(jobid)
+        return ret_dict
+    get_mate_job_status = exposed(get_mate_job_status)
+    
+    def get_mate_jobs_status_local(self, remote_jobid):
+        '''return mate job status, invoked by local functions'''
+        status_dict = {}
+        try:
+            status_dict = ComponentProxy(REMOTE_QUEUE_MANAGER).get_mate_job_status(remote_jobid)
+        except:
+            self.logger.error("failed to connect to remote cluster queue-manager component!")
+            self.dbglog.LogMessage("failed to connect to remote cluster queue-manager component!")
+        return status_dict
+    
+    def get_coschedule_status(self, jobid):
+        '''return job status regarding coscheduling, 
+           input: jobid
+           output: listed as follows:
+            1. "queuing"
+            2. "holding"
+            3. "unsubmitted"
+            4. "running"
+            5. "ended"
+        '''
+        ret_status = "unknown"
+        job = self.get_live_job_by_id(jobid)
+        if job:  #queuing or running
+            has_resources = job.has_resources
+            is_runnable = job.is_runnable
+            if is_runnable and not has_resources:
+                ret_status = "queuing"
+            if not is_runnable and has_resources:
+                ret_status = "running"
+            if not is_runnable and not has_resources:
+                ret_status = "holding"
+        else:  #unsubmitted or ended
+            if self.unsubmitted_job_spec_dict.has_key(str(jobid)):
+                ret_status = "unsubmitted"
+            else:
+                ret_status = "unknown"  #ended or no such job
+                del self.mate_job_dict[jobid]
+        return ret_status
+    
+    def generat_mate_job_log(self):
+        '''output a file with mate jobs one pair per line'''        
+        
+        #initialize debug logger
+        if self.output_log:
+            matelog = PBSlogger(self.output_log+"-mates")
+        else:
+            matelog = PBSlogger(".mates")
+        
+        for k, v in self.mate_job_dict.iteritems():
+            msg = "%s:%s" % (k, v)
+            matelog.LogMessage(msg)
+        matelog.closeLog()
+
+#####--end--CoScheduling stuff
+
+     
+#####----------display stuff
     
     def get_midplanes_by_state(self, status):
         idle_midplane_list = []
@@ -1506,106 +1595,9 @@ class BGQsim(Simulator):
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
         print "\n\n"
-            
-    #coscheduling stuff
-    def get_mate_job_status_bqsim(self, jobid):
-        '''return mate job status, remote function, invoked by remote component'''
-        #local_job = self.get_live_job_by_id(jobid)
-        ret_dict = {'jobid':jobid}
-        ret_dict['status'] = self.get_coschedule_status(jobid)
-        return ret_dict
-    get_mate_job_status_bqsim = exposed(get_mate_job_status_bqsim)
-    
-    def get_mate_jobs_status_local(self, remote_jobid):
-        '''return mate job status, invoked by local functions'''
-        status_dict = {}
-        try:
-            status_dict = ComponentProxy(REMOTE_QUEUE_MANAGER).get_mate_job_status_cqsim(remote_jobid)
-        except:
-            self.logger.error("failed to connect to remote cluster queue-manager component!")
-        return status_dict
-    
-    def get_coschedule_status(self, jobid):
-        '''return job status regarding coscheduling, 
-           input: jobid
-           output: listed as follows:
-            1. "queuing"
-            2. "holding"
-            3. "unsubmitted"
-            4. "running"
-            5. "ended"
-        '''
-        ret_status = "unknown"
-        job = self.get_live_job_by_id(jobid)
-        if job:  #queuing or running
-            has_resources = job.has_resources
-            is_runnable = job.is_runnable
-            if is_runnable and not has_resources:
-                ret_status = "queuing"
-            if not is_runnable and has_resources:
-                ret_status = "running"
-            if not is_runnable and not has_resources:
-                ret_status = "holding"
-        else:  #unsubmitted or ended
-            if self.unsubmitted_job_spec_dict.has_key(str(jobid)):
-                ret_status = "unsubmitted"
-            else:
-                ret_status = "unknown"  #ended or no such job
-                del self.mate_job_dict[jobid]
-        return ret_status
-    
-    def reserve_partition (self, name, size=None):
-        """Reserve a partition and block all related partitions.
-        
-        Arguments:
-        name -- name of the partition to reserve
-        size -- size of the process group reserving the partition (optional)
-        """
-        
-        try:
-            partition = self.partitions[name]
-        except KeyError:
-            self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
-            return False
-#        if partition.state != "allocated":
-#            self.logger.error("reserve_partition(%r, %r) [%s]" % (name, size, partition.state))
-#            return False
-        if not partition.functional:
-            self.logger.error("reserve_partition(%r, %r) [not functional]" % (name, size))
-        if size is not None and size > partition.size:
-            self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
-            return False
-
-        self._partitions_lock.acquire()
-        try:
-            partition.state = "busy"
-            partition.reserved_until = False
-        except:
-            self.logger.error("error in reserve_partition", exc_info=True)
-        self._partitions_lock.release()
-        # explicitly call this, since the above "busy" is instantaneously available
-        self.update_partition_state()
-        
-        self.logger.info("reserve_partition(%r, %r)" % (name, size))
-        return True
-    reserve_partition = exposed(reserve_partition)
-    
-    def generat_mate_job_log(self):
-        '''output a file with mate jobs one pair per line'''        
-        
-        #initialize debug logger
-        if self.output_log:
-            matelog = PBSlogger(self.output_log+"-mates")
-        else:
-            matelog = PBSlogger(".mates")
-        
-        for k, v in self.mate_job_dict.iteritems():
-            msg = "%s:%s" % (k, v)
-            matelog.LogMessage(msg)
-        matelog.closeLog()
         
     def print_post_screen(self):
         '''post screen after simulation completes'''
-        print self.yielding_job_dict
-    print_post_screen = exposed(print_post_screen)
-    
+        #print self.yielding_job_dict
+        pass
+    print_post_screen = exposed(print_post_screen)    

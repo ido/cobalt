@@ -337,11 +337,11 @@ class PBSlogger:
             
         #determine log filename
         if name:
-            filename = "%s/%s-qsim-%s.log" % (self.logdir, MACHINE_NAME, name)
+            filename = "%s/qsim-%s.log" % (self.logdir, name)
         else:
             self.date = time.localtime()[:3]
             date_string = "%s_%02d_%02d" % self.date
-            filename = "%s/%s-qsim-%s.log" % (self.logdir, MACHINE_NAME, date_string)    
+            filename = "%s/qsim-%s.log" % (self.logdir, date_string)    
         
         self.logfile = open(filename, 'w')
         self.name = name
@@ -356,3 +356,13 @@ class PBSlogger:
             self.logfile.flush()
         except IOError, e:
             logger.error("PBSlogger failure : %s" % e)
+            
+class Qsim():
+    '''Cobalt Queue Simulator (base class)'''
+    
+    implementation = "qsim"
+    name = "queue-manager"
+    logger = logging.getLogger(__name__)
+
+    def __init__(self, *args, **kwargs):
+        pass        
