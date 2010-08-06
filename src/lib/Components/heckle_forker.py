@@ -104,9 +104,9 @@ class HeckleForker (Component):
           child_pid = 0
           print "User ID is %s, pid is %s" % (os.getuid(), child_pid)
           child_pid = os.fork()
-          if child_pid:
+          if not child_pid:
                print "...and User ID is now %s, pid is now %s" % (os.getuid(), child_pid)
-               self.logger.debug( logstr + "Child Start")
+               self.logger.debug( logstr + "Parent / Script Start")
                os.setgroups([])
                os.setgroups(data["other_groups"])
                os.setgid(data["primary_group"])
@@ -197,15 +197,12 @@ class HeckleForker (Component):
                     self.logger.error( logstr + "task %s: unable to open cobaltlog file %s", 
                               label, data["cobalt_log_file"])
                self.logger.debug( logstr + "4" )
-               #p = subprocess.check_call(args)
                os.setuid( data['userid'] )
                self.logger.debug( logstr + "About to exec with %s" % cmd )
                os.execvpe(cmd, (cmd, ), environ)
-               #os.execl(*cmd)
                self.logger.debug( logstr + "Finished Execution" )
-               time.sleep(30)
           else:
-               self.logger.info( logstr + "Parent" )
+               self.logger.info( logstr + "Child / Remainder" )
                local_id = self.id_gen.next()
                kid = Child()
                kid.id = local_id
@@ -254,13 +251,14 @@ class HeckleForker (Component):
         Arguments:
         local_id -- id of the child to signal
         """
-
-        self.logger.info("status requested for task id %s", local_id)
-        self.logger.info("current tasks are: %s" % self.children.keys())
+        logstr = "Forker:get_status:"
+        self.logger.info( logstr + "current tasks are %s" % self.children.keys() )
+        self.logger.info( logstr + "status requested for task id %s" % local_id )
+        self.logger.info( logstr + "task pid is %s" % self.children[local_id].pid )
         if self.children.has_key(local_id):
             dead = self.children[local_id]
             if dead.exit_status is not None:
-                del self.children[local_id]
+                #del self.children[local_id]
                 self.logger.info("task %s: status returned", dead.label)
                 return dead.__dict__
             else:

@@ -64,8 +64,7 @@ class HeckleSystem(Component):
         self.process_groups = ProcessGroupDict()
         self.process_groups.item_cls = HeckleProcessGroup
         self.queue_assignments["default"] = self.get_resources()
-        #print "\n\n\n\n"
-        #print "Queue assignments are: %s" % self.queue_assignments
+        self.hacky_forbidden_nodes = []   #This is a temporary fix for the forbidden nodes issue
     def __repr__(self):
         """
         printout representation of the class
@@ -337,6 +336,11 @@ class HeckleSystem(Component):
             if "attrs" not in job or job["attrs"] is None:
                 job["attrs"] = {}
             print "Job is %s" % job
+            tempjob = job.copy()
+            if 'forbidden' not in tempjob.keys():
+                tempjob['forbidden'] = self.hacky_forbidden_nodes
+            else:
+                tempjob['forbidden'].update( self.hacky_forbidden_nodes )
             #############################
             ###  Look at this as point of change
             ###  Think:  For node in unreserved nodes
@@ -350,6 +354,7 @@ class HeckleSystem(Component):
             # Build a list of appropriate nodes
             for node in resources:
                 node_list.append(node)
+                self.hacky_forbidden_nodes.append(node)
             locations[job["jobid"]] = node_list
         LOGGER.info("System:find_job_location: locations are %s" % locations )
         return locations

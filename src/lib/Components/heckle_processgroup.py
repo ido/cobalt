@@ -132,7 +132,8 @@ class HeckleProcessGroup(ProcessGroup):
         logstr = "ProcessGroup:signal:"
         LOGGER.debug( logstr + "%s:%s" % ( self.jobid, signame) )
         try:
-            ComponentProxy( "forker" ).signal( self.local_id, signame )
+            if self.local_id:
+                ComponentProxy( "forker" ).signal( self.local_id, signame )
         except OSError as ose:
             LOGGER.exception( logstr + "failure for PG %s: %s" \
                                       % (self.id, err))
@@ -143,16 +144,18 @@ class HeckleProcessGroup(ProcessGroup):
         Sets the PG state to 'terminated' if done
         """
         logstr = "ProcessGroup:wait:"
-        LOGGER.debug( logstr + "head node %s at %s" % (self.jobid, self.local_id ) )
-        exit_status = ComponentProxy( "forker" ).get_status( self.local_id )
-        if exit_status:
-            LOGGER.debug( logstr + "Process %s terminated: %s" 
+        LOGGER.debug( logstr + "process group %s" % self.jobid )
+        if "local_id" in self.__dict__.keys():
+            LOGGER.debug( logstr + "Local ID for head node found at %s" % self.local_id )
+            exit_status = ComponentProxy( "forker" ).get_status( self.local_id )
+            if exit_status:
+                LOGGER.debug( logstr + "Process %s terminated: %s" 
                               % (self.jobid, exit_status) )
-            #exit_status = exit_status >> 8
-            # Remove temporary file with node locations
-            os.remove(self.nodefile[1])
-            self.exit_status = exit_status
-            # Do something if exit status is non-zero
+                #exit_status = exit_status >> 8
+                # Remove temporary file with node locations
+                os.remove(self.nodefile[1])
+                self.exit_status = exit_status
+                # Do something if exit status is non-zero
     
     def start(self):
         """
@@ -201,7 +204,7 @@ class HeckleProcessGroup(ProcessGroup):
         ret["id"] = self.id
         ret["jobid"] = self.jobid
         ret["cobalt_log_file"] = self.cobalt_log_file
-        self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
+        #self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
         self.env["COBALT_NODEFILE"] = self.nodefile
         self.env["COBALT_JOBID"] = self.jobid
         for val in self.env:
