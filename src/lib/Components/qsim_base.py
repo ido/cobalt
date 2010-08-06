@@ -96,7 +96,6 @@ def parseline_alt(line):
         else:
             return _input
     
-    print line
     temp= {}
     splits = line.split(';')
         

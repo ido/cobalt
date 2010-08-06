@@ -32,6 +32,7 @@ from Cobalt.Server import XMLRPCServer, find_intended_location
 REMOTE_QUEUE_MANAGER = "queue-manager"
 MACHINE_ID = 1
 MACHINE_NAME = "Eureka"
+DEFAULT_VICINITY = 60
     
 class ClusterQsim(ClusterBaseSystem):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -108,9 +109,10 @@ class ClusterQsim(ClusterBaseSystem):
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
         
-        _cosched_scheme = kwargs.get("coscheduling", (0,0))
-        self.cosched_scheme = _cosched_scheme[1]
-        self.cosched_scheme_remote = _cosched_scheme[0]
+        self.cosched_scheme_tup = kwargs.get("coscheduling", (0,0))
+        self.cosched_scheme = self.cosched_scheme_tup[1]
+        self.cosched_scheme_remote = self.cosched_scheme_tup[0]
+        self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
         
         valid_cosched_schemes = ["hold", "yield"]
         
@@ -118,17 +120,26 @@ class ClusterQsim(ClusterBaseSystem):
             self.coscheduling = True
         else:
             self.coscheduling = False
-        
+            
+        if not kwargs.get("bgjob", None):
+            self.coscheduling = False
+            
+        self.mate_job_dict = {}
+            
         if self.coscheduling:
-            bg_mate_dict = ComponentProxy(REMOTE_QUEUE_MANAGER).get_mate_job_dict()
-            self.job_hold_dict = {}
-            self.mate_job_dict = dict((v,k) for k, v in bg_mate_dict.iteritems())
+            try:
+                self.remote_jobid_qtime_pairs = ComponentProxy(REMOTE_QUEUE_MANAGER).get_jobid_qtime_pairs()
+            except:
+                self.logger.error("failed to connect to remote queue-manager component!")
+                self.coscheduling = False
+
+            self.init_mate_job_dict()
+            
             matejobs = len(self.mate_job_dict.keys())
             proportion = float(matejobs) / self.total_job
-            print "number mate job pairs: %s, proportion in cluster jobs: %s%%" \
-            % (len(self.mate_job_dict.keys()), round(proportion *100, 1) ) 
-        else:
-            self.mate_job_dict = {}
+       
+        #recording holding job id and holden resource    
+        self.job_hold_dict = {}
             
         #record yield jobs's first yielding time, for calculating the extra waiting time
         self.yielding_job_dict = {}
@@ -137,8 +148,15 @@ class ClusterQsim(ClusterBaseSystem):
         self.yielding_job_list = []
         
         if self.coscheduling:
-            print "co-scheduling enabled, local scheme=%s, remote scheme=%s" % (self.cosched_scheme, self.cosched_scheme_remote)
-  
+            remote_mate_job_dict = dict((v,k) for k, v in self.mate_job_dict.iteritems())
+            try:
+                ComponentProxy(REMOTE_QUEUE_MANAGER).set_mate_job_dict(remote_mate_job_dict)
+            except:
+                self.logger.error("failed to connect to remote queue-manager component!")
+                self.coscheduling = False
+            print "number of mate job pairs: %s, proportion in cluster jobs: %s%%" \
+            % (len(self.mate_job_dict.keys()), round(proportion *100, 1) )
+        
         Var = raw_input("press any Enter to continue...")
                 
         print "Simulation starts:"
@@ -763,6 +781,48 @@ class ClusterQsim(ClusterBaseSystem):
 
 
 #####coscheduling stuff
+    def find_mate_id(self, qtime, threshold):
+    
+        mate_subtime = 0
+        ret_id = 0
+        last = (0,0)
+        for pair in self.remote_jobid_qtime_pairs:
+            if pair[0] > qtime:
+                break
+            last = pair
+            
+        mate_subtime = last[0]
+        mate_id = last[1]
+
+        if mate_subtime > 0:
+            if float(qtime) - mate_subtime  < threshold:
+               ret_id = mate_id
+        return ret_id
+    
+    def init_mate_job_dict(self):
+        '''init mate job dictionary'''
+        
+        temp_dict = {} #remote_id:local_id
+        
+        for id, spec in self.unsubmitted_job_spec_dict.iteritems():
+            id = int(id)
+            submit_time = spec.get('submittime')
+            mate_id = self.find_mate_id(submit_time, self.mate_vicinity)
+            if mate_id > 0:
+                #self.mate_job_dict[spec['jobid']] = int(mateid)
+                if temp_dict.has_key(mate_id):
+                    tmp = temp_dict[mate_id]
+                    if id > tmp:
+                        temp_dict[mate_id] = id
+                else:
+                    temp_dict[mate_id] = id
+        #reserve dict to local_id:remote_id. (guarentee one-to-one)
+        self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
+        
+    def get_mate_job_dict(self):
+        return self.mate_job_dict
+    get_mate_job_dict = exposed(get_mate_job_dict)
+
     def hold_job(self, specs, updates):
         '''hold a job. a holded job is not started but hold some resources that can run itself in the future
         once its mate job in a remote system can be started immediatly'''

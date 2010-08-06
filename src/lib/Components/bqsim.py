@@ -127,7 +127,7 @@ class BGQsim(Simulator):
             self.walltime_aware_cons = True
         elif self.wass_scheme == "aggr":
             self.walltime_aware_aggr = True
-
+ 
 ###-------CoScheduling start###
         self.cosched_scheme_tup = kwargs.get("coscheduling", (0,0))
 
@@ -143,7 +143,7 @@ class BGQsim(Simulator):
         else:
             self.coscheduling = False
         
-        self.mate_qtime_pairs = []
+        self.jobid_qtime_pairs = []
                 
         #key=local job id, value=remote mated job id
         self.mate_job_dict = {}
@@ -156,26 +156,17 @@ class BGQsim(Simulator):
         #record yield job ids. update dynamically
         self.yielding_job_list = []
         
-        self.cluster_job_trace =  kwargs.get("cjob", None)        
-        
-        if self.coscheduling:
-            #test whether cqsim is up by checking cluster job trace argument (cjob) 
-            if self.cluster_job_trace:
-                self.mate_qtime_pairs = self.init_mate_qtime_pair(self.cluster_job_trace)
-            else:
-                self.coscheduling = False
-                self.mate_queue_manager = None
+        self.cluster_job_trace = kwargs.get("cjob", None)
+        if not self.cluster_job_trace:
+            self.coscheduling = False        
                 
         if self.coscheduling:
-            self.init_mate_job_dict()
-            matejobs = len(self.mate_job_dict.keys())
-            proportion = float(matejobs) / self.total_job
+            self.init_jobid_qtime_pairs()
             print "vicinity = %s seconds" % (self.mate_vicinity)
-            print "number mate job pairs: %s, proportion in blue gene jobs: %s%%"\
-             % (len(self.mate_job_dict.keys()), round(proportion *100, 1))
-            self.generat_mate_job_log()
-         
-            
+            # 'disable' coscheduling for a while until cqsim triggers the remote function
+            # to initialize mate job dice successfully
+            self.coscheduling = False
+                        
 ####----log and other 
         #initialize PBS-style logger
         self.pbslog = PBSlogger(self.output_log)
@@ -210,9 +201,6 @@ class BGQsim(Simulator):
         
         if self.walltime_prediction:
             print "walltime prediction enabled, scheme = ", self.predict_scheme
-            
-        if self.coscheduling:
-            print "co-scheduling enabled, local scheme=%s, remote scheme=%s" % (self.cosched_scheme, self.cosched_scheme_remote)
             
         if self.fraction != 1:
             print "job arrival intervals adjusted, fraction = ", self.fraction
@@ -1233,76 +1221,40 @@ class BGQsim(Simulator):
         return None
  
 #####--begin--CoScheduling stuff
-    def init_mate_qtime_pair(self, mate_job_trace):
+    def init_jobid_qtime_pairs(self):
         '''initialize mate job dict'''
-        jobfile = open(mate_job_trace, 'r')
-        
-        qtime_pairs = []
-        
-        for line in jobfile:
-            line = line.strip('\n')
-            line = line.strip('\r')
-            if line[0].isdigit():
-                #pbs-style trace
-                firstparse = line.split(';')
-                if firstparse[1] == 'Q':
-                    qtime = date_to_sec(firstparse[0])
-                    jobid = int(firstparse[2])
-                    qtime_pairs.append((qtime, jobid))
-            else:
-                #alternative trace
-                first_parse = line.split(';')
-                tempdict = {}
-                for item in first_parse:
-                    tup = item.partition('=')
-                    if tup[0] == 'qtime':
-                        qtime = date_to_sec(tup[2], "%Y-%m-%d %H:%M:%S")
-                    if tup[0] == 'jobid':
-                        jobid = int(tup[2])
-                if jobid and qtime:
-                        qtime_pairs.append((qtime, jobid))
-                    
-        return qtime_pairs
-    
-    def find_mate_id(self, qtime, threshold):
-    
-        mate_subtime = 0
-        ret_id = 0
-        for pair in self.mate_qtime_pairs:
-            if pair[0] > qtime:
-                mate_subtime = pair[0]
-                mate_id = pair[1]
-                break
-
-        if mate_subtime > 0:
-            if mate_subtime - float(qtime) < threshold:
-               ret_id = mate_id
-        return ret_id
-    
-    def init_mate_job_dict(self):
-        '''init mate job dictionary'''
-        
-        temp_dict = {} #remote_id:local_id
+        self.jobid_qtime_pairs = []
         
         for id, spec in self.unsubmitted_job_spec_dict.iteritems():
-            id = int(id)
-            submit_time = spec.get('submittime')
-            mate_id = self.find_mate_id(submit_time, self.mate_vicinity)
-            if mate_id > 0:
-                #self.mate_job_dict[spec['jobid']] = int(mateid)
-                if temp_dict.has_key(mate_id):
-                    tmp = temp_dict[mate_id]
-                    if id > tmp:
-                        temp_dict[mate_id] = id
-                else:
-                    temp_dict[mate_id] = id
-        #reserve dict to local_id:remote_id to guarantee one-to-one match
-        self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
-
-    def get_mate_job_dict(self):
-        return self.mate_job_dict
-    get_mate_job_dict = exposed(get_mate_job_dict)
+            qtime = spec['submittime']
+            self.jobid_qtime_pairs.append((qtime, int(id)))
+            
+        def _qtimecmp(tup1, tup2):
+            return cmp(tup1[0], tup2[0])
+        
+        self.jobid_qtime_pairs.sort(_qtimecmp)
+                        
+    def get_jobid_qtime_pairs(self):
+        '''get jobid_qtime_pairs list, remote function'''
+        return self.jobid_qtime_pairs
+    get_jobid_qtime_pairs = exposed(get_jobid_qtime_pairs)
     
+    def set_mate_job_dict(self, remote_mate_job_dict):
+        '''set self.mate_job_dict, remote function'''
+        self.mate_job_dict = remote_mate_job_dict
+        matejobs = len(self.mate_job_dict.keys())
+        proportion = float(matejobs) / self.total_job
+        
+        self.coscheduling = True
+        
+        print "Co-scheduling enabled, blue gene scheme=%s, cluster scheme=%s" % (self.cosched_scheme, self.cosched_scheme_remote)
+        
+        print "Number of mate job pairs: %s, proportion in blue gene jobs: %s%%"\
+             % (len(self.mate_job_dict.keys()), round(proportion *100, 1))
+        self.generat_mate_job_log()
+
+    set_mate_job_dict = exposed(set_mate_job_dict)
+                
     def try_to_run_mate_job(self, _jobid):
         '''try to run mate job, start all the jobs that can run. If the started
         jobs include the given mate job, return True else return False.  _jobid : int
