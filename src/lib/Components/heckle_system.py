@@ -337,10 +337,11 @@ class HeckleSystem(Component):
                 job["attrs"] = {}
             print "Job is %s" % job
             tempjob = job.copy()
-            if 'forbidden' not in tempjob.keys():
-                tempjob['forbidden'] = self.hacky_forbidden_nodes
-            else:
-                tempjob['forbidden'].update( self.hacky_forbidden_nodes )
+            if self.hacky_forbidden_nodes:
+                if 'forbidden' not in tempjob.keys():
+                    tempjob['forbidden'] = self.hacky_forbidden_nodes
+                else:
+                    tempjob['forbidden'].append( self.hacky_forbidden_nodes )
             #############################
             ###  Look at this as point of change
             ###  Think:  For node in unreserved nodes
