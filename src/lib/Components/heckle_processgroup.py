@@ -74,7 +74,7 @@ class HeckleProcessGroup(ProcessGroup):
         self.env = spec['env']
         # Write nodefile
         self.nodefile = tempfile.mkstemp()
-        print "Nodefile is: %s" % self.nodefile[1]
+        print "\n\n\n\n\nNodefile is: %s\n\n\n\n\n" % self.nodefile[1]
         os.write(self.nodefile[0], " ".join(self.location))
         os.chmod(self.nodefile[1], stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP| \
         stat.S_IROTH)

@@ -341,15 +341,19 @@ class HeckleSystem(Component):
                 if 'forbidden' not in tempjob.keys():
                     tempjob['forbidden'] = self.hacky_forbidden_nodes
                 else:
-                    tempjob['forbidden'].append( self.hacky_forbidden_nodes )
+                    tempjob['forbidden'].extend( self.hacky_forbidden_nodes )
             #############################
             ###  Look at this as point of change
             ###  Think:  For node in unreserved nodes
             ###            Choose node from list
             ###            Remove node from unreserved nodes
             #############################
-            resources = hiccup.find_job_location(**job)  #get matching nodes
-            if not resources:
+            try:
+                resources = hiccup.find_job_location(**job)  #get matching nodes
+                if not resources:
+                    continue
+            except Exception as err:
+                LOGGER.info("System:find_job_location: Error %s" % err)
                 continue
             node_list = []
             # Build a list of appropriate nodes

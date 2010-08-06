@@ -218,22 +218,23 @@ class HeckleConnector( object ):
         node_criteria['hardware_criteria'] = self.get_hw_criteria( attrs )
         LOGGER.debug(
         "HICCUP:find_job_location: Find_Node_Criteria is %s" % node_criteria)
-        bad_count = 1
         if nodes > 0:
-            while bad_count > 0:
-                appropriate_nodes = heckle_findNodes(**node_criteria )
-                appropriate_nodes.sort()
-                print "appr_nodes is %s of type %s" % (appropriate_nodes, type(appropriate_nodes) )
-                print "forbiddein is %s of type %s" % (forbidden, type(forbidden))
-                app_set = set( appropriate_nodes )
-                bad_set = set( forbidden )
-                bad_nodes = list( app_set.intersection( bad_set ) )
-                bad_count = len( bad_nodes )
-                node_criteria['node_num'] += bad_count
+            found = heckle_findNodes( **node_criteria )
+            if forbidden:
+                found_len = len( found )
+                bad_len = len( list( set( found ).intersection( set( forbidden ) ) ) )
+                node_criteria['node_num'] = node_criteria['node_num'] + bad_len
+                while found_len < ( bad_len + int(nodes) ):
+                    found = heckle_findNodes( **node_criteria )
+                    found_len = len( found )
+                    bad_len = len( list( set( found ).intersection( set( forbidden ) ) ) )
+                    node_criteria['node_num'] = int(nodes) + bad_len
+                found = list( set( found ).difference( set( forbidden ) ) )
+            found.sort
             LOGGER.debug( 
                 "HICCUP:find_job_location: appropriate nodes are %s" %
-                appropriate_nodes )
-            return appropriate_nodes
+                found )
+            return found
         else:
             return []
 
