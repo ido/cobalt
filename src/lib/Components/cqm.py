@@ -869,7 +869,7 @@ class Job (StateMachine):
         self.__sm_scripts_thread.start()
         self.__sm_state = new_state
         db_log_to_file(ReportObject(("beginning resource epilogue."),
-                                    None, "resource_epi_start", "job_prog", JobProgMsg(self)).encode())
+                                    None, "resource_epilogue_start", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_start_job_epilogue_scripts(self, new_state = 'Job_Epilogue'):
         job_scripts = get_cqm_config('job_postscripts', "").split(':')
@@ -877,7 +877,7 @@ class Job (StateMachine):
         self.__sm_scripts_thread.start()
         self.__sm_state = new_state
         db_log_to_file(ReportObject(("beginning job epilogue."),
-                                    None, "job_epi_start", "job_prog", JobProgMsg(self)).encode())
+                                    None, "job_epilogue_start", "job_prog", JobProgMsg(self)).encode())
         
     def __sm_scripts_are_finished(self, type):
         try:
@@ -900,9 +900,7 @@ class Job (StateMachine):
                 self.__sm_log_warn("return code from %s %s was %d; error text follows:%s" % \
                     (type, result['script'], result['rc'], err_msg))
         #PMR: shold errors from epilogue somehow be captured?
-        if type == 'prescript':
-            db_log_to_file(ReportObject("Prologue completed.", None, "prologue_finished", "job_prog", JobProgMsg(self)).encode())
-        elif type == 'resource postscript':
+        if type == 'resource postscript':
             db_log_to_file(ReportObject("Resource postscript completed.", None, "resource_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
         elif type == 'job postscript':
             db_log_to_file(ReportObject("Job Postscript completed.", None, "job_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
@@ -1349,8 +1347,6 @@ class Job (StateMachine):
         self.__sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
             (self.exit_status,), cobalt_log = True)
         self.__sm_start_resource_epilogue_scripts()
-        db_log_to_file(ReportObject(("Ending Run, starting resource epilogue."),
-                                    None, "start_resource_epilogue", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_kill_common__hold(self, args):
         '''attempt to add a hold to a preemptable job that is being killed'''
@@ -2135,8 +2131,8 @@ class Job (StateMachine):
     def run(self, nodelist, user = None):
         try:
             self.trigger_event("Run", {'nodelist' : nodelist})
-            db_log_to_file(ReportObject(("Run start requested by %s." % user),
-                                        user, "started", "job_prog", JobProgMsg(self)).encode())
+            #db_log_to_file(ReportObject(("Run start requested by %s." % user),
+             #                           user, "started", "job_prog", JobProgMsg(self)).encode())
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self.__sm_state)
@@ -2179,6 +2175,9 @@ class Job (StateMachine):
         if not force:
             try:
                 self.trigger_event('Kill', {'user' : user, 'signal' : signame})
+                db_log_to_file(ReportObject("Now killing Job %s" % \
+                                                (self.jobid),
+                                            user, "killing", "job_prog", JobProgMsg(self)).encode())
             except:
                 self.__sm_log_exception(None, "an unexpected exception occurred while attempting to kill the task")
                 raise JobDeleteError("An unexpected exception occurred while attempting to delete the job.  See log for details.",
@@ -2231,9 +2230,10 @@ class Job (StateMachine):
                         (self.jobid, self.user, self.nodes, user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
                         (self.jobid, self.user, self.nodes, user, stats))
-                db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
-                                                (self.jobid, self.user, self.nodes, user, stats),
-                                            user, "killing", "job_prog", JobProgMsg(self)).encode())
+            db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
+                                            (self.jobid, self.user, self.nodes, user, stats),
+                                        user, "killing", "job_prog", JobProgMsg(self)).encode())
+
     def task_end(self):
         '''handle the completion of a task'''
         self.task_running = False
@@ -2705,7 +2705,10 @@ class QueueManager(Component):
                 if job.is_active or job.has_completed:
                     raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
 
+        
         for job in joblist:
+            db_log_to_file(ReportObject(("%s modified job: %s, %s", user_name, specs, updates),
+                                        user_name, "modifying", "job_data", JobDataMsg(job)).encode())
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
@@ -2728,8 +2731,7 @@ class QueueManager(Component):
                     self.Queues[old_q_name].jobs.remove(job)
                     new_q.jobs.append(job)
                     new_q.update_max_running()
-        db_log_to_file(ReportObject(("%s modified job: %s, %s", user_name, specs, updates),
-                                    user_name, "modified", "job_data", JobDataMsg(job)).encode())
+       
 
         return joblist    
     set_jobs = exposed(query(set_jobs))
@@ -3015,14 +3017,14 @@ class JobProgMsg(object):
             #isn't a job
             pass
 
-        self.job_id = job.jobid
+        self.jobid = job.jobid
         self.state = job.sm_state
         self.admin_hold = job.admin_hold
         self.user_hold = job.user_hold
-        self.dep_hold = job.has_dep_hold
+        self.dep_hold = bool(job.has_dep_hold)
         self.max_running = job.max_running
         self.dep_fail = job.dep_fail
-        self.task_id = job.taskid
+        self.taskid = job.taskid
         self.task_running = job.task_running
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
@@ -3037,7 +3039,7 @@ class JobDataMsg(object):
             #isn't a job
             pass
 
-        attr_list = ['job_id', 'umask', 'jobname', 'job_type',
+        attr_list = ['jobid', 'umask', 'jobname', 'job_type',
                      'job_user', 'walltime', 'procs', 'nodes',
                      'command', 'args', 'project', 'lienID',
                      'host', 'port', 'inputfile',
@@ -3052,9 +3054,7 @@ class JobDataMsg(object):
         
         for attr in attr_list:
             
-            if attr == 'job_id':
-                self.job_id = job.jobid
-            elif attr == 'job_type':
+            if attr == 'job_type':
                 self.job_type = job.type
             elif attr == 'job_user':
                 self.job_user = job.user

@@ -15,6 +15,7 @@ __revision__ = '$Revision: 1'
 import os.path
 import sys
 import json
+import time
 import ConfigParser
 
 from dbWriter import DatabaseWriter
@@ -95,7 +96,7 @@ if __name__ == '__main__':
 
 
     con_file = ConfigParser.ConfigParser()
-    con_file.read(os.path.join("DB_writer_config"))
+    con_file.read(os.path.join("/Users/paulrich/cobalt-dev/src/clients/DB_clients/DB_writer_config"))
 
     fifo_name = con_file.get('cdbdump', 'fifo')
     login = con_file.get('cdbdump', 'login')
@@ -119,6 +120,7 @@ if __name__ == '__main__':
         if cobaltJSONmessage != '':
             logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
             database.addMessage(logMsg)
-            
+        else:
+           time.sleep(5)
 
         #Wash. Rinse. Repeat

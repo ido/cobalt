@@ -377,7 +377,6 @@ class ReportStateEncoder(JSONEncoder):
         elif isinstance(obj, Cobalt.Components.cqm.JobDataMsg):
             retDict = dict(obj.__dict__)
             retDict['job_prog_msg'] = self.default(obj.job_prog_msg)
-            print obj.__dict__
             return retDict
         
         return  json.JSONEncoder.default(self, obj)

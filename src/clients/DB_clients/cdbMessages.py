@@ -15,10 +15,18 @@ class LogMessage(object):
       self.item = None
       if self.item_type == 'reservation':
          self.item = ReservationStatus(spec.get('item'))
-      #elif self.message_type == 'partition':
-      #elif self.message_type == 'job':
-      #else:
-      #handle bad message, non-fatal exception?
+      elif self.item_type == 'partition':
+         raise NotImplementedError("partition logging not yet implemented.")
+      elif self.item_type == 'job_prog':
+         self.item = JobProgStatus(spec.get('item'))
+         self.item.set_types()
+      elif self.item_type == 'job_data':
+         self.item = JobDataStatus(spec.get('item'))
+         self.item.set_types()
+      else:
+         #handle bad message, non-fatal exception?
+         raise RuntimeError("Bad or Malformed message caught.")
+         pass
       return
      
    def __str__(self):
@@ -49,9 +57,51 @@ class ReservationStatus(object):
    def __str__(self):
       return "Tag: %s\n" % self.tag + "Cycle: %s\n" % self.cycle + "Users: %s\n" % self.users + "partitions: %s\n" % self.partitions + "name: %s\n" % self.name + "start: %s\n" % self.start + "queue: %s\n" % self.queue + "duration: %s\n" % self.duration + "res_id: %s\n" % self.res_id + "cycle_id: %s\n" % self.cycle_id
    
+class JobStatus(object):
+
+   def __init__(self, spec):
+      for entry in spec:
+         self.__setattr__(entry, spec[entry])
+
+   def __str__(self):
+      output = []
+      for entry in self.__dict__:
+         output.append("%s : %s\n" % (entry, str(self.__dict__[entry])))
+      return ''.join(output)
+
+   def set_types(self):
+      raise NotImplementedError("JobStatus.set_types() not implemented.")
+      
+class JobProgStatus(JobStatus):
+
+   def set_types(self):
+      
+      self.dep_hold = int(self.dep_hold)
+      self.admin_hold = int(self.admin_hold)
+      self.user_hold = int(self.user_hold)
+      self.max_running = int(self.max_running)
+      self.dep_fail = int(self.dep_fail)
+      self.task_running = int(self.task_running)
    
-
-
+   
+class JobDataStatus(JobStatus):
+   
+   def __init__(self, spec):
+      JobStatus.__init__(self,spec)
+      self.job_prog_msg = JobProgStatus(spec.get('job_prog_msg'))
+      
+   def set_types(self):
+      self.args = ' '.join(self.args)
+      if self.args == '' : self.args = None
+      self.envs = str(self.envs)
+      self.preemptable = int(self.preemptable)
+      self.project = str(self.project)
+      if self.priority_core_hours: 
+         self.priority_core_hours = int(self.priority_core_hours)
+      else: 
+         self.priority_core_hours = None
+      self.location = str(self.location)
+      self.job_prog_msg.set_types()
 
 class LogMessageDecoder(json.JSONDecoder):
 
@@ -59,10 +109,13 @@ class LogMessageDecoder(json.JSONDecoder):
       spec = json.loads(string)
       return LogMessage(spec)
    
-class ReservationStateDecoder(json.JSONDecoder):
-
-   def decode(self, string):
-      spec = json.loads(string)
-#class JobStatus(LogMessage):
-
-#class PartitionStatus(LogMessage):
+#class ReservationStaeDecoder(json.JSONDecoder):
+#
+#   def decode(self, string):
+#      spec = json.loads(string)
+#
+#class JobStateDecoder(LogMessage):
+#   def decode(self, string):
+#      spec = json.loads(string)
+#
+#class PartitionStateDecoder(LogMessage):
