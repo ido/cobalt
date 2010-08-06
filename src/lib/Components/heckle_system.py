@@ -215,6 +215,10 @@ class HeckleSystem(Component):
         LOGGER.debug( "System:_wait:%s process groups." % waitlen )
         for pgp in self.process_groups.itervalues():
             pgp.wait()
+            try:
+                del( self.hacky_forbidden_nodes[pgp.location] )
+            except:
+                pass
     _wait = automatic(_wait)
     
     
@@ -226,6 +230,10 @@ class HeckleSystem(Component):
         LOGGER.debug( "System:Locations are: %s" % pgp.location )
         hiccup = HeckleConnector()
         hiccup.free_reserved_node( uid = pgp.uid, node_list=pgp.location )
+        try:
+            del( self.hacky_forbidden_nodes[pgp.location] )
+        except:
+            pass
     
     
     def get_resources(self, specs=None ):

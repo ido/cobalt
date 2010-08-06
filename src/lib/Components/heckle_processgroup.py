@@ -155,7 +155,7 @@ class HeckleProcessGroup(ProcessGroup):
                               % (self.jobid, exit_status) )
                 #exit_status = exit_status >> 8
                 # Remove temporary file with node locations
-                os.remove(self.nodefile[1])
+                #os.remove(self.nodefile[1])
                 self.exit_status = exit_status
                 # Do something if exit status is non-zero
     
