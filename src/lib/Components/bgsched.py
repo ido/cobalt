@@ -21,7 +21,8 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 from Cobalt.Statistics import Statistics
-from Cobalt.Logging import ReportObject, db_log_to_file
+from Cobalt.Logging import db_log_to_file
+from Cobalt.JSONEncoders import ReportObject
 
 import Cobalt.SchedulerPolicies
 

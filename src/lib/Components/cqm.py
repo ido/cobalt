@@ -101,7 +101,8 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
     JobRunError, JobPreemptionError, JobDeleteError)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
-from Cobalt.Logging import db_log_to_file, ReportObject
+from Cobalt.Logging import db_log_to_file
+from Cobalt.JSONEncoders import ReportObject
 
 logger = logging.getLogger('cqm')
 
@@ -2896,7 +2897,7 @@ class QueueManager(Component):
             results.append(job.jobid)
         db_log_to_file(ReportObject(("%s updating job scores: %s, %s", user_name, specs, score),
                                     user_name,
-                                    "modified",
+                                    "modifying",
                                     "job_data",
                                     JobDataMsg(job)).encode())
                                     
@@ -3029,6 +3030,13 @@ class JobProgMsg(object):
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
 
+        print job.state
+        print "***************************"
+        if job.state == "running":
+            self.envs = job.envs
+            self.priority_core_hours = 20.0 #job.priority_core_hours
+            self.location = job.location
+            self.nodects = job._Job__resource_nodects
 
 
 class JobDataMsg(object):

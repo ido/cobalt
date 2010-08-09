@@ -33,7 +33,10 @@ class DatabaseWriter(object):
          elif table_name == 'JOB_DATA':
             self.daos[table_name] = JobDataData(self.db, schema, 
                                                 self.tables[table_name].table)
-
+         elif table_name == 'JOB_DEPS':
+            self.daos[table_name] = JobDepsData(self.db, schema, 
+                                                self.tables[table_name].table)
+            
          else:
             self.daos[table_name] = db2util.dao(self.db, schema, 
                                              self.tables[table_name].table)
@@ -202,7 +205,7 @@ class DatabaseWriter(object):
       for nodect in specialObjects['nodects']:
          job_nodects_record = self.daos['JOB_NODECTS'].table.getRecord({
             'JOB_DATA_ID': job_data_id,
-            'VALUE': nodect})
+            'VALUE': str(nodect)})
          self.daos['JOB_NODECTS'].insert(job_nodects_record)
          
 
@@ -248,7 +251,7 @@ class DatabaseWriter(object):
       updateAtRun = {}
       job_prog_record = self.daos['JOB_PROG'].table.getRecord()
       for fieldName in job_prog_msg.__dict__.keys():
-         if fieldName in ['env', 'nodects', 'location',
+         if fieldName in ['envs', 'nodects', 'location',
                           'priority_core_hours','satisfied_dependencies']:
             updateAtRun[fieldName] = job_prog_msg.__getattribute__(fieldName)
          else:
@@ -262,17 +265,30 @@ class DatabaseWriter(object):
       job_prog_record.v.EXEC_USER = logMsg.exec_user
       job_prog_record.v.ENTRY_TIME = logMsg.timestamp
 
-      
       self.daos['JOB_PROG'].insert(job_prog_record)
       
+      job_data_record = None
+      job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
       #These are updated in JOB_DATA at run-start.
-     # if len(updateAtRun) > 0:
-      #   fieldValue = updateAtRun.pop('env', None)
-       #  if fieldValue:
-            
-            
-      
+      if len(updateAtRun) > 0:
+         fieldValue = updateAtRun.pop('envs', None)
+         if fieldValue:
+            job_data_record.v.ENVS = str(fieldValue)
+         fieldValue = updateAtRun.pop('priority_core_hours', None)
+         if fieldValue:
+            job_data_record.v.PRIORITY_CORE_HOURS = int(fieldValue)
+         fieldValue = updateAtRun.pop('location', None)
+         if fieldValue:
+            job_data_record.v.LOCATION = str(fieldValue)
+         fieldValue = updateAtRun.pop('satisfied_dependencies', None)
+         #find dependencies that have been satisfied and mark as such.
+         #if fieldValue:
+         #   for dep in fieldValue:
+         #      job_deps_record = 
+               
+         fieldValue = updateAtRun.pop('nodects', None)
 
+         self.daos['JOB_DATA'].update(job_data_record)
 
    def __get_most_recent_data_id(self, table, logMsg):
       """Takes a table name and ID.  Right now reservation specific.
@@ -356,10 +372,14 @@ class JobDepsData(db2util.dao):
 
    def search (self, record):
       
-      """Find a dependency record and update it to show its success."""
+      """Find a dependency record and update it to show its success.
+      None of these jobs are satisfied, so, only try and update if 
+      something new comes in."""
 
-      SQL = ("select id",
+      SQL = ("select id, dep_on_id, satisfied",
              "from job_deps",
              "where job_data_id = %d and dep_on_id = %d" % (record.v.JOB_DATA_ID,
-                                                            record.v.DEP_ON_ID))
+                                                            record.v.DEP_ON_ID),
+             "and satisfied != 0")
+
       return self.db.getDict(' '.join(SQL))
