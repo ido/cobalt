@@ -280,7 +280,8 @@ class BGQsim(Simulator):
 
 ##### job/queue related
     def _get_queuing_jobs(self):
-        return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+        jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+        return jobs
     queuing_jobs = property(_get_queuing_jobs)
     
     def _get_running_jobs(self):
@@ -565,7 +566,7 @@ class BGQsim(Simulator):
             elif action == "start_both":
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
-                ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
+                ComponentProxy(REMOTE_QUEUE_MANAGER).run_holding_job([{'jobid':mate_job_id}])
             elif action == "start_both_or_give_up":
                 #print "BQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
                 mate_job_can_run = False
@@ -610,14 +611,14 @@ class BGQsim(Simulator):
     def start_job(self, specs, updates):
         '''update the job state and start_time and end_time when cqadm --run
         is issued to a group of jobs'''
-        start_holded = False
+        start_holding = False
         for spec in specs:
             if self.job_hold_dict.has_key(spec['jobid']):
-                start_holded = True
+                start_holding = True
                   
         partitions = updates['location']
         for partition in partitions:
-            if not start_holded:
+            if not start_holding:
                 self.reserve_partition(partition)
             partsize = int(self._partitions[partition].size)
             self.num_busy += partsize
@@ -741,6 +742,7 @@ class BGQsim(Simulator):
                     if p.name == bad_name or bad_name in p.children or bad_name in p.parents:
                         skip = True
                         break
+                
                 if not skip:
                     if (not requested_location) or (p.name == requested_location):
                         available_partitions.add(p)
@@ -762,6 +764,7 @@ class BGQsim(Simulator):
                 
             if partition.state == "idle":
                 # let's check the impact on partitions that would become blocked
+                
                 score = 0
                 for p in partition.parents:
                     if self.cached_partitions[p].state == "idle" and self.cached_partitions[p].scheduled:
@@ -874,6 +877,8 @@ class BGQsim(Simulator):
                     self.logger.info("backfilling job %s" % args['jobid'])
                     best_partition_dict.update(partition_name)
                     break
+                
+#        print "best_partition_dict", best_partition_dict
 
         return best_partition_dict
     find_job_location = locking(exposed(find_job_location))
@@ -906,6 +911,8 @@ class BGQsim(Simulator):
             partition.reserved_until = False
         except:
             self.logger.error("error in reserve_partition", exc_info=True)
+            print "try to reserve a busy partition!!"
+            raw_input("try to reserve a busy partition!!")
         self._partitions_lock.release()
         # explicitly call this, since the above "busy" is instantaneously available
         self.update_partition_state()
@@ -1251,7 +1258,7 @@ class BGQsim(Simulator):
         
         print "Number of mate job pairs: %s, proportion in blue gene jobs: %s%%"\
              % (len(self.mate_job_dict.keys()), round(proportion *100, 1))
-        self.generat_mate_job_log()
+        self.generate_mate_job_log()
 
     set_mate_job_dict = exposed(set_mate_job_dict)
                 
@@ -1319,22 +1326,22 @@ class BGQsim(Simulator):
         return mate_job_started
     try_to_run_mate_job = exposed(try_to_run_mate_job)
     
-    def run_holded_job(self, specs):
-        '''start holded job'''
+    def run_holding_job(self, specs):
+        '''start holding job'''
         for spec in specs:
             jobid = spec.get('jobid')
             nodelist = self.job_hold_dict.get(jobid, None)
             if nodelist == None:
-                #print "cannot find holded resources"
+                #print "cannot find holding resources"
                 return
-            #print "start holded job %s on location %s" % (spec['jobid'], nodelist) 
+            #print "start holding job %s on location %s" % (spec['jobid'], nodelist) 
             self.start_job([spec], {'location':nodelist})
             del self.job_hold_dict[jobid]
             
-    run_holded_job = exposed(run_holded_job)
+    run_holding_job = exposed(run_holding_job)
         
     def hold_job(self, specs, updates):
-        '''hold a job. a holded job is not started but hold some resources that can run itself in the future
+        '''hold a job. a holding job is not started but hold some resources that can run itself in the future
         once its mate job in a remote system can be started immediatly'''
         partitions = updates['location']
         for partition in partitions:
@@ -1415,7 +1422,7 @@ class BGQsim(Simulator):
                 del self.mate_job_dict[jobid]
         return ret_status
     
-    def generat_mate_job_log(self):
+    def generate_mate_job_log(self):
         '''output a file with mate jobs one pair per line'''        
         
         #initialize debug logger
@@ -1455,13 +1462,49 @@ class BGQsim(Simulator):
                     print "*",
                 elif rack[0] == 0:
                     print GREENS + 'X' + ENDC,
+                elif rack[0] == 2:
+                    print YELLOWS + '+' + ENDC,
+                else:
+                    print rack[0],
             print '\r'
             for rack in row:
                 if rack[1] == 1:
                     print "*",
                 elif rack[1] == 0:
                     print GREENS + 'X' + ENDC,
+                elif rack[1] == 2:
+                    print YELLOWS + '+' + ENDC,
+                else:
+                    print rack[1],
             print '\r'
+            
+    def get_holden_midplanes(self):
+        '''return a list of name of 512-size partitions that are in the job_hold_list'''
+        midplanes = []
+        for partlist in self.job_hold_dict.values():
+            partname = partlist[0]
+            midplanes.extend(self.get_midplanes(partname))
+        return midplanes            
+             
+    def get_midplanes(self, partname):
+        '''return a list of sub-partitions each contains 512-nodes(midplane)'''
+        midplane_list = []
+        partition = self._partitions[partname]
+        
+        if partition.size == MIDPLANE_SIZE:
+            midplane_list.append(partname)
+        elif partition.size > MIDPLANE_SIZE:
+            children = partition.children
+            for part in children:
+                if self._partitions[part].size == MIDPLANE_SIZE:
+                    midplane_list.append(part)
+        else:
+            parents = partition.parents
+            for part in parents:
+                if self._partitions[part].size == MIDPLANE_SIZE:
+                    midplane_list.append(part)
+                            
+        return midplane_list             
              
     def mark_matrix(self):
         idle_midplanes = self.get_midplanes_by_state('idle')
@@ -1471,7 +1514,14 @@ class BGQsim(Simulator):
             col = int(name[6])
             M = int(name[9])
             self.rack_matrix[row][col][M] = 1
-            
+        holden_midplanes = self.get_holden_midplanes()
+        if self.coscheduling and self.cosched_scheme == "hold":
+            for name in holden_midplanes:
+                row = int(name[5])
+                col = int(name[6])
+                M = int(name[9])
+                self.rack_matrix[row][col][M] = 2
+                
     def reset_rack_matrix(self):
         self.rack_matrix = [
                 [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
@@ -1507,26 +1557,50 @@ class BGQsim(Simulator):
             
         print waiting_job_bar
         
+        holding_jobs = len(self.job_hold_dict.keys())
+        holding_midplanes = 0
+        hold_partitions = []
+        for partlist in self.job_hold_dict.values():
+            host = partlist[0]
+            hold_partitions.append(host)
+            nodes = int(host.split("-")[-1])
+            holding_midplanes += nodes / 512
+            
         print "number of running jobs: ", self.num_running
-        
         running_job_bar = BLUES
         for i in range(self.num_running):
             running_job_bar += "+"
         running_job_bar += ENDC
         print running_job_bar
         
+        print "number of holding jobs: ", holding_jobs
+        
+        print "number of holden midplanes: ", holding_midplanes
+        print "holden partitions: ", hold_partitions
+        
+
+        
         midplanes = self.num_busy / 512
         print "number of busy midplanes: ", midplanes
         print "system utilization: ", float(self.num_busy) / 40960.0
+         
+        
         busy_midplane_bar = GREENS
         
         i = 0
         while i < midplanes:
             busy_midplane_bar += "x"
             i += 1
-        for j in range(i, 80):
-            busy_midplane_bar += "-"
+        j = 0
         busy_midplane_bar += ENDC
+        busy_midplane_bar += YELLOWS
+        while j < holding_midplanes:
+            busy_midplane_bar += "+"
+            j += 1
+            i += 1
+        busy_midplane_bar += ENDC
+        for k in range(i, 80):
+            busy_midplane_bar += "-"
         busy_midplane_bar += REDS
         busy_midplane_bar += "|"
         busy_midplane_bar += ENDC
@@ -1546,6 +1620,21 @@ class BGQsim(Simulator):
         print progress_bar
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
+            
+        wait_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+        
+        if wait_jobs:
+            wait_jobs.sort(self.utilitycmp)
+            top_jobs = wait_jobs[0:5]
+        else:
+            top_jobs = []    
+            
+        if top_jobs:
+            print "high priority waiting jobs: ", [(job.jobid, job.nodes) for job in top_jobs]
+        else:
+            print "hig priority waiting jobs:"
+
+        print "holding jobs: ", [(k,v[0].split("-")[-1]) for k, v in self.job_hold_dict.iteritems()]
         print "\n\n"
         
     def print_post_screen(self):

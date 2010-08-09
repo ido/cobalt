@@ -187,6 +187,14 @@ class ClusterQsim(ClusterBaseSystem):
         
         self.event_manager.add_event(evspec)
         
+    def _get_queuing_jobs(self):
+        return [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+    queuing_jobs = property(_get_queuing_jobs)
+    
+    def _get_running_jobs(self):
+        return [job for job in self.queues.get_jobs([{'has_resources':True}])]
+    running_jobs = property(_get_running_jobs)
+        
     def add_queues(self, specs):
         '''add queues'''
         return self.queues.add_queues(specs)
@@ -554,7 +562,7 @@ class ClusterQsim(ClusterBaseSystem):
             elif action == "start_both":
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
-                ComponentProxy(REMOTE_QUEUE_MANAGER).run_holded_job([{'jobid':mate_job_id}])
+                ComponentProxy(REMOTE_QUEUE_MANAGER).run_holding_job([{'jobid':mate_job_id}])
             elif action == "start_both_or_give_up":
                 mate_job_can_run = False
                                
@@ -824,7 +832,7 @@ class ClusterQsim(ClusterBaseSystem):
     get_mate_job_dict = exposed(get_mate_job_dict)
 
     def hold_job(self, specs, updates):
-        '''hold a job. a holded job is not started but hold some resources that can run itself in the future
+        '''hold a job. a holding job is not started but hold some resources that can run itself in the future
         once its mate job in a remote system can be started immediatly'''
         
         nodelist = updates['location']
@@ -926,19 +934,19 @@ class ClusterQsim(ClusterBaseSystem):
         return mate_job_started
     try_to_run_mate_job = exposed(try_to_run_mate_job)
     
-    def run_holded_job(self, specs):
-        '''start holded job'''
+    def run_holding_job(self, specs):
+        '''start holding job'''
         for spec in specs:
             jobid = spec.get('jobid')
             nodelist = self.job_hold_dict.get(jobid, None)
             if nodelist == None:
-                #print "cannot find holded resources"
+                #print "cannot find holding resources"
                 return
-            #print "start holded job %s on location %s" % (spec['jobid'], nodelist)
+            #print "start holding job %s on location %s" % (spec['jobid'], nodelist)
             self.start_job([spec], {'location':nodelist})
             del self.job_hold_dict[jobid]
             
-    run_holded_job = exposed(run_holded_job)            
+    run_holding_job = exposed(run_holding_job)            
 
     #coscheduling stuff
     def get_mate_job_status(self, jobid):
@@ -1016,14 +1024,24 @@ class ClusterQsim(ClusterBaseSystem):
         waiting_job_bar += ENDC
             
         print waiting_job_bar
+                
+        holding_jobs = len(self.job_hold_dict.keys())
+        holden_nodes = 0
         
+        for nodelist in self.job_hold_dict.values():
+            nodes = len(nodelist)
+            holden_nodes += nodes
+                        
         print "number of running jobs: ", self.num_running
-        
         running_job_bar = BLUES
         for i in range(self.num_running):
             running_job_bar += "+"
         running_job_bar += ENDC
         print running_job_bar
+        
+        
+        print "number of holding jobs: ", holding_jobs
+        print "number of holden nodes: ", holden_nodes 
         
         print "number of busy nodes: ", self.num_busy
         print "system utilization: ", float(self.num_busy) / self.total_nodes
@@ -1033,9 +1051,16 @@ class ClusterQsim(ClusterBaseSystem):
         while i < self.num_busy:
             busy_node_bar += "x"
             i += 1
-        for j in range(i, self.total_nodes):
-            busy_node_bar += "-"
+        j = 0
         busy_node_bar += ENDC
+        busy_node_bar += YELLOWS
+        while j < holden_nodes:
+            busy_node_bar += '+'
+            j += 1
+            i += 1
+        busy_node_bar += ENDC
+        for k in range(i, self.total_nodes):
+            busy_node_bar += "-"
         busy_node_bar += REDS
         busy_node_bar += "|"
         busy_node_bar += ENDC
@@ -1053,6 +1078,8 @@ class ClusterQsim(ClusterBaseSystem):
             progress_bar += "-"
         progress_bar += "|"
         print progress_bar
+        print "waiting jobs: ", [(job.jobid, job.nodes) for job in self.queues.get_jobs([{'is_runnable':True}])]
+        print "holding jobs: ", self.job_hold_dict.keys()
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
     
