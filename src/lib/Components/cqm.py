@@ -3030,8 +3030,7 @@ class JobProgMsg(object):
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
 
-        print job.state
-        print "***************************"
+
         if job.state == "running":
             self.envs = job.envs
             self.priority_core_hours = 20.0 #job.priority_core_hours

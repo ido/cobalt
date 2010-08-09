@@ -210,10 +210,10 @@ class DatabaseWriter(object):
          
 
       #populate job_deps
-      for dep in specialObjects['satisfied_dependencies']:
+      for dep in specialObjects['all_dependencies']:
          job_deps_record = self.daos['JOB_DEPS'].table.getRecord({
                'JOB_DATA_ID' : job_data_id,
-               'DEP_ON_ID' : dep,
+               'DEP_ON_ID' : int(dep),
                'SATISFIED' : 0})
          self.daos['JOB_DEPS'].insert(job_deps_record)
 
@@ -281,10 +281,22 @@ class DatabaseWriter(object):
          if fieldValue:
             job_data_record.v.LOCATION = str(fieldValue)
          fieldValue = updateAtRun.pop('satisfied_dependencies', None)
+         
          #find dependencies that have been satisfied and mark as such.
-         #if fieldValue:
-         #   for dep in fieldValue:
-         #      job_deps_record = 
+         #I really don't like how I am doing this.  I have a feeling
+         #I can consolidate this.  
+         if fieldValue:
+            job_deps_record = self.daos['JOB_DEPS'].table.getRecord({'JOB_DATA_ID': job_data_id})
+            deps_to_satisfy = self.daos['JOB_DEPS'].search(job_deps_record)
+            job_deps_record = None
+            
+            for dep in deps_to_satisfy:
+               if str(dep['DEP_ON_ID']) in fieldValue:
+                  job_deps_record = self.daos['JOB_DEPS'].getID(dep['ID'])
+                  job_deps_record.v.SATISFIED = 1
+                  self.daos['JOB_DEPS'].update(job_deps_record)
+                  job_deps_record = None
+               
                
          fieldValue = updateAtRun.pop('nodects', None)
 
@@ -378,8 +390,7 @@ class JobDepsData(db2util.dao):
 
       SQL = ("select id, dep_on_id, satisfied",
              "from job_deps",
-             "where job_data_id = %d and dep_on_id = %d" % (record.v.JOB_DATA_ID,
-                                                            record.v.DEP_ON_ID),
-             "and satisfied != 0")
+             "where job_data_id = %d" % (record.v.JOB_DATA_ID),
+             "and satisfied = 0")
 
       return self.db.getDict(' '.join(SQL))
