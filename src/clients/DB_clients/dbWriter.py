@@ -13,8 +13,7 @@ class DatabaseWriter(object):
       table_names = ['RESERVATION_DATA', 'RESERVATION_PARTS',
                      'RESERVATION_STATES', 'RESERVATION_USERS',
                      'RESERVATION_PROG', 'JOB_DATA', 'JOB_ATTR',
-                     'JOB_NODECTS', 'JOB_DEPS', 'JOB_STATES',
-                     'JOB_PROG']
+                     'JOB_DEPS', 'JOB_STATES', 'JOB_PROG']
 
       #Handle tables, There is probably a better way to do this.
       self.tables = {}
@@ -201,12 +200,12 @@ class DatabaseWriter(object):
                'VALUE' : str(specialObjects['attrs'][key])})
          self.daos['JOB_ATTR'].insert(job_attr_record)
       
-      #populate job_nodects, if needed.
-      for nodect in specialObjects['nodects']:
-         job_nodects_record = self.daos['JOB_NODECTS'].table.getRecord({
-            'JOB_DATA_ID': job_data_id,
-            'VALUE': str(nodect)})
-         self.daos['JOB_NODECTS'].insert(job_nodects_record)
+      #populate job_nodects, this is defunct for now.
+      #for nodect in specialObjects['nodects']:
+      #   job_nodects_record = self.daos['JOB_NODECTS'].table.getRecord({
+      #      'JOB_DATA_ID': job_data_id,
+      #      'VALUE': str(nodect)})
+      #   self.daos['JOB_NODECTS'].insert(job_nodects_record)
          
 
       #populate job_deps
@@ -251,7 +250,7 @@ class DatabaseWriter(object):
       updateAtRun = {}
       job_prog_record = self.daos['JOB_PROG'].table.getRecord()
       for fieldName in job_prog_msg.__dict__.keys():
-         if fieldName in ['envs', 'nodects', 'location',
+         if fieldName in ['envs', 'location',
                           'priority_core_hours','satisfied_dependencies']:
             updateAtRun[fieldName] = job_prog_msg.__getattribute__(fieldName)
          else:
@@ -298,7 +297,7 @@ class DatabaseWriter(object):
                   job_deps_record = None
                
                
-         fieldValue = updateAtRun.pop('nodects', None)
+         #fieldValue = updateAtRun.pop('nodects', None)
 
          self.daos['JOB_DATA'].update(job_data_record)
 

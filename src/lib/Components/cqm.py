@@ -3035,7 +3035,7 @@ class JobProgMsg(object):
             self.envs = job.envs
             self.priority_core_hours = 20.0 #job.priority_core_hours
             self.location = job.location
-            self.nodects = job._Job__resource_nodects
+            #self.nodects = job._Job__resource_nodects
 
 
 class JobDataMsg(object):
@@ -3055,7 +3055,7 @@ class JobDataMsg(object):
                      'outputdir', 'errorpath', 'path', 'mode',
                      'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies',
-                     'attribute', 'nodects', 'attrs', 
+                     'attribute', 'attrs', 
                      'satisfied_dependencies', 'preemptable'
                      ]
         
@@ -3065,8 +3065,8 @@ class JobDataMsg(object):
                 self.job_type = job.type
             elif attr == 'job_user':
                 self.job_user = job.user
-            elif attr == 'nodects':
-                self.nodects = job._Job__resource_nodects
+            #elif attr == 'nodects':
+             #   self.nodects = job._Job__resource_nodects
 
             else:
                 self.__setattr__(attr, job.__getattribute__(attr))
