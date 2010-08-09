@@ -196,6 +196,10 @@ class EventSimulator(Component):
         return self.event_list[self.time_stamp].get('jobid')
     get_current_event_job = exposed(get_current_event_job)
     
+    def get_current_event_location(self):
+        return self.event_list[self.time_stamp].get('location')
+    get_current_event_location = exposed(get_current_event_location)
+    
     def get_current_event_machine(self):
         '''return machine which the current event belongs to'''
         return self.event_list[self.time_stamp].get('machine')

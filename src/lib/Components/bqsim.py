@@ -35,6 +35,11 @@ WALLTIME_AWARE_CONS = False
 
 MACHINE_ID = 0
 MACHINE_NAME = "Intrepid"
+DEFAULT_MAX_HOLDING_SYS_UTIL = 1
+MAX_HOLD_TIME = 1800 
+MIDPLANE_SIZE = 512
+TOTAL_NODES = 40960
+TOTAL_MIDPLANE = 80
     
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -60,6 +65,9 @@ class BGQsim(Simulator):
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.inhibit_small_partitions()
+        self.total_nodes = TOTAL_NODES
+        self.total_midplane = TOTAL_MIDPLANE
+        
         self.part_size_list = []
      
         for part in self.partitions.itervalues():
@@ -166,6 +174,8 @@ class BGQsim(Simulator):
             # 'disable' coscheduling for a while until cqsim triggers the remote function
             # to initialize mate job dice successfully
             self.coscheduling = False
+            
+        self.max_holding_sys_util = DEFAULT_MAX_HOLDING_SYS_UTIL
                         
 ####----log and other 
         #initialize PBS-style logger
@@ -231,6 +241,7 @@ class BGQsim(Simulator):
         evspec['datetime'] = sec_to_date(timestamp)
         evspec['unixtime'] = timestamp
         evspec['machine'] = MACHINE_ID
+        evspec['location'] = info.get('location', [])
         
         self.event_manager.add_event(evspec)
         
@@ -427,10 +438,19 @@ class BGQsim(Simulator):
         if self.event_manager.get_go_next():
             del self.yielding_job_list[:]
             
-            self.update_job_states(specs, {})
+            cur_event = self.event_manager.get_current_event_type()
+            
+            
+            if cur_event in ["Q", "E"]:
+                self.update_job_states(specs, {}, cur_event)
             
             self.compute_utility_scores()
-
+            
+            #unhold holding job. MUST be after compute_utility_scores()    
+            if cur_event == "U":
+                cur_job = self.event_manager.get_current_event_job()
+                self.unhold_job(cur_job)
+                            
         self.event_manager.set_go_next(True)
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
@@ -441,15 +461,14 @@ class BGQsim(Simulator):
         return jobs
     get_jobs = exposed(query(get_jobs))
     
-    def update_job_states(self, specs, updates):
+    def update_job_states(self, specs, updates, cur_event):
         '''update the state of the jobs associated to the current time stamp'''
         
-        jobid = self.event_manager.get_current_event_job()
+#        jobid = self.event_manager.get_current_event_job()
         
         ids_str = str(self.event_manager.get_current_event_job())
         
         ids = ids_str.split(':')
-        cur_event = self.event_manager.get_current_event_type()
         #print "current event=", cur_event, " ", ids
         for Id in ids:
             
@@ -547,7 +566,7 @@ class BGQsim(Simulator):
             elif action == "hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
                 mate_job_can_run = False
-                if self.cosched_scheme_remote == "yield":
+                if self.cosched_scheme_remote == "yield" or self.cosched_scheme_remote=="hold":
                     #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
                     try:
                         mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
@@ -562,7 +581,7 @@ class BGQsim(Simulator):
                     self.start_job([spec], {'location': nodelist})
                     dbgmsg += " ###start both"
                 else:
-                    self.hold_job([spec], {'location': nodelist})
+                    self.hold_job(spec, {'location': nodelist})
             elif action == "start_both":
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
@@ -974,7 +993,7 @@ class BGQsim(Simulator):
                 return
             
             try:
-                job.score += score
+                job.score = score #in trunk it is job.score += score, (coscheduling need to temperally change score)
             except:
                 self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
                     exc_info=True)
@@ -1079,7 +1098,7 @@ class BGQsim(Simulator):
         '''number of idle nodes'''
         idle_nodes = 0
         midplanes = self.get_all_idle_midplanes()
-        idle_nodes = 512 * len(midplanes)
+        idle_nodes = MIDPLANE_SIZE * len(midplanes)
         return idle_nodes
     
     def current_cycle_capacity_loss(self):
@@ -1339,30 +1358,48 @@ class BGQsim(Simulator):
             del self.job_hold_dict[jobid]
             
     run_holding_job = exposed(run_holding_job)
-        
-    def hold_job(self, specs, updates):
+            
+    def hold_job(self, spec, updates):
         '''hold a job. a holding job is not started but hold some resources that can run itself in the future
-        once its mate job in a remote system can be started immediatly'''
-        partitions = updates['location']
-        for partition in partitions:
-            self.reserve_partition(partition)
-            partsize = int(self._partitions[partition].size)
-                    
-        for spec in specs:
-            self.job_hold_dict[spec['jobid']] = partitions
-                    
+        once its mate job in a remote system can be started immediatly. Note, one time hold only one job'''
+        
         def _hold_job(job, newattr):
             '''callback function to update job start/end time'''
             temp = job.to_rx()
             newattr = self.hold_job_updates(temp, newattr)
             temp.update(newattr)
             job.update(newattr)
-            self.log_job_event('H', self.get_current_time_date(), temp)
+            self.log_job_event("H", self.get_current_time_date(), temp)
+            
+        current_holden_nodes = 0
+        for partlist in self.job_hold_dict.values():
+            host = partlist[0]
+            nodes = int(host.split("-")[-1])
+            current_holden_nodes += nodes
         
-        return self.queues.get_jobs(specs, _hold_job, updates)
-    
+        nodelist = updates['location']
+        
+        partsize = 0
+        for partname in nodelist:
+            partsize += int(partname.split("-")[-1])
+
+        job_id = spec['jobid']
+        if current_holden_nodes + partsize < self.max_holding_sys_util * self.total_nodes:
+            self.job_hold_dict[spec['jobid']] = nodelist
+            for partname in nodelist:
+                self.reserve_partition(partname)            
+            return self.queues.get_jobs([spec], _hold_job, updates)
+        else:
+            #if execeeding the maximum limite of holding nodes, the job will not hold but yield
+            self.yielding_job_list.append(job_id)  #int
+            #record the first time this job yields
+            if not self.yielding_job_dict.has_key(job_id):
+                self.yielding_job_dict[job_id] = self.get_current_time_sec()
+                self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
+            return 0
+        
     def hold_job_updates(self, jobspec, newattr):
-        ''' return the state updates (including state queued -> running, 
+        '''Return the state updates (including state queued -> running, 
         setting the start_time, end_time)'''
         updates = {}
         
@@ -1370,10 +1407,57 @@ class BGQsim(Simulator):
         updates['has_resources'] = False
         updates['state'] = "holding"
         updates['hold_time'] = self.get_current_time_sec()
-
+        
         updates.update(newattr)
+        
+        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
+        
+        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
     
         return updates
+    
+    def unhold_job(jobid):
+        '''if a job holds a partition longer than MAX_HOLD threshold, the job will release the partition and starts yielding'''
+        nodelist = self.job_hold_dict.get(jobid)
+        
+        #release holden partitions
+        if nodelist:
+            for partname in nodelist:
+                self.release_partition(partname)
+        else:
+            print "holding job %s not found in job_hold_dict: " % jobid
+                
+        def _unholding_job(job, newattr):
+            '''callback function'''
+            temp = job.to_rx()
+            newattr = self.unholding_job_updates(temp, newattr)
+            temp.update(newattr)
+            job.update(newattr)
+            self.log_job_event('U', self.get_current_time_date(), temp)
+            
+            del self.job_hold_dict[jobid]
+            
+        return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':[]})
+                
+    def unholding_job_updates(self, jobspec, newattr):
+        '''unhold job once the job has consumed MAX_HOLD_TIME'''
+        updates = {}
+        
+        updates['is_runnable'] = True
+        updates['has_resources'] = False
+        updates['state'] = "queued"
+        #set the job to lowest priority at this scheduling point. 
+        #if no other job gets the nodes it released, the unholden job can hold those nodes again
+        updates['score'] = 0  
+                
+        updates.update(newattr)
+        
+        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
+        
+        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
+    
+        return updates
+    
 
     def get_mate_job_status(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''
@@ -1435,7 +1519,7 @@ class BGQsim(Simulator):
             msg = "%s:%s" % (k, v)
             matelog.LogMessage(msg)
         matelog.closeLog()
-
+        
 #####--end--CoScheduling stuff
 
      
@@ -1564,7 +1648,7 @@ class BGQsim(Simulator):
             host = partlist[0]
             hold_partitions.append(host)
             nodes = int(host.split("-")[-1])
-            holding_midplanes += nodes / 512
+            holding_midplanes += nodes / MIDPLANE_SIZE
             
         print "number of running jobs: ", self.num_running
         running_job_bar = BLUES
@@ -1578,12 +1662,9 @@ class BGQsim(Simulator):
         print "number of holden midplanes: ", holding_midplanes
         print "holden partitions: ", hold_partitions
         
-
-        
-        midplanes = self.num_busy / 512
+        midplanes = self.num_busy / MIDPLANE_SIZE
         print "number of busy midplanes: ", midplanes
-        print "system utilization: ", float(self.num_busy) / 40960.0
-         
+        print "system utilization: ", float(self.num_busy) / self.total_nodes
         
         busy_midplane_bar = GREENS
         
@@ -1599,7 +1680,7 @@ class BGQsim(Simulator):
             j += 1
             i += 1
         busy_midplane_bar += ENDC
-        for k in range(i, 80):
+        for k in range(i, self.total_midplane):
             busy_midplane_bar += "-"
         busy_midplane_bar += REDS
         busy_midplane_bar += "|"

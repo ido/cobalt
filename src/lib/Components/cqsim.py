@@ -33,6 +33,7 @@ REMOTE_QUEUE_MANAGER = "queue-manager"
 MACHINE_ID = 1
 MACHINE_NAME = "Eureka"
 DEFAULT_VICINITY = 60
+DEFAULT_MAX_HOLDING_SYS_UTIL = 0.5
     
 class ClusterQsim(ClusterBaseSystem):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -156,6 +157,8 @@ class ClusterQsim(ClusterBaseSystem):
                 self.coscheduling = False
             print "number of mate job pairs: %s, proportion in cluster jobs: %s%%" \
             % (len(self.mate_job_dict.keys()), round(proportion *100, 1) )
+            
+        self.max_holding_sys_util = DEFAULT_MAX_HOLDING_SYS_UTIL
         
         Var = raw_input("press any Enter to continue...")
                 
@@ -558,7 +561,7 @@ class ClusterQsim(ClusterBaseSystem):
                     self.start_job([spec], {'location': nodelist})
                     dbgmsg += " ###start both"
                 else:
-                    self.hold_job([spec], {'location': nodelist})
+                    self.hold_job(spec, {'location': nodelist})
             elif action == "start_both":
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
@@ -831,16 +834,9 @@ class ClusterQsim(ClusterBaseSystem):
         return self.mate_job_dict
     get_mate_job_dict = exposed(get_mate_job_dict)
 
-    def hold_job(self, specs, updates):
+    def hold_job(self, spec, updates):
         '''hold a job. a holding job is not started but hold some resources that can run itself in the future
-        once its mate job in a remote system can be started immediatly'''
-        
-        nodelist = updates['location']
-        
-        self.nodes_down(nodelist)
-        
-        for spec in specs:
-            self.job_hold_dict[spec['jobid']] = nodelist 
+        once its mate job in a remote system can be started immediatly. Note, one time hold only one job'''
         
         def _hold_job(job, newattr):
             '''callback function to update job start/end time'''
@@ -850,8 +846,26 @@ class ClusterQsim(ClusterBaseSystem):
             job.update(newattr)
             self.log_job_event('H', self.get_current_time_date(), temp)
         
-        return self.queues.get_jobs(specs, _hold_job, updates)
-    
+        current_holden_nodes = 0
+        for nodelist in self.job_hold_dict.values():
+            current_holden_nodes += len(nodelist)
+            
+        nodelist = updates['location']
+
+        job_id = spec['jobid']
+        if current_holden_nodes + len(nodelist) < self.max_holding_sys_util * self.total_nodes:
+            self.job_hold_dict[spec['jobid']] = nodelist
+            self.nodes_down(nodelist)
+            return self.queues.get_jobs([spec], _hold_job, updates)
+        else:
+            #if execeeding the maximum limite of holding nodes, the job will not hold but yield
+            self.yielding_job_list.append(job_id)  #int
+            #record the first time this job yields
+            if not self.yielding_job_dict.has_key(job_id):
+                self.yielding_job_dict[job_id] = self.get_current_time_sec()
+                self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
+            return 0
+        
     def hold_job_updates(self, jobspec, newattr):
         ''' return the state updates (including state queued -> running, 
         setting the start_time, end_time)'''
@@ -883,7 +897,6 @@ class ClusterQsim(ClusterBaseSystem):
             for job in running_jobs:
                 end_time = max(float(job.starttime) + 60 * float(job.walltime), now + 5*60)
                 end_times.append([job.location, end_time])
-  
             
             active_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])] #waiting jobs
             active_jobs.sort(self.utilitycmp)
@@ -904,7 +917,6 @@ class ClusterQsim(ClusterBaseSystem):
                                           'attrs': job.attrs,
                  } )
             
-            
             if len(job_location_args) == 0:
                 break
             
@@ -923,11 +935,6 @@ class ClusterQsim(ClusterBaseSystem):
                        
                     self.start_job([{'tag':"job", 'jobid':int(canrun_jobid)}], {'location':nodelist})
                     #print "bqsim.try_to_run_mate, start job jobid ", canrun_jobid 
-                     
-                    #insert a new end time
-                    started_job = self.get_live_job_by_id(canrun_jobid)
-                    new_end_time = max(now + 60 * float(started_job.walltime), now + 5*60)                    
-                    end_times.append([started_job.location, new_end_time])
             else:
                 break
                                   
@@ -1027,7 +1034,6 @@ class ClusterQsim(ClusterBaseSystem):
                 
         holding_jobs = len(self.job_hold_dict.keys())
         holden_nodes = 0
-        
         for nodelist in self.job_hold_dict.values():
             nodes = len(nodelist)
             holden_nodes += nodes
