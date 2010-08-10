@@ -36,7 +36,7 @@ WALLTIME_AWARE_CONS = False
 MACHINE_ID = 0
 MACHINE_NAME = "Intrepid"
 DEFAULT_MAX_HOLDING_SYS_UTIL = 1
-MAX_HOLD_TIME = 1800 
+MAX_HOLD_TIME = 600
 MIDPLANE_SIZE = 512
 TOTAL_NODES = 40960
 TOTAL_MIDPLANE = 80
@@ -266,15 +266,14 @@ class BGQsim(Simulator):
                 message = "%s;S;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s exec_host=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
                  spec['nodes'], log_walltime, spec['start_time'], ":".join(spec['location']))
-            elif eventtype == 'H':  #hold some resource  
+            elif eventtype == 'H':  #hold some resources  
                 message = "%s;H;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s exec_host=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
                  spec['nodes'], log_walltime, ":".join(spec['location']))
+            elif eventtype == "U":  #unhold some resources  
+                message = "%s;U;%s;host=%s" % \
+                (timestamp, spec['jobid'], ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                if spec['hold_time'] == 0:
-                    holding_time = 0
-                else:
-                    holding_time = spec['start_time'] - spec['hold_time']
                 first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
                 if first_yielding > 0:
                     yielding_time = spec['start_time'] - first_yielding
@@ -283,7 +282,7 @@ class BGQsim(Simulator):
                 message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
                  round(float(spec['end_time']), 1), ":".join(spec['location']),
-                 spec['runtime'], holding_time, yielding_time)
+                 spec['runtime'], spec['hold_time'], yielding_time)
             else:
                 print "invalid event type, type=", eventtype
                 return
@@ -449,8 +448,12 @@ class BGQsim(Simulator):
             #unhold holding job. MUST be after compute_utility_scores()    
             if cur_event == "U":
                 cur_job = self.event_manager.get_current_event_job()
-                self.unhold_job(cur_job)
-                            
+                if cur_job in self.job_hold_dict.keys():
+                    self.unhold_job(cur_job)
+                else:
+                    #if the job not in job_hold_dict, do nothing. the job should have already started
+                    return []
+                
         self.event_manager.set_go_next(True)
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
@@ -463,9 +466,7 @@ class BGQsim(Simulator):
     
     def update_job_states(self, specs, updates, cur_event):
         '''update the state of the jobs associated to the current time stamp'''
-        
-#        jobid = self.event_manager.get_current_event_job()
-        
+         
         ids_str = str(self.event_manager.get_current_event_job())
         
         ids = ids_str.split(':')
@@ -480,16 +481,13 @@ class BGQsim(Simulator):
                 
                 tempspec['state'] = "queued"   #invisible -> queued
                 tempspec['is_runnable'] = True   #False -> True
-                
-#                self.unsubmitted_job_spec_dict[Id]['state'] = "queued"
-#                self.unsubmitted_job_spec_dict[Id]['is_runnable'] = "True"
-                
+              
                 self.queues.add_jobs([tempspec])
                 self.num_waiting += 1
                 
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
-                #del self.unsubmitted_job_spec_dict[Id]
+                del self.unsubmitted_job_spec_dict[Id]
 
             elif cur_event=="E":  # Job (Id) is completed
                 completed_job = self.get_live_job_by_id(Id)
@@ -550,7 +548,7 @@ class BGQsim(Simulator):
                     
                     if remote_status in ["queuing", "unsubmitted"]:
                         if self.cosched_scheme == "hold": # hold resource if mate cannot run, favoring job
-                            action = "hold"
+                            action = "start_both_or_hold"
                         if self.cosched_scheme == "yield": # give up if mate cannot run, favoring sys utilization
                             action = "start_both_or_give_up"
                     if remote_status == "holding":
@@ -563,18 +561,15 @@ class BGQsim(Simulator):
             if action == "start":
                 #print "BQSIM-normal start job %s on nodes %s" % (spec['jobid'], nodelist)
                 self.start_job([spec], {'location': nodelist})
-            elif action == "hold":
+            elif action == "start_both_or_hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
                 mate_job_can_run = False
-                if self.cosched_scheme_remote == "yield" or self.cosched_scheme_remote=="hold":
-                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
-                    try:
-                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
-                    except:
-                        self.logger.error("failed to connect to remote queue-manager component!")
-                else:
-                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
-                    pass
+                
+                #try to invoke a scheduling iteration to see if remote yielding job can run now
+                try:
+                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                except:
+                    self.logger.error("failed to connect to remote queue-manager component!")
                 
                 if mate_job_can_run:
                     #now that mate has been started, start local job
@@ -590,15 +585,11 @@ class BGQsim(Simulator):
                 #print "BQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
                 mate_job_can_run = False
                 
-                if self.cosched_scheme_remote == "yield":
-                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
-                    try:
-                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
-                    except:
-                        self.logger.error("failed to connect to remote queue-manager component!")
-                else:
-                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
-                    pass
+                #try to invoke a scheduling iteration to see if remote yielding job can run now
+                try:
+                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                except:
+                    self.logger.error("failed to connect to remote queue-manager component!")
                         
                 if mate_job_can_run:
                     #now that mate has been started, start local job
@@ -670,6 +661,8 @@ class BGQsim(Simulator):
         updates['system_state'] = 'running'
         updates['is_runnable'] = False
         updates['has_resources'] = True
+        if jobspec['last_hold'] > 0:
+            updates['hold_time'] = jobspec['hold_time'] + self.get_current_time_sec() - jobspec['last_hold']
              
         #determine whether the job is going to fail before completion
         location = newattr['location']
@@ -1285,13 +1278,14 @@ class BGQsim(Simulator):
         '''try to run mate job, start all the jobs that can run. If the started
         jobs include the given mate job, return True else return False.  _jobid : int
         '''
-        #print "entered bqsim.try_to_run_mate_job, jobid=", _jobid
+        #if the job is not yielding, do not continue; no other job is possibly to be scheduled
+        if _jobid not in self.yielding_job_list:
+            return False
             
         mate_job_started = False
         
         #start all the jobs that can run
-        gohead = True
-        while gohead:
+        while True:
             running_jobs = [job for job in self.queues.get_jobs([{'has_resources':True}])]
             
             end_times = []
@@ -1406,7 +1400,7 @@ class BGQsim(Simulator):
         updates['is_runnable'] = False
         updates['has_resources'] = False
         updates['state'] = "holding"
-        updates['hold_time'] = self.get_current_time_sec()
+        updates['last_hold'] = self.get_current_time_sec()
         
         updates.update(newattr)
         
@@ -1416,7 +1410,7 @@ class BGQsim(Simulator):
     
         return updates
     
-    def unhold_job(jobid):
+    def unhold_job(self, jobid):
         '''if a job holds a partition longer than MAX_HOLD threshold, the job will release the partition and starts yielding'''
         nodelist = self.job_hold_dict.get(jobid)
         
@@ -1426,6 +1420,7 @@ class BGQsim(Simulator):
                 self.release_partition(partname)
         else:
             print "holding job %s not found in job_hold_dict: " % jobid
+            return 0
                 
         def _unholding_job(job, newattr):
             '''callback function'''
@@ -1448,16 +1443,14 @@ class BGQsim(Simulator):
         updates['state'] = "queued"
         #set the job to lowest priority at this scheduling point. 
         #if no other job gets the nodes it released, the unholden job can hold those nodes again
-        updates['score'] = 0  
+        updates['score'] = 0
+        #accumulate hold_time, adding last hold time to total hold_time
+        updates['hold_time'] = jobspec['hold_time'] + self.get_current_time_sec() - jobspec['last_hold']
+        jobspec['last_hold'] = 0
                 
         updates.update(newattr)
-        
-        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
-        
-        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
-    
+     
         return updates
-    
 
     def get_mate_job_status(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''

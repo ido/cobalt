@@ -33,7 +33,8 @@ REMOTE_QUEUE_MANAGER = "queue-manager"
 MACHINE_ID = 1
 MACHINE_NAME = "Eureka"
 DEFAULT_VICINITY = 60
-DEFAULT_MAX_HOLDING_SYS_UTIL = 0.5
+DEFAULT_MAX_HOLDING_SYS_UTIL = 1
+MAX_HOLD_TIME = 1200
     
 class ClusterQsim(ClusterBaseSystem):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -359,11 +360,10 @@ class ClusterQsim(ClusterBaseSystem):
                 message = "%s;H;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s exec_host=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
                  spec['nodes'], log_walltime, ":".join(spec['location']))
+            elif eventtype == "U":  #unhold some resources  
+                message = "%s;U;%s;host=%s" % \
+                (timestamp, spec['jobid'], ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                if spec['hold_time'] == 0:
-                    holding_time = 0
-                else:
-                    holding_time = spec['start_time'] - spec['hold_time']
                 first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
                 if first_yielding > 0:
                     yielding_time = spec['start_time'] - first_yielding
@@ -372,7 +372,7 @@ class ClusterQsim(ClusterBaseSystem):
                 message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
                  round(float(spec['end_time']), 1), ":".join(spec['location']),
-                 spec['runtime'], holding_time, yielding_time)
+                 spec['runtime'], spec['hold_time'], yielding_time)
             else:
                 print "---invalid event type, type=", eventtype
                 return
@@ -395,32 +395,40 @@ class ClusterQsim(ClusterBaseSystem):
         if self.event_manager.get_go_next():
             del self.yielding_job_list[:]
             
-            self.update_job_states(specs, {})
+            cur_event = self.event_manager.get_current_event_type()
+            
+            
+            if cur_event in ["Q", "E"]:
+                self.update_job_states(specs, {}, cur_event)
             
             self.compute_utility_scores()
-
+            
+            #unhold holding job. MUST be after compute_utility_scores()    
+            if cur_event == "U":
+                cur_job = self.event_manager.get_current_event_job()
+                
+                if cur_job in self.job_hold_dict.keys():
+                    self.unhold_job(cur_job)
+                else:
+                    #if the job not in job_hold_dict, do nothing. the job should have already started
+                    return []
+                            
         self.event_manager.set_go_next(True)
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
         
-#        print "ret_job1=", [job.jobid for job in jobs if job.is_runnable == True]
-        
-        #exclude jobs that give up turns (for waiting their mate jobs)
         if self.yielding_job_list:
             jobs = [job for job in jobs if job.jobid not in self.yielding_job_list]
-
+  
         return jobs
     get_jobs = exposed(query(get_jobs))
     
-    def update_job_states(self, specs, updates):
+    def update_job_states(self, specs, updates, cur_event):
         '''update the state of the jobs associated to the current time stamp'''
-        
-        jobid = self.event_manager.get_current_event_job()
-        
+          
         ids_str = str(self.event_manager.get_current_event_job())
         
         ids = ids_str.split(':')
-        cur_event = self.event_manager.get_current_event_type()
         #print "current event=", cur_event, " ", ids
         for Id in ids:
             
@@ -480,6 +488,9 @@ class ClusterQsim(ClusterBaseSystem):
         updates['system_state'] = 'running'
         updates['is_runnable'] = False
         updates['has_resources'] = True
+        
+        if jobspec['last_hold'] > 0:
+            updates['hold_time'] = jobspec['hold_time'] + self.get_current_time_sec() - jobspec['last_hold']
 
         #print self.get_current_time_date(), "run job state change, job", jobspec['jobid'], \
         #     ":", jobspec['state'], "->", updates['state']
@@ -529,9 +540,9 @@ class ClusterQsim(ClusterBaseSystem):
                     
                     if remote_status in ["queuing", "unsubmitted"]:
                         if self.cosched_scheme == "hold": # hold resource if mate cannot run, favoring job
-                            action = "hold"
+                            action = "start_both_or_hold"
                         if self.cosched_scheme == "yield": # give up if mate cannot run, favoring sys utilization
-                            action = "start_both_or_give_up"                        
+                            action = "start_both_or_yield"                        
                     if remote_status == "holding":
                         action = "start_both"
                     
@@ -543,19 +554,15 @@ class ClusterQsim(ClusterBaseSystem):
             if action == "start":
                 #print "CQSIM-normal: start job %s on nodes %s" % (spec['jobid'], nodelist)
                 self.start_job([spec], {'location': nodelist})
-            elif action == "hold":
+            elif action == "start_both_or_hold":
                 #print "try to hold job %s on location %s" % (local_job_id, nodelist)
                 mate_job_can_run = False
-                if self.cosched_scheme_remote == "yield":
-                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
-                    try:
-                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
-                    except:
-                        self.logger.error("failed to connect to remote queue-manager component!")
-                else:
-                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
-                    pass
-                
+                #try to invoke a scheduling iteration to see if remote yielding job can run now
+                try:
+                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                except:
+                    self.logger.error("failed to connect to remote queue-manager component!")
+               
                 if mate_job_can_run:
                     #now that mate has been started, start local job
                     self.start_job([spec], {'location': nodelist})
@@ -566,19 +573,15 @@ class ClusterQsim(ClusterBaseSystem):
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holding_job([{'jobid':mate_job_id}])
-            elif action == "start_both_or_give_up":
+            elif action == "start_both_or_yield":
                 mate_job_can_run = False
                                
-                if self.cosched_scheme_remote == "yield":
-                    #if remote scheme is 'yield', try to invoke a scheduling iteration to see if remote yielded job can run now
-                    try:
-                        mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
-                    except:
-                        self.logger.error("failed to connect to remote queue-manager component!")
-                else:
-                    #if remote scheme is 'hold', the remote mate definitely can not run at this point because its status is not "holding"
-                    pass
-                        
+                #try to invoke a scheduling iteration to see if remote yielding job can run now
+                try:
+                    mate_job_can_run = ComponentProxy(REMOTE_QUEUE_MANAGER).try_to_run_mate_job(mate_job_id)
+                except:
+                    self.logger.error("failed to connect to remote queue-manager component!")
+                  
                 if mate_job_can_run:
                     #now that mate has been started, start local job
                     self.start_job([spec], {'location': nodelist})
@@ -874,16 +877,68 @@ class ClusterQsim(ClusterBaseSystem):
         updates['is_runnable'] = False
         updates['has_resources'] = False
         updates['state'] = "holding"
-        updates['hold_time'] = self.get_current_time_sec()
-
+        updates['last_hold'] = self.get_current_time_sec()
+        
         updates.update(newattr)
+        
+        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
+        
+        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
+    
+        return updates
+    
+    def unhold_job(self, jobid):
+        '''if a job holds a partition longer than MAX_HOLD threshold, the job will release the partition and starts yielding'''
+        nodelist = self.job_hold_dict.get(jobid)
+        
+        #release holden partitions
+        if nodelist:
+            self.nodes_up(nodelist)
+        else:
+            print "holding job %s not found in job_hold_dict: " % jobid
+            
+        def _unholding_job(job, newattr):
+            '''callback function'''
+            temp = job.to_rx()
+            newattr = self.unholding_job_updates(temp, newattr)
+            temp.update(newattr)
+            job.update(newattr)
+            self.log_job_event("U", self.get_current_time_date(), temp)
+            
+            del self.job_hold_dict[jobid]
+            
+        return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':[]})
+                
+    def unholding_job_updates(self, jobspec, newattr):
+        '''unhold job once the job has consumed MAX_HOLD_TIME'''
+        updates = {}
+        
+        updates['is_runnable'] = True
+        updates['has_resources'] = False
+        updates['state'] = "queued"
+        #set the job to lowest priority at this scheduling point. 
+        #if no other job gets the nodes it released, the unholden job can hold those nodes again
+        updates['score'] = 0
+        
+        updates['hold_time'] = jobspec['hold_time'] + self.get_current_time_sec() - jobspec['last_hold']
+        jobspec['last_hold'] = 0  
+                
+        updates.update(newattr)
+        
+        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
+        
+        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
     
         return updates
     
     def try_to_run_mate_job(self, _jobid):
         '''try to run mate job, start all the jobs that can run. If the started
-        jobs include the given mate job, return True else return False.
+        jobs include the given mate job, return True else return False.  _jobid : int
         '''
+        #if the job is not yielding, do not continue; no other job is possibly to be scheduled
+        if _jobid not in self.yielding_job_list:
+            return False
+            
         mate_job_started = False
         
         #start all the jobs that can run
@@ -920,7 +975,7 @@ class ClusterQsim(ClusterBaseSystem):
             if len(job_location_args) == 0:
                 break
             
-            #print "cqsim queue order=", [item['jobid'] for item in job_location_args]
+            #print "queue order=", [item['jobid'] for item in job_location_args]
             
             best_partition_dict = self.find_job_location(job_location_args, end_times)
             
@@ -932,15 +987,15 @@ class ClusterQsim(ClusterBaseSystem):
                     
                     if str(_jobid) == canrun_jobid:
                         mate_job_started = True
-                       
+                            
                     self.start_job([{'tag':"job", 'jobid':int(canrun_jobid)}], {'location':nodelist})
                     #print "bqsim.try_to_run_mate, start job jobid ", canrun_jobid 
             else:
                 break
-                                  
+                        
         return mate_job_started
     try_to_run_mate_job = exposed(try_to_run_mate_job)
-    
+        
     def run_holding_job(self, specs):
         '''start holding job'''
         for spec in specs:

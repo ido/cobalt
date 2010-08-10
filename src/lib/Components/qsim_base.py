@@ -44,7 +44,7 @@ OPT_RULE = "A1"  # A0, A1, A2, A3, A4, NORMAL, EVEN
 RECOVERYOPT = 2 # by default, the failed job is sent back to the rear of the queue
 CHECKPOINT = False  #not used in this version
 MTTR = 3600   #time to repair partition(in sec), a failed partition will be available again in MTTR seconds,
-SET_event = set(['I', 'Q', 'S', 'E', 'F', 'R'])
+SET_event = set(['I', 'Q', 'S', 'E', 'F', 'R', 'U'])
 
 PRINT_SCREEN = True
 
@@ -220,7 +220,7 @@ class Job (Data):
     '''
     
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
-                            "nodes","runtime", "start_time", "end_time", "hold_time", "yield_time"
+                            "nodes","runtime", "start_time", "end_time", "last_hold", "hold_time", "first_yield"
                             "failure_time", "location", "state", "is_visible", 
                             "args",
                             "user",
@@ -254,8 +254,9 @@ class Job (Data):
         self.remain_time = float(self.runtime)       
         self.start_time = spec.get('start_time', '0')
         self.end_time = spec.get('end_time', '0')
-        self.hold_time = spec.get('hold_time', 0)  #the time the job starts holding (coscheduling only)
-        self.yield_time = spec.get('yield_time', 0) #the time the job first yields (coscheduling only)
+        self.last_hold = spec.get('last_hold', 0) # #the time (unix sec) the job starts a latest holding (coscheduling only)
+        self.hold_time = 0 #the time period during which the job is holding (coscheduling only)
+        self.yield_time = spec.get('first_yield', 0) #the time the job first yields (coscheduling only)
         self.state = spec.get("state", "invisible")
         self.system_state = ''
         self.starttime = 0
