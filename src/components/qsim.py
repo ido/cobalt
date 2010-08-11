@@ -98,11 +98,14 @@ def integrated_main(options):
         cqsim = ClusterQsim(**options)
         
     if opts.bgjob and opts.cjob and opts.coscheduling:
+        print "inserting 'unhold' events into event list..."
         if opts.coscheduling[0] == "hold":
             evsim.init_unhold_events(0)
         if opts.coscheduling[1] == "hold":
             evsim.init_unhold_events(1)
-        
+            
+    raw_input("Press Enter to start simulation...")
+            
     starttime_sec = time.time()
     
     while not evsim.is_finished():

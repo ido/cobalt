@@ -164,11 +164,6 @@ class ClusterQsim(ClusterBaseSystem):
             % (len(self.mate_job_dict.keys()), round(proportion *100, 1) )
             
         self.max_holding_sys_util = DEFAULT_MAX_HOLDING_SYS_UTIL
-        
-        Var = raw_input("press any Enter to continue...")
-                
-        print "Simulation starts:"
-        
     
     def get_current_time(self):
         '''this function overrid the get_current_time in bgsched, bg_base_system, and cluster_base_system'''
