@@ -103,6 +103,14 @@ class JobDataStatus(JobStatus):
       self.location = str(self.location)
       self.job_prog_msg.set_types()
 
+
+class PartitionStatus(object):
+   
+   def __init__(self, spec):
+      
+      pass
+
+
 class LogMessageDecoder(json.JSONDecoder):
 
    def decode(self, string):

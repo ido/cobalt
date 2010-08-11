@@ -55,45 +55,10 @@ class PipeListener (object):
 
 
 
-__helpmsg__ = "Usage: cdbwriter [options] file"
+__helpmsg__ = """Usage: cdbdump.py"""
 
 if __name__ == '__main__':
     
-    
-
-    #Database Connection
-
-#    database = db2util.db()
-    
-#    database.connect('COBALT_D', 'richp', 'Bo7[addy')
-#    schema = 'RICHP'
-    
-
-#    tables = {}
-#    tables['entry'] = db2util.table(database, schema, 'COBALT_ENTRY')
-#    tables['log_entry'] = db2util.table(database, schema, 'COBALT_LOG_ENTRY')
-#    tables['reservation_state'] = db2util.table(database, schema, 'COBALT_RESERVATION_STATE')
-  
-#    daos = {}
-#    for key in tables.keys():
-#        daos[key] = db2util.dao(database, schema, tables[key].table)
-#        print daos[key].table.table + ' ' + daos[key].table.schema
-
-
-    #insert dummy data:
-
-   # records = {}
-   # records['entry'] = daos['entry'].table.getRecord()
-   # print records['entry']
-
-   # records['entry'].v.ENTRY_TYPE = 'reservation'
-   # records['entry'].v.COBALTID = 1
-
-   # daos['entry'].insert(records['entry'])
-
-    
-#    database.close()
-
 
     con_file = ConfigParser.ConfigParser()
     con_file.read(os.path.join("/Users/paulrich/cobalt-dev/src/clients/DB_clients/DB_writer_config"))
@@ -108,8 +73,10 @@ if __name__ == '__main__':
     
     #starting listener.  This may become more sophistocated later
 
+   # try:
     pipe = PipeListener(fifo_name)
-
+   # except:
+       
 
     LogMsgDecoder = LogMessageDecoder()
     print "Begin database logging."
