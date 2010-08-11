@@ -142,6 +142,9 @@ class ClusterQsim(ClusterBaseSystem):
        
         #recording holding job id and holden resource    
         self.job_hold_dict = {}
+        
+        #record holding job's holding time   jobid:accumulate holding time (sec)
+        self.hold_time_dict = {} 
             
         #record yield jobs's first yielding time, for calculating the extra waiting time
         self.yielding_job_dict = {}
@@ -907,7 +910,7 @@ class ClusterQsim(ClusterBaseSystem):
             
             del self.job_hold_dict[jobid]
             
-        return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':[]})
+        return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':self.job_hold_dict.get(jobid, ["N"])})
                 
     def unholding_job_updates(self, jobspec, newattr):
         '''unhold job once the job has consumed MAX_HOLD_TIME'''
@@ -921,14 +924,11 @@ class ClusterQsim(ClusterBaseSystem):
         updates['score'] = 0
         
         updates['hold_time'] = jobspec['hold_time'] + self.get_current_time_sec() - jobspec['last_hold']
-        jobspec['last_hold'] = 0  
+        
+        updates['last_hold'] = 0  
                 
         updates.update(newattr)
         
-        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
-        
-        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
-    
         return updates
     
     def try_to_run_mate_job(self, _jobid):

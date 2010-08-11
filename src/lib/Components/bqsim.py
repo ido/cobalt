@@ -838,12 +838,11 @@ class BGQsim(Simulator):
             else:
                 p.backfill_time = now + 5*60
             p.draining = False
-        
+            
         for p in self.cached_partitions.itervalues():    
             if p.name in job_end_times:
                 if job_end_times[p.name] > p.backfill_time:
                     p.backfill_time = job_end_times[p.name]
-                
                 for parent_name in p.parents:
                     parent_partition = self.cached_partitions[parent_name]
                     if p.backfill_time > parent_partition.backfill_time:
@@ -1432,7 +1431,7 @@ class BGQsim(Simulator):
             
             del self.job_hold_dict[jobid]
             
-        return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':[]})
+        return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':self.job_hold_dict.get(jobid, ["N"])})
                 
     def unholding_job_updates(self, jobspec, newattr):
         '''unhold job once the job has consumed MAX_HOLD_TIME'''
@@ -1446,7 +1445,7 @@ class BGQsim(Simulator):
         updates['score'] = 0
         #accumulate hold_time, adding last hold time to total hold_time
         updates['hold_time'] = jobspec['hold_time'] + self.get_current_time_sec() - jobspec['last_hold']
-        jobspec['last_hold'] = 0
+        updates['last_hold'] = 0
                 
         updates.update(newattr)
      
