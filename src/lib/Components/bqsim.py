@@ -36,7 +36,8 @@ WALLTIME_AWARE_CONS = False
 MACHINE_ID = 0
 MACHINE_NAME = "Intrepid"
 DEFAULT_MAX_HOLDING_SYS_UTIL = 1
-MAX_HOLD_TIME = 600
+SELF_UNHOLD_INTERVAL = 0
+AT_LEAST_HOLD = 600
 MIDPLANE_SIZE = 512
 TOTAL_NODES = 40960
 TOTAL_MIDPLANE = 80
@@ -158,8 +159,11 @@ class BGQsim(Simulator):
         #key = jobid, value = nodelist  ['part-or-node-name','part-or-node-name' ]
         self.job_hold_dict = {}  
         
+        #record holding job's holding time   jobid:first hold (sec)
+        self.first_hold_time_dict = {} 
+
         #record yield jobs's first yielding time, for calculating the extra waiting time
-        self.yielding_job_dict = {}
+        self.first_yield_time_dict = {}
         
         #record yield job ids. update dynamically
         self.yielding_job_list = []
@@ -274,7 +278,7 @@ class BGQsim(Simulator):
                 message = "%s;U;%s;host=%s" % \
                 (timestamp, spec['jobid'], ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
+                first_yielding = self.first_yield_time_dict.get(int(spec['jobid']), 0)
                 if first_yielding > 0:
                     yielding_time = spec['start_time'] - first_yielding
                 else:
@@ -454,6 +458,10 @@ class BGQsim(Simulator):
                     #if the job not in job_hold_dict, do nothing. the job should have already started
                     return []
                 
+            if cur_event == "C":
+                 if self.job_hold_dict.keys():
+                    self.unhold_all()
+                
         self.event_manager.set_go_next(True)
         
         jobs = self.queues.get_jobs([{'tag':"job"}])
@@ -600,8 +608,8 @@ class BGQsim(Simulator):
                     job_id = spec.get('jobid')
                     self.yielding_job_list.append(job_id)  #int
                     #record the first time this job yields
-                    if not self.yielding_job_dict.has_key(job_id):
-                        self.yielding_job_dict[job_id] = self.get_current_time_sec()
+                    if not self.first_yield_time_dict.has_key(job_id):
+                        self.first_yield_time_dict[job_id] = self.get_current_time_sec()
                         self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
                                             
                     #self.release_allocated_nodes(nodelist)                    
@@ -1379,6 +1387,10 @@ class BGQsim(Simulator):
         job_id = spec['jobid']
         if current_holden_nodes + partsize < self.max_holding_sys_util * self.total_nodes:
             self.job_hold_dict[spec['jobid']] = nodelist
+            
+            if not self.first_hold_time_dict.has_key(job_id):
+                self.first_hold_time_dict[job_id] = self.get_current_time_sec()
+            
             for partname in nodelist:
                 self.reserve_partition(partname)            
             return self.queues.get_jobs([spec], _hold_job, updates)
@@ -1386,8 +1398,8 @@ class BGQsim(Simulator):
             #if execeeding the maximum limite of holding nodes, the job will not hold but yield
             self.yielding_job_list.append(job_id)  #int
             #record the first time this job yields
-            if not self.yielding_job_dict.has_key(job_id):
-                self.yielding_job_dict[job_id] = self.get_current_time_sec()
+            if not self.first_yield_time_dict.has_key(job_id):
+                self.first_yield_time_dict[job_id] = self.get_current_time_sec()
                 self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
             return 0
         
@@ -1403,9 +1415,9 @@ class BGQsim(Simulator):
         
         updates.update(newattr)
         
-        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
-        
-        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
+        if SELF_UNHOLD_INTERVAL > 0:
+            release_time = self.get_current_time_sec() + SELF_UNHOLD_INTERVAL
+            self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
     
         return updates
     
@@ -1427,14 +1439,14 @@ class BGQsim(Simulator):
             newattr = self.unholding_job_updates(temp, newattr)
             temp.update(newattr)
             job.update(newattr)
-            self.log_job_event('U', self.get_current_time_date(), temp)
+            self.log_job_event("U", self.get_current_time_date(), temp)
             
             del self.job_hold_dict[jobid]
             
         return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':self.job_hold_dict.get(jobid, ["N"])})
                 
     def unholding_job_updates(self, jobspec, newattr):
-        '''unhold job once the job has consumed MAX_HOLD_TIME'''
+        '''unhold job once the job has consumed SELF_UNHOLD_INTERVAL or system-wide unhold_all'''
         updates = {}
         
         updates['is_runnable'] = True
@@ -1450,6 +1462,14 @@ class BGQsim(Simulator):
         updates.update(newattr)
      
         return updates
+    
+    def unhold_all(self):
+        '''unhold all jobs. periodically invoked to prevent deadlock'''
+        for jobid in self.job_hold_dict.keys():
+            job_hold_time = self.get_current_time_sec() - self.first_hold_time_dict[jobid]
+            #if a job has holden at least 10 minutes, then periodically unhold it
+            if job_hold_time >  AT_LEAST_HOLD:
+                self.unhold_job(jobid)
 
     def get_mate_job_status(self, jobid):
         '''return mate job status, remote function, invoked by remote component'''
@@ -1712,6 +1732,6 @@ class BGQsim(Simulator):
         
     def print_post_screen(self):
         '''post screen after simulation completes'''
-        #print self.yielding_job_dict
+        #print self.first_yield_time_dict
         pass
     print_post_screen = exposed(print_post_screen)    

@@ -34,7 +34,8 @@ MACHINE_ID = 1
 MACHINE_NAME = "Eureka"
 DEFAULT_VICINITY = 60
 DEFAULT_MAX_HOLDING_SYS_UTIL = 1
-MAX_HOLD_TIME = 1200
+SELF_UNHOLD_INTERVAL = 0
+AT_LEAST_HOLD = 600
     
 class ClusterQsim(ClusterBaseSystem):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -143,11 +144,11 @@ class ClusterQsim(ClusterBaseSystem):
         #recording holding job id and holden resource    
         self.job_hold_dict = {}
         
-        #record holding job's holding time   jobid:accumulate holding time (sec)
-        self.hold_time_dict = {} 
+        #record holding job's holding time   jobid:first hold (sec)
+        self.first_hold_time_dict = {} 
             
         #record yield jobs's first yielding time, for calculating the extra waiting time
-        self.yielding_job_dict = {}
+        self.first_yield_time_dict = {}
         
         #record yield job ids. update dynamically
         self.yielding_job_list = []
@@ -367,7 +368,7 @@ class ClusterQsim(ClusterBaseSystem):
                 message = "%s;U;%s;host=%s" % \
                 (timestamp, spec['jobid'], ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                first_yielding = self.yielding_job_dict.get(int(spec['jobid']), 0)
+                first_yielding = self.first_yield_time_dict.get(int(spec['jobid']), 0)
                 if first_yielding > 0:
                     yielding_time = spec['start_time'] - first_yielding
                 else:
@@ -415,6 +416,10 @@ class ClusterQsim(ClusterBaseSystem):
                 else:
                     #if the job not in job_hold_dict, do nothing. the job should have already started
                     return []
+                
+            if cur_event == "C":
+                if self.job_hold_dict.keys():
+                    self.unhold_all()
                             
         self.event_manager.set_go_next(True)
         
@@ -594,8 +599,8 @@ class ClusterQsim(ClusterBaseSystem):
                     job_id = spec.get('jobid')
                     self.yielding_job_list.append(job_id)  #int
                     #record the first time this job yields
-                    if not self.yielding_job_dict.has_key(job_id):
-                        self.yielding_job_dict[job_id] = self.get_current_time_sec()
+                    if not self.first_yield_time_dict.has_key(job_id):
+                        self.first_yield_time_dict[job_id] = self.get_current_time_sec()
                         self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
                                     
         #set tag false, enable scheduling another job at the same time
@@ -860,15 +865,19 @@ class ClusterQsim(ClusterBaseSystem):
 
         job_id = spec['jobid']
         if current_holden_nodes + len(nodelist) < self.max_holding_sys_util * self.total_nodes:
-            self.job_hold_dict[spec['jobid']] = nodelist
+            self.job_hold_dict[job_id] = nodelist
+            
+            if not self.first_hold_time_dict.has_key(job_id):
+                self.first_hold_time_dict[job_id] = self.get_current_time_sec()
+            
             self.nodes_down(nodelist)
             return self.queues.get_jobs([spec], _hold_job, updates)
         else:
             #if execeeding the maximum limite of holding nodes, the job will not hold but yield
             self.yielding_job_list.append(job_id)  #int
             #record the first time this job yields
-            if not self.yielding_job_dict.has_key(job_id):
-                self.yielding_job_dict[job_id] = self.get_current_time_sec()
+            if not self.first_yield_time_dict.has_key(job_id):
+                self.first_yield_time_dict[job_id] = self.get_current_time_sec()
                 self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
             return 0
         
@@ -883,11 +892,11 @@ class ClusterQsim(ClusterBaseSystem):
         updates['last_hold'] = self.get_current_time_sec()
         
         updates.update(newattr)
+             
+        if SELF_UNHOLD_INTERVAL > 0:
+            release_time = self.get_current_time_sec() + SELF_UNHOLD_INTERVAL
+            self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
         
-        release_time = self.get_current_time_sec() + MAX_HOLD_TIME
-        
-        self.insert_time_stamp(release_time, "U", {'jobid':jobspec['jobid'], 'location':newattr['location']})
-    
         return updates
     
     def unhold_job(self, jobid):
@@ -913,7 +922,7 @@ class ClusterQsim(ClusterBaseSystem):
         return self.queues.get_jobs([{'jobid':jobid}], _unholding_job, {'location':self.job_hold_dict.get(jobid, ["N"])})
                 
     def unholding_job_updates(self, jobspec, newattr):
-        '''unhold job once the job has consumed MAX_HOLD_TIME'''
+        '''unhold job'''
         updates = {}
         
         updates['is_runnable'] = True
@@ -930,6 +939,14 @@ class ClusterQsim(ClusterBaseSystem):
         updates.update(newattr)
         
         return updates
+    
+    def unhold_all(self):
+        '''unhold all jobs. periodically invoked to prevent deadlock'''
+        for jobid in self.job_hold_dict.keys():
+            job_hold_time = self.get_current_time_sec() - self.first_hold_time_dict[jobid]
+            #if a job has holden at least 10 minutes, then periodically unhold it
+            if job_hold_time >  AT_LEAST_HOLD:
+                self.unhold_job(jobid)
     
     def try_to_run_mate_job(self, _jobid):
         '''try to run mate job, start all the jobs that can run. If the started
@@ -1008,7 +1025,7 @@ class ClusterQsim(ClusterBaseSystem):
             self.start_job([spec], {'location':nodelist})
             del self.job_hold_dict[jobid]
             
-    run_holding_job = exposed(run_holding_job)            
+    run_holding_job = exposed(run_holding_job)         
 
     #coscheduling stuff
     def get_mate_job_status(self, jobid):
@@ -1146,6 +1163,6 @@ class ClusterQsim(ClusterBaseSystem):
     
     def print_post_screen(self):
         '''post screen after simulation completes'''
-        #print self.yielding_job_dict
+        #print self.first_yield_time_dict
         pass
     print_post_screen = exposed(print_post_screen)

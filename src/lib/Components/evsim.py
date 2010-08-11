@@ -35,11 +35,11 @@ from Cobalt.Server import XMLRPCServer, find_intended_location
 logging.basicConfig()
 logger = logging.getLogger('evsim')
 
-SET_event = set(['I', 'Q', 'S', 'E', 'F', 'R'])
-
 no_of_machine = 2
 INTREPID = 0
 EUREKA = 1
+BOTH = 2
+UNHOLD_INTERVAL = 1800
 
 SHOW_SCREEN_LOG = False
 
@@ -131,7 +131,7 @@ class EventSimulator(Component):
         Component.__init__(self, *args, **kwargs)
         self.event_list = [{'unixtime':0}]
         self.time_stamp = 0
-        self.init_tags = [0 for i in range(0,no_of_machine)]
+        
         self.finished = False
                 
         self.bgsched = Sim_bg_Sched(**kwargs)
@@ -227,12 +227,7 @@ class EventSimulator(Component):
                 print str(self.get_current_date_time()) + \
                 "[%s]: Time stamp is incremented by 1, current time stamp: %s " % (self.implementation, self.time_stamp)
         else:
-            #capacity_loss_rate = self.total_capacity_loss_rate()
-            #msg  = "capacity loss=%f" % capacity_loss_rate
-            #self.dbglog.LogMessage(msg)
             self.finished = True
-            #qsim_quit()  #simulation completed, exit!!!
-
             
         return self.time_stamp
     clock_intrement = exposed(clock_increment)
@@ -249,8 +244,28 @@ class EventSimulator(Component):
             evspec['jobid'] = jobspec.get('jobid')
             evspec['location'] = []
             self.add_event(evspec)
-        self.init_tags[machine_id] = 1
+
     add_init_events = exposed(add_init_events)
+    
+    def init_unhold_events(self, machine_id):
+        """add unholding event"""
+        if not self.event_list:
+            return
+            
+        first_time_sec = self.event_list[1]['unixtime']
+        last_time_sec = self.event_list[-1]['unixtime']
+        
+        unhold_point = first_time_sec + UNHOLD_INTERVAL + machine_id
+        while unhold_point < last_time_sec:
+            evspec = {}
+            evspec['machine'] = machine_id
+            evspec['type'] = "C"
+            evspec['unixtime'] = unhold_point
+            evspec['datetime'] = sec_to_date(unhold_point)
+            self.add_event(evspec)
+            
+            unhold_point += UNHOLD_INTERVAL + machine_id
+    init_unhold_events = exposed(init_unhold_events)        
     
     def print_events(self):
         print "total events:", len(self.event_list) 
@@ -280,4 +295,4 @@ class EventSimulator(Component):
         if machine == INTREPID:
             self.bgsched.schedule_jobs()
         if machine == EUREKA:
-            self.csched.schedule_jobs()        
+            self.csched.schedule_jobs()

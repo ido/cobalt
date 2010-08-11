@@ -96,7 +96,13 @@ def integrated_main(options):
         bqsim = BGQsim(**options)
     if opts.cjob:
         cqsim = ClusterQsim(**options)
-    
+        
+    if opts.bgjob and opts.cjob and opts.coscheduling:
+        if opts.coscheduling[0] == "hold":
+            evsim.init_unhold_events(0)
+        if opts.coscheduling[1] == "hold":
+            evsim.init_unhold_events(1)
+        
     starttime_sec = time.time()
     
     while not evsim.is_finished():

@@ -372,8 +372,6 @@ class BGSched (Component):
         self.lock = threading.Lock()
         self.statistics = Statistics()
 
-
-
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
         return -cmp(job1.score, job2.score)
@@ -606,11 +604,16 @@ class BGSched (Component):
             # recall that is_runnable is True for certain types of holds
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in active_queues \
                 if queue.name in eq_class['queues']])
+            
+            #no waiting job, skip the scheduling iteration for this eq_class
+            if len(temp_jobs) == 0:
+                continue
+            
             active_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
                     active_jobs.append(j)
-    
+            
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in spruce_queues \
                 if queue.name in eq_class['queues']])
             spruce_jobs = []
