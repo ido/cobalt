@@ -1,0 +1,8 @@
+[cdbdump]
+
+login: cobaltdev
+pwd: miD2.bud
+database: COBALT_D
+schema: COBALT_DB_DEV
+
+fifo: /Users/paulrich/cobalt-dev/src/components/json.out
