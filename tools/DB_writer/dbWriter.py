@@ -1,6 +1,11 @@
 import db2util
 
 
+
+#TODO: Provide a way for "dummy data" to be updated with actual job
+#data if the job creation message comes in after a generic progress
+#message.
+
 #Class for handling database output
 class DatabaseWriter(object):
 
@@ -227,7 +232,7 @@ class DatabaseWriter(object):
          of these records are likely to be created during a
          single job's run."""
    
-      print job_prog_msg
+      #print job_prog_msg
       #this is always a part of an incoming job message.
       #may have to update some other fields as run progresses in job_data
       job_state_record = self.daos['JOB_STATES'].table.getRecord({'NAME': logMsg.state})
@@ -238,13 +243,7 @@ class DatabaseWriter(object):
          job_state_record.v.ID = match[0]['ID']
 
       if job_data_id == None:
-         job_data_record = self.daos['JOB_DATA'].table.getRecord()
-         job_data_record.v.JOBID = job_prog_msg.jobid
-         ids = self.daos['JOB_DATA'].search_most_recent(job_data_record)
-         
-         if not ids:
-            pass #we have something severely wrong here.
-         job_data_id = ids[0].get('ID', None)
+         job_data_id = self.get_job_data_ids_from_jobid(job_prog_msg.jobid)
 
 
       updateAtRun = {}
@@ -300,6 +299,49 @@ class DatabaseWriter(object):
          #fieldValue = updateAtRun.pop('nodects', None)
 
          self.daos['JOB_DATA'].update(job_data_record)
+
+   def get_job_data_ids_from_jobid(self, jobid):
+      job_data_record = self.daos['JOB_DATA'].table.getRecord()
+      job_data_record.v.JOBID = jobid
+      ids = self.daos['JOB_DATA'].search_most_recent(job_data_record)
+      
+      if not ids:
+         #For one reason or another we do not have job_data object
+         #to tie to.  Create a "dummy" one for now. This will contain
+         #only the jobid and placeholders that indicate this is a dummy. 
+         #Integer values of -1, strings of COBALT_DUMMY should be a good
+         #start.
+
+         for field in job_data_record.m.__dict__:
+
+            if field in ['isfield']:
+               continue
+            if job_data_record.m.__dict__[field].nullallowed:
+               #Null is the ultimate dummy data.
+               pass
+            
+            else:
+              if field == 'ID':
+                 pass #gets set on insert
+              elif db2util.dbtype.typeMap[job_data_record.m.__dict__[field].datatype] in [ 'SMALLINT', 'INTEGER',
+                                                                                   'BIGINT','DECIMAL'
+                                                                                   'REAL', 'DOUBLE']:
+                 job_data_record.v.__dict__[field] = int(0)
+              elif db2util.dbtype.typeMap[job_data_record.m.__dict__[field].datatype] in ['TIMESTAMP']:
+                 job_data_record.v.__dict__[field] = '1970-01-01-00.00.00'
+              else:
+                 job_data_record.v.__dict__[field] = 'COBALT_DUMMY'[0:job_data_record.m.__dict__[field].maxlen]
+                 
+         
+         job_data_record.v.JOBID = jobid
+         
+         return self.daos['JOB_DATA'].insert(job_data_record)
+
+      else:   
+         return ids[0].get('ID', None)
+
+      
+      return None
 
    def __get_most_recent_data_id(self, table, logMsg):
       """Takes a table name and ID.  Right now reservation specific.

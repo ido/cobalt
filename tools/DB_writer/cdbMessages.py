@@ -11,6 +11,8 @@ class LogMessage(object):
       self.exec_user = spec.get("exec_user")
       self.timestamp = TSconform(SectoTS(float(spec.get("timestamp"))),
                                                format=TSFMT.DB2_NOUSEC )
+      self.raw_time = spec.get("timestamp")
+
       self.state = spec.get("state")
       self.item = None
       if self.item_type == 'reservation':
@@ -33,7 +35,10 @@ class LogMessage(object):
       
       return "Message: %s\n" % self.message + "Message_type: %s\n" % self.item_type + "exec_id: %s\n" % self.exec_user + "timestamp: %s\n" % self.timestamp + "%s\n" % self.item
 
-   
+   #so these can be sorted, ordering based on time rec'd.
+   def __lt__(self, other):
+      return self.raw_time < other.raw_time
+      
 class ReservationStatus(object):
    
    """Cobalt reservation state as reconstructed from JSON data."""

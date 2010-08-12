@@ -5,10 +5,14 @@ __revision__ = '$Revision: 1'
 
 
 #TODO:
-# - Implement Reservation DB logging
+
 # - Implement Partition DB logging
-# - Implement Job DB logging
+
 # - *** INPUT VALIDATION ***
+
+# - "Recovery mode": read from a file before handling what is 
+#    in the pipe.
+
 
 # (Should I request retransmit?)
 
@@ -17,6 +21,7 @@ import sys
 import json
 import time
 import ConfigParser
+import optparse
 
 from dbWriter import DatabaseWriter
 from cdbMessages import LogMessage, LogMessageDecoder
@@ -54,40 +59,81 @@ class PipeListener (object):
        return self.fifo.readline()
 
 
+def parse_options():
+   
+   opt_parser = optparse.OptionParser()
+
+   opt_parser.add_option('-r', '--recovery_file', action='store', 
+                         dest='recovery_file')
+
+   opt_parser.set_defaults(recovery_file=None)
+
+   return opt_parser.parse_args()
+
 
 __helpmsg__ = """Usage: cdbdump.py"""
 
 if __name__ == '__main__':
-    
+   
+   #Configuration file handling
+   con_file = ConfigParser.ConfigParser()
+   con_file.read(os.path.join("/Users/paulrich/cobalt-dev/tools/DB_writer/DB_writer_config"))
 
-    con_file = ConfigParser.ConfigParser()
-    con_file.read(os.path.join("/Users/paulrich/cobalt-dev/src/clients/DB_clients/DB_writer_config"))
+   fifo_name = con_file.get('cdbdump', 'fifo')
+   login = con_file.get('cdbdump', 'login')
+   pwd = con_file.get('cdbdump', 'pwd')
+   database = con_file.get('cdbdump', 'database')
+   schema = con_file.get('cdbdump', 'schema')
+   
+   #Command line options.  If conflict with config, these win.
+   opts, args = parse_options()
 
-    fifo_name = con_file.get('cdbdump', 'fifo')
-    login = con_file.get('cdbdump', 'login')
-    pwd = con_file.get('cdbdump', 'pwd')
-    database = con_file.get('cdbdump', 'database')
-    schema = con_file.get('cdbdump', 'schema')
 
-    database = DatabaseWriter(database, login, pwd, schema)
-    
-    #starting listener.  This may become more sophistocated later
+   database = DatabaseWriter(database, login, pwd, schema)
 
+   LogMsgDecoder = LogMessageDecoder()
+
+   #recovery handling.
+   if opts.recovery_file:
+      try:
+         f = open(os.path.join(opts.recovery_file), "r")
+      except IOError as e:
+         database.close()
+         print "Error openting file: %s.\n  Caught Exception: %s!\n" % (opts.recovery_file, e)
+      else:   
+         cobalt_msgs = []
+         for line in f.readlines():
+            cobalt_msgs.append(LogMsgDecoder.decode(line))
+            
+            f.close()
+            
+            cobalt_msgs.sort()
+            
+         for msg in cobalt_msgs:
+            database.addMessage(msg)
+
+   
+   
+   #starting listener.  This may become more sophistocated later
+   
    # try:
-    pipe = PipeListener(fifo_name)
+   pipe = PipeListener(fifo_name)
    # except:
-       
-
-    LogMsgDecoder = LogMessageDecoder()
-    print "Begin database logging."
-    while(True):
-        
-        cobaltJSONmessage = pipe.readData()
-        
-        if cobaltJSONmessage != '':
-            logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
-            database.addMessage(logMsg)
-        else:
-           time.sleep(5)
-
+   
+   
+   
+   print "Begin database logging."
+   while(True):
+      
+      cobaltJSONmessage = pipe.readData()
+      
+      if cobaltJSONmessage != '':
+         logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
+         database.addMessage(logMsg)
+      else:
+         time.sleep(5)
+         
         #Wash. Rinse. Repeat
+         
+
+                         
