@@ -297,7 +297,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                   keyfile=None, certfile=None,
                   timeout=10,
                   logRequests=False,
-                  register=True, allow_none=True, encoding=None):
+                  register=True, allow_none=True, encoding=None, cafile=None):
         
         """Initialize the XML-RPC server.
         
@@ -322,7 +322,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
 
         SSLServer.__init__(self,
             server_address, RequestHandlerClass,
-            timeout=timeout, keyfile=keyfile, certfile=certfile)
+            timeout=timeout, keyfile=keyfile, certfile=certfile, reqCert=True, ca=cafile)
         self.logRequests = logRequests
         self.serve = False
         self.register = register
@@ -469,11 +469,11 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
                   keyfile=None, certfile=None,
                   timeout=10,
                   logRequests=False,
-                  register=True, allow_none=True, encoding=None):
+                  register=True, allow_none=True, encoding=None, cafile=None):
         
         
         BaseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
-                                  certfile, timeout, logRequests, register, allow_none, encoding)
+                                  certfile, timeout, logRequests, register, allow_none, encoding, cafile=cafile)
         
         self.task_thread = threading.Thread(target=self._tasks_thread)
 
