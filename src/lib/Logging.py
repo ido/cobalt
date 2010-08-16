@@ -289,7 +289,12 @@ def db_log_to_file(data):
 
    return
 
+
+log_writer_lock = threading.Lock()
+
 class ThreadedWrite(threading.Thread):
+    
+
 
     def __init__(self, data):
         threading.Thread.__init__(self)
@@ -299,10 +304,12 @@ class ThreadedWrite(threading.Thread):
         
 
     def run(self):
+        global log_writer_lock
         #TODO: going to need some good-old try-catch for failover here.
-        out_file = open("json.out", "a")
-        out_file.write(self.data)
-        out_file.close()
+        with log_writer_lock:
+            out_file = open("json.out", "a")
+            out_file.write(self.data)
+            out_file.close()
 
 
 

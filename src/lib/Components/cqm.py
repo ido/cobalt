@@ -1327,7 +1327,7 @@ class Job (StateMachine):
             if sig_info != None:
                 self.__signaling_info = sig_info
                 self.__sm_preempt_task()
-                #TODO: Potential preempt-cut-in
+                
 
     def __sm_running__kill(self, args):
         '''user delete requested while job is executing a task'''
@@ -1710,6 +1710,9 @@ class Job (StateMachine):
         self.__sm_scripts_thread.start()
 
         self.__sm_state = 'Prologue'
+        db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
+                                    None, "starting", "job_prog", JobProgMsg(self)).encode())
+
 
     def __sm_preempted__hold(self, args):
         '''place a hold on a job in the preempted state'''
