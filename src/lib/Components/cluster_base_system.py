@@ -7,6 +7,7 @@ ClusterBaseSystem -- base system component
 import time
 import Cobalt
 import threading
+import Cobalt.Util
 from Cobalt.Exceptions import  JobValidationError, NotSupportedError
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
@@ -56,6 +57,7 @@ class ClusterBaseSystem (Component):
 
 
     def __setstate__(self, state):
+        Cobalt.Util.fix_set(state)
         self.queue_assignments = state["queue_assignments"]
         self.down_nodes = state["down_nodes"]
 

@@ -25,6 +25,7 @@ except ImportError:
 
 import Cobalt
 import Cobalt.Data
+import Cobalt.Util
 from Cobalt.Components import bg_base_system
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
@@ -144,6 +145,7 @@ class Simulator (BGBaseSystem):
         return {'managed_partitions':self._managed_partitions, 'version':2, 'config_file':self.config_file, 'partition_flags': flags}
     
     def __setstate__(self, state):
+        Cobalt.Util.fix_set(state)
         self._managed_partitions = state['managed_partitions']
         self.config_file = state['config_file']
         self._partitions = PartitionDict()

@@ -667,3 +667,11 @@ def _unpickle_method(func_name, func_cls, obj, cls):
     return func.__get__(obj, cls)
 
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
+
+
+# we made a huge mistake using pickle
+def fix_set(state):
+    import sets
+    for k in state:
+        if isinstance(state[k], sets.Set):
+            state[k] = set(state[k])

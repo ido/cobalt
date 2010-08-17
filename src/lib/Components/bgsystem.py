@@ -21,6 +21,7 @@ import ConfigParser
 
 import Cobalt
 import Cobalt.Data
+import Cobalt.Util
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
@@ -306,6 +307,7 @@ class BGSystem (BGBaseSystem):
     
     def __setstate__(self, state):
         sys.setrecursionlimit(5000)
+        Cobalt.Util.fix_set(state)
         self._managed_partitions = state['managed_partitions']
         self._partitions = PartitionDict()
         self.process_groups = BGProcessGroupDict()
