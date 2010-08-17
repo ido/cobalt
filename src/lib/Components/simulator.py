@@ -6,7 +6,6 @@ Simulator -- simulated system component
 """
 
 import pwd
-from sets import Set as set
 import logging
 import sys
 import os
@@ -15,7 +14,6 @@ import random
 import time
 import thread
 import threading
-import sets
 import xmlrpclib
 from datetime import datetime
 from ConfigParser import ConfigParser
@@ -126,7 +124,7 @@ class Simulator (BGBaseSystem):
         BGBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = BGSimProcessGroup
         self.config_file = kwargs.get("config_file", None)
-        self.failed_components = sets.Set()
+        self.failed_components = set()
         if self.config_file is not None:
             self.configure(self.config_file)
     
@@ -153,7 +151,7 @@ class Simulator (BGBaseSystem):
         self.process_groups.item_cls = BGSimProcessGroup
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
-        self.failed_components = sets.Set()
+        self.failed_components = set()
         self.pending_diags = dict()
         self.failed_diags = list()
         self.bridge_in_error = False
@@ -257,13 +255,13 @@ class Simulator (BGBaseSystem):
         for size in wiring_cache:
             for p in wiring_cache[size]:
                 p = partitions[p]
-                s1 = sets.Set( p.switches )
+                s1 = set( p.switches )
                 for other in wiring_cache[size]:
                     other = partitions[other]
                     if (p.name == other.name):
                         continue
 
-                    s2 = sets.Set( other.switches )
+                    s2 = set( other.switches )
                     
                     if s1.intersection(s2):
                         self.logger.info("found a wiring dep between %s and %s", p.name, other.name)

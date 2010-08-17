@@ -2,7 +2,6 @@ import logging
 
 from Cobalt.Components.base import Component, exposed, automatic
 import Cobalt.Proxy
-from sets import Set as set
 import time, random
 
 class TestComponent (object):

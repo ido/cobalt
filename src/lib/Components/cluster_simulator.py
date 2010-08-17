@@ -6,7 +6,6 @@ Simulator -- simulated system component
 """
 
 import pwd
-from sets import Set as set
 import logging
 import sys
 import os
@@ -14,7 +13,6 @@ import operator
 import random
 import time
 import thread
-import sets
 from datetime import datetime
 from ConfigParser import ConfigParser
 

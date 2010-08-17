@@ -80,7 +80,6 @@ import math
 import types
 import xmlrpclib
 import ConfigParser
-import sets
 import signal
 import thread
 from threading import Thread, Lock
@@ -1916,7 +1915,7 @@ class Job (StateMachine):
     user_hold = property(__get_user_hold, __set_user_hold)
 
     def __has_dep_hold(self):
-        return self.all_dependencies and not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies))
+        return self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
 
     has_dep_hold = property(__has_dep_hold)
 
@@ -2592,7 +2591,7 @@ class QueueManager(Component):
                 if str(job.jobid) in waiting_job.all_dependencies:
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
                     
-                    if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
+                    if set(waiting_job.all_dependencies).issubset(set(waiting_job.satisfied_dependencies)):
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
                         if job.dep_frac is None:
                             new_score = float(get_cqm_config('dep_frac', 0.5))*job.score
@@ -2934,7 +2933,7 @@ class QueueManager(Component):
         queued_jobs = self.Queues.get_jobs([{'jobid': '*'}])
         for job in queued_jobs:
             job.dep_fail = False
-            pending = sets.Set(job.all_dependencies).difference(sets.Set(job.satisfied_dependencies))
+            pending = set(job.all_dependencies).difference(set(job.satisfied_dependencies))
             for jobid_str in pending:
                 try:
                     jobid = int(jobid_str)

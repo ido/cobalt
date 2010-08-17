@@ -8,7 +8,6 @@ BGSystem -- Blue Gene system component
 import atexit
 import pwd
 import grp
-import sets
 import logging
 import sys
 import os
@@ -19,10 +18,6 @@ import thread
 import threading
 import xmlrpclib
 import ConfigParser
-try:
-    set = set
-except NameError:
-    from sets import Set as set
 
 import Cobalt
 import Cobalt.Data
@@ -320,7 +315,7 @@ class BGSystem (BGBaseSystem):
         self.pending_diags = dict()
         self.failed_diags = list()
         self.diag_pids = dict()
-        self.pending_script_waits = sets.Set()
+        self.pending_script_waits = set()
         self.bridge_in_error = False
         self.cached_partitions = None
         self.offline_partitions = []
@@ -387,14 +382,14 @@ class BGSystem (BGBaseSystem):
 
     def _detect_wiring_deps(self, partition, wiring_cache={}):
         def _kernel():
-            s2 = sets.Set(p.switches)
+            s2 = set(p.switches)
 
             if s1.intersection(s2):
                 p._wiring_conflicts.add(partition.name)
                 partition._wiring_conflicts.add(p.name)
                 self.logger.debug("%s and %s havening problems" % (partition.name, p.name))
 
-        s1 = sets.Set(partition.switches)
+        s1 = set(partition.switches)
 
         if wiring_cache.has_key(partition.size):
             for p in wiring_cache[partition.size]:
