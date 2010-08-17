@@ -2452,6 +2452,8 @@ class Queue (Data):
             for job in self.jobs:
                 if job.max_running:
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
+                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
+                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
                 job.max_running = False
             return
         unum = dict()
@@ -2469,6 +2471,12 @@ class Queue (Data):
                     job.max_running = True
             if old != job.max_running:
                 logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
+                if job_maxrunning:
+                    db_log_to_file(ReportObject("maxrun hold placed on job %s." % (self.jobid), 
+                                                None, "maxrun_hold", "job_prog", JobProgMsg(self)).encode())
+                else:
+                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (self.jobid), 
+                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(self)).encode())
                 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -2652,7 +2660,8 @@ class QueueManager(Component):
                     
                     if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
-                        #TODO: Log leaving a dep_hold here!
+                        db_log_to_file(ReportObject("dependency hold released on job %s." % (waiting_job.jobid), 
+                                                None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job)).encode())
                         waiting_job.score = max(waiting_job.score, float(get_cqm_config('dep_frac', 0.5))*job.score)
 
         # remove the job from the queue
