@@ -220,7 +220,8 @@ class BGQsim(Simulator):
             print "job arrival intervals adjusted, fraction = ", self.fraction
         
         if not self.cluster_job_trace:
-            Var = raw_input("press any Enter to continue...")
+            #Var = raw_input("press any Enter to continue...")
+            pass
             
 ##### simulation related
     def get_current_time(self):
@@ -558,7 +559,7 @@ class BGQsim(Simulator):
                         if self.cosched_scheme == "hold": # hold resource if mate cannot run, favoring job
                             action = "start_both_or_hold"
                         if self.cosched_scheme == "yield": # give up if mate cannot run, favoring sys utilization
-                            action = "start_both_or_give_up"
+                            action = "start_both_or_yield"
                     if remote_status == "holding":
                         action = "start_both"
                     
@@ -589,7 +590,7 @@ class BGQsim(Simulator):
                 #print "start both mated jobs %s and %s" % (local_job_id, mate_job_id)
                 self.start_job([spec], {'location': nodelist})
                 ComponentProxy(REMOTE_QUEUE_MANAGER).run_holding_job([{'jobid':mate_job_id}])
-            elif action == "start_both_or_give_up":
+            elif action == "start_both_or_yield":
                 #print "BQSIM: In order to run local job %s, try to run mate job %s" % (local_job_id, mate_job_id)
                 mate_job_can_run = False
                 
@@ -931,7 +932,6 @@ class BGQsim(Simulator):
         except:
             self.logger.error("error in reserve_partition", exc_info=True)
             print "try to reserve a busy partition!!"
-            raw_input("try to reserve a busy partition!!")
         self._partitions_lock.release()
         # explicitly call this, since the above "busy" is instantaneously available
         self.update_partition_state()
@@ -1672,7 +1672,7 @@ class BGQsim(Simulator):
         print "number of holding jobs: ", holding_jobs
         
         print "number of holden midplanes: ", holding_midplanes
-        print "holden partitions: ", hold_partitions
+        #print "holden partitions: ", hold_partitions
         
         midplanes = self.num_busy / MIDPLANE_SIZE
         print "number of busy midplanes: ", midplanes
@@ -1714,20 +1714,20 @@ class BGQsim(Simulator):
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
             
-        wait_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
-        
-        if wait_jobs:
-            wait_jobs.sort(self.utilitycmp)
-            top_jobs = wait_jobs[0:5]
-        else:
-            top_jobs = []    
-            
-        if top_jobs:
-            print "high priority waiting jobs: ", [(job.jobid, job.nodes) for job in top_jobs]
-        else:
-            print "hig priority waiting jobs:"
+#        wait_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+#        
+#        if wait_jobs:
+#            wait_jobs.sort(self.utilitycmp)
+#            top_jobs = wait_jobs[0:5]
+#        else:
+#            top_jobs = []    
+#            
+#        if top_jobs:
+#            print "high priority waiting jobs: ", [(job.jobid, job.nodes) for job in top_jobs]
+#        else:
+#            print "hig priority waiting jobs:"
 
-        print "holding jobs: ", [(k,v[0].split("-")[-1]) for k, v in self.job_hold_dict.iteritems()]
+        #print "holding jobs: ", [(k,v[0].split("-")[-1]) for k, v in self.job_hold_dict.iteritems()]
         print "\n\n"
         
     def print_post_screen(self):

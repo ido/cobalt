@@ -23,7 +23,7 @@ import time
 
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
-            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 'Anchor', 'anchor', 'vicinity']
+            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 'Anchor', 'anchor', 'vicinity', 'batch']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -104,19 +104,26 @@ def integrated_main(options):
         if opts.coscheduling[1] == "hold":
             evsim.init_unhold_events(1)
             
-    raw_input("Press Enter to start simulation...")
+    if opts.batch:
+        print "simulation started"
+    else:
+        raw_input("Press Enter to start simulation...")
             
     starttime_sec = time.time()
     
-    while not evsim.is_finished():
-        evsim.event_driver()
-        os.system('clear')
-        if opts.bgjob:
-            bqsim.print_screen()
-            pass
-        if opts.cjob:
-            cqsim.print_screen()
-            pass
+    if opts.batch:
+        while not evsim.is_finished():
+            evsim.event_driver()
+    else:
+        while not evsim.is_finished():
+            evsim.event_driver()
+            os.system('clear')
+            if opts.bgjob:
+                bqsim.print_screen()
+                pass
+            if opts.cjob:
+                cqsim.print_screen()
+                pass
     
     if opts.bgjob:
         bqsim.print_post_screen()
@@ -130,17 +137,15 @@ def integrated_main(options):
 if __name__ == "__main__":
     
     p = optparse.OptionParser()
-
-    p.add_option("-b", "--bgjob", dest="bgjob", type="string",
-        help="file name of the job trace from the Blue Gene system")
+    
+    p.add_option("-j", "--job", dest="bgjob", type="string",
+        help="file name of the job trace (when scheduling for bg system only)")
     p.add_option("-c", "--cjob", dest="cjob", type="string",
         help="file name of the job trace from the cluster system")
     p.add_option("-p", "--partition", dest="config_file", type="string",
         help="file name of the partition configuration of the Blue Gene system")
     p.add_option("-o", "--output", dest="outputlog", type="string",
         help="featuring string for output log")
-    p.add_option("-j", "--job", dest="bgjob", type="string",
-        help="file name of the job trace (when scheduling for bg system only)")
     p.add_option("-i", "--interval", dest="sleep_interval", type="float",
         help="seconds to wait at each event when printing screens")
     p.add_option("-F", "--bg_frac", dest="BG_Fraction", type="float", default=False,
@@ -178,6 +183,8 @@ if __name__ == "__main__":
     p.add_option("-v", "--vicinity", dest="vicinity", type="float", default=0.0,
         help="Threshold to determine mate jobs in coscheduling. \
         Two jobs can be considered mated only if their submission time difference is smaller than 'vicinity'")
+    p.add_option("-b", "--batch", dest="batch", action = "store_true", default = False, 
+        help="enable batch execution model, do not print screen")
         
     coscheduling_schemes = ["hold", "yield"]
     wass_schemes = ["cons", "aggr", "both"]

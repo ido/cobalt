@@ -1151,8 +1151,8 @@ class ClusterQsim(ClusterBaseSystem):
             progress_bar += "-"
         progress_bar += "|"
         print progress_bar
-        print "waiting jobs: ", [(job.jobid, job.nodes) for job in self.queues.get_jobs([{'is_runnable':True}])]
-        print "holding jobs: ", self.job_hold_dict.keys()
+        #print "waiting jobs: ", [(job.jobid, job.nodes) for job in self.queues.get_jobs([{'is_runnable':True}])]
+        #print "holding jobs: ", self.job_hold_dict.keys()
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
     
