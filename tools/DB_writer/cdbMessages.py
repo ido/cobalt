@@ -10,7 +10,7 @@ class LogMessage(object):
       self.item_type = spec.get("item_type")
       self.exec_user = spec.get("exec_user")
       self.timestamp = TSconform(SectoTS(float(spec.get("timestamp"))),
-                                               format=TSFMT.DB2_NOUSEC )
+                                               format=TSFMT.DB2 )
       self.raw_time = spec.get("timestamp")
 
       self.state = spec.get("state")

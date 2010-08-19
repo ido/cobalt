@@ -1,5 +1,5 @@
 import db2util
-
+__revision__ = '$Revision: 1'
 
 
 #TODO: Provide a way for "dummy data" to be updated with actual job
@@ -40,7 +40,9 @@ class DatabaseWriter(object):
          elif table_name == 'JOB_DEPS':
             self.daos[table_name] = JobDepsData(self.db, schema, 
                                                 self.tables[table_name].table)
-            
+         elif table_name == 'JOB_PROG':
+            self.daos[table_name] = JobProgData(self.db, schema, 
+                                                self.tables[table_name].table)
          else:
             self.daos[table_name] = db2util.dao(self.db, schema, 
                                              self.tables[table_name].table)
@@ -367,6 +369,17 @@ class DatabaseWriter(object):
    
 class StateTableData(db2util.dao):
    
+   def getStatesDict(self):
+      SQL = "select * from %s.%s" % (self.table.schema, self.table.table)
+      
+      result_list = self.db.getDict(SQL)
+      
+      ret_dict = {}
+      for item in result_list:
+         ret_dict[item['NAME']] = item['ID']
+
+      return ret_dict
+
    def search (self, record):
       """look up the id for a given state-change identifier.  
       This had better be in this table."""
@@ -401,6 +414,21 @@ class ResDataData(db2util.dao):
 
 class JobDataData(db2util.dao):
 
+   def find_all_after_jobid(self, jobid):
+      """gets all records with a jobid >= the passed jobid, joined
+      with the job_progress table."""
+        
+      SQL = ("select job_prog.id jpid, job_data.id jdid, job_states.name " ,
+             "from job_prog, job_data, job_states",
+             "where job_data.id = job_prog.job_data_id",
+             "and job_prog.reason = job_states.id",
+             "and job_data.jobid >= %d" % jobid,
+             "order by jobid, entry_time") 
+      
+      retval = self.db.getDict(' '.join(SQL))
+      print retval[0]
+      return retval
+
    def search_most_recent (self, record):
 
       """Find the most recent version of a reservation data entry."""
@@ -415,12 +443,49 @@ class JobDataData(db2util.dao):
    
    def search (self, record):
       
-      SQL = "select ID from %s.%s where job_data_id = %s" % (self.table.schema, 
+      SQL = "select ID from %s.%s where jobid = %s" % (self.table.schema, 
                                                         self.table.table,
                                                         record.v.JOB_DATA_ID)
       return self.db.getDict(SQL)
 
+   def search_by_jobid(self, jobid):
 
+      """get a list of job_data entry ids that share the same jobid"""
+      SQL = "select ID from %s.%s where jobid = %s" % (self.table.schema, 
+                                                        self.table.table,
+                                                        jobid)
+
+      resultdicts = self.db.getDict(SQL)
+      
+      if resultdicts:
+         return [entry['ID'] for entry in resultdicts] 
+      return None
+
+
+      
+class JobProgData(db2util.dao):
+
+   """helpers for getting at job progress data"""
+   
+   def get_list_by_data_id(self, job_data_id):
+
+      """gets a list of all of the progress objects pointing to
+         a job_data entry."""
+
+      SQL = ("select id" ,
+             "from job_prog",
+             "where job_prog.job_data_id = %d" % job_data_id,
+             "order by entry_time")
+
+      resultdicts = self.db.getDict(' '.join(SQL))
+      if not resultdicts:
+         return []
+
+      return [self.getID(result['ID']) for result in resultdicts]
+
+
+
+      
 class JobDepsData(db2util.dao):
 
    def search (self, record):
