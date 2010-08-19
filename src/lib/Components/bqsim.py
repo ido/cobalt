@@ -208,6 +208,8 @@ class BGQsim(Simulator):
     
         self.rack_matrix = []
         self.reset_rack_matrix()
+        
+        self.batch = kwargs.get("batch", False)
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -526,7 +528,7 @@ class BGQsim(Simulator):
                 self.num_running -= 1
                 self.num_end += 1
         
-        if not self.cluster_job_trace:
+        if not self.cluster_job_trace and not self.batch:
             os.system('clear')
             self.print_screen(cur_event)
                 

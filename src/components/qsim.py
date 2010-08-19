@@ -103,7 +103,7 @@ def integrated_main(options):
             evsim.init_unhold_events(0)
         if opts.coscheduling[1] == "hold":
             evsim.init_unhold_events(1)
-            
+
     if opts.batch:
         print "simulation started"
     else:
