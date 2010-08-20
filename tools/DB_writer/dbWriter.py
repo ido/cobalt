@@ -53,6 +53,8 @@ class DatabaseWriter(object):
       
    def addMessage(self, logMsg):
 
+      print "Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state)
+
       if logMsg.item_type == 'reservation':
          if logMsg.state == 'created':
             self.__addResMsg(logMsg)
@@ -187,9 +189,10 @@ class DatabaseWriter(object):
       job_data_record = self.daos['JOB_DATA'].table.getRecord()
 
       specialObjects = {}
+      
 
       for key in logMsg.item.__dict__:
-         print "adding %s value %s" %( key, logMsg.item.__dict__[key])
+         #print "adding %s value %s" %( key, logMsg.item.__dict__[key])
          if key in ['nodects', 'attrs', 'all_dependencies', 
                     'satisfied_dependencies', 'job_prog_msg']:
             specialObjects[key] = logMsg.item.__dict__[key]
@@ -237,6 +240,8 @@ class DatabaseWriter(object):
       #print job_prog_msg
       #this is always a part of an incoming job message.
       #may have to update some other fields as run progresses in job_data
+      
+
       job_state_record = self.daos['JOB_STATES'].table.getRecord({'NAME': logMsg.state})
       match = self.daos['JOB_STATES'].search(job_state_record)
       if not match:
