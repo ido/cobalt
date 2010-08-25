@@ -174,9 +174,6 @@ if __name__ == '__main__':
         #get data from db for jobid:
 
         job_data_ids = db.daos['JOB_DATA'].search_by_jobid(jobid)
-
-        data_records = []
-        prog_records = []
         
         data_records = []
         prog_records = []

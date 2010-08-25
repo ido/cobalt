@@ -96,6 +96,7 @@ class JobDataStatus(JobStatus):
       self.job_prog_msg = JobProgStatus(spec.get('job_prog_msg'))
       
    def set_types(self):
+      self.procs = int(self.procs)
       self.args = ' '.join(self.args)
       if self.args == '' : self.args = None
       self.envs = str(self.envs)

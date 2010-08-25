@@ -23,40 +23,62 @@ import time
 import ConfigParser
 import optparse
 
+
 from dbWriter import DatabaseWriter
 from cdbMessages import LogMessage, LogMessageDecoder
 
 
 class PipeListener (object):
 
+   """since we're not in the business of losing data, the data from
+   a pipe gets read to a temp file, and we go from there. I am beginning
+   to think that a pickle is in order-ish"""
+
    def  __init__(self, fifoname):
-
-       self.__openPipe(fifoname)
-
-       return
+       self.pendingMessages = []
+       self.fifo = None
 
    def __del__(self):
+      if self.fifo:
+         self.close()
 
-       self.__closePipe()
-       return
 
-
-   def __openPipe(self, fifoname):
-
-       self.fifo = open(os.path.join(fifoname), 'r')
+   def open(self, fifoname):
+      self.fifo = open(os.path.join(fifoname), 'r')
    
-       return
 
-   def __closePipe(self):
-
-       self.fifo.close()
-
-       return
+   def close(self):
+      if not self.fifo.closed:
+         self.fifo.close()
 
 
-   def readData(self):
+   def read(self):
 
-       return self.fifo.readline()
+      try:
+         newlines = self.fifo.readlines()
+         if newlines:
+            self.pendingMessages.extend(newlines)
+      except IOError as e:
+         print e
+         print "Error reading from cobalt fifo."
+         self.close()
+   
+   def get_next_message(self):
+      self.read()
+      if not len(self.pendingMessages):
+         return None
+      else:
+         return self.pendingMessages.pop(0)
+   
+   def save_msgs(self):
+      f = open ('cdbdump.json', 'w+')
+      json.dump(self.pendingMessages, f)
+      f.close()
+      
+   def load_msgs(self):
+      f = open ('cdbdump.json', 'r')
+      self.pendingMessages = json.load(f)
+      f.close()
 
 
 def parse_options():
@@ -65,6 +87,8 @@ def parse_options():
 
    opt_parser.add_option('-r', '--recovery_file', action='store', 
                          dest='recovery_file')
+   opt_parser.add_option('-l', '--load_msgs', action='store_true', 
+                         dest='load_msgs')
 
    opt_parser.set_defaults(recovery_file=None)
 
@@ -93,7 +117,20 @@ if __name__ == '__main__':
 
    LogMsgDecoder = LogMessageDecoder()
 
+   #starting listener.  This may become more sophistocated later
+   
+   pipe = PipeListener(fifo_name)
+
    #recovery handling.
+   if opts.load_msgs:
+      pipe.load_msgs()
+      for msg in pipe.pendingMessages:
+         print LogMsgDecoder.decode(msg)
+         database.addMessage(msg)
+
+      pipe.pendingMessages = []
+      pipe.save_msgs()
+
    if opts.recovery_file:
       try:
          f = open(os.path.join(opts.recovery_file), "r")
@@ -112,28 +149,34 @@ if __name__ == '__main__':
          for msg in cobalt_msgs:
             database.addMessage(msg)
 
-   
-   
-   #starting listener.  This may become more sophistocated later
-   
-   # try:
-   pipe = PipeListener(fifo_name)
-   # except:
+   #Normal operation.
+   pipe.open(fifo_name)
    
    
    
    print "Begin database logging."
+   justRead = True
    while(True):
       
-      cobaltJSONmessage = pipe.readData()
+      cobaltJSONmessage = pipe.get_next_message()
       
-      if cobaltJSONmessage != '':
+
+      if cobaltJSONmessage:
+         justRead = True
+         pipe.save_msgs()
+
          logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
          database.addMessage(logMsg)
+         
       else:
+         if justRead:
+            justRead = False
+            pipe.save_msgs()
+         #no pending messages, snooze so we don't
+         #spin the core to death poking the file.
          time.sleep(5)
          
         #Wash. Rinse. Repeat
-         
+   pipe.close()
 
                          
