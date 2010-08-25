@@ -133,6 +133,22 @@ accounting_logger = logging.getLogger("cqm.accounting")
 accounting_logger.addHandler(
     accounting.DatetimeFileHandler(os.path.join(accounting_logdir, "%Y%m%d")))
 
+
+db_writer = Cobalt.Logging.DatabaseWriter(get_cqm_config("db_log_file", "json.out"))
+if not "true" == get_cqm_config("use_db_logging", None):
+    db_writer.off = True
+
+#Signal handler needs to be set now to ensure thread termination before
+#everything else dies.  Assuming the writer is running.
+def terminate_handler(signum, frame):
+    print frame
+    print "bailing out!"
+    db_writer.close()
+    print "writer closed, yay!"
+
+
+
+
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
 
@@ -2471,12 +2487,12 @@ class Queue (Data):
                     job.max_running = True
             if old != job.max_running:
                 logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
-                if job_maxrunning:
-                    db_log_to_file(ReportObject("maxrun hold placed on job %s." % (self.jobid), 
-                                                None, "maxrun_hold", "job_prog", JobProgMsg(self)).encode())
+                if job.max_running:
+                    db_log_to_file(ReportObject("maxrun hold placed on job %s." % (job.jobid), 
+                                                None, "maxrun_hold", "job_prog", JobProgMsg(job)).encode())
                 else:
-                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (self.jobid), 
-                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(self)).encode())
+                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
+                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
                 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -2564,6 +2580,9 @@ class QueueManager(Component):
         self.define_user_utility_functions()
         
         self.score_timestamp = None
+
+        signal.signal(signal.SIGINT, terminate_handler)
+        signal.signal(signal.SIGTERM, terminate_handler)
 
 
     def __getstate__(self):
@@ -3019,6 +3038,10 @@ class QueueManager(Component):
                     job.dep_fail = True
                     break
     check_dep_fail = automatic(check_dep_fail, period=60)
+    
+    
+def cleanup_database_writer():
+    Cobalt.Logging.DatabaseWriter.close()
 
 
 class JobProgMsg(object):
