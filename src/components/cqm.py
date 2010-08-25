@@ -2,7 +2,7 @@
 
 __revision__ = '$Revision$'
 
-import sys, signal, os
+import sys
 from Cobalt.Components.cqm import QueueManager, cleanup_database_writer
 from Cobalt.Components.base import run_component
 

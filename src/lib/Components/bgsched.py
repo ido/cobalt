@@ -27,12 +27,29 @@ from Cobalt.JSONEncoders import ReportObject
 import Cobalt.SchedulerPolicies
 
 logger = logging.getLogger("Cobalt.Components.scheduler")
+config = ConfigParser.ConfigParser()
+config.read(Cobalt.CONFIG_FILES)
+if not config.has_section('bgsched'):
+    print '''"bgsched" section missing from cobalt config file'''
+    sys.exit(1)
 
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
 bgsched_id_gen = None
 bgsched_cycle_id_gen = None
+
+def get_bgsched_config(option, default):
+    try:
+        value = config.get('bgsched', option)
+    except ConfigParser.NoOptionError:
+        value = default
+    return value
+
+db_writer = Cobalt.Logging.DatabaseWriter(get_bgsched_config("db_log_file", "json.out"))
+if not "true" == get_bgsched_config("use_db_logging", None):
+    db_writer.off = True
+
 
 
 
@@ -763,3 +780,6 @@ class BGSched (Component):
         self.active = False
     disable = exposed(disable)
 
+
+def cleanup_database_writer():
+    Cobalt.Logging.DatabaseWriter.close()
