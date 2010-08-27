@@ -584,6 +584,8 @@ class Job (StateMachine):
         self.total_etime = 0.0
         self.priority_core_hours = None
         self.dep_fail = False
+        self.prev_dep_hold = False
+        self.called_has_dep_hold_once = False
 
     # end def __init__()
 
@@ -621,6 +623,14 @@ class Job (StateMachine):
             logger.info("old job missing dep_fail")
             self.dep_fail = False
             
+        if not state.has_key("prev_dep_hold"):
+            logger.info("old job missing prev_dep_hold") 
+            self.prev_dep_hold = False
+
+        if not state.has_key("called_has_dep_hold_once"):
+            logger.info("old job missing called_has_dep_hold_once") 
+            self.called_has_dep_hold_once = False
+
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
@@ -1978,7 +1988,14 @@ class Job (StateMachine):
     user_hold = property(__get_user_hold, __set_user_hold)
 
     def __has_dep_hold(self):
-        return self.all_dependencies and not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies))
+        current_dep_hold = self.all_dependencies and not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies))
+        if ((not self.prev_dep_hold) and current_dep_hold and (not self.called_has_dep_hold_once)):
+            self.called_has_dep_hold_once = True
+            db_log_to_file(ReportObject("dependency hold placed on job %s." % (self.jobid), 
+                                                None, "dep_hold", "job_prog", JobProgMsg(self)).encode())
+        self.called_has_dep_hold_once = False
+        self.prev_dep_hold = current_dep_hold
+        return current_dep_hold
 
     has_dep_hold = property(__has_dep_hold)
 
