@@ -356,7 +356,7 @@ class ThreadedWrite(threading.Thread):
                 queue_data = self.msg_queue.get(block=False)
                 self.missed_timeouts = 0
             except Queue.Empty:               
-                time.sleep(5)
+                time.sleep(1)
                 continue
             
             out_file = open(os.path.join(self.output_filename), "a")

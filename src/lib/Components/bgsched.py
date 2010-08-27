@@ -47,11 +47,12 @@ def get_bgsched_config(option, default):
     return value
 
 db_writer = Cobalt.Logging.DatabaseWriter(get_bgsched_config("db_log_file", "json.out"))
-if not "true" == get_bgsched_config("use_db_logging", None):
-    db_writer.off = True
 
-
-
+def check_db_logging_enabled():
+       
+    if not "true" == get_bgsched_config("use_db_logging", None):
+        logging.info("Turning off logging to database")
+        Cobalt.Logging.DatabaseWriter.off = True
 
 class Reservation (Data):
     
@@ -394,7 +395,7 @@ class BGSched (Component):
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
         
-        
+        self.check_db_logging_enabled()  
 
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
@@ -427,8 +428,10 @@ class BGSched (Component):
         self.lock = threading.Lock()
         self.statistics = Statistics()
         
+        self.check_db_logging_enabled()
 
-
+    def check_db_logging_enabled(self):
+        check_db_logging_enabled()
 
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
