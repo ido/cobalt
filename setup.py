@@ -11,7 +11,7 @@ setup(name="Cobalt",
       packages=["Cobalt", "Cobalt.Components", "Cobalt.DataTypes"],
       package_dir = {'Cobalt': 'src/lib'},
       scripts = glob('src/clients/*.py') + glob('src/clients/POSIX/*.py') \
-      + glob('src/components/*.py'),
+      + glob('src/components/*.py') + glob('tools/DB_writer/cdbdump.py'),
       data_files=[('share/man/man1', glob('man/*.1')),
                   ('share/man/man1', glob('man/POSIX/*.1')),
                   ('share/man/man5', glob('man/*.5')),
