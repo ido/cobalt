@@ -16,6 +16,10 @@ import types
 import linecache
 import Cobalt
 import ConfigParser
+import threading
+import time
+import Queue
+
 
 SYSLOG_LEVEL_DEFAULT = "DEBUG"
 CONSOLE_LEVEL_DEFAULT = "INFO"
@@ -273,3 +277,121 @@ def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d
     handler.setLevel(level)
     handler.setFormatter(logging.Formatter(format))
     logger.addHandler(handler)
+
+
+
+
+
+#TODO: Wrap up the safety stuff in this.  Also, make sure to get the fifo from
+#a config file on the cobalt side
+
+class DatabaseWriter(object):
+
+    """I am intending this to involve a singleton IO thread going to the
+    database"""
+    
+    initialized = False
+    write_thread = None
+    off = False
+    
+    def __init__(self, output_filename):
+        
+        
+        self.output_filename = output_filename
+        
+        if not self.__class__.initialized:
+            self.__class__.write_thread = ThreadedWrite(output_filename,
+                                                        name="db_writer")
+            self.__class__.write_thread.start()
+            self.thread_name = DatabaseWriter.write_thread.name
+            
+
+            self.__class__.initialized = True
+        self.__class__.off = False
+
+    @classmethod              
+    def write(cls,data):
+        #append a newline.  It makes the decoding behave a
+        #a lot better
+        if not cls.initialized:
+            raise RuntimeError("Attempted to write to database before writer initialized.")
+            #until I figure out a better way, do nothing, since this can be
+            #turned off.
+        if cls.off:
+            if cls.write_thread.is_alive():
+                cls.write_thread.send("Terminate\n")
+            return
+        
+        cls.write_thread.send((data +"\n"))
+
+    
+    @classmethod
+    def close(cls):
+        cls.write("Terminate")
+    
+
+db_log_to_file = DatabaseWriter.write
+#TODO: no I don't want to rewrite a bunch of code right now, why do you ask?
+#dump this in favor of DatabaseWriter.write
+
+
+
+class ThreadedWrite(threading.Thread):
+    
+    def __init__(self, output_filename, *args, **kwargs):
+        threading.Thread.__init__(self,*args,**kwargs)
+        self.msg_queue = Queue.Queue()
+        self.terminating = False
+        self.output_filename = output_filename
+        self.missed_timeouts = 0
+        self.max_missed_timeouts = 20
+        #self.daemon = True
+
+    def run(self):
+        
+        #TODO: going to need some good-old try-catch here.
+        
+        while not self.terminating:
+            try:
+                queue_data = self.msg_queue.get(block=False)
+                self.missed_timeouts = 0
+            except Queue.Empty:               
+                time.sleep(1)
+                continue
+            
+            out_file = open(os.path.join(self.output_filename), "a")
+            out_file.write(queue_data)
+            out_file.close()
+            self.msg_queue.task_done()
+            
+        #TODO: set up a fail-over file.
+        #drain the queue and then terminate.
+        print "Writer thread terminating."
+        while not self.msg_queue.empty():
+            queue_data = self.msg_queue.get(block=False)
+            out_file = open(os.path.join(self.output_filename), "a")
+            out_file.write(queue_data)
+            out_file.close()
+            self.msg_queue.task_done()
+        
+        return
+
+    def send(self, data):
+
+        """catches messages.  If "Terminate" message is caught, kill the
+           writer thread."""
+        if not isinstance(data, str):
+            raise TypeError("Non-string data passed to the database writer")
+        if self.terminating:
+            raise RuntimeError("Attempted to queue a message after writer has been sent a terminate message.")
+        if data == "Terminate\n":
+            self.terminating = True
+            self.close()
+            return
+        self.msg_queue.put(data, block=False)
+
+    def close(self):
+        self.msg_queue.join()
+        self.join()
+        
+

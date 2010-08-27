@@ -86,6 +86,7 @@ import thread
 from threading import Thread, Lock
 import traceback
 import string
+import json
 
 import Cobalt
 import Cobalt.Util
@@ -100,7 +101,8 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
     JobRunError, JobPreemptionError, JobDeleteError)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
-
+from Cobalt.Logging import db_log_to_file
+from Cobalt.JSONEncoders import ReportObject
 
 logger = logging.getLogger('cqm')
 
@@ -130,6 +132,17 @@ accounting_logdir = os.path.expandvars(get_cqm_config("log_dir", Cobalt.DEFAULT_
 accounting_logger = logging.getLogger("cqm.accounting")
 accounting_logger.addHandler(
     accounting.DatetimeFileHandler(os.path.join(accounting_logdir, "%Y%m%d")))
+
+
+db_writer = Cobalt.Logging.DatabaseWriter(get_cqm_config("db_log_file", "json.out"))
+
+
+def check_db_logging_enabled():
+       
+    if not "true" == get_cqm_config("use_db_logging", None):
+        logging.info("Turning off logging to database")
+        Cobalt.Logging.DatabaseWriter.off = True
+
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -489,9 +502,9 @@ class Job (StateMachine):
         self.args = spec.get("args", [])
         self.project = spec.get("project")
         self.lienID = spec.get("lienID")
-        self.stagein = spec.get("stagein")
-        self.stageout = spec.get("stageout")
-        self.reservation = spec.get("reservation", False)
+        self.stagein = spec.get("stagein") #does nothing
+        self.stageout = spec.get("stageout") #like ze goggles, it does nothing
+        self.reservation = spec.get("reservation", False) #appears to be defunct.
         self.host = spec.get("host")
         self.port = spec.get("port")
         self.url = spec.get("url")
@@ -571,8 +584,17 @@ class Job (StateMachine):
         self.total_etime = 0.0
         self.priority_core_hours = None
         self.dep_fail = False
+        self.prev_dep_hold = False
+        self.called_has_dep_hold_once = False
         self.dep_frac = None
+
     # end def __init__()
+
+    def no_holds_left(self):
+        return not (self.admin_hold or 
+                self.user_hold or 
+                self.has_dep_hold or 
+                self.max_running)
 
     def __getstate__(self):
         data = {}
@@ -602,6 +624,14 @@ class Job (StateMachine):
             logger.info("old job missing dep_fail")
             self.dep_fail = False
             
+        if not state.has_key("prev_dep_hold"):
+            logger.info("old job missing prev_dep_hold") 
+            self.prev_dep_hold = False
+
+        if not state.has_key("called_has_dep_hold_once"):
+            logger.info("old job missing called_has_dep_hold_once") 
+            self.called_has_dep_hold_once = False
+
         if not state.has_key("dep_frac"):
             logger.info("old job missing dep_frac")
             self.dep_frac = None
@@ -858,9 +888,13 @@ class Job (StateMachine):
                 self.__signal_timer = Timer()
             self.__signal_timer.start()
             self.__sm_state = 'Preempting'
+            db_log_to_file(ReportObject(("Preempting job %s" % self.jobid),
+                                    None, "preempting", "job_prog", JobProgMsg(self)).encode())
             return True
         else:
             self.__sm_state = 'Preempt_Retry'
+            db_log_to_file(ReportObject(("Problem preempting job %s, retrying." % self.jobid),
+                                    None, "preempting", "job_prog", JobProgMsg(self)).encode())
             return False
 
     def __sm_start_resource_epilogue_scripts(self, new_state = 'Resource_Epilogue'):
@@ -868,13 +902,17 @@ class Job (StateMachine):
         self.__sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
         self.__sm_scripts_thread.start()
         self.__sm_state = new_state
+        db_log_to_file(ReportObject(("beginning resource epilogue."),
+                                    None, "resource_epilogue_start", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_start_job_epilogue_scripts(self, new_state = 'Job_Epilogue'):
         job_scripts = get_cqm_config('job_postscripts', "").split(':')
         self.__sm_scripts_thread = RunScriptsThread(job_scripts, self, self.fields)
         self.__sm_scripts_thread.start()
         self.__sm_state = new_state
-
+        db_log_to_file(ReportObject(("beginning job epilogue."),
+                                    None, "job_epilogue_start", "job_prog", JobProgMsg(self)).encode())
+        
     def __sm_scripts_are_finished(self, type):
         try:
             if self.__sm_scripts_thread.isAlive():
@@ -895,6 +933,11 @@ class Job (StateMachine):
                 err_msg = ("\n" + result['err']).replace("\n", "\n    ").rstrip()
                 self.__sm_log_warn("return code from %s %s was %d; error text follows:%s" % \
                     (type, result['script'], result['rc'], err_msg))
+        #PMR: shold errors from epilogue somehow be captured?
+        if type == 'resource postscript':
+            db_log_to_file(ReportObject("Resource postscript completed.", None, "resource_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
+        elif type == 'job postscript':
+            db_log_to_file(ReportObject("Job Postscript completed.", None, "job_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
         return True
 
     def __sm_common_queued__hold(self, hold_state, args):
@@ -919,6 +962,9 @@ class Job (StateMachine):
         self.__timers['hold'].start()
         self.__sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
         self.__sm_state = hold_state
+        db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
+                                    None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self)).encode())
+        
 
     def __sm_common_queued__release(self, args):
         '''handle attempt to erroneously release a job in the queued state'''
@@ -949,6 +995,8 @@ class Job (StateMachine):
 
         if activity:
             self.__sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
+            db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
+                                        None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self)).encode())
         else:
             self.__sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
@@ -973,6 +1021,11 @@ class Job (StateMachine):
 
         if activity:
             self.__sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
+            db_log_to_file(ReportObject("%s hold released on job %s." % (args['type'], self.jobid), 
+                                        None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self)).encode())
+            if self.no_holds_left():
+                db_log_to_file(ReportObject("No holds left on job %s." % (self.jobid), 
+                                            None, "all_holds_clear", "job_prog", JobProgMsg(self)).encode())
         else:
             self.__sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
             
@@ -981,6 +1034,9 @@ class Job (StateMachine):
             self.__timers['hold'].stop()
             self.etime = time.time()
             self.__sm_state = queued_state
+            #db_log_to_file(ReportObject("all holds released on job %s. Requeueing" % 
+            #                            (args['type'], self.jobid), 
+            #                            None, "hold_release", "job", self).encode())
 
     def __sm_ready__run(self, args):
         '''prepare a job for execution'''
@@ -1085,6 +1141,8 @@ class Job (StateMachine):
         self.__sm_scripts_thread.start()
 
         self.__sm_state = 'Prologue'
+        db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
+                                    None, "starting", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_ready__hold(self, args):
         '''place a hold on a job in the queued state'''
@@ -1241,12 +1299,18 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self.__sm_state = 'Running'
             self.task_running = True
+            db_log_to_file(ReportObject(("Run start."),
+                                        None, "running", "job_prog", JobProgMsg(self)).encode())
         elif rc == Job.__rc_retry:
             self.__sm_state = 'Run_Retry'
+            db_log_to_file(ReportObject(("Run start is being retried."),
+                                        None, "run_retrying", "job_prog", JobProgMsg(self)).encode())
         else:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
             self.__sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
             self.__sm_start_resource_epilogue_scripts()
+            db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
+                                        None, "failed", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_release_resources_retry__progress(self, args):
         self.__sm_log_info("retrying release of resources")
@@ -1254,6 +1318,7 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self.__sm_log_info("resources released; initiating job cleanup and removal", cobalt_log = True)
             self.__sm_start_resource_epilogue_scripts()
+            #TODO: from retrying release to resources release.
 
     def __sm_run_retry__progress(self, args):
         '''previous attempt to execute the task failed; attempt to run it again'''
@@ -1261,10 +1326,14 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self.__sm_state = 'Running'
             self.task_running = True
+            db_log_to_file(ReportObject(("Run start."),
+                                         None, "started", "job_prog", JobProgMsg(self)).encode())
         elif rc != Job.__rc_retry:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
             self.__sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
             self.__sm_start_resource_epilogue_scripts()
+            db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
+                                        None, "failed", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_run_retry__kill(self, args):
         '''user delete requested while job was waiting to retry executing task'''
@@ -1276,6 +1345,9 @@ class Job (StateMachine):
 
         # start the resource epilogue scripts
         self.__sm_start_resource_epilogue_scripts()
+        db_log_to_file(ReportObject(("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
+                                         (args['signal'], args['user'])),
+                                     args['user'], "killed", "job_prog", JobProgMsg(self)).encode())
 
     def __sm_running__progress(self, args):
         '''
@@ -1291,17 +1363,19 @@ class Job (StateMachine):
             if sig_info != None:
                 self.__signaling_info = sig_info
                 self.__sm_preempt_task()
+                
 
     def __sm_running__kill(self, args):
         '''user delete requested while job is executing a task'''
         self.__sm_signaling_info_set_user_delete(args['signal'], args['user'])
-        self.__sm_kill_task()
-
+        self.__sm_kill_task() #current
+    
     def __sm_running__task_end(self, args):
         '''task completed normally'''
         # finalize the task and obtain the exit status
         self.__sm_log_info("task completed normally; finalizing task and obtaining exit code")
         rc = self.__task_finalize()
+        
         if rc == Job.__rc_retry:
             self.__sm_state = 'Finalize_Retry'
             return
@@ -1446,6 +1520,7 @@ class Job (StateMachine):
         self.__sm_log_info("task terminated; finalizing task")
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
+            #point1
             self.__sm_state = 'Finalize_Retry'
             return
 
@@ -1671,6 +1746,9 @@ class Job (StateMachine):
         self.__sm_scripts_thread.start()
 
         self.__sm_state = 'Prologue'
+        db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
+                                    None, "starting", "job_prog", JobProgMsg(self)).encode())
+
 
     def __sm_preempted__hold(self, args):
         '''place a hold on a job in the preempted state'''
@@ -1916,7 +1994,14 @@ class Job (StateMachine):
     user_hold = property(__get_user_hold, __set_user_hold)
 
     def __has_dep_hold(self):
-        return self.all_dependencies and not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies))
+        current_dep_hold = self.all_dependencies and not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies))
+        if ((not self.prev_dep_hold) and current_dep_hold and (not self.called_has_dep_hold_once)):
+            self.called_has_dep_hold_once = True
+            db_log_to_file(ReportObject("dependency hold placed on job %s." % (self.jobid), 
+                                                None, "dep_hold", "job_prog", JobProgMsg(self)).encode())
+        self.called_has_dep_hold_once = False
+        self.prev_dep_hold = current_dep_hold
+        return current_dep_hold
 
     has_dep_hold = property(__has_dep_hold)
 
@@ -2090,9 +2175,11 @@ class Job (StateMachine):
         except:
             self.__sm_log_exception(None, "an exception occurred during a progress event")
 
-    def run(self, nodelist):
+    def run(self, nodelist, user = None):
         try:
             self.trigger_event("Run", {'nodelist' : nodelist})
+            #db_log_to_file(ReportObject(("Run start requested by %s." % user),
+             #                           user, "started", "job_prog", JobProgMsg(self)).encode())
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self.__sm_state)
@@ -2110,6 +2197,9 @@ class Job (StateMachine):
             args['force'] = True
         try:
             self.trigger_event('Preempt', args)
+            if user:
+                db_log_to_file(ReportObject(("Preemption requested by %s." % user),
+                                            user, "preempted", "job_prog", JobProgMsg(self)).encode())
         except JobPreemptionError:
             raise
         except StateMachineIllegalEventError:
@@ -2132,6 +2222,9 @@ class Job (StateMachine):
         if not force:
             try:
                 self.trigger_event('Kill', {'user' : user, 'signal' : signame})
+                db_log_to_file(ReportObject("Now killing Job %s" % \
+                                                (self.jobid),
+                                            user, "killing", "job_prog", JobProgMsg(self)).encode())
             except:
                 self.__sm_log_exception(None, "an unexpected exception occurred while attempting to kill the task")
                 raise JobDeleteError("An unexpected exception occurred while attempting to delete the job.  See log for details.",
@@ -2184,6 +2277,9 @@ class Job (StateMachine):
                         (self.jobid, self.user, self.nodes, user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
                         (self.jobid, self.user, self.nodes, user, stats))
+            db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
+                                            (self.jobid, self.user, self.nodes, user, stats),
+                                        user, "killing", "job_prog", JobProgMsg(self)).encode())
 
     def task_end(self):
         '''handle the completion of a task'''
@@ -2202,7 +2298,12 @@ class JobList(DataList):
         for spec in specs:
             if "jobid" not in spec or spec['jobid'] == "*":
                 spec['jobid'] = self.id_gen.next()
-        return DataList.q_add(self, specs, callback, cargs)
+        jobs_added = DataList.q_add(self, specs, callback, cargs)
+        if jobs_added:
+            for job in jobs_added:
+                db_log_to_file(ReportObject(("%s created job: %s", spec['user'], spec['jobid']),
+                                            spec['user'], "created", "job_data", JobDataMsg(job)).encode())
+        return jobs_added
     
 
 class Restriction (Data):
@@ -2394,7 +2495,14 @@ class Queue (Data):
             for job in self.jobs:
                 if job.max_running:
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
+                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
+                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
+
+                    if job.no_holds_left():
+                        db_log_to_file(ReportObject("No holds left on job %s." % (job.jobid), 
+                                                    None, "all_holds_clear", "job_prog", JobProgMsg(job)).encode())
                 job.max_running = False
+                
             return
         unum = dict()
         for job in self.jobs.q_get([{'has_resources':True}]):
@@ -2411,6 +2519,15 @@ class Queue (Data):
                     job.max_running = True
             if old != job.max_running:
                 logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
+                if job.max_running:
+                    db_log_to_file(ReportObject("maxrun hold placed on job %s." % (job.jobid), 
+                                                None, "maxrun_hold", "job_prog", JobProgMsg(job)).encode())
+                else:
+                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
+                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
+                    if job.no_holds_left():
+                        db_log_to_file(ReportObject("No holds left on job %s." % (job.jobid), 
+                                                    None, "all_holds_clear", "job_prog", JobProgMsg(job)).encode())
                 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -2496,9 +2613,10 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
-        
-        self.score_timestamp = None
+        self.check_db_logging_enabled()
 
+        self.score_timestamp = None
+        
 
     def __getstate__(self):
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3}
@@ -2523,8 +2641,16 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
+        self.check_db_logging_enabled()
 
         self.score_timestamp = None
+        
+ 
+
+
+
+    def check_db_logging_enabled(self):
+        check_db_logging_enabled()
 
     def __save_me(self):
         Component.save(self)
@@ -2593,7 +2719,12 @@ class QueueManager(Component):
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
                     
                     if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
-                        logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user)
+                        logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
+                        db_log_to_file(ReportObject("dependency hold released on job %s." % (waiting_job.jobid), 
+                                                None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job)).encode())
+                        if waiting_job.no_holds_left():
+                            db_log_to_file(ReportObject("No holds left on job %s." % ( waiting_job.jobid), 
+                                                        None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job)).encode())
                         if job.dep_frac is None:
                             new_score = float(get_cqm_config('dep_frac', 0.5))*job.score
                         else:
@@ -2654,7 +2785,10 @@ class QueueManager(Component):
                 if job.is_active or job.has_completed:
                     raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
 
+        
         for job in joblist:
+            db_log_to_file(ReportObject(("%s modifying job: %s, %s", user_name, specs, updates),
+                                        user_name, "modifying", "job_data", JobDataMsg(job)).encode())
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
@@ -2677,7 +2811,8 @@ class QueueManager(Component):
                     self.Queues[old_q_name].jobs.remove(job)
                     new_q.jobs.append(job)
                     new_q.update_max_running()
-            
+       
+
         return joblist    
     set_jobs = exposed(query(set_jobs))
 
@@ -2839,7 +2974,12 @@ class QueueManager(Component):
             else:
                 job.score += delta
             results.append(job.jobid)
-        
+        db_log_to_file(ReportObject(("%s updating job scores: %s, %s", user_name, specs, score),
+                                    user_name,
+                                    "modifying",
+                                    "job_data",
+                                    JobDataMsg(job)).encode())
+                                    
         return results
     adjust_job_scores = exposed(adjust_job_scores)
             
@@ -2932,7 +3072,9 @@ class QueueManager(Component):
     
     def check_dep_fail(self):
         queued_jobs = self.Queues.get_jobs([{'jobid': '*'}])
+        already_failed = False
         for job in queued_jobs:
+            already_failed = job.dep_fail
             job.dep_fail = False
             pending = sets.Set(job.all_dependencies).difference(sets.Set(job.satisfied_dependencies))
             for jobid_str in pending:
@@ -2945,4 +3087,73 @@ class QueueManager(Component):
                 if not self.Queues.get_jobs([{'jobid': jobid}]):
                     job.dep_fail = True
                     break
+            if (job.dep_fail and (not already_failed)):
+                db_log_to_file(ReportObject("Dep fail on job %s." % (job.jobid), 
+                                            None, "dep_fail", "job_prog", JobProgMsg(job)).encode())
+
     check_dep_fail = automatic(check_dep_fail, period=60)
+    
+    
+def cleanup_database_writer():
+    Cobalt.Logging.DatabaseWriter.close()
+
+
+class JobProgMsg(object):
+
+    def __init__(self, job):
+        
+        if not isinstance(job, Cobalt.Components.cqm.Job):
+            #raise an exception for throwing in something that
+            #isn't a job
+            pass
+
+        self.jobid = job.jobid
+        self.cobalt_state = job.sm_state
+        self.score = job.score
+        self.satisfied_dependencies  = job.satisfied_dependencies
+
+
+        if job.state == "running":
+            self.envs = job.envs
+            self.priority_core_hours = 20.0 #job.priority_core_hours
+            self.location = job.location
+            #self.nodects = job._Job__resource_nodects
+
+
+class JobDataMsg(object):
+    
+    def __init__(self, job):
+        if not isinstance(job, Cobalt.Components.cqm.Job):
+            #raise an exception for throwing in something that
+            #isn't a job
+            pass
+
+        attr_list = ['jobid', 'umask', 'jobname', 'job_type',
+                     'job_user', 'walltime', 'procs', 'nodes',
+                     'command', 'args', 'project', 'lienID',
+                     'host', 'port', 'inputfile',
+                     'kernel', 'kerneloptions', 'notify', 
+                     'adminemail', 'location', 'outputpath',
+                     'outputdir', 'errorpath', 'path', 'mode',
+                     'envs', 'queue', 'priority_core_hours',
+                     'force_kill_delay', 'all_dependencies',
+                     'attribute', 'attrs', 
+                     'satisfied_dependencies', 'preemptable'
+                     ]
+        
+        for attr in attr_list:
+            
+            if attr == 'job_type':
+                self.job_type = job.type
+            elif attr == 'job_user':
+                self.job_user = job.user
+            #elif attr == 'nodects':
+             #   self.nodects = job._Job__resource_nodects
+
+            else:
+                self.__setattr__(attr, job.__getattribute__(attr))
+
+            #times are handled via the ReportObject's timestamp.
+
+
+        self.job_prog_msg = JobProgMsg(job)
