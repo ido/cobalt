@@ -234,7 +234,6 @@ class DatabaseWriter(object):
          self.daos['JOB_DEPS'].insert(job_deps_record)
 
 
-      print "Job data id: %d" % job_data_id
       self.__addJobProgMsg(logMsg, logMsg.item.job_prog_msg, job_data_id)
 
 
@@ -334,7 +333,7 @@ class DatabaseWriter(object):
       
       if not ids:
          #For one reason or another we do not have job_data object
-         #to tie to.  Create a "dummy" one for now. This will contain
+         #to tie to.  Create a "dmmy" one for now. This will contain
          #only the jobid and placeholders that indicate this is a dummy. 
          #Integer values of -1, strings of COBALT_DUMMY should be a good
          #start.
@@ -449,8 +448,6 @@ class JobDataData(db2util.dao):
              "where jobid = %d" % jobid,
              "and isdummy != 0")
       job_data_id = self.db.getDict(' '.join(SQL))
-
-      print job_data_id
 
       if not job_data_id:
          return None

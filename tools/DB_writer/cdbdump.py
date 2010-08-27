@@ -124,7 +124,7 @@ if __name__ == '__main__':
    while(True):
       
       cobaltJSONmessage = pipe.get_next_message()
-      print cobaltJSONmessage
+
       if cobaltJSONmessage:
          justRead = True
          pipe.save_msgs()
