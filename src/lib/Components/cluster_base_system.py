@@ -373,7 +373,7 @@ class ClusterBaseSystem (Component):
     reserve_resources_until = exposed(reserve_resources_until)
 
 
-    def nodes_up(self, node_list):
+    def nodes_up(self, node_list, user_name=None):
         changed = []
         for n in node_list:
             if n in self.down_nodes:
@@ -383,19 +383,19 @@ class ClusterBaseSystem (Component):
                 self.running_nodes.remove(n)
                 changed.append(n)
         if changed:
-            self.logger.info("marking nodes up: %s", ", ".join(changed))
+            self.logger.info("%s marking nodes up: %s", user_name, ", ".join(changed))
         return changed
     nodes_up = exposed(nodes_up)
         
 
-    def nodes_down(self, node_list):
+    def nodes_down(self, node_list, user_name=None):
         changed = []
         for n in node_list:
             if n in self.all_nodes:
                 self.down_nodes.add(n)
                 changed.append(n)
         if changed:
-            self.logger.info("marking nodes down: %s", ", ".join(changed))
+            self.logger.info("%s marking nodes down: %s", user_name, ", ".join(changed))
         return changed
     nodes_down = exposed(nodes_down)
 
@@ -424,7 +424,7 @@ class ClusterBaseSystem (Component):
         return ret
     get_queue_assignments = exposed(get_queue_assignments)
     
-    def set_queue_assignments(self, queue_names, node_list):
+    def set_queue_assignments(self, queue_names, node_list, user_name=None):
         checked_nodes = sets.Set()
         for n in node_list:
             if n in self.all_nodes:
@@ -442,6 +442,7 @@ class ClusterBaseSystem (Component):
                     del self.queue_assignments[q]
             else:
                 self.queue_assignments[q].update(checked_nodes)
+        self.logger.info("%s assigning queues %s to nodes %s", user_name, queue_names, " ".join(checked_nodes))
         return list(checked_nodes)
     set_queue_assignments = exposed(set_queue_assignments)
 

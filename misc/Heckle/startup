@@ -1,0 +1,12 @@
+#!/bin/sh
+
+#Script to copy files to bblogin
+FR=~/HCI/Active
+TO=/sandbox/Active
+
+cp -r $FR/* $TO
+
+for component in slp cqm scriptm bgsched heckle_forker heckle_system; do
+     gnome-terminal --window-with-profile=Four-Square -t $component
+
+kate -s HCI &

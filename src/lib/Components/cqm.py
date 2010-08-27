@@ -310,7 +310,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status",
+        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac",
     ]
 
     _states = [
@@ -586,6 +586,7 @@ class Job (StateMachine):
         self.dep_fail = False
         self.prev_dep_hold = False
         self.called_has_dep_hold_once = False
+        self.dep_frac = None
 
     # end def __init__()
 
@@ -631,6 +632,11 @@ class Job (StateMachine):
             logger.info("old job missing called_has_dep_hold_once") 
             self.called_has_dep_hold_once = False
 
+        if not state.has_key("dep_frac"):
+            logger.info("old job missing dep_frac")
+            self.dep_frac = None
+            
+            
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
@@ -2719,7 +2725,11 @@ class QueueManager(Component):
                         if waiting_job.no_holds_left():
                             db_log_to_file(ReportObject("No holds left on job %s." % ( waiting_job.jobid), 
                                                         None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job)).encode())
-                        waiting_job.score = max(waiting_job.score, float(get_cqm_config('dep_frac', 0.5))*job.score)
+                        if job.dep_frac is None:
+                            new_score = float(get_cqm_config('dep_frac', 0.5))*job.score
+                        else:
+                            new_score = job.dep_frac * job.score
+                        waiting_job.score = max(waiting_job.score, new_score)
 
         # remove the job from the queue
         #
