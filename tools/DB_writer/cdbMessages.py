@@ -80,13 +80,7 @@ class JobStatus(object):
 class JobProgStatus(JobStatus):
 
    def set_types(self):
-      
-      self.dep_hold = int(self.dep_hold)
-      self.admin_hold = int(self.admin_hold)
-      self.user_hold = int(self.user_hold)
-      self.max_running = int(self.max_running)
-      self.dep_fail = int(self.dep_fail)
-      self.task_running = int(self.task_running)
+      pass
    
    
 class JobDataStatus(JobStatus):

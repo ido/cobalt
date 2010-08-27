@@ -23,62 +23,11 @@ import time
 import ConfigParser
 import optparse
 
+import pipelistener
 
 from dbWriter import DatabaseWriter
 from cdbMessages import LogMessage, LogMessageDecoder
 
-
-class PipeListener (object):
-
-   """since we're not in the business of losing data, the data from
-   a pipe gets read to a temp file, and we go from there. I am beginning
-   to think that a pickle is in order-ish"""
-
-   def  __init__(self, fifoname):
-       self.pendingMessages = []
-       self.fifo = None
-
-   def __del__(self):
-      if self.fifo:
-         self.close()
-
-
-   def open(self, fifoname):
-      self.fifo = open(os.path.join(fifoname), 'r')
-   
-
-   def close(self):
-      if not self.fifo.closed:
-         self.fifo.close()
-
-
-   def read(self):
-
-      try:
-         newlines = self.fifo.readlines()
-         if newlines:
-            self.pendingMessages.extend(newlines)
-      except IOError as e:
-         print e
-         print "Error reading from cobalt fifo."
-         self.close()
-   
-   def get_next_message(self):
-      self.read()
-      if not len(self.pendingMessages):
-         return None
-      else:
-         return self.pendingMessages.pop(0)
-   
-   def save_msgs(self):
-      f = open ('cdbdump.json', 'w+')
-      json.dump(self.pendingMessages, f)
-      f.close()
-      
-   def load_msgs(self):
-      f = open ('cdbdump.json', 'r')
-      self.pendingMessages = json.load(f)
-      f.close()
 
 
 def parse_options():
@@ -89,8 +38,15 @@ def parse_options():
                          dest='recovery_file')
    opt_parser.add_option('-l', '--load_msgs', action='store_true', 
                          dest='load_msgs')
+   opt_parser.add_option('-f', '--fifo', action='store',
+                         dest='user_fifo')
+   opt_parser.add_option('-c', '--config_file', action='store',
+                         dest='config_filename')
 
    opt_parser.set_defaults(recovery_file=None)
+   opt_parser.set_defaults(load_msgs=False)
+   opt_parser.set_defaults(user_fifo=None)
+   opt_parser.set_defaults(config_filename=None)
 
    return opt_parser.parse_args()
 
@@ -98,28 +54,36 @@ def parse_options():
 __helpmsg__ = """Usage: cdbdump.py"""
 
 if __name__ == '__main__':
+
+   #Command line options.  If conflict with config, these win.
+   opts, args = parse_options()
+
    
    #Configuration file handling
    con_file = ConfigParser.ConfigParser()
-   con_file.read(os.path.join("/Users/paulrich/cobalt-dev/tools/DB_writer/DB_writer_config"))
+   config_filename = "/Users/paulrich/cobalt-dev/tools/DB_writer/DB_writer_config"
+   if opts.config_filename:
+      config_filename = opts.config_filename
 
-   fifo_name = con_file.get('cdbdump', 'fifo')
+   con_file.read(os.path.join(config_filename))
+
+   fifo_name = con_file.get('cdbdump', 'default_fifo')
    login = con_file.get('cdbdump', 'login')
    pwd = con_file.get('cdbdump', 'pwd')
    database = con_file.get('cdbdump', 'database')
    schema = con_file.get('cdbdump', 'schema')
+   queue_state_file = con_file.get('cdbdump','queue_state_file')
+   pipe_poll_interval = con_file.get('cdbdump','pipe_poll_interval')
    
-   #Command line options.  If conflict with config, these win.
-   opts, args = parse_options()
-
-
    database = DatabaseWriter(database, login, pwd, schema)
 
    LogMsgDecoder = LogMessageDecoder()
 
    #starting listener.  This may become more sophistocated later
-   
-   pipe = PipeListener(fifo_name)
+   if opts.user_fifo:
+      fifo_name = os.path.join(opts.user_fifo)
+
+   pipe = pipelistener.pipelistener(fifo_name, queue_state_file)
 
    #recovery handling.
    if opts.load_msgs:
@@ -150,7 +114,8 @@ if __name__ == '__main__':
             database.addMessage(msg)
 
    #Normal operation.
-   pipe.open(fifo_name)
+   print "opening %s " % fifo_name
+   #pipe.open()
    
    
    
@@ -159,13 +124,18 @@ if __name__ == '__main__':
    while(True):
       
       cobaltJSONmessage = pipe.get_next_message()
-      
-
+      print cobaltJSONmessage
       if cobaltJSONmessage:
          justRead = True
          pipe.save_msgs()
-
-         logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
+         logMsg = None
+         try:
+            logMsg =  LogMsgDecoder.decode(cobaltJSONmessage)
+         except ValueError:
+            #just drop the message.  It's a loss, but came 
+            #in malformed.  No way to call back, yet.
+            print "dropped bad message."
+            continue
          database.addMessage(logMsg)
          
       else:
@@ -174,7 +144,8 @@ if __name__ == '__main__':
             pipe.save_msgs()
          #no pending messages, snooze so we don't
          #spin the core to death poking the file.
-         time.sleep(5)
+         time.sleep(float(pipe_poll_interval))
+         pipe.read()
          
         #Wash. Rinse. Repeat
    pipe.close()

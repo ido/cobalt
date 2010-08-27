@@ -18,7 +18,7 @@ class DatabaseWriter(object):
       table_names = ['RESERVATION_DATA', 'RESERVATION_PARTS',
                      'RESERVATION_STATES', 'RESERVATION_USERS',
                      'RESERVATION_PROG', 'JOB_DATA', 'JOB_ATTR',
-                     'JOB_DEPS', 'JOB_STATES', 'JOB_PROG']
+                     'JOB_DEPS', 'JOB_EVENTS','JOB_COBALT_STATES', 'JOB_PROG']
 
       #Handle tables, There is probably a better way to do this.
       self.tables = {}
@@ -27,7 +27,7 @@ class DatabaseWriter(object):
          print "Accessing table: %s" % table_name
          self.tables[table_name] = db2util.table(self.db, schema, table_name)
          #I am so going to need new and exciting daos.
-         if table_name in ['RESERVATION_STATES', 'JOB_STATES']:
+         if table_name in ['RESERVATION_STATES', 'JOB_EVENTS', 'JOB_COBALT_STATES']:
             self.daos[table_name] = StateTableData(self.db, schema, 
                                              self.tables[table_name].table)
          elif table_name == 'RESERVATION_DATA':
@@ -188,6 +188,15 @@ class DatabaseWriter(object):
       #execution.
       job_data_record = self.daos['JOB_DATA'].table.getRecord()
 
+      #if we have a "dummy" object, and we get a message that
+      #indicates job creation, replace the dummy.
+      updateDummy = False
+      if logMsg.state == "created":
+         possible_record = self.daos['JOB_DATA'].find_dummy(logMsg.item.jobid)
+         if possible_record: 
+            job_data_record = possible_record
+            updateDummy  = True
+
       specialObjects = {}
       
 
@@ -199,8 +208,13 @@ class DatabaseWriter(object):
          else:
             job_data_record.v.__setattr__(key.upper(),
                                    logMsg.item.__dict__[key])
-
-      job_data_id = self.daos['JOB_DATA'].insert(job_data_record)
+      job_data_record.v.ISDUMMY = 0
+      
+      job_data_id = job_data_record.v.ID
+      if updateDummy:
+         jod_data_id = self.daos['JOB_DATA'].update(job_data_record)
+      else:
+         job_data_id = self.daos['JOB_DATA'].insert(job_data_record)
       
       #populate job_attrs, if needed.
       for key in specialObjects['attrs'].keys():
@@ -210,13 +224,6 @@ class DatabaseWriter(object):
                'VALUE' : str(specialObjects['attrs'][key])})
          self.daos['JOB_ATTR'].insert(job_attr_record)
       
-      #populate job_nodects, this is defunct for now.
-      #for nodect in specialObjects['nodects']:
-      #   job_nodects_record = self.daos['JOB_NODECTS'].table.getRecord({
-      #      'JOB_DATA_ID': job_data_id,
-      #      'VALUE': str(nodect)})
-      #   self.daos['JOB_NODECTS'].insert(job_nodects_record)
-         
 
       #populate job_deps
       for dep in specialObjects['all_dependencies']:
@@ -227,6 +234,7 @@ class DatabaseWriter(object):
          self.daos['JOB_DEPS'].insert(job_deps_record)
 
 
+      print "Job data id: %d" % job_data_id
       self.__addJobProgMsg(logMsg, logMsg.item.job_prog_msg, job_data_id)
 
 
@@ -242,12 +250,23 @@ class DatabaseWriter(object):
       #may have to update some other fields as run progresses in job_data
       
 
-      job_state_record = self.daos['JOB_STATES'].table.getRecord({'NAME': logMsg.state})
-      match = self.daos['JOB_STATES'].search(job_state_record)
+      job_event_record = self.daos['JOB_EVENTS'].table.getRecord({'NAME': logMsg.state})
+      match = self.daos['JOB_EVENTS'].search(job_event_record)
       if not match:
-         self.daos['JOB_STATES'].insert(job_state_record)
+         #Hmmm...a message with a state not in the DB.  Reject it.
+         #TODO: Log rejection?
+         pass
       else:
-         job_state_record.v.ID = match[0]['ID']
+         job_event_record.v.ID = match[0]['ID']
+
+      
+
+      job_cobalt_states_record = self.daos['JOB_COBALT_STATES'].table.getRecord({'NAME': job_prog_msg.cobalt_state})
+      match = self.daos['JOB_COBALT_STATES'].search(job_cobalt_states_record)
+      if not match:
+         self.daos['JOB_COBALT_STATES'].insert(job_cobalt_states_record)
+      else:
+         job_cobalt_states_record.v.ID = match[0]['ID']
 
       if job_data_id == None:
          job_data_id = self.get_job_data_ids_from_jobid(job_prog_msg.jobid)
@@ -260,11 +279,12 @@ class DatabaseWriter(object):
                           'priority_core_hours','satisfied_dependencies']:
             updateAtRun[fieldName] = job_prog_msg.__getattribute__(fieldName)
          else:
-            if fieldName not in ['jobid']:
+            if fieldName not in ['jobid', 'cobalt_state']:
                job_prog_record.v.__setattr__(fieldName.upper(), 
                                              job_prog_msg.__getattribute__(fieldName))
          
-      job_prog_record.v.REASON = job_state_record.v.ID
+      job_prog_record.v.EVENT_TYPE = job_event_record.v.ID
+      job_prog_record.v.COBALT_STATE = job_cobalt_states_record.v.ID
       job_prog_record.v.JOB_DATA_ID = job_data_id
 
       job_prog_record.v.EXEC_USER = logMsg.exec_user
@@ -330,6 +350,8 @@ class DatabaseWriter(object):
             else:
               if field == 'ID':
                  pass #gets set on insert
+              elif field == 'ISDUMMY':
+                 job_data_record.v.ISDUMMY = 1
               elif db2util.dbtype.typeMap[job_data_record.m.__dict__[field].datatype] in [ 'SMALLINT', 'INTEGER',
                                                                                    'BIGINT','DECIMAL'
                                                                                    'REAL', 'DOUBLE']:
@@ -419,6 +441,23 @@ class ResDataData(db2util.dao):
 
 class JobDataData(db2util.dao):
 
+
+   def find_dummy(self, jobid):
+      """returns a dummy record.  If there is none for this job, returns None"""
+      SQL = ("select id",
+             "from job_data",
+             "where jobid = %d" % jobid,
+             "and isdummy != 0")
+      job_data_id = self.db.getDict(' '.join(SQL))
+
+      print job_data_id
+
+      if not job_data_id:
+         return None
+      
+      return self.getID(job_data_id[0]['ID'])
+   
+
    def find_all_after_jobid(self, jobid):
       """gets all records with a jobid >= the passed jobid, joined
       with the job_progress table."""
@@ -430,9 +469,7 @@ class JobDataData(db2util.dao):
              "and job_data.jobid >= %d" % jobid,
              "order by jobid, entry_time") 
       
-      retval = self.db.getDict(' '.join(SQL))
-      print retval[0]
-      return retval
+      return self.db.getDict(' '.join(SQL))
 
    def search_most_recent (self, record):
 
