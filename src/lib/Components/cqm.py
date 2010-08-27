@@ -135,18 +135,13 @@ accounting_logger.addHandler(
 
 
 db_writer = Cobalt.Logging.DatabaseWriter(get_cqm_config("db_log_file", "json.out"))
-if not "true" == get_cqm_config("use_db_logging", None):
-    db_writer.off = True
-
-#Signal handler needs to be set now to ensure thread termination before
-#everything else dies.  Assuming the writer is running.
-def terminate_handler(signum, frame):
-    print frame
-    print "bailing out!"
-    db_writer.close()
-    print "writer closed, yay!"
 
 
+def check_db_logging_enabled():
+       
+    if not "true" == get_cqm_config("use_db_logging", None):
+        logging.info("Turning off logging to database")
+        Cobalt.Logging.DatabaseWriter.off = True
 
 
 def str_elapsed_time(elapsed_time):
@@ -592,6 +587,12 @@ class Job (StateMachine):
 
     # end def __init__()
 
+    def no_holds_left(self):
+        return not (self.admin_hold or 
+                self.user_hold or 
+                self.has_dep_hold or 
+                self.max_running)
+
     def __getstate__(self):
         data = {}
         for key, value in self.__dict__.iteritems():
@@ -1006,6 +1007,9 @@ class Job (StateMachine):
             self.__sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
             db_log_to_file(ReportObject("%s hold released on job %s." % (args['type'], self.jobid), 
                                         None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self)).encode())
+            if self.no_holds_left():
+                db_log_to_file(ReportObject("No holds left on job %s." % (self.jobid), 
+                                            None, "all_holds_clear", "job_prog", JobProgMsg(self)).encode())
         else:
             self.__sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
             
@@ -2470,7 +2474,12 @@ class Queue (Data):
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
                     db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
                                                 None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
+
+                    if job.no_holds_left():
+                        db_log_to_file(ReportObject("No holds left on job %s." % (job.jobid), 
+                                                    None, "all_holds_clear", "job_prog", JobProgMsg(job)).encode())
                 job.max_running = False
+                
             return
         unum = dict()
         for job in self.jobs.q_get([{'has_resources':True}]):
@@ -2493,6 +2502,9 @@ class Queue (Data):
                 else:
                     db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
                                                 None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
+                    if job.no_holds_left():
+                        db_log_to_file(ReportObject("No holds left on job %s." % (job.jobid), 
+                                                    None, "all_holds_clear", "job_prog", JobProgMsg(job)).encode())
                 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -2578,12 +2590,10 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
-        
+        self.check_db_logging_enabled()
+
         self.score_timestamp = None
-
-        signal.signal(signal.SIGINT, terminate_handler)
-        signal.signal(signal.SIGTERM, terminate_handler)
-
+        
 
     def __getstate__(self):
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3}
@@ -2608,8 +2618,16 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
+        self.check_db_logging_enabled()
 
         self.score_timestamp = None
+        
+ 
+
+
+
+    def check_db_logging_enabled(self):
+        check_db_logging_enabled()
 
     def __save_me(self):
         Component.save(self)
@@ -2681,6 +2699,9 @@ class QueueManager(Component):
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
                         db_log_to_file(ReportObject("dependency hold released on job %s." % (waiting_job.jobid), 
                                                 None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job)).encode())
+                        if waiting_job.no_holds_left():
+                            db_log_to_file(ReportObject("No holds left on job %s." % ( waiting_job.jobid), 
+                                                        None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job)).encode())
                         waiting_job.score = max(waiting_job.score, float(get_cqm_config('dep_frac', 0.5))*job.score)
 
         # remove the job from the queue
@@ -2739,7 +2760,7 @@ class QueueManager(Component):
 
         
         for job in joblist:
-            db_log_to_file(ReportObject(("%s modified job: %s, %s", user_name, specs, updates),
+            db_log_to_file(ReportObject(("%s modifying job: %s, %s", user_name, specs, updates),
                                         user_name, "modifying", "job_data", JobDataMsg(job)).encode())
             old_q_name = job.queue
             test = job.to_rx()
@@ -3024,7 +3045,9 @@ class QueueManager(Component):
     
     def check_dep_fail(self):
         queued_jobs = self.Queues.get_jobs([{'jobid': '*'}])
+        already_failed = False
         for job in queued_jobs:
+            already_failed = job.dep_fail
             job.dep_fail = False
             pending = sets.Set(job.all_dependencies).difference(sets.Set(job.satisfied_dependencies))
             for jobid_str in pending:
@@ -3037,6 +3060,10 @@ class QueueManager(Component):
                 if not self.Queues.get_jobs([{'jobid': jobid}]):
                     job.dep_fail = True
                     break
+            if (job.dep_fail and (not already_failed)):
+                db_log_to_file(ReportObject("Dep fail on job %s." % (job.jobid), 
+                                            None, "dep_fail", "job_prog", JobProgMsg(job)).encode())
+
     check_dep_fail = automatic(check_dep_fail, period=60)
     
     
@@ -3054,14 +3081,7 @@ class JobProgMsg(object):
             pass
 
         self.jobid = job.jobid
-        self.state = job.sm_state
-        self.admin_hold = job.admin_hold
-        self.user_hold = job.user_hold
-        self.dep_hold = bool(job.has_dep_hold)
-        self.max_running = job.max_running
-        self.dep_fail = job.dep_fail
-        self.taskid = job.taskid
-        self.task_running = job.task_running
+        self.cobalt_state = job.sm_state
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
 

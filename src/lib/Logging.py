@@ -318,12 +318,12 @@ class DatabaseWriter(object):
             #until I figure out a better way, do nothing, since this can be
             #turned off.
         if cls.off:
+            if cls.write_thread.is_alive():
+                cls.write_thread.send("Terminate\n")
             return
         
         cls.write_thread.send((data +"\n"))
-        
 
-        return
     
     @classmethod
     def close(cls):
@@ -366,6 +366,7 @@ class ThreadedWrite(threading.Thread):
             
         #TODO: set up a fail-over file.
         #drain the queue and then terminate.
+        print "Writer thread terminating."
         while not self.msg_queue.empty():
             queue_data = self.msg_queue.get(block=False)
             out_file = open(os.path.join(self.output_filename), "a")
@@ -387,7 +388,6 @@ class ThreadedWrite(threading.Thread):
             self.terminating = True
             self.close()
             return
-
         self.msg_queue.put(data, block=False)
 
     def close(self):
