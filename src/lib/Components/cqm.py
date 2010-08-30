@@ -7,10 +7,10 @@ __revision__ = '$Revision$'
 #
 # TODO:
 #
-# - modify progress routine to catch exceptions and report them using __sm_log_exception.  should some or all exceptions cause
+# - modify progress routine to catch exceptions and report them using _sm_log_exception.  should some or all exceptions cause
 #   the job to be terminated?
 #
-# - make a pass through the __sm_log calls and decide the correct error levels
+# - make a pass through the _sm_log calls and decide the correct error levels
 #
 # Changes:
 #
@@ -150,6 +150,11 @@ def str_elapsed_time(elapsed_time):
 def has_private_attr(obj, attr):
     assert attr[0:2] == "__"
     return hasattr(obj, "_" + obj.__class__.__name__ + attr)
+
+def has_semi_private_attr(obj, attr):
+    assert attr[0:1] == "_"
+    return hasattr(obj, attr)
+
 
 class Signal_Map (object):
     checkpoint = 'SIGUSR1'
@@ -401,88 +406,88 @@ class Job (StateMachine):
 
     def __init__(self, spec):
         seas = {
-            ('Ready', 'Run') : [self.__sm_ready__run],
-            ('Ready', 'Hold') : [self.__sm_ready__hold],
-            ('Ready', 'Release') : [self.__sm_ready__release],
-            ('Ready', 'Kill') : [self.__sm_ready__kill],
-            ('Hold', 'Hold') : [self.__sm_hold__hold],
-            ('Hold', 'Release') : [self.__sm_hold__release],
-            ('Hold', 'Kill') : [self.__sm_hold__kill],
-            ('Prologue', 'Progress') : [self.__sm_prologue__progress],
-            ('Prologue', 'Hold') : [self.__sm_common__pending_hold],
-            ('Prologue', 'Release') : [self.__sm_common__pending_release],
-            ('Prologue', 'Preempt') : [self.__sm_common__pending_preempt],
-            ('Prologue', 'Kill') : [self.__sm_common__pending_kill],
-            ('Release_Resources_Retry', 'Progress') : [self.__sm_release_resources_retry__progress],
-            ('Release_Resources_Retry', 'Hold') : [self.__sm_exit_common__hold],
-            ('Release_Resources_Retry', 'Release') : [self.__sm_exit_common__release],
-            ('Release_Resources_Retry', 'Preempt') : [self.__sm_exit_common__preempt],
-            ('Release_Resources_Retry', 'Kill') : [self.__sm_exit_common__kill],
-            ('Run_Retry', 'Progress') : [self.__sm_run_retry__progress],
-            ('Run_Retry', 'Hold') : [self.__sm_common__pending_hold],
-            ('Run_Retry', 'Release') : [self.__sm_common__pending_release],
-            ('Run_Retry', 'Preempt') : [self.__sm_common__pending_preempt],
-            ('Run_Retry', 'Kill') : [self.__sm_run_retry__kill],
-            ('Running', 'Progress') : [self.__sm_running__progress],
-            ('Running', 'Hold') : [self.__sm_common__pending_hold],
-            ('Running', 'Release') : [self.__sm_common__pending_release],
-            ('Running', 'Preempt') : [self.__sm_common__pending_preempt],
-            ('Running', 'Kill') : [self.__sm_running__kill],
-            ('Running', 'Task_End') : [self.__sm_running__task_end],
-            ('Kill_Retry', 'Progress') : [self.__sm_kill_retry__progress],
-            ('Kill_Retry', 'Hold') : [self.__sm_kill_common__hold],
-            ('Kill_Retry', 'Release') : [self.__sm_kill_common__release],
-            ('Kill_Retry', 'Preempt') : [self.__sm_kill_common__preempt],
-            ('Kill_Retry', 'Kill') : [self.__sm_kill_retry__kill],
-            ('Kill_Retry', 'Task_End') : [self.__sm_kill_retry__task_end],
-            ('Killing', 'Progress') : [self.__sm_killing__progress],
-            ('Killing', 'Hold') : [self.__sm_kill_common__hold],
-            ('Killing', 'Release') : [self.__sm_kill_common__release],
-            ('Killing', 'Preempt') : [self.__sm_kill_common__preempt],
-            ('Killing', 'Kill') : [self.__sm_killing__kill],
-            ('Killing', 'Task_End') : [self.__sm_killing__task_end],
-            ('Preempt_Retry', 'Progress') : [self.__sm_preempt_retry__progress],
-            ('Preempt_Retry', 'Hold') : [self.__sm_common__pending_hold],
-            ('Preempt_Retry', 'Release') : [self.__sm_common__pending_release],
-            ('Preempt_Retry', 'Kill') : [self.__sm_preempt_retry__kill],
-            ('Preempt_Retry', 'Task_End') : [self.__sm_preempt_retry__task_end],
-            ('Preempting', 'Progress') : [self.__sm_preempting__progress],
-            ('Preempting', 'Hold') : [self.__sm_common__pending_hold],
-            ('Preempting', 'Release') : [self.__sm_common__pending_release],
-            ('Preempting', 'Kill') : [self.__sm_preempting__kill],
-            ('Preempting', 'Task_End') : [self.__sm_preempting__task_end],
-            ('Preempt_Finalize_Retry', 'Progress') : [self.__sm_preempt_finalize_retry__progress],
-            ('Preempt_Finalize_Retry', 'Hold') : [self.__sm_common__pending_hold],
-            ('Preempt_Finalize_Retry', 'Release') : [self.__sm_common__pending_release],
-            ('Preempt_Finalize_Retry', 'Kill') : [self.__sm_common__pending_kill],
-            ('Preempt_Epilogue', 'Progress') : [self.__sm_preempt_epilogue__progress],
-            ('Preempt_Epilogue', 'Hold') : [self.__sm_common__pending_hold],
-            ('Preempt_Epilogue', 'Release') : [self.__sm_common__pending_release],
-            ('Preempt_Epilogue', 'Kill') : [self.__sm_common__pending_kill],
-            ('Preempted', 'Run') : [self.__sm_preempted__run],
-            ('Preempted', 'Hold') : [self.__sm_preempted__hold],
-            ('Preempted', 'Release') : [self.__sm_preempted__release],
-            ('Preempted', 'Kill') : [self.__sm_preempted__kill],
-            ('Preempted_Hold', 'Hold') : [self.__sm_preempted_hold__hold],
-            ('Preempted_Hold', 'Release') : [self.__sm_preempted_hold__release],
-            ('Preempted_Hold', 'Kill') : [self.__sm_preempted_hold__kill],
-            ('Finalize_Retry', 'Progress') : [self.__sm_finalize_retry__progress],
-            ('Finalize_Retry', 'Hold') : [self.__sm_exit_common__hold],
-            ('Finalize_Retry', 'Release') : [self.__sm_exit_common__release],
-            ('Finalize_Retry', 'Preempt') : [self.__sm_exit_common__preempt],
-            ('Finalize_Retry', 'Kill') : [self.__sm_exit_common__kill],
-            ('Resource_Epilogue', 'Progress') : [self.__sm_resource_epilogue__progress],
-            ('Resource_Epilogue', 'Hold') : [self.__sm_exit_common__hold],
-            ('Resource_Epilogue', 'Release') : [self.__sm_exit_common__release],
-            ('Resource_Epilogue', 'Preempt') : [self.__sm_exit_common__preempt],
-            ('Resource_Epilogue', 'Kill') : [self.__sm_exit_common__kill],
-            ('Job_Epilogue', 'Progress') : [self.__sm_job_epilogue__progress],
-            ('Job_Epilogue', 'Hold') : [self.__sm_exit_common__hold],
-            ('Job_Epilogue', 'Release') : [self.__sm_exit_common__release],
-            ('Job_Epilogue', 'Preempt') : [self.__sm_exit_common__preempt],
-            ('Job_Epilogue', 'Kill') : [self.__sm_exit_common__kill],
+            ('Ready', 'Run') : [self._sm_ready__run],
+            ('Ready', 'Hold') : [self._sm_ready__hold],
+            ('Ready', 'Release') : [self._sm_ready__release],
+            ('Ready', 'Kill') : [self._sm_ready__kill],
+            ('Hold', 'Hold') : [self._sm_hold__hold],
+            ('Hold', 'Release') : [self._sm_hold__release],
+            ('Hold', 'Kill') : [self._sm_hold__kill],
+            ('Prologue', 'Progress') : [self._sm_prologue__progress],
+            ('Prologue', 'Hold') : [self._sm_common__pending_hold],
+            ('Prologue', 'Release') : [self._sm_common__pending_release],
+            ('Prologue', 'Preempt') : [self._sm_common__pending_preempt],
+            ('Prologue', 'Kill') : [self._sm_common__pending_kill],
+            ('Release_Resources_Retry', 'Progress') : [self._sm_release_resources_retry__progress],
+            ('Release_Resources_Retry', 'Hold') : [self._sm_exit_common__hold],
+            ('Release_Resources_Retry', 'Release') : [self._sm_exit_common__release],
+            ('Release_Resources_Retry', 'Preempt') : [self._sm_exit_common__preempt],
+            ('Release_Resources_Retry', 'Kill') : [self._sm_exit_common__kill],
+            ('Run_Retry', 'Progress') : [self._sm_run_retry__progress],
+            ('Run_Retry', 'Hold') : [self._sm_common__pending_hold],
+            ('Run_Retry', 'Release') : [self._sm_common__pending_release],
+            ('Run_Retry', 'Preempt') : [self._sm_common__pending_preempt],
+            ('Run_Retry', 'Kill') : [self._sm_run_retry__kill],
+            ('Running', 'Progress') : [self._sm_running__progress],
+            ('Running', 'Hold') : [self._sm_common__pending_hold],
+            ('Running', 'Release') : [self._sm_common__pending_release],
+            ('Running', 'Preempt') : [self._sm_common__pending_preempt],
+            ('Running', 'Kill') : [self._sm_running__kill],
+            ('Running', 'Task_End') : [self._sm_running__task_end],
+            ('Kill_Retry', 'Progress') : [self._sm_kill_retry__progress],
+            ('Kill_Retry', 'Hold') : [self._sm_kill_common__hold],
+            ('Kill_Retry', 'Release') : [self._sm_kill_common__release],
+            ('Kill_Retry', 'Preempt') : [self._sm_kill_common__preempt],
+            ('Kill_Retry', 'Kill') : [self._sm_kill_retry__kill],
+            ('Kill_Retry', 'Task_End') : [self._sm_kill_retry__task_end],
+            ('Killing', 'Progress') : [self._sm_killing__progress],
+            ('Killing', 'Hold') : [self._sm_kill_common__hold],
+            ('Killing', 'Release') : [self._sm_kill_common__release],
+            ('Killing', 'Preempt') : [self._sm_kill_common__preempt],
+            ('Killing', 'Kill') : [self._sm_killing__kill],
+            ('Killing', 'Task_End') : [self._sm_killing__task_end],
+            ('Preempt_Retry', 'Progress') : [self._sm_preempt_retry__progress],
+            ('Preempt_Retry', 'Hold') : [self._sm_common__pending_hold],
+            ('Preempt_Retry', 'Release') : [self._sm_common__pending_release],
+            ('Preempt_Retry', 'Kill') : [self._sm_preempt_retry__kill],
+            ('Preempt_Retry', 'Task_End') : [self._sm_preempt_retry__task_end],
+            ('Preempting', 'Progress') : [self._sm_preempting__progress],
+            ('Preempting', 'Hold') : [self._sm_common__pending_hold],
+            ('Preempting', 'Release') : [self._sm_common__pending_release],
+            ('Preempting', 'Kill') : [self._sm_preempting__kill],
+            ('Preempting', 'Task_End') : [self._sm_preempting__task_end],
+            ('Preempt_Finalize_Retry', 'Progress') : [self._sm_preempt_finalize_retry__progress],
+            ('Preempt_Finalize_Retry', 'Hold') : [self._sm_common__pending_hold],
+            ('Preempt_Finalize_Retry', 'Release') : [self._sm_common__pending_release],
+            ('Preempt_Finalize_Retry', 'Kill') : [self._sm_common__pending_kill],
+            ('Preempt_Epilogue', 'Progress') : [self._sm_preempt_epilogue__progress],
+            ('Preempt_Epilogue', 'Hold') : [self._sm_common__pending_hold],
+            ('Preempt_Epilogue', 'Release') : [self._sm_common__pending_release],
+            ('Preempt_Epilogue', 'Kill') : [self._sm_common__pending_kill],
+            ('Preempted', 'Run') : [self._sm_preempted__run],
+            ('Preempted', 'Hold') : [self._sm_preempted__hold],
+            ('Preempted', 'Release') : [self._sm_preempted__release],
+            ('Preempted', 'Kill') : [self._sm_preempted__kill],
+            ('Preempted_Hold', 'Hold') : [self._sm_preempted_hold__hold],
+            ('Preempted_Hold', 'Release') : [self._sm_preempted_hold__release],
+            ('Preempted_Hold', 'Kill') : [self._sm_preempted_hold__kill],
+            ('Finalize_Retry', 'Progress') : [self._sm_finalize_retry__progress],
+            ('Finalize_Retry', 'Hold') : [self._sm_exit_common__hold],
+            ('Finalize_Retry', 'Release') : [self._sm_exit_common__release],
+            ('Finalize_Retry', 'Preempt') : [self._sm_exit_common__preempt],
+            ('Finalize_Retry', 'Kill') : [self._sm_exit_common__kill],
+            ('Resource_Epilogue', 'Progress') : [self._sm_resource_epilogue__progress],
+            ('Resource_Epilogue', 'Hold') : [self._sm_exit_common__hold],
+            ('Resource_Epilogue', 'Release') : [self._sm_exit_common__release],
+            ('Resource_Epilogue', 'Preempt') : [self._sm_exit_common__preempt],
+            ('Resource_Epilogue', 'Kill') : [self._sm_exit_common__kill],
+            ('Job_Epilogue', 'Progress') : [self._sm_job_epilogue__progress],
+            ('Job_Epilogue', 'Hold') : [self._sm_exit_common__hold],
+            ('Job_Epilogue', 'Release') : [self._sm_exit_common__release],
+            ('Job_Epilogue', 'Preempt') : [self._sm_exit_common__preempt],
+            ('Job_Epilogue', 'Kill') : [self._sm_exit_common__kill],
             }
-        # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self.__sm_terminal, {})])
+        # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
         
         self.jobid = spec.get("jobid")
@@ -641,7 +646,7 @@ class Job (StateMachine):
         '''send a signal to the managed task'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
         try:
-            self.__sm_log_info("instructing the system component to send signal %s" % (self.__signaling_info.signal,))
+            self._sm_log_info("instructing the system component to send signal %s" % (self.__signaling_info.signal,))
             pgroup = ComponentProxy("system").signal_process_groups([{'id':self.taskid}], self.__signaling_info.signal)
         except (ComponentLookupError, xmlrpclib.Fault), e:
             #
@@ -651,15 +656,15 @@ class Job (StateMachine):
             # very least unexpected fault code should be reported as such and the retry loop broken.
             #
             if retry:
-                self.__sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
+                self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
                 return Job.__rc_retry
             else:
-                self.__sm_log_warn("failed to communicate with the system component (%s); manual cleanup may be required" % \
+                self._sm_log_warn("failed to communicate with the system component (%s); manual cleanup may be required" % \
                     (e,))
                 return Job.__rc_xmlrpc
         except:
             traceback.print_exc()
-            self.__sm_raise_exception("unexpected error from the system component; manual cleanup may be required")
+            self._sm_raise_exception("unexpected error from the system component; manual cleanup may be required")
             return Job.__rc_unknown
 
         self.__signaled_info = self.__signaling_info
@@ -671,7 +676,7 @@ class Job (StateMachine):
         if self.preemptable and self.maxtasktime < walltime:
             walltime = self.maxtasktime
         try:
-            self.__sm_log_info("instructing the system component to begin executing the task")
+            self._sm_log_info("instructing the system component to begin executing the task")
             pgroup = ComponentProxy("system").add_process_groups([{
                 'id':"*",
                 'jobid':self.jobid,
@@ -700,13 +705,13 @@ class Job (StateMachine):
                 else:
                     self.__resource_nodects.append(self.nodes)
             else:
-                self.__sm_log_error("process group creation failed", cobalt_log = True)
+                self._sm_log_error("process group creation failed", cobalt_log = True)
                 return Job.__rc_pg_create
         except (ComponentLookupError, xmlrpclib.Fault), e:
-            self.__sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
+            self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            self.__sm_raise_exception("unexpected error returned from the system component when attempting to add task",
+            self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
 
@@ -719,12 +724,12 @@ class Job (StateMachine):
             if result:
                 self.exit_status = result[0].get('exit_status')
             else:
-                self.__sm_log_warn("system component was unable to locate the task; exit status not obtained")
+                self._sm_log_warn("system component was unable to locate the task; exit status not obtained")
         except (ComponentLookupError, xmlrpclib.Fault), e:
-            self.__sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
+            self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            self.__sm_raise_exception("unexpected error returned from the system component while finalizing task")
+            self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
 
         self.taskid = None
@@ -736,49 +741,49 @@ class Job (StateMachine):
             ComponentProxy("system").reserve_resources_until(self.location, None, self.jobid)
             return Job.__rc_success
         except (ComponentLookupError, xmlrpclib.Fault), e:
-            self.__sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
+            self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            self.__sm_raise_exception("unexpected error returned from the system component while releasing resources")
+            self._sm_raise_exception("unexpected error returned from the system component while releasing resources")
             return Job.__rc_unknown
 
-    def __sm_log_debug(self, msg, cobalt_log = False):
+    def _sm_log_debug(self, msg, cobalt_log = False):
         '''write an informational message to the CQM log that includes state machine status'''
-        if self.__sm_event != None:
-            event_msg = "; Event=%s" % (self.__sm_event,)
+        if self._sm_event != None:
+            event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        logger.debug("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self.__sm_state, event_msg, msg))
+        logger.debug("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg))
         if cobalt_log:
             self.__write_cobalt_log("Debug: %s" % (msg,))
 
-    def __sm_log_info(self, msg, cobalt_log = False):
+    def _sm_log_info(self, msg, cobalt_log = False):
         '''write an informational message to the CQM log that includes state machine status'''
-        if self.__sm_event != None:
-            event_msg = "; Event=%s" % (self.__sm_event,)
+        if self._sm_event != None:
+            event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        logger.info("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self.__sm_state, event_msg, msg))
+        logger.info("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg))
         if cobalt_log:
             self.__write_cobalt_log("Info: %s" % (msg,))
 
-    def __sm_log_warn(self, msg, cobalt_log = False):
+    def _sm_log_warn(self, msg, cobalt_log = False):
         '''write a warning message to the CQM log that includes state machine status'''
-        if self.__sm_event != None:
-            event_msg = "; Event=%s" % (self.__sm_event,)
+        if self._sm_event != None:
+            event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        logger.warning("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self.__sm_state, event_msg, msg))
+        logger.warning("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg))
         if cobalt_log:
             self.__write_cobalt_log("Warning: %s" % (msg,))
 
-    def __sm_log_error(self, msg, tb_flag = True, skip_tb_entries = 1, cobalt_log = False):
+    def _sm_log_error(self, msg, tb_flag = True, skip_tb_entries = 1, cobalt_log = False):
         '''write an error message to the CQM log that includes state machine status and a stack trace'''
-        if self.__sm_event != None:
-            event_msg = "; Event=%s" % (self.__sm_event,)
+        if self._sm_event != None:
+            event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self.__sm_state, event_msg, msg)
+        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg)
         if tb_flag:
             stack = traceback.format_stack()
             last_tb_entry = len(stack) - skip_tb_entries
@@ -788,13 +793,13 @@ class Job (StateMachine):
         if cobalt_log:
             self.__write_cobalt_log("ERROR: %s" % (msg,))
 
-    def __sm_log_exception(self, msg, cobalt_log = False):
+    def _sm_log_exception(self, msg, cobalt_log = False):
         '''write an error message to the CQM log that includes state machine status and a stack trace'''
-        if self.__sm_event != None:
-            event_msg = "; Event=%s" % (self.__sm_event,)
+        if self._sm_event != None:
+            event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self.__sm_state, event_msg, msg)
+        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg)
         (exc_cls, exc, tb) = sys.exc_info()
         exc_str = traceback.format_exception_only(exc_cls, exc)[0]
         full_msg += "\n    Exception: %s" % (exc_str)
@@ -805,11 +810,11 @@ class Job (StateMachine):
         if cobalt_log:
             self.__write_cobalt_log("EXCEPTION: %s" % (full_msg,))
 
-    def __sm_raise_exception(self, msg, cobalt_log = False):
-        self.__sm_log_error(msg, skip_tb_entries = 2, cobalt_log = cobalt_log)
-        raise JobProcessingError(msg, self.jobid, self.user, self.state, self.__sm_state, self.__sm_event)
+    def _sm_raise_exception(self, msg, cobalt_log = False):
+        self._sm_log_error(msg, skip_tb_entries = 2, cobalt_log = cobalt_log)
+        raise JobProcessingError(msg, self.jobid, self.user, self.state, self._sm_state, self._sm_event)
 
-    def __sm_log_user_delete(self, signame, user = None, pending = False):
+    def _sm_log_user_delete(self, signame, user = None, pending = False):
         if user != None:
             umsg = " by user %s" % (user,)
         else:
@@ -818,60 +823,60 @@ class Job (StateMachine):
             pmsg = " now pending"
         else:
             pmsg = ""
-        self.__sm_log_info("user delete requested with signal %s%s%s" % (signame, umsg, pmsg), cobalt_log = True)
+        self._sm_log_info("user delete requested with signal %s%s%s" % (signame, umsg, pmsg), cobalt_log = True)
 
-    def __sm_signaling_info_set_user_delete(self, signame = Signal_Map.terminate, user = None, pending = False):
+    def _sm_signaling_info_set_user_delete(self, signame = Signal_Map.terminate, user = None, pending = False):
         self.__signaling_info = Signal_Info(Signal_Info.Reason.delete, signame, user, pending)
-        self.__sm_log_user_delete(signame, user, pending)
+        self._sm_log_user_delete(signame, user, pending)
 
-    def __sm_check_job_timers(self):
+    def _sm_check_job_timers(self):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
-            self.__sm_log_info("maximum execution time exceeded; initiating job terminiation", cobalt_log = True)
+            self._sm_log_info("maximum execution time exceeded; initiating job terminiation", cobalt_log = True)
             accounting_logger.info(accounting.abort(self.jobid))
             return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
             return None
 
-    def __sm_kill_task(self):
+    def _sm_kill_task(self):
         '''initiate the user deletion of a task by signaling it and then changing to the appropriate state'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
         rc = self.__task_signal()
         if rc == Job.__rc_success:
             # start the signal timer so that the state machine knows when to escalate to sending a force kill signal
             if self.__signaled_info.signal != Signal_Map.force_kill:
-                self.__sm_log_debug("setting force kill signal timer to %d seconds" % (self.force_kill_delay * 60,))
+                self._sm_log_debug("setting force kill signal timer to %d seconds" % (self.force_kill_delay * 60,))
                 self.__signal_timer = Timer(self.force_kill_delay * 60)
             else:
                 self.__signal_timer = Timer()
             self.__signal_timer.start()
-            self.__sm_state = 'Killing'
+            self._sm_state = 'Killing'
             return True
         else:
-            self.__sm_state = 'Kill_Retry'
+            self._sm_state = 'Kill_Retry'
             return False
 
-    def __sm_check_preempt_timers(self):
+    def _sm_check_preempt_timers(self):
         '''
         if maximum resource timer has expired, or a preemption is pending and the minimum resource time has been exceeded, then
         inform the task it's time to checkpoint and terminate
         '''
         if self.__maxtasktimer.has_expired:
-            self.__sm_log_info("maximum resource time exceeded; initiating job preemption")
+            self._sm_log_info("maximum resource time exceeded; initiating job preemption")
             if self.maxcptime > 0:
                 return Signal_Info(Signal_Info.Reason.preempt, Signal_Map.checkpoint)
             else:
                 return Signal_Info(Signal_Info.Reason.preempt, Signal_Map.terminate)
         elif has_private_attr(self, '__signaling_info') and self.__signaling_info.reason == Signal_Info.Reason.preempt and \
                 self.__signaling_info.pending and self.__mintasktimer.has_expired:
-            self.__sm_log_info("preemption pending and resource time exceeded; initiating job preemption")
+            self._sm_log_info("preemption pending and resource time exceeded; initiating job preemption")
             sig_info = self.__signaling_info
             sig_info.pending = False
             return sig_info
         else:
             return None
 
-    def __sm_preempt_task(self):
+    def _sm_preempt_task(self):
         '''initiate the preemption of a task by signaling it and then changing to the appropriate state'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
         rc = self.__task_signal()
@@ -879,59 +884,59 @@ class Job (StateMachine):
             if self.__signaled_info.signal == Signal_Map.checkpoint:
                 # start the signal timer so that the state machine knows when to escalate to sending a terminate signal
                 self.__signal_timer = Timer(self.maxcptime * 60)
-                self.__sm_log_debug("setting terminate signal timer to %d seconds" % (self.maxcptime * 60,))
+                self._sm_log_debug("setting terminate signal timer to %d seconds" % (self.maxcptime * 60,))
             elif self.__signaled_info.signal == Signal_Map.terminate:
                 # start the signal timer so that the state machine knows when to escalate to sending a force kill signal
                 self.__signal_timer = Timer(self.force_kill_delay * 60)
-                self.__sm_log_debug("setting force kill signal timer to %d seconds" % (self.force_kill_delay * 60,))
+                self._sm_log_debug("setting force kill signal timer to %d seconds" % (self.force_kill_delay * 60,))
             else:
                 self.__signal_timer = Timer()
             self.__signal_timer.start()
-            self.__sm_state = 'Preempting'
+            self._sm_state = 'Preempting'
             db_log_to_file(ReportObject(("Preempting job %s" % self.jobid),
                                     None, "preempting", "job_prog", JobProgMsg(self)).encode())
             return True
         else:
-            self.__sm_state = 'Preempt_Retry'
+            self._sm_state = 'Preempt_Retry'
             db_log_to_file(ReportObject(("Problem preempting job %s, retrying." % self.jobid),
                                     None, "preempting", "job_prog", JobProgMsg(self)).encode())
             return False
 
-    def __sm_start_resource_epilogue_scripts(self, new_state = 'Resource_Epilogue'):
+    def _sm_start_resource_epilogue_scripts(self, new_state = 'Resource_Epilogue'):
         resource_scripts = get_cqm_config('resource_postscripts', "").split(':')
-        self.__sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
-        self.__sm_scripts_thread.start()
-        self.__sm_state = new_state
+        self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
+        self._sm_scripts_thread.start()
+        self._sm_state = new_state
         db_log_to_file(ReportObject(("beginning resource epilogue."),
                                     None, "resource_epilogue_start", "job_prog", JobProgMsg(self)).encode())
 
-    def __sm_start_job_epilogue_scripts(self, new_state = 'Job_Epilogue'):
+    def _sm_start_job_epilogue_scripts(self, new_state = 'Job_Epilogue'):
         job_scripts = get_cqm_config('job_postscripts', "").split(':')
-        self.__sm_scripts_thread = RunScriptsThread(job_scripts, self, self.fields)
-        self.__sm_scripts_thread.start()
-        self.__sm_state = new_state
+        self._sm_scripts_thread = RunScriptsThread(job_scripts, self, self.fields)
+        self._sm_scripts_thread.start()
+        self._sm_state = new_state
         db_log_to_file(ReportObject(("beginning job epilogue."),
                                     None, "job_epilogue_start", "job_prog", JobProgMsg(self)).encode())
         
-    def __sm_scripts_are_finished(self, type):
+    def _sm_scripts_are_finished(self, type):
         try:
-            if self.__sm_scripts_thread.isAlive():
+            if self._sm_scripts_thread.isAlive():
                 return False
         except ThreadPickledAliveException:
-            if not has_private_attr(self, "__sm_scripts_state_unknown"):
-                self.__sm_log_error(("restart of cqm left running scripts in an unknown state; job has been frozen; " + \
-                    "scripts=%s; scripts_completed=%s") % (":".join(self.__sm_scripts_thread.scripts_provided), \
-                    ":".join(self.__sm_scripts_thread.scripts_completed)), cobalt_log = True)
-                self.__sm_scripts_state_unknown = True
+            if not has_semi_private_attr(self, "_sm_scripts_state_unknown"):
+                self._sm_log_error(("restart of cqm left running scripts in an unknown state; job has been frozen; " + \
+                    "scripts=%s; scripts_completed=%s") % (":".join(self._sm_scripts_thread.scripts_provided), \
+                    ":".join(self._sm_scripts_thread.scripts_completed)), cobalt_log = True)
+                self._sm_scripts_state_unknown = True
 
-        self.__sm_scripts_thread.join()
+        self._sm_scripts_thread.join()
 
-        for result in self.__sm_scripts_thread.results:
+        for result in self._sm_scripts_thread.results:
             if result.has_key('exception'):
-                self.__sm_log_warn("exception with %s %s, error is %s" % (type, result['script'], result['exception']))
+                self._sm_log_warn("exception with %s %s, error is %s" % (type, result['script'], result['exception']))
             elif result['rc'] != 0:
                 err_msg = ("\n" + result['err']).replace("\n", "\n    ").rstrip()
-                self.__sm_log_warn("return code from %s %s was %d; error text follows:%s" % \
+                self._sm_log_warn("return code from %s %s was %d; error text follows:%s" % \
                     (type, result['script'], result['rc'], err_msg))
         #PMR: shold errors from epilogue somehow be captured?
         if type == 'resource postscript':
@@ -940,13 +945,13 @@ class Job (StateMachine):
             db_log_to_file(ReportObject("Job Postscript completed.", None, "job_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
         return True
 
-    def __sm_common_queued__hold(self, hold_state, args):
+    def _sm_common_queued__hold(self, hold_state, args):
         '''place a hold on a job in the queued state'''
         if self.__admin_hold:
-            self.__sm_raise_exception("admin hold set on a job in the '%s' state", self.__sm_state)
+            self._sm_raise_exception("admin hold set on a job in the '%s' state", self._sm_state)
             return
         if self.__user_hold:
-            self.__sm_raise_exception("user hold set on a job in the '%s' state", self.__sm_state)
+            self._sm_raise_exception("user hold set on a job in the '%s' state", self._sm_state)
             return
 
         if args['type'] == 'admin':
@@ -954,30 +959,30 @@ class Job (StateMachine):
         elif args['type'] == 'user':
             self.__user_hold = True
         else:
-            self.__sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if not self.__timers.has_key('hold'):
             self.__timers['hold'] = Timer()
         self.__timers['hold'].start()
-        self.__sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
-        self.__sm_state = hold_state
+        self._sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
+        self._sm_state = hold_state
         db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
                                     None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self)).encode())
         
 
-    def __sm_common_queued__release(self, args):
+    def _sm_common_queued__release(self, args):
         '''handle attempt to erroneously release a job in the queued state'''
         if self.__admin_hold:
-            self.__sm_raise_exception("admin hold set on a job in the '%s' state", self.__sm_state)
+            self._sm_raise_exception("admin hold set on a job in the '%s' state", self._sm_state)
             return
         if self.__user_hold:
-            self.__sm_raise_exception("user hold set on a job in the '%s' state", self.__sm_state)
+            self._sm_raise_exception("user hold set on a job in the '%s' state", self._sm_state)
             return
 
-        self.__sm_log_info("job is not being held; ignoring release request", cobalt_log = True)
+        self._sm_log_info("job is not being held; ignoring release request", cobalt_log = True)
 
-    def __sm_common_hold__hold(self, args):
+    def _sm_common_hold__hold(self, args):
         '''place another hold on a job that is already in a hold state'''
         activity = False
 
@@ -990,20 +995,20 @@ class Job (StateMachine):
                 self.__user_hold = True
                 activity = True
         else:
-            self.__sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if activity:
-            self.__sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
             db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
                                         None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self)).encode())
         else:
-            self.__sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
         '''release a hold previous placed on a job'''
         activity = False
 
-    def __sm_common_hold__release(self, queued_state, args):
+    def _sm_common_hold__release(self, queued_state, args):
         '''release a hold previous placed on a job in a hold state'''
         activity = False
 
@@ -1016,31 +1021,31 @@ class Job (StateMachine):
                 self.__user_hold = False
                 activity = True
         else:
-            self.__sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if activity:
-            self.__sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
             db_log_to_file(ReportObject("%s hold released on job %s." % (args['type'], self.jobid), 
                                         None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self)).encode())
             if self.no_holds_left():
                 db_log_to_file(ReportObject("No holds left on job %s." % (self.jobid), 
                                             None, "all_holds_clear", "job_prog", JobProgMsg(self)).encode())
         else:
-            self.__sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
             
         if not self.__admin_hold and not self.__user_hold:
-            self.__sm_log_info("no holds remain; releasing job", cobalt_log = True)
+            self._sm_log_info("no holds remain; releasing job", cobalt_log = True)
             self.__timers['hold'].stop()
             self.etime = time.time()
-            self.__sm_state = queued_state
+            self._sm_state = queued_state
             #db_log_to_file(ReportObject("all holds released on job %s. Requeueing" % 
             #                            (args['type'], self.jobid), 
             #                            None, "hold_release", "job", self).encode())
 
-    def __sm_ready__run(self, args):
+    def _sm_ready__run(self, args):
         '''prepare a job for execution'''
-        self.__sm_log_info("preparing job for execution")
+        self._sm_log_info("preparing job for execution")
 
         # stop queue timers
         self.__timers['queue'].stop()
@@ -1137,45 +1142,45 @@ class Job (StateMachine):
         # start job and resource prologue scripts
         job_scripts = get_cqm_config('job_prescripts', "").split(':')
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
-        self.__sm_scripts_thread = RunScriptsThread(job_scripts + resource_scripts, self, self.fields)
-        self.__sm_scripts_thread.start()
+        self._sm_scripts_thread = RunScriptsThread(job_scripts + resource_scripts, self, self.fields)
+        self._sm_scripts_thread.start()
 
-        self.__sm_state = 'Prologue'
+        self._sm_state = 'Prologue'
         db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
                                     None, "starting", "job_prog", JobProgMsg(self)).encode())
 
-    def __sm_ready__hold(self, args):
+    def _sm_ready__hold(self, args):
         '''place a hold on a job in the queued state'''
-        self.__sm_common_queued__hold('Hold', args)
+        self._sm_common_queued__hold('Hold', args)
 
-    def __sm_ready__release(self, args):
+    def _sm_ready__release(self, args):
         '''handle attempt to erroneously release a job in the ready state'''
-        self.__sm_common_queued__release(args)
+        self._sm_common_queued__release(args)
 
-    def __sm_ready__kill(self, args):
+    def _sm_ready__kill(self, args):
         '''delete a job in the ready state'''
-        self.__sm_log_info("user delete requested; removing job from the queue", cobalt_log = True)
+        self._sm_log_info("user delete requested; removing job from the queue", cobalt_log = True)
         self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, args['signal'], args['user'])
-        self.__sm_state = 'Terminal'
+        self._sm_state = 'Terminal'
 
-    def __sm_hold__hold(self, args):
+    def _sm_hold__hold(self, args):
         '''place another hold on a job that is already in the hold state'''
-        self.__sm_common_hold__hold(args)
+        self._sm_common_hold__hold(args)
 
-    def __sm_hold__release(self, args):
+    def _sm_hold__release(self, args):
         '''release a hold previous placed on a job'''
-        self.__sm_common_hold__release('Ready', args)
+        self._sm_common_hold__release('Ready', args)
 
-    def __sm_hold__kill(self, args):
+    def _sm_hold__kill(self, args):
         '''delete a job in the hold state'''
-        self.__sm_log_info("user delete requested; removing job from the queue", cobalt_log = True)
+        self._sm_log_info("user delete requested; removing job from the queue", cobalt_log = True)
         self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, args['signal'], args['user'])
-        self.__sm_state = 'Terminal'
+        self._sm_state = 'Terminal'
 
-    def __sm_common__pending_hold(self, args):
+    def _sm_common__pending_hold(self, args):
         '''place a pending hold to a preemptable job that is active'''
         if not self.preemptable:
-            self.__sm_log_info("non-preemptable job has already started; hold request ignored", cobalt_log = True)
+            self._sm_log_info("non-preemptable job has already started; hold request ignored", cobalt_log = True)
             return
 
         activity = False
@@ -1189,19 +1194,19 @@ class Job (StateMachine):
                 self.__user_hold = True
                 activity = True
         else:
-            self.__sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if activity:
-            self.__sm_log_info("pending %s hold set" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("pending %s hold set" % (args['type'],), cobalt_log = True)
         else:
-            self.__sm_log_info("pending %s hold already present; ignoring hold request" % \
+            self._sm_log_info("pending %s hold already present; ignoring hold request" % \
                 (args['type'],), cobalt_log = True)
 
-    def __sm_common__pending_release(self, args):
+    def _sm_common__pending_release(self, args):
         '''remove a pending hold from a preemptable job that is active'''
         if not self.preemptable:
-            self.__sm_log_info("non-preemptable job has already started; release request ignored", cobalt_log = True)
+            self._sm_log_info("non-preemptable job has already started; release request ignored", cobalt_log = True)
             return
 
         activity = False
@@ -1215,27 +1220,27 @@ class Job (StateMachine):
                 self.__user_hold = False
                 activity = True
         else:
-            self.__sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if activity:
-            self.__sm_log_info("pending %s hold removed" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("pending %s hold removed" % (args['type'],), cobalt_log = True)
         else:
-            self.__sm_log_info("pending %s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
+            self._sm_log_info("pending %s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
 
-    def __sm_common__pending_kill(self, args):
+    def _sm_common__pending_kill(self, args):
         '''place a pending user delete request on a job whose current state does not permit immediately signaling the job'''
         if has_private_attr(self, '__signaling_info') and self.__signaling_info.reason == Signal_Info.Reason.delete and \
                 self.__signaling_info.signal == args['signal']:
-            self.__sm_log_info("user delete request already pending with signal %s; ignoring user delete request", \
+            self._sm_log_info("user delete request already pending with signal %s; ignoring user delete request", \
                 cobalt_log = True)
             return
-        self.__sm_signaling_info_set_user_delete(args['signal'], args['user'], pending = True)
+        self._sm_signaling_info_set_user_delete(args['signal'], args['user'], pending = True)
     
-    def __sm_common__pending_preempt(self, args):
+    def _sm_common__pending_preempt(self, args):
         '''place a pending preemption on a job whose current state does not permit immediately signaling the job'''
         if not self.preemptable:
-            self.__sm_log_warn("preemption requests may only be made for preemptable jobs", cobalt_log = True)
+            self._sm_log_warn("preemption requests may only be made for preemptable jobs", cobalt_log = True)
             try:
                 user = args['user']
             except KeyError:
@@ -1248,7 +1253,7 @@ class Job (StateMachine):
 
         # if a delete is already pending, then ignore preemption request
         if has_private_attr(self, '__signaling_info') and self.__signaling_info.reason == Signal_Info.Reason.delete:
-            self.__sm_log_info("user delete request already pending; ignoring preemption request", cobalt_log = True)
+            self._sm_log_info("user delete request already pending; ignoring preemption request", cobalt_log = True)
             return
 
         # if preemption is being forced, reset the time limit on the minimum task timer so that the preemption request will be
@@ -1265,18 +1270,18 @@ class Job (StateMachine):
             user_msg = ""
             if args.has_key('user'):
                 user_msg = " by user %s" % (args['user'],)
-            self.__sm_log_info("preemption forced%s" % (user_msg,), cobalt_log = True)
+            self._sm_log_info("preemption forced%s" % (user_msg,), cobalt_log = True)
         else:
-            self.__sm_log_info("preemption request now pending", cobalt_log = True)
+            self._sm_log_info("preemption request now pending", cobalt_log = True)
     
-    def __sm_prologue__progress(self, args):
+    def _sm_prologue__progress(self, args):
         '''
         wait for prologue scripts to complete.  once they have completed, execute the task if no user delete requests are pending.
         '''
         # wait for the prologue scripts to complete; report any errors
-        if not self.__sm_scripts_are_finished("prescript"):
+        if not self._sm_scripts_are_finished("prescript"):
             return
-        self.__sm_log_debug("prologue scripts have completed")
+        self._sm_log_debug("prologue scripts have completed")
 
         # if a user delete is pending, then release any resources that have been reserved, and start job cleanup so that it may
         # terminate
@@ -1285,126 +1290,126 @@ class Job (StateMachine):
             self.__signaled_info = self.__signaling_info
             self.__signaled_info.pending = False
             del self.__signaling_info
-            self.__sm_log_info("pending user delete; releasing resources", cobalt_log = True)
+            self._sm_log_info("pending user delete; releasing resources", cobalt_log = True)
             rc = self.__release_resources()
             if rc == Job.__rc_success:
-                self.__sm_log_info("resources released; initiating job cleanup and removal", cobalt_log = True)
-                self.__sm_start_resource_epilogue_scripts()
+                self._sm_log_info("resources released; initiating job cleanup and removal", cobalt_log = True)
+                self._sm_start_resource_epilogue_scripts()
             else:
-                self.__sm_state = 'Release_Resources_Retry'
+                self._sm_state = 'Release_Resources_Retry'
             return
             
         # attempt to run task
         rc = self.__task_run()
         if rc == Job.__rc_success:
-            self.__sm_state = 'Running'
+            self._sm_state = 'Running'
             self.task_running = True
             db_log_to_file(ReportObject(("Run start."),
                                         None, "running", "job_prog", JobProgMsg(self)).encode())
         elif rc == Job.__rc_retry:
-            self.__sm_state = 'Run_Retry'
+            self._sm_state = 'Run_Retry'
             db_log_to_file(ReportObject(("Run start is being retried."),
                                         None, "run_retrying", "job_prog", JobProgMsg(self)).encode())
         else:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
-            self.__sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
-            self.__sm_start_resource_epilogue_scripts()
+            self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
+            self._sm_start_resource_epilogue_scripts()
             db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
                                         None, "failed", "job_prog", JobProgMsg(self)).encode())
 
-    def __sm_release_resources_retry__progress(self, args):
-        self.__sm_log_info("retrying release of resources")
+    def _sm_release_resources_retry__progress(self, args):
+        self._sm_log_info("retrying release of resources")
         rc = self.__release_resources()
         if rc == Job.__rc_success:
-            self.__sm_log_info("resources released; initiating job cleanup and removal", cobalt_log = True)
-            self.__sm_start_resource_epilogue_scripts()
+            self._sm_log_info("resources released; initiating job cleanup and removal", cobalt_log = True)
+            self._sm_start_resource_epilogue_scripts()
             #TODO: from retrying release to resources release.
 
-    def __sm_run_retry__progress(self, args):
+    def _sm_run_retry__progress(self, args):
         '''previous attempt to execute the task failed; attempt to run it again'''
         rc = self.__task_run()
         if rc == Job.__rc_success:
-            self.__sm_state = 'Running'
+            self._sm_state = 'Running'
             self.task_running = True
             db_log_to_file(ReportObject(("Run start."),
                                          None, "started", "job_prog", JobProgMsg(self)).encode())
         elif rc != Job.__rc_retry:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
-            self.__sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
-            self.__sm_start_resource_epilogue_scripts()
+            self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
+            self._sm_start_resource_epilogue_scripts()
             db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
                                         None, "failed", "job_prog", JobProgMsg(self)).encode())
 
-    def __sm_run_retry__kill(self, args):
+    def _sm_run_retry__kill(self, args):
         '''user delete requested while job was waiting to retry executing task'''
-        self.__sm_log_info("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
+        self._sm_log_info("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
             (args['signal'], args['user']), cobalt_log = True)
 
         # set signal information so that the terminal state handler knows to write the delete record
         self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, args['signal'], args['user'])
 
         # start the resource epilogue scripts
-        self.__sm_start_resource_epilogue_scripts()
+        self._sm_start_resource_epilogue_scripts()
         db_log_to_file(ReportObject(("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
                                          (args['signal'], args['user'])),
                                      args['user'], "killed", "job_prog", JobProgMsg(self)).encode())
 
-    def __sm_running__progress(self, args):
+    def _sm_running__progress(self, args):
         '''
         periodically verify that the job has not exceeded its maximum execution time and determine if the task needs to be
         preempted
         '''
-        sig_info = self.__sm_check_job_timers()
+        sig_info = self._sm_check_job_timers()
         if sig_info != None:
             self.__signaling_info = sig_info
-            self.__sm_kill_task()
+            self._sm_kill_task()
         elif self.preemptable:
-            sig_info = self.__sm_check_preempt_timers()
+            sig_info = self._sm_check_preempt_timers()
             if sig_info != None:
                 self.__signaling_info = sig_info
-                self.__sm_preempt_task()
+                self._sm_preempt_task()
                 
 
-    def __sm_running__kill(self, args):
+    def _sm_running__kill(self, args):
         '''user delete requested while job is executing a task'''
-        self.__sm_signaling_info_set_user_delete(args['signal'], args['user'])
-        self.__sm_kill_task() #current
-    
-    def __sm_running__task_end(self, args):
+        self._sm_signaling_info_set_user_delete(args['signal'], args['user'])
+        self._sm_kill_task()
+
+    def _sm_running__task_end(self, args):
         '''task completed normally'''
         # finalize the task and obtain the exit status
-        self.__sm_log_info("task completed normally; finalizing task and obtaining exit code")
+        self._sm_log_info("task completed normally; finalizing task and obtaining exit code")
         rc = self.__task_finalize()
         
         if rc == Job.__rc_retry:
-            self.__sm_state = 'Finalize_Retry'
+            self._sm_state = 'Finalize_Retry'
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
+        self._sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
             (self.exit_status,), cobalt_log = True)
-        self.__sm_start_resource_epilogue_scripts()
+        self._sm_start_resource_epilogue_scripts()
 
-    def __sm_kill_common__hold(self, args):
+    def _sm_kill_common__hold(self, args):
         '''attempt to add a hold to a preemptable job that is being killed'''
         if self.preemptable:
-            self.__sm_log_info("job is in the process of being killed; hold request ignored", cobalt_log = True)
+            self._sm_log_info("job is in the process of being killed; hold request ignored", cobalt_log = True)
         else:
-            self.__sm_log_info("non-preemptable job has already started; hold request ignored", cobalt_log = True)
+            self._sm_log_info("non-preemptable job has already started; hold request ignored", cobalt_log = True)
 
-    def __sm_kill_common__release(self, args):
+    def _sm_kill_common__release(self, args):
         '''attempt to remove a hold from a preemptable job that is being killed'''
         if self.preemptable:
-            self.__sm_log_info("job is in the process of being killed; release request ignored", cobalt_log = True)
+            self._sm_log_info("job is in the process of being killed; release request ignored", cobalt_log = True)
         else:
-            self.__sm_log_info("non-preemptable job has already started; release request ignored", cobalt_log = True)
+            self._sm_log_info("non-preemptable job has already started; release request ignored", cobalt_log = True)
 
-    def __sm_kill_common__preempt(self, args):
+    def _sm_kill_common__preempt(self, args):
         '''attempt to preempt a preemptable job that is being killed'''
         if self.preemptable:
-            self.__sm_log_info("job is in the process of being killed; preemption request ignored", cobalt_log = True)
+            self._sm_log_info("job is in the process of being killed; preemption request ignored", cobalt_log = True)
         else:
-            self.__sm_log_warn("preemption requests may only be made for preemptable jobs", cobalt_log = True)
+            self._sm_log_warn("preemption requests may only be made for preemptable jobs", cobalt_log = True)
             try:
                 user = args['user']
             except KeyError:
@@ -1415,228 +1420,227 @@ class Job (StateMachine):
                 force = False
             raise JobPreemptionError("Only preemptable jobs may be preempted.", self.jobid, user, force)
 
-    def __sm_kill_retry__progress(self, args):
+    def _sm_kill_retry__progress(self, args):
         '''previous attempt to signal the task to terminate failed; attempt to signal again'''
         # note: signaling_info is still set and should not be set again
-        self.__sm_kill_task()
+        self._sm_kill_task()
 
-    def __sm_kill_retry__kill(self, args):
+    def _sm_kill_retry__kill(self, args):
         '''
         process a user delete request on a job which already has an outstanding delete request.  only modify the existing request
         if the signal to be sent is a promotion of the one pending.
         '''
         if self.__signaling_info.reason == Signal_Info.Reason.time_limit:
-            self.__sm_log_info("job is already being terminated for exceeding a time limit; ignoring user delete request", \
+            self._sm_log_info("job is already being terminated for exceeding a time limit; ignoring user delete request", \
                 cobalt_log = True)
             return
 
         if self.__signaling_info.reason != Signal_Info.Reason.delete:
-            self.__sm_log_error("signal reason is expected to be %s but is %s" % \
+            self._sm_log_error("signal reason is expected to be %s but is %s" % \
                 (Signal_Info.Reason.delete, self.__signaling_info.reason))
             return
 
         if self.__signaling_info.signal == args['signal']:
-            self.__sm_log_info("user delete request already pending with signal %s; ignoring user delete request" % \
+            self._sm_log_info("user delete request already pending with signal %s; ignoring user delete request" % \
                (args['signal'],), cobalt_log = True)
             return
 
         if self.__signaling_info.signal == Signal_Map.force_kill:
-            self.__sm_log_info("job is already being forced to terminate; ignoring user delete request", cobalt_log = True)
+            self._sm_log_info("job is already being forced to terminate; ignoring user delete request", cobalt_log = True)
             return
 
         if self.__signaling_info.signal == Signal_Map.terminate and args['signal'] != Signal_Map.force_kill:
-            self.__sm_log_warn("signal demotion attempted; only %s may be specified once %s has been sent; ignoring request" % \
+            self._sm_log_warn("signal demotion attempted; only %s may be specified once %s has been sent; ignoring request" % \
                 (Signal_Map.force_kill, Signal_Map.terminate))
             return
 
-        self.__sm_signaling_info_set_user_delete(args['signal'], args['user'])
-        self.__sm_kill_task()
+        self._sm_signaling_info_set_user_delete(args['signal'], args['user'])
+        self._sm_kill_task()
 
-    def __sm_kill_retry__task_end(self, args):
+    def _sm_kill_retry__task_end(self, args):
         '''task completed/terminated while waiting to retry signaling the task'''
         # delete signal information since the signal was never sent
         del self.__signaling_info
 
         # finalize the task and obtain the exit status
         if has_private_attr(self, '__signaled_info'):
-            self.__sm_log_info("task terminated; finalizing task")
+            self._sm_log_info("task terminated; finalizing task")
         else:
-            self.__sm_log_info("task completed normally; finalizing task and obtaining exit code")
+            self._sm_log_info("task completed normally; finalizing task and obtaining exit code")
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
-            self.__sm_state = 'Finalize_Retry'
+            self._sm_state = 'Finalize_Retry'
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
+        self._sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
             (self.exit_status,), cobalt_log = True)
-        self.__sm_start_resource_epilogue_scripts()
+        self._sm_start_resource_epilogue_scripts()
 
-    def __sm_killing__progress(self, args):
+    def _sm_killing__progress(self, args):
         '''check if the signal timer; if it has expired, promote signal to a force kill and signal the task again'''
         if self.__signal_timer.has_expired:
-            self.__sm_log_info("job deletion timer has expired; forcibly terminating task")
+            self._sm_log_info("job deletion timer has expired; forcibly terminating task")
             self.__signaling_info = self.__signaled_info
             self.__signaling_info.signal = Signal_Map.force_kill
-            self.__sm_kill_task()
+            self._sm_kill_task()
 
-    def __sm_killing__kill(self, args):
+    def _sm_killing__kill(self, args):
         '''
         process a user delete request on a job which is already being deleted.  only modify the existing request if the signal to
         be sent is a promotion of the one already sent.
         '''
         if self.__signaled_info.reason == Signal_Info.Reason.time_limit:
-            self.__sm_log_info("job is already being terminated for exceeding a time limit; ignoring user delete request", \
+            self._sm_log_info("job is already being terminated for exceeding a time limit; ignoring user delete request", \
                 cobalt_log = True)
             return
 
         if self.__signaled_info.reason != Signal_Info.Reason.delete:
-            self.__sm_log_error("signal reason is expected to be %s but is %s" % \
+            self._sm_log_error("signal reason is expected to be %s but is %s" % \
                 (Signal_Info.Reason.delete, self.__signaled_info.reason))
             return
 
         if self.__signaled_info.signal == args['signal']:
-            self.__sm_log_info("user delete request already pending with signal %s; ignoring user delete request" % \
+            self._sm_log_info("user delete request already pending with signal %s; ignoring user delete request" % \
                (args['signal'],), cobalt_log = True)
             return
 
         if self.__signaled_info.signal == Signal_Map.force_kill:
-            self.__sm_log_info("job is already being forced to terminate; ignoring user delete request", cobalt_log = True)
+            self._sm_log_info("job is already being forced to terminate; ignoring user delete request", cobalt_log = True)
             return
 
         if self.__signaled_info.signal == Signal_Map.terminate and args['signal'] != Signal_Map.force_kill:
-            self.__sm_log_warn("signal demotion attempted; only %s may be specified once %s has been sent; ignoring request" % \
+            self._sm_log_warn("signal demotion attempted; only %s may be specified once %s has been sent; ignoring request" % \
                 (Signal_Map.force_kill, Signal_Map.terminate))
             return
 
-        self.__sm_signaling_info_set_user_delete(args['signal'], args['user'])
-        self.__sm_kill_task()
+        self._sm_signaling_info_set_user_delete(args['signal'], args['user'])
+        self._sm_kill_task()
 
-    def __sm_killing__task_end(self, args):
+    def _sm_killing__task_end(self, args):
         '''task terminated (presumably from signal)'''
         self.__signal_timer.stop()
 
         # finalize the task and obtain the exit status
-        self.__sm_log_info("task terminated; finalizing task")
+        self._sm_log_info("task terminated; finalizing task")
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
-            #point1
-            self.__sm_state = 'Finalize_Retry'
+            self._sm_state = 'Finalize_Retry'
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task terminated; initiating resource cleanup")
-        self.__sm_start_resource_epilogue_scripts()
+        self._sm_log_info("task terminated; initiating resource cleanup")
+        self._sm_start_resource_epilogue_scripts()
 
-    def __sm_preempt_retry__progress(self, args):
+    def _sm_preempt_retry__progress(self, args):
         '''previous attempt to signal the task failed; attempt to signal again'''
-        self.__sm_preempt_task()
+        self._sm_preempt_task()
 
-    def __sm_preempt_retry__kill(self, args):
+    def _sm_preempt_retry__kill(self, args):
         '''
         process a user delete request on a job which is being preempted.  only modify the existing signal if the signal to be
         sent is a promotion of the one pending.
         '''
         if self.__signaling_info.signal == Signal_Map.terminate and args['signal'] != Signal_Map.force_kill:
-            self.__sm_log_warn(("job is already being preempted with %s; only %s may be specified once %s has been sent; " + \
+            self._sm_log_warn(("job is already being preempted with %s; only %s may be specified once %s has been sent; " + \
                 "switching to job deletion") % (Signal_Map.terminate, Signal_Map.force_kill, Signal_Map.terminate))
             sig = Signal_Map.terminate
         else:
             sig = args['signal']
-        self.__sm_signaling_info_set_user_delete(sig, args['user'])
-        self.__sm_kill_task()
+        self._sm_signaling_info_set_user_delete(sig, args['user'])
+        self._sm_kill_task()
 
-    def __sm_preempt_retry__task_end(self, args):
+    def _sm_preempt_retry__task_end(self, args):
         '''task completed/terminated while waiting to retry signaling the task'''
         # delete signal information since the signal was never sent
         del self.__signaling_info
 
         # finalize the task and obtain the exit status
         if has_private_attr(self, '__signaled_info'):
-            self.__sm_log_info("task terminated; finalizing task")
+            self._sm_log_info("task terminated; finalizing task")
             new_epilogue_state = 'Preempt_Epilogue'
         else:
-            self.__sm_log_info("task completed normally; finalizing task and obtaining exit code")
+            self._sm_log_info("task completed normally; finalizing task and obtaining exit code")
             new_epilogue_state = 'Resource_Epilogue'
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
             if has_private_attr(self, '__signaled_info'):
-                self.__sm_state = 'Preempt_Finalize_Retry'
+                self._sm_state = 'Preempt_Finalize_Retry'
             else:
                 # if the task terminated before the signal was ever sent, then treate this as a normal end-of-job not a preemption
-                self.__sm_state = 'Finalize_Retry'
+                self._sm_state = 'Finalize_Retry'
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task terminated; initiating resource cleanup")
-        self.__sm_start_resource_epilogue_scripts(new_epilogue_state)
+        self._sm_log_info("task terminated; initiating resource cleanup")
+        self._sm_start_resource_epilogue_scripts(new_epilogue_state)
 
-    def __sm_preempting__progress(self, args):
+    def _sm_preempting__progress(self, args):
         '''check if the signal timer; if it has expired, promote signal to a force kill and signal the task again'''
         if self.__signal_timer.has_expired:
             self.__signaling_info = self.__signaled_info
             if self.__signaled_info.signal == Signal_Map.terminate:
-                self.__sm_log_info("job preemption timer has expired; forcibly terminating task")
+                self._sm_log_info("job preemption timer has expired; forcibly terminating task")
                 self.__signaling_info.signal = Signal_Map.force_kill
             else:
-                self.__sm_log_info("job preemption timer has expired; signaling the task to terminate")
+                self._sm_log_info("job preemption timer has expired; signaling the task to terminate")
                 self.__signaling_info.signal = Signal_Map.terminate
-            self.__sm_preempt_task()
+            self._sm_preempt_task()
 
-    def __sm_preempting__kill(self, args):
+    def _sm_preempting__kill(self, args):
         '''
         process a user delete request on a job which is already being preempted.  only modify the existing signal if the signal
         to be sent is a promotion of the one pending.
         '''
         if self.__signaled_info.signal == args['signal']:
-            self.__sm_log_info("job is already being preempted with %s; switching to job deletion" % (args['signal'],), \
+            self._sm_log_info("job is already being preempted with %s; switching to job deletion" % (args['signal'],), \
                 cobalt_log = True)
-            self.__sm_state = 'Killing'
+            self._sm_state = 'Killing'
             return
 
         if self.__signaled_info.signal == Signal_Map.force_kill:
-            self.__sm_log_info("job is already being preempted and forced to terminate; switching to job deletion",
+            self._sm_log_info("job is already being preempted and forced to terminate; switching to job deletion",
                 cobalt_log = True)
-            self.__sm_state = 'Killing'
+            self._sm_state = 'Killing'
             return
 
         if self.__signaled_info.signal == Signal_Map.terminate and args['signal'] != Signal_Map.force_kill:
-            self.__sm_log_warn(("job is already being preempted with %s; only %s may be specified once %s has been sent; " + \
+            self._sm_log_warn(("job is already being preempted with %s; only %s may be specified once %s has been sent; " + \
                 "switching to job deletion") % (Signal_Map.terminate, Signal_Map.force_kill, Signal_Map.terminate))
-            self.__sm_state = 'Killing'
+            self._sm_state = 'Killing'
             return
 
-        self.__sm_signaling_info_set_user_delete(args['signal'], args['user'])
-        self.__sm_kill_task()
+        self._sm_signaling_info_set_user_delete(args['signal'], args['user'])
+        self._sm_kill_task()
 
-    def __sm_preempting__task_end(self, args):
+    def _sm_preempting__task_end(self, args):
         '''task preemption completed'''
         # finalize the task and obtain the exit status
-        self.__sm_log_info("task preemption completed; finalizing task")
+        self._sm_log_info("task preemption completed; finalizing task")
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
-            self.__sm_state = 'Preempt_Finalize_Retry'
+            self._sm_state = 'Preempt_Finalize_Retry'
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task terminated; initiating resource cleanup")
-        self.__sm_start_resource_epilogue_scripts('Preempt_Epilogue')
+        self._sm_log_info("task terminated; initiating resource cleanup")
+        self._sm_start_resource_epilogue_scripts('Preempt_Epilogue')
 
-    def __sm_preempt_finalize_retry__progress(self, args):
+    def _sm_preempt_finalize_retry__progress(self, args):
         '''previous attempt to finalize the task and extract the exit status failed; make another attempt'''
         # make another attempt to finalize the task
-        self.__sm_log_info("previous attempt to finalize the task failed; trying again")
+        self._sm_log_info("previous attempt to finalize the task failed; trying again")
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task terminated; initiating resource cleanup")
-        self.__sm_start_resource_epilogue_scripts('Preempt_Epilogue')
+        self._sm_log_info("task terminated; initiating resource cleanup")
+        self._sm_start_resource_epilogue_scripts('Preempt_Epilogue')
 
-    def __sm_preempt_epilogue__progress(self, args):
+    def _sm_preempt_epilogue__progress(self, args):
         # wait for the resource epilogue scripts to complete, and report any errors
-        if not self.__sm_scripts_are_finished("resource postscript"):
+        if not self._sm_scripts_are_finished("resource postscript"):
             return
 
         # if a user delete is pending, then start job cleanup so that it may terminate
@@ -1644,8 +1648,8 @@ class Job (StateMachine):
             self.__signaled_info = self.__signaling_info
             self.__signaled_info.pending = False
             del self.__signaling_info
-            self.__sm_log_info("pending user delete; initiating job cleanup and removal", cobalt_log = True)
-            self.__sm_start_job_epilogue_scripts()
+            self._sm_log_info("pending user delete; initiating job cleanup and removal", cobalt_log = True)
+            self._sm_start_job_epilogue_scripts()
             return
             
         # stop the execution timer, clear the location where the job is being run, and output accounting log entry
@@ -1654,9 +1658,9 @@ class Job (StateMachine):
         self.location = None
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then proceed to cleanup and remove the job
-            self.__sm_log_info("maximum execution time exceeded; initiating job cleanup and removal", cobalt_log = True)
+            self._sm_log_info("maximum execution time exceeded; initiating job cleanup and removal", cobalt_log = True)
             accounting_logger.info(accounting.abort(self.jobid))
-            self.__sm_start_job_epilogue_scripts()
+            self._sm_start_job_epilogue_scripts()
             return
 
         # write job preemption information to CQM and accounting logs
@@ -1669,7 +1673,7 @@ class Job (StateMachine):
 
         accounting_logger.info(accounting.rerun(self.jobid))
 
-        self.__sm_log_info("job successfully preempted", cobalt_log = True)
+        self._sm_log_info("job successfully preempted", cobalt_log = True)
         self.__preempts += 1
 
         # start the queue timers
@@ -1684,11 +1688,11 @@ class Job (StateMachine):
             if not self.__timers.has_key('hold'):
                 self.__timers['hold'] = Timer()
             self.__timers['hold'].start()
-            self.__sm_state = 'Preempted_Hold'
+            self._sm_state = 'Preempted_Hold'
         else:
-            self.__sm_state = 'Preempted'
+            self._sm_state = 'Preempted'
 
-    def __sm_preempted__run(self, args):
+    def _sm_preempted__run(self, args):
         # stop queue timers
         self.__timers['queue'].stop()
         self.__timers['current_queue'].stop()
@@ -1742,72 +1746,71 @@ class Job (StateMachine):
 
         # start resource prologue scripts
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
-        self.__sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
-        self.__sm_scripts_thread.start()
+        self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
+        self._sm_scripts_thread.start()
 
-        self.__sm_state = 'Prologue'
+        self._sm_state = 'Prologue'
         db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
                                     None, "starting", "job_prog", JobProgMsg(self)).encode())
 
-
-    def __sm_preempted__hold(self, args):
+    def _sm_preempted__hold(self, args):
         '''place a hold on a job in the preempted state'''
-        self.__sm_common_queued__hold('Preempted_Hold', args)
+        self._sm_common_queued__hold('Preempted_Hold', args)
 
-    def __sm_preempted__release(self, args):
+    def _sm_preempted__release(self, args):
         '''handle attempt to erroneously release a job in the preempted state'''
-        self.__sm_common_queued__release(args)
+        self._sm_common_queued__release(args)
 
-    def __sm_preempted__kill(self, args):
+    def _sm_preempted__kill(self, args):
         '''user delete requested while job was preempted'''
-        self.__sm_log_info("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
+        self._sm_log_info("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
             (args['signal'], args['user']), cobalt_log = True)
 
         # set signal information so that the terminal state handler knows to write the delete record
         self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, args['signal'], args['user'])
 
         # start the job epilogue scripts
-        self.__sm_start_job_epilogue_scripts()
+        self._sm_start_job_epilogue_scripts()
 
-    def __sm_preempted_hold__hold(self, args):
+    def _sm_preempted_hold__hold(self, args):
         '''place another hold on a job that is already in the preempted hold state'''
-        self.__sm_common_hold__hold(args)
+        self._sm_common_hold__hold(args)
 
-    def __sm_preempted_hold__release(self, args):
+    def _sm_preempted_hold__release(self, args):
         '''release a hold previous placed on a job'''
-        self.__sm_common_hold__release('Preempted', args)
+        self._sm_common_hold__release('Preempted', args)
 
-    def __sm_preempted_hold__kill(self, args):
+    def _sm_preempted_hold__kill(self, args):
         '''user delete requested while job was preempted and held'''
-        self.__sm_log_info("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
+        self._sm_log_info("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
             (args['signal'], args['user']), cobalt_log = True)
 
         # set signal information so that the terminal state handler knows to write the delete record
         self.__signaled_info = Signal_Info(Signal_Info.Reason.delete, args['signal'], args['user'])
 
         # start the job epilogue scripts
-        self.__sm_start_job_epilogue_scripts()
+        self._sm_start_job_epilogue_scripts()
 
-    def __sm_exit_common__hold(self, args):
+    def _sm_exit_common__hold(self, args):
         '''attempt to add a hold to a job that is exiting'''
         if self.preemptable:
-            self.__sm_log_info("job is in the process of exiting; hold request ignored", cobalt_log = True)
+            self._sm_log_info("job is in the process of exiting; hold request ignored", cobalt_log = True)
         else:
-            self.__sm_log_info("non-preemptable job has already started; hold request ignored", cobalt_log = True)
+            self._sm_log_info("non-preemptable job has already started; hold request ignored", cobalt_log = True)
 
-    def __sm_exit_common__release(self, args):
+    def _sm_exit_common__release(self, args):
         '''attempt to release a hold to a job that is exiting'''
         if self.preemptable:
-            self.__sm_log_info("job is in the process of exiting; release request ignored", cobalt_log = True)
+            self._sm_log_info("job is in the process of exiting; release request ignored", cobalt_log = True)
         else:
-            self.__sm_log_info("non-preemptable job has already started; release request ignored", cobalt_log = True)
+            self._sm_log_info("non-preemptable job has already started; release request ignored", cobalt_log = True)
 
-    def __sm_exit_common__preempt(self, args):
+    def _sm_exit_common__preempt(self, args):
         '''attempt to preempt a job that is exiting'''
         if self.preemptable:
-            self.__sm_log_info("job is in the process of exiting; preemption request ignored", cobalt_log = True)
+            self._sm_log_info("job is in the process of exiting; preemption request ignored", cobalt_log = True)
         else:
-            self.__sm_log_warn("preemption requests may only be made for preemptable jobs", cobalt_log = True)
+            self._sm_log_warn("preemption requests may only be made for preemptable jobs", cobalt_log = True)
             try:
                 user = args['user']
             except KeyError:
@@ -1818,36 +1821,36 @@ class Job (StateMachine):
                 force = False
             raise JobPreemptionError("Only preemptable jobs may be preempted.", self.jobid, user, force)
 
-    def __sm_exit_common__kill(self, args):
+    def _sm_exit_common__kill(self, args):
         '''attempt to perform a user delete on a job that is exiting'''
-        self.__sm_log_info("job is in the process of exiting; user delete request ignored", cobalt_log = True)
+        self._sm_log_info("job is in the process of exiting; user delete request ignored", cobalt_log = True)
 
-    def __sm_finalize_retry__progress(self, args):
+    def _sm_finalize_retry__progress(self, args):
         '''previous attempt to finalize the task and extract the exit status failed; make another attempt'''
         # make another attempt to finalize the task and obtain the exit status
-        self.__sm_log_info("previous attempt to finalize the task and obtain exit code failed; trying again")
+        self._sm_log_info("previous attempt to finalize the task and obtain exit code failed; trying again")
         rc = self.__task_finalize()
         if rc == Job.__rc_retry:
             return
 
         # start the resource epilogue scripts
-        self.__sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
+        self._sm_log_info("task completed normally with an exit code of %s; initiating job cleanup and removal" % \
             (self.exit_status,), cobalt_log = True)
-        self.__sm_start_resource_epilogue_scripts()
+        self._sm_start_resource_epilogue_scripts()
 
-    def __sm_resource_epilogue__progress(self, args):
+    def _sm_resource_epilogue__progress(self, args):
         '''wait for resource epilogue scripts to complete.  once they have completed, start the job epilogue scripts.'''
         # wait for the resource epilogue scripts to complete, and report any errors
-        if not self.__sm_scripts_are_finished("resource postscript"):
+        if not self._sm_scripts_are_finished("resource postscript"):
             return
 
         # start job epilogue scripts
-        self.__sm_start_job_epilogue_scripts()
+        self._sm_start_job_epilogue_scripts()
     
-    def __sm_job_epilogue__progress(self, args):
+    def _sm_job_epilogue__progress(self, args):
         '''wait for job epilogue scripts to complete.  once they have completed, write out end-of-job accounting logs'''
         # wait for the job epilogue scripts to complete, and report any errors
-        if not self.__sm_scripts_are_finished("job postscript"):
+        if not self._sm_scripts_are_finished("job postscript"):
             return
 
         # stop the execution timer and get the stats; NOTE: the execution timer may not be running if the job was preempted
@@ -1911,9 +1914,9 @@ class Job (StateMachine):
         self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
             (self.jobid, self.user, self.nodes, stats, str(self.exit_status)))
 
-        self.__sm_state = 'Terminal'
+        self._sm_state = 'Terminal'
 
-    # def __sm_terminal(self, args):
+    # def _sm_terminal(self, args):
     #     try:
     #         reason = self.__signaled_info.reason
     #     except AttributeError:
@@ -1925,20 +1928,20 @@ class Job (StateMachine):
     #             logger.info('D;%s;%s' % (self.jobid, self.user))
     #             self.acctlog.LogMessage('D;%s;%s' % (self.jobid, self.user))
 
-    def __sm_get_state(self):
+    def _sm_get_state(self):
         return StateMachine._state.__get__(self)
 
-    def __sm_set_state(self, state):
-        self.__sm_log_info("transitioning to the '%s' state" % (state,))
+    def _sm_set_state(self, state):
+        self._sm_log_info("transitioning to the '%s' state" % (state,))
         StateMachine._state.__set__(self, state)
 
-    __sm_state = property(__sm_get_state, __sm_set_state)
-    sm_state = property(__sm_get_state, __sm_set_state)
+    _sm_state = property(_sm_get_state, _sm_set_state)
+    sm_state = property(_sm_get_state, _sm_set_state)
 
-    def __sm_get_event(self):
+    def _sm_get_event(self):
         return StateMachine._event.__get__(self)
 
-    __sm_event = property(__sm_get_event)
+    _sm_event = property(_sm_get_event)
 
     def __get_queue(self):
         return self.__queue
@@ -1958,7 +1961,7 @@ class Job (StateMachine):
 
     def __set_walltime(self, walltime):
         walltime = int(float(walltime))
-        if self.__sm_state == 'Running':
+        if self._sm_state == 'Running':
             remaining_time = walltime - int(self.__timers['user'].elapsed_time) / 60
             if remaining_time > 0:
                 ComponentProxy("system").reserve_resources_until(self.location, time.time() + remaining_time * 60, self.jobid)
@@ -1967,7 +1970,7 @@ class Job (StateMachine):
             self.__max_job_timer.max_time = walltime * 60
         except AttributeError:
             pass
-        self.__sm_log_info("walltime adjusted to %d minutes" % (self.__walltime,))
+        self._sm_log_info("walltime adjusted to %d minutes" % (self.__walltime,))
 
     walltime = property(__get_walltime, __set_walltime)
 
@@ -2006,7 +2009,7 @@ class Job (StateMachine):
     has_dep_hold = property(__has_dep_hold)
 
     def __get_job_state(self):
-        if self.__sm_state in ('Ready', 'Preempted'):
+        if self._sm_state in ('Ready', 'Preempted'):
             if self.has_dep_hold:
                 if self.dep_fail:
                     return "dep_fail"
@@ -2014,53 +2017,53 @@ class Job (StateMachine):
                     return "dep_hold"
             if self.max_running:
                 return "maxrun_hold"
-        if self.__sm_state == 'Ready':
+        if self._sm_state == 'Ready':
             return "queued"
-        if self.__sm_state in ['Hold', 'Preempted_Hold']:
+        if self._sm_state in ['Hold', 'Preempted_Hold']:
             if self.user_hold:
                 return "user_hold"
             else:
                 return "admin_hold"
-        if self.__sm_state in ['Prologue', 'Run_Retry']:
+        if self._sm_state in ['Prologue', 'Run_Retry']:
             return "starting"
-        if self.__sm_state == 'Running':
+        if self._sm_state == 'Running':
             return "running"
-        if self.__sm_state in ['Kill_Retry', 'Killing']:
+        if self._sm_state in ['Kill_Retry', 'Killing']:
             return "killing"
-        if self.__sm_state in ['Preempt_Retry', 'Preempting', 'Preempt_Finalize_Retry', 'Preempt_Epilogue']:
+        if self._sm_state in ['Preempt_Retry', 'Preempting', 'Preempt_Finalize_Retry', 'Preempt_Epilogue']:
             return 'preempting'
-        if self.__sm_state == 'Preempted':
+        if self._sm_state == 'Preempted':
             return 'preempted'
-        if self.__sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 'Resource_Epilogue', 'Job_Epilogue']:
+        if self._sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 'Resource_Epilogue', 'Job_Epilogue']:
             return "exiting"
-        if self.__sm_state == 'Terminal':
+        if self._sm_state == 'Terminal':
             return "done"
-        raise DataStateError, "unknown state: %s" % (self.__sm_state,)
+        raise DataStateError, "unknown state: %s" % (self._sm_state,)
 
     state = property(__get_job_state)
     
     def __get_short_job_state(self):
-        if self.__sm_state in ('Ready', 'Preempted') and (self.has_dep_hold or self.max_running):
+        if self._sm_state in ('Ready', 'Preempted') and (self.has_dep_hold or self.max_running):
             return "H"
-        if self.__sm_state == 'Ready':
+        if self._sm_state == 'Ready':
             return "Q"
-        if self.__sm_state in ['Hold', 'Preempted_Hold']:
+        if self._sm_state in ['Hold', 'Preempted_Hold']:
             return "H"
-        if self.__sm_state in ['Prologue', 'Run_Retry', 'Running']:
+        if self._sm_state in ['Prologue', 'Run_Retry', 'Running']:
             return "R"
-        if self.__sm_state in ['Kill_Retry', 'Killing']:
+        if self._sm_state in ['Kill_Retry', 'Killing']:
             return "K"
-        if self.__sm_state in ['Preempt_Retry', 'Preempting', 'Preempt_Finalize_Retry', 'Preempt_Epilogue', 'Preempted']:
+        if self._sm_state in ['Preempt_Retry', 'Preempting', 'Preempt_Finalize_Retry', 'Preempt_Epilogue', 'Preempted']:
             return 'P'
-        if self.__sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 'Resource_Epilogue', 'Job_Epilogue', 'Terminal']:
+        if self._sm_state in ['Release_Resources_Retry', 'Finalize_Retry', 'Resource_Epilogue', 'Job_Epilogue', 'Terminal']:
             return 'E'
-        raise DataStateError, "unknown state: %s" % (self.__sm_state,)
+        raise DataStateError, "unknown state: %s" % (self._sm_state,)
 
     short_state = property(__get_short_job_state)
 
     def __is_runnable(self):
         '''returns true if the job is runnable'''
-        if self.__sm_state in ('Ready', 'Preempted'):
+        if self._sm_state in ('Ready', 'Preempted'):
             if self.has_dep_hold or self.max_running:
                 return False
             return True
@@ -2078,19 +2081,19 @@ class Job (StateMachine):
         allocated and assigned to the job prior to the 'Run' event being triggered in the 'Ready' state, which is what initiates
         the running of the job scripts.
         '''
-        return self.__sm_state not in ('Ready', 'Hold', 'Preempted', 'Preempted_Hold', 'Job_Epilogue', 'Terminal')
+        return self._sm_state not in ('Ready', 'Hold', 'Preempted', 'Preempted_Hold', 'Job_Epilogue', 'Terminal')
 
     has_resources = property(__has_resources)
 
     def __is_active(self):
         '''returns true if the job is not queued or held, and has not completed'''
-        return self.__sm_state not in ('Ready', 'Hold', 'Preempted', 'Preempted_Hold', 'Terminal')
+        return self._sm_state not in ('Ready', 'Hold', 'Preempted', 'Preempted_Hold', 'Terminal')
 
     is_active = property(__is_active)
 
     def __has_completed(self):
         '''returns true if the job has completed, whether successfully or not'''
-        return self.__sm_state == 'Terminal'
+        return self._sm_state == 'Terminal'
 
     has_completed = property(__has_completed)
 
@@ -2173,7 +2176,7 @@ class Job (StateMachine):
         try:
             self.trigger_event('Progress')
         except:
-            self.__sm_log_exception(None, "an exception occurred during a progress event")
+            self._sm_log_exception(None, "an exception occurred during a progress event")
 
     def run(self, nodelist, user = None):
         try:
@@ -2182,11 +2185,11 @@ class Job (StateMachine):
              #                           user, "started", "job_prog", JobProgMsg(self)).encode())
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
-                self.state, self.__sm_state)
+                self.state, self._sm_state)
         except:
-            self.__sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
+            self._sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
             raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.", 
-                self.jobid, self.state, self.__sm_state)
+                self.jobid, self.state, self._sm_state)
 
     def preempt(self, user = None, force = False):
         '''process a preemption request for a job'''
@@ -2205,7 +2208,7 @@ class Job (StateMachine):
         except StateMachineIllegalEventError:
             raise JobPreemptionError("Jobs in the '%s' state may not be preempted." % (self.state,), self.jobid, user, force)
         except:
-            self.__sm_log_exception(None, "an unexpected exception occurred while attempting to preempt the task")
+            self._sm_log_exception(None, "an unexpected exception occurred while attempting to preempt the task")
             raise JobPreemptionError("An unexpected exception occurred while attempting to preempt the job.  See log for details.",
                 self.jobid, user, force)
 
@@ -2226,24 +2229,24 @@ class Job (StateMachine):
                                                 (self.jobid),
                                             user, "killing", "job_prog", JobProgMsg(self)).encode())
             except:
-                self.__sm_log_exception(None, "an unexpected exception occurred while attempting to kill the task")
+                self._sm_log_exception(None, "an unexpected exception occurred while attempting to kill the task")
                 raise JobDeleteError("An unexpected exception occurred while attempting to delete the job.  See log for details.",
-                    self.jobid, user, force, self.state, self.__sm_state)
+                    self.jobid, user, force, self.state, self._sm_state)
         else:
-            self.__sm_log_info(("forced delete requested by user '%s'; initiating job termination and removal of job " + \
+            self._sm_log_info(("forced delete requested by user '%s'; initiating job termination and removal of job " + \
                 "from the queue") % (user,), cobalt_log = True)
             self.__signaling_info = Signal_Info(Signal_Info.Reason.delete, signame, user)
             try:
                 if self.taskid != None:
                     self.__task_signal(retry = False)
             except:
-                self.__sm_log_exception(None, "an exception occurred while attempting to forcibly kill the task")
+                self._sm_log_exception(None, "an exception occurred while attempting to forcibly kill the task")
                 raise JobDeleteError(("An error occurred while forcibly killing the job.  The job has been removed from " + \
                     "the queue; however, resouces may not have been released.  Manual clean up may be required."),
-                    self.jobid, user, force, self.state, self.__sm_state)
+                    self.jobid, user, force, self.state, self._sm_state)
             finally:
                 # if the job is running or has run at some point, then collect and output end of job information
-                if self.__sm_state not in ('Ready', 'Hold'):
+                if self._sm_state not in ('Ready', 'Hold'):
                     # stop the execution timer and get the stats
                     if self.__timers['user'].is_active:
                         self.__timers['user'].stop()
@@ -2705,7 +2708,7 @@ class QueueManager(Component):
         return True
     set_jobid = exposed(set_jobid)
 
-    def __job_terminal_action(self, args):
+    def _job_terminal_action(self, args):
         '''job terminal action routine that handles updating dependency information and removing the job from the queue'''
         job = args['job']
 
@@ -2743,7 +2746,7 @@ class QueueManager(Component):
 
     def __add_job_terminal_action(self, job, args):
         '''add the terminal action handler to the each job added to the queue'''
-        job.add_terminal_action(self.__job_terminal_action, {'job':job})
+        job.add_terminal_action(self._job_terminal_action, {'job':job})
 
     def add_jobs(self, specs):
         '''Add a job, throws in adminemail'''
@@ -2840,7 +2843,7 @@ class QueueManager(Component):
                 ret.append(job)
                 job.kill(user, signame, force)
                 if force:
-                    self.__job_terminal_action({'job':job})
+                    self._job_terminal_action({'job':job})
         return ret
     del_jobs = exposed(query(del_jobs))
 
