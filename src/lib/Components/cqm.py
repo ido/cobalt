@@ -80,7 +80,6 @@ import math
 import types
 import xmlrpclib
 import ConfigParser
-import sets
 import signal
 import thread
 from threading import Thread, Lock
@@ -1997,7 +1996,7 @@ class Job (StateMachine):
     user_hold = property(__get_user_hold, __set_user_hold)
 
     def __has_dep_hold(self):
-        current_dep_hold = self.all_dependencies and not sets.Set(self.all_dependencies).issubset(sets.Set(self.satisfied_dependencies))
+        current_dep_hold = self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
         if ((not self.prev_dep_hold) and current_dep_hold and (not self.called_has_dep_hold_once)):
             self.called_has_dep_hold_once = True
             db_log_to_file(ReportObject("dependency hold placed on job %s." % (self.jobid), 
@@ -2721,7 +2720,7 @@ class QueueManager(Component):
                 if str(job.jobid) in waiting_job.all_dependencies:
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
                     
-                    if sets.Set(waiting_job.all_dependencies).issubset(sets.Set(waiting_job.satisfied_dependencies)):
+                    if set(waiting_job.all_dependencies).issubset(set(waiting_job.satisfied_dependencies)):
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
                         db_log_to_file(ReportObject("dependency hold released on job %s." % (waiting_job.jobid), 
                                                 None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job)).encode())
@@ -3079,7 +3078,7 @@ class QueueManager(Component):
         for job in queued_jobs:
             already_failed = job.dep_fail
             job.dep_fail = False
-            pending = sets.Set(job.all_dependencies).difference(sets.Set(job.satisfied_dependencies))
+            pending = set(job.all_dependencies).difference(set(job.satisfied_dependencies))
             for jobid_str in pending:
                 try:
                     jobid = int(jobid_str)
