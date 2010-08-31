@@ -216,28 +216,6 @@ class Component (object):
         if statefile:
             temp_statefile = statefile + ".temp"
             data = cPickle.dumps(self)
-
-            try:
-                import pyxser
-
-                print "-" * 64
-                xser_data = pyxser.serialize(obj=self, enc="utf-8", depth=2)
-                fileobj = open("__xser_cqm__.txt", 'wb')
-                fileobj.write(xser_data)
-                fileobj.close()
-
-                xser_data = None
-
-                fileobj = open("__xser_cqm__.txt", 'rb')
-                xser_data = fileobj.read()
-                fileobj.close()
-                print xser_data
-                newself = pyxser.unserialize(obj=xser_data, enc="utf-8")
-                print dir(newself)
-            except Exception, e:
-                print "ERROR:%s" % str(e)
-                
-
             try:
                 fd = file(temp_statefile, "wb")
                 fd.write(data)
