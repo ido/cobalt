@@ -302,12 +302,15 @@ class DatabaseWriter(object):
         if not self.__class__.initialized:
             self.__class__.write_thread = ThreadedWrite(output_filename,
                                                         name="db_writer")
-            self.__class__.write_thread.start()
-            self.thread_name = DatabaseWriter.write_thread.name
+            
+            #Turning this off in trunk until I can figure out why
+            #this is not shutting down correctly.
+            #self.__class__.write_thread.start()
+            #self.thread_name = DatabaseWriter.write_thread.name
             
 
             self.__class__.initialized = True
-        self.__class__.off = False
+        self.__class__.off = True
 
     @classmethod              
     def write(cls,data):
@@ -349,7 +352,8 @@ class ThreadedWrite(threading.Thread):
 
     def run(self):
         
-        #TODO: going to need some good-old try-catch here.
+        print "Database writing disabled."
+        return
         
         while not self.terminating:
             try:
