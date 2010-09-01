@@ -23,7 +23,8 @@ import time
 
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
-            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 'Anchor', 'anchor', 'vicinity', 'batch']
+            'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 
+            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -183,6 +184,8 @@ if __name__ == "__main__":
     p.add_option("-v", "--vicinity", dest="vicinity", type="float", default=0.0,
         help="Threshold to determine mate jobs in coscheduling. \
         Two jobs can be considered mated only if their submission time difference is smaller than 'vicinity'")
+    p.add_option("-r", "--ratio", dest="mate_ratio", type="float", default=0.0,
+        help="Specifies the ratio of number mate jobs to number total jobs. Used in the case two job traces have the same number of total jobs.")
     p.add_option("-b", "--batch", dest="batch", action = "store_true", default = False, 
         help="enable batch execution model, do not print screen")
         

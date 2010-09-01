@@ -140,7 +140,7 @@ class BGQsim(Simulator):
 ###-------CoScheduling start###
         self.cosched_scheme_tup = kwargs.get("coscheduling", (0,0))
 
-        self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
+        self.mate_vicinity = kwargs.get("vicinity", 0)
         
         self.cosched_scheme = self.cosched_scheme_tup[0]
         self.cosched_scheme_remote = self.cosched_scheme_tup[1]
@@ -152,8 +152,6 @@ class BGQsim(Simulator):
         else:
             self.coscheduling = False
         
-        self.jobid_qtime_pairs = []
-                
         #key=local job id, value=remote mated job id
         self.mate_job_dict = {}
         #key = jobid, value = nodelist  ['part-or-node-name','part-or-node-name' ]
@@ -170,11 +168,12 @@ class BGQsim(Simulator):
         
         self.cluster_job_trace = kwargs.get("cjob", None)
         if not self.cluster_job_trace:
-            self.coscheduling = False        
+            self.coscheduling = False
+            
+        self.jobid_qtime_pairs = []        
                 
         if self.coscheduling:
             self.init_jobid_qtime_pairs()
-            print "vicinity = %s seconds" % (self.mate_vicinity)
             # 'disable' coscheduling for a while until cqsim triggers the remote function
             # to initialize mate job dice successfully
             self.coscheduling = False
@@ -297,7 +296,7 @@ class BGQsim(Simulator):
 
 ##### job/queue related
     def _get_queuing_jobs(self):
-        jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+        jobs = [job for job in selgetf.queues.get_jobs([{'is_runnable':True}])]
         return jobs
     queuing_jobs = property(_get_queuing_jobs)
     
@@ -1259,9 +1258,10 @@ class BGQsim(Simulator):
             
         def _qtimecmp(tup1, tup2):
             return cmp(tup1[0], tup2[0])
+
         
         self.jobid_qtime_pairs.sort(_qtimecmp)
-                        
+                           
     def get_jobid_qtime_pairs(self):
         '''get jobid_qtime_pairs list, remote function'''
         return self.jobid_qtime_pairs

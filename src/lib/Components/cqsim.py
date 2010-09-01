@@ -12,6 +12,7 @@ import random
 import signal
 import sys
 import time
+import random
 
 from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 from datetime import datetime
@@ -115,7 +116,8 @@ class ClusterQsim(ClusterBaseSystem):
         self.cosched_scheme_tup = kwargs.get("coscheduling", (0,0))
         self.cosched_scheme = self.cosched_scheme_tup[1]
         self.cosched_scheme_remote = self.cosched_scheme_tup[0]
-        self.mate_vicinity = kwargs.get("vicinity", DEFAULT_VICINITY)
+        self.mate_vicinity = kwargs.get("vicinity", 0)
+        self.mate_ratio = kwargs.get("mate_ratio", 0)
         
         valid_cosched_schemes = ["hold", "yield"]
         
@@ -130,13 +132,21 @@ class ClusterQsim(ClusterBaseSystem):
         self.mate_job_dict = {}
             
         if self.coscheduling:
+            self.jobid_qtime_pairs =  self.init_jobid_qtime_pairs()           
             try:
                 self.remote_jobid_qtime_pairs = ComponentProxy(REMOTE_QUEUE_MANAGER).get_jobid_qtime_pairs()
             except:
-                self.logger.error("failed to connect to remote queue-manager component!")
+                self.logger.error("fail to connect to remote queue-manager component!")
                 self.coscheduling = False
 
-            self.init_mate_job_dict()
+            if self.mate_vicinity:
+                print "start init mate job dict, vicinity=", self.mate_vicinity
+                self.init_mate_job_dict_by_vicinity()
+            elif self.mate_ratio:
+                print "start init mate job dict, mate_ratio=", self.mate_ratio
+                self.init_mate_job_dict_by_ratio(self.mate_ratio)
+            else:
+                self.logger.error("fail to initialize mate job dict!")
             
             matejobs = len(self.mate_job_dict.keys())
             proportion = float(matejobs) / self.total_job
@@ -798,6 +808,22 @@ class ClusterQsim(ClusterBaseSystem):
 
 
 #####coscheduling stuff
+    def init_jobid_qtime_pairs(self):
+        '''initialize mate job dict'''
+        jobid_qtime_pairs = []
+        
+        for id, spec in self.unsubmitted_job_spec_dict.iteritems():
+            qtime = spec['submittime']
+            jobid_qtime_pairs.append((qtime, int(id)))
+            
+        def _qtimecmp(tup1, tup2):
+            return cmp(tup1[0], tup2[0])
+        
+        jobid_qtime_pairs.sort(_qtimecmp)
+        
+        return jobid_qtime_pairs
+
+
     def find_mate_id(self, qtime, threshold):
     
         mate_subtime = 0
@@ -816,8 +842,8 @@ class ClusterQsim(ClusterBaseSystem):
                ret_id = mate_id
         return ret_id
     
-    def init_mate_job_dict(self):
-        '''init mate job dictionary'''
+    def init_mate_job_dict_by_vicinity(self):
+        '''init mate job dictionary by vicinity'''
         
         temp_dict = {} #remote_id:local_id
         
@@ -834,7 +860,34 @@ class ClusterQsim(ClusterBaseSystem):
                 else:
                     temp_dict[mate_id] = id
         #reserve dict to local_id:remote_id. (guarentee one-to-one)
-        self.mate_job_dict = dict((v, k) for k, v in temp_dict.iteritems())
+        self.mate_job_dict = dict((local_id, remote_id) for remote_id, local_id in temp_dict.iteritems())
+        
+    def init_mate_job_dict_by_ratio(self, ratio):
+        '''init mate job dictionary by specified ratio'''
+        
+        if ratio <= 0.5:
+            step = int(1.0 / ratio)
+            reverse_step = 1
+        else:
+            step = 1
+            reverse_step = int(1.0/(1-ratio))
+        
+        print "step=", step
+        print "reverse_step=", reverse_step
+        
+        i = 0
+        temp_dict = {}
+        for item in self.jobid_qtime_pairs:
+            remote_item = self.remote_jobid_qtime_pairs[i]
+            random_number = random.random()
+            if step > 1:
+                if i % step == 0:
+                    temp_dict[item[1]] = remote_item[1]
+            if reverse_step > 1:
+                if i % reverse_step != 0:
+                    temp_dict[item[1]] = remote_item[1]
+            i += 1
+        self.mate_job_dict = temp_dict            
         
     def get_mate_job_dict(self):
         return self.mate_job_dict
