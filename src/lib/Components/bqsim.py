@@ -35,12 +35,13 @@ WALLTIME_AWARE_CONS = False
 
 MACHINE_ID = 0
 MACHINE_NAME = "Intrepid"
-DEFAULT_MAX_HOLDING_SYS_UTIL = 1
+DEFAULT_MAX_HOLDING_SYS_UTIL = 0.6
 SELF_UNHOLD_INTERVAL = 0
 AT_LEAST_HOLD = 600
 MIDPLANE_SIZE = 512
 TOTAL_NODES = 40960
 TOTAL_MIDPLANE = 80
+YIELD_THRESHOLD = 0
     
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -161,7 +162,7 @@ class BGQsim(Simulator):
         self.first_hold_time_dict = {} 
 
         #record yield jobs's first yielding time, for calculating the extra waiting time
-        self.first_yield_time_dict = {}
+        self.first_yield_hold_time_dict = {}
         
         #record yield job ids. update dynamically
         self.yielding_job_list = []
@@ -280,15 +281,15 @@ class BGQsim(Simulator):
                 message = "%s;U;%s;host=%s" % \
                 (timestamp, spec['jobid'], ":".join(spec['location']))
             elif eventtype == 'E':  #end
-                first_yielding = self.first_yield_time_dict.get(int(spec['jobid']), 0)
-                if first_yielding > 0:
-                    yielding_time = spec['start_time'] - first_yielding
+                first_yield_hold = self.first_yield_hold_time_dict.get(int(spec['jobid']), 0)
+                if first_yield_hold > 0:
+                    overhead = spec['start_time'] - first_yield_hold
                 else:
-                    yielding_time = 0
-                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s yield=%s" % \
+                    overhead = 0
+                message = "%s;E;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s end=%f exec_host=%s runtime=%s hold=%s overhead=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], spec['nodes'], log_walltime, spec['start_time'], 
                  round(float(spec['end_time']), 1), ":".join(spec['location']),
-                 spec['runtime'], spec['hold_time'], yielding_time)
+                 spec['runtime'], spec['hold_time'], overhead)
             else:
                 print "invalid event type, type=", eventtype
                 return
@@ -610,8 +611,8 @@ class BGQsim(Simulator):
                     job_id = spec.get('jobid')
                     self.yielding_job_list.append(job_id)  #int
                     #record the first time this job yields
-                    if not self.first_yield_time_dict.has_key(job_id):
-                        self.first_yield_time_dict[job_id] = self.get_current_time_sec()
+                    if not self.first_yield_hold_time_dict.has_key(job_id):
+                        self.first_yield_hold_time_dict[job_id] = self.get_current_time_sec()
                         self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
                                             
                     #self.release_allocated_nodes(nodelist)                    
@@ -1394,14 +1395,18 @@ class BGQsim(Simulator):
                 self.first_hold_time_dict[job_id] = self.get_current_time_sec()
             
             for partname in nodelist:
-                self.reserve_partition(partname)            
+                self.reserve_partition(partname)
+                
+            if not self.first_yield_hold_time_dict.has_key(job_id):
+                self.first_yield_hold_time_dict[job_id] = self.get_current_time_sec()
+                            
             return self.queues.get_jobs([spec], _hold_job, updates)
         else:
             #if execeeding the maximum limite of holding nodes, the job will not hold but yield
             self.yielding_job_list.append(job_id)  #int
             #record the first time this job yields
-            if not self.first_yield_time_dict.has_key(job_id):
-                self.first_yield_time_dict[job_id] = self.get_current_time_sec()
+            if not self.first_yield_hold_time_dict.has_key(job_id):
+                self.first_yield_hold_time_dict[job_id] = self.get_current_time_sec()
                 self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
             return 0
         
@@ -1734,6 +1739,6 @@ class BGQsim(Simulator):
         
     def print_post_screen(self):
         '''post screen after simulation completes'''
-        #print self.first_yield_time_dict
+        #print self.first_yield_hold_time_dict
         pass
     print_post_screen = exposed(print_post_screen)    
