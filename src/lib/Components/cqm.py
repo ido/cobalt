@@ -1038,9 +1038,6 @@ class Job (StateMachine):
             self.__timers['hold'].stop()
             self.etime = time.time()
             self._sm_state = queued_state
-            #db_log_to_file(ReportObject("all holds released on job %s. Requeueing" % 
-            #                            (args['type'], self.jobid), 
-            #                            None, "hold_release", "job", self).encode())
 
     def _sm_ready__run(self, args):
         '''prepare a job for execution'''
@@ -2180,8 +2177,6 @@ class Job (StateMachine):
     def run(self, nodelist, user = None):
         try:
             self.trigger_event("Run", {'nodelist' : nodelist})
-            #db_log_to_file(ReportObject(("Run start requested by %s." % user),
-             #                           user, "started", "job_prog", JobProgMsg(self)).encode())
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self._sm_state)
@@ -2279,8 +2274,8 @@ class Job (StateMachine):
                         (self.jobid, self.user, self.nodes, user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
                         (self.jobid, self.user, self.nodes, user, stats))
-            db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
-                                            (self.jobid, self.user, self.nodes, user, stats),
+            db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s." % \
+                                            (self.jobid, self.user, self.nodes, user),
                                         user, "killing", "job_prog", JobProgMsg(self)).encode())
 
     def task_end(self):
@@ -2303,8 +2298,9 @@ class JobList(DataList):
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
             for job in jobs_added:
-                db_log_to_file(ReportObject(("%s created job: %s", spec['user'], spec['jobid']),
-                                            spec['user'], "created", "job_data", JobDataMsg(job)).encode())
+                user = spec.get('user', None)
+                db_log_to_file(ReportObject(("%s created job: %s", user, spec['jobid']),
+                                            user, "created", "job_data", JobDataMsg(job)).encode())
         return jobs_added
     
 
