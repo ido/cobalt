@@ -1,10 +1,129 @@
 import db2util
-__revision__ = '$Revision: 1'
+import xmlrpclib
+import os, sys
+import logging
+import ConfigParser
+import threading
+
+import Cobalt.Logging, Cobalt.Util
+from Cobalt.Statistics import Statistics
+from Cobalt.Components.DBWriter.cdbMessages import LogMessage, LogMessageDecoder
+from Cobalt.Components.base import Component, exposed, automatic, query, locking
+from Cobalt.Proxy import ComponentProxy
 
 
-#TODO: Provide a way for "dummy data" to be updated with actual job
-#data if the job creation message comes in after a generic progress
-#message.
+__revision__ = '$Revision: 1$'
+
+logger = logging.getLogger("Cobalt.Components.cdbwriter")
+config = ConfigParser.ConfigParser()
+config.read(Cobalt.CONFIG_FILES)
+if not config.has_section('cdbwriter'):
+   logger.error('"cdbwriter" section missing from config file.')
+   sys.exit(1)
+
+def get_cdbwriter_config(option, default):
+   try:
+      value = config.get('cdbwriter', option)
+   except ConfigParser.NoOptionError:
+      value = default
+   return value
+
+
+class MessageQueue(Component):
+   
+   name = "cdbwriter"
+   implementation = "cdbwriter"
+   logger = logging.getLogger("Cobalt.Components.cdbwriter")
+
+   _configfields = ['user', 'pwd', 'database', 'schema']
+   _config = ConfigParser.ConfigParser()
+   _config.read(Cobalt.CONFIG_FILES)
+   if not config._sections.has_key('cdbwriter'):
+      logger.error('"cdbwriter" section missing from config file.')
+   config = _config._sections['cdbwriter']
+   mfields = [field for field in _configfields if not config.has_key(field)]
+   if mfields:
+      logger.error("Missing option(s) in cobalt config file [cdbwriter] section: %s" % (" ".join(mfields)))
+      sys.exit(1)
+      
+      
+   def __init__(self, *args, **kwargs):
+      Component.__init__(self, *args, **kwargs)
+      self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
+      self.databaseWriter = self.init_database_connection()
+      self.database_active = True
+      self.msg_queue = []
+      self.lock = threading.Lock()
+      self.statistics = Statistics()
+
+   def __setstate__(self, state):
+      self.msg_queue = state['msg_queue']
+      self.databaseWriter = self.init_database_connection()
+      self.lock = threading.Lock()
+      self.statistics = Statistics()
+
+   def __getstate__(self):
+      return {'msg_queue': self.msg_queue}
+     
+             
+   def init_database_connection(self):
+      user = get_cdbwriter_config('user', None)
+      pwd =  get_cdbwriter_config('pwd', None)
+      database =  get_cdbwriter_config('database', None)
+      schema =  get_cdbwriter_config('schema', None)
+      print user, pwd, database, schema
+      try:
+         database_writer = DatabaseWriter(database, user, pwd, schema)
+      except:
+         #make this a log statement
+         logging.error("Error in connecting to the database. Exiting.")
+         self.database_active = False
+         raise
+         sys.exit(1)
+      return database_writer
+
+   def iterate(self):
+      """Go through the messages that are sitting on the queue and
+      load them into the database."""
+      if not self.msg_queue == []:
+         msg = self.msg_queue[0]
+         try:
+            self.databaseWriter.addMessage(msg)
+         except:
+            logger.error ("Error updating databse.  Unable to add message.")
+         else:
+            #message added
+            self.msg_queue.pop(0)
+
+      else:
+         self.idle()
+
+   iterate = automatic(iterate)
+
+   def idle(self):
+      #prevent queue lookup from pegging out CPU
+      pass
+
+   def add_message(self, msg):
+      msgDict = None
+      try:
+         msgDict = LogMsgDecoder.decode(msg)
+      except ValueError:
+         logger.error("Bad message recieved.  Failed to decode string %s" % msg)
+         return
+      self.queue.append(msgDict) 
+      
+
+   add_message = exposed(add_message)
+   
+   
+   def save_me(self):
+      Component.save(self)
+   save_me = automatic(save_me)
+
+#TODO: Make this follow Cobalt xmlrpc conventions and work like a component
+#in general.
+
 
 #Class for handling database output
 class DatabaseWriter(object):
@@ -12,7 +131,13 @@ class DatabaseWriter(object):
    def __init__(self, dbName, username, password, schema):
 
       self.db = db2util.db()
-      self.db.connect(dbName, username, password)
+      print dbName, username, password, schema
+      try:
+         self.db.connect(dbName, username, password)
+      except:
+         logger.error("Failed to open a connection to database %s as user %s" %(dbName, username))
+         raise
+
       self.schema = schema
 
       table_names = ['RESERVATION_DATA', 'RESERVATION_PARTS',
@@ -23,37 +148,42 @@ class DatabaseWriter(object):
       #Handle tables, There is probably a better way to do this.
       self.tables = {}
       self.daos = {}
-      for table_name in table_names:
-         print "Accessing table: %s" % table_name
-         self.tables[table_name] = db2util.table(self.db, schema, table_name)
-         #I am so going to need new and exciting daos.
-         if table_name in ['RESERVATION_STATES', 'JOB_EVENTS', 'JOB_COBALT_STATES']:
-            self.daos[table_name] = StateTableData(self.db, schema, 
-                                             self.tables[table_name].table)
-         elif table_name == 'RESERVATION_DATA':
-            self.daos[table_name] = ResDataData(self.db, schema, 
-                                                self.tables[table_name].table)
+      try:
+         for table_name in table_names:
+            logger.info("Accessing table: %s" % table_name)
+            self.tables[table_name] = db2util.table(self.db, schema, table_name)
+         
+            if table_name in ['RESERVATION_STATES', 'JOB_EVENTS', 'JOB_COBALT_STATES']:
+               self.daos[table_name] = StateTableData(self.db, schema, 
+                                                      self.tables[table_name].table)
+            elif table_name == 'RESERVATION_DATA':
+               self.daos[table_name] = ResDataData(self.db, schema, 
+                                                   self.tables[table_name].table)
             
-         elif table_name == 'JOB_DATA':
-            self.daos[table_name] = JobDataData(self.db, schema, 
-                                                self.tables[table_name].table)
-         elif table_name == 'JOB_DEPS':
-            self.daos[table_name] = JobDepsData(self.db, schema, 
-                                                self.tables[table_name].table)
-         elif table_name == 'JOB_PROG':
-            self.daos[table_name] = JobProgData(self.db, schema, 
-                                                self.tables[table_name].table)
-         else:
-            self.daos[table_name] = db2util.dao(self.db, schema, 
-                                             self.tables[table_name].table)
+            elif table_name == 'JOB_DATA':
+               self.daos[table_name] = JobDataData(self.db, schema, 
+                                                   self.tables[table_name].table)
+            elif table_name == 'JOB_DEPS':
+               self.daos[table_name] = JobDepsData(self.db, schema, 
+                                                   self.tables[table_name].table)
+            elif table_name == 'JOB_PROG':
+               self.daos[table_name] = JobProgData(self.db, schema, 
+                                                   self.tables[table_name].table)
+            else:
+               self.daos[table_name] = db2util.dao(self.db, schema, 
+                                                   self.tables[table_name].table)
+      except:
+         logger.error("Error accessing table %s!" % table_name)
+         self.db.close()
+         raise
+         
       
-
       #we opened with a schema, let's make that the default for now.
       self.db.prepExec("set current schema %s" % schema)
       
    def addMessage(self, logMsg):
 
-      print "Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state)
+      logger.info("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
 
       if logMsg.item_type == 'reservation':
          if logMsg.state == 'created':

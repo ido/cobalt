@@ -2181,8 +2181,6 @@ class Job (StateMachine):
     def run(self, nodelist, user = None):
         try:
             self.trigger_event("Run", {'nodelist' : nodelist})
-            #db_log_to_file(ReportObject(("Run start requested by %s." % user),
-             #                           user, "started", "job_prog", JobProgMsg(self)).encode())
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self._sm_state)
@@ -2303,9 +2301,10 @@ class JobList(DataList):
                 spec['jobid'] = self.id_gen.next()
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
+            user = spec.get('user', None)
             for job in jobs_added:
-                db_log_to_file(ReportObject(("%s created job: %s", spec['user'], spec['jobid']),
-                                            spec['user'], "created", "job_data", JobDataMsg(job)).encode())
+                db_log_to_file(ReportObject(("%s created job: %s", user, spec['jobid']),
+                                            user, "created", "job_data", JobDataMsg(job)).encode())
         return jobs_added
     
 
