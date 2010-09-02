@@ -304,6 +304,7 @@ class dbwriter(object):
         self.enabled = False
         self.cdbwriter_alive = False
         self.cdbwriter = None
+        self.flushing = False
         if queue:
             self.msg_queue = queue
         else:
@@ -335,7 +336,16 @@ class dbwriter(object):
             raise
         else:
             self.msg_queue.append(message)
+        
+        self.flush_queue()
 
+ 
+    def flush_queue(self):
+        """send a series of messages to the writer component."""
+        if not (self.enabled or self.flushing):
+            return
+
+        self.flushing = True
         if not self.cdbwriter_alive:
             self.connect()
         
@@ -351,7 +361,7 @@ class dbwriter(object):
                 break
             else:
                 self.msg_queue.pop(0)
-
+        self.flushing = False
     
     
 #TODO: no I don't want to rewrite a bunch of code right now, why do you ask?

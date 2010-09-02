@@ -2631,6 +2631,11 @@ class QueueManager(Component):
     def __save_me(self):
         Component.save(self)
     __save_me = automatic(__save_me, float(get_cqm_config('save_me_interval', 10)))
+
+
+    def __flush_msg_queue(self):
+        dbwriter.flush_queue()
+    __flush_msg_queue = automatic(__flush_msg_queue, float(get_cqm_config('db_flush_interval', 10)))
         
     def __progress(self):
         '''Process asynchronous job work'''

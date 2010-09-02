@@ -87,10 +87,9 @@ class MessageQueue(Component):
    def iterate(self):
       """Go through the messages that are sitting on the queue and
       load them into the database."""
-      print self.msg_queue
+      
       while self.msg_queue:
          msg = self.msg_queue[0]
-         print msg
          try:
             print msg
             self.databaseWriter.addMessage(msg)
