@@ -55,12 +55,14 @@ class MessageQueue(Component):
       self.msg_queue = []
       self.lock = threading.Lock()
       self.statistics = Statistics()
+      self.decoder = LogMessageDecoder()
 
    def __setstate__(self, state):
       self.msg_queue = state['msg_queue']
       self.databaseWriter = self.init_database_connection()
       self.lock = threading.Lock()
       self.statistics = Statistics()
+      self.decoder = LogMessageDecoder()
 
    def __getstate__(self):
       return {'msg_queue': self.msg_queue}
@@ -71,7 +73,7 @@ class MessageQueue(Component):
       pwd =  get_cdbwriter_config('pwd', None)
       database =  get_cdbwriter_config('database', None)
       schema =  get_cdbwriter_config('schema', None)
-      print user, pwd, database, schema
+      
       try:
          database_writer = DatabaseWriter(database, user, pwd, schema)
       except:
@@ -85,9 +87,12 @@ class MessageQueue(Component):
    def iterate(self):
       """Go through the messages that are sitting on the queue and
       load them into the database."""
-      if not self.msg_queue == []:
+      print self.msg_queue
+      while self.msg_queue:
          msg = self.msg_queue[0]
+         print msg
          try:
+            print msg
             self.databaseWriter.addMessage(msg)
          except:
             logger.error ("Error updating databse.  Unable to add message.")
@@ -95,23 +100,18 @@ class MessageQueue(Component):
             #message added
             self.msg_queue.pop(0)
 
-      else:
-         self.idle()
 
    iterate = automatic(iterate)
 
-   def idle(self):
-      #prevent queue lookup from pegging out CPU
-      pass
 
    def add_message(self, msg):
       msgDict = None
       try:
-         msgDict = LogMsgDecoder.decode(msg)
+         msgDict = self.decoder.decode(msg)
       except ValueError:
          logger.error("Bad message recieved.  Failed to decode string %s" % msg)
          return
-      self.queue.append(msgDict) 
+      self.msg_queue.append(msgDict) 
       
 
    add_message = exposed(add_message)
@@ -131,7 +131,7 @@ class DatabaseWriter(object):
    def __init__(self, dbName, username, password, schema):
 
       self.db = db2util.db()
-      print dbName, username, password, schema
+      
       try:
          self.db.connect(dbName, username, password)
       except:

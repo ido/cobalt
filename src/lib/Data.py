@@ -6,8 +6,6 @@ import time
 import random
 import warnings
 
-from sets import Set as set
-
 import Cobalt.Util
 from Cobalt.Exceptions import DataCreationError, IncrIDError, DataStateError, DataStateTransitionError
 

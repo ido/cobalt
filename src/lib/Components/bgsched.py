@@ -21,8 +21,6 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
 from Cobalt.Statistics import Statistics
-from Cobalt.Logging import db_log_to_file
-from Cobalt.JSONEncoders import ReportObject
 
 import Cobalt.SchedulerPolicies
 
@@ -46,13 +44,12 @@ def get_bgsched_config(option, default):
         value = default
     return value
 
-db_writer = Cobalt.Logging.DatabaseWriter(get_bgsched_config("db_log_file", "json.out"))
+dbwriter = Cobalt.Logging.dbwriter(logger)
+use_db_logging = get_bgsched_config('use_db_logging', None)
+if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
+   dbwriter.enabled = True
+   dbwriter.connect()
 
-def check_db_logging_enabled():
-       
-    if not "true" == get_bgsched_config("use_db_logging", None):
-        logging.info("Turning off logging to database")
-        Cobalt.Logging.DatabaseWriter.off = True
 
 class Reservation (Data):
     
@@ -198,8 +195,7 @@ class Reservation (Data):
                and self.running):
                 self.running = False
                 self.res_id = self.id_gen.get()
-                db_log_to_file(ReportObject("Reservation %s has cycled" % self.name,
-                                            None, "cycled", "reservation", self).encode())
+                dbwriter.log_to_db(None, "cycled", "reservation", self)
             return False        
         
         if (self.start + self.duration) <= stime:
@@ -395,12 +391,12 @@ class BGSched (Component):
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
         
-        self.check_db_logging_enabled()  
+        
 
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
                 'active':self.active, 'next_res_id':self.id_gen.idnum+1, 
-                'next_cycle_id':self.cycle_id_gen.idnum+1}
+                'next_cycle_id':self.cycle_id_gen.idnum+1, 'msg_queue': dbwriter.msg_queue}
     
     def __setstate__(self, state):
         self.reservations = state['reservations']
@@ -427,11 +423,12 @@ class BGSched (Component):
         self.get_current_time = time.time
         self.lock = threading.Lock()
         self.statistics = Statistics()
-        
-        self.check_db_logging_enabled()
 
-    def check_db_logging_enabled(self):
-        check_db_logging_enabled()
+        if state.has_key('msg_queue'):
+            dbwriter.msg_queue = state['msg_queue']
+        
+        
+
 
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
@@ -487,9 +484,7 @@ class BGSched (Component):
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
         added_reservations =  self.reservations.q_add(specs)
         for added_reservation in added_reservations:
-            db_log_to_file( ReportObject("%s added reservation: %r" % (user_name, specs), 
-                                         user_name, "created", "reservation", 
-                                         added_reservation).encode()) 
+            dbwriter.log_to_db(user_name, "created", "reservation", added_reservation)
         return added_reservations
     
     add_reservations = exposed(query(add_reservations))
@@ -498,9 +493,7 @@ class BGSched (Component):
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
-            db_log_to_file( ReportObject("%s releasing reservation: %r" % (user_name, specs), 
-                                         user_name, "ended", "reservation",
-                                         del_reservation).encode()) 
+            dbwriter.log_to_db(user_name, "ended", "reservation", del_reservation) 
         return del_reservations
 
     del_reservations = exposed(query(del_reservations))
@@ -516,9 +509,7 @@ class BGSched (Component):
             res.update(newattr)
         mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
         for mod_reservation in mod_reservations:
-            db_log_to_file(ReportObject(log_str, user_name, 
-                                        "modified", "reservation", 
-                                        mod_reservation).encode())
+            dbwriter.log_to_db(user_name, "modified", "reservation", mod_reservation)
         return mod_reservations
         
     set_reservations = exposed(query(set_reservations))
@@ -641,7 +632,7 @@ class BGSched (Component):
                     self.logger.info("reservation %s has ended; removing" % res.name)
                     del_reservations = self.reservations.q_del([{'name': res.name}])
                     for del_reservation in del_reservations:
-                        db_log_to_file( ReportObject("reservation %s has ended; removing" % res.name, None, "ended", "reservation", del_reservation).encode()) 
+                        dbwriter.log_to_db(None, "ended", "reservation", del_reservation) 
     
             reservations_cache = self.reservations.copy()
         except:
@@ -782,7 +773,3 @@ class BGSched (Component):
         self.logger.info("%s disabling scheduling", user_name)
         self.active = False
     disable = exposed(disable)
-
-
-def cleanup_database_writer():
-    Cobalt.Logging.DatabaseWriter.close()
