@@ -363,62 +363,7 @@ class dbwriter(object):
                 self.msg_queue.pop(0)
         self.flushing = False
     
-    
-#TODO: no I don't want to rewrite a bunch of code right now, why do you ask?
-#dump this in favor of DatabaseWriter.write
 
 
-# class ThreadedWrite(threading.Thread):
-    
-#     def __init__(self, output_filename, *args, **kwargs):
-#         threading.Thread.__init__(self,*args,**kwargs)
-#         self.msg_queue = Queue.Queue()
-#         self.terminating = False
-
-
-#     def run(self):
-                
-#         while not self.terminating:
-#             try:
-#                 queue_data = self.msg_queue.get(block=False)
-#                 self.missed_timeouts = 0
-#             except Queue.Empty:               
-#                 time.sleep(1)
-#                 continue
-            
-#             out_file = open(os.path.join(self.output_filename), "a")
-#             out_file.write(queue_data)
-#             out_file.close()
-#             self.msg_queue.task_done()
-            
-#         #TODO: set up a fail-over file.
-#         #drain the queue and then terminate.
-#         print "Writer thread terminating."
-#         while not self.msg_queue.empty():
-#             queue_data = self.msg_queue.get(block=False)
-#             out_file = open(os.path.join(self.output_filename), "a")
-#             out_file.write(queue_data)
-#             out_file.close()
-#             self.msg_queue.task_done()
-        
-#         return
-
-#     def send(self, data):
-
-#         """catches messages.  If "Terminate" message is caught, kill the
-#            writer thread."""
-#         if not isinstance(data, str):
-#             raise TypeError("Non-string data passed to the database writer")
-#         if self.terminating:
-#             raise RuntimeError("Attempted to queue a message after writer has been sent a terminate message.")
-#         if data == "Terminate\n":
-#             self.terminating = True
-#             self.close()
-#             return
-#         self.msg_queue.put(data, block=False)
-
-#     def close(self):
-#         self.msg_queue.join()
-#         self.join()
         
 

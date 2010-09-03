@@ -4,6 +4,7 @@ import os, sys
 import logging
 import ConfigParser
 import threading
+import traceback
 
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Statistics import Statistics
@@ -50,16 +51,16 @@ class MessageQueue(Component):
    def __init__(self, *args, **kwargs):
       Component.__init__(self, *args, **kwargs)
       self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
-      self.databaseWriter = self.init_database_connection()
-      self.database_active = True
+      self.database_writer = self.init_database_connection()
       self.msg_queue = []
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
+      self.connected = False
 
    def __setstate__(self, state):
       self.msg_queue = state['msg_queue']
-      self.databaseWriter = self.init_database_connection()
+      self.database_writer = self.init_database_connection()
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
@@ -75,26 +76,34 @@ class MessageQueue(Component):
       schema =  get_cdbwriter_config('schema', None)
       
       try:
-         database_writer = DatabaseWriter(database, user, pwd, schema)
+         self.database_writer = DatabaseWriter(database, user, pwd, schema)
       except:
          #make this a log statement
-         logging.error("Error in connecting to the database. Exiting.")
-         self.database_active = False
-         raise
-         sys.exit(1)
-      return database_writer
+         logging.error("Unable to connect to %s as %s" % (database, user))
+         self.connected = False
+         logging.debug(traceback.format_exc())
+      else:
+         self.connected = True
 
    def iterate(self):
       """Go through the messages that are sitting on the queue and
       load them into the database."""
       
-      while self.msg_queue:
+      #if we're not connected, try to reconnect to the database
+      if not self.connected:
+         logger.debug("Attempting reconnection.")
+         self.init_database_connection()
+      
+      while self.msg_queue and self.connected:
+        
          msg = self.msg_queue[0]
          try:
-            print msg
-            self.databaseWriter.addMessage(msg)
+            self.database_writer.addMessage(msg)
          except:
             logger.error ("Error updating databse.  Unable to add message.")
+            logging.debug(traceback.format_exc())
+            self.connected = False
+            break
          else:
             #message added
             self.msg_queue.pop(0)
@@ -104,12 +113,15 @@ class MessageQueue(Component):
 
 
    def add_message(self, msg):
+     
       msgDict = None
       try:
          msgDict = self.decoder.decode(msg)
       except ValueError:
          logger.error("Bad message recieved.  Failed to decode string %s" % msg)
          return
+      except:
+         logging.debug(traceback.format_exc())
       self.msg_queue.append(msgDict) 
       
 
