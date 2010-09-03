@@ -183,6 +183,7 @@ class Reservation (Data):
         if now <= self.duration:
             if not self.running:
                 self.running = True
+                dbwriter.log_to_db(None, "active", "reservation", self)
             return True
 
     def is_over(self):
@@ -773,3 +774,7 @@ class BGSched (Component):
         self.logger.info("%s disabling scheduling", user_name)
         self.active = False
     disable = exposed(disable)
+
+    def __flush_msg_queue(self):
+        dbwriter.flush_queue()
+    __flush_msg_queue = automatic(__flush_msg_queue, float(get_bgsched_config('db_flush_interval', 10)))
