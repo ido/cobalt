@@ -113,12 +113,12 @@ def parseline_alt(line):
     end_date = temp['end']
     end_sec = date_to_sec(end_date, "%Y-%m-%d %H:%M:%S")
     temp['end'] = end_sec
-    walltime_sec = temp['Resource_List.walltime']
-    wall_time = int(float(walltime_sec) / 60) 
-    walltime_minutes = len2(wall_time % 60)
-    walltime_hours = len2(wall_time // 60)
-    fmt_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
-    temp['Resource_List.walltime'] = fmt_walltime
+#    walltime_sec = temp['Resource_List.walltime']
+#    wall_time = int(float(walltime_sec) / 60) 
+#    walltime_minutes = len2(wall_time % 60)
+#    walltime_hours = len2(wall_time // 60)
+#    fmt_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
+#    temp['Resource_List.walltime'] = fmt_walltime
 
     return temp
 
