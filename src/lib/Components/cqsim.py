@@ -255,9 +255,17 @@ class ClusterQsim(ClusterBaseSystem):
             format_walltime = tmp.get('Resource_List.walltime')
             spec['walltime'] = 0
             if format_walltime:
-                segs = format_walltime.split(':')
-                walltime_minuntes = int(segs[0])*60 + int(segs[1])
-                spec['walltime'] = str(int(segs[0])*60 + int(segs[1]))
+                parts = format_walltime.split(',')
+                days = 0
+                if len(parts) > 1: #contain day:  1 day, 11:00:00
+                    days = int(parts[0].split(' ')[0])
+                    minutes_part = parts[1]
+                else:
+                    minutes_part = parts[0] 
+                segs = minutes_part.split(':')
+                walltime_minutes = int(segs[0])*60 + int(segs[1])
+                total_walltime_minutes = walltime_minutes + days * 24 * 60
+                spec['walltime'] = str(total_walltime_minutes)
             else:  #invalid job entry, discard
                 continue
             
