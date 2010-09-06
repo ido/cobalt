@@ -263,7 +263,7 @@ class ClusterQsim(ClusterBaseSystem):
                 else:
                     minutes_part = parts[0] 
                 segs = minutes_part.split(':')
-                walltime_minutes = int(segs[0])*60 + int(segs[1])
+                walltime_minutes = float(segs[0])*60 + int(segs[1])
                 total_walltime_minutes = walltime_minutes + days * 24 * 60
                 spec['walltime'] = str(total_walltime_minutes)
             else:  #invalid job entry, discard
