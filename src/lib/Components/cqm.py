@@ -2275,7 +2275,7 @@ class JobList(DataList):
             user = spec.get('user', None)
             for job in jobs_added:
                 user = spec.get('user', None)
-                dbwriter.log_to_db(user, "created", "job_data", JobDataMsg(job))
+                dbwriter.log_to_db(user, "creating", "job_data", JobDataMsg(job))
         return jobs_added
     
 

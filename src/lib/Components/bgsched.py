@@ -94,7 +94,7 @@ class Reservation (Data):
     active = property(_get_active)
     
     def update (self, spec):
-        print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
+        #print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
         if spec.has_key("users"):
             qm = ComponentProxy("queue-manager")
             try:
@@ -107,7 +107,7 @@ class Reservation (Data):
             #we have just turned this into a cyclic reservation and need a cycle_id.
             spec['cycle_id'] = self.cycle_id_gen.get()
         Data.update(self, spec)
-        print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
+        #print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
 
     
     def overlaps(self, start, duration):
@@ -183,7 +183,7 @@ class Reservation (Data):
         if now <= self.duration:
             if not self.running:
                 self.running = True
-                dbwriter.log_to_db(None, "active", "reservation", self)
+                dbwriter.log_to_db(None, "activating", "reservation", self)
             return True
 
     def is_over(self):
@@ -196,7 +196,7 @@ class Reservation (Data):
                and self.running):
                 self.running = False
                 self.res_id = self.id_gen.get()
-                dbwriter.log_to_db(None, "cycled", "reservation", self)
+                dbwriter.log_to_db(None, "cycling", "reservation", self)
             return False        
         
         if (self.start + self.duration) <= stime:
@@ -485,7 +485,7 @@ class BGSched (Component):
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
         added_reservations =  self.reservations.q_add(specs)
         for added_reservation in added_reservations:
-            dbwriter.log_to_db(user_name, "created", "reservation", added_reservation)
+            dbwriter.log_to_db(user_name, "creating", "reservation", added_reservation)
         return added_reservations
     
     add_reservations = exposed(query(add_reservations))
@@ -494,7 +494,7 @@ class BGSched (Component):
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
-            dbwriter.log_to_db(user_name, "ended", "reservation", del_reservation) 
+            dbwriter.log_to_db(user_name, "ending", "reservation", del_reservation) 
         return del_reservations
 
     del_reservations = exposed(query(del_reservations))
@@ -510,7 +510,7 @@ class BGSched (Component):
             res.update(newattr)
         mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
         for mod_reservation in mod_reservations:
-            dbwriter.log_to_db(user_name, "modified", "reservation", mod_reservation)
+            dbwriter.log_to_db(user_name, "modifying", "reservation", mod_reservation)
         return mod_reservations
         
     set_reservations = exposed(query(set_reservations))
@@ -633,7 +633,7 @@ class BGSched (Component):
                     self.logger.info("reservation %s has ended; removing" % res.name)
                     del_reservations = self.reservations.q_del([{'name': res.name}])
                     for del_reservation in del_reservations:
-                        dbwriter.log_to_db(None, "ended", "reservation", del_reservation) 
+                        dbwriter.log_to_db(None, "ending", "reservation", del_reservation) 
     
             reservations_cache = self.reservations.copy()
         except:

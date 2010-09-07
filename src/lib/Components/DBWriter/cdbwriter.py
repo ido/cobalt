@@ -64,6 +64,7 @@ class MessageQueue(Component):
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
+      print self.msg_queue
 
    def __getstate__(self):
       return {'msg_queue': self.msg_queue}
@@ -99,6 +100,10 @@ class MessageQueue(Component):
          msg = self.msg_queue[0]
          try:
             self.database_writer.addMessage(msg)
+         except db2util.adapterError:
+            logger.error ("Error updating databse.  Unable to add message.")
+            logging.debug(traceback.format_exc())
+            self.msg_queue.pop(0)
          except:
             logger.error ("Error updating databse.  Unable to add message.")
             logging.debug(traceback.format_exc())
@@ -152,7 +157,7 @@ class DatabaseWriter(object):
       self.schema = schema
 
       table_names = ['RESERVATION_DATA', 'RESERVATION_PARTS',
-                     'RESERVATION_STATES', 'RESERVATION_USERS',
+                     'RESERVATION_EVENTS', 'RESERVATION_USERS',
                      'RESERVATION_PROG', 'JOB_DATA', 'JOB_ATTR',
                      'JOB_DEPS', 'JOB_EVENTS','JOB_COBALT_STATES', 'JOB_PROG']
 
@@ -164,7 +169,7 @@ class DatabaseWriter(object):
             logger.info("Accessing table: %s" % table_name)
             self.tables[table_name] = db2util.table(self.db, schema, table_name)
          
-            if table_name in ['RESERVATION_STATES', 'JOB_EVENTS', 'JOB_COBALT_STATES']:
+            if table_name in ['RESERVATION_EVENTS', 'JOB_EVENTS', 'JOB_COBALT_STATES']:
                self.daos[table_name] = StateTableData(self.db, schema, 
                                                       self.tables[table_name].table)
             elif table_name == 'RESERVATION_DATA':
@@ -197,7 +202,7 @@ class DatabaseWriter(object):
       logger.info("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
 
       if logMsg.item_type == 'reservation':
-         if logMsg.state == 'created':
+         if logMsg.state == 'creating':
             self.__addResMsg(logMsg)
          else:
             self.__modifyResMsg(logMsg)
@@ -258,18 +263,19 @@ class DatabaseWriter(object):
                self.daos['RESERVATION_USERS'].insert(res_users_record)
 
             
-      reservation_state_record = self.daos['RESERVATION_STATES'].table.getRecord({'NAME': logMsg.state})
-      match = self.daos['RESERVATION_STATES'].search(reservation_state_record)
+      reservation_event_record = self.daos['RESERVATION_EVENTS'].table.getRecord({'NAME': logMsg.state})
+      match = self.daos['RESERVATION_EVENTS'].search(reservation_event_record)
       if not match:
-         self.daos['RESERVATION_STATES'].insert(reservation_state_record)
+         logger.warning("Received message with a nonexistent event for resid %s.  Event was: %s" %
+                        (logMsg.item.res_id, logMsg.state))
       else:
-         reservation_state_record.v.ID = match[0]['ID']
+         reservation_event_record.v.ID = match[0]['ID']
          
          
 
       reservation_prog_record = self.daos['RESERVATION_PROG'].table.getRecord({
             'ENTRY_TIME': logMsg.timestamp,
-            'STATE':reservation_state_record.v.ID,
+            'EVENT_TYPE':reservation_event_record.v.ID,
             'EXEC_USER': logMsg.exec_user,
             'RES_DATA_ID' : res_data_id
             })
@@ -282,19 +288,20 @@ class DatabaseWriter(object):
    def __modifyResMsg(self, logMsg):
    
       #get state.  No matter what we need this.
-      reservation_state_record = self.daos['RESERVATION_STATES'].table.getRecord({'NAME': logMsg.state})
-      match = self.daos['RESERVATION_STATES'].search(reservation_state_record)
+      reservation_event_record = self.daos['RESERVATION_EVENTS'].table.getRecord({'NAME': logMsg.state})
+      match = self.daos['RESERVATION_EVENTS'].search(reservation_event_record)
       if not match:
-         self.daos['RESERVATION_STATES'].insert(reservation_state_record)
+         logger.warning("Received message with a nonexistent event for resid %s.  Event was: %s" %
+                        (logMsg.item.res_id, logMsg.state))
       else:
-         reservation_state_record.v.ID = match[0]['ID']
+         reservation_event_record.v.ID = match[0]['ID']
          
          
       res_id = self.__get_most_recent_data_id('RESERVATION_DATA', logMsg)      
  
       if ((not res_id) or 
-          ((logMsg.state == 'modified') or 
-           (logMsg.state == 'cycled'))): 
+          ((logMsg.state == 'modifying') or 
+           (logMsg.state == 'cycling'))): 
          
          #we've gone from modify to add.
          self.__addResMsg(logMsg)
@@ -310,7 +317,7 @@ class DatabaseWriter(object):
          
          reservation_prog_record = self.daos['RESERVATION_PROG'].table.getRecord({
                'RES_DATA_ID' : res_id,
-               'STATE' : reservation_state_record.v.ID,
+               'EVENT_TYPE' : reservation_event_record.v.ID,
                'ENTRY_TIME' : logMsg.timestamp,
                'EXEC_USER' : logMsg.exec_user
                })
@@ -332,7 +339,7 @@ class DatabaseWriter(object):
       #if we have a "dummy" object, and we get a message that
       #indicates job creation, replace the dummy.
       updateDummy = False
-      if logMsg.state == "created":
+      if logMsg.state == "creating":
          possible_record = self.daos['JOB_DATA'].find_dummy(logMsg.item.jobid)
          if possible_record: 
             job_data_record = possible_record
@@ -385,17 +392,17 @@ class DatabaseWriter(object):
          of these records are likely to be created during a
          single job's run."""
    
-      #print job_prog_msg
       #this is always a part of an incoming job message.
       #may have to update some other fields as run progresses in job_data
-      
+
+      if job_data_id == None:
+         job_data_id = self.get_job_data_ids_from_jobid(job_prog_msg.jobid)      
 
       job_event_record = self.daos['JOB_EVENTS'].table.getRecord({'NAME': logMsg.state})
       match = self.daos['JOB_EVENTS'].search(job_event_record)
       if not match:
-         #Hmmm...a message with a state not in the DB.  Reject it.
-         #TODO: Log rejection?
-         pass
+         logger.warning("Received message with a nonexistent event for jobid %s.  Event was: %s" %
+                        (job_data_id, logMsg.state))
       else:
          job_event_record.v.ID = match[0]['ID']
 
@@ -404,12 +411,11 @@ class DatabaseWriter(object):
       job_cobalt_states_record = self.daos['JOB_COBALT_STATES'].table.getRecord({'NAME': job_prog_msg.cobalt_state})
       match = self.daos['JOB_COBALT_STATES'].search(job_cobalt_states_record)
       if not match:
-         self.daos['JOB_COBALT_STATES'].insert(job_cobalt_states_record)
+         logger.warning("Received message with a nonexistent cobalt state for jobid %s.  Event was: %s" %
+                        (job_data_id, job_prog_msg.cobalt_state))
       else:
          job_cobalt_states_record.v.ID = match[0]['ID']
 
-      if job_data_id == None:
-         job_data_id = self.get_job_data_ids_from_jobid(job_prog_msg.jobid)
 
 
       updateAtRun = {}
