@@ -51,20 +51,19 @@ class MessageQueue(Component):
    def __init__(self, *args, **kwargs):
       Component.__init__(self, *args, **kwargs)
       self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
-      self.database_writer = self.init_database_connection()
+      self.connected = False
       self.msg_queue = []
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
-      self.connected = False
+      
 
    def __setstate__(self, state):
       self.msg_queue = state['msg_queue']
-      self.database_writer = self.init_database_connection()
+      self.connected = False
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
-      print self.msg_queue
 
    def __getstate__(self):
       return {'msg_queue': self.msg_queue}
@@ -96,8 +95,8 @@ class MessageQueue(Component):
          self.init_database_connection()
       
       while self.msg_queue and self.connected:
-        
          msg = self.msg_queue[0]
+            
          try:
             self.database_writer.addMessage(msg)
          except db2util.adapterError:
