@@ -85,7 +85,7 @@ import thread
 from threading import Thread, Lock
 import traceback
 import string
-import json
+
 
 import Cobalt
 import Cobalt.Util
@@ -100,8 +100,6 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
     JobRunError, JobPreemptionError, JobDeleteError)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
-from Cobalt.Logging import db_log_to_file
-from Cobalt.JSONEncoders import ReportObject
 
 logger = logging.getLogger('cqm')
 
@@ -133,14 +131,12 @@ accounting_logger.addHandler(
     accounting.DatetimeFileHandler(os.path.join(accounting_logdir, "%Y%m%d")))
 
 
-db_writer = Cobalt.Logging.DatabaseWriter(get_cqm_config("db_log_file", "json.out"))
+dbwriter = Cobalt.Logging.dbwriter(logging)
+use_db_logging = get_cqm_config('use_db_logging',None)
+if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
+    dbwriter.enabled = True
+    dbwriter.connect()
 
-
-def check_db_logging_enabled():
-       
-    if not "true" == get_cqm_config("use_db_logging", None):
-        logging.info("Turning off logging to database")
-        Cobalt.Logging.DatabaseWriter.off = True
 
 
 def str_elapsed_time(elapsed_time):
@@ -892,13 +888,11 @@ class Job (StateMachine):
                 self.__signal_timer = Timer()
             self.__signal_timer.start()
             self._sm_state = 'Preempting'
-            db_log_to_file(ReportObject(("Preempting job %s" % self.jobid),
-                                    None, "preempting", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "preempting", "job_prog", JobProgMsg(self))
             return True
         else:
             self._sm_state = 'Preempt_Retry'
-            db_log_to_file(ReportObject(("Problem preempting job %s, retrying." % self.jobid),
-                                    None, "preempting", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "preempting", "job_prog", JobProgMsg(self))
             return False
 
     def _sm_start_resource_epilogue_scripts(self, new_state = 'Resource_Epilogue'):
@@ -906,16 +900,14 @@ class Job (StateMachine):
         self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
         self._sm_scripts_thread.start()
         self._sm_state = new_state
-        db_log_to_file(ReportObject(("beginning resource epilogue."),
-                                    None, "resource_epilogue_start", "job_prog", JobProgMsg(self)).encode())
+        dbwriter.log_to_db(None, "resource_epilogue_start", "job_prog", JobProgMsg(self))
 
     def _sm_start_job_epilogue_scripts(self, new_state = 'Job_Epilogue'):
         job_scripts = get_cqm_config('job_postscripts', "").split(':')
         self._sm_scripts_thread = RunScriptsThread(job_scripts, self, self.fields)
         self._sm_scripts_thread.start()
         self._sm_state = new_state
-        db_log_to_file(ReportObject(("beginning job epilogue."),
-                                    None, "job_epilogue_start", "job_prog", JobProgMsg(self)).encode())
+        dbwriter.log_to_db(None, "job_epilogue_start", "job_prog", JobProgMsg(self))
         
     def _sm_scripts_are_finished(self, type):
         try:
@@ -939,9 +931,9 @@ class Job (StateMachine):
                     (type, result['script'], result['rc'], err_msg))
         #PMR: shold errors from epilogue somehow be captured?
         if type == 'resource postscript':
-            db_log_to_file(ReportObject("Resource postscript completed.", None, "resource_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog", JobProgMsg(self))
         elif type == 'job postscript':
-            db_log_to_file(ReportObject("Job Postscript completed.", None, "job_epilogue_finished", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", JobProgMsg(self))
         return True
 
     def _sm_common_queued__hold(self, hold_state, args):
@@ -966,8 +958,7 @@ class Job (StateMachine):
         self.__timers['hold'].start()
         self._sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
         self._sm_state = hold_state
-        db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
-                                    None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self)).encode())
+        dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
         
 
     def _sm_common_queued__release(self, args):
@@ -999,8 +990,7 @@ class Job (StateMachine):
 
         if activity:
             self._sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
-            db_log_to_file(ReportObject("%s hold placed on job %s." % (args['type'], self.jobid), 
-                                        None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
         else:
             self._sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
@@ -1025,11 +1015,9 @@ class Job (StateMachine):
 
         if activity:
             self._sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
-            db_log_to_file(ReportObject("%s hold released on job %s." % (args['type'], self.jobid), 
-                                        None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self))
             if self.no_holds_left():
-                db_log_to_file(ReportObject("No holds left on job %s." % (self.jobid), 
-                                            None, "all_holds_clear", "job_prog", JobProgMsg(self)).encode())
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(self))
         else:
             self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
             
@@ -1142,8 +1130,7 @@ class Job (StateMachine):
         self._sm_scripts_thread.start()
 
         self._sm_state = 'Prologue'
-        db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
-                                    None, "starting", "job_prog", JobProgMsg(self)).encode())
+        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
 
     def _sm_ready__hold(self, args):
         '''place a hold on a job in the queued state'''
@@ -1300,18 +1287,16 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self._sm_state = 'Running'
             self.task_running = True
-            db_log_to_file(ReportObject(("Run start."),
-                                        None, "running", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
         elif rc == Job.__rc_retry:
             self._sm_state = 'Run_Retry'
-            db_log_to_file(ReportObject(("Run start is being retried."),
-                                        None, "run_retrying", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "run_retrying", "job_prog", JobProgMsg(self))
         else:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
             self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
+            dbwriter.log_to_db(None, "failed", "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
-            db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
-                                        None, "failed", "job_prog", JobProgMsg(self)).encode())
+            
 
     def _sm_release_resources_retry__progress(self, args):
         self._sm_log_info("retrying release of resources")
@@ -1327,14 +1312,13 @@ class Job (StateMachine):
         if rc == Job.__rc_success:
             self._sm_state = 'Running'
             self.task_running = True
-            db_log_to_file(ReportObject(("Run start."),
-                                         None, "started", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "running", "job_prog", JobProgMsg(self))
         elif rc != Job.__rc_retry:
             # if the task failed to run, then proceed with job termination by starting the resource prologue scripts
             self._sm_log_error("execution failure; initiating job cleanup and removal", cobalt_log = True)
+            dbwriter.log_to_db(None, "failed", "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
-            db_log_to_file(ReportObject(("execution failure, initiating job cleanup and removal."),
-                                        None, "failed", "job_prog", JobProgMsg(self)).encode())
+            
 
     def _sm_run_retry__kill(self, args):
         '''user delete requested while job was waiting to retry executing task'''
@@ -1346,9 +1330,7 @@ class Job (StateMachine):
 
         # start the resource epilogue scripts
         self._sm_start_resource_epilogue_scripts()
-        db_log_to_file(ReportObject(("user delete with signal %s requested by user %s; initiating job cleanup and removal" % \
-                                         (args['signal'], args['user'])),
-                                     args['user'], "killed", "job_prog", JobProgMsg(self)).encode())
+        dbwriter.log_to_db(args['user'], "killing", "job_prog", JobProgMsg(self))
 
     def _sm_running__progress(self, args):
         '''
@@ -1746,8 +1728,7 @@ class Job (StateMachine):
         self._sm_scripts_thread.start()
 
         self._sm_state = 'Prologue'
-        db_log_to_file(ReportObject("%s starting prologue." % (self.jobid), 
-                                    None, "starting", "job_prog", JobProgMsg(self)).encode())
+        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
 
     def _sm_preempted__hold(self, args):
         '''place a hold on a job in the preempted state'''
@@ -1996,8 +1977,7 @@ class Job (StateMachine):
         current_dep_hold = self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
         if ((not self.prev_dep_hold) and current_dep_hold and (not self.called_has_dep_hold_once)):
             self.called_has_dep_hold_once = True
-            db_log_to_file(ReportObject("dependency hold placed on job %s." % (self.jobid), 
-                                                None, "dep_hold", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
         self.called_has_dep_hold_once = False
         self.prev_dep_hold = current_dep_hold
         return current_dep_hold
@@ -2195,8 +2175,7 @@ class Job (StateMachine):
         try:
             self.trigger_event('Preempt', args)
             if user:
-                db_log_to_file(ReportObject(("Preemption requested by %s." % user),
-                                            user, "preempted", "job_prog", JobProgMsg(self)).encode())
+                dbwriter.log_to_db(user, "preempted", "job_prog", JobProgMsg(self))
         except JobPreemptionError:
             raise
         except StateMachineIllegalEventError:
@@ -2219,9 +2198,7 @@ class Job (StateMachine):
         if not force:
             try:
                 self.trigger_event('Kill', {'user' : user, 'signal' : signame})
-                db_log_to_file(ReportObject("Now killing Job %s" % \
-                                                (self.jobid),
-                                            user, "killing", "job_prog", JobProgMsg(self)).encode())
+                dbwriter.log_to_db(user, "killing", "job_prog", JobProgMsg(self))
             except:
                 self._sm_log_exception(None, "an unexpected exception occurred while attempting to kill the task")
                 raise JobDeleteError("An unexpected exception occurred while attempting to delete the job.  See log for details.",
@@ -2274,9 +2251,7 @@ class Job (StateMachine):
                         (self.jobid, self.user, self.nodes, user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
                         (self.jobid, self.user, self.nodes, user, stats))
-            db_log_to_file(ReportObject("Job %s/%s on %s nodes forcibly terminated by user %s." % \
-                                            (self.jobid, self.user, self.nodes, user),
-                                        user, "killing", "job_prog", JobProgMsg(self)).encode())
+            dbwriter.log_to_db(user, "killing", "job_prog", JobProgMsg(self))
 
     def task_end(self):
         '''handle the completion of a task'''
@@ -2297,10 +2272,10 @@ class JobList(DataList):
                 spec['jobid'] = self.id_gen.next()
         jobs_added = DataList.q_add(self, specs, callback, cargs)
         if jobs_added:
+            user = spec.get('user', None)
             for job in jobs_added:
                 user = spec.get('user', None)
-                db_log_to_file(ReportObject(("%s created job: %s", user, spec['jobid']),
-                                            user, "created", "job_data", JobDataMsg(job)).encode())
+                dbwriter.log_to_db(user, "creating", "job_data", JobDataMsg(job))
         return jobs_added
     
 
@@ -2493,12 +2468,10 @@ class Queue (Data):
             for job in self.jobs:
                 if job.max_running:
                     logger.info("Job %s/%s: max_running set to False", job.jobid, job.user)
-                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
-                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
+                    dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
 
                     if job.no_holds_left():
-                        db_log_to_file(ReportObject("No holds left on job %s." % (job.jobid), 
-                                                    None, "all_holds_clear", "job_prog", JobProgMsg(job)).encode())
+                        dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
                 job.max_running = False
                 
             return
@@ -2518,14 +2491,11 @@ class Queue (Data):
             if old != job.max_running:
                 logger.info("Job %s/%s: max_running set to %s", job.jobid, job.user, job.max_running)
                 if job.max_running:
-                    db_log_to_file(ReportObject("maxrun hold placed on job %s." % (job.jobid), 
-                                                None, "maxrun_hold", "job_prog", JobProgMsg(job)).encode())
+                    dbwriter.log_to_db(None, "maxrun_hold", "job_prog", JobProgMsg(job))
                 else:
-                    db_log_to_file(ReportObject("maxrun hold released on job %s." % (job.jobid), 
-                                                None, "maxrun_hold_release", "job_prog", JobProgMsg(job)).encode())
+                    dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
                     if job.no_holds_left():
-                        db_log_to_file(ReportObject("No holds left on job %s." % (job.jobid), 
-                                                    None, "all_holds_clear", "job_prog", JobProgMsg(job)).encode())
+                        dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
                 
 class QueueDict(DataDict):
     item_cls = Queue
@@ -2611,13 +2581,19 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
-        self.check_db_logging_enabled()
 
         self.score_timestamp = None
         
+        if dbwriter.enabled:
+            logger.info("Logging to cdbwriter enabled.")
+        else:
+            logger.info("Logging to cdbwriter disabled.")
+
+
 
     def __getstate__(self):
-        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3}
+        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
+                'msg_queue':dbwriter.msg_queue}
                 
     def __setstate__(self, state):
         self.Queues = state['Queues']
@@ -2639,20 +2615,27 @@ class QueueManager(Component):
 
         self.define_builtin_utility_functions()
         self.define_user_utility_functions()
-        self.check_db_logging_enabled()
 
         self.score_timestamp = None
         
- 
+        if dbwriter.enabled:
+            logger.info("Logging to database enabled.")
+        else:
+            logger.info("Logging to database disabled.")
 
+        if state.has_key("msg_queue"):
+            logger.info("loading pending messages.")
+            dbwriter.msg_queue = state["msg_queue"]
 
-
-    def check_db_logging_enabled(self):
-        check_db_logging_enabled()
 
     def __save_me(self):
         Component.save(self)
     __save_me = automatic(__save_me, float(get_cqm_config('save_me_interval', 10)))
+
+
+    def __flush_msg_queue(self):
+        dbwriter.flush_queue()
+    __flush_msg_queue = automatic(__flush_msg_queue, float(get_cqm_config('db_flush_interval', 10)))
         
     def __progress(self):
         '''Process asynchronous job work'''
@@ -2718,11 +2701,9 @@ class QueueManager(Component):
                     
                     if set(waiting_job.all_dependencies).issubset(set(waiting_job.satisfied_dependencies)):
                         logger.info("Job %s/%s: dependencies satisfied", waiting_job.jobid, waiting_job.user) 
-                        db_log_to_file(ReportObject("dependency hold released on job %s." % (waiting_job.jobid), 
-                                                None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job)).encode())
+                        dbwriter.log_to_db(None, "dep_hold_release", "job_prog", JobProgMsg(waiting_job))
                         if waiting_job.no_holds_left():
-                            db_log_to_file(ReportObject("No holds left on job %s." % ( waiting_job.jobid), 
-                                                        None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job)).encode())
+                            dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job))
                         if job.dep_frac is None:
                             new_score = float(get_cqm_config('dep_frac', 0.5))*job.score
                         else:
@@ -2785,8 +2766,7 @@ class QueueManager(Component):
 
         
         for job in joblist:
-            db_log_to_file(ReportObject(("%s modifying job: %s, %s", user_name, specs, updates),
-                                        user_name, "modifying", "job_data", JobDataMsg(job)).encode())
+            dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
@@ -2972,11 +2952,7 @@ class QueueManager(Component):
             else:
                 job.score += delta
             results.append(job.jobid)
-        db_log_to_file(ReportObject(("%s updating job scores: %s, %s", user_name, specs, score),
-                                    user_name,
-                                    "modifying",
-                                    "job_data",
-                                    JobDataMsg(job)).encode())
+        dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
                                     
         return results
     adjust_job_scores = exposed(adjust_job_scores)
@@ -3086,14 +3062,10 @@ class QueueManager(Component):
                     job.dep_fail = True
                     break
             if (job.dep_fail and (not already_failed)):
-                db_log_to_file(ReportObject("Dep fail on job %s." % (job.jobid), 
-                                            None, "dep_fail", "job_prog", JobProgMsg(job)).encode())
+                dbwriter.log_to_db(None, "dep_fail", "job_prog", JobProgMsg(job))
 
     check_dep_fail = automatic(check_dep_fail, period=60)
     
-    
-def cleanup_database_writer():
-    Cobalt.Logging.DatabaseWriter.close()
 
 
 class JobProgMsg(object):
@@ -3150,8 +3122,6 @@ class JobDataMsg(object):
 
             else:
                 self.__setattr__(attr, job.__getattribute__(attr))
-
-            #times are handled via the ReportObject's timestamp.
 
 
         self.job_prog_msg = JobProgMsg(job)

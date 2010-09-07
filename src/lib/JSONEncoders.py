@@ -5,20 +5,22 @@ import time
 import json
 import Cobalt.Components
 
-
+#UTC time to the same resolution as normal timestamp.
+def utctime():
+    return time.time() + time.altzone
+    
 
 #allow us to dump relevant data to JSON.  
 #let the database importer figure out what to do with the data.
 class ReportObject(object):
     
-    def __init__(self, message, exec_user, state, item_type, item):
+    def __init__(self, exec_user, state, item_type, item):
 
-        self.message = message #reason for the change
         self.exec_user = exec_user #id of what is causing change None is cobalt
         self.state = state #Current state causing message 
         self.item_type = item_type #the type of item being changed
-        self.item = item #this should contain the current state of changed
-        self.timestamp = time.time()
+        self.item = item #this should contain further information to go to db
+        self.timestamp = utctime()
         
         return
 
@@ -40,8 +42,7 @@ class ReportObjectEncoder(json.JSONEncoder):
             else:
                 raise TypeError("No decoder set for %s of item." % obj.item_type)
 
-            return {'message' : obj.message, 
-                    'exec_user' : obj.exec_user, 
+            return {'exec_user' : obj.exec_user, 
                     'item_type' : obj.item_type,
                     'timestamp' : obj.timestamp,
                     'state' : obj.state,

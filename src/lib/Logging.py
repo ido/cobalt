@@ -20,6 +20,11 @@ import threading
 import time
 import Queue
 
+import Cobalt.JSONEncoders
+import Cobalt.Proxy
+from Cobalt.Exceptions import ComponentLookupError
+
+
 
 SYSLOG_LEVEL_DEFAULT = "DEBUG"
 CONSOLE_LEVEL_DEFAULT = "INFO"
@@ -282,120 +287,88 @@ def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d
 
 
 
+        
+    
+
 #TODO: Wrap up the safety stuff in this.  Also, make sure to get the fifo from
 #a config file on the cobalt side
 
-class DatabaseWriter(object):
+class dbwriter(object):
 
     """I am intending this to involve a singleton IO thread going to the
     database"""
     
-    initialized = False
-    write_thread = None
-    off = False
+    def __init__(self, logger, queue=None):
+        
+        self.logger = logger
+        self.enabled = False
+        self.cdbwriter_alive = False
+        self.cdbwriter = None
+        self.flushing = False
+        if queue:
+            self.msg_queue = queue
+        else:
+            self.msg_queue = []
     
-    def __init__(self, output_filename):
-        
-        
-        self.output_filename = output_filename
-        
-        if not self.__class__.initialized:
-            self.__class__.write_thread = ThreadedWrite(output_filename,
-                                                        name="db_writer")
-            
             #Turning this off in trunk until I can figure out why
             #this is not shutting down correctly.
             #self.__class__.write_thread.start()
             #self.thread_name = DatabaseWriter.write_thread.name
             
 
-            self.__class__.initialized = True
-        self.__class__.off = True
-
-    @classmethod              
-    def write(cls,data):
-        #append a newline.  It makes the decoding behave a
-        #a lot better
-        if not cls.initialized:
-            raise RuntimeError("Attempted to write to database before writer initialized.")
-            #until I figure out a better way, do nothing, since this can be
-            #turned off.
-        if cls.off:
-            if cls.write_thread.is_alive():
-                cls.write_thread.send("Terminate\n")
+    def connect(self):
+        if not self.enabled:
             return
+
+        if self.cdbwriter_alive:
+            self.logger.warning("Attempted to connect to cdbwriter when a conenction already exists.")
+            return
+
+        try:
+            self.cdbwriter = Cobalt.Proxy.ComponentProxy('cdbwriter')
+        except:
+            self.logger.warning("Unable to connect to cdbwriter")
+        else:
+            self.cdbwriter_alive = True
         
-        cls.write_thread.send((data +"\n"))
-
-    
-    @classmethod
-    def close(cls):
-        cls.write("Terminate")
-    
-
-db_log_to_file = DatabaseWriter.write
-#TODO: no I don't want to rewrite a bunch of code right now, why do you ask?
-#dump this in favor of DatabaseWriter.write
-
-
-
-class ThreadedWrite(threading.Thread):
-    
-    def __init__(self, output_filename, *args, **kwargs):
-        threading.Thread.__init__(self,*args,**kwargs)
-        self.msg_queue = Queue.Queue()
-        self.terminating = False
-        self.output_filename = output_filename
-        self.missed_timeouts = 0
-        self.max_missed_timeouts = 20
-        #self.daemon = True
-
-    def run(self):
+    def log_to_db(self, user, event, msg_type, obj):
+        if not self.enabled:
+            return
+        try:
+            message = Cobalt.JSONEncoders.ReportObject(user, event, msg_type, obj).encode()
+        except:
+            self.logger.error("Error encoding message to send to cdbwriter.")
+            raise
+        else:
+            self.msg_queue.append(message)
         
-        print "Database writing disabled."
-        return
+        self.flush_queue()
+
+ 
+    def flush_queue(self):
+        """send a series of messages to the writer component."""
+        if not (self.enabled or self.flushing):
+            return
+
+        self.flushing = True
+        if not self.cdbwriter_alive:
+            self.connect()
         
-        while not self.terminating:
+        #drain the queue, if we have one.
+        while self.msg_queue:
+            msg = self.msg_queue[0]
             try:
-                queue_data = self.msg_queue.get(block=False)
-                self.missed_timeouts = 0
-            except Queue.Empty:               
-                time.sleep(1)
-                continue
-            
-            out_file = open(os.path.join(self.output_filename), "a")
-            out_file.write(queue_data)
-            out_file.close()
-            self.msg_queue.task_done()
-            
-        #TODO: set up a fail-over file.
-        #drain the queue and then terminate.
-        print "Writer thread terminating."
-        while not self.msg_queue.empty():
-            queue_data = self.msg_queue.get(block=False)
-            out_file = open(os.path.join(self.output_filename), "a")
-            out_file.write(queue_data)
-            out_file.close()
-            self.msg_queue.task_done()
-        
-        return
+               self.cdbwriter.add_message(msg)
+            except ComponentLookupError:
+                self.logger.error("Unable to contact database writer when sending message.")
+                #assume this has gone down and bail so as to not completely flood the log 
+                #when cdbwriter eventually falls over. 
+                break
+            else:
+                self.msg_queue.pop(0)
+        self.flushing = False
+    
 
-    def send(self, data):
 
-        """catches messages.  If "Terminate" message is caught, kill the
-           writer thread."""
-        if not isinstance(data, str):
-            raise TypeError("Non-string data passed to the database writer")
-        if self.terminating:
-            raise RuntimeError("Attempted to queue a message after writer has been sent a terminate message.")
-        if data == "Terminate\n":
-            self.terminating = True
-            self.close()
-            return
-        self.msg_queue.put(data, block=False)
-
-    def close(self):
-        self.msg_queue.join()
-        self.join()
         
 
