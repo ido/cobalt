@@ -1,9 +1,0 @@
-[cdbdump]
-
-login: cobaltdev
-pwd: miD2.bud
-database: COBALT_D
-schema: COBALT_DB_DEV
-
-default_fifo: /Users/paulrich/cobalt-dev/src/components/cqm.json
-queue_state_file = tmp/cdbdump.cqm.json
