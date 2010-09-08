@@ -132,7 +132,7 @@ accounting_logger.addHandler(
 
 
 dbwriter = Cobalt.Logging.dbwriter(logging)
-use_db_logging = get_cqm_config('use_db_logging',None)
+use_db_logging = get_cqm_config('use_db_logging','false')
 if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
     dbwriter.enabled = True
     dbwriter.connect()

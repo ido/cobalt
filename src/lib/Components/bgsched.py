@@ -45,7 +45,7 @@ def get_bgsched_config(option, default):
     return value
 
 dbwriter = Cobalt.Logging.dbwriter(logger)
-use_db_logging = get_bgsched_config('use_db_logging', None)
+use_db_logging = get_bgsched_config('use_db_logging', 'false')
 if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
    dbwriter.enabled = True
    dbwriter.connect()
