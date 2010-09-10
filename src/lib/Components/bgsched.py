@@ -44,11 +44,22 @@ def get_bgsched_config(option, default):
         value = default
     return value
 
+#db writer initialization
 dbwriter = Cobalt.Logging.dbwriter(logger)
 use_db_logging = get_bgsched_config('use_db_logging', 'false')
 if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
    dbwriter.enabled = True
-   dbwriter.connect()
+   overflow_filename = get_bgsched_config('overflow_file', None)
+   max_queued = int(get_bgsched_config('max_queued_msgs', '-1'))
+   if max_queued <= 0:
+       max_queued = None
+   if (overflow_filename == None) and (max_queued != None):
+       logger.warning('No filename set for database logging messages, max_queued_msgs set to unlimited')
+   if max_queued != None:
+       dbwriter.overflow_filename = overflow_filename
+       dbwriter.max_queued = max_queued
+
+   #dbwriter.connect()
 
 
 class Reservation (Data):
@@ -397,7 +408,9 @@ class BGSched (Component):
     def __getstate__(self):
         return {'reservations':self.reservations, 'version':1,
                 'active':self.active, 'next_res_id':self.id_gen.idnum+1, 
-                'next_cycle_id':self.cycle_id_gen.idnum+1, 'msg_queue': dbwriter.msg_queue}
+                'next_cycle_id':self.cycle_id_gen.idnum+1, 
+                'msg_queue': dbwriter.msg_queue, 
+                'overflow': dbwriter.overflow}
     
     def __setstate__(self, state):
         self.reservations = state['reservations']
@@ -427,8 +440,8 @@ class BGSched (Component):
 
         if state.has_key('msg_queue'):
             dbwriter.msg_queue = state['msg_queue']
-        
-        
+        if state.has_key('overflow') and (dbwriter.max_queued != None):
+            dbwriter.overflow = state['overflow']
 
 
     # order the jobs with biggest utility first

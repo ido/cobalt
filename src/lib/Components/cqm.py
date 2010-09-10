@@ -135,7 +135,17 @@ dbwriter = Cobalt.Logging.dbwriter(logging)
 use_db_logging = get_cqm_config('use_db_logging','false')
 if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
     dbwriter.enabled = True
-    dbwriter.connect()
+    overflow_filename = get_cqm_config('overflow_file', None)
+    max_queued = int(get_cqm_config('max_queued_msgs', '-1'))
+    if max_queued <= 0:
+        max_queued = None
+    if (overflow_filename == None) and (max_queued != None):
+        logger.warning('No filename set for database logging messages, max_queued_msgs set to unlimited')
+    if max_queued != None:
+        dbwriter.overflow_filename = overflow_filename
+        dbwriter.max_queued = max_queued
+
+
 
 
 
@@ -2593,7 +2603,8 @@ class QueueManager(Component):
 
     def __getstate__(self):
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
-                'msg_queue':dbwriter.msg_queue}
+                'msg_queue':dbwriter.msg_queue,
+                'overflow': dbwriter.overflow}
                 
     def __setstate__(self, state):
         self.Queues = state['Queues']
@@ -2626,6 +2637,8 @@ class QueueManager(Component):
         if state.has_key("msg_queue"):
             logger.info("loading pending messages.")
             dbwriter.msg_queue = state["msg_queue"]
+        if state.has_key('overflow') and (dbwriter.max_queued != None):
+            dbwriter.overflow = state['overflow']
 
 
     def __save_me(self):

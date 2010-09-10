@@ -10,6 +10,7 @@ import math
 import os.path
 import socket
 import struct
+import os
 import sys
 import termios
 import types
@@ -284,27 +285,27 @@ def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d
     logger.addHandler(handler)
 
 
-
-
-
-        
-    
-
-#TODO: Wrap up the safety stuff in this.  Also, make sure to get the fifo from
-#a config file on the cobalt side
-
+# Log-to-database utilities are below.
 class dbwriter(object):
 
     """I am intending this to involve a singleton IO thread going to the
     database"""
     
-    def __init__(self, logger, queue=None):
+    def __init__(self, logger, queue=None, overflow_filename=None,
+                 max_queued=None):
         
         self.logger = logger
         self.enabled = False
         self.cdbwriter_alive = False
         self.cdbwriter = None
         self.flushing = False
+        
+        self.overflow = False
+        self.overflow_filename = overflow_filename
+        self.overflow_file = None
+        self.clearing_overflow = False
+        self.max_queued = max_queued    
+        
         if queue:
             self.msg_queue = queue
         else:
@@ -316,6 +317,7 @@ class dbwriter(object):
             #self.thread_name = DatabaseWriter.write_thread.name
             
 
+
     def connect(self):
         if not self.enabled:
             return
@@ -325,20 +327,50 @@ class dbwriter(object):
             return
 
         try:
-            self.cdbwriter = Cobalt.Proxy.ComponentProxy('cdbwriter')
+            self.cdbwriter = Cobalt.Proxy.ComponentProxy('cdbwriter', defer=False)
+            
+            self.cdbwriter_alive = True
         except:
             self.logger.warning("Unable to connect to cdbwriter")
-        else:
-            self.cdbwriter_alive = True
+        
+        
         
     def log_to_db(self, user, event, msg_type, obj):
         if not self.enabled:
             return
+
+        #if a queue gets too large, save messages to disk for later writiing.
+        if ((self.max_queued != None) and 
+            (len(self.msg_queue) >= self.max_queued) and 
+            not self.clearing_overflow):
+            self.overflow = True
+            self.open_overflow('a')
+            if self.overflow_file == None:
+                #we have too many messages and cannot write to disk.  
+                #This message has to be dropped.
+                #Of course, a lot of somethings would have to go critically 
+                #wrong to need this.  The logfile message may fail as well.
+
+                try:
+                    message = Cobalt.JSONEncoders.ReportObject(user, event,
+                                                               msg_type, obj).encode()
+                except:
+                    logger.error("Error encoding message to send to cdbwriter.")
+                else:
+                    #done just about all I can.  At this point, I don't have much choice.
+                    logger.critical("MESSAGE DROPPED: %s" % message)
+            else:
+                self.queue_to_overflow()
+                self.close_overflow()
+
+        #end queue overflow handling
+
         try:
-            message = Cobalt.JSONEncoders.ReportObject(user, event, msg_type, obj).encode()
+            message = Cobalt.JSONEncoders.ReportObject(user, event, 
+                                                           msg_type, obj).encode()
         except:
             self.logger.error("Error encoding message to send to cdbwriter.")
-            raise
+            #raise
         else:
             self.msg_queue.append(message)
         
@@ -347,28 +379,89 @@ class dbwriter(object):
  
     def flush_queue(self):
         """send a series of messages to the writer component."""
-        if not (self.enabled or self.flushing):
+        if not (self.enabled or self.flushing or self.clearing_overflow):
             return
 
         self.flushing = True
         if not self.cdbwriter_alive:
             self.connect()
         
-        #drain the queue, if we have one.
-        while self.msg_queue:
-            msg = self.msg_queue[0]
-            try:
-               self.cdbwriter.add_message(msg)
-            except ComponentLookupError:
-                self.logger.error("Unable to contact database writer when sending message.")
-                #assume this has gone down and bail so as to not completely flood the log 
-                #when cdbwriter eventually falls over. 
-                break
-            else:
-                self.msg_queue.pop(0)
-        self.flushing = False
-    
-
+        #we're connected and have an "overflow file", we should flush 
+        #that first.
+        if self.overflow and self.cdbwriter_alive:
+            self.clearing_overflow = True
+            #Shove out as many to the writer component as we can.  Save the rest.
+            self.open_overflow('r')
+            if self.overflow_file:
+                #we prepend to the message queue.
+                overflow_queue = [line for line in self.overflow_file]
+                overflow_queue.extend(self.msg_queue)
+                self.msg_queue = overflow_queue
+                self.close_overflow()
+                self.del_overflow() #Now that it is back in memory, we dump if needed.
+                self.overflow = False
 
         
 
+        #drain the queue, if we have one.
+        while self.msg_queue and self.cdbwriter_alive:
+            msg = self.msg_queue[0]
+            try:
+               self.cdbwriter.add_message(msg)
+            except:
+                self.logger.error("Unable to contact database writer when sending message.")
+                self.cdbwriter_alive = False
+                
+                #if the cdbwriter falls over while dealing with overflow.
+                if ((self.max_queued != None) and
+                    (len(self.msg_queue) >= self.max_queued)):
+                    self.overflow = True
+                    self.open_overflow('a')
+                    if self.overflow_file != None:
+                        self.queue_to_overflow()
+                        self.close_overflow()
+                break
+            else:
+                self.msg_queue.pop(0)
+        
+        self.clearing_overflow = False
+        self.flushing = False
+       
+
+    def open_overflow(self, mode):
+        
+        try:
+            self.overflow_file = open(self.overflow_filename,mode)
+        except:
+            self.logger.critical("Unable to open overflow file!  Information to database will be lost!")
+
+    def close_overflow(self):
+        if self.overflow and self.overflow_file:
+            self.overflow_file.close()
+            self.overflow_file = None
+    
+    def del_overflow(self):
+        os.remove(self.overflow_filename)
+        
+
+    def queue_to_overflow(self):
+        
+        elements_written = 0
+        if len(self.msg_queue) == 0:
+            return
+
+        while self.msg_queue:
+            msg = self.msg_queue.pop(0)
+            try:
+                self.overflow_file.write(msg+'\n')
+                elements_written += 1
+            except IOError:
+                logger.error('Could only partially empty queue, %d messages written' % 
+                             elements_written)
+                self.msg_queue.insert(0, msg)
+                
+        if elements_written > 0:
+            del self.msg_queue[0:elements_written-1] #empty the queue of what we have written
+        
+        return len(self.msg_queue)
+        
