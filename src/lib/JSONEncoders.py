@@ -1,14 +1,12 @@
 '''JSON encoding objects for transmitting data to the logging database.'''
 __revision__ = '$Revision: 1 $'
 
-import time
+import datetime
 import json
 import Cobalt.Components
 
-#UTC time to the same resolution as normal timestamp.
-def utctime():
-    return time.time() + time.altzone
-    
+
+db2format = '%Y-%m-%d-%H.%M.%S.%f'
 
 #allow us to dump relevant data to JSON.  
 #let the database importer figure out what to do with the data.
@@ -20,7 +18,8 @@ class ReportObject(object):
         self.state = state #Current state causing message 
         self.item_type = item_type #the type of item being changed
         self.item = item #this should contain further information to go to db
-        self.timestamp = utctime()
+        d = datetime.datetime.utcnow()
+        self.timestamp = d.strftime(db2format)
         
         return
 
@@ -54,6 +53,10 @@ class ReservationStateEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, Cobalt.Components.bgsched.Reservation):
+            
+            #Convert to UTC for consistiency
+            start = datetime.datetime.utcfromtimestamp(obj.start)
+
             return {'cycle' : obj.cycle,
                     'cycle_id' : obj.cycle_id,
                     'duration' : obj.duration,
@@ -61,7 +64,7 @@ class ReservationStateEncoder(json.JSONEncoder):
                     'name' : obj.name,
                     'queue' : obj.queue,
                     'res_id' : obj.res_id,
-                    'start' : obj.start,
+                    'start' : start.strftime(db2format),
                     'tag': obj.tag,
                     'users' : obj.users}    
         else:

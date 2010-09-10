@@ -96,7 +96,7 @@ class MessageQueue(Component):
       
       while self.msg_queue and self.connected:
          msg = self.msg_queue[0]
-            
+         
          try:
             self.database_writer.addMessage(msg)
          except db2util.adapterError:
@@ -119,6 +119,7 @@ class MessageQueue(Component):
    def add_message(self, msg):
      
       msgDict = None
+   
       try:
          msgDict = self.decoder.decode(msg)
       except ValueError:
@@ -128,7 +129,6 @@ class MessageQueue(Component):
          logging.debug(traceback.format_exc())
       self.msg_queue.append(msgDict) 
       
-
    add_message = exposed(add_message)
    
    

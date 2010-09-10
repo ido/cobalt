@@ -1,6 +1,12 @@
 import json
+import datetime
 
 from db2util.ts import SectoTS, TStoST, TSconform, TSFMT
+
+db2format = '%Y-%m-%d-%H.%M.%S.%f'
+
+def db2time_to_datetime(db2time):
+   return datetime.datetime.strptime(db2time, db2format)
 
 class LogMessage(object):
 
@@ -9,9 +15,9 @@ class LogMessage(object):
       self.message = spec.get("message")
       self.item_type = spec.get("item_type")
       self.exec_user = spec.get("exec_user")
-      self.timestamp = TSconform(SectoTS(float(spec.get("timestamp"))),
-                                               format=TSFMT.DB2 )
-      self.raw_time = spec.get("timestamp")
+      self.timestamp = spec.get("timestamp")
+                
+      self.raw_time = db2time_to_datetime(self.timestamp)
 
       self.state = spec.get("state")
       self.item = None
@@ -51,8 +57,7 @@ class ReservationStatus(object):
       self.users = spec.get("users")
       self.partitions = spec.get("partitions")
       self.name = spec.get("name")
-      self.start = TSconform(SectoTS(float(spec.get('start'))), 
-                             format=TSFMT.DB2_NOUSEC )
+      self.start = spec.get('start')
       self.queue = spec.get("queue")
       self.duration = int(spec.get("duration"))
       self.res_id = int(spec.get("res_id"))
