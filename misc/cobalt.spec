@@ -8,7 +8,7 @@ URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python2.5, python2.5-tlslite, M2Crypto, python2.5-xml
+Requires: python2.6, python2.6-tlslite, M2Crypto, python2.6-xml
 
 %package -n cobalt-clients
 Version: %{version}
@@ -24,7 +24,7 @@ The Cobalt Resource Management System
 %prep
 
 %setup -q
-python2.5 setup.py build
+python2.6 setup.py build
 
 %build
 cd src/clients && make 
@@ -32,7 +32,7 @@ cd src/clients && make
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
-python2.5 setup.py install --prefix=${RPM_BUILD_ROOT}/usr
+python2.6 setup.py install --prefix=${RPM_BUILD_ROOT}/usr
 install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}/usr/bin
 install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
@@ -52,6 +52,7 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/nodeadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/perfdata.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/prologue_helper.py %${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/cdbdump.py %${RPM_BUILD_ROOT}%{_sbindir}
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/test*
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/brun.py
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/bstat.py
@@ -65,7 +66,7 @@ cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
 cd ${RPM_BUILD_ROOT}%{_bindir}
 for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf wrapper $file ; done
-find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python2.5@'
+find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python2.6@'
 cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done 
 
 %clean
@@ -96,8 +97,8 @@ fi
 %files -n cobalt-clients
 /usr/bin/*
 %attr(755,root,cobalt) /usr/bin/wrapper
-/usr/lib*/python2.5/site-packages/Cobalt/*
-/usr/lib*/python2.5/site-packages/Cobalt-*egg-info*
+/usr/lib*/python2.6/site-packages/Cobalt/*
+/usr/lib*/python2.6/site-packages/Cobalt-*egg-info*
 /usr/share/man/man1/*.1*
 
 %defattr(-,root,root,-)
