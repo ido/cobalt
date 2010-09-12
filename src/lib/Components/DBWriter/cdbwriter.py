@@ -1,5 +1,6 @@
 import db2util
 import xmlrpclib
+import json
 import os, sys
 import logging
 import ConfigParser
@@ -8,7 +9,7 @@ import traceback
 
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Statistics import Statistics
-from Cobalt.Components.DBWriter.cdbMessages import LogMessage, LogMessageDecoder
+from Cobalt.Components.DBWriter.cdbMessages import LogMessage, LogMessageDecoder, LogMessageEncoder
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 
@@ -56,7 +57,23 @@ class MessageQueue(Component):
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
+
+      self.overflow = False
+      self.overflow_filename = None
+      self.overflow_file = None
+      self.clearing_overflow = False
       
+      self.max_queued = int(get_cdbwriter_config('max_queued_msgs', '-1'))
+                        
+      if self.max_queued <= 0:
+         logger.info("message queue set to unlimited.")
+         self.max_queued = None
+         self.overflow_filename = get_cdbwriter_config('overflow_file', None)
+         
+      if self.overflow_filename == None:
+         logger.warning("No file given to catch maximum messages. Setting queue size to unlimited.")
+         self.max_queued = None
+
 
    def __setstate__(self, state):
       self.msg_queue = state['msg_queue']
@@ -64,9 +81,29 @@ class MessageQueue(Component):
       self.lock = threading.Lock()
       self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
+      self.clearing_overflow = False
+      self.overflow_filename = None
+      self.overflow_file = None
+      self.max_queued = int(get_cdbwriter_config('max_queued_msgs', '-1'))
+                        
+      if self.max_queued <= 0:
+         logger.info("message queue set to unlimited.")
+         self.max_queued = None
+      else:
+         self.overflow_filename = get_cdbwriter_config('overflow_file', None)
+
+      if self.max_queued and (self.overflow_filename == None):
+         logger.warning("No file given to catch maximum messages. Setting queue size to unlimited.")
+         self.max_queued = None
+
+      if state.has_key('overflow') and self.max_queued:
+         self.overflow = state['overflow']
+      else:
+         self.overflow = False
 
    def __getstate__(self):
-      return {'msg_queue': self.msg_queue}
+      return {'msg_queue': self.msg_queue,
+              'overflow': self.overflow}
      
              
    def init_database_connection(self):
@@ -94,6 +131,17 @@ class MessageQueue(Component):
          logger.debug("Attempting reconnection.")
          self.init_database_connection()
       
+      if self.connected and self.overflow:
+         self.clearing_overflow = True
+         self.open_overflow('r')
+         if self.overflow_file:
+            overflow_queue = [self.decoder.decode(line) for line in self.overflow_file]
+            overflow_queue.extend(self.msg_queue)
+            self.msg_queue = overflow_queue
+            self.close_overflow()
+            self.del_overflow()
+            self.overflow = False
+
       while self.msg_queue and self.connected:
          msg = self.msg_queue[0]
          
@@ -107,17 +155,41 @@ class MessageQueue(Component):
             logger.error ("Error updating databse.  Unable to add message.")
             logging.debug(traceback.format_exc())
             self.connected = False
+            #if we were clearing an overflow, here we go again.
+            if ((self.max_queued != None) and
+                (len(self.msg_queue) >= self.max_queued)):
+               self.overflow = True
+               self.open_overflow('a')
+               if self.overflow_file != None:
+                  self.queue_to_overflow()
+                  self.close_overflow()
+
             break
          else:
             #message added
             self.msg_queue.pop(0)
-
+            
+      self.clearing_overflow = False
 
    iterate = automatic(iterate)
 
 
    def add_message(self, msg):
      
+      #keep the queue from consuming all memory
+      if ((self.max_queued != None) and
+          (len(self.msg_queue) >= self.max_queued)and
+          (not self.clearing_overflow)):
+         
+         self.overflow = True
+         self.open_overflow('a')
+         if self.overflow_file == None:
+            logger.critical("MESSAGE DROPPED: %s", msg)
+         else:
+            self.queue_to_overflow()
+            self.close_overflow()
+      #and now queue as normal
+
       msgDict = None
    
       try:
@@ -126,7 +198,8 @@ class MessageQueue(Component):
          logger.error("Bad message recieved.  Failed to decode string %s" % msg)
          return
       except:
-         logging.debug(traceback.format_exc())
+         logging.debug(traceback.format_exc()) 
+
       self.msg_queue.append(msgDict) 
       
    add_message = exposed(add_message)
@@ -136,8 +209,50 @@ class MessageQueue(Component):
       Component.save(self)
    save_me = automatic(save_me)
 
-#TODO: Make this follow Cobalt xmlrpc conventions and work like a component
-#in general.
+
+   def open_overflow(self, mode):
+        
+      try:
+         self.overflow_file = open(self.overflow_filename,mode)
+      except:
+         self.logger.critical("Unable to open overflow file!  Information to database will be lost!")
+
+   def close_overflow(self):
+      if self.overflow and self.overflow_file:
+         self.overflow_file.close()
+         self.overflow_file = None
+    
+   def del_overflow(self):
+      os.remove(self.overflow_filename)
+        
+
+   def queue_to_overflow(self):
+        
+      elements_written = 0
+      if len(self.msg_queue) == 0:
+         return
+
+      while self.msg_queue:
+         msg = self.msg_queue.pop(0)
+         try:
+            self.overflow_file.write(json.dumps(msg, cls=LogMessageEncoder)+'\n')
+            elements_written += 1
+         except IOError:
+            logger.error('Could only partially empty queue, %d messages written' % 
+                         elements_written)
+            self.msg_queue.insert(0, msg)
+                
+      if elements_written > 0:
+         del self.msg_queue[0:elements_written-1] #empty the queue of what we have written
+        
+      return len(self.msg_queue)
+
+#for storing the message queue to avoid memory problems:
+def encodeLogMsg(logMsg):
+   return json.dumps(logMsg)
+
+def decodeLogMsg(msgStr):
+   return json.loads(msgStr)
 
 
 #Class for handling database output

@@ -310,11 +310,6 @@ class dbwriter(object):
             self.msg_queue = queue
         else:
             self.msg_queue = []
-    
-            #Turning this off in trunk until I can figure out why
-            #this is not shutting down correctly.
-            #self.__class__.write_thread.start()
-            #self.thread_name = DatabaseWriter.write_thread.name
             
 
 

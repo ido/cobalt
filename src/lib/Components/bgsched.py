@@ -443,7 +443,6 @@ class BGSched (Component):
         if state.has_key('overflow') and (dbwriter.max_queued != None):
             dbwriter.overflow = state['overflow']
 
-
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
         return -cmp(job1.score, job2.score)

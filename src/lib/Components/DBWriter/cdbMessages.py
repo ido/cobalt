@@ -64,6 +64,10 @@ class ReservationStatus(object):
       
       return
    
+   def encode(self):
+      """return a dict of everything in object"""
+      return self.__dict__
+
    def __str__(self):
       return "Tag: %s\n" % self.tag + "Cycle: %s\n" % self.cycle + "Users: %s\n" % self.users + "partitions: %s\n" % self.partitions + "name: %s\n" % self.name + "start: %s\n" % self.start + "queue: %s\n" % self.queue + "duration: %s\n" % self.duration + "res_id: %s\n" % self.res_id + "cycle_id: %s\n" % self.cycle_id
    
@@ -78,7 +82,10 @@ class JobStatus(object):
       for entry in self.__dict__:
          output.append("%s : %s\n" % (entry, str(self.__dict__[entry])))
       return ''.join(output)
-
+   
+   def encode(self):
+      return self.__dict__
+      
    def set_types(self):
       raise NotImplementedError("JobStatus.set_types() not implemented.")
       
@@ -86,7 +93,7 @@ class JobProgStatus(JobStatus):
 
    def set_types(self):
       pass
-   
+
    
 class JobDataStatus(JobStatus):
    
@@ -108,6 +115,14 @@ class JobDataStatus(JobStatus):
       self.location = str(self.location)
       self.job_prog_msg.set_types()
 
+   def encode(self):
+      retDict = self.__dict__
+      if self.args == None:
+         retDict['args'] = []
+      else:
+         retDict['args'] = self.args.split(' ')
+      retDict['job_prog_msg'] = self.job_prog_msg.encode()
+      return retDict
 
 class PartitionStatus(object):
    
@@ -121,7 +136,21 @@ class LogMessageDecoder(json.JSONDecoder):
    def decode(self, string):
       spec = json.loads(string)
       return LogMessage(spec)
+ 
+
+class LogMessageEncoder(json.JSONEncoder):
    
+   def default(self, obj):
+      encodedObj = {'message': obj.message,
+                    'item_type': obj.item_type,
+                    'exec_user': obj.exec_user,
+                    'timestamp': obj.timestamp,
+                    'state': obj.state,
+                    'item': obj.item.encode()}
+      
+
+      return encodedObj
+
 #class ReservationStaeDecoder(json.JSONDecoder):
 #
 #   def decode(self, string):
