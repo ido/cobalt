@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -W ignore::DeprecationWarning
 
 '''Cobalt qsub command'''
 __revision__ = '$Revision: 559 $'

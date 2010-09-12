@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -W ignore::DeprecationWarning
 
 from Cobalt.Components.simulator import Simulator
 from Cobalt.Components.base import run_component
