@@ -1,0 +1,27 @@
+.TH "bgsched" 8
+.SH NAME
+bgsched \- Blue Gene Scheduler
+.SH SYNOPSIS
+.B bgsched
+.I [-d] [--config-files <configfile1:configfile2>] [-D=<pidfile>]
+.SH "DESCRIPTION"
+.PP
+.B bgsched
+Blue Gene Scheduler
+.SH "OPTIONS"
+.TP
+.B \-d
+Turn on communication debugging.
+.TP
+.B \-\-config-files <configfile1:configfile2>
+Specify path to cobalt.conf.
+.TP
+.B \-D=<pidfile>
+Daemonize, and write pid to pidfile.
+.SH "CONFIGURATION FILE PARAMETERS"
+.TP
+none
+.SH "SEE ALSO"
+.BR setres(8),
+.BR releaseres(8),
+.BR showres(1)
