@@ -13,6 +13,17 @@ CONFIGFILE="${CONFIGPATH}/cobalt.conf"
 DAEMONDIR=/usr/sbin
 PIDPATH=/var/run/
 
+# Configure DB2 environment
+# . /discovery/db.src
+
+umask 077
+
+# ANL Local:
+# MPIRUN_VERBOSE=1
+# export MPIRUN_VERBOSE
+# LD_LIBRARY_PATH=/bgsys/drivers/ppcfloor/lib64:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH
+
 # Starts the component specified as the first argument.
 # Optional second argument used for extra arguments to 
 # pass to the component.
@@ -23,52 +34,60 @@ start_component () {
     else
 	component_args=''
     fi
+    pid=`pgrep ${component}.py`
     echo -n "Starting ${component}: "
-    "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" -D "${PIDPATH}/${component}.pid"
-    echo "done"
-    return 0
+    if [ -z "$pid" ]
+    then
+        (
+         date=`/bin/date`
+         echo "--- $date: START ${component} ---" >>/var/log/${component}.out
+         nohup "${DAEMONDIR}/${component}.py" $component_args --config-files "${CONFIGFILE}" >>/var/log/${component}.out 2>&1 &
+        )
+        echo "done"
+        return 0
+    else
+        echo "failed -- $component already running (pid $pid)"
+        return 1
+    fi
 }
 
 # Stops the component specified as the first argument.
 stop_component () {
     component=$1
-    if [ -f "${PIDPATH}/${component}.pid" ] ; then
-	echo -n "Stopping ${component}: "
-	kill -INT `cat ${PIDPATH}/${component}.pid`
-	echo "done"
-	rm -f "${PIDPATH}/${component}.pid"
-    else
-	echo "${component} not running"
-    fi
+#   if [ -f "${PIDPATH}/${component}.pid" ] ; then
+       echo -n "Stopping ${component}: "
+#       kill -INT `cat ${PIDPATH}/${component}.pid`
+	pkill -f ${DAEMONDIR}/${component}.py
+        echo "done"
+#       rm -f "${PIDPATH}/${component}.pid"
+#   else
+#       echo "${component} not running"
+#   fi
     return 0
 }
 
-# Configure DB2 environment
-. /discovery/db.src
-
-umask 077
 
 case "$1" in
   start)
-    for component in slp bgsystem cqm scriptm bgsched cdbwriter; do
+    for component in slp cqm bgsched bgforker bgsystem cdbwriter scriptm; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   start-debug)
-    for component in slp brooklyn cqm scriptm bgsched cdbwriter; do
+    for component in slp brooklyn cqm bgsched bgforker bgsystem cdbwriter scriptm; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   stop)
-    for component in bgsched cqm bgsystem scriptm slp cdbwriter; do
+    for component in slp cqm bgsched bgforker bgsystem cdbwriter scriptm; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
     ;;
   stop-debug) 
-    for component in bgsched cqm brooklyn scriptm slp cdbwriter; do
+    for component in slp brooklyn cqm bgsched bgforker bgsystem cdbwriter scriptm; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
