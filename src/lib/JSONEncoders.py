@@ -2,9 +2,12 @@
 __revision__ = '$Revision: 1 $'
 
 import datetime
-import json
 import Cobalt.Components
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 db2format = '%Y-%m-%d-%H.%M.%S.%f'
 

@@ -1,6 +1,5 @@
 import db2util
 import xmlrpclib
-import json
 import os, sys
 import logging
 import ConfigParser
@@ -13,6 +12,10 @@ from Cobalt.Components.DBWriter.cdbMessages import LogMessage, LogMessageDecoder
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 __revision__ = '$Revision: 1$'
 

@@ -1,5 +1,9 @@
-import json
 import datetime
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 
 from db2util.ts import SectoTS, TStoST, TSconform, TSFMT
 
