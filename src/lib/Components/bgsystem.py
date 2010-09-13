@@ -377,7 +377,7 @@ class BGSystem (BGBaseSystem):
             name = partition_def.id,
             queue = "default",
             size = NODES_PER_NODECARD * len(node_list),
-            bridge_partition = partition_def,
+            bridge_partition_state = partition_def.state,
             node_cards = node_list,
             switches = [ s.id for s in partition_def.switches ],
             state = _get_state(partition_def),
@@ -476,7 +476,7 @@ class BGSystem (BGBaseSystem):
         def _set_partition_cleanup_state(p):
             p.state = "cleanup"
             for part in p._children:
-                if part.bridge_partition.state == "RM_PARTITION_FREE":
+                if part.bridge_partition_state == "RM_PARTITION_FREE":
                     part.state = "blocked (%s)" % (p.name,)
                 else:
                     part.state = "cleanup"
@@ -527,7 +527,7 @@ class BGSystem (BGBaseSystem):
                     if self._partitions.has_key(partition.id):
                         p = self._partitions[partition.id]
                         p.state = _get_state(partition)
-                        p.bridge_partition = partition
+                        p.bridge_partition_state = partition.state
                         p._update_node_cards()
                         if p.reserved_until and now > p.reserved_until:
                             p.reserved_until = False
@@ -556,7 +556,7 @@ class BGSystem (BGBaseSystem):
                     bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._partitions.q_add([self._new_partition_dict(bridge_p, bp_cache)])
                     p = self._partitions[bridge_p.id]
-                    p.bridge_partition = partition
+                    p.bridge_partition_state = partition.state
                     self._detect_wiring_deps(p, wiring_cache)
 
                 # if partitions were added or removed, then update the relationships between partitions
@@ -575,7 +575,7 @@ class BGSystem (BGBaseSystem):
                             parts = list(p._all_children)
                             parts.append(p)
                             for part in parts:
-                                if part.bridge_partition.state != "RM_PARTITION_FREE":
+                                if part.bridge_partition_state != "RM_PARTITION_FREE":
                                     busy.append(part.name)
                             if len(busy) > 0:
                                 _set_partition_cleanup_state(p)
@@ -596,7 +596,7 @@ class BGSystem (BGBaseSystem):
                             for part in p._children:
                                 if part.state == "idle":
                                     part.state = "blocked (%s)" % (p.name,)
-                        elif p.bridge_partition.state == "RM_PARTITION_FREE" and p.used_by:
+                        elif p.bridge_partition_state == "RM_PARTITION_FREE" and p.used_by:
                             # if the job assigned to the partition has completed, then set the state so that cleanup will be
                             # performed
                             _start_partition_cleanup(p)
@@ -639,15 +639,22 @@ class BGSystem (BGBaseSystem):
                 for part in parts:
                     pnames_cleaned.append(part.name)
                     try:
-                        bpart = part.bridge_partition
-                        if bpart.state != "RM_PARTITION_FREE":
+                        bpart = Cobalt.bridge.Partition.by_id(p.name)
+                    except Cobalt.bridge.PartitionNotFound:
+                        self.logger.info("partition %s: aborted destruction of partition %s; partition no longer exists",
+                            p.name, part.name)
+                    except:
+                        self.logger.info("partition %s: an exception occurred while retrieving structure for partition %s",
+                            p.name, part.name, exc_info=1)
+                    try:
+                        if part.bridge_partition_state != "RM_PARTITION_FREE":
                             bpart.destroy()
                             pnames_destroyed.append(part.name)
                     except Cobalt.bridge.IncompatibleState:
                         pass
                     except:
-                        self.logger.info("partition %s: an exception occurred while attempting to destroy partition %s",
-                            p.name, part.name)
+                        self.logger.info("partition %s: an exception occurred while attempting to destroy the partition",
+                            p.name, part.name, exc_info=1)
                 if len(pnames_destroyed) > 0:
                     self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
                 else:
