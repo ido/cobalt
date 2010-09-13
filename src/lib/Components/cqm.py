@@ -2779,7 +2779,7 @@ class QueueManager(Component):
 
         
         for job in joblist:
-            dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
+            
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
@@ -2802,7 +2802,8 @@ class QueueManager(Component):
                     self.Queues[old_q_name].jobs.remove(job)
                     new_q.jobs.append(job)
                     new_q.update_max_running()
-       
+            
+            dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
 
         return joblist    
     set_jobs = exposed(query(set_jobs))
