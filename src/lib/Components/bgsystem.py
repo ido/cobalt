@@ -647,7 +647,7 @@ class BGSystem (BGBaseSystem):
                         self.logger.info("partition %s: an exception occurred while retrieving structure for partition %s",
                             p.name, part.name, exc_info=1)
                     try:
-                        if part.bridge_partition_state != "RM_PARTITION_FREE":
+                        if bpart.state != "RM_PARTITION_FREE":
                             bpart.destroy()
                             pnames_destroyed.append(part.name)
                     except Cobalt.bridge.IncompatibleState:
