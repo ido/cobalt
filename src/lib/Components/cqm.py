@@ -598,6 +598,8 @@ class Job (StateMachine):
         self.called_has_dep_hold_once = False
         self.dep_frac = None
 
+        dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
+
     # end def __init__()
 
     def no_holds_left(self):
@@ -2285,7 +2287,7 @@ class JobList(DataList):
             user = spec.get('user', None)
             for job in jobs_added:
                 user = spec.get('user', None)
-                dbwriter.log_to_db(user, "creating", "job_data", JobDataMsg(job))
+                
         return jobs_added
     
 
