@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
    database = 'COBALT_D'
    user = 'cobaltdev'
-   pwd = 'miD2.bud'
+   pwd = 
    schema = 'cobalt_log_db'
 
    db = cdbaccess(database, user, pwd, schema)

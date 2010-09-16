@@ -4,7 +4,7 @@ import os
 import sys
 import db2util
 
-from dbWriter import DatabaseWriter
+from cdbaccess import cdbaccess, JobSummaryData
 
 
 
@@ -12,20 +12,20 @@ from dbWriter import DatabaseWriter
 
 if __name__ == '__main__':
 
-    schema = 'COBALT_DB_DEV'
+    schema = 'COBALT_LOG_DB'
     database_name = 'COBALT_D'
     user = 'cobaltdev'
-    pwd = 'miD2.bud'
+    pwd = 
 
     init_job_id = int(sys.argv[1])
     final_job_id = int(sys.argv[2])
 
-    db = DatabaseWriter(database_name,
+    db = cdbaccess(database_name,
                         user,
                         pwd,
                         schema)
     
-    reasons = db.daos['JOB_STATES'].getStatesDict()
+    reasons = db.daos['JOB_EVENTS'].getStatesDict()
 
     notfound = []
     nocreation = []
@@ -59,17 +59,17 @@ if __name__ == '__main__':
                 has_dummy.append(jobid)
 
         #do we have a creation record?
-        if not [record for record in prog_records if record.v.REASON == reasons['created']]:
+        if not [record for record in prog_records if record.v.EVENT_TYPE == reasons['creating']]:
             nocreation.append(jobid)
 
         if not [record for record in prog_records 
-                if ((record.v.REASON == reasons['job_epilogue_finished']) or
-                    (record.v.REASON == reasons['killing']))]:
+                if ((record.v.EVENT_TYPE == reasons['job_epilogue_finished']) or
+                    (record.v.EVENT_TYPE == reasons['killing']))]:
             #TODO: Put a check to see if the job's walltime has been exceeded.
             notermination.append(jobid)
 
         killing_records = [record for record in prog_records 
-                           if record.v.REASON == reasons['killing']]
+                           if record.v.EVENT_TYPE == reasons['killing']]
         
 
         #we had better not have multiple of these...overkill shouldn't happen.
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             #we should see a sequence: created, started, running, resource_epilogue_start
             #resource_epilogue_finished, job_epilogue_start job_epilogue_finished.
             #out of order would be bad.  Ignore holds for now.
-            normal_order_names = ['created', 'starting', 'running', 'resource_epilogue_start',
+            normal_order_names = ['creating', 'starting', 'running', 'resource_epilogue_start',
              'resource_epilogue_finished', 'job_epilogue_start', 'job_epilogue_finished']
 
             normal_order_vals = [reasons[entry] for entry in normal_order_names]
@@ -88,9 +88,9 @@ if __name__ == '__main__':
                     #we have messages after termination for a "normal" execution?
                     messages_after_termination.append(jobid)
                     break
-                if record.v.REASON == normal_order_vals[next_msg_idx]:
+                if record.v.EVENT_TYPE == normal_order_vals[next_msg_idx]:
                     next_msg_idx += 1
-                elif record.v.REASON not in normal_order_vals:
+                elif record.v.EVENT_TYPE not in normal_order_vals:
                     continue
                 else:
                     norm_term_missing_records.append(jobid)
