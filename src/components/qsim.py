@@ -127,9 +127,9 @@ def integrated_main(options):
                 pass
     
     if opts.bgjob:
-        bqsim.print_post_screen()
+        bqsim.post_simulation_handling()
     if opts.cjob:
-        cqsim.print_post_screen()
+        cqsim.post_simulation_handling()
        
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"

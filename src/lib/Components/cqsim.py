@@ -1222,8 +1222,8 @@ class ClusterQsim(ClusterBaseSystem):
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
     
-    def print_post_screen(self):
+    def post_simulation_handling(self):
         '''post screen after simulation completes'''
         #print self.first_yield_hold_time_dict
         pass
-    print_post_screen = exposed(print_post_screen)
+    post_simulation_handling = exposed(post_simulation_handling)

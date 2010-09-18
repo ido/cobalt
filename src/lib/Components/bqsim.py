@@ -297,7 +297,7 @@ class BGQsim(Simulator):
 
 ##### job/queue related
     def _get_queuing_jobs(self):
-        jobs = [job for job in selgetf.queues.get_jobs([{'is_runnable':True}])]
+        jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
         return jobs
     queuing_jobs = property(_get_queuing_jobs)
     
@@ -359,7 +359,7 @@ class BGQsim(Simulator):
                 
             if tmp.get('Resource_List.nodect'):
                 spec['nodes'] = tmp.get('Resource_List.nodect')
-                if int(spec['nodes']) == 40960:
+                if int(spec['nodes']) == TOTAL_NODES:
                     continue                    
             else:  #invalid job entry, discard
                 continue
@@ -442,11 +442,13 @@ class BGQsim(Simulator):
         jobs = []
         
         if self.event_manager.get_go_next():
+            #enter a scheduling iteration
+            
+            #clear yielding job list
             del self.yielding_job_list[:]
-            
+                        
             cur_event = self.event_manager.get_current_event_type()
-            
-            
+                        
             if cur_event in ["Q", "E"]:
                 self.update_job_states(specs, {}, cur_event)
             
@@ -613,11 +615,12 @@ class BGQsim(Simulator):
                     #record the first time this job yields
                     if not self.first_yield_hold_time_dict.has_key(job_id):
                         self.first_yield_hold_time_dict[job_id] = self.get_current_time_sec()
-                        self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
+                        #self.dbglog.LogMessage("%s: job %s first yield" % (self.get_current_time_date(), job_id))
                                             
                     #self.release_allocated_nodes(nodelist)                    
             if len(dbgmsg) > 0:
-                self.dbglog.LogMessage(dbgmsg)
+                #self.dbglog.LogMessage(dbgmsg)
+                pass
                 
             if self.walltime_aware_aggr:
                 self.run_matched_job(spec['jobid'], nodelist[0])
@@ -819,9 +822,9 @@ class BGQsim(Simulator):
                             least_diff = diff
                             best_partition = partition
                         msg = "jobid=%s, partition=%s, neighbor part=%s, neighbor job=%s, diff=%s" % (jobid, partition.name, nbpart, nbjob.jobid, diff)
-                        self.dbglog.LogMessage(msg)
+                        #self.dbglog.LogMessage(msg)
             msg = "------------job %s allocated to best_partition %s-------------" % (jobid,  best_partition.name)
-            self.dbglog.LogMessage(msg)
+            #self.dbglog.LogMessage(msg)
                             
         if best_partition:
             return {jobid: [best_partition.name]}
@@ -1096,31 +1099,40 @@ class BGQsim(Simulator):
             
         
 #####---- Walltime-aware Spatial Scheduling part
-    def current_idle_node(self):
-        '''number of idle nodes'''
-        idle_nodes = 0
-        midplanes = self.get_all_idle_midplanes()
-        idle_nodes = MIDPLANE_SIZE * len(midplanes)
-        return idle_nodes
-    
+
+    def calc_loss_of_capacity(self):
+        '''calculate loss of capacity for one iteration'''
+        
+        if self.num_waiting > 0:
+            idle_nodes = TOTAL_NODES - self.num_busy
+            has_loss = False
+            for job in self.queuing_jobs:
+                if (int(job.nodes)) < idle_nodes:
+                    has_loss = True
+                    break
+            if has_loss:
+                loss = self.current_cycle_capacity_loss()
+                self.capacity_loss += loss
+    calc_loss_of_capacity = exposed(calc_loss_of_capacity)
+
     def current_cycle_capacity_loss(self):
         loss  = 0
         current_time = self.get_current_time_sec()
-        next_time = self.get_next_time_sec()
-        print "current_time=", current_time
-        print "next_time=", next_time
+        next_time = self.event_manager.get_next_event_time_sec()
         time_length = next_time - current_time
-        idle_node = self.current_idle_node()
+        
+        idle_midplanes = len(self.get_midplanes_by_state('idle'))
+        idle_node = idle_midplanes * MIDPLANE_SIZE
         loss = time_length * idle_node
         return loss
     
     def total_capacity_loss_rate(self):
-        last_stamp = len(self.time_stamps) - 1
-        total_period_sec = self.time_stamps[last_stamp] [2] - self.time_stamps[1][2]
-        total_NH = TOTAL_NODES *  (total_period_sec / 3600)
+        timespan_sec = self.event_manager.get_time_span()
+        
+        total_NH = TOTAL_NODES *  (timespan_sec / 3600)
             
-        print "total_nodehours=", total_NH
-        print "total loss capcity (node*hour)=", self.capacity_loss / 3600
+        #print "total_nodehours=", total_NH
+        #print "total loss capcity (node*hour)=", self.capacity_loss / 3600
         
         loss_rate = self.capacity_loss /  (total_NH * 3600)
         
@@ -1190,7 +1202,8 @@ class BGQsim(Simulator):
             pass
             #self.dbglog.LogMessage("return point 3")
         else:
-            self.dbglog.LogMessage(matched_job.jobid)
+            #self.dbglog.LogMessage(matched_job.jobid)
+            pass
                     
         #run the matched job on the neiborbor partition
         if matched_job and partlist:
@@ -1737,8 +1750,11 @@ class BGQsim(Simulator):
         #print "holding jobs: ", [(k,v[0].split("-")[-1]) for k, v in self.job_hold_dict.iteritems()]
         print "\n\n"
         
-    def print_post_screen(self):
+    def post_simulation_handling(self):
         '''post screen after simulation completes'''
         #print self.first_yield_hold_time_dict
+        capacity_loss_rate = self.total_capacity_loss_rate()
+        msg  = "capacity loss=%f" % capacity_loss_rate 
+        self.dbglog.LogMessage(msg)
         pass
-    print_post_screen = exposed(print_post_screen)    
+    post_simulation_handling = exposed(post_simulation_handling)    

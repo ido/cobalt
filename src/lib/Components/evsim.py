@@ -172,6 +172,14 @@ class EventSimulator(Component):
         return pos
     add_event = exposed(add_event)
     
+    def get_time_span(self):
+        '''return the whole time span'''
+        starttime = self.event_list[1].get('unixtime')
+        endtime = self.event_list[-1].get('unixtime')
+        timespan = endtime - starttime
+        return timespan
+    get_time_span = exposed(get_time_span)       
+    
     def get_current_time_stamp(self):
         '''return current time stamp'''
         return self.time_stamp
@@ -214,6 +222,8 @@ class EventSimulator(Component):
             return self.event_list[self.time_stamp + 1].get('unixtime')
         else:
             return self.get_current_time_date()
+    get_next_event_time_sec = exposed(get_next_event_time_sec)
+    
         
     def is_finished(self):
         return self.finished
@@ -296,3 +306,7 @@ class EventSimulator(Component):
             self.bgsched.schedule_jobs()
         if machine == EUREKA:
             self.csched.schedule_jobs()
+        
+        if self.go_next:
+            ComponentProxy("queue-manager").calc_loss_of_capacity()
+            
