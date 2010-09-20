@@ -2209,13 +2209,15 @@ class Job (StateMachine):
 
         if not force:
             try:
+                dbwriter.log_to_db(user, "killing", "job_prog", JobProgMsg(self)) 
                 self.trigger_event('Kill', {'user' : user, 'signal' : signame})
-                dbwriter.log_to_db(user, "killing", "job_prog", JobProgMsg(self))
+                
             except:
                 self._sm_log_exception(None, "an unexpected exception occurred while attempting to kill the task")
                 raise JobDeleteError("An unexpected exception occurred while attempting to delete the job.  See log for details.",
                     self.jobid, user, force, self.state, self._sm_state)
         else:
+            dbwriter.log_to_db(user, "killing", "job_prog", JobProgMsg(self))
             self._sm_log_info(("forced delete requested by user '%s'; initiating job termination and removal of job " + \
                 "from the queue") % (user,), cobalt_log = True)
             self.__signaling_info = Signal_Info(Signal_Info.Reason.delete, signame, user)
@@ -2263,7 +2265,7 @@ class Job (StateMachine):
                         (self.jobid, self.user, self.nodes, user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly terminated by user %s. %s" % \
                         (self.jobid, self.user, self.nodes, user, stats))
-            dbwriter.log_to_db(user, "killing", "job_prog", JobProgMsg(self))
+            
 
     def task_end(self):
         '''handle the completion of a task'''
@@ -2734,6 +2736,10 @@ class QueueManager(Component):
 
         # update state of jobs held because the user exceeded the maximum number of running jobs allowed by the queue
         self.Queues[job.queue].update_max_running()
+
+        #The job has well-and-truly ended.  As such, send a message that the
+        #job has terminated. Should remove all ambiguity. --PMR
+        dbwriter.log_to_db(None, "terminated", "job_prog", JobProgMsg(job))
 
     def __add_job_terminal_action(self, job, args):
         '''add the terminal action handler to the each job added to the queue'''
