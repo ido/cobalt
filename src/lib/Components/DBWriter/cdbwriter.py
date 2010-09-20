@@ -147,7 +147,7 @@ class MessageQueue(Component):
 
       while self.msg_queue and self.connected:
          msg = self.msg_queue[0]
-         
+
          try:
             self.database_writer.addMessage(msg)
          except db2util.adapterError:
@@ -197,6 +197,7 @@ class MessageQueue(Component):
    
       try:
          msgDict = self.decoder.decode(msg)
+         
       except ValueError:
          logger.error("Bad message recieved.  Failed to decode string %s" % msg)
          return
@@ -317,6 +318,7 @@ class DatabaseWriter(object):
    def addMessage(self, logMsg):
 
       logger.info("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
+      #print logMsg
 
       if logMsg.item_type == 'reservation':
          if logMsg.state == 'creating':

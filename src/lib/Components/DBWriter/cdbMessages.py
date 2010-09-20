@@ -84,8 +84,8 @@ class JobStatus(object):
    def __str__(self):
       output = []
       for entry in self.__dict__:
-         output.append("%s : %s\n" % (entry, str(self.__dict__[entry])))
-      return ''.join(output)
+         output.append("%s : %s" % (entry, str(self.__dict__[entry])))
+      return '\n'.join(output)
    
    def encode(self):
       return self.__dict__
@@ -96,9 +96,28 @@ class JobStatus(object):
 class JobProgStatus(JobStatus):
 
    def set_types(self):
-      pass
-
+      if hasattr(self, 'envs'):
+          self.envs = dict_to_plain_strs(self.envs)
+      if hasattr(self, 'location'):
+          self.location = list_to_plain_strs(self.location)
    
+   def encode(self):
+       retDict = self.__dict__
+       if hasattr(self, 'location'):
+           if self.location == None:
+               retDict['location'] = []
+           else:
+               retDict['location'] = str_to_list(self.location)
+       if hasattr(self, 'envs'):
+           if self.envs == None:
+               retDict['envs'] = {}
+           else:
+               retDict['envs'] = str_to_dict(self.envs)
+
+       
+       return retDict
+
+
 class JobDataStatus(JobStatus):
    
    def __init__(self, spec):
@@ -109,14 +128,14 @@ class JobDataStatus(JobStatus):
       self.procs = int(self.procs)
       self.args = ' '.join(self.args)
       if self.args == '' : self.args = None
-      self.envs = str(self.envs)
+      self.envs = dict_to_plain_strs(self.envs) 
       self.preemptable = int(self.preemptable)
       self.project = str(self.project)
       if self.priority_core_hours: 
          self.priority_core_hours = int(self.priority_core_hours)
       else: 
          self.priority_core_hours = None
-      self.location = str(self.location)
+      self.location = list_to_plain_strs(self.location)
       self.job_prog_msg.set_types()
 
    def encode(self):
@@ -125,7 +144,18 @@ class JobDataStatus(JobStatus):
          retDict['args'] = []
       else:
          retDict['args'] = self.args.split(' ')
+      
+      if self.location == None:
+          retDict['location'] = []
+      else:
+          retDict['location'] = str_to_list(self.location)
+      if self.envs == None:
+          retDict['envs'] = {}
+      else:
+          retDict['envs'] = str_to_dict(self.envs)
+
       retDict['job_prog_msg'] = self.job_prog_msg.encode()
+
       return retDict
 
 class PartitionStatus(object):
@@ -154,6 +184,32 @@ class LogMessageEncoder(json.JSONEncoder):
       
 
       return encodedObj
+
+
+def dict_to_plain_strs(d):
+    if d == None:
+        return None
+    return ':'.join(['='.join([str(e), str(d[e])]) for e in d])
+
+def list_to_plain_strs(l):
+    if l == None:
+        return None
+    return ':'.join([str(e) for e in l])
+
+def str_to_dict(s):
+    if s == None: 
+        return {}
+    entries = s.split(':')
+    keyVals = [entry.split('=') for entry in entries] 
+    retDict = {}
+    for keyVal in keyVals:
+        retDict[keyVal[0]] = keyVal[1]
+    return retDict
+
+def str_to_list(s):
+    if s == None: 
+        return []
+    return s.split(':')
 
 #class ReservationStaeDecoder(json.JSONDecoder):
 #
