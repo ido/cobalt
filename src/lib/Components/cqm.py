@@ -970,7 +970,8 @@ class Job (StateMachine):
         self.__timers['hold'].start()
         self._sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
         self._sm_state = hold_state
-        dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
+        #print args
+        #dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
         
 
     def _sm_common_queued__release(self, args):
@@ -1002,7 +1003,8 @@ class Job (StateMachine):
 
         if activity:
             self._sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
-            dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
+            print args
+            #dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
         else:
             self._sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
@@ -1027,7 +1029,7 @@ class Job (StateMachine):
 
         if activity:
             self._sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
-            dbwriter.log_to_db(None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self))
+            #dbwriter.log_to_db(None, "%s_hold_release" % args['type'], "job_prog", JobProgMsg(self))
             if self.no_holds_left():
                 dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(self))
         else:
@@ -2791,9 +2793,32 @@ class QueueManager(Component):
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
+            #if we are requesting a change in hold:
+            set_user_hold = updates.get('user_hold', None)
+            set_admin_hold = updates.get('admin_hold', None)
+             
+            if set_admin_hold and not job.admin_hold:
+                dbwriter.log_to_db(user_name, "admin_hold", "job_prog", JobProgMsg(job))
+            elif set_admin_hold == False and job.admin_hold:
+                dbwriter.log_to_db(user_name, "admin_hold_release", "job_prog", JobProgMsg(job))
+            if set_user_hold and not job.user_hold:
+                dbwriter.log_to_db(user_name, "user_hold", "job_prog", JobProgMsg(job))
+            elif set_user_hold == False and job.user_hold:
+                dbwriter.log_to_db(user_name, "user_hold_release", "job_prog", JobProgMsg(job))
+
+
             #if update "user_hold" alone, do not check MaxQueued restriction
+            #and "admin_holds" can get the same treatment.
+            #This is also the easiest place to get both the change in hold
+            #state and the username at the same time.
+            only_hold = False
             if updates.keys() == ['user_hold']:            
                 job.update(updates)
+                only_hold = True
+            elif updates.keys() == ['admin_hold']:
+                job.update(updates)
+                only_hold = True
+
             elif self.Queues[test["queue"]].can_queue(test):
                 job.update(updates)
                 if updates.has_key("all_dependencies"):
@@ -2810,8 +2835,8 @@ class QueueManager(Component):
                     self.Queues[old_q_name].jobs.remove(job)
                     new_q.jobs.append(job)
                     new_q.update_max_running()
-            
-            dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
+                if not only_hold:
+                    dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
 
         return joblist    
     set_jobs = exposed(query(set_jobs))
