@@ -973,7 +973,7 @@ class Job (StateMachine):
         self.__timers['hold'].start()
         self._sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
         self._sm_state = hold_state
-        #print args
+        
         #dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
         
 
@@ -1006,7 +1006,7 @@ class Job (StateMachine):
 
         if activity:
             self._sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
-            print args
+            
             #dbwriter.log_to_db(None, "%s_hold" % args['type'], "job_prog", JobProgMsg(self))
         else:
             self._sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
@@ -3115,7 +3115,10 @@ class QueueManager(Component):
                     break
             if (job.dep_fail and (not already_failed)):
                 dbwriter.log_to_db(None, "dep_fail", "job_prog", JobProgMsg(job))
-
+            if ((not job.dep_fail) and already_failed and 
+                (job.no_holds_left())):
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", 
+                                   JobProgMsg(job))
     check_dep_fail = automatic(check_dep_fail, period=60)
     
 
