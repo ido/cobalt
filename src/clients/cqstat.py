@@ -112,7 +112,7 @@ if __name__ == '__main__':
                       'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Preemptable', 'Queue', 'StartTime', 'Index']
     long_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
-                      'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
+                      'RunTime', 'RemainingTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
                       'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
                       'ErrorPath', 'OutputPath',                      
@@ -120,7 +120,8 @@ if __name__ == '__main__':
                       'Project', 'Dependencies', 'short_state', 'Notify',
                       'Score', 'Maxtasktime', 'attrs', 'dep_frac', ]
     header = None
-    query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
+    query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime'], 
+                          'RemainingTime':['StartTime', 'WallTime']}
 
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
@@ -193,6 +194,11 @@ if __name__ == '__main__':
             jobidfmt = "%%%ss" % maxjoblen
         # calculate derived values
         for j in response:
+            # remainingtime
+            if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
+                j['remainingtime'] = 'N/A'
+            else:
+                j['remainingtime'] = get_elapsed_time(time.time() - float(j.get('starttime')), float(j.get('walltime')) * 60.0)      
             # walltime
             t = int(float(j['walltime']))
             h = int(math.floor(t/60))

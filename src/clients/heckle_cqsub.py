@@ -1,14 +1,19 @@
-#!/usr/bin/env python -W ignore::DeprecationWarning
+#!/usr/bin/env python
 
-'''Cobalt qsub command'''
+'''
+Cobalt qsub command for Heckle
+The only difference is that it includes the user's environment
+And passes it along with the environment variables.
+'''
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1785 $'
 __version__ = '$Version$'
 
 import os
 import sys
 import pwd
 import os.path
+import popen2
 import xmlrpclib
 import ConfigParser
 import re
@@ -196,7 +201,7 @@ if __name__ == '__main__':
         if sys.argv.count('-e') - command.count('-e') > 1:
             logger.error("Use of multiple -e options is not supported. Specify multiple environment variables with -e FOO=1:BAR=2")
             raise SystemExit(1)
-        jobspec['envs'] = {}
+        jobspec['envs'] = os.environ
         key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]
         for kv in key_value_pairs:
             if len(kv) != 2:
@@ -265,4 +270,4 @@ if __name__ == '__main__':
             logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
             logger.error("         %s" % e.strerror)
     else:
-        logger.error("failed to create the job.  maybe a queue isn't there")
+        logger.error("failed to create teh job.  maybe a queue isn't there")
