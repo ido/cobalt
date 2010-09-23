@@ -151,7 +151,7 @@ class MessageQueue(Component):
          try:
             self.database_writer.addMessage(msg)
          except db2util.adapterError:
-            logger.error ("Error updating databse.  Unable to add message.")
+            logger.error ("Error updating databse.  Unable to add message due to adapter error. Message dropped.")
             logging.debug(traceback.format_exc())
             self.msg_queue.pop(0)
          except:
@@ -466,6 +466,7 @@ class DatabaseWriter(object):
 
       specialObjects = {}
       
+      if updateDummy: print "Update Dummy."
 
       for key in logMsg.item.__dict__:
          #print "adding %s value %s" %( key, logMsg.item.__dict__[key])
@@ -479,26 +480,29 @@ class DatabaseWriter(object):
       
       job_data_id = job_data_record.v.ID
       if updateDummy:
-         jod_data_id = self.daos['JOB_DATA'].update(job_data_record)
+          jod_data_id = self.daos['JOB_DATA'].update(job_data_record)
       else:
-         job_data_id = self.daos['JOB_DATA'].insert(job_data_record)
+          job_data_id = self.daos['JOB_DATA'].insert(job_data_record)
       
       #populate job_attrs, if needed.
       for key in specialObjects['attrs'].keys():
-         job_attr_record = self.daos['JOB_ATTR'].table.getRecord({
-               'JOB_DATA_ID' : job_data_id,
-               'KEY' : key,
-               'VALUE' : str(specialObjects['attrs'][key])})
-         self.daos['JOB_ATTR'].insert(job_attr_record)
+          job_attr_record = self.daos['JOB_ATTR'].table.getRecord({
+                  'JOB_DATA_ID' : job_data_id,
+                  'KEY' : key,
+                  'VALUE' : str(specialObjects['attrs'][key])})
+          self.daos['JOB_ATTR'].insert(job_attr_record)
       
 
       #populate job_deps
       for dep in specialObjects['all_dependencies']:
-         job_deps_record = self.daos['JOB_DEPS'].table.getRecord({
-               'JOB_DATA_ID' : job_data_id,
-               'DEP_ON_ID' : int(dep),
-               'SATISFIED' : 0})
-         self.daos['JOB_DEPS'].insert(job_deps_record)
+          if not dep.isdigit():
+              continue
+          
+          job_deps_record = self.daos['JOB_DEPS'].table.getRecord({
+                  'JOB_DATA_ID' : job_data_id,
+                  'DEP_ON_ID' : int(dep),
+                  'SATISFIED' : 0})
+          self.daos['JOB_DEPS'].insert(job_deps_record)
 
 
       self.__addJobProgMsg(logMsg, logMsg.item.job_prog_msg, job_data_id)
@@ -573,8 +577,7 @@ class DatabaseWriter(object):
          fieldValue = updateAtRun.pop('satisfied_dependencies', None)
          
          #find dependencies that have been satisfied and mark as such.
-         #I really don't like how I am doing this.  I have a feeling
-         #I can consolidate this.  
+         
          if fieldValue:
             job_deps_record = self.daos['JOB_DEPS'].table.getRecord({'JOB_DATA_ID': job_data_id})
             deps_to_satisfy = self.daos['JOB_DEPS'].search(job_deps_record)
@@ -587,8 +590,6 @@ class DatabaseWriter(object):
                   self.daos['JOB_DEPS'].update(job_deps_record)
                   job_deps_record = None
                
-               
-         #fieldValue = updateAtRun.pop('nodects', None)
 
          self.daos['JOB_DATA'].update(job_data_record)
 

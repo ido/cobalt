@@ -410,6 +410,7 @@ class Job (StateMachine):
     __rc_unknown = "unknown"
 
     def __init__(self, spec):
+        self.initializing = True
         seas = {
             ('Ready', 'Run') : [self._sm_ready__run],
             ('Ready', 'Hold') : [self._sm_ready__hold],
@@ -599,6 +600,7 @@ class Job (StateMachine):
         self.dep_frac = None
 
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
+        self.initializing = False
 
     # end def __init__()
 
@@ -648,7 +650,8 @@ class Job (StateMachine):
             logger.info("old job missing dep_frac")
             self.dep_frac = None
             
-            
+        self.initializing = False
+
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
         # BRT: this routine should probably check if the task could not be signaled because it was no longer running
@@ -1987,8 +1990,10 @@ class Job (StateMachine):
 
     user_hold = property(__get_user_hold, __set_user_hold)
 
-    def __has_dep_hold(self):
+    def __has_dep_hold(self):    
         current_dep_hold = self.all_dependencies and not set(self.all_dependencies).issubset(set(self.satisfied_dependencies))
+        if self.initializing:
+            return current_dep_hold
         if ((not self.prev_dep_hold) and current_dep_hold and (not self.called_has_dep_hold_once)):
             self.called_has_dep_hold_once = True
             dbwriter.log_to_db(None, "dep_hold", "job_prog", JobProgMsg(self))
