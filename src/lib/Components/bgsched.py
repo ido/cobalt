@@ -10,10 +10,6 @@ import time
 import ConfigParser
 import threading
 import xmlrpclib
-try:
-    set()
-except:
-    from sets import Set as set
 
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, IncrID

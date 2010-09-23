@@ -7,11 +7,12 @@ ClusterBaseSystem -- base system component
 import time
 import Cobalt
 import threading
+import Cobalt.Util
 from Cobalt.Exceptions import  JobValidationError, NotSupportedError
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 from Cobalt.Statistics import Statistics
-import sets, ConfigParser
+import ConfigParser
 
 __all__ = [
     "ClusterBaseSystem",
@@ -38,16 +39,16 @@ class ClusterBaseSystem (Component):
         self.process_groups = ProcessGroupDict()
         self.pending_diags = dict()
         self.failed_diags = list()
-        self.all_nodes = sets.Set()
-        self.running_nodes = sets.Set()
-        self.down_nodes = sets.Set()
+        self.all_nodes = set()
+        self.running_nodes = set()
+        self.down_nodes = set()
         self.queue_assignments = {}
         self.node_order = {}
         try:
             self.configure(CP.get("cluster_system", "hostfile"))
         except:
             self.logger.error("unable to load hostfile")
-        self.queue_assignments["default"] = sets.Set(self.all_nodes)
+        self.queue_assignments["default"] = set(self.all_nodes)
 
 
     def __getstate__(self):
@@ -56,14 +57,15 @@ class ClusterBaseSystem (Component):
 
 
     def __setstate__(self, state):
+        Cobalt.Util.fix_set(state)
         self.queue_assignments = state["queue_assignments"]
         self.down_nodes = state["down_nodes"]
 
         self.process_groups = ProcessGroupDict()
         self.pending_diags = dict()
         self.failed_diags = list()
-        self.all_nodes = sets.Set()
-        self.running_nodes = sets.Set()
+        self.all_nodes = set()
+        self.running_nodes = set()
         self.node_order = {}
         try:
             self.configure(CP.get("cluster_system", "hostfile"))
@@ -149,12 +151,12 @@ class ClusterBaseSystem (Component):
             kids = [ self._partitions[c_name] for c_name in partition.children]
             kids.sort(size_cmp)
             n = len(kids)
-            part_node_cards = sets.Set(partition.node_cards)
+            part_node_cards = set(partition.node_cards)
             # generate the power set, but try to use the big partitions first (hence the sort above)
             for i in xrange(1, 2**n + 1):
                 test_cover = [ kids[j] for j in range(n) if i & 2**j ]
                 
-                test_node_cards = sets.Set()
+                test_node_cards = set()
                 for t in test_cover:
                     test_node_cards.update(t.node_cards)
                 
@@ -254,7 +256,7 @@ class ClusterBaseSystem (Component):
         required = args.get("required", [])
         
         if required:
-            available_nodes = sets.Set(required)
+            available_nodes = set(required)
         else:
             available_nodes = self.queue_assignments[queue].difference(forbidden)
 
@@ -425,7 +427,7 @@ class ClusterBaseSystem (Component):
     get_queue_assignments = exposed(get_queue_assignments)
     
     def set_queue_assignments(self, queue_names, node_list, user_name=None):
-        checked_nodes = sets.Set()
+        checked_nodes = set()
         for n in node_list:
             if n in self.all_nodes:
                 checked_nodes.add(n)
@@ -433,7 +435,7 @@ class ClusterBaseSystem (Component):
         queue_list = queue_names.split(":")
         for q in queue_list:
             if q not in self.queue_assignments:
-                self.queue_assignments[q] = sets.Set()
+                self.queue_assignments[q] = set()
                 
         for q in self.queue_assignments.keys():
             if q not in queue_list:

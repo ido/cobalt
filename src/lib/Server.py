@@ -21,12 +21,7 @@ import logging
 import urlparse
 import threading
 import time
-
-import tlslite.integration.TLSSocketServerMixIn
-import tlslite.api
-from tlslite.api import \
-    TLSSocketServerMixIn, parsePrivateKey, \
-    X509, X509CertChain, SessionCache, TLSError
+import ssl
 
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
@@ -61,21 +56,6 @@ def find_intended_location (component, config_files=None):
     return location
 
 
-class TLSConnection (tlslite.api.TLSConnection):
-    
-    """TLSConnection supporting additional socket methods.
-    
-    Methods:
-    shutdown -- shut down the underlying socket
-    """
-    
-    def shutdown (self, *args, **kwargs):
-        """Shut down the underlying socket."""
-        return self.sock.shutdown(*args, **kwargs)
-
-#monkeypatch TLSSocketServerMixIn's module to use new TLSConnection
-tlslite.integration.TLSSocketServerMixIn.TLSConnection = TLSConnection
-
 
 class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     logger = logging.getLogger("Cobalt.Server.CobaltXMLRPCDispatcher")
@@ -106,101 +86,94 @@ class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 allow_none=self.allow_none, encoding=self.encoding)
         return raw_response
 
-class TCPServer (TLSSocketServerMixIn, SocketServer.TCPServer, object):
-    
+
+
+class SSLServer (SocketServer.TCPServer, object):
+
     """TCP server supporting SSL encryption.
-    
+
     Methods:
     handshake -- perform a SSL/TLS handshake
-    
+
     Properties:
     url -- A url pointing to this server.
+
     """
-    
+
     allow_reuse_address = True
     logger = logging.getLogger("Cobalt.Server.TCPServer")
-    
-    def __init__ (self, server_address, RequestHandlerClass, keyfile=None,
-                  certfile=None, reqCert=False, timeout=None):
-        
+
+    def __init__(self, server_address, RequestHandlerClass, keyfile=None,
+                 certfile=None, reqCert=False, ca=None, timeout=None, protocol='xmlrpc/ssl'):
+
         """Initialize the SSL-TCP server.
-        
+
         Arguments:
         server_address -- address to bind to the server
         RequestHandlerClass -- class to handle requests
-        
+
         Keyword arguments:
         keyfile -- private encryption key filename (enables ssl encryption)
         certfile -- certificate file (enables ssl encryption)
         reqCert -- client must present certificate
         timeout -- timeout for non-blocking request handling
+
         """
 
         all_iface_address = ('', server_address[1])
-        SocketServer.TCPServer.__init__(self, all_iface_address, RequestHandlerClass)
-        
+        try:
+            SocketServer.TCPServer.__init__(self, all_iface_address,
+                                            RequestHandlerClass)
+        except socket.error:
+            self.logger.error("Failed to bind to socket")
+            raise
+
+        self.timeout = timeout
         self.socket.settimeout(timeout)
-        
-        if keyfile or certfile:
-            self.private_key = parsePrivateKey(open(keyfile or certfile).read())
-            x509 = X509()
-            x509.parse(open(certfile or keyfile).read())
-            self.certificate_chain = X509CertChain([x509])
+        self.keyfile = keyfile
+        if keyfile != None:
+            if keyfile == False or not os.path.exists(keyfile):
+                self.logger.error("Keyfile %s does not exist" % keyfile)
+                raise Exception, "keyfile doesn't exist"
+        self.certfile = certfile
+        if certfile != None:
+            if certfile == False or not os.path.exists(certfile):
+                self.logger.error("Certfile %s does not exist" % certfile)
+                raise Exception, "certfile doesn't exist"
+        self.ca = ca
+        if ca != None:
+            if ca == False or not os.path.exists(ca):
+                self.logger.error("CA %s does not exist" % ca)
+                raise Exception, "ca doesn't exist"
+        self.reqCert = reqCert
+        if ca and certfile:
+            self.mode = ssl.CERT_OPTIONAL
         else:
-            if reqCert:
-                raise TypeError("use of reqCert requires a keyfile/certfile")
-            self.private_key = None
-            self.certificate_chain = None
-        self.request_certificate = reqCert
-        self.sessions = SessionCache()
-        self.master_pid = os.getpid()
-    
-    def handshake (self, connection):
-        
-        """Perform the SSL/TLS handshake.
-        
-        Arguments:
-        connection -- handshake through this connection
-        """
-        
-        try:
-            connection.handshakeServer(
-                certChain = self.certificate_chain,
-                privateKey = self.private_key,
-                reqCert = self.request_certificate,
-                sessionCache = self.sessions,
-            )
-        except TLSError, e:
-            return False
-        
-        connection.ignoreAbruptClose = True
-        return True
-    
-    def finish_request (self, *args, **kwargs):
-        """Support optional ssl/tls handshaking."""
-        try:
-            if self.private_key and self.certificate_chain:
-                tlsConnection = TLSConnection(args[0])
-                if self.handshake(tlsConnection) == True:
-                    self.RequestHandlerClass(tlsConnection, args[1], self)
-                    if os.getpid() != self.master_pid:
-                        tlsConnection.close()
-            else:
-                SocketServer.TCPServer.finish_request(self, *args, **kwargs)
-        except socket.error, e:
-            self.logger.error("Socket error occurred in send: %s" % e)
-    
-    def _get_secure (self):
-        return self.private_key and self.certificate_chain
-    secure = property(_get_secure)
-    
-    def _get_url (self):
+            self.mode = ssl.CERT_NONE
+        if protocol == 'xmlrpc/ssl':
+            self.ssl_protocol = ssl.PROTOCOL_SSLv23
+        elif protocol == 'xmlrpc/tlsv1':
+            self.ssl_protocol = ssl.PROTOCOL_TLSv1
+        else:
+            self.logger.error("Unknown protocol %s" % (protocol))
+            raise Exception, "unknown protocol %s" % protocol
+
+    def get_request(self):
+        (sock, sockinfo) = self.socket.accept()
+        sock.settimeout(self.timeout)
+        sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
+                                  keyfile=self.keyfile, cert_reqs=self.mode,
+                                  ca_certs=self.ca, ssl_version=self.ssl_protocol)
+        return sslsock, sockinfo
+
+    def close_request(self, request):
+        # request.unwrap()
+        request.close()
+
+    def _get_url(self):
         port = self.socket.getsockname()[1]
         hostname = socket.gethostname()
-        if self.secure:
-            protocol = "https"
-        else:
-            protocol = "http"
+        protocol = "https"
         return "%s://%s:%i" % (protocol, hostname, port)
     url = property(_get_url)
 
@@ -300,7 +273,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.connection.shutdown(1)
    
 
-class BaseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
+class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
     
     """Component XMLRPCServer.
     
@@ -324,7 +297,7 @@ class BaseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
                   keyfile=None, certfile=None,
                   timeout=10,
                   logRequests=False,
-                  register=True, allow_none=True, encoding=None):
+                  register=True, allow_none=True, encoding=None, cafile=None):
         
         """Initialize the XML-RPC server.
         
@@ -347,9 +320,9 @@ class BaseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
             class RequestHandlerClass (XMLRPCRequestHandler):
                 """A subclassed request handler to prevent class-attribute conflicts."""
 
-        TCPServer.__init__(self,
+        SSLServer.__init__(self,
             server_address, RequestHandlerClass,
-            timeout=timeout, keyfile=keyfile, certfile=certfile)
+            timeout=timeout, keyfile=keyfile, certfile=certfile, reqCert=True, ca=cafile)
         self.logRequests = logRequests
         self.serve = False
         self.register = register
@@ -422,7 +395,7 @@ class BaseXMLRPCServer (TCPServer, CobaltXMLRPCDispatcher, object):
     
     
     def server_close (self):
-        TCPServer.server_close(self)
+        SSLServer.server_close(self)
         if self.register:
             self.register = False
             self.unregister_with_slp()
@@ -496,11 +469,11 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
                   keyfile=None, certfile=None,
                   timeout=10,
                   logRequests=False,
-                  register=True, allow_none=True, encoding=None):
+                  register=True, allow_none=True, encoding=None, cafile=None):
         
         
         BaseXMLRPCServer.__init__(self, server_address, RequestHandlerClass, keyfile, 
-                                  certfile, timeout, logRequests, register, allow_none, encoding)
+                                  certfile, timeout, logRequests, register, allow_none, encoding, cafile=cafile)
         
         self.task_thread = threading.Thread(target=self._tasks_thread)
 

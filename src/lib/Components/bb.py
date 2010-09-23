@@ -5,7 +5,6 @@ import logging
 import os
 import os.path
 import pwd
-import sets
 import signal
 import stat
 import sys
@@ -167,7 +166,7 @@ class BBSystem(Component):
         self.process_groups = ProcessGroupDict()
         self.process_groups.item_cls = BBProcessGroup
         self.queue_assignments = {}
-        self.queue_assignments["default"] = sets.Set(self.resources)
+        self.queue_assignments["default"] = set(self.resources)
 
     #####################
     # Main set of methods

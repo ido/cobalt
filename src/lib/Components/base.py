@@ -104,15 +104,19 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         cp = ConfigParser.ConfigParser()
         cp.read([Cobalt.CONFIG_FILES[0]])
         keypath = os.path.expandvars(cp.get('communication', 'key'))
+        certpath = os.path.expandvars(cp.get('communication', 'cert'))
+        capath = os.path.expandvars(cp.get('communication', 'ca'))
     except:
         keypath = '/etc/cobalt.key'
+        certpath = None
+        capath = None
 
     if single_threaded:
-        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=keypath,
-                          register=register, timeout=time_out)
+        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath, 
+                          cafile=capath, register=register, timeout=time_out)
     else:
-        server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
-                          register=register, timeout=time_out)
+        server = XMLRPCServer(location, keyfile=keypath, certfile=certpath,
+                          cafile=capath, register=register, timeout=time_out)
     server.register_instance(component)
     
     try:

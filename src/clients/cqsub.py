@@ -9,7 +9,6 @@ import os
 import sys
 import pwd
 import os.path
-import popen2
 import xmlrpclib
 import ConfigParser
 import re
