@@ -5,14 +5,39 @@ import sys
 import re
 import db2util
 
-from dbWriter import DatabaseWriter
+from cdbaccess import cdbaccess
 
 
+#ignore if messages don't correspond to any database messages.  also useful if 
+#they correspond to multiple lines for the same event.
+
+cqmMsgsToDBMsgs = {
+    'preparing job for execution':['starting'],
+    'Running job on ANL-R00-1024':['ignore'],
+    "transitioning to the 'Prologue' state": ['ignore'],
+    'instructing the system component to begin executing the task': ['ignore'],
+    "transitioning to the 'Running' state": ['running'],
+    'process group no longer executing': ['ignore'],
+    'task completed normally; finalizing task and obtaining exit code':['ignore'],
+    'task completed normally with an exit code of ; initiating job cleanup and removal':['ignore'],
+    "transitioning to the 'Resource_Epilogue' state":['resource_epilogue_start'],
+    "transitioning to the 'Job_Epilogue' state":['resource_epilogue_finished','job_epilogue_start'],
+    "transitioning to the 'Terminal' state":['job_epilogue_finished', 'terminated'],
+    "user delete requested; removing job from the queue": ['killing'],
+    "user delete requested with signal": ['ignore'],
+    "instructing the system component to send signal": ['ignore'],
+    "transitioning to the 'Killing' state":['killing'],
+    "task terminated; finalizing task": ['ignore'],
+    "task terminated; initiating resource cleanup": ['ignore']
+     }
+
+cqmMsgs = cqmMsgsToDBMsgs.keys()
 
 class AcctLogLine(object):
     
     def __init__(self, input_line):
         #Parse log line:
+        print input_line
         line = input_line.split()
         self.date_str = line[0]
         self.time_str = line[1]
@@ -36,38 +61,78 @@ class AcctLogLine(object):
             print "unhandled message of %s type" % self.type
 
 
-class BasicLogLine(object):
+class SyslogLine(object):
     
-    """hide the messy parsing details and make it more convenient to
-    get to line contents."""
+    def __init__(self, lineTupple):
+        self.timestamp = lineTupple[0]
+        self.host = lineTupple[1]
+        self.component = lineTupple[2]
+        self.pid = lineTupple[3]
+        self.message = lineTupple[4]
+        self.componentLine = None                           
 
-    def __init__(self, line):
+class cqmLine(object):
 
-        self.norm_msg = False
-        split_line = line.split()
+    cqmLogLine = re.compile(r'Job \d+/\w+:')
+    acctLogLine = re.compile(r'^[DESQR];\d+;\w+')
 
-        state_re = re.compile("State=")
-        event_re = re.compile("Event=")
+    state_re = re.compile(r'State=')
+    event_re = re.compile(r'Event=')
     
-        match_line = state_re.match(split_line[2])
+    def __init__(self, string):
         
-        if match_line:
-            self.norm_msg = True
-            self.state = split_line[2].split('=')[1].strip(';').lower()
-            if not event_re.match(split_line[3]):
-                self.event = None
+        self.is_valid_line = False
+        self.is_acct_log_line = False
+        self.string = string
+        
+        match = cqmLogLine.match(string)
+        if match:
+            
+            self.is_valid_line = True
+            
+            fragments = match.string.split()
+            job_user_id = fragments[1].split('/')
+            self.jobid = int(job_user_id[0])
+            self.user = job_user_id[1].strip(':')
+            
+            has_state = self.state_re.match(fragments[2])
+            has_event = None
+            self.state = None
+            self.event = None
+
+            if has_state:
+                self.state = fragments[2].split('=')[1].strip(';')
+                has_event = self.event_re.match(fragments[3])
+                if has_event:
+                    self.event = fragments[3].split('=')[1].strip(';')
+                    self.cobalt_msg = ' '.join(fragments[4:])
+                else:
+                    self.cobalt_msg = ' '.join(fragments[3:])
             else:
-                self.event = split_line[3].split('=')[1].strip(';').lower()
-            self.message = ' '.join(split_line[4:])
-            self.state_event = '.'.join([self.state, str(self.event)])
+                self.cobalt_msg = ' '.join(fragments[2:])
+            
+            return 
         
-        else:
-            self.message = ' '.join(split_line[2:])
-                                   
+        match = actLogLine.match(string)
+        if match:
+            self.is_act_log_line = True
+            #self.is_valid_line = True
+            
+            #self.acct_log_line = AcctLogLine(match.string)
+            #self.jobid = self.acct_log_line.jobid
+            return
+        
+        #if these don't match then don't consider the line.
+        
+    def __str__(self):
+        if not self.is_valid_line:
+            return "Invalid Line."
+        return self.string
+        
 
 if __name__ == '__main__':
 
-    schema = 'COBALT_DB_DEV'
+    schema = 'COBALT_LOG_DB'
     database_name = 'COBALT_D'
     user = 'cobaltdev'
     pwd = 'miD2.bud'
@@ -81,91 +146,69 @@ if __name__ == '__main__':
         
     #files in logs first, then cqm log messages.
 
-    db = DatabaseWriter(database_name,
-                        user,
-                        pwd,
-                        schema)
+    db = cdbaccess(database_name,
+                   user,
+                   pwd,
+                   schema)
     
-    reasons = db.daos['JOB_STATES'].getStatesDict()
+    events = db.daos['JOB_EVENTS'].getStatesDict()
 
-    logLine = re.compile(r'Job \d+/\w+:')
-    actLogLine = re.compile('^[DESQR];\d+;\w+')
+    syslogLine = re.compile(r'(?P<timestamp>[a-zA-Z]{3} \d{2} \d\d:\d\d:\d\d) (?P<host>\w+) (?P<component>\w+)\[(?P<pid>\d+)\]: (?P<message>[^\n]+)')
+    cqmLogLine = re.compile(r'Job \d+/\w+:')
+    actLogLine = re.compile(r'^[DESQR];\d+;\w+')
     findState = re.compile(r'State=')
     findMaxRunning = re.compile(r'maxrunning set to')
-
-    f = open(os.path.join(cqm_console), "r")
-    lines_to_check = {}
-    for line in f:
-        match = logLine.match(line)
-        if match:
-            jobid = int(match.string.split()[1].split('/')[0])
-            if (jobid >= init_job_id) and (jobid <= final_job_id):
-                if lines_to_check.has_key(jobid):
-                    lines_to_check[jobid].append(line)
-                else:
-                    lines_to_check[jobid] = [line]
-                    
-        #    continue
-        #This should be degenerate with messages above.
-        #else: match = actLogLine.match(line)
-        #if match: 
-        #    jobid = int(match.string.split(';')[1])
-        #    if (jobid >= init_job_id) and (jobid <= final_job_id):
-        #        if lines_to_check.has_key(jobid):
-        #            lines_to_check[jobid].append(line)
-        #        else:
-        #            lines_to_check[jobid] = [line]
     
-    #print lines_to_check
+
+    cobaltComponents = ['cqm', 'slp', 'bgsched', 'cdbwriter', 'bgsystem',
+                        'brooklyn', 'scriptm', 'bgforker']
+
+    f = open(os.path.join('/var/log/cobalt.log'))
+    lines_to_check = {}
+    
+    for line in f:
+        
+        syslogMatch = syslogLine.match(line)
+        cqm_line = cqmLine('')
+
+        if syslogMatch:
+            if syslogMatch.group('component') == 'cqm':
+                cqm_line = cqmLine(syslogMatch.group('message'))
+        if not cqm_line.is_valid_line:
+            continue
+
+        if not cqm_line.is_acct_log_line:
+            
+            if (cqm_line.jobid >= init_job_id) and (cqm_line.jobid <= final_job_id):
+                if lines_to_check.has_key(cqm_line.jobid):
+                    lines_to_check[cqm_line.jobid].append(cqm_line)
+                else:
+                    lines_to_check[cqm_line.jobid] = [cqm_line]
+                            
+    #print "Lines:"
+    #for key in lines_to_check.keys():
+    #    print '\n'.join([str(line) for line in lines_to_check[key]])
     f.close()
+
 
     not_found_in_log = []
     not_found_in_db = []
     error_no_job_data = []
+    error_out_of_place_message = []
     
-    missing_messages = dict.fromkeys(reasons.keys())
+
+    
+    missing_messages = dict.fromkeys(events.values())
     for m in missing_messages:
         missing_messages[m] = []
-
-    print missing_messages
-
-    states = []
-    events = []
-    for key in lines_to_check.keys():
-        for line in lines_to_check[key]:
-            
-            parsed_line = BasicLogLine(line)
-            if parsed_line.norm_msg:
-                if parsed_line.state not in states:
-                    states.append(parsed_line.state)
-                event_str = '.'.join([parsed_line.state, str(parsed_line.event)])
-                if event_str not in events:
-                        events.append(event_str)
-    print "states: %s" % states
-    print "events: %s" % events
     
-    event_map = dict.fromkeys(events)
-    event_map['ready.run'] = 'starting'
-    event_map['prologue.progress'] = 'running'
-    event_map['running.task_end'] = 'resource_epilogue_start'
-    event_map['resource_epilogue.progress'] = 'resource_epilogue_finished'
-    event_map['job_epilogue.progress'] = 'job_epilogue_finished'
-    event_map['killing.task_end'] = 'killing'
-    event_map['hold.release'] = 'hold_release'
-    event_map['ready.hold'] = 'hold_set'
-    event_map['ready.kill'] = 'killing'
-    event_map['running.kill'] = 'killing'
-    event_map['prologue.kill'] = 'killing'
-    event_map['terminal.progress'] = 'killing'
 
-    special_events = [None, 'terminal.progress', 'hold.release', 'ready.hold',
-                      'resource_epilogue.progress'] 
+    #print missing_messages
 
     for jobid in xrange(init_job_id, final_job_id+1):
         
         print "checking Job: %d" % jobid
-        #sys.stdout.write('.')
-        #sys.stdout.flush()
+        
         if not lines_to_check.has_key(jobid):
             not_found_in_log.append(jobid)
             continue
@@ -188,52 +231,59 @@ if __name__ == '__main__':
             prog_records.extend(db.daos['JOB_PROG'].get_list_by_data_id(job_data_id))  
     
 
-    
         #do we have the objects to match these messages? We'd better.
+        record_count = 1
+        
+        line_count = len(current_lines)
+        
         for line in current_lines:
             #print line
-            parsed_line = BasicLogLine(line)
-            #get type
-            if not parsed_line.norm_msg:
+            line_count -= 1
+            #the order of entries in the logfile implies an ordering
+            #on the messages that should be in the database.
+            
+            if line.cobalt_msg not in cqmMsgs:
+                #this doesn't correspond to a database entry, yet.
                 continue
-
-            reason = event_map[parsed_line.state_event]
+            if 'ignore' in cqmMsgsToDBMsgs[line.cobalt_msg]:
+                #this message is an extra message, already handled.
+                continue
             
-           
-            if parsed_line.state_event not in special_events:
-                if not reason:
-                    #this line should have no entry.  Redundant line?
-                    continue
+            prog_record_events = [events[record.v.EVENT_TYPE] for record in prog_records]
+            if record_count < len(prog_record_events):
+                messagesToFind = cqmMsgsToDBMsgs[line.cobalt_msg]
                 
-                matching_records =  [record for record in prog_records if
-                                     record.v.REASON == reasons[reason]]
+                for message in messagesToFind:
+                    print prog_record_events[record_count]
+                    if prog_record_events[record_count] != message:
+                        if message in prog_record_events[:record_count] :
+                            error_out_of_place_message.append((line.jobid, message, "Early"))
+                        elif message in prog_record_events[record_count:]:
+                            error_out_of_place_message.append((line.jobid, message, "Late"))
+                        else:
+                            error_out_of_place_message.append((line.jobid, message, "Not Found"))
+                            missing_messages[message].append(line.jobid)
+            
+                            
                 
-                if (not matching_records 
-                    and (jobid not in missing_messages[reason])):
-                        missing_messages[reason].append(jobid)
-                    
+                    else:
+                        print "found: %s" % message
+                    record_count += 1
             else:
-                if parsed_line.state_event == 'resource_epilogue.progress':
-                    #look for two messages.
-                    matching_records =  [record for record in prog_records if
-                                     record.v.REASON == reasons[reason]]
-                    matching_records2 = [record for record in prog_records if
-                                     record.v.REASON == 
-                                     reasons['job_epilogue_start']]
-                    if (not matching_records 
-                        and (jobid not in missing_messages[reason])):
-                        missing_messages[reason].append(jobid)
-                        if (not matching_records2
-                            and (jobid not in missing_messages['job_epilogue_start'])):
-                            missing_messages['job_epilogue_start'].append(jobid)
-                #hold-handling
+                
+                break
 
-            
-            #do we have a matching message Holds are special.
+            # do we have a matching message Holds are special.
             #for others,a message must exist in the set of messages.
             #sanity check
             #???
-            #PROFIT!
+            #PROFIT!            
+        if line_count > 0:
+            for line in current_lines[(len(current_lines)-line_db):]:
+                missing_messages[message].append(line.jobid)
+            
+                            
+    db.close()
 
     #Reporting
     if not_found_in_log:
@@ -246,6 +296,14 @@ if __name__ == '__main__':
         if missing_messages[key]:
             print "Missing messages of type %s in database:" % key
             print missing_messages[key]
+    if error_out_of_place_message:
+         print "Messages out of place:"
+         #print error_out_of_place_message
+         for entry in error_out_of_place_message:
+             output = ["Job: %s;" % entry[0]]
+             output.append( "Expected: %s;" % entry[1])
+             output.append("Message Was: %s" % entry[2])
+             print ' '.join(output)
     
     print "Stick a fork in me, I'm done."
         

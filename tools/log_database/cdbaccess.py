@@ -117,7 +117,7 @@ class StateTableData(AccessOnlyDAO):
       
       ret_dict = {}
       for item in result_list:
-         ret_dict[item['NAME']] = item['ID']
+         ret_dict[item['ID']] = item['NAME']
 
       return ret_dict
 
