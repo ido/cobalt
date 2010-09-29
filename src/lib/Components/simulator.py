@@ -123,6 +123,7 @@ class Simulator (BGBaseSystem):
 
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
+        sys.setrecursionlimit(5000)
         self.process_groups.item_cls = BGSimProcessGroup
         self.config_file = kwargs.get("config_file", None)
         self.failed_components = set()
@@ -146,6 +147,7 @@ class Simulator (BGBaseSystem):
     
     def __setstate__(self, state):
         Cobalt.Util.fix_set(state)
+        sys.setrecursionlimit(5000)
         self._managed_partitions = state['managed_partitions']
         self.config_file = state['config_file']
         self._partitions = PartitionDict()
