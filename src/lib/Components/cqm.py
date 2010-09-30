@@ -320,7 +320,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac",
+        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac", "user_list"
     ]
 
     _states = [
@@ -598,6 +598,7 @@ class Job (StateMachine):
         self.prev_dep_hold = False
         self.called_has_dep_hold_once = False
         self.dep_frac = None
+        self.user_list = spec.get('user_list', [self.user])
 
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
         self.initializing = False
@@ -649,6 +650,10 @@ class Job (StateMachine):
         if not state.has_key("dep_frac"):
             logger.info("old job missing dep_frac")
             self.dep_frac = None
+
+        if not state.has_key("user_list"):
+            logger.info("old job missing dep_frac")
+            self.user_list = [self.user]
             
         self.initializing = False
 
@@ -2183,6 +2188,20 @@ class Job (StateMachine):
             self._sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
             raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.", 
                 self.jobid, self.state, self._sm_state)
+
+    def match (self, spec):
+        """True if every field in spec == the same field on the entity.
+        
+        Arguments:
+        spec -- Dictionary specifying fields and values to match against.
+        """
+        for field, value in spec.iteritems():
+            if ((field == 'user') and (value in self.user_list)):
+                continue
+            if not (value == "*" or (field in self.fields and hasattr(self, field) and getattr(self, field) == value)):
+                return False
+        return True
+
 
     def preempt(self, user = None, force = False):
         '''process a preemption request for a job'''
