@@ -31,6 +31,7 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -n <number of nodes> -h -c <processor count> -m <mode co/vn> 
              -u <umask> --debuglog <cobaltlog file path>
              --attrs <attr1=val1:attr2=val2> <command> <args>
+             --users <user1>:<user2>
 """
 
 if __name__ == '__main__':
@@ -40,7 +41,8 @@ if __name__ == '__main__':
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'u':'umask', 'attrs':'attrs'}
+                'debuglog':'debuglog', 'u':'umask', 'attrs':'attrs', 
+                'users':'user_list'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -151,6 +153,13 @@ if __name__ == '__main__':
 
     if opts['notify']:
         jobspec['notify'] = opts['notify']
+
+    if opts['user_list']:
+        jobspec['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]  
+    else:
+        jobspec['user_list'] = [user]
+    if user not in jobspec['user_list']:
+        jobspec['user_list'].insert(0, user)
 
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
                     'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
