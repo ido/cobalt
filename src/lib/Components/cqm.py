@@ -2197,6 +2197,7 @@ class Job (StateMachine):
         """
         for field, value in spec.iteritems():
             if ((field == 'user') and (value in self.user_list)):
+                print "User found: %s" % value
                 continue
             if not (value == "*" or (field in self.fields and hasattr(self, field) and getattr(self, field) == value)):
                 return False

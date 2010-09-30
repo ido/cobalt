@@ -24,13 +24,14 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
               -e <error file path> -o <output file path> 
               --dependencies <jobid1>:<jobid2>
               -n <number of nodes> -h --proccount <processor count> 
-              -M <email address> --mode <mode co/vn> <jobid1> <jobid2> """
+              -M <email address> --mode <mode co/vn> --users <user1>:<user2> 
+              <jobid1> <jobid2>"""
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies', 
-                'M':'notify', 'e':'error', 'o':'output'}
+                'M':'notify', 'e':'error', 'o':'output', 'users':'user_list'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -163,6 +164,14 @@ if __name__ == '__main__':
 
     if opts['notify']:
         updates['notify'] = opts['notify']
+
+    if opts['user_list']:
+        if opts['user_list'].lower() == 'none':
+            updates['user_list'] = [user]
+        else:
+            updates['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]  
+            if user not in updates['user_list']:
+                updates['user_list'].insert(0, user)
 
     if opts['error']:
         updates.update({'errorpath': opts['error']})
