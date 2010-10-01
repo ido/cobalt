@@ -2309,7 +2309,7 @@ class Restriction (Data):
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
                   'maxrunning':'maxuserjobs', 'mintime':'minwalltime',
                   'maxqueued':'maxqueuedjobs', 'maxusernodes':'maxusernodes',
-                  'totalnodes':'maxtotalnodes'}
+                  'totalnodes':'maxtotalnodes', 'maxnodehours':'maxnodehours' }
 
     def __init__(self, spec, queue=None):
         '''info could be like
@@ -2370,6 +2370,22 @@ class Restriction (Data):
             return (False, "The limit of %s jobs per user in the '%s' queue has been reached" % (self.value, job['queue']))
         else:
             return (True, "")
+
+    def maxnodehours(self, job, _=None):
+        '''limits how many node hours a user can have in the queue at a time'''
+        userjobs = [j for j in self.queue.jobs if j.user == job['user']]
+        
+        total = 0.0
+        for j in userjobs:
+            total += float(j.walltime)/60.0 * int(j.nodes)
+            
+        total += float(job['walltime'])/60.0 * int(job['nodes'])
+
+        if total > float(self.value):
+            return (False, "The limit of %s node hours per user in the '%s' queue has been reached" % (self.value, job['queue']))
+        else:
+            return (True, "")
+
 
     def maxusernodes(self, job, queuestate=None):
         '''limits how many nodes a single user can have running'''

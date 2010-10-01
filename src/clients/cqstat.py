@@ -137,9 +137,11 @@ if __name__ == '__main__':
         query = [{'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
                   'maxqueued':'*', 'maxusernodes':'*',
+                  'maxnodehours': '*', 
                   'totalnodes':'*', 'state':'*', 'priority':'*'} for qname in names]
         header = ['Name', 'State', 'Users', 'MinTime', 'MaxTime',
                   'MaxRunning', 'MaxQueued', 'MaxUserNodes',
+                  'MaxNodeHours',
                   'TotalNodes', 'Priority']
         response = cqm.get_queues(query)
     else:
