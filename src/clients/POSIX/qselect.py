@@ -1,4 +1,4 @@
-#!/usr/bin/env python -W ignore::DeprecationWarning
+#!/usr/bin/env python
 
 '''Cobalt qselect command'''
 __revision__ = '$Revision: 559 $'

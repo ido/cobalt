@@ -1,4 +1,4 @@
-#!/usr/bin/env python -W ignore::DeprecationWarning
+#!/usr/bin/env python
 
 '''Partadm sets partition attributes in the scheduler'''
 __revision__ = '$Revision$'
