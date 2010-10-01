@@ -169,7 +169,16 @@ if __name__ == '__main__':
         if opts['user_list'].lower() == 'none':
             updates['user_list'] = [user]
         else:
-            updates['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]  
+            #we really should be adding users that actually exist.
+            updates['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]
+            for auth_user in updates['user_list']:
+                try:
+                    pwd.getpwnam(auth_user)
+                except KeyError:
+                    logger.error("user %s does not exist." % auth_user)
+                    sys.exit(1)
+                except Exception:
+                    raise
             if user not in updates['user_list']:
                 updates['user_list'].insert(0, user)
 

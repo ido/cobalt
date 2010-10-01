@@ -156,6 +156,14 @@ if __name__ == '__main__':
 
     if opts['user_list']:
         jobspec['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]  
+        for auth_user in jobspec['user_list']:
+            try:
+                pwd.getpwnam(auth_user)
+            except KeyError:
+                logger.error("user %s does not exist." % auth_user)
+                sys.exit(1)
+            except Exception:
+                raise
     else:
         jobspec['user_list'] = [user]
     if user not in jobspec['user_list']:
