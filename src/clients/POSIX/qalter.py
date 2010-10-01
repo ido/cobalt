@@ -213,7 +213,7 @@ if __name__ == '__main__':
         if job['is_active']:
             job_running = True
             
-    if job_running:
+    if job_running and (updates.keys() != ['user_list']):
         if updates.has_key('procs'):
             print >> sys.stderr, "cannot change processor count of a running job"
         if updates.has_key('nodes'):

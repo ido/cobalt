@@ -2197,7 +2197,6 @@ class Job (StateMachine):
         """
         for field, value in spec.iteritems():
             if ((field == 'user') and (value in self.user_list)):
-                print "User found: %s" % value
                 continue
             if not (value == "*" or (field in self.fields and hasattr(self, field) and getattr(self, field) == value)):
                 return False
@@ -2830,6 +2829,13 @@ class QueueManager(Component):
                 dbwriter.log_to_db(user_name, "user_hold", "job_prog", JobProgMsg(job))
             elif set_user_hold == False and job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold_release", "job_prog", JobProgMsg(job))
+                
+            #if we are updating the user list, make sure the submitter
+            #is always on the list.
+            elif 'user_list' in updates.keys():
+                if job.user not in updates['user_list']:
+                    updates['user_list'].insert(0,job.user)
+
 
 
             #if update "user_hold" alone, do not check MaxQueued restriction
@@ -3183,7 +3189,8 @@ class JobDataMsg(object):
                      'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies',
                      'attribute', 'attrs', 
-                     'satisfied_dependencies', 'preemptable'
+                     'satisfied_dependencies', 'preemptable',
+                     'user_list'
                      ]
         
         for attr in attr_list:
@@ -3192,8 +3199,8 @@ class JobDataMsg(object):
                 self.job_type = job.type
             elif attr == 'job_user':
                 self.job_user = job.user
-            #elif attr == 'nodects':
-             #   self.nodects = job._Job__resource_nodects
+            elif attr == 'user_list':
+                self.job_user_list = job.user_list
 
             else:
                 self.__setattr__(attr, job.__getattribute__(attr))
