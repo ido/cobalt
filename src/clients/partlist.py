@@ -1,4 +1,4 @@
-#!/usr/bin/env python -W ignore::DeprecationWarning
+#!/usr/bin/env python
 
 '''Partlist displays online partitions for users'''
 __revision__ = '$Revision$'
