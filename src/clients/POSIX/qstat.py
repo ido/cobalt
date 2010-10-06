@@ -131,7 +131,7 @@ if __name__ == '__main__':
                       'ErrorPath', 'OutputPath',
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'Dependencies', 'short_state', 'Notify', 
-                      'Score', 'Maxtasktime', 'attrs', 'dep_frac', ]
+                      'Score', 'Maxtasktime', 'attrs', 'dep_frac','user_list']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
@@ -256,6 +256,7 @@ if __name__ == '__main__':
             
             j['outputpath'] = outputpath
             j['errorpath'] = j.get('errorpath')
+            j['user_list'] = ':'.join(j['user_list'])
 
         # any header that was not present in the query response has value set to '-'
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]

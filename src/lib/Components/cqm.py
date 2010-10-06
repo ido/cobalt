@@ -334,7 +334,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac", "walltime_p",
+        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac", "walltime_p", "user_list"
     ]
 
     _states = [
@@ -613,6 +613,7 @@ class Job (StateMachine):
         self.prev_dep_hold = False
         self.called_has_dep_hold_once = False
         self.dep_frac = None
+        self.user_list = spec.get('user_list', [self.user])
 
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
         self.initializing = False
@@ -664,6 +665,10 @@ class Job (StateMachine):
         if not state.has_key("dep_frac"):
             logger.info("old job missing dep_frac")
             self.dep_frac = None
+
+        if not state.has_key("user_list"):
+            logger.info("old job missing dep_frac")
+            self.user_list = [self.user]
             
         self.initializing = False
 
@@ -2199,6 +2204,20 @@ class Job (StateMachine):
             raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.", 
                 self.jobid, self.state, self._sm_state)
 
+    def match (self, spec):
+        """True if every field in spec == the same field on the entity.
+        
+        Arguments:
+        spec -- Dictionary specifying fields and values to match against.
+        """
+        for field, value in spec.iteritems():
+            if ((field == 'user') and (value in self.user_list)):
+                continue
+            if not (value == "*" or (field in self.fields and hasattr(self, field) and getattr(self, field) == value)):
+                return False
+        return True
+
+
     def preempt(self, user = None, force = False):
         '''process a preemption request for a job'''
         args = {}
@@ -2898,6 +2917,13 @@ class QueueManager(Component):
                 dbwriter.log_to_db(user_name, "user_hold", "job_prog", JobProgMsg(job))
             elif set_user_hold == False and job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold_release", "job_prog", JobProgMsg(job))
+                
+            #if we are updating the user list, make sure the submitter
+            #is always on the list.
+            elif 'user_list' in updates.keys():
+                if job.user not in updates['user_list']:
+                    updates['user_list'].insert(0,job.user)
+
 
 
             #if update "user_hold" alone, do not check MaxQueued restriction
@@ -3252,7 +3278,8 @@ class JobDataMsg(object):
                      'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies',
                      'attribute', 'attrs', 
-                     'satisfied_dependencies', 'preemptable'
+                     'satisfied_dependencies', 'preemptable',
+                     'user_list'
                      ]
         
         for attr in attr_list:
@@ -3261,8 +3288,8 @@ class JobDataMsg(object):
                 self.job_type = job.type
             elif attr == 'job_user':
                 self.job_user = job.user
-            #elif attr == 'nodects':
-             #   self.nodects = job._Job__resource_nodects
+            elif attr == 'user_list':
+                self.job_user_list = job.user_list
 
             else:
                 self.__setattr__(attr, job.__getattribute__(attr))

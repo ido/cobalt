@@ -29,16 +29,17 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              -e <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h --proccount <processor count> -u <umask>
              --mode <mode co/vn> --debuglog <cobaltlog file path> <command> <args>
+             --users <user1>:<user2>
 """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable', 'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'attrs':'attrs'}
+                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -150,8 +151,25 @@ if __name__ == '__main__':
     if opts['project']:
         jobspec['project'] = opts['project']
 
+    jobspec['run_project'] =  opts['run_project']
+
     if opts['notify']:
         jobspec['notify'] = opts['notify']
+
+    if opts['user_list']:
+        jobspec['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]  
+        for auth_user in jobspec['user_list']:
+            try:
+                pwd.getpwnam(auth_user)
+            except KeyError:
+                logger.error("user %s does not exist." % auth_user)
+                sys.exit(1)
+            except Exception:
+                raise
+    else:
+        jobspec['user_list'] = [user]
+    if user not in jobspec['user_list']:
+        jobspec['user_list'].insert(0, user)
 
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
                     'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
@@ -263,4 +281,4 @@ if __name__ == '__main__':
             logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
             logger.error("         %s" % e.strerror)
     else:
-        logger.error("failed to create teh job.  maybe a queue isn't there")
+        logger.error("failed to create the job.  Maybe a queue isn't there?")

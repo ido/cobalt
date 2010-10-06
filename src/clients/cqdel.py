@@ -48,7 +48,7 @@ if __name__ == '__main__':
             raise SystemExit, 1
     
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
-    jobs = cqm.del_jobs(spec)
+    jobs = cqm.del_jobs(spec, False, user)
     time.sleep(1)
     if jobs:
         data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in jobs]

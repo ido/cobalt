@@ -30,17 +30,19 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -E <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h -c <processor count> -m <mode co/vn> 
              -u <umask> --debuglog <cobaltlog file path>
-             --attrs <attr1=val1:attr2=val2> <command> <args>
+             --attrs <attr1=val1:attr2=val2> --run-users <user1>:<user2> 
+             --run-project <command> <args>
 """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable', 'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode',
                 'c':'proccount', 'C':'cwd', 'e':'env', 'k':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'u':'umask', 'attrs':'attrs'}
+                'debuglog':'debuglog', 'u':'umask', 'attrs':'attrs', 
+                'run_users':'user_list'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -149,8 +151,26 @@ if __name__ == '__main__':
     if opts['project']:
         jobspec['project'] = opts['project']
 
+    jobspec['run_project'] =  opts['run_project']
+        
+    #print "run_project",  opts['run_project']
     if opts['notify']:
         jobspec['notify'] = opts['notify']
+
+    if opts['user_list']:
+        jobspec['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]
+        for auth_user in jobspec['user_list']:
+            try:
+                pwd.getpwnam(auth_user)
+            except KeyError:
+                logger.error("user %s does not exist." % auth_user)
+                sys.exit(1)
+            except Exception:
+                raise
+    else:
+        jobspec['user_list'] = [user]
+    if user not in jobspec['user_list']:
+        jobspec['user_list'].insert(0, user)
 
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
                     'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
