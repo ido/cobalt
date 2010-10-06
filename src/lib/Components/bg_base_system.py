@@ -36,6 +36,22 @@ try:
     max_drain_hours = float(CP.get('bgsystem', 'max_drain_hours'))
 except:
     max_drain_hours = float(sys.maxint)
+    
+# *AdjEst*
+config = ConfigParser.ConfigParser() 
+config.read(Cobalt.CONFIG_FILES)
+def get_histm_config(option, default):
+    try:
+        value = config.get('histm', option)
+    except ConfigParser.NoSectionError:
+        value = default
+    return value
+walltime_prediction = get_histm_config("walltime_prediction", "False").lower()
+if walltime_prediction  == "true":
+    walltime_prediction_enabled = True
+else:
+    walltime_prediction_enabled = False
+# *AdjEst*
 
 class NodeCard (object):
     """node cards make up Partitions"""
@@ -481,8 +497,14 @@ class BGBaseSystem (Component):
         queue = args['queue']
         utility_score = args['utility_score']
         walltime = args['walltime']
+        walltime_p = args['walltime_p']  #*AdjEst* 
         forbidden = args.get("forbidden", [])
         required = args.get("required", [])
+        
+        if walltime_prediction_enabled:  # *Adj_Est*
+            runtime_estimate = float(walltime_p)  
+        else:
+            runtime_estimate = float(walltime)
         
         best_score = sys.maxint
         best_partition = None
@@ -536,7 +558,15 @@ class BGBaseSystem (Component):
         
         for partition in available_partitions:
             # if the job needs more time than the partition currently has available, look elsewhere    
-            if backfilling:
+            if backfilling: 
+                               
+                if partition.reserved_by:
+                    #if the partition is reserved, we don't use predicted walltime to backfill
+                    runtime_estimate = float(walltime)
+                
+                if 60 * runtime_estimate > (partition.backfill_time - now):      # *Adj_Est*
+                    continue
+                
                 if 60*float(walltime) > (partition.backfill_time - now):
                     continue
                 

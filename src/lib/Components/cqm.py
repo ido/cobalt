@@ -125,6 +125,24 @@ def get_bgsched_config(option, default):
         value = default
     return value
 
+# *AdjEst*
+def get_histm_config(option, default):
+    try:
+        value = config.get('histm', option)
+    except ConfigParser.NoSectionError:
+        value = default
+    return value
+
+walltime_prediction = get_histm_config("walltime_prediction", "False").lower()   # *AdjEst*
+walltime_prediction_configured = False
+walltime_prediction_enabled = False
+if walltime_prediction  == "true":
+    walltime_prediction_configured = True
+    walltime_prediction_enabled = True
+#print "walltime_prediction_configured=", walltime_prediction_configured 
+    
+prediction_scheme = get_histm_config("prediction_scheme", "combined").lower()  # ["project", "user", "combined"]   # *AdjEst*
+
 accounting_logdir = os.path.expandvars(get_cqm_config("log_dir", Cobalt.DEFAULT_LOG_DIRECTORY))
 accounting_logger = logging.getLogger("cqm.accounting")
 accounting_logger.addHandler(
@@ -144,10 +162,6 @@ if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
     if max_queued != None:
         dbwriter.overflow_filename = overflow_filename
         dbwriter.max_queued = max_queued
-
-
-
-
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -320,7 +334,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath", "errorpath", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac", "user_list"
+        "has_completed", "sm_state", "score", "attrs", "has_resources", "exit_status", "dep_frac", "walltime_p", "user_list"
     ]
 
     _states = [
@@ -506,6 +520,7 @@ class Job (StateMachine):
         self.type = spec.get("type", "mpish")
         self.user = spec.get("user")
         self.__walltime = int(float(spec.get("walltime", 0)))
+        self.walltime_p = spec.get("walltime_p", self.walltime)    #  *AdjEst*
         self.procs = spec.get("procs")
         self.nodes = spec.get("nodes")
         self.cwd = spec.get("cwd")
@@ -2328,7 +2343,7 @@ class Restriction (Data):
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
                   'maxrunning':'maxuserjobs', 'mintime':'minwalltime',
                   'maxqueued':'maxqueuedjobs', 'maxusernodes':'maxusernodes',
-                  'totalnodes':'maxtotalnodes'}
+                  'totalnodes':'maxtotalnodes', 'maxnodehours':'maxnodehours' }
 
     def __init__(self, spec, queue=None):
         '''info could be like
@@ -2389,6 +2404,22 @@ class Restriction (Data):
             return (False, "The limit of %s jobs per user in the '%s' queue has been reached" % (self.value, job['queue']))
         else:
             return (True, "")
+
+    def maxnodehours(self, job, _=None):
+        '''limits how many node hours a user can have in the queue at a time'''
+        userjobs = [j for j in self.queue.jobs if j.user == job['user']]
+        
+        total = 0.0
+        for j in userjobs:
+            total += float(j.walltime)/60.0 * int(j.nodes)
+            
+        total += float(job['walltime'])/60.0 * int(job['nodes'])
+
+        if total > float(self.value):
+            return (False, "The limit of %s node hours per user in the '%s' queue has been reached" % (self.value, job['queue']))
+        else:
+            return (True, "")
+
 
     def maxusernodes(self, job, queuestate=None):
         '''limits how many nodes a single user can have running'''
@@ -2559,7 +2590,7 @@ class QueueDict(DataDict):
 
     def del_queues(self, specs, callback=None, cargs={}):
         return self.q_del(specs, callback, cargs)
-        
+    
     def add_jobs(self, specs, callback=None, cargs={}):
         queue_names = self.keys()
         
@@ -2628,10 +2659,9 @@ class QueueManager(Component):
             logger.info("Logging to cdbwriter enabled.")
         else:
             logger.info("Logging to cdbwriter disabled.")
-
-
-
+            
     def __getstate__(self):
+        
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
                 'msg_queue':dbwriter.msg_queue,
                 'overflow': dbwriter.overflow}
@@ -2770,6 +2800,60 @@ class QueueManager(Component):
     def __add_job_terminal_action(self, job, args):
         '''add the terminal action handler to the each job added to the queue'''
         job.add_terminal_action(self._job_terminal_action, {'job':job})
+        
+    def test_history_manager(self):
+        '''test if history manager is alive. If not, inhibit walltime prediction''' 
+        if walltime_prediction_configured:
+            histm_alive = False
+            try:
+                histm_alive = ComponentProxy("history-manager").is_alive()
+            except:
+                self.logger.error("failed to connect to histm component, disable walltime prediction")
+            
+            global walltime_prediction_enabled
+            if histm_alive:
+                walltime_prediction_enabled = True
+            else:
+                walltime_prediction_enabled = False
+            print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
+            
+    test_history_manager = automatic(test_history_manager, 60)
+       
+
+    def get_walltime_Ap(self, spec):  
+        '''get walltime adjusting parameter from history manager component'''  #*AdjEst*
+        
+        projectname = spec.get('project')
+        username = spec.get('user')
+        
+        Ap = 1
+                
+        if prediction_scheme == "project":
+            try:
+                Ap = ComponentProxy("history-manager").get_Ap('project', projectname)
+            except:
+                self.logger.error("failed to connect to history-manager component")
+        elif prediction_scheme == "user":
+            try:
+                Ap_user = ComponentProxy("history-manager").get_Ap('user', username)
+            except:
+                self.logger.error("failed to connect to history-manager component")
+        elif prediction_scheme == "combined":
+            try:
+                Ap_combined = ComponentProxy("history-manager").get_Ap_by_keypair(username, projectname)
+            except:
+                self.logger.error("failed to connect to history-manager component")
+                walltime_prediction_enabled = False
+        else:
+            Ap = 1
+        
+        return Ap
+        
+    def get_walltime_p(self, spec):
+        '''get predicted walltime provided with user estimated walltime'''  #*AdjEst*
+        ap = self.get_walltime_Ap(spec)
+        walltime_p = int(spec.get('walltime')) * ap
+        return walltime_p
 
     def add_jobs(self, specs):
         '''Add a job, throws in adminemail'''
@@ -2780,6 +2864,10 @@ class QueueManager(Component):
         for spec in specs:
             if spec['queue'] in self.Queues:
                 spec.update({'adminemail':self.Queues[spec['queue']].adminemail})
+                if walltime_prediction_enabled:
+                    spec['walltime_p'] = self.get_walltime_p(spec)        #*AdjEst*
+                else:
+                    spec['walltime_p'] = spec['walltime']
             else:
                 failure_msg = "trying to add job to non-existant queue '%s'" % spec['queue']
                 logger.error(failure_msg)
@@ -3061,7 +3149,8 @@ class QueueManager(Component):
         for job in queued_jobs:    
             utility_name = self.Queues[job.queue].policy
             args = {'queued_time':current_time - float(job.submittime), 
-                    'wall_time': 60*float(job.walltime), 
+                    'wall_time': 60*float(job.walltime),
+                    'wall_time_p': 60*float(job.walltime_p), 
                     'size': float(job.nodes),
                     'user_name': job.user,
                     'project': job.project,
