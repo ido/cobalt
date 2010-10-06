@@ -33,13 +33,13 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
 """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable', 'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'attrs':'attrs', 'users':'user_list'}
+                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -150,6 +150,8 @@ if __name__ == '__main__':
 
     if opts['project']:
         jobspec['project'] = opts['project']
+
+    jobspec['run_project'] =  opts['run_project']
 
     if opts['notify']:
         jobspec['notify'] = opts['notify']

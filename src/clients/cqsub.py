@@ -30,19 +30,19 @@ Usage: cqsub [-d] [-v] -p <project> -q <queue> -C <working directory>
              -E <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h -c <processor count> -m <mode co/vn> 
              -u <umask> --debuglog <cobaltlog file path>
-             --attrs <attr1=val1:attr2=val2> <command> <args>
-             --users <user1>:<user2>
+             --attrs <attr1=val1:attr2=val2> --run-users <user1>:<user2> 
+             --run-project <command> <args>
 """
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable', 'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'p':'project', 'm':'mode',
                 'c':'proccount', 'C':'cwd', 'e':'env', 'k':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix',
                 'p':'project', 'N':'notify', 'E':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
                 'debuglog':'debuglog', 'u':'umask', 'attrs':'attrs', 
-                'users':'user_list'}
+                'run_users':'user_list'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -151,6 +151,9 @@ if __name__ == '__main__':
     if opts['project']:
         jobspec['project'] = opts['project']
 
+    jobspec['run_project'] =  opts['run_project']
+        
+    #print "run_project",  opts['run_project']
     if opts['notify']:
         jobspec['notify'] = opts['notify']
 
