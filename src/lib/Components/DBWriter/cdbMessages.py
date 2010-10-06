@@ -136,7 +136,7 @@ class JobDataStatus(JobStatus):
       else: 
          self.priority_core_hours = None
       self.location = list_to_plain_strs(self.location)
-      self.job_user_list = list_to_plain_strs(self.job_user_list)
+      #self.job_user_list = list_to_plain_strs(self.job_user_list)
       self.job_prog_msg.set_types()
 
    def encode(self):
@@ -154,7 +154,7 @@ class JobDataStatus(JobStatus):
           retDict['envs'] = {}
       else:
           retDict['envs'] = str_to_dict(self.envs)
-      retDict['job_user_list'] = str_to_list(self.job_user_list)
+      #retDict['job_user_list'] = str_to_list(self.job_user_list)
 
       retDict['job_prog_msg'] = self.job_prog_msg.encode()
 
@@ -213,13 +213,4 @@ def str_to_list(s):
         return []
     return s.split(':')
 
-#class ReservationStaeDecoder(json.JSONDecoder):
-#
-#   def decode(self, string):
-#      spec = json.loads(string)
-#
-#class JobStateDecoder(LogMessage):
-#   def decode(self, string):
-#      spec = json.loads(string)
-#
-#class PartitionStateDecoder(LogMessage):
+

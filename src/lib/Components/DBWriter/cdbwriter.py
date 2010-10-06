@@ -277,35 +277,39 @@ class DatabaseWriter(object):
       table_names = ['RESERVATION_DATA', 'RESERVATION_PARTS',
                      'RESERVATION_EVENTS', 'RESERVATION_USERS',
                      'RESERVATION_PROG', 'JOB_DATA', 'JOB_ATTR',
-                     'JOB_DEPS', 'JOB_EVENTS','JOB_COBALT_STATES', 'JOB_PROG']
+                     'JOB_DEPS', 'JOB_EVENTS','JOB_COBALT_STATES', 'JOB_PROG',
+                     'JOB_RUN_USERS']
+      no_pk_tables = ['RESERVATION_PARTS', 'RESERVATION_USERS',
+                      'JOB_ATTR', 'JOB_RUN_USERS']
 
       #Handle tables, There is probably a better way to do this.
-      self.tables = {}
       self.daos = {}
       try:
-         for table_name in table_names:
-            logger.info("Accessing table: %s" % table_name)
-            self.tables[table_name] = db2util.table(self.db, schema, table_name)
+          for table_name in table_names:
+              logger.info("Accessing table: %s" % table_name)
          
-            if table_name in ['RESERVATION_EVENTS', 'JOB_EVENTS', 'JOB_COBALT_STATES']:
-               self.daos[table_name] = StateTableData(self.db, schema, 
-                                                      self.tables[table_name].table)
-            elif table_name == 'RESERVATION_DATA':
-               self.daos[table_name] = ResDataData(self.db, schema, 
-                                                   self.tables[table_name].table)
-            
-            elif table_name == 'JOB_DATA':
-               self.daos[table_name] = JobDataData(self.db, schema, 
-                                                   self.tables[table_name].table)
-            elif table_name == 'JOB_DEPS':
-               self.daos[table_name] = JobDepsData(self.db, schema, 
-                                                   self.tables[table_name].table)
-            elif table_name == 'JOB_PROG':
-               self.daos[table_name] = JobProgData(self.db, schema, 
-                                                   self.tables[table_name].table)
-            else:
-               self.daos[table_name] = db2util.dao(self.db, schema, 
-                                                   self.tables[table_name].table)
+              if table_name in ['RESERVATION_EVENTS', 'JOB_EVENTS', 
+                              'JOB_COBALT_STATES']:
+                  self.daos[table_name] = StateTableData(self.db, schema, 
+                                                         table_name)
+              elif table_name == 'RESERVATION_DATA':
+                  self.daos[table_name] = ResDataData(self.db, schema, 
+                                                      table_name)
+              elif table_name == 'JOB_DATA':
+                  self.daos[table_name] = JobDataData(self.db, schema,
+                                                      table_name)
+              elif table_name == 'JOB_DEPS':
+                  self.daos[table_name] = JobDepsData(self.db, schema, 
+                                                      table_name)
+              elif table_name == 'JOB_PROG':
+                  self.daos[table_name] = JobProgData(self.db, schema, 
+                                                      table_name)
+              elif table_name in no_pk_tables:
+                  self.daos[table_name] = no_pk_dao(self.db, schema, 
+                                                      table_name)
+              else:
+                  self.daos[table_name] = db2util.dao(self.db, schema, 
+                                                      table_name)
       except:
          logger.error("Error accessing table %s!" % table_name)
          self.db.close()
@@ -330,8 +334,6 @@ class DatabaseWriter(object):
       elif logMsg.item_type == 'job_prog':
          self.__addJobProgMsg(logMsg, logMsg.item)
       elif logMsg.item_type == 'job_data':
-         #modifying and creating messages are handled
-         #a bit differently 
          self.__addJobDataMsg(logMsg)
 
 
@@ -471,7 +473,7 @@ class DatabaseWriter(object):
       for key in logMsg.item.__dict__:
          #print "adding %s value %s" %( key, logMsg.item.__dict__[key])
          if key in ['nodects', 'attrs', 'all_dependencies', 
-                    'satisfied_dependencies', 'job_prog_msg']:
+                    'satisfied_dependencies', 'job_user_list', 'job_prog_msg']:
             specialObjects[key] = logMsg.item.__dict__[key]
          else:
             job_data_record.v.__setattr__(key.upper(),
@@ -503,6 +505,13 @@ class DatabaseWriter(object):
                   'DEP_ON_ID' : int(dep),
                   'SATISFIED' : 0})
           self.daos['JOB_DEPS'].insert(job_deps_record)
+
+      #parse and add users:
+      for user_name in specialObjects['job_user_list']:
+          job_run_users_record = self.daos['JOB_RUN_USERS'].table.getRecord({
+                  'JOB_DATA_ID' : job_data_id,
+                  'USER_NAME' : user_name})
+          self.daos['JOB_RUN_USERS'].insert(job_run_users_record)
 
 
       self.__addJobProgMsg(logMsg, logMsg.item.job_prog_msg, job_data_id)
@@ -806,3 +815,38 @@ class JobDepsData(db2util.dao):
              "and satisfied = 0")
 
       return self.db.getDict(' '.join(SQL))
+
+class no_pk_dao(db2util.dao):
+    
+    def insert (self, record):
+        """Inserts the passed record and returns the IDENTITY value
+        if applicable"""
+        
+        invalidFields = record.invalidFields()
+        
+        if invalidFields:
+            raise adapterError("Validation error prior to insert.\n\nTable: %s\n\nField(s): %s\n" % (record.fqtn, str(invalidFields)))
+        
+        insertSQL = "insert into %s (%s) values (%s)" %(
+            self.table.fqName,
+            db2util.valueFormatter(record, db2util.FFORMAT.NAMES),
+            db2util.valueFormatter(record, db2util.FFORMAT.PLACES))
+        try:
+            self.db.prepExec(insertSQL, db2util.helpers.num2str(db2util.valueFormatter(record, db2util.FFORMAT.VALUES)))
+        except db2util.dbError:
+            raise
+
+		
+		
+        
+
+    def update (self, record):
+        """Updates of a primary-keyless record aren't supported."""
+        raise AssertionError("update operations are not supported on "\
+                                 "tables without primary keys.")
+
+    def delete (self, record):
+        """Delete not supported on primary-keyless tables via db2util."""
+        raise AssertionError("delete operations are not supported on "\
+                                 "tables without primary keys.")
+
