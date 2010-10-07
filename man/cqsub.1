@@ -78,6 +78,15 @@ Send file to job's stdin.
 .B \-\-dependencies <jobid1>:<jobid2>
 Set the dependencies for the job being submitted.  This job won't run until 
 jobs having ids jobid1 and jobid2 have finished.
+.TP
+.B \-\-run_users <user1>:<user2>
+Sets a colon-separated list of users for the job being submitted.  All users
+in this list will be able to execute cobalt commands to control the job. The 
+submitting user is always able to run commands on a submitted job.
+.TP
+.B \-\-run_project
+Appends the list of users in a project to the list of users authorized to run
+commands on the submitted job. 
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
 .SH "SEE ALSO"
