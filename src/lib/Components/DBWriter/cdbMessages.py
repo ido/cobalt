@@ -78,7 +78,7 @@ class ReservationStatus(object):
 class JobStatus(object):
 
    def __init__(self, spec):
-      for entry in spec:
+       for entry in spec:
          self.__setattr__(entry, spec[entry])
 
    def __str__(self):
@@ -100,6 +100,9 @@ class JobProgStatus(JobStatus):
           self.envs = dict_to_plain_strs(self.envs)
       if hasattr(self, 'location'):
           self.location = list_to_plain_strs(self.location)
+      if hasattr(self, 'dep_frac'):
+          if self.dep_frac != None:
+              self.dep_frac = float(self.dep_frac)
    
    def encode(self):
        retDict = self.__dict__
@@ -113,6 +116,9 @@ class JobProgStatus(JobStatus):
                retDict['envs'] = {}
            else:
                retDict['envs'] = str_to_dict(self.envs)
+       if hasattr(self, dep_frac):
+           if self.dep_frac != None:
+               self.dep_frac = float(self.dep_frac)
 
        
        return retDict

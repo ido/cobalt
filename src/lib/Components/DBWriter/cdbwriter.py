@@ -473,7 +473,8 @@ class DatabaseWriter(object):
       for key in logMsg.item.__dict__:
          #print "adding %s value %s" %( key, logMsg.item.__dict__[key])
          if key in ['nodects', 'attrs', 'all_dependencies', 
-                    'satisfied_dependencies', 'job_user_list', 'job_prog_msg']:
+                    'satisfied_dependencies', 'job_user_list', 
+                    'job_prog_msg']:
             specialObjects[key] = logMsg.item.__dict__[key]
          else:
             job_data_record.v.__setattr__(key.upper(),
@@ -554,7 +555,8 @@ class DatabaseWriter(object):
       job_prog_record = self.daos['JOB_PROG'].table.getRecord()
       for fieldName in job_prog_msg.__dict__.keys():
          if fieldName in ['envs', 'location',
-                          'priority_core_hours','satisfied_dependencies']:
+                          'priority_core_hours','satisfied_dependencies',
+                          'dep_frac']:
             updateAtRun[fieldName] = job_prog_msg.__getattribute__(fieldName)
          else:
             if fieldName not in ['jobid', 'cobalt_state']:
@@ -574,6 +576,9 @@ class DatabaseWriter(object):
       job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
       #These are updated in JOB_DATA at run-start.
       if len(updateAtRun) > 0:
+         fieldValue = updateAtRun.pop('dep_frac', None)
+         if fieldValue and (fieldValue != None):
+             job_data_record.v.DEP_FRAC = float(fieldValue)
          fieldValue = updateAtRun.pop('envs', None)
          if fieldValue:
             job_data_record.v.ENVS = str(fieldValue)

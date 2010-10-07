@@ -612,7 +612,7 @@ class Job (StateMachine):
         self.dep_fail = False
         self.prev_dep_hold = False
         self.called_has_dep_hold_once = False
-        self.dep_frac = None
+        self.dep_frac = None #float(get_cqm_config('dep_frac', 0.5))
         self.user_list = spec.get('user_list', [self.user])
 
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
@@ -2778,7 +2778,9 @@ class QueueManager(Component):
                         if waiting_job.no_holds_left():
                             dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(waiting_job))
                         if job.dep_frac is None:
+                            job.dep_frac = float(get_cqm_config('dep_frac', 0.5))
                             new_score = float(get_cqm_config('dep_frac', 0.5))*job.score
+                            dbwriter.log_to_db(None, "dep_frac_update", "job_prog", JobProgDepFracMsg(job))
                         else:
                             new_score = job.dep_frac * job.score
                         waiting_job.score = max(waiting_job.score, new_score)
@@ -3252,12 +3254,20 @@ class JobProgMsg(object):
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
 
+        
 
         if job.state == "running":
             self.envs = job.envs
             self.priority_core_hours = 20.0 #job.priority_core_hours
             self.location = job.location
             #self.nodects = job._Job__resource_nodects
+
+class JobProgDepFracMsg(JobProgMsg):
+    
+    def __init__(self, job):
+        super(JobProgDepFracMsg, self).__init__(job)
+        self.dep_frac = job.dep_frac
+        
 
 
 class JobDataMsg(object):
