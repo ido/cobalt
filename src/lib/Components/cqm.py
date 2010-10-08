@@ -670,6 +670,10 @@ class Job (StateMachine):
             logger.info("old job missing dep_frac")
             self.user_list = [self.user]
             
+        if not state.has_key("walltime_p"):
+            logger.info("old job missing walltime_p")
+            self.walltime_p = self.walltime            
+            
         self.initializing = False
 
     def __task_signal(self, retry = True):
