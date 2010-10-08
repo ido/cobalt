@@ -3,7 +3,7 @@
 qalter \- change properties of jobs already submitted to the queue manager
 .SH "SYNOPSIS"
 .B qalter 
-.I [--version] [-d] [-A project] [-t time] [-n number of nodes] [--mode mode] [--procccount process count] <jobid1> <jobid2>
+.I [--version] [-d] [-A project] [-t time] [-n number of nodes] [--mode mode] [--procccount process count] [--run_users user1:user2:...] <jobid1> <jobid2>
 .SH "DESCRIPTION"
 .PP
 .B qalter
@@ -48,6 +48,11 @@ Send job stderr to file specified.
 .TP
 .B \-o "stdout file path"
 Send job stdout to file specified.
+.TP
+.B \-\-run_users <user1>:<user2>
+Sets a colon-separated list of users for the job being submitted.  All users
+in this list will be able to execute cobalt commands to control the job. The 
+submitting user is always able to run commands on a submitted job.
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR qstat(1)
