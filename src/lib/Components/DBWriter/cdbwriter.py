@@ -531,6 +531,25 @@ class DatabaseWriter(object):
       if job_data_id == None:
          job_data_id = self.get_job_data_ids_from_jobid(job_prog_msg.jobid)      
 
+
+      #if we are update-only and don't want to actually add a message 
+      #to the progress table.  
+
+      update_only_msgs = ['dep_frac_update']
+      if logMsg.state in update_only_msgs:
+          if logMsg.state == 'dep_frac_update':
+              job_data_record = None
+              job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
+              
+              fieldValue = job_prog_msg.dep_frac
+              
+              if fieldValue and (fieldValue != None):
+                  job_data_record.v.DEP_FRAC = float(fieldValue)
+          
+          self.daos['JOB_DATA'].update(job_data_record)
+          return
+
+
       job_event_record = self.daos['JOB_EVENTS'].table.getRecord({'NAME': logMsg.state})
       match = self.daos['JOB_EVENTS'].search(job_event_record)
       if not match:
@@ -539,7 +558,8 @@ class DatabaseWriter(object):
       else:
          job_event_record.v.ID = match[0]['ID']
 
-      
+
+
 
       job_cobalt_states_record = self.daos['JOB_COBALT_STATES'].table.getRecord({'NAME': job_prog_msg.cobalt_state})
       match = self.daos['JOB_COBALT_STATES'].search(job_cobalt_states_record)
@@ -576,9 +596,6 @@ class DatabaseWriter(object):
       job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
       #These are updated in JOB_DATA at run-start.
       if len(updateAtRun) > 0:
-         fieldValue = updateAtRun.pop('dep_frac', None)
-         if fieldValue and (fieldValue != None):
-             job_data_record.v.DEP_FRAC = float(fieldValue)
          fieldValue = updateAtRun.pop('envs', None)
          if fieldValue:
             job_data_record.v.ENVS = str(fieldValue)

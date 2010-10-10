@@ -3293,7 +3293,7 @@ class JobDataMsg(object):
                      'force_kill_delay', 'all_dependencies',
                      'attribute', 'attrs', 
                      'satisfied_dependencies', 'preemptable',
-                     'user_list'
+                     'user_list', 'dep_frac'
                      ]
         
         for attr in attr_list:

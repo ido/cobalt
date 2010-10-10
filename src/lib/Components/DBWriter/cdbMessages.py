@@ -116,7 +116,7 @@ class JobProgStatus(JobStatus):
                retDict['envs'] = {}
            else:
                retDict['envs'] = str_to_dict(self.envs)
-       if hasattr(self, dep_frac):
+       if hasattr(self, 'dep_frac'):
            if self.dep_frac != None:
                self.dep_frac = float(self.dep_frac)
 
@@ -142,6 +142,9 @@ class JobDataStatus(JobStatus):
       else: 
          self.priority_core_hours = None
       self.location = list_to_plain_strs(self.location)
+      if hasattr(self, 'dep_frac'):
+          if self.dep_frac != None:
+              self.dep_frac = float(self.dep_frac)
       #self.job_user_list = list_to_plain_strs(self.job_user_list)
       self.job_prog_msg.set_types()
 
