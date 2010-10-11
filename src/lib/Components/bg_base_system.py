@@ -497,7 +497,7 @@ class BGBaseSystem (Component):
         queue = args['queue']
         utility_score = args['utility_score']
         walltime = args['walltime']
-        walltime_p = args['walltime_p']  #*AdjEst* 
+        walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
         forbidden = args.get("forbidden", [])
         required = args.get("required", [])
         
