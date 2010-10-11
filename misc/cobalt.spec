@@ -1,14 +1,14 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.99.0pre15
-Release: 7
+Version: 0.99.0pre19
+Release: 1
 License: GPL
 Group: System Software
 URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python >= 2.6, python2.6-tlslite, python2.6-m2crypto, python2.6-xml 
+Requires: python >= 2.6,  python2.6-m2crypto, python2.6-xml 
 
 %package -n cobalt-clients
 Version: %{version}
@@ -33,7 +33,7 @@ cd src/clients && make
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}%{_sbindir}
-python2.6 setup.py install --prefix=${RPM_BUILD_ROOT}/usr
+python2.6 setup.py install --prefix=${RPM_BUILD_ROOT}/usr --install-lib ${RPM_BUILD_ROOT}/usr/lib64/python2.6/site-packages
 install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}/usr/bin
 install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
