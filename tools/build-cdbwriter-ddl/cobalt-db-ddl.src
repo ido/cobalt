@@ -552,7 +552,6 @@ insert into "##COBALT_SCHEMA##"."JOB_EVENTS" values
     (default,'maxrun_hold_release','E'),
     (default,'all_holds_clear','S'),
     (default,'dep_fail','S'),
-    (default,'dep_frac_update', 'S'),
     (default,'failed','S'),
     (default,'run_retrying','S'),
     (default,'terminated','T');
