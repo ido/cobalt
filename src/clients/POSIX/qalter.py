@@ -25,10 +25,11 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
               --dependencies <jobid1>:<jobid2>
               -n <number of nodes> -h --proccount <processor count> 
               -M <email address> --mode <mode co/vn> 
-              --run_users <user1>:<user2> <jobid1> <jobid2>"""
+              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>"""
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
+               'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies', 
                 'M':'notify', 'e':'error', 'o':'output', 
@@ -183,7 +184,13 @@ if __name__ == '__main__':
             if user not in updates['user_list']:
                 updates['user_list'].insert(0, user)
 
-    updates['run_project'] = False
+    
+    if opts['run_project'] == True:
+        if not opts['user_list']:
+            updates['user_list'] = [user]
+        updates['run_project'] = True
+    else:
+        updates['run_project'] = False
 
     if opts['error']:
         updates.update({'errorpath': opts['error']})
