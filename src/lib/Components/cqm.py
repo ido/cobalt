@@ -616,6 +616,10 @@ class Job (StateMachine):
         self.user_list = spec.get('user_list', [self.user])
 
         dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
+        if self.admin_hold:
+            dbwriter.log_to_db(self.user, "admin_hold", "job_prog", JobProgMsg(self))
+        if self.user_hold:
+            dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
         self.initializing = False
 
     # end def __init__()
