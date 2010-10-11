@@ -1,0 +1,9 @@
+* GT4 Cobalt-GRAM integration code derived from the Sun Grid Engine GT4 GRAM Integration code
+ provided at http://www.lesc.ic.ac.uk/projects/SGE-GT4.html and the PBS GRAM Integration code
+ provided in the GT4 distribution at http://www.globus.org
+
+Sun Grid Engine GT4 GRAM Integration code based on 
+* Based on the GT2 Cobalt/GRE JobManager implementation by Marko Krzarnic
+  <marko at doc.ic.ac.uk>, London e-Science Centre.
+* GT4 port developed in collaboration with Gridwisetech.com and MCNC.org.
+* Package metadata and installation scripts based on the GT4 OpenPBS packages.

@@ -1,0 +1,18 @@
+.TH "qmove" 1
+.SH NAME
+qmove \- Move a job to a different queue.
+.SH SYNOPSIS
+.B qmove
+.I <queue name> <jobid1> [jobid2]
+.SH DESCRIPTION
+.PP
+.B qmove
+Move a job to a different queue.  Queue restrictions will be enforced, so the job may be prevented from moving to the new queue.
+.SH OPTIONS
+.TP
+none
+.SH "SEE ALSO"
+.BR qstat(1),
+.BR qsub(1)
+.SH BUGS
+None are currently known.
