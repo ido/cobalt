@@ -183,6 +183,8 @@ if __name__ == '__main__':
             if user not in updates['user_list']:
                 updates['user_list'].insert(0, user)
 
+    updates['run_project'] = False
+
     if opts['error']:
         updates.update({'errorpath': opts['error']})
     if opts['output']:
