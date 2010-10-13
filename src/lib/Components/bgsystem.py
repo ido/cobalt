@@ -636,7 +636,7 @@ class BGSystem (BGBaseSystem):
                 for part in parts:
                     pnames_cleaned.append(part.name)
                     try:
-                        bpart = Cobalt.bridge.Partition.by_id(p.name)
+                        bpart = Cobalt.bridge.Partition.by_id(part.name)
                     except Cobalt.bridge.PartitionNotFound:
                         self.logger.info("partition %s: aborted destruction of partition %s; partition no longer exists",
                             p.name, part.name)

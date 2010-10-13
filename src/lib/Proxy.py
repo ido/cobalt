@@ -18,6 +18,7 @@ import xmlrpclib
 import urlparse
 import httplib
 import ssl
+import os.path
 
 import Cobalt
 from Cobalt.Exceptions import ComponentLookupError, ComponentOperationError
@@ -248,9 +249,9 @@ def ComponentProxy(component_name, **kwargs):
         config = SafeConfigParser()
         config.read(Cobalt.CONFIG_FILES)
         passwd = config.get('communication', 'password')
-        keypath = config.get('communication', 'key')
-        certpath = config.get('communication', 'cert')
-        capath = config.get('communication', 'ca')
+        keypath = os.path.expandvars(config.get('communication', 'key'))
+        certpath = os.path.expandvars(config.get('communication', 'cert'))
+        capath = os.path.expandvars(config.get('communication', 'ca'))
     except:
         passwd = 'default'
         keypath = None
