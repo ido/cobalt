@@ -23,7 +23,7 @@ if __name__ == '__main__':
                       'Queue', 'StartTime', 'Index', 'SubmitTime', 'Path',
                       'OutputDir', 'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'errorpath', 'outputpath', 'inputfile','all_dependencies', 'user_hold',
-                      'admin_hold', 'satisfied_dependencies']
+                      'admin_hold', 'satisfied_dependencies', 'user_list', 'score']
 
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         jobidfmt = "%%%ss" % maxjoblen
     # calculate derived values
     for j in response:
-        #print j
+
         print "cqadm.py -j %s" % j['jobid']
         command = "cqsub "
         command += "-q %s " % j['queue']
@@ -97,14 +97,13 @@ if __name__ == '__main__':
         command += "-t %s " % int(float(j['walltime']))
         command += "-n %s " % j['nodes']
 
-
-        #print j['all_dependencies']
-        #print j['satisfied_dependencies']
-
         if j['all_dependencies'] != []:
             command += "--dependencies %s " % ':'.join(s for s in j['all_dependencies'] if
                                                        s not in j['satisfied_dependencies'])   
     
+        if j['user_list'] != []:
+            command += "--run users %s " % ':'.join(j['user_list'])
+
         if j['state'] == "user_hold":
             command += "-h "
 
@@ -118,6 +117,9 @@ if __name__ == '__main__':
 
         if j['admin_hold']:
             print "cqadm --hold %s" % j['jobid']
+                                                  
+                                               
+        print "schedctl --score=%s %s" % (j['score'], j['jobid'])
 
 
 
