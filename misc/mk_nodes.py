@@ -47,15 +47,19 @@ if __name__ == '__main__':
         if queues.has_key(host_name):
             queues[host_name]  = ':'.join(queues[host_name])
  
-     
+    commands.append("echo 'Marking nodes as down.'")
     if nodes_to_down != []:
         commands.append("nodeadm --down %s" % ' '.join(nodes_to_down))
 
+    commands.append("echo 'associating queues with nodes.'")
     if queues != {}:
         for key in queues.keys():
-            commands.append ("nodeadm --queues=%s %s" %
+            commands.append ("nodeadm --queue=%s %s" %
                              (queues[key], key))
-            
+
+    commands.append("echo 'current node state:'")
+    commands.append('nodelist')
+
     print "\n".join(commands)
 
 
