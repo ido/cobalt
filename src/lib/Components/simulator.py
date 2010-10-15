@@ -515,7 +515,7 @@ class Simulator (BGBaseSystem):
             print >> stderr, "BE_MPI (Info) : Checking for block error text:"
             print >> stderr, "BE_MPI (ERROR): block error text '%s.'" % random.choice(excuses)
             print >> stderr, "BE_MPI (Info) : Starting cleanup sequence"
-            time.sleep(20)
+            Cobalt.Util.sleep(20)
             self.release_partition(partition)
             print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
             print >> stderr, "FE_MPI (ERROR): Failure list:"
@@ -546,7 +546,7 @@ class Simulator (BGBaseSystem):
                 my_exit_status = 1
                 break
             else:
-                time.sleep(1) # tumblers better than pumpers
+                Cobalt.Util.sleep(1) # tumblers better than pumpers
         
         print >> stderr, "FE_MPI (Info) : ProcessGroup", process_group.id, "switched to state TERMINATED ('T')"
         print >> stderr, "FE_MPI (Info) : ProcessGroup sucessfully terminated"

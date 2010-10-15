@@ -68,7 +68,7 @@ class RetryMethod(_Method):
             except:
                 log.error("Unknown failure", exc_info=1)
                 break
-            time.sleep(0.5)
+            Cobalt.Util.sleep(0.5)
         raise xmlrpclib.Fault(20, "Server Failure")
 
 # sorry jon

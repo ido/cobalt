@@ -8,7 +8,7 @@ import getopt, os, pwd, sys, time
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
-
+import Cobalt.Util
 
 usehelp = "Usage:\ncqdel [--version] [-f] <jobid> <jobid>"
 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     
     spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
     jobs = cqm.del_jobs(spec, False, user)
-    time.sleep(1)
+    Cobalt.Util.sleep(1)
     if jobs:
         data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in jobs]
         print "      Deleted Jobs"

@@ -14,7 +14,7 @@ from Cobalt.Components.base import Component, automatic, exposed, query
 from Cobalt.Exceptions import JobValidationError
 
 from Cobalt.Components.heckle_processgroup import HeckleProcessGroup
-
+import Cobalt.Util
 
 #from Cobalt.Components.heckle_lib import *
 try:
