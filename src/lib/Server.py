@@ -374,7 +374,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
         try:
             while self.register:
                 self.register_with_slp()
-                Cobalt.Util.sleep(frequency)
+                time.sleep(frequency)
         except:
             self.logger.error("slp_thread failed", exc_info=1)
 
@@ -386,7 +386,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                         self.instance.do_tasks()
                 except:
                     self.logger.error("Unexpected task failure", exc_info=1)
-                Cobalt.Util.sleep(self.timeout)
+                time.sleep(self.timeout)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
     
@@ -495,7 +495,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
         try:
             while self.register:
                 self.register_with_slp()
-                Cobalt.Util.sleep(frequency)
+                time.sleep(frequency)
         except:
             self.logger.error("slp_thread failed", exc_info=1)
 
@@ -507,7 +507,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
                         self.instance.do_tasks()
                 except:
                     self.logger.error("Unexpected task failure", exc_info=1)
-                Cobalt.Util.sleep(self.timeout)
+                time.sleep(self.timeout)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
     

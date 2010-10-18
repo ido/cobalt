@@ -8,7 +8,6 @@ import getopt, os, pwd, sys, time, xmlrpclib, logging
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
-import Cobalt.Util
 
 usehelp = "Usage:\ncobalt-mpirun [--version] [-h] <mpirun arguments>"
 
@@ -143,12 +142,12 @@ if __name__ == '__main__':
             if time.time() - start > 90:
                 break
             
-            Cobalt.Util.sleep(5)
+            time.sleep(5)
         
         while True:
             r = system.get_process_groups([{'id':pgid, 'state':'*'}])
             if r and r[0]['state'] == 'running':
-                Cobalt.Util.sleep(5)
+                time.sleep(5)
                 continue
             else:
                 break

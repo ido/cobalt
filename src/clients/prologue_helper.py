@@ -6,7 +6,6 @@ import Cobalt
 import subprocess
 import logging
 import time
-import Cobalt.Util
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -86,7 +85,7 @@ while True:
                     logging.error("%s for %s already terminated", p.action, p.host)
         break
     else:
-        Cobalt.Util.sleep(5)
+        time.sleep(5)
 
 for p in processes:
     if p.poll() > 0:

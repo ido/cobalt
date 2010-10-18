@@ -9,7 +9,6 @@ import os
 from Cobalt.Data import Data
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError, NodeAllocationError
-import Cobalt.Util
 
 if __name__ == '__main__':
     level = 20
@@ -41,6 +40,6 @@ if __name__ == '__main__':
         if state == 'finished':
             break
         else:
-            Cobalt.Util.sleep(5)
+            time.sleep(5)
     print "process group %s has completed" % (pgid)
         

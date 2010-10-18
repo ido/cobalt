@@ -8,7 +8,6 @@ import time
 
 from Cobalt.Components.base import automatic
 from Cobalt.Components.bb import BBProcessGroup, BBSystem
-import Cobalt.Util
 
 __all__ = ["BBSimulator", "BBSimProcessGroup"]
 
@@ -163,7 +162,7 @@ class BBSimulator(BBSystem):
                 my_exit_status = 1
                 break
             else:
-                Cobalt.Util.sleep(1)
+                time.sleep(1)
         print >> stderr, "ProcessGroup %s switched to state TERMINATED" % pgp.id
         print >> stderr, "Exit Status:", my_exit_status
         pgp.exit_status = my_exit_status

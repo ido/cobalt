@@ -486,7 +486,7 @@ class BGSystem (BGBaseSystem):
             except BridgeException:
                 self.logger.error("Error communicating with the bridge to update partition state information.")
                 self.bridge_in_error = True
-                Cobalt.Util.sleep(5) # wait a little bit...
+                time.sleep(5) # wait a little bit...
                 continue # then try again
     
             try:
@@ -497,7 +497,7 @@ class BGSystem (BGBaseSystem):
             except:
                 self.logger.error("Error communicating with the bridge to update nodecard state information.")
                 self.bridge_in_error = True
-                Cobalt.Util.sleep(5) # wait a little bit...
+                time.sleep(5) # wait a little bit...
                 continue # then try again
 
             self.bridge_in_error = False
@@ -664,7 +664,7 @@ class BGSystem (BGBaseSystem):
                     except (Cobalt.bridge.IncompatibleState, Cobalt.bridge.JobNotFound):
                         pass
 
-            Cobalt.Util.sleep(10)
+            time.sleep(10)
 
     def _mark_partition_for_cleaning(self, pname, jobid):
         self._partitions_lock.acquire()

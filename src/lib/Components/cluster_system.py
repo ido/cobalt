@@ -252,7 +252,7 @@ class ClusterSystem (ClusterBaseSystem):
                             self.logger.error("epilogue for %s already terminated" %p.host)
                 break
             else:
-                Cobalt.Util.sleep(5)
+                time.sleep(5)
 
         for p in processes:
             if p.poll() > 0:

@@ -263,7 +263,7 @@ class Simulator (ClusterBaseSystem):
                 my_exit_status = 1
                 break
             else:
-                Cobalt.Util.sleep(1) # tumblers better than pumpers
+                time.sleep(1) # tumblers better than pumpers
         
         print >> stderr, "FE_MPI (Info) : ProcessGroup", process_group.id, "switched to state TERMINATED ('T')"
         print >> stderr, "FE_MPI (Info) : ProcessGroup sucessfully terminated"

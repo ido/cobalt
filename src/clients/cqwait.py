@@ -9,7 +9,7 @@ import sys, time
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
-import Cobalt.Util
+
 
 __helpmsg__ = "Usage: cqwait [--version] [-vr] [--start] <jobid> <jobid>\n"
 
@@ -59,4 +59,4 @@ if __name__ == '__main__':
         if len(response) == 0:
             raise SystemExit, 0
         else:
-            Cobalt.Util.sleep(2)
+            time.sleep(2)

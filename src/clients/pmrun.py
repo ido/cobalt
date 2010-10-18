@@ -8,7 +8,6 @@ import pwd
 import os
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
-import Cobalt.Util
 
 if __name__ == '__main__':
     level = 20
@@ -31,7 +30,7 @@ if __name__ == '__main__':
         r = pm.get_jobs([{'tag':'process-group', 'id':pgid, 'state':'*'}])
         state = r[0]['state']
         if state == 'running':
-            Cobalt.Util.sleep(5)
+            time.sleep(5)
             continue
         else:
             break
