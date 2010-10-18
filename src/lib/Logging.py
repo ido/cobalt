@@ -137,7 +137,7 @@ class TermiosFormatter(logging.Formatter):
         returns = []
         line_len = self.width
         if type(record.msg) in types.StringTypes:
-            for line in record.getMessage().split('\n'):
+            for line in logging.Formatter.format(self, record).split('\n'):
                 if len(line) <= line_len:
                     returns.append(line)
                 else:
@@ -211,13 +211,14 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                     self.socket.send("Reconnected to syslog")
                     self.socket.send(msg)
 
-def setup_logging(procname, to_console=TO_CONSOLE, to_syslog=TO_SYSLOG, syslog_facility=SYSLOG_FACILITY, level=0):
+def setup_logging(procname, to_console=TO_CONSOLE, to_syslog=TO_SYSLOG, syslog_facility=SYSLOG_FACILITY, level=0,
+                  console_timestamp=False):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
         return 
     # add the handler to the root logger
     if to_console:
-        log_to_stderr(logging.root)
+        log_to_stderr(logging.root, timestamp=console_timestamp)
     if to_syslog:
         try:
             syslog = FragmentingSysLogHandler(procname, SYSLOG_LOCATION, syslog_facility)
@@ -259,8 +260,14 @@ def trace_process (**kwargs):
     
     sys.settrace(traceit)
 
-def log_to_stderr (logger_name, level=CONSOLE_LEVEL):
+def log_to_stderr (logger_name, level=CONSOLE_LEVEL, timestamp=False):
     """Set up console logging."""
+    if timestamp:
+        format = '%(asctime)s %(message)s'
+        date_format = '%Y-%m-%d %H:%M:%S'
+    else:
+        format = None
+        date_format = None
     try:
         logger = logging.getLogger(logger_name)
     except:
@@ -268,7 +275,7 @@ def log_to_stderr (logger_name, level=CONSOLE_LEVEL):
         logger = logger_name
     handler = logging.StreamHandler() # sys.stderr is the default stream
     handler.setLevel(level)
-    handler.setFormatter(TermiosFormatter()) # investigate this formatter
+    handler.setFormatter(TermiosFormatter(format, date_format)) # investigate this formatter
     logger.addHandler(handler)
 
 def log_to_syslog (logger_name, level=SYSLOG_LEVEL, format='%(name)s[%(process)d]: %(message)s'):

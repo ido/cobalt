@@ -62,8 +62,8 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             level = logging.DEBUG
     
     logging.getLogger().setLevel(level)
-    Cobalt.Logging.log_to_stderr(logging.getLogger())
-    Cobalt.Logging.setup_logging(component_cls.implementation)
+    Cobalt.Logging.log_to_stderr(logging.getLogger(), timestamp=True)
+    Cobalt.Logging.setup_logging(component_cls.implementation, console_timestamp=True)
 
     if daemon:
         child_pid = os.fork()
