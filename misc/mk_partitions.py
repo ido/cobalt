@@ -34,34 +34,22 @@ if __name__ == '__main__':
         print helpmsg
         raise SystemExit, 1
     try:
-        sched = Cobalt.Proxy.scheduler()
+        sched = Cobalt.Proxy.ComponentProxy("system", defer=False)
     except Cobalt.Exceptions.ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
 
-    func = sched.GetPartition
-    args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*', 'queue':'*', 'deps':'*', 'xdeps':'*'}], )
+    func = sched.get_partitions
+    specs = [{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*', 'queue':'*', 'deps':'*', 'xdeps':'*'}]
 
 
     try:
-        parts = apply(func, args)
+        parts = sched.get_partitions(specs) #apply(func, args)
     except xmlrpclib.Fault, fault:
         print "Command failure", fault
     except:
         print "strange failure"
 
-    # need to cascade up busy and non-functional flags
-    partinfo = Cobalt.Util.buildRackTopology(parts)
-    busy = [part['name'] for part in parts if part['state'] == 'busy']
-    for part in parts:
-        for pname in busy:
-            if pname in partinfo[part['name']][0] + partinfo[part['name']][1] and pname != part['name']:
-                part.__setitem__('state', 'blocked')
-    offline = [part['name'] for part in parts if not part['functional']]
-    forced = [part for part in parts \
-              if [down for down in offline \
-                  if down in partinfo[part['name']][0] + partinfo[part['name']][1]]]
-    [part.__setitem__('functional', '-') for part in forced]
 
     for part in parts:
         print "partadm.py -a %s" % part['name']
