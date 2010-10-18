@@ -26,6 +26,21 @@ from Cobalt.Proxy import ComponentProxy
 logger = logging.getLogger('Util')
 
 
+def sleep(t):
+    
+    """The python sleep uses a select() to handle sleep to allow for
+       subsecond sleeps.  Apparently, on 64-bit Linux kernels, this
+       use of select() has been known to throw a  kernel error into 
+       user-space.  In the case of Cobalt, this can cause components to
+       unregister themselves.  Use this function to prevent such pain."""
+
+    try:
+        time.sleep(t)
+    except IOError:
+        logger.warning("IOError trapped from time.sleep() and ignored.")
+    
+
+
 def check_dependencies(dependency_string):
     deps = set(dependency_string.split(":"))
     
