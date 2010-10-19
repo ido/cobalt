@@ -36,7 +36,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id='])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id=', 'force_id'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -51,12 +51,19 @@ if __name__ == '__main__':
     for opt in opts:
         opt_dict[opt[0]] = opt[1] 
 
+    
     only_id_change = True
     for key in opt_dict:
-        if key not in ['--cycle_id', '--res_id']:
+        if key not in ['--cycle_id', '--res_id', '--force_id']:
             only_id_change = False
             break
-    
+
+    force_id = False
+    if '--force_id' in opt_dict.keys():
+        force_id = True
+        if not only_id_change:
+            print "--force_id can only be used with --cycle_id and/or --res_id."
+            raise SystemExit, 1
 
     if (not partitions and '-m' not in sys.argv[1:]) and (not only_id_change):
         print "Must supply either -p with value or partitions as arguments"
@@ -67,8 +74,12 @@ if __name__ == '__main__':
 
     if '--res_id' in opt_dict.keys():
         try:
-            scheduler.set_res_id(int(opt_dict['--res_id']))
-            print "Setting res_id to %s" % opt_dict['--res_id']
+            if force_id:
+                scheduler.force_res_id(int(opt_dict['--res_id']))
+                print "WARNING: Forcing res id to %s" % opt_dict['--res_id']
+            else:
+                scheduler.set_res_id(int(opt_dict['--res_id']))
+                print "Setting res id to %s" % opt_dict['--res_id']
         except ValueError:
             print "res_id must be set to an integer value."
             raise SystemExit, 1
@@ -78,8 +89,12 @@ if __name__ == '__main__':
         
     if '--cycle_id' in opt_dict.keys():
         try:
-            scheduler.set_cycle_id(int(opt_dict['--cycle_id']))
-            print "Setting cycle_id to %s" % opt_dict['--cycle_id']
+            if force_id:
+                scheduler.force_cycle_id(int(opt_dict['--cycle_id']))
+                print "WARNING: Forcing cycle id to %s" % opt_dict['--cycle_id']
+            else:
+                scheduler.set_cycle_id(int(opt_dict['--cycle_id']))
+                print "Setting cycle_id to %s" % opt_dict['--cycle_id']
         except ValueError:
             print "cycle_id must be set to an integer value."
             raise SystemExit, 1

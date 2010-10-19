@@ -841,6 +841,26 @@ class BGSched (Component):
 
     set_cycle_id = exposed(set_cycle_id)
 
+    def force_res_id(self, id_num):
+        self.id_gen.idnum = id_num - 1
+        logger.warning("Forced res_id generator to %s." % id_num)
+
+    force_res_id = exposed(force_res_id)
+
+    def force_cycle_id(self, id_num):
+        self.cycle_id_gen.idnum = id_num - 1
+        logger.warning("Forced cycle_id generator to %s." % id_num)
+
+    force_cycle_id = exposed(force_cycle_id)
+
+    def get_next_res_id(self):
+        return self.id_gen.idnum + 1
+    get_next_res_id = exposed(get_next_res_id)
+
+    def get_next_cycle_id(self):
+        return self.cycle_id_gen.idnum + 1
+    get_next_cycle_id = exposed(get_next_cycle_id)
+
     def __flush_msg_queue(self):
         dbwriter.flush_queue()
     __flush_msg_queue = automatic(__flush_msg_queue, float(get_bgsched_config('db_flush_interval', 10)))
