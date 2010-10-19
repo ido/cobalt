@@ -104,7 +104,7 @@ if __name__ == '__main__':
                                                        s not in j['satisfied_dependencies'])   
     
         if j['user_list'] != []:
-            command += "--run users %s " % ':'.join(j['user_list'])
+            command += "--run_users %s " % ':'.join(j['user_list'])
 
         if j['state'] == "user_hold":
             command += "-h "
