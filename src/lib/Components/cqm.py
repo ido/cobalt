@@ -3246,6 +3246,10 @@ class QueueManager(Component):
                                    JobProgMsg(job))
     check_dep_fail = automatic(check_dep_fail, period=60)
     
+    def get_next_id(self):
+        '''get the next id, the generator will throw.  Useful for recovery.'''
+        return self.id_gen.idnum + 1
+    get_next_id = exposed(get_next_id)
 
 
 class JobProgMsg(object):

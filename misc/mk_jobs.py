@@ -49,6 +49,8 @@ if __name__ == '__main__':
                         q.update({x.lower():'*'})
     response = cqm.get_jobs(query)
 
+    next_job_id = cqm.get_next_id()
+
     def my_cmp(left, right):
         return cmp(int(left['jobid']), int(right['jobid']))
 
@@ -120,6 +122,7 @@ if __name__ == '__main__':
                                                   
                                                
         print "schedctl --score=%s %s" % (j['score'], j['jobid'])
+    print "cqadm -j %d" % next_job_id
 
 
 
