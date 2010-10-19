@@ -202,6 +202,9 @@ class Reservation (Data):
         if now <= self.duration:
             if not self.running:
                 self.running = True
+                logger.info("Res %s/%s: Activating reservation: %r" % 
+                             (self.res_id,
+                              self.cycle_id)) 
                 dbwriter.log_to_db(None, "activating", "reservation", self)
             return True
 
@@ -215,6 +218,9 @@ class Reservation (Data):
                and self.running):
                 self.running = False
                 self.res_id = self.id_gen.get()
+                logger.info("Res %s/%s: Cycling reservation: %r" % 
+                             (self.res_id,
+                              self.cycle_id)) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
             return False        
         
@@ -506,6 +512,10 @@ class BGSched (Component):
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
         added_reservations =  self.reservations.q_add(specs)
         for added_reservation in added_reservations:
+            self.logger.info("Res %s/%s: %s adding reservation: %r" % 
+                             (added_reservation.res_id,
+                              added_reservation.cycle_id,
+                              user_name, specs))
             dbwriter.log_to_db(user_name, "creating", "reservation", added_reservation)
         return added_reservations
     
@@ -515,6 +525,10 @@ class BGSched (Component):
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
+            self.logger.info("Res %s/%s/: %s releasing reservation: %r" % 
+                             (del_reservation.res_id,
+                              del_reservation.cycle_id,
+                              user_name, specs))
             dbwriter.log_to_db(user_name, "ending", "reservation", del_reservation) 
         return del_reservations
 
@@ -531,6 +545,10 @@ class BGSched (Component):
             res.update(newattr)
         mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
         for mod_reservation in mod_reservations:
+            self.logger.info("Res %s/%s: %s modifying reservation: %r" % 
+                             (mod_reservation.res_id,
+                              mod_reservation.cycle_id,
+                              user_name, specs))
             dbwriter.log_to_db(user_name, "modifying", "reservation", mod_reservation)
         return mod_reservations
         
@@ -652,6 +670,11 @@ class BGSched (Component):
             for res in self.reservations.values():
                 if res.is_over():
                     self.logger.info("reservation %s has ended; removing" % res.name)
+                    self.logger.info("Res %s/%s: Ending reservation: %r" % 
+                             (res.res_id,
+                              res.cycle_id,
+                              res.name))
+
                     del_reservations = self.reservations.q_del([{'name': res.name}])
                     for del_reservation in del_reservations:
                         dbwriter.log_to_db(None, "ending", "reservation", del_reservation) 
@@ -803,6 +826,20 @@ class BGSched (Component):
         self.logger.info("%s disabling scheduling", user_name)
         self.active = False
     disable = exposed(disable)
+
+    def set_res_id(self, id_num):
+        """Set the reservation id number."""
+        self.id_gen.set(id_num)
+        logger.info("Reset res_id generator to %s." % id_num)
+
+    set_res_id = exposed(set_res_id)
+    
+    def set_cycle_id(self, id_num):
+        """Set the cycle id number."""
+        self.cycle_id_gen.set(id_num)
+        logger.info("Reset cycle_id generator to %s." % id_num)
+
+    set_cycle_id = exposed(set_cycle_id)
 
     def __flush_msg_queue(self):
         dbwriter.flush_queue()

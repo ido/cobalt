@@ -14,6 +14,8 @@ from Cobalt.Exceptions import ComponentLookupError
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
                   -c <cycle time> -p <partition> -q <queue name> 
                   -D -u <user> [-f] [partion1] .. [partionN]
+                  --res_id <new res_id>
+                  --cycle_id <new cycle_id>
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 cycle time may be in minutes or DD:HH:MM:SS
@@ -34,7 +36,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id='])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -44,12 +46,49 @@ if __name__ == '__main__':
     except ValueError:
         if args:
             partitions = args
+    
+    opt_dict = {}
+    for opt in opts:
+        opt_dict[opt[0]] = opt[1] 
 
-    if not partitions and '-m' not in sys.argv[1:]:
+    only_id_change = True
+    for key in opt_dict:
+        if key not in ['--cycle_id', '--res_id']:
+            only_id_change = False
+            break
+    
+
+    if (not partitions and '-m' not in sys.argv[1:]) and (not only_id_change):
         print "Must supply either -p with value or partitions as arguments"
         print helpmsg
         raise SystemExit, 1
+    
+
+
+    if '--res_id' in opt_dict.keys():
+        try:
+            scheduler.set_res_id(int(opt_dict['--res_id']))
+            print "Setting res_id to %s" % opt_dict['--res_id']
+        except ValueError:
+            print "res_id must be set to an integer value."
+            raise SystemExit, 1
+        except xmlrpclib.Fault, flt:
+            print flt.faultString
+            raise SystemExit, 1
         
+    if '--cycle_id' in opt_dict.keys():
+        try:
+            scheduler.set_cycle_id(int(opt_dict['--cycle_id']))
+            print "Setting cycle_id to %s" % opt_dict['--cycle_id']
+        except ValueError:
+            print "cycle_id must be set to an integer value."
+            raise SystemExit, 1
+        except xmlrpclib.Fault, flt:
+            print flt.faultString
+            raise SystemExit, 1
+
+    if only_id_change:
+        raise SystemExit, 0
 
     if '-f' not in sys.argv:
         # we best check that the partitions are valid
