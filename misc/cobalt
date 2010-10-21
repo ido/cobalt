@@ -16,7 +16,7 @@ PIDPATH=/var/run/
 # Configure DB2 environment
 # . /discovery/db.src
 
-umask 077
+umask 0027
 
 # ANL Local:
 # MPIRUN_VERBOSE=1
