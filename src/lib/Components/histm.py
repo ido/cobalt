@@ -64,7 +64,12 @@ class HistoryManager(Component):
                 
     def update_job_dict(self):
         '''initialize/update job_dict from jobinfo_file'''
-        input_file = open(self.jobinfo_file, 'r')
+        try:
+            input_file = open(self.jobinfo_file, "r")
+        except IOError:
+            logger.error("History manager: unable to open jobinfo file %s", self.jobinfo_file)
+            return
+                
         for line in input_file:
             line = line.strip('\n')
             jobspec = parse_jobinfo(line)
