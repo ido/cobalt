@@ -5,7 +5,8 @@ __revision__ = '$Revision: 406 $'
 __version__ = '$Version$'
 
 import math, os, re, sys, time, types, ConfigParser
-import Cobalt.Logging, Cobalt.Proxy, Cobalt.Util
+import Cobalt.Proxy, Cobalt.Util
+import xmlrpclib
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
@@ -49,7 +50,10 @@ if __name__ == '__main__':
                         q.update({x.lower():'*'})
     response = cqm.get_jobs(query)
 
-    next_job_id = cqm.get_next_id()
+    try:
+    	next_job_id = cqm.get_next_id()
+    except xmlrpclib.Fault:
+	next_job_id = -1
 
     def my_cmp(left, right):
         return cmp(int(left['jobid']), int(right['jobid']))
@@ -103,8 +107,9 @@ if __name__ == '__main__':
             command += "--dependencies %s " % ':'.join(s for s in j['all_dependencies'] if
                                                        s not in j['satisfied_dependencies'])   
     
-        if j['user_list'] != []:
-            command += "--run_users %s " % ':'.join(j['user_list'])
+	if j['user_list'] != None:
+            if j['user_list'] != []:
+    	        command += "--run_users %s " % ':'.join(j['user_list'])
 
         if j['state'] == "user_hold":
             command += "-h "
@@ -122,7 +127,8 @@ if __name__ == '__main__':
                                                   
                                                
         print "schedctl --score=%s %s" % (j['score'], j['jobid'])
-    print "cqadm -j %d" % next_job_id
-
+    
+    if next_job_id > 0:
+	print "cqadm -j %d" % next_job_id
 
 
