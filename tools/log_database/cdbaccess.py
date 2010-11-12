@@ -1,11 +1,15 @@
-import db2util
-import os, sys
-import logging
-import ConfigParser
-import threading
-import traceback
+#!/usr/bin/env python
 
-__revision__ = '$Revision: 1$'
+"""A set of helper methods to access data from the database.
+These are intentionally read-only.
+
+"""
+
+import os
+import sys
+
+import db2util
+__revision__ = '$Revision: 1 $'
 
 
 class AccessOnlyDAO(db2util.dao):
@@ -35,7 +39,8 @@ class cdbaccess(object):
       table_names = ['RESERVATION_DATA', 'RESERVATION_PARTS',
                      'RESERVATION_EVENTS', 'RESERVATION_USERS',
                      'RESERVATION_PROG', 'JOB_DATA', 'JOB_ATTR',
-                     'JOB_DEPS', 'JOB_EVENTS','JOB_COBALT_STATES', 'JOB_PROG']
+                     'JOB_DEPS', 'JOB_EVENTS','JOB_COBALT_STATES', 'JOB_PROG',
+                     'JOB_SUMMARY']
 
       #Handle tables, There is probably a better way to do this.
       self.tables = {}
@@ -61,6 +66,9 @@ class cdbaccess(object):
             elif table_name == 'JOB_PROG':
                self.daos[table_name] = JobProgData(self.db, schema, 
                                                    self.tables[table_name].table)
+            elif table_name == 'JOB_SUMMARY':
+                self.daos[table_name] = JobSummaryData(self.db, schema,
+                                                    self.tables[table_name].table)
             else:
                self.daos[table_name] = AccessOnlyDAO(self.db, schema, 
                                                    self.tables[table_name].table)
@@ -458,10 +466,25 @@ class JobDepsData(AccessOnlyDAO):
 
 class JobSummaryData(AccessOnlyDAO):
    
-   def get_job_history(self, jobid):
+    def get_job_history(self, jobid):
       
       SQL = "select * from %s.%s where jobid = %d" % (self.table.schema, self.table.table, jobid)
 
       entryDicts = self.db.getDict(SQL)
       
       return [self.table.getRecord(entry) for entry in entryDicts]
+
+    def get_job_ids_in_date_range(self, start = None, end = None):
+
+
+        if start == None:
+            pass
+        elif end == None:
+            pass
+        else:
+            SQL = [ "select unique(jobid)",
+                    "from %s.job_summary" % self.table.schema, 
+                    "where entry_time >= '%s'" % start,
+                    "and entry_time <= '%s'" % end ]
+        print " ".join(SQL)
+        return [int(i) for i in self.db.getList(" ".join(SQL))]
