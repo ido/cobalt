@@ -328,7 +328,6 @@ class DatabaseWriter(object):
       
    def addMessage(self, logMsg):
 
-      print logMsg
       logger.info("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
       #print logMsg
 
