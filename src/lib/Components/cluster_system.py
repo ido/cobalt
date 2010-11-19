@@ -125,12 +125,13 @@ class ClusterSystem (ClusterBaseSystem):
     def __init__ (self, *args, **kwargs):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ClusterProcessGroup
-
+        self.cleaning_processes = []
         
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup
-
+        if not state.has_key("cleaning_processes"):
+            self.cleaning_processes = []
     
     def add_process_groups (self, specs):
         """Create a process group.
@@ -142,8 +143,8 @@ class ClusterSystem (ClusterBaseSystem):
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
-            self.logger.info("job %s/%s: process group %s created to track script", 
-                    pgroup.jobid, pgroup.user, pgroup.id)
+            self.logger.info("Job %s/%s: process group %s created to track script", 
+                    pgroup.user, pgroup.jobid, pgroup.id)
 
         return process_groups
     add_process_groups = exposed(query(add_process_groups))
@@ -172,7 +173,7 @@ class ClusterSystem (ClusterBaseSystem):
                     return
                 
                 if dead_dict is None:
-                    self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
+                    self.logger.info("Job %s/%s: process group %i: exited with unknown status", each.user, each.jobid, each.id)
                     each.exit_status = 1234567
                 else:
                     each.exit_status = dead_dict["exit_status"]
@@ -193,10 +194,12 @@ class ClusterSystem (ClusterBaseSystem):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            thread.start_new_thread(self.clean_nodes, (process_group,))
+            self.clean_nodes(process_group)
+            #thread.start_new_thread(self.clean_nodes, (process_group,))
         return process_groups
     wait_process_groups = locking(exposed(query(wait_process_groups)))
-    
+   
+     
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
@@ -210,70 +213,109 @@ class ClusterSystem (ClusterBaseSystem):
     signal_process_groups = exposed(query(signal_process_groups))
 
     def clean_nodes(self, pg):
+        """Given a process group, start cleaning the nodes that were involved.
+        The rest of the cleanup is done in check_done_cleaning.
+        
+        """
+        self.logger.info("Job %s/%s: starting node cleanup." , pg.user, pg.jobid)
         try:
             tmp_data = pwd.getpwnam(pg.user)
             groupid = tmp_data.pw_gid
             group_name = grp.getgrgid(groupid)[0]
         except KeyError:
             group_name = ""
-            self.logger.error("Job %s/%s unable to determine group name for epilogue" % (pg.jobid, pg.user))
- 
-        processes = []
+            self.logger.error("Job %s/%s: Process Group %s: unable to determine group name for epilogue" % (pg.user, pg.jobid, pg.id))
+     
+        pg.host_count = 0
         for host in pg.location:
             h = host.split(":")[0]
             try:
                 p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), str(pg.jobid), pg.user, group_name], 
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.host = h
-                processes.append(p)
+                pg.host_count += 1
+                self.cleaning_processes.append({"process":p, "process_group":pg, "start_time":time.time(), "completed":False})
             except:
-                self.logger.error("Job %s/%s failed to run epilogue on host %s", pg.jobid, pg.user, h, exc_info=True)
+                self.logger.error("Job %s/%s: Failed to run epilogue on host %s, marking node down", pg.user, pg.jobid, h, exc_info=True)
+                self.down_nodes.add(h)
+                self.running_nodes.discard(h)
         
-        start = time.time()
-        dirty_nodes = []
-        while True:
-            running = False
-            for p in processes:
-                if p.poll() is None:
-                    running = True
-                    break
-            
-            if not running:
-                break
-            
-            if time.time() - start > float(pg.config.get("epilogue_timeout")):
-                for p in processes:
-                    if p.poll() is None:
-                        try:
-                            os.kill(p.pid, signal.SIGTERM)
-                            dirty_nodes.append(p.host)
-                            self.logger.error("Job %s/%s epilogue timed out on host %s" % (pg.jobid, pg.user, p.host))
-                        except:
-                            self.logger.error("epilogue for %s already terminated" %p.host)
-                break
-            else:
-                Cobalt.Util.sleep(5)
+    def check_done_cleaning(self):
+        """Check to see if the processes we are using to clean up nodes post-run are done.
+        If they are, release the nodes back for general consumption.  If the cleanup fails for some reason,
+        then mark the node down and release it. 
 
-        for p in processes:
-            if p.poll() > 0:
-                self.logger.error("epilogue failed for host %s", p.host)
-                self.logger.error("stderr from epilogue on host %s: [%s]", p.host, p.stderr.read().strip())
-            
-            
-        self.lock.acquire()
-        try:
-            self.logger.info("job finished on %s", Cobalt.Util.merge_nodelist(pg.location))
-            for host in pg.location:
-                self.running_nodes.discard(host)
-            
-            if dirty_nodes:    
-                for host in dirty_nodes:
-                    self.down_nodes.add(host)
-                    self.logger.info("epilogue timed out, marking host %s down" % host)
-                p = subprocess.Popen([pg.config.get("epi_epilogue"), str(pg.jobid), pg.user, group_name] + dirty_nodes)
-            
-            del self.process_groups[pg.id]
-        except:
-            self.logger.error("error in clean_nodes", exc_info=True)
-        self.lock.release()
+        """
+        #this is the check function ultimately.  Check the registered functions.  Get this out of a thread.
+        #start = time.time()
+        #dirty_nodes = []
+        #uses a tuple of (subprocess.Popen, process_group, start_time)
+        if self.cleaning_processes == []:
+            return
         
+        count = 0
+        finished = []
+        for cleaning_process in self.cleaning_processes: 
+                            
+            pg = cleaning_process["process_group"]
+
+            if cleaning_process["process"].poll() != None:
+                #we're done, this node is now free to be scheduled again.
+                self.running_nodes.discard(cleaning_process["process"].host)
+                finished.append(count)
+                pg.host_count -= 1
+            else:
+                if time.time() - cleaning_process["start_time"] < float(pg.config.get("epilogue_timeout")):
+                
+            
+                    if cleaning_process["process"].poll() == None:
+                        #otherwise we'll get it on the next pass.
+                        finished.append(count)
+                        try:
+                            cleaning_process["process"].terminate()
+                            #mark as dirty and arrange to mark down.
+                            self.down_nodes.add(cleaning_process["process"].host)
+                            self.running_nodes.discard(cleaning_process["process"].host)
+                            self.logger.error("Job %s/%s: epilogue timed out on host %s, marking hosts down", 
+                                pg.user, pg.jobid, cleaning_process["process"].host)
+                            self.logger.error("Job %s/%s: stderr from epilogue on host %s: [%s]",
+                                pg.user, pg.jobid,
+                                cleaning_process["process"].host, 
+                                cleaning_process["process"].stderr.read().strip())
+                            pg.host_count -= 1
+                        except:
+                            #Catch the jobs that have terminated prior to signaling.
+                            #self.logger.error("Job %s/%s: epilogue for %s already terminated",
+                            #         pg.user, pg.jobid, cleaning_process["process"].host)
+                            self.running_nodes.discard(cleaning_process["process"].host)
+                            pg.host_count -= 1
+                count += 1
+        
+            if pg.host_count == 0:
+                self.logger.info("Job %s/%s: job finished on %s",
+                    pg.user, pg.jobid, Cobalt.Util.merge_nodelist(pg.location))
+                del self.process_groups[pg.id]
+        
+        for i in finished:
+            self.cleaning_processes.pop(i)
+            
+    check_done_cleaning = automatic(check_done_cleaning, 10.0)
+
+            
+            #del self.process_groups[pg.id]
+
+#fix for clean_nodes:  Proposed
+
+#The problem, how to clean nodes without blocking.
+#potential solution:
+
+#Change out thread for threadding module.  Lock is already from there to begin with.
+#add cleaned/dirty nodes to respective queues.
+#main thread has an automatic method that checks the queues and resolves nodes as
+#available (idle) or dirty (down) and runs appropriate cleanup.
+
+#I'm not sure if this gets rid of the locking sematics issues.  May help alleviate them.
+
+#Otherwise, I think I can get rid of everything, subprocess doesn't block.  
+#do a countdown and clean everything, but do it only in the main thread.
+
