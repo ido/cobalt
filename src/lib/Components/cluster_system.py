@@ -265,7 +265,7 @@ class ClusterSystem (ClusterBaseSystem):
                 cleaning_process["completed"] = True
                 pg.host_count -= 1
             else:
-                if time.time() - cleaning_process["start_time"] < float(pg.config.get("epilogue_timeout")):
+                if time.time() - cleaning_process["start_time"] > float(pg.config.get("epilogue_timeout")):
                 
             
                     if cleaning_process["process"].poll() == None:
