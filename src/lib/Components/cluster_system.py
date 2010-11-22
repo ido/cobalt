@@ -262,7 +262,7 @@ class ClusterSystem (ClusterBaseSystem):
             if cleaning_process["process"].poll() != None:
                 #we're done, this node is now free to be scheduled again.
                 self.running_nodes.discard(cleaning_process["process"].host)
-                finished.append(count)
+                cleaning_process["completed"] = True
                 pg.host_count -= 1
             else:
                 if time.time() - cleaning_process["start_time"] < float(pg.config.get("epilogue_timeout")):
@@ -270,7 +270,7 @@ class ClusterSystem (ClusterBaseSystem):
             
                     if cleaning_process["process"].poll() == None:
                         #otherwise we'll get it on the next pass.
-                        finished.append(count)
+                        cleaning_process["completed"] = True
                         try:
                             cleaning_process["process"].terminate()
                             #mark as dirty and arrange to mark down.
@@ -296,8 +296,8 @@ class ClusterSystem (ClusterBaseSystem):
                     pg.user, pg.jobid, Cobalt.Util.merge_nodelist(pg.location))
                 del self.process_groups[pg.id]
         
-        for i in finished:
-            self.cleaning_processes.pop(i)
+        self.cleaning_processes = [cleaning_process for cleaning_process in self.cleaning_processes 
+                                    if cleaning_process["completed"] == False]
             
     check_done_cleaning = automatic(check_done_cleaning, 10.0)
 
