@@ -258,7 +258,8 @@ if __name__ == '__main__':
             for key in jobinfo:
                 if not original_spec.has_key(key):
                     if key == "all_dependencies":
-                        print "dependencies set to %s" % ":".join(jobinfo[key])
+                        if not (opts['dependencies'].lower() == 'none'):
+                            print "dependencies set to %s" % ":".join(jobinfo[key])
                     else:
                         print "%s set to %s" % (key, jobinfo[key])
                 elif jobinfo[key] != original_spec[key]:

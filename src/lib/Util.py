@@ -42,6 +42,12 @@ def sleep(t):
 
 
 def check_dependencies(dependency_string):
+
+    if dependency_string.lower() == 'none':
+        #we are removing all job dependencies.
+        print "Removing job dependencies"
+        return
+
     deps = set(dependency_string.split(":"))
     
     query = []
