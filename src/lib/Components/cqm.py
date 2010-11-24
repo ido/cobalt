@@ -559,7 +559,8 @@ class Job (StateMachine):
         self.path = spec.get("path")
         self.mode = spec.get("mode", "co")
         self.envs = spec.get("envs", {})
-        self.force_kill_delay = spec.get("force_kill_delay", get_cqm_config('force_kill_delay', DEFAULT_FORCE_KILL_DELAY))
+        self.force_kill_delay = spec.get("force_kill_delay", 
+                get_cqm_config('force_kill_delay', DEFAULT_FORCE_KILL_DELAY))
         self.attrs = spec.get("attrs", {})
 
         self.all_dependencies = spec.get("all_dependencies")
@@ -594,13 +595,16 @@ class Job (StateMachine):
             user = Timer(),
         )
 
-        # setting the queue will cause updated accounting records to be written and the current queue timer to be restarted, so
+        # setting the queue will cause updated accounting records to be 
+        #written and the current queue timer to be restarted, so
         # this needs to be done only after the object has been initialized
         self.queue = spec.get("queue", "default")
+        self.resid = None #Must be obtained from the scheduler component.
         self.__timers['queue'].start()
         self.etime = time.time()
 
-        # setting the hold flags will automatically cause the appropriate hold events to be triggered, so this needs to be done
+        # setting the hold flags will automatically cause the appropriate hold
+        #events to be triggered, so this needs to be done
         # only after the object has been completely initialized
         if spec.get("admin_hold", False):
             self.admin_hold = True
@@ -615,11 +619,14 @@ class Job (StateMachine):
         self.dep_frac = None #float(get_cqm_config('dep_frac', 0.5))
         self.user_list = spec.get('user_list', [self.user])
 
-        dbwriter.log_to_db(self.user, "creating", "job_data", JobDataMsg(self))
+        dbwriter.log_to_db(self.user, "creating", "job_data", 
+                           JobDataMsg(self))
         if self.admin_hold:
-            dbwriter.log_to_db(self.user, "admin_hold", "job_prog", JobProgMsg(self))
+            dbwriter.log_to_db(self.user, "admin_hold", "job_prog", 
+                               JobProgMsg(self))
         if self.user_hold:
-            dbwriter.log_to_db(self.user, "user_hold", "job_prog", JobProgMsg(self))
+            dbwriter.log_to_db(self.user, "user_hold", "job_prog", 
+                               JobProgMsg(self))
         self.initializing = False
 
     # end def __init__()
@@ -639,8 +646,10 @@ class Job (StateMachine):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        # BRT: why is the current queue timer being reset?  if cqm is restarted, the job remained in the queue during that time,
-        # so I would think that timer should continue to run during the restart rather than been reset.
+        # BRT: why is the current queue timer being reset?  if cqm is 
+        #restarted, the job remained in the queue during that time, so I would
+        #think that timer should continue to run during the restart rather 
+        #than been reset.
         if not self.__timers.has_key('current_queue'):
             self.__timers['current_queue'] = Timer()
             self.__timers['current_queue'].start()
@@ -676,22 +685,30 @@ class Job (StateMachine):
             
         if not state.has_key("walltime_p"):
             logger.info("old job missing walltime_p")
-            self.walltime_p = self.walltime            
+            self.walltime_p = self.walltime
+
+        if not state.has_key("resid"):
+            logger.info("old job missing resid")
+            self.resid = None
             
         self.initializing = False
 
     def __task_signal(self, retry = True):
         '''send a signal to the managed task'''
-        # BRT: this routine should probably check if the task could not be signaled because it was no longer running
+        # BRT: this routine should probably check if the task could not be 
+        #signaled because it was no longer running
         try:
             self._sm_log_info("instructing the system component to send signal %s" % (self.__signaling_info.signal,))
             pgroup = ComponentProxy("system").signal_process_groups([{'id':self.taskid}], self.__signaling_info.signal)
         except (ComponentLookupError, xmlrpclib.Fault), e:
             #
-            # BRT: will a ComponentLookupError ever be raised directly or will it always be buried in a XML-RPC fault?
+            # BRT: will a ComponentLookupError ever be raised directly or will 
+            # it always be buried in a XML-RPC fault?
             #
-            # BRT: shouldn't we be checking the XML-RPC fault code?  which fault codes are valid for this operation?  at the
-            # very least unexpected fault code should be reported as such and the retry loop broken.
+            # BRT: shouldn't we be checking the XML-RPC fault code?  which 
+            # fault codes are valid for this operation?  at the very least 
+            # unexpected fault code should be reported as such and the retry 
+            # loop broken.
             #
             if retry:
                 self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
@@ -743,7 +760,8 @@ class Job (StateMachine):
                 else:
                     self.__resource_nodects.append(self.nodes)
             else:
-                self._sm_log_error("process group creation failed", cobalt_log = True)
+                self._sm_log_error("process group creation failed", 
+                        cobalt_log = True)
                 return Job.__rc_pg_create
         except (ComponentLookupError, xmlrpclib.Fault), e:
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
@@ -2971,10 +2989,19 @@ class QueueManager(Component):
     set_jobs = exposed(query(set_jobs))
 
 
-    def run_jobs(self, specs, nodelist, user_name=None):
+    def run_jobs(self, specs, nodelist, user_name=None, resid=None):
+        """Run jobs.  Get a possible user_name if this is a forced-run, or 
+        a dict that contains resid's keyed by jobid.  Resid is for the reservation
+        the job actually ran in, not the one, if any, it was queued in.
+
+        """
         if user_name:
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
+
         def _run_jobs(job, nodes):
+            if resid != None:
+                if str(job.jobid) in resid.keys():
+                    job.resid = resid[str(job.jobid)]
             job.run(nodes)
             self.Queues[job.queue].update_max_running()
         return self.Queues.get_jobs(specs, _run_jobs, nodelist)

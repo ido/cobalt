@@ -202,9 +202,8 @@ class Reservation (Data):
         if now <= self.duration:
             if not self.running:
                 self.running = True
-                logger.info("Res %s/%s: Activating reservation: %r" % 
-                             (self.res_id,
-                              self.cycle_id)) 
+                logger.info("Res %s/%s: Activating reservation: %s",
+                        self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "activating", "reservation", self)
             return True
 
@@ -218,9 +217,8 @@ class Reservation (Data):
                and self.running):
                 self.running = False
                 self.res_id = self.id_gen.get()
-                logger.info("Res %s/%s: Cycling reservation: %r" % 
-                             (self.res_id,
-                              self.cycle_id)) 
+                logger.info("Res %s/%s: Cycling reservation: %s", 
+                             self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
             return False        
         
@@ -597,6 +595,7 @@ class BGSched (Component):
     def _run_reservation_jobs (self, reservations_cache):
         # handle each reservation separately, as they shouldn't be competing for resources
         for cur_res in reservations_cache.itervalues():
+            #print "trying to run res jobs in", cur_res.name, self.started_jobs
             queue = cur_res.queue
             if not (self.queues.has_key(queue) and self.queues[queue].state == 'running'):
                 continue
@@ -632,14 +631,16 @@ class BGSched (Component):
     
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
-                self._start_job(job, best_partition_dict[jobid])
+                self._start_job(job, best_partition_dict[jobid], {str(job.jobid):cur_res.res_id})
 
-    def _start_job(self, job, partition_list):
+    def _start_job(self, job, partition_list, resid=None):
+        """Get the queue manager to start a job."""
+
         cqm = ComponentProxy("queue-manager")
         
         try:
             self.logger.info("trying to start job %d on partition %r" % (job.jobid, partition_list))
-            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list)
+            cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list, None, resid)
         except ComponentLookupError:
             self.logger.error("failed to connect to queue manager")
             return
@@ -814,6 +815,11 @@ class BGSched (Component):
         # print "took %f seconds for scheduling loop" % (time.time() - started_scheduling, )
     schedule_jobs = locking(automatic(schedule_jobs))
 
+    def get_resid(self, queue_name):
+        
+        return None
+    get_resid = exposed(get_resid)
+
     
     def enable(self, user_name):
         """Enable scheduling"""
@@ -842,25 +848,31 @@ class BGSched (Component):
     set_cycle_id = exposed(set_cycle_id)
 
     def force_res_id(self, id_num):
+        """Override the id-generator and change the resid to id_num"""
         self.id_gen.idnum = id_num - 1
         logger.warning("Forced res_id generator to %s." % id_num)
 
     force_res_id = exposed(force_res_id)
 
     def force_cycle_id(self, id_num):
+        """Override the id-generator and change the cycleid to id_num"""
         self.cycle_id_gen.idnum = id_num - 1
         logger.warning("Forced cycle_id generator to %s." % id_num)
 
     force_cycle_id = exposed(force_cycle_id)
 
     def get_next_res_id(self):
+        """Get what the next resid number would be"""
         return self.id_gen.idnum + 1
     get_next_res_id = exposed(get_next_res_id)
 
     def get_next_cycle_id(self):
+        """get what the next cycleid number would be"""
         return self.cycle_id_gen.idnum + 1
     get_next_cycle_id = exposed(get_next_cycle_id)
 
     def __flush_msg_queue(self):
+        """Send queued messages to the database-writer component"""
         dbwriter.flush_queue()
-    __flush_msg_queue = automatic(__flush_msg_queue, float(get_bgsched_config('db_flush_interval', 10)))
+    __flush_msg_queue = automatic(__flush_msg_queue, 
+                float(get_bgsched_config('db_flush_interval', 10)))
