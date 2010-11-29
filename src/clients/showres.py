@@ -37,14 +37,16 @@ if __name__ == '__main__':
         print "Failed to connect to system component"
         raise SystemExit, 1
 
-    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 'queue': '*'}])
+    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 
+        'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 
+        'queue': '*', 'res_id': '*', 'cycle_id': '*'}])
     output = []
     if '-l' in sys.argv:
         verbose = True
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 'End Time', 'Cycle Time', 'Partitions')]
+        header = [('Reservation', 'Res ID', 'Queue', 'User', 'Start', 'Duration', 'End Time', 'Cycle ID', 'Cycle Time', 'Partitions')]
     else:
         verbose = False
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 'Partitions')]
+        header = [('Reservation', 'Res ID', 'Queue', 'User', 'Start', 'Duration', 'Partitions')]
 
     for res in reservations:
         start = float(res['start'])
@@ -63,7 +65,9 @@ if __name__ == '__main__':
             # if we are in the dead time after the reservation ended, show when the next one starts
             else:
                 start += (periods+1) * cycle
-        
+        if res['cycle_id'] == None:
+            res['cycle_id'] = '-'
+
         if res['cycle']:
             cycle = float(res['cycle'])
             if cycle < (60 * 60 * 24):
@@ -75,12 +79,12 @@ if __name__ == '__main__':
         dmin = (duration/60)%60
         dhour = duration/3600
         if verbose:
-            output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), cycle, mergelist(res['partitions'], cluster)))
+            output.append((res['name'], res['res_id'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), res['cycle_id'], cycle, mergelist(res['partitions'], cluster)))
         else:
-            output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
+            output.append((res['name'], res['res_id'],res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
                            "%02d:%02d" % (dhour, dmin), mergelist(res['partitions'], cluster)))
 
-    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3], "%c")), time.mktime(time.strptime(y[3], "%c"))) ) )
+    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[4], "%c")), time.mktime(time.strptime(y[4], "%c"))) ) )
     Cobalt.Util.print_tabular(header + output)
                      
