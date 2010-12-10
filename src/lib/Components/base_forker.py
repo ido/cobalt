@@ -25,6 +25,7 @@ from traceback import format_exc
 import Cobalt.Logging
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.Data import IncrID
+from Cobalt.Util import sleep
 
 
 config = ConfigParser.ConfigParser()
@@ -65,8 +66,31 @@ class Child(object):
         self.signum = 0
         self.core_dump = False
         self.tag = None
+        self.cmd = None
+        self.args = None
+        self.stdout = None
+        self.stderr = None
+        self.ignore_output = False
+        self.complete = False
+        self.old_child = False
         #keep the Popen object handle.
         self.proc = None
+    
+    def from_dict(self, old_dict):
+        for key in old_dict:
+            self.__dict__[key] = old_dict[key]
+        self.old_child = True
+
+    def get_dict(self):
+        
+        retdict == {}
+        for key in self.__dict__:
+            if key != "proc":
+                retdict[key] = self.__dict__[key]
+
+        return retdict
+
+
 
 class job_preexec(object):
     '''Class for handling pre-exec tasks for a job.
@@ -80,7 +104,7 @@ class job_preexec(object):
         self.data = data
 
     def __call__(self):
-        '''this is where the job-setting magic happens
+        '''Set important bits for cobalt jobs and redirect files as needed.
         
         '''
         data = self.data
@@ -165,7 +189,7 @@ class job_preexec(object):
                     else:
                         self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stderr")
                         error_to_devnull = True
-                except Exception, e:
+                except Exception, 
                     error_to_devnull = True
                     self.logger.error("task %s: error opening stderr file %s: %s", label, new_err, e)
                                           
@@ -229,11 +253,21 @@ class BaseForker (Component):
         self.id_gen = IncrID()
 
     def __getstate__(self):
-        return {'next_job_id': self.id_gen.idnum+1}
+        child_dicts = []
+        for key in self.children:
+            child_dicts.append(self.children[key].get_dict())
+
+        return {'next_job_id': self.id_gen.idnum+1,
+                'old_children': child_dicts}
    
-    def __setstate__(self):
+    def __setstate__(self, state):
         self.id_gen = IncrID()
         self.ig_gen.set(state['next_job_id'])
+        if state.has_key('old_children'):
+            old_children = state['old_childeren']
+            if old_children != []:
+                for old_child in old_childeren:
+                    childeren[old_child.id]=Child(
 
     def __save_me(self):
         '''Periodically save off a statefile.'''
@@ -247,37 +281,55 @@ class BaseForker (Component):
         retcode in the child, asuming we have one.
 
         '''
-        
-        retcode = self.children[local_id].subproc.poll()
-        if retcode != None:
-            self.children[local_id].exit_status = retcode
-            return True
-        return False
+        child = self.childeren[local_id]
+        if child.exit_status != None:
+            #we're already done
+            return child.exit_status
+
+        retcode = child.pg.poll() 
+        if (retcode != None):
+            child.exit_status = retcode
+            if not child.ignore_output
+                child.stdout = child.proc.stdout.readlines()
+                child.stderr = child.proc.stderr.readlines()
+            child.complete = True
+            return retcode
+        return None
     child_completed = exposed(child_completed)
 
-    def get_output(self, local_id):
-        '''return a tupple of return code, stdout, stderr
-           if None, None, None returned, then we're not done.
-
-           if stdout or stderr are none and the process has exited, then 
-           that output has been redirected to some other file, and not a 
-           subprocess.PIPE.
+    def get_child_data(self, local_id):
+        '''return a dict of child data. Return None if there is no
+        data.
 
         '''
+        if not self.childeren.has_key(local_id):
+            return None
+        return self.childeren[local_id].get_dict()
+    get_child_data = exposed(get_child_data)
 
-        if self.children[local_id].exit_status != None:
+    def child_cleanup(self, local_ids):
+        '''Let the forker know that we are done with the child process data.
+        and clean up.  Only call this if you have some sort of return code.
+        Operates on a list of ids
+
+
+        '''
+        for local_id in local_ids:
+            if not self.children.has_key(local_id):
+                continue
+        
+            #kill child if still running.  
             pg = self.childeren[local_id].proc
-            stdout = None
-            stderr = None
-            if pg.stdout != None:
-                stdout = pg.stdout.readlines()
-            if pg.stderr != None:
-                stderr = pg.stderr.readlines()
-            return pg.exit_status, stdout, stderr
-        return None,None,None
+            pid = pg.pid
+            if pg.poll() == None:
+                pg.terminate()
+                sleep(5)
+            if pg.poll() == None:
+                pg.kill()
+            #now that we're dead...
+            del self.children[local_id]
 
-    get_output = exposed(get_output)
-
+    child_cleanup = exposed(child_cleanup)
     
        
     def fork(self, cmd, tag=None, label=None, app_env=None, 
@@ -302,6 +354,8 @@ class BaseForker (Component):
         child.id = self.id_gen.next() #this would be the 'local_id'
         child.label = label
         child.tag = tag
+        child.cmd = cmd[0]
+        child.args = cmd[1:]
 
         try:
             env = os.environ
@@ -318,6 +372,7 @@ class BaseForker (Component):
                 #jobs routed to that would be bad.
                 child.proc = subprocess.Popen(cmd, env=env, preexec_fn=preexec)
                 child.pid = child.proc.pid
+                child.ignore_output = True
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
             self.childeren[child.id] = child
