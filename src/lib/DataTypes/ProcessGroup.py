@@ -93,7 +93,7 @@ class ProcessGroup(Data):
         """Start the process group by forking to _mpirun()"""
         try:
             data = self.prefork()
-            self.head_pid = ComponentProxy("forker").fork(data)
+            self.head_pid = ComponentProxy("forker").fork(data, self.tag)
         except:
             self.logger.error("problem forking: pg %s did not find a child pid", self.id)
 

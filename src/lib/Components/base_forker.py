@@ -21,7 +21,8 @@ import shlex
 from subprocess import PIPE
 from traceback import format_exc
 
-
+from threading import Lock
+from Cobalt.Statistics import Statistics
 import Cobalt.Logging
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.Data import IncrID
@@ -33,6 +34,7 @@ config.read(Cobalt.CONFIG_FILES)
 
 # A default logger for the component is instantiated here.
 module_logger = logging.getLogger("Cobalt.Components.BaseForker")
+
 
 def get_forker_config(option, default):
     try:
@@ -79,17 +81,28 @@ class Child(object):
     def from_dict(self, old_dict):
         for key in old_dict:
             self.__dict__[key] = old_dict[key]
-        self.old_child = True
 
     def get_dict(self):
         
-        retdict == {}
+        retdict = {}
         for key in self.__dict__:
             if key != "proc":
                 retdict[key] = self.__dict__[key]
 
         return retdict
+    
+    def __getstate__(self):
+        '''returns the data to be pickled.  Ignores the subprocess's Popen 
+        object and sets old_child to true.  If we reload from this data, the
+        child process is not recoverable.
 
+        '''
+        retdict = self.get_dict()
+        retdict['old_child'] = True
+        return retdict
+
+    def __setstate__(self, state):
+        self.from_dict(state)
 
 
 class job_preexec(object):
@@ -189,7 +202,7 @@ class job_preexec(object):
                     else:
                         self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stderr")
                         error_to_devnull = True
-                except Exception, 
+                except Exception, e: 
                     error_to_devnull = True
                     self.logger.error("task %s: error opening stderr file %s: %s", label, new_err, e)
                                           
@@ -237,12 +250,15 @@ class BaseForker (Component):
     
     name = "forker"
     implementation = "bgforker"
+    UNKNOWN_ERROR = 255
     
     # A default logger for the class is placed here.
     # Assigning an instance-level logger is supported,
     # and expected in the case of multiple instances.
     logger = module_logger
-    
+   
+    __statefields__ = ['next_task_id', 'children']
+
     def __init__ (self, *args, **kwargs):
         """Initialize a new BaseForker.
         
@@ -253,21 +269,22 @@ class BaseForker (Component):
         self.id_gen = IncrID()
 
     def __getstate__(self):
-        child_dicts = []
-        for key in self.children:
-            child_dicts.append(self.children[key].get_dict())
 
-        return {'next_job_id': self.id_gen.idnum+1,
-                'old_children': child_dicts}
+        return {'next_task_id': self.id_gen.idnum+1,
+                'children'  : self.children}
    
+        #FIXME: Single threaded things don't need a lock but components do.
+        #  It will do nothing, fortunately. Parent needs to be picked as well
+        #  or whatever we eventually decide to do.
+
     def __setstate__(self, state):
         self.id_gen = IncrID()
-        self.ig_gen.set(state['next_job_id'])
-        if state.has_key('old_children'):
-            old_children = state['old_childeren']
-            if old_children != []:
-                for old_child in old_childeren:
-                    childeren[old_child.id]=Child(
+        print "setting idgen to ", state['next_task_id']
+        self.id_gen.set(state['next_task_id'])
+        if state.has_key('children'):
+            self.children = state['children']
+        self.lock = Lock()
+        self.statistics = Statistics()
 
     def __save_me(self):
         '''Periodically save off a statefile.'''
@@ -275,21 +292,42 @@ class BaseForker (Component):
     __save_me = automatic(__save_me, 
             float(get_forker_config('save_me_interval', 10)))
         
+    def dummy_child(self):
+        '''Generate a placeholder child should we somehow lose a child.
+
+        '''
+        c = Child()
+        c.id = -1
+        c.pid = -1
+        c.label = "Unknown"
+        c.exit_status = self.UNKNOWN_ERROR
+        c.ignore_output = True 
+        c.complete = True
+        c.old_child = True 
+
+        return c
 
     def child_completed(self, local_id):
         '''check to see if our child has completed.  This will store the
         retcode in the child, asuming we have one.
 
         '''
-        child = self.childeren[local_id]
+
+        print self.children
+        try:
+            child = self.children[local_id]
+        except KeyError:
+            self.logger.warning("Could not find task id %s.  Assuming this "
+                    "process died in an unknown error-state.", local_id)
+            return self.UNKNOWN_ERROR 
         if child.exit_status != None:
             #we're already done
             return child.exit_status
 
-        retcode = child.pg.poll() 
+        retcode = child.proc.poll() 
         if (retcode != None):
             child.exit_status = retcode
-            if not child.ignore_output
+            if not child.ignore_output:
                 child.stdout = child.proc.stdout.readlines()
                 child.stderr = child.proc.stderr.readlines()
             child.complete = True
@@ -302,9 +340,11 @@ class BaseForker (Component):
         data.
 
         '''
-        if not self.childeren.has_key(local_id):
-            return None
-        return self.childeren[local_id].get_dict()
+        if not self.children.has_key(local_id):
+            self.logger.warning("Task %s: Could not locate child process data "
+                    "entry.  Returning a dummy child.", local_id)
+            return self.dummy_child()
+        return self.children[local_id].get_dict()
     get_child_data = exposed(get_child_data)
 
     def child_cleanup(self, local_ids):
@@ -319,13 +359,19 @@ class BaseForker (Component):
                 continue
         
             #kill child if still running.  
-            pg = self.childeren[local_id].proc
+            pg = self.children[local_id].proc
             pid = pg.pid
-            if pg.poll() == None:
-                pg.terminate()
-                sleep(5)
-            if pg.poll() == None:
-                pg.kill()
+            pg.poll()
+            if pg.returncode == None:
+                try:
+                    if pg.poll() == None:
+                        pg.terminate()
+                        sleep(5)
+                    if pg.poll() == None:
+                        pg.kill()
+                except OSError:
+                    #apparently we're already dead.
+                    pass
             #now that we're dead...
             del self.children[local_id]
 
@@ -357,13 +403,14 @@ class BaseForker (Component):
         child.cmd = cmd[0]
         child.args = cmd[1:]
 
+
         try:
             env = os.environ
             if app_env != None:
                 for key in app_env:
                     env[key] = app_env[key]
 
-            if prefork == None:
+            if preexec == None:
                 child.proc = subprocess.Popen(cmd, env=env, stdout=PIPE, 
                         stderr=PIPE)
                 child.pid = child.proc.pid
@@ -375,10 +422,11 @@ class BaseForker (Component):
                 child.ignore_output = True
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
-            self.childeren[child.id] = child
+            self.children[child.id] = child
             return child.id
         except OSError as e:
-            self.logger.error("%s Task %s failed to execute with a code of %s: %s", child.label, child.id, e.errno, e.strerr)
+            self.logger.error("%s Task %s failed to execute with a code of "
+                    "%s: %s", child.label, child.id, e.errno, e)
         except ValueError:
             self.logger.error("%s Task %s failed to run due to bad arguments.",
                     child.label, child.id)
@@ -387,7 +435,8 @@ class BaseForker (Component):
                     child.label, child.id, e)
             self.logger.debug("%s Parent Traceback:\n %s", child.label, 
                     format_exc())
-            self.logger.debug("%s Child Traceback:\n %s", child_label,
+            if e.__dict__.has_key('child_traceback'):
+                self.logger.debug("%s Child Traceback:\n %s", child.label,
                     e.child_traceback)
             #It may be valuable to get the child traceback for debugging.
             raise
@@ -426,7 +475,7 @@ class BaseForker (Component):
         """
         ret = []
         if tag != None:
-            return [kid for kid in self.childeren.itervalues()
+            return [kid for kid in self.children.itervalues()
                     if (kid.exit_status is None) and
                        (kid.tag == tag)]
         else:
