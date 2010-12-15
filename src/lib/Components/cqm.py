@@ -1021,16 +1021,16 @@ class Job (StateMachine):
             dbwriter.log_to_db(None, "preempting", "job_prog", JobProgMsg(self))
             return False
 
-    def _sm_start_resource_epilogue_scripts(self, new_state = 'Resource_Epilogue'):
+    def _sm_start_resource_epilogue_scripts(self, script_error=False):
         '''Launch the resource-cleanup scripts.
 
         '''
 
-        dbwriter.log_to_db(None, "resource_epilogue_start", "job_prog", JobProgMsg(self))
+        dbwriter.log_to_db(None, "resource_epilogue_start", "job_prog", 
+                JobProgMsg(self))
         scripts = get_cqm_config('resource_postscripts', "").split(':')
-        
         if scripts == ['']:
-            self._sm_log_debug("Job %s/%s: DEBUG: No scripts for Resource "
+            logger.debug("Job %s/%s: DEBUG: No scripts for Resource "
                     "Epilogue state.  Skipping to Job Epilogue.", self.jobid,
                     self.user)
             self._sm_state = 'Resource_Epilogue'
@@ -1057,17 +1057,20 @@ class Job (StateMachine):
                         '%s_%s'%(self.jobid, self._sm_state)) 
             except ComponentLookupError:
                 if self._sm_state != "Resource_Epilogue_Retry":
-                     logger.warning("Job %s/%s: Unable to connect to forker \
-                        component to launch resource postscripts.  Will retry", 
+                     logger.warning("Job %s/%s: Unable to connect to forker "
+                        "component to launch resource postscripts.  Will retry", 
                         self.user, self.jobid)
                      self._sm_state = "Resource_Prologue_Retry"
                      return
             except Exception as e:
-                logger.error("Job %s/%s: %s exception recieved. Resource_Epilogue \
-                    launcher has catastrophicaly failed.", self.user, 
+                logger.error("Job %s/%s: %s exception recieved. Resource_Epilogue "
+                    "launcher has catastrophicaly failed.", self.user, 
                     self.jobid, str(e))
+                dbwriter.log_to_db(None, "resource_epilogue_failed", "job_prog", 
+                    JobProgMsg(self))
                 self._sm_start_job_epilogue_scripts(error=True)
                 return
+
         if None in self.resource_postscript_ids:
             count = 0
             for local_id in self.resource_postscript_ids:
@@ -1080,12 +1083,28 @@ class Job (StateMachine):
         else:
             logger.info("Job %s/%s: Resource epilogue scripts started.", 
                     self.jobid, self.user)
-            self._sm_state = new_state
+            self._sm_state = "Resource_Epilogue"
             return Job.__rc_success
 
 
     def _sm_start_job_epilogue_scripts(self, error=False, new_state = 'Job_Epilogue'):
-        scripts = get_cqm_config('job_postscripts', "").split(':')
+        '''Start the job epilogue scripts.
+
+        '''
+        
+        dbwriter.log_to_db(None, "job_epilogue_start", "job_prog", 
+                JobProgMsg(self))
+        scripts = get_cqm_config('job_postscripts', "").split(':') 
+        if scripts == ['']:
+            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue " 
+                    "state.  Skipping to .", self.jobid, self.user)
+            self._sm_state = 'Job_Epilogue'
+
+            dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", 
+                    JobProgMsg(self))
+            self._sm_state = 'Terminal'
+            return
+
         params = []
         for attr in self.fields:
             if not hasattr(self, attr):
@@ -1117,9 +1136,12 @@ class Job (StateMachine):
                     self.jobid, str(e))
                 # we have failed, but there is nothing left but the terminal 
                 # state anyway.  Things outside of cobalt need to catch this.
+
+                dbwriter.log_to_db(None, "job_epilogue_failed", 
+                    "job_prog", JobProgMsg(self))
                 self._sm_state = 'Terminal'
-                #self._sm_start_job_epilogue_scripts(error=True)
                 return
+
         if None in self.job_postscript_ids:
             count = 0
             for local_id in self.job_postscript_ids:
@@ -1133,7 +1155,6 @@ class Job (StateMachine):
             logger.info("Job %s/%s: Job epilogue scripts started.", 
                     self.jobid, self.user)
             self._sm_state = new_state
-            dbwriter.log_to_db(None, "job_epilogue_start", "job_prog", JobProgMsg(self))
             return Job.__rc_success
  
     def _sm_scripts_are_finished(self, type):  #Script Forking ***
@@ -1149,10 +1170,12 @@ class Job (StateMachine):
     def _sm_common_queued__hold(self, hold_state, args):
         '''place a hold on a job in the queued state'''
         if self.__admin_hold:
-            self._sm_raise_exception("admin hold set on a job in the '%s' state", self._sm_state)
+            self._sm_raise_exception("admin hold set on a job in the '%s' "
+                    "state", self._sm_state)
             return
         if self.__user_hold:
-            self._sm_raise_exception("user hold set on a job in the '%s' state", self._sm_state)
+            self._sm_raise_exception("user hold set on a job in the '%s' "
+                    "state", self._sm_state)
             return
 
         if args['type'] == 'admin':
@@ -1160,13 +1183,15 @@ class Job (StateMachine):
         elif args['type'] == 'user':
             self.__user_hold = True
         else:
-            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type "
+                    "must be 'admin' or 'user'" % (args['type'],))
             return
 
         if not self.__timers.has_key('hold'):
             self.__timers['hold'] = Timer()
         self.__timers['hold'].start()
-        self._sm_log_info("%s hold placed on job" % (args['type'],), cobalt_log = True)
+        self._sm_log_info("%s hold placed on job" % (args['type'],), 
+                cobalt_log = True)
         self._sm_state = hold_state
         
         
@@ -1341,8 +1366,14 @@ class Job (StateMachine):
         '''Launch our job prescripts.
 
         '''
+        dbwriter.log_to_db(None, "job_prologue_start", 
+                "job_prog", JobProgMsg(self))
         scripts = get_cqm_config('job_prescripts', '').split(':')
-        #FIXME: Put in handling for null-scripts
+        if scripts == ['']:
+            self._sm_state = "Job_Prologue"
+            #if no scripts, we can go straight to resource prologue.
+            self._sm_start_resource_prologue_scripts()
+            return
 
         params = []
         #job.fields are passed into the script as arguments.
@@ -1377,10 +1408,12 @@ class Job (StateMachine):
             #we just blew up badly, bail out
             logger.error(("Job %s/%s: %s exception recieved. Job prologue "
                 "launcher has catastrophicaly failed.", self.jobid, 
-                    self.user, str(e)))
-            traceback.print_exc()
+                self.user, str(e)))
+            dbwriter.log_to_db(None, "job_prologue_failed", 
+                "job_prog", JobProgMsg(self))
             self._sm_start_job_epilogue_scripts(error=True)
             return
+
         #Hey, we didn't blow up
         if None in self.job_prescript_ids:
             count = 0
@@ -1660,7 +1693,6 @@ class Job (StateMachine):
 
         Otherwise proceed to resource_prologue
 
-
         '''
         job_dicts = self._sm_common_script_progress(self.job_prescript_ids)
         
@@ -1671,12 +1703,15 @@ class Job (StateMachine):
             script_failed = False
             for job_dict in job_dicts:
                 if job_dict['exit_status'] != 0:
-                    self.log_script_failure(job_dict, "Job prescripts")
+                    self.log_script_failure(job_dict, "Job Prologue")
                     script_failed = True
             if script_failed:
+                
+                dbwriter.log_to_db(None, "job_prologue_failed", 
+                    "job_prog", JobProgMsg(self))
                 self._sm_start_job_epilogue_scripts(script_failed)
             else:
-                logger.info("Job %s/%s: Job prescripts completed "
+                logger.info("Job %s/%s: Job Prologue scripts completed "
                     "successfuly.", self.jobid, self.user)
                 self._sm_start_resource_prologue_scripts()
 
@@ -1686,6 +1721,9 @@ class Job (StateMachine):
         and/or setting them correctly for users to run on them.
 
         '''
+
+        dbwriter.log_to_db(None, "resource_prologue_start", 
+                "job_prog", JobProgMsg(self))
         scripts = get_cqm_config('resource_prescripts', '').split(':')
         if scripts == ['']:
             self._sm_state = "Resource_Prologue"
@@ -1726,7 +1764,10 @@ class Job (StateMachine):
             logger.error("Job %s/%s: %s exception recieved. Resource "
                     "prescript launcher has catastrophicaly failed.", 
                     self.user, self.jobid, str(e))
+            dbwriter.log_to_db(None, "resource_prologue_failed", 
+                        "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts(error=True)
+            return
         
         if None in self.resource_prescript_ids:
             count = 0
@@ -1762,14 +1803,16 @@ class Job (StateMachine):
         script_failed = False
         for job_dict in job_dicts:
             if job_dict['exit_status'] != 0:
-                self.log_script_failure(job_dict, "Resource prescripts")
+                self.log_script_failure(job_dict, "Resource prologue")
+                dbwriter.log_to_db(None, "resource_prologue_failed", 
+                        "job_prog", JobProgMsg(self))
                 script_failed = True
         if script_failed:
             self._sm_start_resource_epilogue_scripts(script_failed)
             return
         #and we're off and running.
         
-        logger.info("Job %s/%s: Resource prescripts completed "
+        logger.info("Job %s/%s: Resource Prologue scripts completed "
                 "successfuly.", self.jobid, self.user)
         #check for pending job-deletion.  If it is pending, don't run, just
         #drop to the resource_epilogue and proceed.
@@ -1810,9 +1853,8 @@ class Job (StateMachine):
             #starting the resource prologue scripts
             self._sm_log_error("execution failure; initiating job cleanup and "
                     "removal", cobalt_log = True)
-            dbwriter.log_to_db(None, "running_fail", "job_prog", JobProgMsg(self))
+            dbwriter.log_to_db(None, "running_failed", "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
-            # TODO: failed needs to be changed to running_fail
 
         
     def log_script_failure(self, job_dict, script_type):
@@ -2432,15 +2474,17 @@ class Job (StateMachine):
                     self.log_script_failure(job_dict, "Resource Epilogue")
                     script_failed = True
             if script_failed:
-                self._sm_start_job_epilogue_scripts(script_failed)
+                logger.error("Job %s/%s: Resource epilogue scripts failed! "
+                    "Continuing to Job Epilogue Scripts.", self.jobid, 
+                    self.user)
                 dbwriter.log_to_db(None, "resource_epilogue_failed", "job_prog",
                         JobProgMsg(self))
             else:
                 logger.info("Job %s/%s: Resource epilogue completed "
                     "successfuly.", self.jobid, self.user)
-                dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog",
-                        JobProgMsg(self))
-                self._sm_start_job_epilogue_scripts()
+            dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog",
+                    JobProgMsg(self))
+            self._sm_start_job_epilogue_scripts(script_failed)
 
     
     def _sm_job_epilogue__progress(self, args):
@@ -2458,15 +2502,22 @@ class Job (StateMachine):
         else:
             script_failed = False
             for job_dict in job_dicts:
-
                 if job_dict['exit_status'] != 0:
                     self.log_script_failure(job_dict, "Job epilogue")
                     script_failed = True
             #No matter what, we die now.
-            if not script_failed:
+            if script_failed:
+                logger.error("Job %s/%s: Job epilogue scripts failed! "
+                    "Continuing to Job Termination.", self.jobid, 
+                    self.user)
+                dbwriter.log_to_db(None, "job_epilogue_failed", "job_prog",
+                    JobProgMsg(self))
+            else:
                 logger.info("Job %s/%s: Job epilogue completed successfuly.",
                         self.jobid, self.user)
 
+        dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog",
+                JobProgMsg(self))
 
         # stop the execution timer and get the stats; 
         # NOTE: the execution timer may not be running if the job was preempted
