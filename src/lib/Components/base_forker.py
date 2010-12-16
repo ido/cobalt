@@ -105,135 +105,6 @@ class Child(object):
         self.from_dict(state)
 
 
-class job_preexec(object):
-    '''Class for handling pre-exec tasks for a job.
-    Initilaization takes a job-data object.  This allows id's to be set 
-    properly and other bookkeeping tasks to be correctly set.
-
-    '''
-
-    def __init__(self, data):
-
-        self.data = data
-
-    def __call__(self):
-        '''Set important bits for cobalt jobs and redirect files as needed.
-        
-        '''
-        data = self.data
-        label = "%s/%s" % (data["jobid"], data["id"])    
-        try:
-            # only root can call os.setgroups so we need to do this
-            # before calling os.setuid
-            try:
-                os.setgroups([])
-                os.setgroups(data["other_groups"])
-            except:
-                self.logger.error("task %s: failed to set supplementary groups",
-                        label, exc_info=True)
-            try:
-                os.setgid(data["primary_group"])
-                os.setuid(data["userid"])
-            except OSError:
-                self.logger.error("task %s: failed to change userid/groupid", 
-                        label)
-                os._exit(1)
-                       
-            if data["umask"] != None:
-                try:
-                    os.umask(data["umask"])
-                except:
-                    self.logger.error("task %s: failed to set umask to %s", 
-                            label, data["umask"])
-
-            for key, value in data["postfork_env"].iteritems():
-                os.environ[key] = value
-                    
-            atexit._atexit = []
-        
-            try:
-                stdin = open(data["stdin"] or "/dev/null", 'r')
-            except (IOError, OSError, TypeError), e:
-                self.logger.error("task %s: error opening stdin file %s: %s (stdin will be /dev/null)", label, data["stdin"], e)
-                stdin = open("/dev/null", 'r')
-            os.dup2(stdin.fileno(), 0)
-                
-            new_out = None
-            try:
-                stdout = open(data["stdout"], 'a')
-            except (IOError, OSError, TypeError), e:
-                self.logger.error("task %s: error opening stdout file %s: %s", 
-                        label, data["stdout"], e)
-                output_to_devnull = False
-                try:
-                    scratch_dir = get_forker_config("scratch_dir", None)
-                    if scratch_dir:
-                        new_out = os.path.join(scratch_dir, 
-                                "%s.output" % data["jobid"])
-                        self.logger.error("task %s: sending stdout to scratch_dir %s", label, new_out)
-                        stdout = open(new_out, 'a')
-                    else:
-                        self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stdout")
-                        output_to_devnull = True
-                except Exception, e:
-                    output_to_devnull = True
-                    self.logger.error("task %s: error opening stdout file %s: %s", label, new_out, e)
-                                          
-                if output_to_devnull:
-                    stdout = open("/dev/null", 'a')
-                    new_out = "/dev/null"
-                    self.logger.error("task %s: sending stdout to /dev/null",
-                            label)
-            os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-                
-            new_err = None
-            try:
-                stderr = open(data["stderr"], 'a')
-            except (IOError, OSError, TypeError), e:
-                self.logger.error("task %s: error opening stderr file %s: %s", label, data["stderr"], e)
-                error_to_devnull = False
-                try:
-                    scratch_dir = get_forker_config("scratch_dir", None)
-                    if scratch_dir:
-                        new_err = os.path.join(scratch_dir, 
-                                "%s.error" % data["jobid"])
-                        self.logger.error("task %s: sending stderr to scratch_dir %s", label, new_err)
-                        stderr = open(new_err, 'a')
-                    else:
-                        self.logger.error("set the scratch_dir option in the [forker] section of cobalt.conf to salvage stderr")
-                        error_to_devnull = True
-                except Exception, e: 
-                    error_to_devnull = True
-                    self.logger.error("task %s: error opening stderr file %s: %s", label, new_err, e)
-                                          
-                if error_to_devnull:
-                    stderr = open("/dev/null", 'a')
-                    new_err = "/dev/null"
-                    self.logger.error("task %s: sending stderr to /dev/null", label)
-            os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-                
-            cmd = data["cmd"]
-            try:
-                cobalt_log_file = open(data["cobalt_log_file"], "a")
-                if new_out:
-                    print >> cobalt_log_file, "failed to open %s" % data["stdout"]
-                    print >> cobalt_log_file, "stdout sent to %s\n" % new_out
-                if new_err:
-                    print >> cobalt_log_file, "failed to open %s" % data["stderr"]
-                    print >> cobalt_log_file, "stderr sent to %s\n" % new_err
-                print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
-                print >> cobalt_log_file, "called with environment:\n"
-                for key in os.environ:
-                    print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
-                print >> cobalt_log_file, "\n"
-                cobalt_log_file.close()
-            except:
-                self.logger.error("task %s: unable to open cobaltlog file %s", 
-                                 label, data["cobalt_log_file"])
-        except:
-            self.logger.error("task %s: Unhandled exception.")
-            raise
-            
 
 
 class BaseForker (Component):
@@ -279,7 +150,6 @@ class BaseForker (Component):
 
     def __setstate__(self, state):
         self.id_gen = IncrID()
-        print "setting idgen to ", state['next_task_id']
         self.id_gen.set(state['next_task_id'])
         if state.has_key('children'):
             self.children = state['children']
@@ -313,13 +183,13 @@ class BaseForker (Component):
 
         '''
 
-        print self.children
         try:
             child = self.children[local_id]
         except KeyError:
             self.logger.warning("Could not find task id %s.  Assuming this "
                     "process died in an unknown error-state.", local_id)
-            return self.UNKNOWN_ERROR 
+            return self.UNKNOWN_ERROR
+
         if child.exit_status != None:
             #we're already done
             return child.exit_status
@@ -378,8 +248,7 @@ class BaseForker (Component):
     child_cleanup = exposed(child_cleanup)
     
        
-    def fork(self, cmd, tag=None, label=None, app_env=None, 
-            data=None, preexec=None):
+    def fork(self, cmd, tag=None, label=None, app_env=None, preexec=None):
         """Fork a child task.  
         cmd -- A list of strings: the command and relevant arguments.
         tag -- a tag identifying the type of job, such as a script
@@ -473,16 +342,34 @@ class BaseForker (Component):
         only that tag, otherwise, return all running processes.
 
         """
+        #return only if we match the tag, the job is still running
+        #and we haven't lost the process due to a restart.
+
         ret = []
         if tag != None:
-            return [kid for kid in self.children.itervalues()
+            ret = [kid for kid in self.children.itervalues()
                     if (kid.exit_status is None) and
-                       (kid.tag == tag)]
+                       (kid.tag == tag) and
+                       (kid.old_child == False)]
+
+            keys = self.childeren.keys()
+            for key in keys:
+                if ((self.childeren[key].old_child == True) and
+                    (self.childeren[key].tag == tag)):
+                    del self.childeren[key]
         else:
             for kid in self.children.itervalues():
-                if kid.exit_status is None:
+                if ((kid.exit_status is None) and
+                    (kid.old_child == False)):
+
                     ret.append(kid.id)
-                
+   
+            #once reported, we can delete.
+            keys = self.childeren.keys()
+            for key in keys:
+                if self.childeren[key].old_child == True:
+                    del self.childeren[key]
+
         return ret
     active_list = exposed(active_list)
     

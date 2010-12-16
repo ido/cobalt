@@ -823,7 +823,7 @@ class BGSystem (BGBaseSystem):
     
     def _get_exit_status (self):
         try:
-            running = ComponentProxy("forker").active_list()
+            running = ComponentProxy("forker").active_list("process group")
         except:
             self.logger.error("failed to contact forker component for list of running jobs")
             return
