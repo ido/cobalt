@@ -125,12 +125,12 @@ class job_preexec(object):
         try:
             # only root can call os.setgroups so we need to do this
             # before calling os.setuid
-            #try:
-                #os.setgroups([])
-                #os.setgroups(data["other_groups"])
-            #except:
-               # self.logger.error("task %s: failed to set supplementary groups",
-               #         label, exc_info=True)
+            try:
+                os.setgroups([])
+                os.setgroups(data["other_groups"])
+            except:
+                self.logger.error("task %s: failed to set supplementary groups",
+                        label, exc_info=True)
             try:
                 os.setgid(data["primary_group"])
                 os.setuid(data["userid"])
@@ -403,7 +403,6 @@ class BaseForker (Component):
         child.cmd = cmd[0]
         child.args = cmd[1:]
 
-
         try:
             env = os.environ
             if app_env != None:
@@ -414,6 +413,8 @@ class BaseForker (Component):
                 child.proc = subprocess.Popen(cmd, env=env, stdout=PIPE, 
                         stderr=PIPE)
                 child.pid = child.proc.pid
+                self.logger.info("task %s: forked with pid %s", child.label, 
+                    child.pid)
             else:
                 #As noted above.  Do not send stdout/stderr to a pipe.  User 
                 #jobs routed to that would be bad.
@@ -441,7 +442,6 @@ class BaseForker (Component):
                     e.child_traceback)
             #It may be valuable to get the child traceback for debugging.
             raise
-
         #Well, this has blown up, There is no child, so nothing to return.
         return None
     fork = exposed(fork)

@@ -92,8 +92,6 @@ class ProcessGroup(Data):
         """Start the process group by forking to _mpirun()"""
         try:
             data = self.prefork()
-            #preexec_fn = job_preexec(data, self.logger)
-            print data['cmd']
             self.head_pid = ComponentProxy("forker").fork(data['cmd'], 
                 self.tag, "Job %s/%s" %(self.jobid, self.user), None, 
                 data)
