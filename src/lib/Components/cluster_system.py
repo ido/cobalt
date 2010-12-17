@@ -20,7 +20,7 @@ import Cobalt
 import Cobalt.Data
 import Cobalt.Util
 from Cobalt.Components.base import exposed, automatic, query, locking
-from Cobalt.Exceptions import ProcessGroupCreationError
+from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Proxy import ComponentProxy
@@ -90,7 +90,7 @@ class ClusterProcessGroup(ProcessGroup):
         ret["stderr"] = self.stderr
         
         cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
-        cmd = ("/usr/bin/ssh", "/usr/bin/ssh", rank0, cmd_string)
+        cmd = ("/usr/bin/ssh", rank0, cmd_string)
 
         
         ret["id"] = self.id
@@ -195,7 +195,6 @@ class ClusterSystem (ClusterBaseSystem):
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
             self.clean_nodes(process_group)
-            #thread.start_new_thread(self.clean_nodes, (process_group,))
         return process_groups
     wait_process_groups = locking(exposed(query(wait_process_groups)))
    
@@ -230,14 +229,14 @@ class ClusterSystem (ClusterBaseSystem):
         for host in pg.location:
             h = host.split(":")[0]
             try:
-                cleaning_id = launch_cleaning_process(h)
+                cleaning_id = self.launch_cleaning_process(h, pg, group_name)
                 #cmd = ["/usr/bin/ssh", h, pg.config.get("epilogue"), 
                 #        str(pg.jobid), pg.user, group_name]
                 #cleaning_id = ComponentProxy(cmd, "system epilogue", 
                 #        "Job %s/%s" % (pg.jobid, pg.user))
                 #p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), str(pg.jobid), pg.user, group_name], 
                 #                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                p.host = h
+                #p.host = h
                 pg.host_count += 1
                 #self.cleaning_processes.append({"process":p, "process_group":pg, "start_time":time.time(), "completed":False})
                 self.cleaning_processes.append({"host": h, 
@@ -254,14 +253,14 @@ class ClusterSystem (ClusterBaseSystem):
                 self.down_nodes.add(h)
                 self.running_nodes.discard(h)
     
-    def launch_cleaning_process(self, h):
+    def launch_cleaning_process(self, h, pg, group_name):
         '''Ping the forker to launch the cleaning process.
 
         '''
         cmd = ["/usr/bin/ssh", h, pg.config.get("epilogue"), 
                         str(pg.jobid), pg.user, group_name]
-        return ComponentProxy(cmd, "system epilogue", "Job %s/%s" % (pg.jobid,
-            pg.user))
+        return ComponentProxy("forker").fork(cmd, "system epilogue", 
+                "Job %s/%s" % (pg.jobid, pg.user))
 
     
     def retry_cleaning_scripts(self):
@@ -269,11 +268,23 @@ class ClusterSystem (ClusterBaseSystem):
         with the forker component.  Reset start-time to when script starts.
 
         '''
+
         for cleaning_process in self.cleaning_processes:
             if cleaning_process['retry'] == True:
+                pg = cleaning_process['process_group']
+                
                 try:
-                    cleaning_id = launch_cleaning_process(
-                            cleaning_process['host'])
+                    tmp_data = pwd.getpwnam(pg.user)
+                    groupid = tmp_data.pw_gid
+                    group_name = grp.getgrgid(groupid)[0]
+                except KeyError:
+                    group_name = ""
+                    self.logger.error("Job %s/%s: Process Group %s: unable to"
+                            " determine group name for epilogue" % (pg.user, 
+                                pg.jobid, pg.id))
+                try:
+                    cleaning_id = self.launch_cleaning_process(
+                            cleaning_process['host'], pg, group_name)
                     self.cleaning_processes.append({"host": h, 
                         "cleaning_id": cleaning_id,
                         "process_group":pg, "start_time":time.time(), 
@@ -318,6 +329,8 @@ class ClusterSystem (ClusterBaseSystem):
             try:
                 exit_status = ComponentProxy("forker").child_completed(
                         cleaning_process['cleaning_id'])
+                ComponentProxy("forker").child_cleanup(
+                        [cleaning_process['cleaning_id']])
 
             except ComponentLookupError:
                 self.logger.error("Job %s/%s: Error contacting forker "
@@ -339,7 +352,7 @@ class ClusterSystem (ClusterBaseSystem):
                         forker.signal(cleaning_process['cleaning_id'], "SIGINT")
                         child_output = forker.get_child_data(
                             cleaning_process['cleaning_id'])
-                        forker.child_cleanup(cleaning_process['cleaning_id'])
+                        forker.child_cleanup([cleaning_process['cleaning_id']])
                             
                         #mark as dirty and arrange to mark down.
                         self.down_nodes.add(cleaning_process['host'])
