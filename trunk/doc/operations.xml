@@ -1,0 +1,358 @@
+<chapter>
+  <title>Component Operations</title>
+  
+  <para>
+    During normal operations, a variety of messages are produced. This
+    allows for most state to be tracked through logs. All messages are
+    logged to syslog facility LOG_LOCAL0, so ensure that these
+    messages are captured. 
+  </para>
+
+  <section>
+    <title>Job Execution</title>
+
+    <para>
+      Job execution is the most common operation in cobalt. It is a
+      procedure that requires several components to work in
+      concert. All jobs go through the same based steps:
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>Initial Job Queueing</term>
+	<listitem>
+	  <para>
+	    A request is sent to the queue manager describing a
+	    new job. Aspects of this request are checked both on the
+	    server side, and in <filename>cqsub</filename>, for better
+	    user error messages. <!-- Whenever a job is created or changes -->
+<!-- 	    state, appropriate events are emitted. These events can be -->
+<!-- 	    seen using the <filename>eminfo.py</filename> command. Any -->
+<!-- 	    client that has subscribed to this sort of event will -->
+<!-- 	    receive a copy. -->
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Scheduling</term>
+	<listitem>
+	  <para>
+	    The scheduler periodically pools the queue manager for new
+	    jobs, and can also receive events as an asynchronous
+	    notification of queue activity. At these times, it
+	    connects to the queue manager and fetches information
+	    about current jobs. This process results in a set of idle
+	    partitions and idle jobs. If both sets are non-empty, then
+	    the scheduler attempts to place idle jobs on idle
+	    partitions. This cycle culmunates in the execution of
+	    suitable jobs, if they can be scheduled.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Execution</term>
+	<listitem>
+	  <para>
+	    Once the queue manager gets a job-run command from the
+	    queue manager, it can start the job on those specified
+	    resources. At this point, the job state machine is
+	    activated. This state machine can contain different steps
+	    depending on the underlying architecture and which queue
+	    manager features are enabled. For example, enabling
+	    allocation management functionality causes jobs to run
+	    several extra job steps before completion. These extra
+	    steps will not be discussed here; our main focus is
+	    generic job execution.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>Process Group Execution</term>
+	<listitem>
+	  <para>
+	    The queueing system spawns some number of parallel
+	    processes for each job. The execution, management, and
+	    cleanup of these processes is handled by the process
+	    manager. It, like the queue manager, emits a number
+	    of events as process groups execute.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Process Group Cleanup</term>
+	<listitem>
+	  <para>
+	    Parallel process management semantics are not unlike unix
+	    process semantics. Processes can be started, signalled,
+	    killed, and can exit of their own accord. Similar to unix
+	    processes, process groups must be reaped once they have
+	    finished execution. At reap time, stdio and return codes
+	    are available to the "parent" component.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Step Execution</term>
+	<listitem>
+	  <para>
+	    As the job executes, some number of process groups will be
+	    executed. These will result in a number of cycles of the
+	    previous two steps. Note that process groups can be serial
+	    as well, so steps like job prologue and epilogue are
+	    executed in an identical fashion.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Job Completion</term>
+	<listitem>
+	  <para>
+	    Once all steps have completed, the job is
+	    finished. Cleanup consists of logging a usage summary, job
+	    deletion from the queue, and event emission. At this
+	    point, the job no longer exists.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Scheduler Cleanup</term>
+	<listitem>
+	  <para>
+	    When the job no longer exists in the queue manager, the
+	    scheduler flags it as exited and frees its execution
+	    location. It then attempts to schedule idle jobs in this
+	    location. 
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </section>
+
+  <section>
+    <title>Job Log Trace</title>
+    
+    <para>
+      The following is a set of example logs pertaining to a single
+      job.
+    </para>
+
+    <programlisting>
+Jun 29 20:27:14 sn1 BGSched: Found new job 4719
+Jun 29 20:27:14 sn1 BGSched: Scheduling job 4719 on partition R000_J108-32
+Jun 29 20:27:14 sn1 cqm: Running job 4719 on R000_J108-32
+Jun 29 20:27:14 sn1 cqm: running step SetBGKernel for job 4719
+Jun 29 20:27:14 sn1 cqm: running step RunBGUserJob for job 4719
+Jun 29 20:27:14 sn1 bgpm: ProcessGroup 84 Started on partition R000_J108-32. pid: 29368
+Jun 29 20:27:16 sn1 bgpm: Running /bgl/BlueLight/ppcfloor/bglsys/bin/mpirun mpirun 
+  -np 32 -partition R000_J108-32 -mode co 
+  -cwd /bgl/home1/adiga/alumina/surface/slab_30/1x1/300K/zerok 
+  -exe /home/adiga/alumina/surface/slab_30/1x1/300K/zerok/DLPOLY.X
+Jun 29 21:05:28 sn1 bgpm: ProcessGroup 84 Finshed. pid 29368
+Jun 29 21:05:28 sn1 cqm: user completed for job 4719
+Jun 29 21:05:28 sn1 cqm: running step FinishUserPgrp for job 4719
+Jun 29 21:05:29 sn1 bgpm: Got wait-process-group from 10.0.0.1
+Jun 29 21:05:29 sn1 cqm: running step Finish for job 4719
+Jun 29 21:05:29 sn1 cqm: Job 4719/adiga on 32 nodes done. queue:9.18s user:2294.08s 
+Jun 29 21:05:35 sn1 BGSched: Job 4719 gone from qm
+Jun 29 21:05:35 sn1 BGSched: Freeing partition R000_J108-32
+Jun 29 21:28:37 sn1 BGSched: Found new job 4720
+    </programlisting>
+    
+    <para>
+      In the event that this job ran out of time or was cqdel'ed,
+      additional log messages would appear to that effect. 
+    </para>
+
+</section>
+
+<section>
+    <title>Job Accounting Messages</title>
+
+    <para>
+      Job accounting log messages are logged to files in the directory
+      specified by <filename>log_dir</filename> in the [cqm] section
+      of the config file. Basic messages are logged by the
+      queue-manager for job queuing (Q), execution (S), and exit
+      (E). Additional messages include the location where the job is
+      running and the exit code.
+
+	<programlisting>
+Q;jobid;user;queue
+S;jobid;user;job name;nodes;processors;mode;walltime
+Job jobid/user/Q:queue: Running job on location
+E;jobid;user;walltime
+Job jobid/user on nodes nodes done. queue:[queuetime]s
+  user:[walltime]s  exit:exitcode
+	</programlisting>
+    </para>
+    <para>
+      Example:
+      <programlisting>
+2007-06-06 12:43:50 Q;59;bob;default
+2007-06-06 12:44:56 S;59;bob;N/A;32;32;co;20
+2007-06-06 12:44:56 Job 59/bob/4539/Q:default: Running job on 32_R000_J108_N3
+2007-06-06 12:44:56 Job 59/bob using kernel default
+2007-06-06 12:45:08 E;59;bob;14
+2007-06-06 12:45:09 Job 59/bob on 32 nodes done. queue:65.88s user:11.98s  exit:0
+      </programlisting>
+
+    </para>
+
+    <para>
+      More details can be found in the log messages from the
+      scheduler, process-manager, and queue-manager. The scheduler
+      logs where the job is executing. The process-manager (bgpm) logs
+      the program executable and arguments, as well as the exit code
+      of the program. The queue-manager also logs statistics about the
+      job execution, such as the kernel used, the actual run time and
+      the queue wait time.  
+    </para>
+
+    <para>
+      Example:
+      <programlisting>
+Dec 15 17:29:39 localhost bgsched[4760]: Job 25537/bob: Scheduling
+  job 25537 on partition 32wayN0
+Dec 15 17:29:39 localhost cqm[4152]: Job 25537/bob using kernel default
+Dec 15 17:29:39 localhost bgpm[4124]: Job 25537/bob: ProcessGroup 1
+  Started on partition 32wayN0. pid: 4220
+Dec 15 17:29:39 localhost bgpm[4220]: Job 25537/bob: Running
+  /bgl/BlueLight/ppcfloor/bglsys/bin/mpirun mpirun -np 32 -partition 
+  32wayN0 -mode co -cwd /home/bob/tests -exe /home/bob/tests/ring-hello
+Dec 15 17:35:49 localhost bgpm[4124]: Job 25537/bob: ProcessGroup 1
+  Finshed with exit code 0. pid 4220
+Dec 15 17:35:59 localhost cqm[4152]: Job 25537/bob on 32 nodes
+  done. queue:2.99s user:10.18s
+      </programlisting>
+
+    </para>
+</section>
+
+<section>
+    <title>Data Persistence</title>
+    
+    <para>
+      Each of these components must store persistent data, for obvious
+      reasons. Each of the components present in cobalt store data
+      using a common mechanism. These functions are implemented in
+      common code. Each component has some data that needs to be
+      persistent. Periodically, each component marshalls this data
+      down to a text stream (using Python's cPickle module), and saves
+      this data in a file in the directory
+      <filename>/var/spool/cobalt/</filename>. The filenames in this
+      directory correspond to the component implementation name. This
+      is the name that appears in syslog log messages (ie cqm, bgpm,
+      BGSched). 
+    </para>
+
+<!--     <para> -->
+<!--       This data can be manipulated from a python interpreter using the -->
+<!--       <filename>cddbg.py</filename>. This should not be attempted -->
+<!--       unless you really know what you are doing. -->
+<!--     </para> -->
+  </section>
+  <section>
+    <title>Resource Manager Operations</title>
+
+    <para>This section describes basic operations of the Cobalt
+    resource manager in terms of initial setup and long term
+    operations. First we will describe how job flow through the
+    system, and then we will describe how administrators can shape
+    this process.</para>
+
+    <para>
+      Internally, the Cobalt queue manager (cqm) stores a set of
+      queues, each of which is associated with some number of
+      jobs. Each queue has a set (potentially empty) of submission
+      restrictions. These restrictions can limit a queue to jobs of
+      particular sizes, walltimes, or users. At submission time, jobs
+      are verified against all restrictions. If a job fails to pass
+      any of these, it is rejected, and the user is presented with an
+      error message describing its failure. Also, queues have a state
+      that is used to govern its behavior. The state "running" allows
+      the submission and execution of jobs. The state "draining"
+      allows jobs to execute, but prevents submission of new jobs. The
+      state "stopped" allows jobs to be submitted, but does not allow
+      job execution. Finally, the state "dead" prevents both job
+      submission and execution.
+    </para>
+
+    <para>When setting up new Cobalt instance, the default queue must
+    be created. This can be done with the command: </para>
+    <programlisting>
+      $ cqadm.py --addq default
+    </programlisting>
+
+    <para>
+      Restrictions can be added also using cqadm. Once the queues are
+      enabled, users can submit jobs.
+    </para>
+      
+    <para>
+      Job execution is controlled by the scheduler. It makes
+      scheduling decisions based on several criteria.
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>Queue Status</term>
+	<listitem>
+	  <para>The scheduler will only execute jobs from queues that
+	    are in the "running" or "draining" states</para>
+
+	  <para>Queue status can be toggled using the cqadm command.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Partition Status</term>
+	<listitem>
+	  <para>Partitions have two flags that govern their
+	  use. "Active" partitions are functional; that is, they
+	  work. This means that they (and all containing partitions
+	  that are also active) work properly. If a partition is
+	  "inactive", then it and all larger containing partitions
+	  will not be used.</para>
+
+	  <para>Partitions also have a "scheduled" flag. This allows
+	  administrators to control if a partition should have jobs
+	  scheduled on it. Typically, administrators will frequently
+	  toggle the "scheduled" flag, to govern the available machine
+	  topology, while only changing the "active" flag during
+	  system faults.</para>
+
+	  <para>Both partition status flags can be toggled using the
+	  partadm command.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Partition Queue Setting</term>
+	<listitem>
+	  <para>
+	    Partitions are made available to one or more queues at any
+	    given time. Only jobs from the specified queues can be run on a
+	    partition.
+	  </para>
+
+	  <para>Partition queue settings can be set using the partadm command.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Reservations</term>
+	<listitem>
+	  <para>
+	    Reservations each have a list of associated users,
+	    partitions, and an active period. During this period, only
+	    users listed on a reservation can run on reserved
+	    resources. If multiple reservations are active
+	    simultaneously, then a user must be listed on all
+	    reservations in order to consume resources</para>
+	  <para>Reservations can be set, displayed and released using
+	  the commands setres, showres, and releaseres, respectively.</para>
+	</listitem>
+
+      </varlistentry>
+    </variablelist>
+
+  </section>
+</chapter>
