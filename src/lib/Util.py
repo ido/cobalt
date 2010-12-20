@@ -684,7 +684,11 @@ def _pickle_method(method):
     return _unpickle_method, (func_name, func_cls, obj, cls)
 
 def _unpickle_method(func_name, func_cls, obj, cls):
-    func = func_cls.__dict__[func_name]
+    try:
+        func = func_cls.__dict__[func_name]
+    except KeyError:
+        #no longer exists.
+        return None
     return func.__get__(obj, cls)
 
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
