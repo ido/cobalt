@@ -585,7 +585,7 @@ class DatabaseWriter(object):
       for fieldName in job_prog_msg.__dict__.keys():
          if fieldName in ['envs', 'location',
                           'priority_core_hours','satisfied_dependencies',
-                          'dep_frac']:
+                          'dep_frac', 'resid']:
             updateAtRun[fieldName] = job_prog_msg.__getattribute__(fieldName)
          else:
             if fieldName not in ['jobid', 'cobalt_state']:
@@ -605,6 +605,9 @@ class DatabaseWriter(object):
       job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
       #These are updated in JOB_DATA at run-start.
       if len(updateAtRun) > 0:
+         fieldValue = updateAtRun.pop('resid',None)
+         if fieldValue:
+             job_data_record.v.RESID = int(fieldValue)
          fieldValue = updateAtRun.pop('envs', None)
          if fieldValue:
             job_data_record.v.ENVS = str(fieldValue)

@@ -27,7 +27,9 @@ class ReportObject(object):
         return
 
     def __str__(self):
-        return self.reason + self.exec_id + self.item_type + self.item.__repr__()
+        return (self.reason + self.exec_id + self.item_type + 
+                self.item.__repr__())
+
     def encode(self): #encode into a JSON object, return a string rep of it.       
         return json.dumps(self, cls=ReportObjectEncoder)
 

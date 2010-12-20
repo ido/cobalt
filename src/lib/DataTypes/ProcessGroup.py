@@ -13,8 +13,7 @@ from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError
 from Cobalt.Proxy import ComponentProxy
 
-
-
+                                          
 class ProcessGroup(Data):
     """A job that runs on the system
     
@@ -93,9 +92,12 @@ class ProcessGroup(Data):
         """Start the process group by forking to _mpirun()"""
         try:
             data = self.prefork()
-            self.head_pid = ComponentProxy("forker").fork(data)
+            self.head_pid = ComponentProxy("forker").fork(data['cmd'], 
+                self.tag, "Job %s/%s" %(self.jobid, self.user), None, 
+                data)
         except:
-            self.logger.error("problem forking: pg %s did not find a child pid", self.id)
+            self.logger.error("problem forking: pg %s did not find a "
+                "child pid", self.id)
 
     def prefork (self):
         """This method is called before the fork, while it's still safe to call 

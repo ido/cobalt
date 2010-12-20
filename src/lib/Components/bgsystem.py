@@ -89,6 +89,7 @@ class BGProcessGroup(ProcessGroup):
         except IndexError:
             raise ProcessGroupCreationError("no location")
 
+
         kerneloptions = self.kerneloptions
 
         # export subset of MPIRUN_* variables to mpirun's environment
@@ -112,7 +113,7 @@ class BGProcessGroup(ProcessGroup):
         ret["stdout"] = self.stdout
         ret["stderr"] = self.stderr
         
-        cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
+        cmd = (self.config['mpirun'], 
               '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
                '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
                '-exe', self.executable)
@@ -134,7 +135,7 @@ class BGProcessGroup(ProcessGroup):
         ret["jobid"] = self.jobid
         ret["cobalt_log_file"] = self.cobalt_log_file
         ret["cmd" ] = cmd
-
+        
         return ret
 
     
@@ -823,7 +824,7 @@ class BGSystem (BGBaseSystem):
     
     def _get_exit_status (self):
         try:
-            running = ComponentProxy("forker").active_list()
+            running = ComponentProxy("forker").active_list("process group")
         except:
             self.logger.error("failed to contact forker component for list of running jobs")
             return

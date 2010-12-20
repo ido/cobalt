@@ -488,3 +488,7 @@ class JobSummaryData(AccessOnlyDAO):
                     "and entry_time <= '%s'" % end ]
         print " ".join(SQL)
         return [int(i) for i in self.db.getList(" ".join(SQL))]
+
+    def find_event(self, jobid, event):
+        
+        pass

@@ -74,4 +74,12 @@ if __name__  == '__main__':
         if wait_time not in ["Error", "Job still in hold", "Undefined"]:
             output_tuples.append((jobid, tqt_time, wait_time))
        # print jobid, wait_time
-    print "\n".join(["\t".join([str(j) for j in item]) for item in output_tuples])
+    print "\t".join([str(j) for j in [jobid, tqt_time, wait_time]]
+
+    sum_tot_queued = sum([t[1] for t in output_tuples])
+    sum_elig_queued = sum([t[2] for t in output_tuples])
+
+    
+    print "Average wait times:"
+    print "Mean Total Wait: ", (float(sum_tot_queued)/float(len(output_tuples)))
+    print "Mean Eligible Wait: ", (float(sum_elig_queued)/float(len(output_tuples)))
