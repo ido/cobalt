@@ -246,6 +246,10 @@ class Signal_Info (object):
 
     pending = property(__get_pending, __set_pending)
 
+class RunScriptsThread(object):
+    
+    def __init__(self):
+        pass
 
 class Job (StateMachine):
     """
@@ -694,7 +698,14 @@ class Job (StateMachine):
             logger.info("old job missing resid")
             self.resid = None
 
-        
+        if not state.has_key("job_prologue_ids"):
+            self.job_prologue_ids = None
+        if not state.has_key("job_epilogue_ids"):
+            self.job_epilogue_ids = None
+        if not state.has_key("resource_prologue_ids"):
+            self.resource_prologue_ids = None
+        if not state.has_key("resource_epilogue_ids"):
+            self.resource_epilogue_ids = None
             
         self.initializing = False
 
