@@ -408,10 +408,13 @@ class BaseForker (Component):
             if app_env != None:
                 for key in app_env:
                     env[key] = app_env[key]
+            
+            command = [cmd[0]]
+            command.extend(cmd)
 
             if preexec_data == None:
-                child.proc = subprocess.Popen(cmd, env=env, stdout=PIPE, 
-                        stderr=PIPE)
+                child.proc = subprocess.Popen(command, shell=True, env=env, 
+                        stdout=PIPE, stderr=PIPE)
                 child.pid = child.proc.pid
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
@@ -419,7 +422,8 @@ class BaseForker (Component):
                 #As noted above.  Do not send stdout/stderr to a pipe.  User 
                 #jobs routed to that would be bad.
                 preexec_fn = job_preexec(preexec_data)
-                child.proc = subprocess.Popen(cmd, env=env, preexec_fn=preexec_fn)
+                child.proc = subprocess.Popen(cmd, shell=True, env=env, 
+                        preexec_fn=preexec_fn)
                 child.pid = child.proc.pid
                 child.ignore_output = True
                 self.logger.info("task %s: forked with pid %s", child.label, 

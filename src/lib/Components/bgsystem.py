@@ -113,7 +113,7 @@ class BGProcessGroup(ProcessGroup):
         ret["stdout"] = self.stdout
         ret["stderr"] = self.stderr
         
-        cmd = (self.config['mpirun'], 
+        cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']), 
               '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
                '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
                '-exe', self.executable)
