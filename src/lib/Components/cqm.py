@@ -531,7 +531,7 @@ class Job (StateMachine):
         self.lienID = spec.get("lienID")
         self.stagein = spec.get("stagein") #does nothing
         self.stageout = spec.get("stageout") #like ze goggles, it does nothing
-        self.reservation = spec.get("reservation", False) #defunct?
+        self.reservation = spec.get("reservation", False) #appears to be defunct.
         self.host = spec.get("host")
         self.port = spec.get("port")
         self.url = spec.get("url")
@@ -553,8 +553,7 @@ class Job (StateMachine):
         self.errorpath = spec.get("errorpath")
         self.cobalt_log_file = spec.get("cobalt_log_file")
         if not self.cobalt_log_file:
-            self.cobalt_log_file = "%s/%s.cobaltlog" % (self.outputdir, 
-                    self.jobid)
+            self.cobalt_log_file = "%s/%s.cobaltlog" % (self.outputdir, self.jobid)
         else:
             t = string.Template(self.cobalt_log_file)
             self.cobalt_log_file = t.safe_substitute(jobid=self.jobid)
@@ -568,8 +567,7 @@ class Job (StateMachine):
         self.all_dependencies = spec.get("all_dependencies")
         if self.all_dependencies:
             self.all_dependencies = self.all_dependencies.split(":")
-            logger.info("Job %s/%s: dependencies set to %s", self.jobid, 
-                    self.user, ":".join(self.all_dependencies))
+            logger.info("Job %s/%s: dependencies set to %s", self.jobid, self.user, ":".join(self.all_dependencies))
         else:
             self.all_dependencies = []
         self.satisfied_dependencies = []
@@ -716,8 +714,7 @@ class Job (StateMachine):
         # BRT: this routine should probably check if the task could not be 
         #signaled because it was no longer running
         try:
-            self._sm_log_info("instructing the system component to send signal"
-                    " %s" % (self.__signaling_info.signal,))
+            self._sm_log_info("instructing the system component to send signal %s" % (self.__signaling_info.signal,))
             pgroup = ComponentProxy("system").signal_process_groups([{'id':self.taskid}], self.__signaling_info.signal)
         except (ComponentLookupError, xmlrpclib.Fault), e:
             #
@@ -730,18 +727,15 @@ class Job (StateMachine):
             # loop broken.
             #
             if retry:
-                self._sm_log_warn("failed to communicate with the system "
-                        "component (%s); retry pending" % (e,))
+                self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
                 return Job.__rc_retry
             else:
-                self._sm_log_warn("failed to communicate with the system "
-                        "component (%s); manual cleanup may be required" % \
-                        (e,))
+                self._sm_log_warn("failed to communicate with the system component (%s); manual cleanup may be required" % \
+                    (e,))
                 return Job.__rc_xmlrpc
         except:
             traceback.print_exc()
-            self._sm_raise_exception("unexpected error from the system "
-                    "component; manual cleanup may be required")
+            self._sm_raise_exception("unexpected error from the system component; manual cleanup may be required")
             return Job.__rc_unknown
 
         self.__signaled_info = self.__signaling_info
@@ -753,8 +747,7 @@ class Job (StateMachine):
         if self.preemptable and self.maxtasktime < walltime:
             walltime = self.maxtasktime
         try:
-            self._sm_log_info("instructing the system component to begin "
-                    "executing the task")
+            self._sm_log_info("instructing the system component to begin executing the task")
             pgroup = ComponentProxy("system").add_process_groups([{
                 'id':"*",
                 'jobid':self.jobid,
@@ -787,12 +780,10 @@ class Job (StateMachine):
                         cobalt_log = True)
                 return Job.__rc_pg_create
         except (ComponentLookupError, xmlrpclib.Fault), e:
-            self._sm_log_warn("failed to execute the task (%s); retry pending"\
-                    % (e,))
+            self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            self._sm_raise_exception("unexpected error returned from the "
-                    "system component when attempting to add task",
+            self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
 
@@ -805,91 +796,66 @@ class Job (StateMachine):
             if result:
                 self.exit_status = result[0].get('exit_status')
             else:
-                self._sm_log_warn("system component was unable to locate the "
-                        "task; exit status not obtained")
+                self._sm_log_warn("system component was unable to locate the task; exit status not obtained")
         except (ComponentLookupError, xmlrpclib.Fault), e:
-            self._sm_log_warn("failed to communicate with the system component "
-                    "(%s); retry pending" % (e,))
+            self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            self._sm_raise_exception("unexpected error returned from the system"
-            " component while finalizing task")
+            self._sm_raise_exception("unexpected error returned from the system component while finalizing task")
             return Job.__rc_unknown
 
         self.taskid = None
         return Job.__rc_success
 
     def __release_resources(self):
-        '''release computing resources that may still be reserved by the job
-        
-        '''
+        '''release computing resources that may still be reserved by the job'''
         try:
-            ComponentProxy("system").reserve_resources_until(self.location, 
-                    None, self.jobid)
+            ComponentProxy("system").reserve_resources_until(self.location, None, self.jobid)
             return Job.__rc_success
         except (ComponentLookupError, xmlrpclib.Fault), e:
-            self._sm_log_warn("failed to communicate with the system component "
-                    "(%s); retry pending" % (e,))
+            self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            self._sm_raise_exception("unexpected error returned from the system"
-            " component while releasing resources")
+            self._sm_raise_exception("unexpected error returned from the system component while releasing resources")
             return Job.__rc_unknown
 
     def _sm_log_debug(self, msg, cobalt_log = False):
-        '''write an informational message to the CQM log that includes state 
-        machine status
-        
-        '''
+        '''write an informational message to the CQM log that includes state machine status'''
         if self._sm_event != None:
             event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        logger.debug("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, 
-            self._sm_state, event_msg, msg))
+        logger.debug("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg))
         if cobalt_log:
             self.__write_cobalt_log("Debug: %s" % (msg,))
 
     def _sm_log_info(self, msg, cobalt_log = False):
-        '''write an informational message to the CQM log that includes state 
-        machine status
-        
-        '''
+        '''write an informational message to the CQM log that includes state machine status'''
         if self._sm_event != None:
             event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        logger.info("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, 
-            self._sm_state, event_msg, msg))
+        logger.info("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg))
         if cobalt_log:
             self.__write_cobalt_log("Info: %s" % (msg,))
 
     def _sm_log_warn(self, msg, cobalt_log = False):
-        '''write a warning message to the CQM log that includes state machine 
-        status
-        
-        '''
+        '''write a warning message to the CQM log that includes state machine status'''
         if self._sm_event != None:
             event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        logger.warning("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, 
-            self._sm_state, event_msg, msg))
+        logger.warning("Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg))
         if cobalt_log:
             self.__write_cobalt_log("Warning: %s" % (msg,))
 
-    def _sm_log_error(self, msg, tb_flag = True, skip_tb_entries = 1, 
-            cobalt_log = False):
-        '''write an error message to the CQM log that includes state machine 
-        status and a stack trace
-        
-        '''
+    def _sm_log_error(self, msg, tb_flag = True, skip_tb_entries = 1, cobalt_log = False):
+        '''write an error message to the CQM log that includes state machine status and a stack trace'''
         if self._sm_event != None:
             event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, 
-                self._sm_state, event_msg, msg)
+        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg)
         if tb_flag:
             stack = traceback.format_stack()
             last_tb_entry = len(stack) - skip_tb_entries
@@ -900,16 +866,12 @@ class Job (StateMachine):
             self.__write_cobalt_log("ERROR: %s" % (msg,))
 
     def _sm_log_exception(self, msg, cobalt_log = False):
-        '''write an error message to the CQM log that includes state machine 
-        status and a stack trace
-        
-        '''
+        '''write an error message to the CQM log that includes state machine status and a stack trace'''
         if self._sm_event != None:
             event_msg = "; Event=%s" % (self._sm_event,)
         else:
             event_msg = ""
-        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, 
-                self._sm_state, event_msg, msg)
+        full_msg = "Job %s/%s: State=%s%s; %s" % (self.jobid, self.user, self._sm_state, event_msg, msg)
         (exc_cls, exc, tb) = sys.exc_info()
         exc_str = traceback.format_exception_only(exc_cls, exc)[0]
         full_msg += "\n    Exception: %s" % (exc_str)
@@ -922,8 +884,7 @@ class Job (StateMachine):
 
     def _sm_raise_exception(self, msg, cobalt_log = False):
         self._sm_log_error(msg, skip_tb_entries = 2, cobalt_log = cobalt_log)
-        raise JobProcessingError(msg, self.jobid, self.user, self.state, 
-                self._sm_state, self._sm_event)
+        raise JobProcessingError(msg, self.jobid, self.user, self.state, self._sm_state, self._sm_event)
 
     def _sm_log_user_delete(self, signame, user = None, pending = False):
         if user != None:
@@ -934,40 +895,29 @@ class Job (StateMachine):
             pmsg = " now pending"
         else:
             pmsg = ""
-        self._sm_log_info("user delete requested with signal %s%s%s" % (signame,
-            umsg, pmsg), cobalt_log = True)
+        self._sm_log_info("user delete requested with signal %s%s%s" % (signame, umsg, pmsg), cobalt_log = True)
 
-    def _sm_signaling_info_set_user_delete(self, signame = Signal_Map.terminate,
-            user = None, pending = False):
-        self.__signaling_info = Signal_Info(Signal_Info.Reason.delete, 
-                signame, user, pending)
+    def _sm_signaling_info_set_user_delete(self, signame = Signal_Map.terminate, user = None, pending = False):
+        self.__signaling_info = Signal_Info(Signal_Info.Reason.delete, signame, user, pending)
         self._sm_log_user_delete(signame, user, pending)
 
     def _sm_check_job_timers(self):
         if self.__max_job_timer.has_expired:
             # if the job execution time has exceeded the wallclock time, then inform the task that it must terminate
-            self._sm_log_info("maximum execution time exceeded; initiating job"
-                    "terminiation", cobalt_log = True)
+            self._sm_log_info("maximum execution time exceeded; initiating job terminiation", cobalt_log = True)
             accounting_logger.info(accounting.abort(self.jobid))
-            return Signal_Info(Signal_Info.Reason.time_limit, 
-                    Signal_Map.terminate)
+            return Signal_Info(Signal_Info.Reason.time_limit, Signal_Map.terminate)
         else:
             return None
 
     def _sm_kill_task(self):
-        '''initiate the user deletion of a task by signaling it and then 
-        changing to the appropriate state
-        
-        '''
-        # BRT: this routine should probably check if the task could not be 
-        # signaled because it was no longer running
+        '''initiate the user deletion of a task by signaling it and then changing to the appropriate state'''
+        # BRT: this routine should probably check if the task could not be signaled because it was no longer running
         rc = self.__task_signal()
         if rc == Job.__rc_success:
-            # start the signal timer so that the state machine knows when to 
-            # escalate to sending a force kill signal
+            # start the signal timer so that the state machine knows when to escalate to sending a force kill signal
             if self.__signaled_info.signal != Signal_Map.force_kill:
-                self._sm_log_debug("setting force kill signal timer to %d "
-                        "seconds" % (self.force_kill_delay * 60,))
+                self._sm_log_debug("setting force kill signal timer to %d seconds" % (self.force_kill_delay * 60,))
                 self.__signal_timer = Timer(self.force_kill_delay * 60)
             else:
                 self.__signal_timer = Timer()
@@ -979,26 +929,19 @@ class Job (StateMachine):
             return False
 
     def _sm_check_preempt_timers(self):
-        '''if maximum resource timer has expired, or a preemption is pending
-        and the minimum resource time has been exceeded, then inform the task 
-        it's time to checkpoint and terminate
-        
+        '''
+        if maximum resource timer has expired, or a preemption is pending and the minimum resource time has been exceeded, then
+        inform the task it's time to checkpoint and terminate
         '''
         if self.__maxtasktimer.has_expired:
-            self._sm_log_info("maximum resource time exceeded; initiating job"
-                    " preemption")
+            self._sm_log_info("maximum resource time exceeded; initiating job preemption")
             if self.maxcptime > 0:
-                return Signal_Info(Signal_Info.Reason.preempt, 
-                        Signal_Map.checkpoint)
+                return Signal_Info(Signal_Info.Reason.preempt, Signal_Map.checkpoint)
             else:
-                return Signal_Info(Signal_Info.Reason.preempt, 
-                        Signal_Map.terminate)
-        elif has_private_attr(self, '__signaling_info') and \
-                self.__signaling_info.reason == Signal_Info.Reason.preempt and \
-                self.__signaling_info.pending and \
-                self.__mintasktimer.has_expired:
-            self._sm_log_info("preemption pending and resource time exceeded;"
-                    " initiating job preemption")
+                return Signal_Info(Signal_Info.Reason.preempt, Signal_Map.terminate)
+        elif has_private_attr(self, '__signaling_info') and self.__signaling_info.reason == Signal_Info.Reason.preempt and \
+                self.__signaling_info.pending and self.__mintasktimer.has_expired:
+            self._sm_log_info("preemption pending and resource time exceeded; initiating job preemption")
             sig_info = self.__signaling_info
             sig_info.pending = False
             return sig_info
@@ -1006,22 +949,17 @@ class Job (StateMachine):
             return None
 
     def _sm_preempt_task(self):
-        '''initiate the preemption of a task by signaling it and then changing
-        to the appropriate state'''
-
-        # BRT: this routine should probably check if the task could not be 
-        #signaled because it was no longer running
+        '''initiate the preemption of a task by signaling it and then changing to the appropriate state'''
+        # BRT: this routine should probably check if the task could not be signaled because it was no longer running
         rc = self.__task_signal()
         if rc == Job.__rc_success:
             if self.__signaled_info.signal == Signal_Map.checkpoint:
-                # start the signal timer so that the state machine knows when 
-                #to escalate to sending a terminate signal
+                # start the signal timer so that the state machine knows when to escalate to sending a terminate signal
                 self.__signal_timer = Timer(self.maxcptime * 60)
                 self._sm_log_debug("setting terminate signal timer to %d "
                         "seconds" % (self.maxcptime * 60,))
             elif self.__signaled_info.signal == Signal_Map.terminate:
-                # start the signal timer so that the state machine knows when 
-                #to escalate to sending a force kill signal
+                # start the signal timer so that the state machine knows when to escalate to sending a force kill signal
                 self.__signal_timer = Timer(self.force_kill_delay * 60)
                 self._sm_log_debug("setting force kill signal timer to %d "
                         "seconds" % (self.force_kill_delay * 60,))
@@ -1187,17 +1125,12 @@ class Job (StateMachine):
  
     def _sm_scripts_are_finished(self, type):  #Script Forking ***
         #modify to check to see if a set of scripts for this job are finished.  
-        #Tag will require job-information (jobid and script-type should be 
-        # adequate)
-        #Making this go away, 
-        #TODO: Move these to appropriate epilogue functions
-
+        #Tag will require job-information (jobid and script-type should be adequate)
+        #Making this go away, TODO: Move these to appropriate epilogue functions
         if type == 'resource postscript':
-            dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog",
-                    JobProgMsg(self))
+            dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog", JobProgMsg(self))
         elif type == 'job postscript':
-            dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog",
-                    JobProgMsg(self))
+            dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", JobProgMsg(self))
         return True
 
     def _sm_common_queued__hold(self, hold_state, args):
@@ -1232,15 +1165,13 @@ class Job (StateMachine):
     def _sm_common_queued__release(self, args):
         '''handle attempt to erroneously release a job in the queued state'''
         if self.__admin_hold:
-            self._sm_raise_exception("admin hold set on a job in the '%s' "
-                    "state", self._sm_state)
+            self._sm_raise_exception("admin hold set on a job in the '%s' state", self._sm_state)
             return
         if self.__user_hold:
-            self._sm_raise_exception("user hold set on a job in the '%s' "
-                    "state", self._sm_state)
+            self._sm_raise_exception("user hold set on a job in the '%s' state", self._sm_state)
             return
-        self._sm_log_info("job is not being held; ignoring release request", 
-                cobalt_log = True)
+
+        self._sm_log_info("job is not being held; ignoring release request", cobalt_log = True)
 
     def _sm_common_hold__hold(self, args):
         '''place another hold on a job that is already in a hold state'''
@@ -1255,16 +1186,13 @@ class Job (StateMachine):
                 self.__user_hold = True
                 activity = True
         else:
-            self._sm_raise_exception("hold type of '%s' is not valid; type "
-                    "must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if activity:
-            self._sm_log_info("%s hold set" % (args['type'],), 
-                    cobalt_log = True)
+            self._sm_log_info("%s hold set" % (args['type'],), cobalt_log = True)
         else:
-            self._sm_log_info("%s hold already present; ignoring hold request"\
-                    % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold already present; ignoring hold request" % (args['type'],), cobalt_log = True)
 
         '''release a hold previous placed on a job'''
         activity = False
@@ -1282,19 +1210,15 @@ class Job (StateMachine):
                 self.__user_hold = False
                 activity = True
         else:
-            self._sm_raise_exception("hold type of '%s' is not valid; type "
-                    "must be 'admin' or 'user'" % (args['type'],))
+            self._sm_raise_exception("hold type of '%s' is not valid; type must be 'admin' or 'user'" % (args['type'],))
             return
 
         if activity:
-            self._sm_log_info("%s hold released" % (args['type'],), 
-                    cobalt_log = True)
+            self._sm_log_info("%s hold released" % (args['type'],), cobalt_log = True)
             if self.no_holds_left():
-                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", 
-                        JobProgMsg(self))
+                dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(self))
         else:
-            self._sm_log_info("%s hold not present; ignoring release request" \
-                    % (args['type'],), cobalt_log = True)
+            self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
             
         if not self.__admin_hold and not self.__user_hold:
             self._sm_log_info("no holds remain; releasing job", cobalt_log = True)
@@ -1318,12 +1242,10 @@ class Job (StateMachine):
             self.__max_job_timer = Timer()
         self.__max_job_timer.start()
         if self.preemptable:
-            self.__mintasktimer = Timer(max((self.mintasktime - 
-                self.maxcptime) * 60, 0))
+            self.__mintasktimer = Timer(max((self.mintasktime - self.maxcptime) * 60, 0))
             self.__mintasktimer.start()
             if self.maxtasktime > 0:
-                self.__maxtasktimer = Timer(max((self.maxtasktime - 
-                    self.maxcptime) * 60, 0))
+                self.__maxtasktimer = Timer(max((self.maxtasktime - self.maxcptime) * 60, 0))
             else:
                 self.__maxtasktimer = Timer()
             self.__maxtasktimer.start()
@@ -1336,28 +1258,21 @@ class Job (StateMachine):
         # write job start and project information to CQM and accounting logs
         if self.reservation:
             logger.info('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
-            self.acctlog.LogMessage('R;%s;%s;%s' % (self.jobid, self.queue, 
-                self.user))
+            self.acctlog.LogMessage('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
         else:
-            logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, 
-                self.jobname, self.nodes, self.procs, self.mode, \
+            logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, self.jobname, self.nodes, self.procs, self.mode, \
                 self.walltime))
-            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, 
-                self.user, self.jobname, self.nodes, self.procs, \
+            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, self.jobname, self.nodes, self.procs, \
                 self.mode, self.walltime))
         if self.project:
-            logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, 
-                self.user, self.project, self.queue, \
+            logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
                 ":".join(self.location)))
-            self.acctlog.LogMessage("Job %s/%s/%s/Q:%s: Running job on %s" \
-                    % (self.jobid, self.user, self.project, self.queue, \
-                    ":".join(self.location)))
+            self.acctlog.LogMessage("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
+                ":".join(self.location)))
         else:
-            logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, 
-                self.user, self.queue, ":".join(self.location)))
-            self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" \
-                    % (self.jobid, self.user, self.queue, \
-                    ":".join(self.location)))
+            logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, ":".join(self.location)))
+            self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, \
+                ":".join(self.location)))
 
         optional = {}
         if self.project:
@@ -3530,10 +3445,8 @@ class QueueManager(Component):
 
         # remove the job from the queue
         #
-        # BRT: it seems somewhat silly to use q_del() which searches for the 
-        # job object to which we already have a reference.
-        # could "job.queue.jobs.remove(job)" be used instead or would that 
-        # make an inappropriate assumption about the
+        # BRT: it seems somewhat silly to use q_del() which searches for the job object to which we already have a reference.
+        # could "job.queue.jobs.remove(job)" be used instead or would that make an inappropriate assumption about the
         # implementation of the JobList/DataList?
         self.Queues[job.queue].jobs.q_del([{'jobid':job.jobid}])
 
