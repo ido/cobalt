@@ -43,10 +43,10 @@ if __name__ == '__main__':
     output = []
     if '-l' in sys.argv:
         verbose = True
-        header = [('Reservation', 'Res ID', 'Queue', 'User', 'Start', 'Duration', 'End Time', 'Cycle ID', 'Cycle Time', 'Partitions')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 'End Time', 'Cycle Time', 'Partitions')]
     else:
         verbose = False
-        header = [('Reservation', 'Res ID', 'Queue', 'User', 'Start', 'Duration', 'Partitions')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 'Partitions')]
 
     for res in reservations:
         start = float(res['start'])
@@ -79,10 +79,10 @@ if __name__ == '__main__':
         dmin = (duration/60)%60
         dhour = duration/3600
         if verbose:
-            output.append((res['name'], res['res_id'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
-                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), res['cycle_id'], cycle, mergelist(res['partitions'], cluster)))
+            output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
+                           "%02d:%02d" % (dhour, dmin),time.strftime("%c", time.localtime(start + duration)), cycle, mergelist(res['partitions'], cluster)))
         else:
-            output.append((res['name'], res['res_id'],res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
+            output.append((res['name'], res['queue'], res['users'], time.strftime("%c", time.localtime(start)),
                            "%02d:%02d" % (dhour, dmin), mergelist(res['partitions'], cluster)))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[4], "%c")), time.mktime(time.strptime(y[4], "%c"))) ) )
