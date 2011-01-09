@@ -38,7 +38,7 @@ class ProcessGroup(Data):
     stderr -- file to use for stderr of script
     stdin -- file to use for stdin of script
     stdout -- file to use for stdout of script
-    true_mpi_args -- 
+    true_mpi_args -- args as passed by cobalt-mpirun call 
     umask -- permissions to set
     user -- the user the process group is running under
     """

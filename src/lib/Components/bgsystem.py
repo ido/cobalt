@@ -113,7 +113,7 @@ class BGProcessGroup(ProcessGroup):
         ret["stdout"] = self.stdout
         ret["stderr"] = self.stderr
         
-        cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']), 
+        cmd = (self.config['mpirun'],
               '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
                '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
                '-exe', self.executable)
@@ -129,7 +129,7 @@ class BGProcessGroup(ProcessGroup):
         # already been modified to include the partition that cobalt has selected
         # for the job, and can just replace the arguments built above.
         if self.true_mpi_args:
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
+            cmd = (self.config['mpirun'], ) + tuple(self.true_mpi_args)
     
         ret["id"] = self.id
         ret["jobid"] = self.jobid
@@ -220,7 +220,7 @@ class BGProcessGroup(ProcessGroup):
         # for the job, and can just replace the arguments built above.
         if self.true_mpi_args:
             cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
-    
+
         try:
             cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
             print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])

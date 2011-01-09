@@ -412,6 +412,7 @@ class BaseForker (Component):
             command = [cmd[0]]
             command.extend(cmd)
 
+
             if preexec_data == None:
                 child.proc = subprocess.Popen(command, shell=True, env=env, 
                         stdout=PIPE, stderr=PIPE)
@@ -422,7 +423,7 @@ class BaseForker (Component):
                 #As noted above.  Do not send stdout/stderr to a pipe.  User 
                 #jobs routed to that would be bad.
                 preexec_fn = job_preexec(preexec_data)
-                child.proc = subprocess.Popen(cmd, shell=True, env=env, 
+                child.proc = subprocess.Popen(cmd, env=env, 
                         preexec_fn=preexec_fn)
                 child.pid = child.proc.pid
                 child.ignore_output = True
