@@ -411,10 +411,11 @@ class BaseForker (Component):
             
             command = [cmd[0]]
             command.extend(cmd)
+            command_str = " ".join(cmd)
 
 
             if preexec_data == None:
-                child.proc = subprocess.Popen(command, shell=True, env=env, 
+                child.proc = subprocess.Popen(command_str, shell=True, env=env, 
                         stdout=PIPE, stderr=PIPE)
                 child.pid = child.proc.pid
                 self.logger.info("task %s: forked with pid %s", child.label, 
