@@ -90,7 +90,7 @@ class ClusterProcessGroup(ProcessGroup):
         ret["stderr"] = self.stderr
         
         cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
-        cmd = ("/usr/bin/ssh","/usr/bin/ssh", rank0, cmd_string)
+        cmd = ("/usr/bin/ssh", rank0, cmd_string)
 
         
         ret["id"] = self.id
