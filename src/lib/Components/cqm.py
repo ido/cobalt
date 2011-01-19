@@ -246,44 +246,17 @@ class Signal_Info (object):
 
     pending = property(__get_pending, __set_pending)
 
+
+#TODO: I want to get rid of this.  I don't want to see threaded-forks in 
+# cobalt ever again. --PR
 class RunScriptsThread(object):
-    
+    '''stub for restart compatibility'''
     def __init__(self):
         pass
 
-class Job (StateMachine):
-    """
-    The job tracks a job, driving it at a high-level.  Actual operations on the job, such as execution or termination, are
-    the responsibility of the system component
-    """
-    
-    acctlog = Cobalt.Util.AccountingLog('qm')
-    
-    # properties for easier accounting logging
-    ctime = property(lambda self: self.__timers['queue'].start_times[0])
-    qtime = property(lambda self:
-        self.__timers['current_queue'].start_times[0])
-    start = property(lambda self: self.__timers['user'].start_times[-1])
-    exec_host = property(lambda self: ":".join(self.__locations[-1]))
-    end = property(lambda self: self.__timers['user'].stop_times[-1])
-    
-    fields = Data.fields + [
-        "jobid", "jobname", "state", "attribute", "location", "starttime", 
-        "submittime", "endtime", "queue", "type", "user",
-        "walltime", "procs", "nodes", "mode", "cwd", "command", "args", 
-        "outputdir", "project", "lienID", "stagein", "stageout",
-        "reservation", "host", "port", "url", "stageid", "envs", "inputfile", 
-        "kernel", "kerneloptions", "admin_hold",
-        "user_hold", "dependencies", "notify", "adminemail", "outputpath",
-        "errorpath", "path", "preemptable", "preempts",
-        "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
-        "is_runnable", "is_active",
-        "has_completed", "sm_state", "score", "attrs", "has_resources", 
-        "exit_status", "dep_frac", "walltime_p", "user_list"
-    ]
+def get_job_sm_states():
 
-    _states = [
-        'Ready',
+    return ['Ready',
         'Hold',
         'Job_Prologue',
         'Job_Prologue_Retry',
@@ -304,9 +277,11 @@ class Job (StateMachine):
         'Resource_Epilogue',
         'Resource_Epilogue_Retry',
         'Job_Epilogue',
-        'Job_Epilogue_Retry'
-        ] + StateMachine._states
-    _transitions = [
+        'Job_Epilogue_Retry']
+
+def get_job_sm_transitions():
+
+    return [       
         ('Ready', 'Hold'),                                  # user/admin hold
         ('Ready', 'Job_Prologue'),                          # run; start prologue scripts
         ('Ready', 'Job_Prologue_Retry'),                    # run; error contacting forker component; scripts not running, yet
@@ -388,8 +363,161 @@ class Job (StateMachine):
         ('Job_Epilogue_Retry', 'Job_Epilogue'),             # starting job_epilogue scripts
         ('Job_Epilogue', 'Job_Epilogue_Retry')              # Lost communication to forker during progress
         ]
-    _initial_state = 'Ready'
-    _events = ['Run', 'Hold', 'Release', 'Preempt', 'Kill', 'Task_End'] + StateMachine._events
+
+def get_job_sm_initial_state():
+
+    return "Ready"
+
+def get_job_sm_events():
+
+    return ['Run', 'Hold', 'Release', 'Preempt', 'Kill', 'Task_End']
+
+def get_job_sm_seas(job):
+
+    return {('Ready', 'Run') : [job._sm_ready__run],
+            ('Ready', 'Hold') : [job._sm_ready__hold],
+            ('Ready', 'Release') : [job._sm_ready__release],
+            ('Ready', 'Kill') : [job._sm_ready__kill],
+            ('Hold', 'Hold') : [job._sm_hold__hold],
+            ('Hold', 'Release') : [job._sm_hold__release],
+            ('Hold', 'Kill') : [job._sm_hold__kill],
+            ('Job_Prologue', 'Progress') : [job._sm_job_prologue__progress],
+            ('Job_Prologue', 'Hold') : [job._sm_common__pending_hold], 
+            ('Job_Prologue', 'Release') : [job._sm_common__pending_release],
+            ('Job_Prologue', 'Preempt') : [job._sm_common__pending_preempt], #custom?
+            ('Job_Prologue', 'Kill') : [job._sm_common__pending_kill],
+            ('Job_Prologue_Retry', 'Progress') : [job._sm_job_prologue_retry__progress],
+            ('Job_Prologue_Retry', 'Hold') : [job._sm_common__pending_hold],
+            ('Job_Prologue_Retry', 'Release') : [job._sm_common__pending_release],
+            ('Job_Prologue_Retry', 'Preempt') : [job._sm_common__pending_preempt], #Must go pending
+            ('Job_Prologue_Retry', 'Kill') : [job._sm_job_prologue_retry__kill],
+            ('Resource_Prologue', 'Progress') : [job._sm_resource_prologue__progress],
+            ('Resource_Prologue', 'Hold') : [job._sm_common__pending_hold],
+            ('Resource_Prologue', 'Release') : [job._sm_common__pending_release],
+            ('Resource_Prologue', 'Preempt') : [job._sm_common__pending_preempt], #custom?
+            ('Resource_Prologue', 'Kill') : [job._sm_common__pending_kill],
+            ('Resource_Prologue_Retry', 'Progress') : [job._sm_job_prologue_retry__progress],
+            ('Resource_Prologue_Retry', 'Hold') : [job._sm_common__pending_hold],
+            ('Resource_Prologue_Retry', 'Release') : [job._sm_common__pending_release],
+            ('Resource_Prologue_Retry', 'Preempt') : [job._sm_common__pending_preempt], #custom: go directly to preempted?
+            ('Resource_Prologue_Retry', 'Kill') : [job._sm_job_prologue_retry__kill],
+            ('Release_Resources_Retry', 'Progress') : [job._sm_release_resources_retry__progress],
+            ('Release_Resources_Retry', 'Hold') : [job._sm_exit_common__hold],
+            ('Release_Resources_Retry', 'Release') : [job._sm_exit_common__release],
+            ('Release_Resources_Retry', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Release_Resources_Retry', 'Kill') : [job._sm_exit_common__kill],
+            ('Run_Retry', 'Progress') : [job._sm_run_retry__progress],
+            ('Run_Retry', 'Hold') : [job._sm_common__pending_hold],
+            ('Run_Retry', 'Release') : [job._sm_common__pending_release],
+            ('Run_Retry', 'Preempt') : [job._sm_common__pending_preempt],
+            ('Run_Retry', 'Kill') : [job._sm_run_retry__kill],
+            ('Running', 'Progress') : [job._sm_running__progress],
+            ('Running', 'Hold') : [job._sm_common__pending_hold],
+            ('Running', 'Release') : [job._sm_common__pending_release],
+            ('Running', 'Preempt') : [job._sm_common__pending_preempt],
+            ('Running', 'Kill') : [job._sm_running__kill],
+            ('Running', 'Task_End') : [job._sm_running__task_end],
+            ('Kill_Retry', 'Progress') : [job._sm_kill_retry__progress],
+            ('Kill_Retry', 'Hold') : [job._sm_kill_common__hold],
+            ('Kill_Retry', 'Release') : [job._sm_kill_common__release],
+            ('Kill_Retry', 'Preempt') : [job._sm_kill_common__preempt],
+            ('Kill_Retry', 'Kill') : [job._sm_kill_retry__kill],
+            ('Kill_Retry', 'Task_End') : [job._sm_kill_retry__task_end],
+            ('Killing', 'Progress') : [job._sm_killing__progress],
+            ('Killing', 'Hold') : [job._sm_kill_common__hold],
+            ('Killing', 'Release') : [job._sm_kill_common__release],
+            ('Killing', 'Preempt') : [job._sm_kill_common__preempt],
+            ('Killing', 'Kill') : [job._sm_killing__kill],
+            ('Killing', 'Task_End') : [job._sm_killing__task_end],
+            ('Preempt_Retry', 'Progress') : [job._sm_preempt_retry__progress],
+            ('Preempt_Retry', 'Hold') : [job._sm_common__pending_hold],
+            ('Preempt_Retry', 'Release') : [job._sm_common__pending_release],
+            ('Preempt_Retry', 'Kill') : [job._sm_preempt_retry__kill],
+            ('Preempt_Retry', 'Task_End') : [job._sm_preempt_retry__task_end],
+            ('Preempting', 'Progress') : [job._sm_preempting__progress],
+            ('Preempting', 'Hold') : [job._sm_common__pending_hold],
+            ('Preempting', 'Release') : [job._sm_common__pending_release],
+            ('Preempting', 'Kill') : [job._sm_preempting__kill],
+            ('Preempting', 'Task_End') : [job._sm_preempting__task_end],
+            ('Preempt_Finalize_Retry', 'Progress') : [job._sm_preempt_finalize_retry__progress],
+            ('Preempt_Finalize_Retry', 'Hold') : [job._sm_common__pending_hold],
+            ('Preempt_Finalize_Retry', 'Release') : [job._sm_common__pending_release],
+            ('Preempt_Finalize_Retry', 'Kill') : [job._sm_common__pending_kill],
+            ('Preempt_Epilogue', 'Progress') : [job._sm_preempt_epilogue__progress],
+            ('Preempt_Epilogue', 'Hold') : [job._sm_common__pending_hold],
+            ('Preempt_Epilogue', 'Release') : [job._sm_common__pending_release],
+            ('Preempt_Epilogue', 'Kill') : [job._sm_common__pending_kill],
+            ('Preempted', 'Run') : [job._sm_preempted__run],
+            ('Preempted', 'Hold') : [job._sm_preempted__hold],
+            ('Preempted', 'Release') : [job._sm_preempted__release],
+            ('Preempted', 'Kill') : [job._sm_preempted__kill],
+            ('Preempted_Hold', 'Hold') : [job._sm_preempted_hold__hold],
+            ('Preempted_Hold', 'Release') : [job._sm_preempted_hold__release],
+            ('Preempted_Hold', 'Kill') : [job._sm_preempted_hold__kill],
+            ('Finalize_Retry', 'Progress') : [job._sm_finalize_retry__progress],
+            ('Finalize_Retry', 'Hold') : [job._sm_exit_common__hold],
+            ('Finalize_Retry', 'Release') : [job._sm_exit_common__release],
+            ('Finalize_Retry', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Finalize_Retry', 'Kill') : [job._sm_exit_common__kill],
+            ('Resource_Epilogue', 'Progress') : [job._sm_resource_epilogue__progress],
+            ('Resource_Epilogue', 'Hold') : [job._sm_exit_common__hold],
+            ('Resource_Epilogue', 'Release') : [job._sm_exit_common__release],
+            ('Resource_Epilogue', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Resource_Epilogue', 'Kill') : [job._sm_exit_common__kill],
+            ('Resource_Epilogue_Retry', 'Progress') : [job._sm_resource_epilogue_retry__progress],
+            ('Resource_Epilogue_Retry', 'Hold') : [job._sm_exit_common__hold],
+            ('Resource_Epilogue_Retry', 'Release') : [job._sm_exit_common__release],
+            ('Resource_Epilogue_Retry', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Resource_Epilogue_Retry', 'Kill') : [job._sm_exit_common__kill],
+            ('Job_Epilogue', 'Progress') : [job._sm_job_epilogue__progress],
+            ('Job_Epilogue', 'Hold') : [job._sm_exit_common__hold],
+            ('Job_Epilogue', 'Release') : [job._sm_exit_common__release],
+            ('Job_Epilogue', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Job_Epilogue', 'Kill') : [job._sm_exit_common__kill],
+            ('Job_Epilogue_Retry', 'Progress') : [job._sm_job_epilogue_retry__progress],
+            ('Job_Epilogue_Retry', 'Hold') : [job._sm_exit_common__hold],
+            ('Job_Epilogue_Retry', 'Release') : [job._sm_exit_common__release],
+            ('Job_Epilogue_Retry', 'Preempt') : [job._sm_exit_common__preempt],
+            ('Job_Epilogue_Retry', 'Kill') : [job._sm_exit_common__kill],
+            }
+
+class Job (StateMachine):
+    """
+    The job tracks a job, driving it at a high-level.  Actual operations on the job, such as execution or termination, are
+    the responsibility of the system component
+    """
+    
+    acctlog = Cobalt.Util.AccountingLog('qm')
+    
+    # properties for easier accounting logging
+    ctime = property(lambda self: self.__timers['queue'].start_times[0])
+    qtime = property(lambda self:
+        self.__timers['current_queue'].start_times[0])
+    start = property(lambda self: self.__timers['user'].start_times[-1])
+    exec_host = property(lambda self: ":".join(self.__locations[-1]))
+    end = property(lambda self: self.__timers['user'].stop_times[-1])
+    
+    fields = Data.fields + [
+        "jobid", "jobname", "state", "attribute", "location", "starttime", 
+        "submittime", "endtime", "queue", "type", "user",
+        "walltime", "procs", "nodes", "mode", "cwd", "command", "args", 
+        "outputdir", "project", "lienID", "stagein", "stageout",
+        "reservation", "host", "port", "url", "stageid", "envs", "inputfile", 
+        "kernel", "kerneloptions", "admin_hold",
+        "user_hold", "dependencies", "notify", "adminemail", "outputpath",
+        "errorpath", "path", "preemptable", "preempts",
+        "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
+        "is_runnable", "is_active",
+        "has_completed", "sm_state", "score", "attrs", "has_resources", 
+        "exit_status", "dep_frac", "walltime_p", "user_list"
+    ]
+
+    _states = get_job_sm_states() + StateMachine._states
+    
+    _transitions = get_job_sm_transitions()
+         
+    _initial_state = get_job_sm_initial_state()
+    _events = get_job_sm_events() + StateMachine._events
 
     # return codes to improve typo detection.  by using the return codes in condition statements, a typo will result in a key
     # error rather than an incorrectly followed path.
@@ -401,113 +529,8 @@ class Job (StateMachine):
 
     def __init__(self, spec):
         self.initializing = True
-        seas = {
-            ('Ready', 'Run') : [self._sm_ready__run],
-            ('Ready', 'Hold') : [self._sm_ready__hold],
-            ('Ready', 'Release') : [self._sm_ready__release],
-            ('Ready', 'Kill') : [self._sm_ready__kill],
-            ('Hold', 'Hold') : [self._sm_hold__hold],
-            ('Hold', 'Release') : [self._sm_hold__release],
-            ('Hold', 'Kill') : [self._sm_hold__kill],
-            ('Job_Prologue', 'Progress') : [self._sm_job_prologue__progress],
-            ('Job_Prologue', 'Hold') : [self._sm_common__pending_hold], 
-            ('Job_Prologue', 'Release') : [self._sm_common__pending_release],
-            ('Job_Prologue', 'Preempt') : [self._sm_common__pending_preempt], #custom?
-            ('Job_Prologue', 'Kill') : [self._sm_common__pending_kill],
-            ('Job_Prologue_Retry', 'Progress') : [self._sm_job_prologue_retry__progress],
-            ('Job_Prologue_Retry', 'Hold') : [self._sm_common__pending_hold],
-            ('Job_Prologue_Retry', 'Release') : [self._sm_common__pending_release],
-            ('Job_Prologue_Retry', 'Preempt') : [self._sm_common__pending_preempt], #Must go pending
-            ('Job_Prologue_Retry', 'Kill') : [self._sm_job_prologue_retry__kill],
-            ('Resource_Prologue', 'Progress') : [self._sm_resource_prologue__progress],
-            ('Resource_Prologue', 'Hold') : [self._sm_common__pending_hold],
-            ('Resource_Prologue', 'Release') : [self._sm_common__pending_release],
-            ('Resource_Prologue', 'Preempt') : [self._sm_common__pending_preempt], #custom?
-            ('Resource_Prologue', 'Kill') : [self._sm_common__pending_kill],
-            ('Resource_Prologue_Retry', 'Progress') : [self._sm_job_prologue_retry__progress],
-            ('Resource_Prologue_Retry', 'Hold') : [self._sm_common__pending_hold],
-            ('Resource_Prologue_Retry', 'Release') : [self._sm_common__pending_release],
-            ('Resource_Prologue_Retry', 'Preempt') : [self._sm_common__pending_preempt], #custom: go directly to preempted?
-            ('Resource_Prologue_Retry', 'Kill') : [self._sm_job_prologue_retry__kill],
-            ('Release_Resources_Retry', 'Progress') : [self._sm_release_resources_retry__progress],
-            ('Release_Resources_Retry', 'Hold') : [self._sm_exit_common__hold],
-            ('Release_Resources_Retry', 'Release') : [self._sm_exit_common__release],
-            ('Release_Resources_Retry', 'Preempt') : [self._sm_exit_common__preempt],
-            ('Release_Resources_Retry', 'Kill') : [self._sm_exit_common__kill],
-            ('Run_Retry', 'Progress') : [self._sm_run_retry__progress],
-            ('Run_Retry', 'Hold') : [self._sm_common__pending_hold],
-            ('Run_Retry', 'Release') : [self._sm_common__pending_release],
-            ('Run_Retry', 'Preempt') : [self._sm_common__pending_preempt],
-            ('Run_Retry', 'Kill') : [self._sm_run_retry__kill],
-            ('Running', 'Progress') : [self._sm_running__progress],
-            ('Running', 'Hold') : [self._sm_common__pending_hold],
-            ('Running', 'Release') : [self._sm_common__pending_release],
-            ('Running', 'Preempt') : [self._sm_common__pending_preempt],
-            ('Running', 'Kill') : [self._sm_running__kill],
-            ('Running', 'Task_End') : [self._sm_running__task_end],
-            ('Kill_Retry', 'Progress') : [self._sm_kill_retry__progress],
-            ('Kill_Retry', 'Hold') : [self._sm_kill_common__hold],
-            ('Kill_Retry', 'Release') : [self._sm_kill_common__release],
-            ('Kill_Retry', 'Preempt') : [self._sm_kill_common__preempt],
-            ('Kill_Retry', 'Kill') : [self._sm_kill_retry__kill],
-            ('Kill_Retry', 'Task_End') : [self._sm_kill_retry__task_end],
-            ('Killing', 'Progress') : [self._sm_killing__progress],
-            ('Killing', 'Hold') : [self._sm_kill_common__hold],
-            ('Killing', 'Release') : [self._sm_kill_common__release],
-            ('Killing', 'Preempt') : [self._sm_kill_common__preempt],
-            ('Killing', 'Kill') : [self._sm_killing__kill],
-            ('Killing', 'Task_End') : [self._sm_killing__task_end],
-            ('Preempt_Retry', 'Progress') : [self._sm_preempt_retry__progress],
-            ('Preempt_Retry', 'Hold') : [self._sm_common__pending_hold],
-            ('Preempt_Retry', 'Release') : [self._sm_common__pending_release],
-            ('Preempt_Retry', 'Kill') : [self._sm_preempt_retry__kill],
-            ('Preempt_Retry', 'Task_End') : [self._sm_preempt_retry__task_end],
-            ('Preempting', 'Progress') : [self._sm_preempting__progress],
-            ('Preempting', 'Hold') : [self._sm_common__pending_hold],
-            ('Preempting', 'Release') : [self._sm_common__pending_release],
-            ('Preempting', 'Kill') : [self._sm_preempting__kill],
-            ('Preempting', 'Task_End') : [self._sm_preempting__task_end],
-            ('Preempt_Finalize_Retry', 'Progress') : [self._sm_preempt_finalize_retry__progress],
-            ('Preempt_Finalize_Retry', 'Hold') : [self._sm_common__pending_hold],
-            ('Preempt_Finalize_Retry', 'Release') : [self._sm_common__pending_release],
-            ('Preempt_Finalize_Retry', 'Kill') : [self._sm_common__pending_kill],
-            ('Preempt_Epilogue', 'Progress') : [self._sm_preempt_epilogue__progress],
-            ('Preempt_Epilogue', 'Hold') : [self._sm_common__pending_hold],
-            ('Preempt_Epilogue', 'Release') : [self._sm_common__pending_release],
-            ('Preempt_Epilogue', 'Kill') : [self._sm_common__pending_kill],
-            ('Preempted', 'Run') : [self._sm_preempted__run],
-            ('Preempted', 'Hold') : [self._sm_preempted__hold],
-            ('Preempted', 'Release') : [self._sm_preempted__release],
-            ('Preempted', 'Kill') : [self._sm_preempted__kill],
-            ('Preempted_Hold', 'Hold') : [self._sm_preempted_hold__hold],
-            ('Preempted_Hold', 'Release') : [self._sm_preempted_hold__release],
-            ('Preempted_Hold', 'Kill') : [self._sm_preempted_hold__kill],
-            ('Finalize_Retry', 'Progress') : [self._sm_finalize_retry__progress],
-            ('Finalize_Retry', 'Hold') : [self._sm_exit_common__hold],
-            ('Finalize_Retry', 'Release') : [self._sm_exit_common__release],
-            ('Finalize_Retry', 'Preempt') : [self._sm_exit_common__preempt],
-            ('Finalize_Retry', 'Kill') : [self._sm_exit_common__kill],
-            ('Resource_Epilogue', 'Progress') : [self._sm_resource_epilogue__progress],
-            ('Resource_Epilogue', 'Hold') : [self._sm_exit_common__hold],
-            ('Resource_Epilogue', 'Release') : [self._sm_exit_common__release],
-            ('Resource_Epilogue', 'Preempt') : [self._sm_exit_common__preempt],
-            ('Resource_Epilogue', 'Kill') : [self._sm_exit_common__kill],
-            ('Resource_Epilogue_Retry', 'Progress') : [self._sm_resource_epilogue_retry__progress],
-            ('Resource_Epilogue_Retry', 'Hold') : [self._sm_exit_common__hold],
-            ('Resource_Epilogue_Retry', 'Release') : [self._sm_exit_common__release],
-            ('Resource_Epilogue_Retry', 'Preempt') : [self._sm_exit_common__preempt],
-            ('Resource_Epilogue_Retry', 'Kill') : [self._sm_exit_common__kill],
-            ('Job_Epilogue', 'Progress') : [self._sm_job_epilogue__progress],
-            ('Job_Epilogue', 'Hold') : [self._sm_exit_common__hold],
-            ('Job_Epilogue', 'Release') : [self._sm_exit_common__release],
-            ('Job_Epilogue', 'Preempt') : [self._sm_exit_common__preempt],
-            ('Job_Epilogue', 'Kill') : [self._sm_exit_common__kill],
-            ('Job_Epilogue_Retry', 'Progress') : [self._sm_job_epilogue_retry__progress],
-            ('Job_Epilogue_Retry', 'Hold') : [self._sm_exit_common__hold],
-            ('Job_Epilogue_Retry', 'Release') : [self._sm_exit_common__release],
-            ('Job_Epilogue_Retry', 'Preempt') : [self._sm_exit_common__preempt],
-            ('Job_Epilogue_Retry', 'Kill') : [self._sm_exit_common__kill],
-            }
+        seas = get_sm_job_seas(self)
+
         # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
         
@@ -653,6 +676,10 @@ class Job (StateMachine):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        
+        #reset the statemachine's states
+        self.update_seas(get_job_sm_seas(self))
+
         # BRT: why is the current queue timer being reset?  if cqm is 
         #restarted, the job remained in the queue during that time, so I would
         #think that timer should continue to run during the restart rather 

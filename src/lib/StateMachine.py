@@ -106,6 +106,38 @@ class StateMachine (DataState):
 
     _event = property(__get_event)
 
+    def update_seas(self, seas):
+        '''change the statemachine states mid-flight.  It is the updater's 
+        respomsibility to not break existing jobs by removing states that are
+        currently in use.
+
+        '''       
+        if seas != None:
+            if not isinstance(seas, dict):
+                raise StateMachineError("supplied SEAs parameter is not a dictionary")
+            for key, actions in seas.iteritems():
+                # verify that each key in the SEAs dict has a valid state and event
+                if not isinstance(key, tuple) or len(key) != 2:
+                    raise StateMachineError("SEAs dictionary contains an invalid (state, event) tuple: %s" % (key,))
+                state, event = key
+                if state not in self._states:
+                    raise StateMachineError("SEAs dictionary contains an invalid state: %s" % (state,))
+                if state == 'Terminal':
+                    raise StateMachineError("SEAs dictionary must not contain entries for the 'Terminal' state")
+                if event not in self._events:
+                    raise StateMachineError("SEAs dictionary contains an invalid event: %s" % (event,))
+                # verify that each value in the SEAs dict is a list of action functions
+                if not isinstance(actions, list):
+                    raise StateMachineError("entry %s in the SEAs dictionary is not a list: %s" % (key, actions))
+                for action in actions:
+                    if not callable(action):
+                        raise StateMachineError( \
+                            "entry %s in the SEAs dictionary has an action that is not a function: %s" % (key, action))
+            self.__seas = seas
+        else:
+            self.__seas = {}
+
+
     def add_action(self, state, event, action):
         """
         Add a new action routine to the list of routines executed when the event is triggered in the specified state
