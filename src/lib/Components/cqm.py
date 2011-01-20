@@ -529,7 +529,7 @@ class Job (StateMachine):
 
     def __init__(self, spec):
         self.initializing = True
-        seas = get_sm_job_seas(self)
+        seas = get_job_sm_seas(self)
 
         # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
