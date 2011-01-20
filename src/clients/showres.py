@@ -112,7 +112,7 @@ if __name__ == '__main__':
                 "%02d:%02d" % (dhour, dmin), 
                 mergelist(res['partitions'], cluster)))
 
-    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3], "%c")), 
-        time.mktime(time.strptime(y[3], "%c"))) ) )
+    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3], time_fmt)), 
+        time.mktime(time.strptime(y[3], time_fmt))) ) )
     Cobalt.Util.print_tabular(header + output)
                      

@@ -236,7 +236,7 @@ if __name__ == '__main__':
             if j.get('starttime') in ('-1', 'BUG', None):
                 j['starttime'] = 'N/A'
             else:
-                j['starttime'] = time.strftime("%m/%d/%y %T", time.localtime(float(j['starttime'])))
+                j['starttime'] = time.strftime("%m/%d/%y %T %Z", time.localtime(float(j['starttime'])))
             # jobname
             outputpath = j.get('outputpath')
             if outputpath:
@@ -252,7 +252,7 @@ if __name__ == '__main__':
             j['args'] = ' '.join(j['args'])
             
             # make the SubmitTime readable by humans
-            j['submittime'] = time.ctime(float(j['submittime']))
+            j['submittime'] = time.strftime("%c %Z",time.localtime(float(j['submittime'])))
             
             j['outputpath'] = outputpath
             j['errorpath'] = j.get('errorpath')
