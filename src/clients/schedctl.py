@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""Commands to control job scheduling.  
+
+
+"""
+
+
 import sys
 import os
 import optparse
@@ -11,12 +17,19 @@ from Cobalt.Proxy import ComponentProxy
 if __name__ == '__main__':
     p = optparse.OptionParser()
     
-    p.add_option("--stop", action="store_true", dest="stop", help="stop scheduling jobs")
-    p.add_option("--start", action="store_true", dest="start", help="resume scheduling jobs")
-    p.add_option("--reread-policy", action="store_true", dest="reread", help="reread the utility function definition file")
-    p.add_option("--savestate", dest="savestate", help="write the current state to the specified file")
-    p.add_option("--score", dest="adjust", type="string", help="<jobid> <jobid> adjust the scores of the arguments")
-    p.add_option("--inherit", dest="dep_frac", type="float", help="<jobid> <jobid> control the fraction of the score inherited by jobs which depend on the arguments")
+    p.add_option("--stop", action="store_true", dest="stop", 
+            help="stop scheduling jobs")
+    p.add_option("--start", action="store_true", dest="start", 
+            help="resume scheduling jobs")
+    p.add_option("--reread-policy", action="store_true", dest="reread", 
+            help="reread the utility function definition file")
+    p.add_option("--savestate", dest="savestate", 
+            help="write the current state to the specified file")
+    p.add_option("--score", dest="adjust", type="string", 
+            help="<jobid> <jobid> adjust the scores of the arguments")
+    p.add_option("--inherit", dest="dep_frac", type="float", 
+            help=("<jobid> <jobid> control the fraction of the score "
+                "inherited by jobs which depend on the arguments"))
 
     if len(sys.argv) == 1:
         p.print_help()
@@ -33,9 +46,14 @@ if __name__ == '__main__':
 
     if opt.stop:
         sched.disable(whoami)
+        print "Job Scheduling: DISABLED"
+        sys.exit(0)
     elif opt.start:
         sched.enable(whoami)
+        print "Job Scheduling: ENABLED"
+        sys.exit(0)
     elif opt.reread:
+        print "Attempting to reread utility functions."
         try:
             Cobalt.Proxy.ComponentProxy("queue-manager").define_user_utility_functions(whoami)
         except:
@@ -53,6 +71,8 @@ if __name__ == '__main__':
             sys.exit(1)
         else:
             print response
+        sys.exit(0)
+        
 
             
     # everything below here should operate on <jobid> arguments
