@@ -9,6 +9,7 @@ import optparse
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Util import sec_to_str
 
 
 __helpmsg__ = "Usage: showres [-l] [--oldts] [--version]"
@@ -54,9 +55,6 @@ if __name__ == '__main__':
         'queue': '*', 'res_id': '*', 'cycle_id': '*'}])
     output = []
  
-    time_fmt = "%c"
-    if not ('--oldts' in sys.argv):
-        time_fmt += " %Z"
     
     if '-l' in sys.argv:
         verbose = True
@@ -100,19 +98,31 @@ if __name__ == '__main__':
             cycle = None
         dmin = (duration/60)%60
         dhour = duration/3600
+
+       
+        time_fmt = "%c"
+        starttime = time.strftime(time_fmt, time.localtime(start))
+        endtime = time.strftime(time_fmt, time.localtime(start + duration)) 
+
+        if not ('--oldts' in sys.argv):
+            #time_fmt += " %z (%Z)"
+            starttime = sec_to_str(start)
+            endtime = sec_to_str(start + duration)
+    
+
         if verbose:
             output.append((res['name'], res['queue'], res['users'], 
-                time.strftime(time_fmt, time.localtime(start)),
+                starttime,
                 "%02d:%02d" % (dhour, dmin),
-                time.strftime(time_fmt, time.localtime(start + duration)), cycle, 
+                endtime, cycle, 
                 mergelist(res['partitions'], cluster)))
         else:
             output.append((res['name'], res['queue'], res['users'], 
-                time.strftime(time_fmt, time.localtime(start)),
+                starttime,
                 "%02d:%02d" % (dhour, dmin), 
                 mergelist(res['partitions'], cluster)))
 
-    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3], time_fmt)), 
-        time.mktime(time.strptime(y[3], time_fmt))) ) )
+    output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3].split('+')[0].split('-')[0].strip(), time_fmt)), 
+        time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )
     Cobalt.Util.print_tabular(header + output)
                      

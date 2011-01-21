@@ -700,3 +700,23 @@ def fix_set(state):
     for k in state:
         if isinstance(state[k], sets.Set):
             state[k] = set(state[k])
+
+def sec_to_str(t):
+
+    '''convert a time in secs since epoch into a formated string for output
+    viewing, containing timezone information.
+
+    '''
+
+    timestamp = time.strftime("%c", time.localtime(t))
+
+    tzh = time.timezone / 3600
+    tzm = time.timezone / 60 % 60
+
+    offset = "%+.2d%.2d" % (tzh,tzm)
+    tzname = time.strftime("(%Z)", time.localtime(t))
+
+    time_str =  "%s %s %s" % (timestamp, offset, tzname)
+
+    return time_str
+

@@ -17,6 +17,7 @@ import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Util import sec_to_str
 
 __helpmsg__ = "Usage: cqstat [-d] [-f] [-l] [-u username] [--sort <fields>] [--header <fields>] [--reverse] <jobid> <jobid>\n" + \
               "       cqstat [-d] -q <queue> <queue>\n" + \
@@ -227,7 +228,7 @@ if __name__ == '__main__':
             if j.get('starttime') in ('-1', 'BUG', None):
                 j['starttime'] = 'N/A'
             else:
-                j['starttime'] = time.strftime("%m/%d/%y %T %Z", time.localtime(float(j['starttime'])))
+                j['starttime'] = sec_to_str(float(j['starttime']))
             # jobname
             outputpath = j.get('outputpath')
             if outputpath:
@@ -243,7 +244,7 @@ if __name__ == '__main__':
             j['args'] = ' '.join(j['args'])
             
             # make the SubmitTime readable by humans
-            j['submittime'] = time.strftime("%c %Z", time.localtime(float(j['submittime'])))
+            j['submittime'] = sec_to_str(float(j['submittime']))
             
             j['outputpath'] = outputpath
             j['errorpath'] = j.get('errorpath')

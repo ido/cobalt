@@ -10,6 +10,7 @@ import xmlrpclib
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Util import sec_to_str
 
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
                   -c <cycle time> -p <partition> -q <queue name> 
@@ -149,7 +150,7 @@ if __name__ == '__main__':
             (syear, smonth, sday) = [int(field) for field in day.split('_')]
             (shour, smin) = [int(field) for field in rtime.split(':')]
             starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
-            print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
+            print "Got starttime %s" % (sec_to_str(starttime))
         except ValueError:
             print "Error: start time '%s' is invalid" % start
             print "start time is expected to be in the format: YYYY_MM_DD-HH:MM"
