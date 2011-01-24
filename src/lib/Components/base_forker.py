@@ -424,8 +424,6 @@ class BaseForker (Component):
                         
             command_str = " ".join(mod_cmd)
 
-            print command_str
-
 
             if preexec_data == None:
                 child.proc = subprocess.Popen(command_str, shell=True, env=env, 
