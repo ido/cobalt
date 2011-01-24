@@ -411,7 +411,20 @@ class BaseForker (Component):
             
             command = [cmd[0]]
             command.extend(cmd)
-            command_str = " ".join(cmd)
+            #command_str = " ".join(cmd)
+
+           
+            # One last bit of mangling to prevent premature splitting of args
+            mod_cmd = []
+            for s in cmd:
+                if len(s.split()) > 1:
+                    ''.join(s.split())
+                else:
+                    mod_cmd.append(s)
+                        
+            command_str = " ".join(mod_cmd)
+
+            print command_str
 
 
             if preexec_data == None:
