@@ -660,7 +660,8 @@ class BGSched (Component):
         self.sync_data()
         
         # if we're missing information, don't bother trying to schedule jobs
-        if not (self.queues.__oserror__.status and self.jobs.__oserror__.status):
+        if not (self.queues.__oserror__.status and 
+                self.jobs.__oserror__.status):
             self.sync_state.Fail()
             return
         self.sync_state.Pass()
@@ -670,15 +671,17 @@ class BGSched (Component):
             # cleanup any reservations which have expired
             for res in self.reservations.values():
                 if res.is_over():
-                    self.logger.info("reservation %s has ended; removing" % res.name)
+                    self.logger.info("reservation %s has ended; removing" % 
+                            (res.name))
                     self.logger.info("Res %s/%s: Ending reservation: %r" % 
-                             (res.res_id,
-                              res.cycle_id,
-                              res.name))
+                             (res.res_id, res.cycle_id, res.name))
 
-                    del_reservations = self.reservations.q_del([{'name': res.name}])
+                    del_reservations = self.reservations.q_del([
+                        {'name': res.name}])
+                    
                     for del_reservation in del_reservations:
-                        dbwriter.log_to_db(None, "ending", "reservation", del_reservation) 
+                        dbwriter.log_to_db(None, "ending", "reservation", 
+                                del_reservation) 
     
             reservations_cache = self.reservations.copy()
         except:
@@ -687,6 +690,7 @@ class BGSched (Component):
         self.lock.release()
         
         # clean up the started_jobs cached data
+        # TODO: Make this tunable.
         now = self.get_current_time()
         for job_name in self.started_jobs.keys():
             if (now - self.started_jobs[job_name]) > 60:
@@ -715,7 +719,8 @@ class BGSched (Component):
         for cur_res in reservations_cache.values():
             res_info[cur_res.name] = cur_res.partitions
         try:
-            equiv = ComponentProxy("system").find_queue_equivalence_classes(res_info, [q.name for q in active_queues + spruce_queues])
+            equiv = ComponentProxy("system").find_queue_equivalence_classes(
+                    res_info, [q.name for q in active_queues + spruce_queues])
         except:
             self.logger.error("failed to connect to system component")
             return
@@ -776,7 +781,6 @@ class BGSched (Component):
                     for part_name in cur_res.partitions.split(":"):
                         end_times.append([[part_name], end_time])
     
-            
             if not active_jobs:
                 continue
             active_jobs.sort(self.utilitycmp)

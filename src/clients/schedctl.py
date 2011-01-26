@@ -111,7 +111,7 @@ if __name__ == '__main__':
             dumb = [str(id) for id in response]
             print "updating scores for jobs: %s" % ", ".join(dumb)
 
-    if opt.dep_frac:
+    if opt.dep_frac != None:
         specs = [{'jobid':jobid} for jobid in args]
         
         try:
