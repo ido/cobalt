@@ -544,16 +544,25 @@ class DatabaseWriter(object):
       #if we are update-only and don't want to actually add a message 
       #to the progress table.  
 
-      update_only_msgs = ['dep_frac_update']
+      update_only_msgs = ['dep_frac_update', 'exit_status_update']
       if logMsg.state in update_only_msgs:
+          
+          job_data_record = None
+          job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
+          
           if logMsg.state == 'dep_frac_update':
-              job_data_record = None
-              job_data_record = self.daos['JOB_DATA'].getID(job_data_id)
               
               fieldValue = job_prog_msg.dep_frac
               
-              if fieldValue and (fieldValue != None):
+              if fieldValue != None:
                   job_data_record.v.DEP_FRAC = float(fieldValue)
+          
+          elif logMsg.state == 'exit_status_update':
+
+              fieldValue = job_prog_msg.exit_status
+              
+              if fieldValue != None:
+                  job_data_record.v.EXIT_STATUS = int(fieldValue)
           
           self.daos['JOB_DATA'].update(job_data_record)
           return
@@ -585,7 +594,7 @@ class DatabaseWriter(object):
       for fieldName in job_prog_msg.__dict__.keys():
          if fieldName in ['envs', 'location',
                           'priority_core_hours','satisfied_dependencies',
-                          'dep_frac', 'resid']:
+                          'dep_frac', 'resid', 'exit_status']:
             updateAtRun[fieldName] = job_prog_msg.__getattribute__(fieldName)
          else:
             if fieldName not in ['jobid', 'cobalt_state']:

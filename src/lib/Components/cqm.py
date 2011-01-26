@@ -822,6 +822,11 @@ class Job (StateMachine):
             result = ComponentProxy("system").wait_process_groups([{'id':self.taskid, 'exit_status':'*'}])
             if result:
                 self.exit_status = result[0].get('exit_status')
+                dbwriter.log_to_db(None, "exit_status_update", "job_prog", 
+                    JobProgExitStatusMsg(self))
+
+
+
             else:
                 self._sm_log_warn("system component was unable to locate the task; exit status not obtained")
         except (ComponentLookupError, xmlrpclib.Fault), e:
@@ -3952,8 +3957,6 @@ class JobProgMsg(object):
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
 
-        
-
         if job.state == "running":
             self.envs = job.envs
             self.priority_core_hours = 20.0 #job.priority_core_hours
@@ -3961,12 +3964,20 @@ class JobProgMsg(object):
             self.resid = job.resid
             #self.nodects = job._Job__resource_nodects
 
+
+
 class JobProgDepFracMsg(JobProgMsg):
     
     def __init__(self, job):
         super(JobProgDepFracMsg, self).__init__(job)
         self.dep_frac = job.dep_frac
-        
+
+
+class JobProgExitStatusMsg(JobProgMsg):
+
+    def __init__(self, job):
+        super(JobProgExitStatusMsg, self).__init__(job)
+        self.exit_status = job.exit_status
 
 
 class JobDataMsg(object):
