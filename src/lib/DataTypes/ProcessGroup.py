@@ -100,16 +100,21 @@ class ProcessGroup(Data):
                 "child pid", self.id)
 
     def prefork (self):
-        """This method is called before the fork, while it's still safe to call 
-        object methods.  It returns a dictionary, which can be passed to a totally
-        static function which handles the exec from inside the child process."""
+        """This method is called before the fork, while it's still safe to 
+        call object methods.  It returns a dictionary, which can be passed to 
+        a totally static function which handles the exec from inside the child
+        process.
+        
+        """
         
         return {}
     
     def _runjob(self):
-        """This method is called from the forked process in start() to run a job
-        on the system.  It should be overridden by whatever specialized Process
-        Group class extends this one within each system component."""
+        """This method is called from the forked process in start() to run a 
+        job on the system.  It should be overridden by whatever specialized 
+        Process Group class extends this one within each system component.
+        
+        """
         os._exit(0)
 
 

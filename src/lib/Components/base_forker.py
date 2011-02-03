@@ -10,6 +10,7 @@ fork new processes.
 
 import logging
 import sys
+import copy
 import os
 import signal
 import socket
@@ -53,7 +54,6 @@ def get_forker_config(option, default):
 __all__ = [
     "BaseForker",
 ]
-
 
 class Child(object):
     '''Simple container for data about child processes.
@@ -104,6 +104,24 @@ class Child(object):
     def __setstate__(self, state):
         self.from_dict(state)
 
+class env_preexec(object):
+
+    '''Takes a dict of envs to set in the child process at runtime, post-fork
+    but pre-exec.
+
+    '''
+
+    def __init__(self, envs):
+
+        self.envs = envs
+
+    def __call__(self):
+
+        for key in self.envs:
+            os.environ[key] = self.envs[key]
+
+
+
 class job_preexec(object):
     '''Class for handling pre-exec tasks for a job.
     Initilaization takes a job-data object.  This allows id's to be set 
@@ -114,6 +132,7 @@ class job_preexec(object):
     def __init__(self, data):
 
         self.data = data
+        self.set_environ = env_preexec(self.data['postfork_envs'])
         self.logger = module_logger
 
     def __call__(self):
@@ -122,6 +141,13 @@ class job_preexec(object):
         '''
         data = self.data
         label = "%s/%s" % (data["jobid"], data["id"])    
+
+        #set these before root promotion for safety
+        self.set_environ()
+        
+        
+        
+
         try:
             # only root can call os.setgroups so we need to do this
             # before calling os.setuid
@@ -233,8 +259,6 @@ class job_preexec(object):
         except:
             self.logger.error("task %s: Unhandled exception.")
             raise
-
-
 
 
 class BaseForker (Component):
@@ -404,11 +428,18 @@ class BaseForker (Component):
         child.args = cmd[1:]
 
         try:
-            env = os.environ
-            if app_env != None:
-                for key in app_env:
-                    env[key] = app_env[key]
             
+            # os.environ silently calls putenv().  It also shallow-copies.
+            # I'm checking here to make sure user-environments don't leak
+            # back into forker's environment.  --PMR
+            orig_env = copy.deepcopy(os.environ)
+            #child_env_dict = copy.deepcopy(os.environ.data)
+            #if app_env != None:
+            #    for key in app_env:
+            #        child_env_dict[key] = app_env[key]
+            print app_env
+            #print child_env_dict
+
             command = [cmd[0]]
             command.extend(cmd)
             #command_str = " ".join(cmd)
@@ -426,23 +457,39 @@ class BaseForker (Component):
 
 
             if preexec_data == None:
-                child.proc = subprocess.Popen(command_str, shell=True, env=env, 
-                        stdout=PIPE, stderr=PIPE)
+                preexec_fn = env_preexec(app_env)
+
+                child.proc = subprocess.Popen(command_str, shell=True, 
+                        preexec_fn=preexec_fn, stdout=PIPE, stderr=PIPE)
                 child.pid = child.proc.pid
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
             else:
                 #As noted above.  Do not send stdout/stderr to a pipe.  User 
                 #jobs routed to that would be bad.
+                
+                #add environment vars to data for use in preexec step.
+                preexec_data['postfork_envs'] = app_env
+
                 preexec_fn = job_preexec(preexec_data)
-                child.proc = subprocess.Popen(cmd, env=env, 
+                child.proc = subprocess.Popen(cmd, 
                         preexec_fn=preexec_fn)
                 child.pid = child.proc.pid
                 child.ignore_output = True
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
+            
+            if orig_env != os.environ:
+                raise RuntimeError("forker environment changed during"
+                        " task initialization.")
+            print os.environ
             self.children[child.id] = child
             return child.id
+
+   
+        #except EnvChangeError as e:
+        #    self.logger.error
+                
         except OSError as e:
             self.logger.error("%s Task %s failed to execute with a code of "
                     "%s: %s", child.label, child.id, e.errno, e)
@@ -457,6 +504,7 @@ class BaseForker (Component):
             if e.__dict__.has_key('child_traceback'):
                 self.logger.debug("%s Child Traceback:\n %s", child.label,
                     e.child_traceback)
+            print os.system("env | grep COBALT")
             #It may be valuable to get the child traceback for debugging.
             raise
         #Well, this has blown up, There is no child, so nothing to return.

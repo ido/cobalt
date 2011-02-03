@@ -1352,7 +1352,10 @@ class Job (StateMachine):
             self.errorpath = t.safe_substitute(jobid=self.jobid)
 
         # add the cobolt job id to the list of environment variables
+        # same for reservation id
         self.envs['COBALT_JOBID'] = str(self.jobid)
+        if self.resid != None:
+            self.envs['COBALT_RESID'] = str(self.resid)
 
         # start job and resource prologue scripts
 
