@@ -144,9 +144,7 @@ class job_preexec(object):
 
         #set these before root promotion for safety
         self.set_environ()
-        
-        
-        
+
 
         try:
             # only root can call os.setgroups so we need to do this
@@ -259,6 +257,8 @@ class job_preexec(object):
         except:
             self.logger.error("task %s: Unhandled exception.")
             raise
+
+
 
 
 class BaseForker (Component):
@@ -433,18 +433,17 @@ class BaseForker (Component):
             # I'm checking here to make sure user-environments don't leak
             # back into forker's environment.  --PMR
             orig_env = copy.deepcopy(os.environ)
-            #child_env_dict = copy.deepcopy(os.environ.data)
-            #if app_env != None:
-            #    for key in app_env:
-            #        child_env_dict[key] = app_env[key]
-            print app_env
+            child_env_dict = copy.deepcopy(os.environ.data)
+            if app_env != None:
+                for key in app_env:
+                    child_env_dict[key] = app_env[key]
+            #print app_env
             #print child_env_dict
 
             command = [cmd[0]]
             command.extend(cmd)
-            #command_str = " ".join(cmd)
-
-           
+            command_str = " ".join(cmd)
+            
             # One last bit of mangling to prevent premature splitting of args
             mod_cmd = []
             for s in cmd:
@@ -455,24 +454,17 @@ class BaseForker (Component):
                         
             command_str = " ".join(mod_cmd)
 
-
             if preexec_data == None:
-                preexec_fn = env_preexec(app_env)
-
                 child.proc = subprocess.Popen(command_str, shell=True, 
-                        preexec_fn=preexec_fn, stdout=PIPE, stderr=PIPE)
+                        env=child_env_dict, stdout=PIPE, stderr=PIPE)
                 child.pid = child.proc.pid
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
             else:
                 #As noted above.  Do not send stdout/stderr to a pipe.  User 
                 #jobs routed to that would be bad.
-                
-                #add environment vars to data for use in preexec step.
-                preexec_data['postfork_envs'] = app_env
-
                 preexec_fn = job_preexec(preexec_data)
-                child.proc = subprocess.Popen(cmd, 
+                child.proc = subprocess.Popen(cmd, env=child_env_dict, 
                         preexec_fn=preexec_fn)
                 child.pid = child.proc.pid
                 child.ignore_output = True
@@ -480,12 +472,10 @@ class BaseForker (Component):
                     child.pid)
             
             if orig_env != os.environ:
-                raise RuntimeError("forker environment changed during"
+                self.logger.error("forker environment changed during"
                         " task initialization.")
-            print os.environ
             self.children[child.id] = child
             return child.id
-
    
         #except EnvChangeError as e:
         #    self.logger.error
