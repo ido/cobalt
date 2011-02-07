@@ -132,7 +132,6 @@ class job_preexec(object):
     def __init__(self, data):
 
         self.data = data
-        self.set_environ = env_preexec(self.data['postfork_envs'])
         self.logger = module_logger
 
     def __call__(self):
@@ -142,8 +141,6 @@ class job_preexec(object):
         data = self.data
         label = "%s/%s" % (data["jobid"], data["id"])    
 
-        #set these before root promotion for safety
-        self.set_environ()
 
 
         try:
@@ -171,7 +168,7 @@ class job_preexec(object):
                             label, data["umask"])
 
             for key, value in data["postfork_env"].iteritems():
-                os.environ[key] = value
+                os.environ[key] = str(value)
                     
             atexit._atexit = []
         
@@ -432,13 +429,16 @@ class BaseForker (Component):
             # os.environ silently calls putenv().  It also shallow-copies.
             # I'm checking here to make sure user-environments don't leak
             # back into forker's environment.  --PMR
+            
+            #only should do this for user jobs, we're not using this for
+            #helper scripts.
             orig_env = copy.deepcopy(os.environ)
             child_env_dict = copy.deepcopy(os.environ.data)
-            if app_env != None:
-                for key in app_env:
-                    child_env_dict[key] = app_env[key]
-            #print app_env
-            #print child_env_dict
+            #for key, value in os.environ.data.iteritems():
+            #    child_env_dict[key] = value
+            #if app_env != None:
+            #    for key in app_env:
+            #        child_env_dict[key] = app_env[key]
 
             command = [cmd[0]]
             command.extend(cmd)
@@ -456,15 +456,16 @@ class BaseForker (Component):
 
             if preexec_data == None:
                 child.proc = subprocess.Popen(command_str, shell=True, 
-                        env=child_env_dict, stdout=PIPE, stderr=PIPE)
+                        stdout=PIPE, stderr=PIPE)
                 child.pid = child.proc.pid
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
             else:
                 #As noted above.  Do not send stdout/stderr to a pipe.  User 
                 #jobs routed to that would be bad.
+                
                 preexec_fn = job_preexec(preexec_data)
-                child.proc = subprocess.Popen(cmd, env=child_env_dict, 
+                child.proc = subprocess.Popen(cmd, 
                         preexec_fn=preexec_fn)
                 child.pid = child.proc.pid
                 child.ignore_output = True
@@ -494,7 +495,6 @@ class BaseForker (Component):
             if e.__dict__.has_key('child_traceback'):
                 self.logger.debug("%s Child Traceback:\n %s", child.label,
                     e.child_traceback)
-            print os.system("env | grep COBALT")
             #It may be valuable to get the child traceback for debugging.
             raise
         #Well, this has blown up, There is no child, so nothing to return.

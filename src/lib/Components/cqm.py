@@ -794,8 +794,8 @@ class Job (StateMachine):
                 'umask':self.umask,
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
-                'walltime':walltime
-                'resid':self.resid
+                'walltime':walltime,
+                'resid': self.resid
             }])
             if pgroup[0].has_key('id'):
                 self.taskid = pgroup[0]['id']
