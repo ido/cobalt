@@ -1,6 +1,6 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.99.0pre25
+Version: 0.99.0pre26
 Release: 1
 License: GPL
 Group: System Software
@@ -79,9 +79,11 @@ then
     groupadd cobalt
 fi
 
-%post
+%post -n cobalt-clients
 chgrp cobalt /usr/bin/wrapper
 chmod g+s /usr/bin/wrapper
+
+%post -n cobalt
 if test ! -d /var/spool/cobalt ; then
     mkdir -p /var/spool/cobalt
     chmod 700 /var/spool/cobalt
