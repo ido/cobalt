@@ -77,6 +77,7 @@ class ProcessGroup(Data):
         self.true_mpi_args = spec.get("true_mpi_args")
         self.umask = spec.get("umask")
         self.user = spec.get("user", "")
+        self.resid = spec.get("resid", None)
 
         self.logger = logger
 

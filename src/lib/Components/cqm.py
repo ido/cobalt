@@ -795,6 +795,7 @@ class Job (StateMachine):
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
                 'walltime':walltime
+                'resid':self.resid
             }])
             if pgroup[0].has_key('id'):
                 self.taskid = pgroup[0]['id']
@@ -1353,9 +1354,11 @@ class Job (StateMachine):
 
         # add the cobolt job id to the list of environment variables
         # same for reservation id
-        self.envs['COBALT_JOBID'] = str(self.jobid)
-        if self.resid != None:
-            self.envs['COBALT_RESID'] = str(self.resid)
+        #self.envs['COBALT_JOBID'] = str(self.jobid)
+        #if self.resid != None:
+        #     self.envs['COBALT_RESID'] = str(self.resid)
+        #This is being done later in the system component.
+
 
         # start job and resource prologue scripts
 

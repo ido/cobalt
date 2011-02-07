@@ -97,8 +97,15 @@ class BGProcessGroup(ProcessGroup):
         exportenv = [ 'MPIRUN_CONNECTION', 'MPIRUN_KERNEL_OPTIONS',
                       'MPIRUN_MAPFILE', 'MPIRUN_START_GDBSERVER',
                       'MPIRUN_LABEL', 'MPIRUN_NW', 'MPIRUN_VERBOSE',
-                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE' ]
+                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE']
         postfork_env = {}
+
+        #COBALT_JOBID and COBALT_RESID are special and must be passed to 
+        #the mpirun environment.
+        postfork_env['COBALT_JOBID'] = self.jobid
+        if self.resid != None:
+            postfork_env['COBALT_RESID'] = self.resid
+
         app_envs = []
         for key, value in self.env.iteritems():
             if key in exportenv:
