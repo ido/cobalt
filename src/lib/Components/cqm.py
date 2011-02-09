@@ -1354,11 +1354,12 @@ class Job (StateMachine):
 
         # add the cobolt job id to the list of environment variables
         # same for reservation id
-        #self.envs['COBALT_JOBID'] = str(self.jobid)
-        #if self.resid != None:
-        #     self.envs['COBALT_RESID'] = str(self.resid)
-        #This is being done later in the system component.
-
+        self.envs['COBALT_JOBID'] = str(self.jobid)
+        if self.resid != None:
+             self.envs['COBALT_RESID'] = str(self.resid)
+        
+        #This is being done later in the system component as well
+        #so that the mpirun library sees these.
 
         # start job and resource prologue scripts
 
