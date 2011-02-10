@@ -295,7 +295,7 @@ class BGSystem (BGBaseSystem):
         self.diag_pids = dict()
         self.configure()
         # initiate the process before starting any threads
-        thread.start_new_thread(self.update_partition_state, tuple())
+        thread.start_new_thread(self.update_partition_state_thread_func, tuple())
     
     def __getstate__(self):
         flags = {}
@@ -342,7 +342,7 @@ class BGSystem (BGBaseSystem):
         
         self.update_relatives()
         # initiate the process before starting any threads
-        thread.start_new_thread(self.update_partition_state, tuple())
+        thread.start_new_thread(self.update_partition_state_thread_func, tuple())
         self.lock = threading.Lock()
         self.statistics = Statistics()
 
@@ -465,6 +465,13 @@ class BGSystem (BGBaseSystem):
                         break
         
    
+    def update_partition_state_thread_func(self):
+        while True:
+            try:
+                self.update_partition_state()
+            except:
+                self.logger.error("unexpected exception from update_partition_state", exc_info=True)
+        
     def update_partition_state(self):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
         
@@ -651,7 +658,7 @@ class BGSystem (BGBaseSystem):
                         pass
                     except:
                         self.logger.info("partition %s: an exception occurred while attempting to destroy the partition",
-                            p.name, part.name, exc_info=1)
+                            p.name, exc_info=1)
                 if len(pnames_destroyed) > 0:
                     self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
                 else:
