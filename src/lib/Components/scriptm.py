@@ -47,6 +47,7 @@ class ProcessGroup(Data):
         self.cobalt_log_file = spec.get('cobalt_log_file')
         self.executable = spec.pop("executable", None)
         self.jobid = spec.pop("jobid", None)
+        self.resid = spec.pop("resid",None)
         self.path = spec.pop("path", None)
         self.cwd = spec.pop("cwd", None)
         self.args = spec.pop("args", [])
@@ -85,6 +86,8 @@ class ProcessGroup(Data):
             # create a nodefile in /tmp
             os.environ['COBALT_NODEFILE'] = self.t.name
             os.environ["COBALT_JOBID"] = str(self.jobid)
+            if self.resid != None:
+                os.environ["COBALT_RESID"] = str(self.resid)
             os.environ["COBALT_PARTNAME"] = self.location[0]
             os.environ["COBALT_JOBSIZE"] = str(self.job_size)
             os.environ['USER'] = self.user
