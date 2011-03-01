@@ -1,0 +1,80 @@
+Changes from previous Cobalt Versions
+
+Changes to 0.99.0pre28
+
+* sequence number and acknowledgements added to base components.  This should
+    prevent repeat messages from triggering actions multiple times.
+
+
+Changes to 0.99.0pre27
+
+* Restored COBALT_JOBID and COBALT_RESID in back-end jobs. This was erroniously
+    removed in 0.99.0pre26.
+
+
+Changes to 0.99.0pre26
+
+* Fixed bug where environmental variables passed into a job from the --env flag
+    of qsub and qalter would leak into the environment of bgforker and from 
+    there into subsequent mpirun process environments.  These did not leak 
+    into the backend-job environments.  Cluster-system component jobs did not
+    see issues with this due to an apparent bug in envrionment handling.
+
+* A job's exit status is now added to the Cobalt Database as exit_status
+* COBALT_RESID is set in mpirun jobs
+
+
+Changes to 0.99.0pre25
+
+* Various timezone formatting changes including:
+    - setres takes the reservation time depending on what TZ is set to
+    - qstat and showres show times in a unified format, that includes
+        offset and three-letter timezone designation
+    - showres has a flag --oldts where it shows timestamps in the original
+        format for compatibility with old scripts
+* Forker was not handling spaces in arguments to scripts correctly
+* schedctl no longer gives an erronious error message about requiring a job id 
+    for --start, --stop 
+* Statemachine state-transition function pointers are now regenerated at 
+    restart as well as job initialization, to allow for transparent state-
+    machine adjustments
+
+
+Changes to 0.99.0pre24
+
+* Fixes for arguments to pre and post scripts for jobs
+* showres reverted to not include id's
+* Fixes for script-mode jobs
+
+
+changes to 0.99.0pre23
+
+* Script jobs run with their own shells from forker to prevent 32/64 bit execution environment issues
+
+changes to 0.99.0pre22
+
+* Bgforker modified so that helper scripts can be run
+* KNOWN ISSUE: job preemption is not working correctly in this version.  
+* Resid now added to jobs at runtime, if they are run in a reservation.
+* Fix for partially overlapping partitions being scheduled at the same time
+    and properly detecting reservations.
+
+changes to 0.99.0pre21
+
+* Fix to reduce chance of cluster system nodes from being hung-up on job exit.
+* Adding in backfill prediction functionality.  This is by default disabled.
+* Various fixes and updates to the mk_* cobalt backup scripts.  These can be 
+    used to restore state should a change that is destructive to statefiles is
+    made (like the 0.99.0pre16 to 0.99.0pre17 change).
+* resid and cycleid can be set via setres
+* time.sleep() wrapped to prevent kernel level IOError from creeping out on 
+    ppc64 linux platforms.  
+
+
+changes to 0.99.0pre20
+
+* stderr log messages now contain timestamps
+* ensemble jobs that use -nofree without a -wait free are now cleaned up properly
+* environment variables in cert, key and ca options in config files are expanded
+
+changes to 0.99.0pre19
