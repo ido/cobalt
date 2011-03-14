@@ -434,11 +434,6 @@ class BaseForker (Component):
             #helper scripts.
             orig_env = copy.deepcopy(os.environ)
             child_env_dict = copy.deepcopy(os.environ.data)
-            #for key, value in os.environ.data.iteritems():
-            #    child_env_dict[key] = value
-            #if app_env != None:
-            #    for key in app_env:
-            #        child_env_dict[key] = app_env[key]
 
             command = [cmd[0]]
             command.extend(cmd)
@@ -478,8 +473,6 @@ class BaseForker (Component):
             self.children[child.id] = child
             return child.id
    
-        #except EnvChangeError as e:
-        #    self.logger.error
                 
         except OSError as e:
             self.logger.error("%s Task %s failed to execute with a code of "

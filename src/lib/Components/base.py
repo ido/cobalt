@@ -27,6 +27,13 @@ from Cobalt.Statistics import Statistics
 
 
 def state_file_location():
+    
+    '''Grab the location of the Cobalt statefiles.  
+
+    default: /var/spool/cobalt
+
+    '''
+
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
     if _config._sections.has_key("statefiles"):
@@ -39,6 +46,23 @@ def state_file_location():
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10,
                    single_threaded=False):
+    '''Run the Cobalt component.  
+
+    arguments:
+
+    component_cls
+    argv
+    register
+    state_name
+    cls_kwargs
+    extra_getopt
+    time_out
+    single_threaded
+    
+    This will run until a the component is terminated.
+
+    '''
+
     if argv is None:
         argv = sys.argv
     try:
@@ -192,6 +216,7 @@ class Component (object):
     Methods:
     save -- pickle the component to a file
     do_tasks -- perform automatic tasks for the component
+
     """
     
     name = "component"
@@ -352,3 +377,5 @@ class Component (object):
         """Get current statistics about component execution"""
         return self.statistics.display()
     get_statistics = exposed(get_statistics)
+
+ 

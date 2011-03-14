@@ -69,7 +69,11 @@ class CobaltXMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     def _marshaled_dispatch (self, data):
         method_func = None
         params, method = xmlrpclib.loads(data)
+        #print method, "\n" ,params
+
         try:
+            #print "%s: %s being poked" % (time.ctime(), method)
+            #time.sleep(120)
             response = self.instance._dispatch(method, params, self.funcs)
             response = (response,)
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
@@ -229,7 +233,9 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     def parse_request (self):
         """Extends parse_request.
         
-        Optionally check HTTP authentication when parsing."""
+        Optionally check HTTP authentication when parsing.
+
+        """
         if not SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.parse_request(self):
             return False
         if self.require_auth:
@@ -352,6 +358,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
             ComponentProxy("service-location").register(name, self.url)
         except Exception, e:
             self.logger.error("register_with_slp() [%s]" % (e))
+            raise
     
     def unregister_with_slp (self):
         try:
@@ -362,6 +369,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
             ComponentProxy("service-location").unregister(name)
         except Exception, e:
             self.logger.error("unregister_with_slp() [%s]" % (e))
+            raise
         else:
             self.logger.info("unregister_with_slp()")
 
