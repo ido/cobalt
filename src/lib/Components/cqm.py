@@ -2842,7 +2842,7 @@ class QueueManager(Component):
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
-            val = queue_priority + 0.1
+            val = (queued_time/wall_time)**3 * size
             return val
     
         def high_prio():

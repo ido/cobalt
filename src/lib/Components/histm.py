@@ -59,7 +59,7 @@ class HistoryManager(Component):
         
         self.Ap_dict_proj = {}  #dictionary of walltime adjusting parameters by project name
         self.Ap_dict_user = {}  #dictionary of walltime adjusting parameters by user name
-        self.Ap_dict_paired = {} #dictionary of walltime adjusting parameters by double key (user, project)
+        self.Ap_dict_combined = {} #dictionary of walltime adjusting parameters by double key (user, project)
         
         self.update_Ap_Dict()
                 
@@ -96,10 +96,10 @@ class HistoryManager(Component):
                 self.Ap_dict_user[username] = ap
                 
         for keypair in self.pair_set:
-            if not self.Ap_dict_paired.has_key(keypair):
-                ap = self.calculate_Ap_paired(keypair)
+            if not self.Ap_dict_combined.has_key(keypair):
+                ap = self.calculate_Ap_combined(keypair)
                 keystr = "%s:%s" % (keypair[0], keypair[1])
-                self.Ap_dict_paired[keystr] = ap                
+                self.Ap_dict_combined[keystr] = ap                
 
         print "***********Adjusting Parameter Dict Updated***********"
         
@@ -123,7 +123,7 @@ class HistoryManager(Component):
             Ap = 1
         return Ap
     
-    def calculate_Ap_paired(self, keypair):
+    def calculate_Ap_combined(self, keypair):
         username = keypair[0]
         projectname = keypair[1]
         
@@ -156,7 +156,7 @@ class HistoryManager(Component):
     
     def get_Ap_by_keypair(self, username, projectname):
         keypair = "%s:%s" % (username, projectname)
-        Ap = self.Ap_dict_paired.get(keypair, 1)
+        Ap = self.Ap_dict_combined.get(keypair, 1)
         return Ap
     get_Ap_by_keypair = exposed(get_Ap_by_keypair)
     
