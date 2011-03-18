@@ -1,3 +1,5 @@
+#!/usr/bin/env python2.6
+
 """Implementations of the forker component.
 
 Classes:
@@ -77,6 +79,7 @@ class Child(object):
         self.old_child = False
         #keep the Popen object handle.
         self.proc = None
+        self.runid = None
     
     def from_dict(self, old_dict):
         for key in old_dict:
@@ -288,6 +291,7 @@ class BaseForker (Component):
         """
         Component.__init__(self, *args, **kwargs)
         self.children = {}
+        self.active_runids = []
         self.id_gen = IncrID()
 
     def __getstate__(self):
@@ -308,6 +312,7 @@ class BaseForker (Component):
             self.children = []
         self.lock = Lock()
         self.statistics = Statistics()
+        self.active_runids = []
 
     def __save_me(self):
         '''Periodically save off a statefile.'''
@@ -395,12 +400,15 @@ class BaseForker (Component):
                     #apparently we're already dead.
                     pass
             #now that we're dead...
+            if self.children[local_id].runid != None:
+                self.active_runids.remove(self.children[local_id].runid)
             del self.children[local_id]
 
     child_cleanup = exposed(child_cleanup)
     
        
-    def fork(self, cmd, tag=None, label=None, app_env=None, preexec_data=None):
+    def fork(self, cmd, tag=None, label=None, app_env=None, preexec_data=None,
+            runid=None):
         """Fork a child task.  
         cmd -- A list of strings: the command and relevant arguments.
         tag -- a tag identifying the type of job, such as a script
@@ -417,12 +425,22 @@ class BaseForker (Component):
 
         """
 
+
+        #make sure that a job isn't retrying because the XML-RPC hung.
+        if (runid != None) and (runid in self.active_runids):
+            self.logger.warning("%s: Attempting to start a task that is "\
+                    "already running. Returning running child id." % label)
+            for child,child_obj in self.children.iteritems():
+                if child_obj.runid == runid:
+                    return child_obj.id 
+
         child = Child()
         child.id = self.id_gen.next() #this would be the 'local_id'
         child.label = label
         child.tag = tag
         child.cmd = cmd[0]
         child.args = cmd[1:]
+        child.runid = runid #generated at cqm.  Unique w/in a cobalt run.
 
         try:
             
@@ -434,11 +452,6 @@ class BaseForker (Component):
             #helper scripts.
             orig_env = copy.deepcopy(os.environ)
             child_env_dict = copy.deepcopy(os.environ.data)
-            #for key, value in os.environ.data.iteritems():
-            #    child_env_dict[key] = value
-            #if app_env != None:
-            #    for key in app_env:
-            #        child_env_dict[key] = app_env[key]
 
             command = [cmd[0]]
             command.extend(cmd)
@@ -471,15 +484,13 @@ class BaseForker (Component):
                 child.ignore_output = True
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
-            
             if orig_env != os.environ:
                 self.logger.error("forker environment changed during"
                         " task initialization.")
             self.children[child.id] = child
+            self.active_runids.append(runid)
             return child.id
    
-        #except EnvChangeError as e:
-        #    self.logger.error
                 
         except OSError as e:
             self.logger.error("%s Task %s failed to execute with a code of "
@@ -623,3 +634,32 @@ class BaseForker (Component):
                     each.core_dump = core_dump
                     each.signum = signum
     wait = automatic(wait)
+
+
+if __name__ == "__main__":
+
+    print "Initiating forker unit tests"
+    test_count = IncrID()
+    
+    forker = BaseForker()
+
+    init_pid = forker.fork("/bin/ls", runid=1)
+    print test_count.next(),":", "forked process with pid %s" % init_pid
+    assert (init_pid == 1), "init_id wrong"
+    pid_2 = forker.fork("/bin/ls", runid=2)
+    assert (pid_2 == 2), "pid_2 wrong"
+    print test_count.next(),":", "forked process with pid %s" % pid_2
+    pid_3 = forker.fork("/bin/ls", runid=1)
+    print test_count.next(),":", "forked process with pid %s" % pid_3
+
+    print forker.active_runids
+    print forker.children
+    forker.child_cleanup([init_pid, pid_2, pid_3])
+
+    print forker.active_runids
+    print forker.children
+    pid_4 = forker.fork("/bin/ls", runid=1)
+    pid_5 = forker.fork("/bin/ls")
+    print pid_4
+    forker.child_cleanup([pid_4])
+

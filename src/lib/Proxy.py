@@ -37,19 +37,42 @@ class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
 
+class RetryServerProxy(ServerProxy):
+    """A Simple proxy wiht it's __getattr__ method overridden to enable
+    retries.
+
+    Only overrides the __getattr__.
+
+    """
+    #Note to future developers: ServerProxy is a class, not an object.
+    #at least that's the case in Python2.x
+    #also, don't do this unless you want auto-retries (i.e. the call is
+    #idempotent).
+
+    def __init__(self, uri, transport=None, encoding=None, verbose=0,
+            allow_none=0, use_datetime=0):
+        ServerProxy.__init__(self, uri, transport, 
+                encoding, verbose, allow_none, use_datetime)
+
+    def __getattr__(self, name):
+        #an even more magiv method dispatcher that includes retries.
+        return RetryMethod(self._ServerProxy__request, name)
 
 class RetryMethod(_Method):
     """Method with error handling and retries built in."""
     max_retries = 4
     def __call__(self, *args):
+        #print "In Retry Version"
         for retry in range(self.max_retries):
             try:
-                return _Method.__call__(self, *args)
+                retval = _Method.__call__(self, *args)
+                #print "returned: retval = %s" % retval
+                return retval 
             except xmlrpclib.ProtocolError, err:
                 log.error("Server failure: Protocol Error: %s %s" % \
                               (err.errcode, err.errmsg))
                 raise xmlrpclib.Fault(20, "Server Failure")
-            except xmlrpclib.Fault:
+            except xmlrpclib.Fault as fault:
                 raise
             except socket.error, err:
                 if hasattr(err, 'errno') and err.errno == 336265218:
@@ -68,11 +91,20 @@ class RetryMethod(_Method):
             except:
                 log.error("Unknown failure", exc_info=1)
                 break
-            Cobalt.Util.sleep(0.5)
+            
+            try:
+                time.sleep(0.5)
+            except IOError:
+                #Yes, you can get an IOError from ppc64 linux kernels
+                #It has to do with the select that is used to get sub-second
+                #sleeps. We just ignore this attempt if the exception gets 
+                #thrown Putting this here to avoid a circular dependnecy. --PMR
+                pass
+
         raise xmlrpclib.Fault(20, "Server Failure")
 
 # sorry jon
-xmlrpclib._Method = RetryMethod
+#xmlrpclib._Method = RetryMethod
 
 class SSLHTTPConnection(httplib.HTTPConnection):
     """Extension of HTTPConnection that implements SSL and related behaviors."""
@@ -239,10 +271,10 @@ def ComponentProxy(component_name, **kwargs):
     Additional arguments are passed to the ServerProxy constructor.
     """
     
+    enable_retry = kwargs.get("retry", True)
 
-    
     if kwargs.get("defer", True):
-        return DeferredProxy(component_name)
+        return DeferredProxy(component_name, enable_retry)
 
     user = 'root'
     try:
@@ -265,6 +297,8 @@ def ComponentProxy(component_name, **kwargs):
     elif component_name in known_servers:
         method, path = urlparse.urlparse(known_servers[component_name])[:2]
         newurl = "%s://%s:%s@%s" % (method, user, passwd, path)
+        if enable_retry:
+            return RetryServerProxy(newurl, allow_none=True, transport=ssl_trans)
         return ServerProxy(newurl, allow_none=True, transport=ssl_trans)
     elif component_name != "service-location":
         try:
@@ -279,6 +313,8 @@ def ComponentProxy(component_name, **kwargs):
             raise ComponentLookupError(component_name)
         method, path = urlparse.urlparse(address)[:2]
         newurl = "%s://%s:%s@%s" % (method, user, passwd, path)
+        if enable_retry:
+            return RetryServerProxy(newurl, allow_none=True, transport=ssl_trans)
         return ServerProxy(newurl, allow_none=True, transport=ssl_trans)
     else:
         raise ComponentLookupError(component_name)
@@ -322,21 +358,23 @@ class DeferredProxy (object):
     Gets a new proxy when it can't connect to a component.
     """
     
-    def __init__ (self, component_name):
+    def __init__ (self, component_name, retry=True):
         self._component_name = component_name
+        self.retry = retry
     
     def __getattr__ (self, attribute):
-        return DeferredProxyMethod(self, attribute)
+        return DeferredProxyMethod(self, attribute, self.retry)
 
 
 class DeferredProxyMethod (object):
     
-    def __init__ (self, proxy, func_name):
+    def __init__ (self, proxy, func_name, retry=True):
         self._proxy = proxy
         self._func_name = func_name
+        self.retry = retry
     
     def __call__ (self, *args):
-        proxy = ComponentProxy(self._proxy._component_name, defer=False)
+        proxy = ComponentProxy(self._proxy._component_name, retry=self.retry, defer=False)
         func = getattr(proxy, self._func_name)
         return func(*args)
 
