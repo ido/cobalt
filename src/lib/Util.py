@@ -9,6 +9,7 @@ import smtplib
 import socket
 import sys
 import time
+import datetime
 import ConfigParser
 import os.path
 import subprocess
@@ -23,7 +24,15 @@ import re
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
 
+no_pytz = False
+try:
+    from pytz import timezone
+    import pytz
+except ImportError:
+    no_pytz = True
+
 logger = logging.getLogger('Util')
+
 
 
 def sleep(t):
@@ -701,6 +710,7 @@ def fix_set(state):
         if isinstance(state[k], sets.Set):
             state[k] = set(state[k])
 
+
 def sec_to_str(t):
 
     '''convert a time in secs since epoch into a formated string for output
@@ -708,13 +718,41 @@ def sec_to_str(t):
 
     '''
 
-    timestamp = time.strftime("%c", time.localtime(t))
+    timestamp = None
+    offset = None
+    tzname = None
 
-    tzh = time.timezone / 3600
-    tzm = time.timezone / 60 % 60
+    
 
-    offset = "%+.2d%.2d" % (tzh,tzm)
-    tzname = time.strftime("(%Z)", time.localtime(t))
+    if no_pytz:
+        timestamp = time.strftime("%c", time.localtime(t))
+        
+        tzh = 0
+        tzm = 0
+
+        if time.strftime("%Z", time.localtime(t)).find('DT') != -1:
+            tzh = (time.timezone / 3600) - 1
+            tzm = time.timezone / 60 % 60
+        
+        else:
+            tzh = time.timezone / 3600
+            tzm = time.timezone / 60 % 60
+
+        offset = "%+.2d%.2d" % (-tzh,tzm)
+        tzname = time.strftime("(%Z)", time.localtime(t))
+
+    else:
+        tzname = os.environ.get('TZ','UTC')
+        try:
+            tz = timezone(tzname)
+        except pytz.exceptions.UnknownTimeZoneError:
+            tz = timezone('UTC')
+
+        dt = datetime.fromtimestamp(t, tz)
+        
+        timestamp = dt.strftime("%c")
+        offset = dt.strftime("%z")
+        tzname = dt.strftime("(%Z)")
 
     time_str =  "%s %s %s" % (timestamp, offset, tzname)
 
