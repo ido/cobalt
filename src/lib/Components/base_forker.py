@@ -484,7 +484,6 @@ class BaseForker (Component):
                 child.ignore_output = True
                 self.logger.info("task %s: forked with pid %s", child.label, 
                     child.pid)
-            
             if orig_env != os.environ:
                 self.logger.error("forker environment changed during"
                         " task initialization.")

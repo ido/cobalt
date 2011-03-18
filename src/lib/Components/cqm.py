@@ -1487,7 +1487,7 @@ class Job (StateMachine):
             
 
 
-    def _sm_job_prologue_retry__progress(self):
+    def _sm_job_prologue_retry__progress(self, args):
 
         '''Try and run the job scripts again.  Since these are usually failures
         due to a component going down, keep retrying.
@@ -1495,7 +1495,7 @@ class Job (StateMachine):
         '''
         rc = self._sm_start_job_prologue_scripts()
 
-    def _sm_resource_prologue_retry__progress(self):
+    def _sm_resource_prologue_retry__progress(self, args):
 
         '''Try and run the resource prologue scripts again.  Since these are 
         usually failures due to a component going down, keep retrying.
@@ -1504,7 +1504,7 @@ class Job (StateMachine):
         rc = self._sm_start_resource_prologue_scripts()
     
     
-    def _sm_resource_epilogue_retry__progress(self):
+    def _sm_resource_epilogue_retry__progress(self, args):
 
         '''Try and run the resource epilogue scripts again.  Since these are 
         usually failures due to a component going down, keep retrying.
@@ -1512,7 +1512,7 @@ class Job (StateMachine):
         '''
         rc = self._sm_start_resource_epilogue_scripts()
 
-    def _sm_job_epilogue_retry__progress(self):
+    def _sm_job_epilogue_retry__progress(self, args):
         '''Try and run the job epilogue scripts again.  Since these are 
         usually failures due to a component going down, keep retrying.
 
