@@ -864,47 +864,14 @@ class BGSystem (BGBaseSystem):
                             each.id, each.jobid, each.user, dead_dict["signum"], core_dump_str)
 
                 
-        block_comment = """
-        while True:
-            try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
-            except OSError: # there are no child processes
-                break
-            status = 0
-            signum = 0
-            core_dump = False
-            if os.WIFEXITED(status):
-                status = os.WEXITSTATUS(status)
-            elif os.WIFSIGNALED(status):
-                signum = os.WTERMSIG(status)
-                if os.WCOREDUMP(status):
-                    core_dump = True
-            else:
-                break
-            for each in self.process_groups.itervalues():
-                if each.head_pid == pid:
-                    if signum == 0:
-                        each.exit_status = status
-                        self.logger.info("process group %i: job %s/%s exited with status %i", 
-                            each.id, each.jobid, each.user, status)
-                    else:
-                        each.exit_status = 128 + signum
-                        if core_dump:
-                            core_dump_str = ", core dumped"
-                        else:
-                            core_dump_str = ""
-                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
-                            each.id, each.jobid, each.user, signum, core_dump_str)
-            if pid in self.diag_pids:
-                part, test = self.diag_pids[pid]
-                del self.diag_pids[pid]
-                self.logger.info("Diagnostic %s on %s finished. rc=%d" % \
-                                 (test, part.name, status))
-                self.finish_diags(part, test, status)
-        """
     _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
+        """Get the exit status of any completed process groups.  If completed,
+        initiate the partition cleaning process, and remove the process group 
+        from system's list of active processes.
+
+        """
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
@@ -915,6 +882,12 @@ class BGSystem (BGBaseSystem):
     wait_process_groups = exposed(query(wait_process_groups))
     
     def signal_process_groups (self, specs, signame="SIGINT"):
+        """Send a signal to a currently running process group as specified by signame.
+
+        if no signame, then SIGINT is the default.
+
+        """
+
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
             if pg.exit_status is None:

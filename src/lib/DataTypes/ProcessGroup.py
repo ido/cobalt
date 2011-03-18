@@ -78,6 +78,7 @@ class ProcessGroup(Data):
         self.umask = spec.get("umask")
         self.user = spec.get("user", "")
         self.resid = spec.get("resid", None)
+        self.runid = spec.get("runid", None)
 
         self.logger = logger
 
@@ -93,9 +94,9 @@ class ProcessGroup(Data):
         """Start the process group by forking to _mpirun()"""
         try:
             data = self.prefork()
-            self.head_pid = ComponentProxy("forker").fork(data['cmd'], 
+            self.head_pid = ComponentProxy("forker", retry=False).fork(data['cmd'], 
                 self.tag, "Job %s/%s" %(self.jobid, self.user), None, 
-                data)
+                data, self.runid)
         except:
             self.logger.error("problem forking: pg %s did not find a "
                 "child pid", self.id)

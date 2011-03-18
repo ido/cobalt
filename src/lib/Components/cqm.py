@@ -104,6 +104,7 @@ from Cobalt.Statistics import Statistics
 logger = logging.getLogger('cqm')
 
 cqm_id_gen = None
+run_id_gen = IncrID()
 
 cqm_forker_tag = "cqm_script"
 job_prescript_tag = "job prescript"
@@ -649,6 +650,8 @@ class Job (StateMachine):
         self.resource_prescript_ids = []
         self.resource_postscript_ids = []
 
+        self.runid = None #A job starts once.
+
         dbwriter.log_to_db(self.user, "creating", "job_data", 
                            JobDataMsg(self))
         if self.admin_hold:
@@ -770,12 +773,16 @@ class Job (StateMachine):
         return Job.__rc_success
 
     def __task_run(self):
+        global run_id_gen
         walltime = self.walltime
+        if self.runid == None: #allow us to unset this for preemption
+            self.runid = run_id_gen.next() #Don't try and run this twice.
+            
         if self.preemptable and self.maxtasktime < walltime:
             walltime = self.maxtasktime
         try:
             self._sm_log_info("instructing the system component to begin executing the task")
-            pgroup = ComponentProxy("system").add_process_groups([{
+            pgroup = ComponentProxy("system", retry=False).add_process_groups([{
                 'id':"*",
                 'jobid':self.jobid,
                 'user':self.user,
@@ -795,7 +802,8 @@ class Job (StateMachine):
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
                 'walltime':walltime,
-                'resid': self.resid
+                'resid': self.resid,
+                'runid': self.runid
             }])
             if pgroup[0].has_key('id'):
                 self.taskid = pgroup[0]['id']
@@ -999,6 +1007,7 @@ class Job (StateMachine):
             else:
                 self.__signal_timer = Timer()
             self.__signal_timer.start()
+            self.runid = None #we will be able to run this again later.
             self._sm_state = 'Preempting'
             dbwriter.log_to_db(None, "preempting", "job_prog", JobProgMsg(self))
             return True
@@ -3361,7 +3370,7 @@ class QueueManager(Component):
         self.id_gen.set(state['next_job_id'])
         global cqm_id_gen
         cqm_id_gen = self.id_gen
-        
+
         for q in self.Queues.values():
             q.jobs.id_gen = self.id_gen
         

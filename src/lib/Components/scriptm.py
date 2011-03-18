@@ -185,7 +185,7 @@ class ProcessGroup(Data):
         stderr = spec.get("stderr", self.stderr)
         
         try:
-            pgroup = ComponentProxy("system").add_process_groups([{
+            pgroup = ComponentProxy("system", retry=False).add_process_groups([{
                 'jobid':self.jobid,
                 'tag':'process-group',
                 'user':self.user, 
