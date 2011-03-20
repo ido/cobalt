@@ -510,7 +510,7 @@ class Job (StateMachine):
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
         "is_runnable", "is_active",
         "has_completed", "sm_state", "score", "attrs", "has_resources", 
-        "exit_status", "dep_frac", "walltime_p", "user_list"
+        "exit_status", "dep_frac", "walltime_p", "user_list", "runid"
     ]
 
     _states = get_job_sm_states() + StateMachine._states
@@ -736,7 +736,8 @@ class Job (StateMachine):
             self.resource_prologue_ids = None
         if not state.has_key("resource_epilogue_ids"):
             self.resource_epilogue_ids = None
-            
+        self.runid = state.get("runid", None)
+
         self.initializing = False
 
     def __task_signal(self, retry = True):
