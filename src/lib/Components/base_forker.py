@@ -21,6 +21,7 @@ import atexit
 import ConfigParser
 import subprocess
 import shlex
+import re
 from subprocess import PIPE
 from traceback import format_exc
 
@@ -440,6 +441,7 @@ class BaseForker (Component):
         child.tag = tag
         child.cmd = cmd[0]
         child.args = cmd[1:]
+
         child.runid = runid #generated at cqm.  Unique w/in a cobalt run.
 
         try:
@@ -458,12 +460,13 @@ class BaseForker (Component):
             command_str = " ".join(cmd)
             
             # One last bit of mangling to prevent premature splitting of args
+            # quote the argument strings so the shell doesn't eat them.
             mod_cmd = []
+            rep_quote = re.compile(r'\'')
+            
             for s in cmd:
-                if len(s.split()) > 1:
-                    ''.join(s.split())
-                else:
-                    mod_cmd.append(s)
+                
+                mod_cmd.append("'" + rep_quote.sub('\'"\'"\'', s) + "'")
                         
             command_str = " ".join(mod_cmd)
 
