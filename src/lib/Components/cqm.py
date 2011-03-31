@@ -104,7 +104,7 @@ from Cobalt.Statistics import Statistics
 logger = logging.getLogger('cqm')
 
 cqm_id_gen = None
-run_id_gen = IncrID()
+run_id_gen = None #IncrID()
 
 cqm_forker_tag = "cqm_script"
 job_prescript_tag = "job prescript"
@@ -2835,6 +2835,8 @@ class Job (StateMachine):
         return result
 
     def __write_cobalt_log(self, message):
+
+        #changed such that now, we can do this through a thread defined in Cobalt.Util
         if self.cobalt_log_file:
             try:
                 uid = pwd.getpwnam(self.user)[2]
@@ -3343,8 +3345,12 @@ class QueueManager(Component):
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
         self.id_gen = IncrID()
+        self.run_id_gen = IncrID()
         global cqm_id_gen
         cqm_id_gen = self.id_gen
+        global run_id_gen
+        run_id_gen = self.run_id_gen
+
         
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
@@ -3362,7 +3368,7 @@ class QueueManager(Component):
     def __getstate__(self):
         
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
-                'msg_queue':dbwriter.msg_queue,
+                'msg_queue':dbwriter.msg_queue, 'next_run_id':self.run_id_gen.idnum+1,
                 'overflow': dbwriter.overflow}
                 
     def __setstate__(self, state):
@@ -3372,6 +3378,11 @@ class QueueManager(Component):
         global cqm_id_gen
         cqm_id_gen = self.id_gen
 
+        self.run_id_gen = IncrID()
+        self.run_id_gen.set(state.get('next_run_id', 1))
+        global run_id_gen
+        run_id_gen = self.run_id_gen
+        
         for q in self.Queues.values():
             q.jobs.id_gen = self.id_gen
         
