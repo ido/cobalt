@@ -83,7 +83,8 @@ if __name__ == '__main__':
         if not 0 < nc <= sys_size:
             logger.error("node count out of realistic range")
             sys.exit(1)
-        updates['nodes'] = opts['nodecount']
+        updates['nodes'] = nc 
+       
     # ensure time is actually in minutes
     if opts['time']:
         if opts['time'][0] in [ '+', '-']:
@@ -140,6 +141,7 @@ if __name__ == '__main__':
             opts['mode'] = 'SMP'
         updates['mode'] = opts['mode']
 
+    #TODO: This is bugged and must be handled on a per-job basis. --PMR
     if opts['nodecount'] and not opts['proccount']:
         if opts.get('mode', 'co') == 'vn':
             # set procs to 2 x nodes
@@ -151,15 +153,15 @@ if __name__ == '__main__':
                 logger.error("Unknown bgtype %s" % (sys_type))
                 sys.exit(1)
         else:
-            opts['proccount'] = opts['nodecount']
-        updates['procs'] = opts['proccount']
+            opts['proccount'] = int(opts['nodecount'])
+        updates['procs'] = int(opts['proccount'])
     if opts['proccount']:
         try:
             int(opts['proccount'])
         except:
             logger.error("non-integer node count specified")
             sys.exit(1)
-        updates['procs'] = opts['proccount']
+        updates['procs'] = int(opts['proccount'])
 
     if opts['project']:
         updates['project'] = opts['project']
