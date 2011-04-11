@@ -18,8 +18,11 @@ from getopt import getopt, GetoptError
 from Cobalt.Exceptions import TimeFormatError, TimerException, ThreadPickledAliveException
 import logging
 from threading import Thread
+from Queue import Queue
 import inspect
 import re
+import select
+import errno
 
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
@@ -48,7 +51,6 @@ def sleep(t):
     except IOError:
         logger.warning("IOError trapped from time.sleep() and ignored.")
     
-
 
 def check_dependencies(dependency_string):
 
@@ -757,4 +759,203 @@ def sec_to_str(t):
     time_str =  "%s %s %s" % (timestamp, offset, tzname)
 
     return time_str
+
+
+
+class file_message(object):
+    
+    def __init__(self, filename, msg):
+        self.filename = filename
+        self.msg = msg
+        self.msg_len = len(msg)
+        self.written = 0
+
+
+class disk_writer_thread(Thread):
+    
+    '''Thread for enabling safe non-blocking disk writes
+
+    '''
+
+    def __init__(self, *args, **kwargs):
+        '''Initialize the thread.  And prepare it for running.
+
+        '''
+        super(disk_writer_thread, self).__init__(*args, **kwargs)
+        self.msg_queue = Queue()
+
+    
+    def send(self, item):
+        #Item should be a list of filename, msg tupples
+        self.msg_queue.put(item)
+
+    def extract(self):
+        '''Pull out all pending messages.
+
+        '''
+        item_list = []
+        while not self.msg_queue.empty():
+            item_list.append(self.msg_queue.get())
+        return item_list
+
+    def close(self):
+        self.msg_queue.put(None)
+        self.msg_queue.join()
+
+    def run(self):
+
+        active_file_msgs = []
+        active_fds = {}
+        os.environ["STAT_SLEEP"] = '10'
+        while True: #keep this thread alive
+
+            if not self.msg_queue.empty():
+                item = self.msg_queue.get()
+                if item == None:
+                    break
+            
+                active_file_msgs.append(file_message(item[0],item[1]+"\n"))
+            
+            if active_file_msgs == []:
+                #We have no pending messages
+                Cobalt.Util.sleep(5.0)
+                continue
+
+
+            messages_to_remove = []
+            for file_msg in active_file_msgs:
+                blockcomment = """
+                #make sure that we have permissions for this file
+
+                #may have to move this as well.
+                try:
+                    uid = pwd.getpwnam(self.user)[2]
+                except KeyError:
+                    logger.error("Job %s/%s: user name is not valid; skipping output to cobaltlog file", self.jobid, self.user)
+                    continue
+                except:
+                    logger.exception("Job %s/%s: obtaining the user id failed", self.jobid, self.user)
+                    continue
+
+                try:
+                    file_uid = os.stat(self.cobalt_log_file).st_uid
+                    if file_uid != uid:
+                        logger.error("Job %s/%s: user does not own cobaltlog file %s", self.jobid, self.user, self.cobalt_log_file)
+                        continue
+                except OSError, e:
+                    logger.error("Job %s/%s: stat of cobaltlog file %s failed: %s", self.jobid, self.user, self.cobalt_log_file,
+                        e.strerror)
+                    continue
+                except:
+                    logger.exception("Job %s/%s: stat of cobaltlog file %s failed", self.jobid, self.user, self.cobalt_log_file) 
+                    continue
+                """
+                
+                try:
+                    fd = os.open(file_msg.filename, os.O_WRONLY|os.O_CREAT|os.O_APPEND|os.O_NONBLOCK)
+                except IOError as (num, strerror):
+                    
+                    errcode = errno.errorcode[num]
+
+                    if num == errno.EACCES:
+                        logger.error("Unable to write to %s with error code: "
+                                "%s. Permission Denied.", errcode,
+                                    file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num == errno.EDQUOT: 
+                        logger.error("Unable to write to %s. Quota Exceeded.", file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num in [errno.EFAULT,errno.EINVAL,errno.EIO]:
+                        logger.error("Unable to write to %s. Fatal Error.", file_msg.filename)
+                        messages_to_remove.append(file_msg) 
+                    elif num == errno.ENXIO:
+                        logger.error("Why are you trying to open a pipe?")
+                        messages_to_remove.append(file_msg) 
+                    else:
+                        logger.debug("Failed to write to %s.  Holding message for retry.",
+                                file_msg.filename)
+                        continue
+                except OSError as (num, strerror):
+
+                    if num == errno.EACCES:
+                        logger.error("Unable to write to %s. Permission Denied.",file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num == errno.EDQUOT: 
+                        logger.error("Unable to write to %s. Quota Exceeded.", file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num in [errno.EFAULT,errno.EINVAL,errno.EIO]:
+                        logger.error("Unable to write to %s. Fatal Error.", file_msg.filename)
+                        messages_to_remove.append(file_msg) 
+                    elif num == errno.ENXIO:
+                        logger.error("Why are you trying to open a pipe?")
+                        messages_to_remove.append(file_msg) 
+                    else:
+                        logger.debug("Failed to write to %s.  Holding message for retry.", 
+                                file_msg.filename)
+                        continue
+                except Exception:
+                    logger.critical("Unknown error recieved when writing to cobaltlog %s. "\
+                            "Traceback follows:" % file_msg.filename)
+                    logger.critical(traceback.format_exc())
+                    logger.critical("This message has been discarded.")
+                    messages_to_remove.append(file_msg)
+
+                else:
+                    active_fds[fd] = file_msg
+
+            #if we had any error out badly enough, just remove the messages for lack of being able to write
+            for msg in messages_to_remove:
+                active_file_msgs.remove(msg)
+
+            timeout = 0
+            while (timeout < 3):
+
+                try:
+                
+                    r_fd, w_fd, x_fd = select.select([], active_fds.keys(), [], 5.0)
+                
+                except IOError:
+                    logger.info("Select failed for open file descriptors.  Kernel bug?")
+                    break
+
+                if w_fd == []:
+                    timeout += 1
+                    if timeout > 3:
+                        logger.warn("Unable to write to all file descriptors this pass due to timeout.")
+                    continue
+
+                for fd in w_fd:
+                    
+                    #Only you can prevent partial writes
+                    count = 0
+                    try:
+                        count = os.write(fd, file_msg.msg[file_msg.written:])
+                    except IOError:
+                        logger.warn("Unable to complete write to ")
+
+                    if active_fds[fd].msg_len > (active_fds[fd].written + count):
+                        active_fds[fd].written += count
+                    else:
+                        active_file_msgs.remove(active_fds[fd])
+                        del active_fds[fd]
+                        os.close(fd)
+
+                if active_fds == {}:
+                    #yep, we're done
+                    break
+                
+            #End while timeout > 3
+
+            #Not running out of descriptors would be nice
+            if active_fds != {}:
+                fd_list = active_fds.keys()
+                for fd in fd_list:
+                    os.close(fd)
+                    del active_fds[fd]
+            
+            Cobalt.Util.sleep(1.0) #Don't hammer this into the ground
+
+        #End of while True:
+
+        logger.warn("Non-blocking File IO thread terminated.")
 

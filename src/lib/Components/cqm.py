@@ -89,7 +89,7 @@ import string
 
 import Cobalt
 import Cobalt.Util
-from Cobalt.Util import Timer, pickle_data, unpickle_data
+from Cobalt.Util import Timer, pickle_data, unpickle_data, disk_writer_thread
 import Cobalt.Cqparse
 from Cobalt.Data import Data, DataList, DataDict, IncrID
 from Cobalt.StateMachine import StateMachine
@@ -169,6 +169,23 @@ if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
     if max_queued != None:
         dbwriter.overflow_filename = overflow_filename
         dbwriter.max_queued = max_queued
+
+#writer so that cobalt log writes don't hang up scheduling.
+cobalt_log_writer = disk_writer_thread()
+cobalt_log_writer.daemon = True
+cobalt_log_writer.start()
+
+def cobalt_log_write(filename, msg):
+    '''send the cobalt_log writer thread a filename, msg tuple.
+    
+    '''
+    coblt_log_writer.send((filename, msg))
+
+def cobalt_log_terminate():
+    '''Terminate the writer thread by sending it None.
+
+    '''
+    coblat_log_writer.send(None)
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -2836,41 +2853,32 @@ class Job (StateMachine):
 
     def __write_cobalt_log(self, message):
 
+        global cobalt_log_writer
+        
         #changed such that now, we can do this through a thread defined in Cobalt.Util
         if self.cobalt_log_file:
-            try:
-                uid = pwd.getpwnam(self.user)[2]
-            except KeyError:
-                logger.error("Job %s/%s: user name is not valid; skipping output to cobaltlog file", self.jobid, self.user)
-                return
-            except:
-                logger.exception("Job %s/%s: obtaining the user id failed", self.jobid, self.user)
-                return
-            
-            try:
-                file_uid = os.stat(self.cobalt_log_file).st_uid
-                if file_uid != uid:
-                    logger.error("Job %s/%s: user does not own cobaltlog file %s", self.jobid, self.user, self.cobalt_log_file)
-                    return
-            except OSError, e:
-                logger.error("Job %s/%s: stat of cobaltlog file %s failed: %s", self.jobid, self.user, self.cobalt_log_file,
-                    e.strerror)
-                return
-            except:
-                logger.exception("Job %s/%s: stat of cobaltlog file %s failed", self.jobid, self.user, self.cobalt_log_file)
-                return
+
+            #former location of stat to see if user even owned the file.  This has been moved into a thread so as to prevent
+            #scheduling blockage
+
+            if not cobalt_log_writer.is_alive():
+                #we have had a disaster and the writer thread has tanked, recover what we can and keep going.
+                remaining_msgs = cobalt_log_writer.extract()
+                cobalt_log_writer = disk_writer_thread()
+                cobalt_log_writer.daemon = True
+                cobalt_log_writer.start()
+                for msg in remaining_msgs:
+                    cobalt_log_writer.send(msg)
+                logger.warning("Cobaltlog writer thread had fallen over.  Has restarted successfully.")
         
-            try:    
-                cobalt_log_file = open(self.cobalt_log_file, "a")
-                print >> cobalt_log_file, message
-                cobalt_log_file.close()
-            except IOError, e:
-                logger.error("Job %s/%s: unable to write to cobaltlog file %s: %s", self.jobid, self.user, self.cobalt_log_file, 
-                    e.strerror)
-                return
-            except:
-                logger.exception("Job %s/%s: unable to write to cobaltlog file %s", self.jobid, self.user, self.cobalt_log_file)
-                return
+            try:
+                cobalt_log_writer.send((self.cobalt_log_file, message))
+            except Exception:
+                logger.error("Job %s/%s: Error sending message to "\
+                        "cobalt_log_file thread.  Aborting write! Traceback "\
+                        "follows:" %(self.jobid, self.user))
+                logger.error(traceback.format_exc())
+            
 
     def progress(self):
         '''Run next job step'''
@@ -3364,7 +3372,8 @@ class QueueManager(Component):
             logger.info("Logging to cdbwriter enabled.")
         else:
             logger.info("Logging to cdbwriter disabled.")
-            
+           
+
     def __getstate__(self):
         
         return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
