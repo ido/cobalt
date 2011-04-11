@@ -411,7 +411,8 @@ class dbwriter(object):
             try:
                self.cdbwriter.add_message(msg)
             except:
-                self.logger.error("Unable to contact database writer when sending message.")
+                self.logger.error("dbwriter.flush_queue: Unable to contact "\
+                        "database writer when sending message.")
                 self.cdbwriter_alive = False
                 
                 #if the cdbwriter falls over while dealing with overflow.
@@ -424,7 +425,10 @@ class dbwriter(object):
                         self.close_overflow()
                 break
             else:
-                self.msg_queue.pop(0)
+                try:
+                    self.msg_queue.pop(0)
+                except IndexError:
+                    self.logger.error("dbwriter.flush_queue: Queue already empty.")
         
         self.clearing_overflow = False
         self.flushing = False
