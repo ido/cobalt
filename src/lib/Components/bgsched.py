@@ -104,7 +104,7 @@ class Reservation (Data):
 
         self.running = False
         
-        self.id_gen = bgsched_id_gen
+        #self.id_gen = bgsched_id_gen
         
 
     def _get_active(self):
@@ -216,7 +216,8 @@ class Reservation (Data):
             if((((stime - self.start) % self.cycle) > self.duration) 
                and self.running):
                 self.running = False
-                self.res_id = self.id_gen.get()
+                print "generating next id"
+                self.res_id = bgsched_id_gen.get()
                 logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
@@ -235,7 +236,8 @@ class ReservationDict (DataDict):
     item_cls = Reservation
     key = "name"
     
-    
+    global bgsched_id_gen
+
     def q_add (self, *args, **kwargs):
         qm = ComponentProxy("queue-manager")
         try:
@@ -434,11 +436,13 @@ class BGSched (Component):
         
         self.id_gen = IncrID()
         self.id_gen.set(state['next_res_id'])
+        print '#'*20, "next resid:", state['next_res_id']
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
         
         self.cycle_id_gen = IncrID()
         self.cycle_id_gen.set(state['next_cycle_id'])
+        print '#'*20, "next cycleid:", state['next_cycle_id']
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
 
