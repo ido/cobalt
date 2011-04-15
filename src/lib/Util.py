@@ -75,11 +75,16 @@ def check_dependencies(dependency_string):
     missing = deps.difference(job_ids)
     
     if missing:
-        print "WARNING: dependencies %s do not match jobs currently in the queue" % ":".join(missing)
+        print "WARNING: dependencies %s do not match jobs currently in the "\
+                "queue" % ":".join(missing)
     
 
 def get_time(date_string):
-    '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, or DD:HH:MM:SS, and return the total number of minutes.  Raise an exception for bad values.'''
+    '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, 
+    or DD:HH:MM:SS, and return the total number of minutes.  Raise an 
+    exception for bad values.
+    
+    '''
     time_info = {}
 
     units = date_string.split(":")
@@ -824,32 +829,6 @@ class disk_writer_thread(Thread):
 
             messages_to_remove = []
             for file_msg in active_file_msgs:
-                blockcomment = """
-                #make sure that we have permissions for this file
-
-                #may have to move this as well.
-                try:
-                    uid = pwd.getpwnam(self.user)[2]
-                except KeyError:
-                    logger.error("Job %s/%s: user name is not valid; skipping output to cobaltlog file", self.jobid, self.user)
-                    continue
-                except:
-                    logger.exception("Job %s/%s: obtaining the user id failed", self.jobid, self.user)
-                    continue
-
-                try:
-                    file_uid = os.stat(self.cobalt_log_file).st_uid
-                    if file_uid != uid:
-                        logger.error("Job %s/%s: user does not own cobaltlog file %s", self.jobid, self.user, self.cobalt_log_file)
-                        continue
-                except OSError, e:
-                    logger.error("Job %s/%s: stat of cobaltlog file %s failed: %s", self.jobid, self.user, self.cobalt_log_file,
-                        e.strerror)
-                    continue
-                except:
-                    logger.exception("Job %s/%s: stat of cobaltlog file %s failed", self.jobid, self.user, self.cobalt_log_file) 
-                    continue
-                """
                 
                 try:
                     fd = os.open(file_msg.filename, os.O_WRONLY|os.O_CREAT|os.O_APPEND|os.O_NONBLOCK)

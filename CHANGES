@@ -1,14 +1,27 @@
 Changes from previous Cobalt Versions
 
+
+Changes to 0.99.0pre29
+
+* Arguments that get passed to scripts (not script jobs but pre and 
+    postscripts) are now being properly escaped.
+* Cobaltlogs are now being written to by cqm in a separate thread, and
+    should allow scheduling to continue in the event of a filesystem hang.
+* qalter has had a bug fixed where it was passing back nodecounts and proccounts
+    as a string rather than an int.
+* jobs in cqm that do not have a timer are appropriately destroyed rather
+    than entering into an infinite loop of attempting to run the job.
+* Fix for the situation where a resid can be duplicated in the case of a
+    cycling reservation
+
+
 Changes to 0.99.0pre28
 
 * Modification to the XMLRPC base proxy class that allows you to turn off 
     automatic retries from the cobalt side on the proxy by requesting no
     retries.  This should be used for non-idempotent tasks like job-launching.
-
 * Modified cqm's retry behavior to include a runid when running a job, so and 
     retrying so that bgforker doesn't try to start the same job twice.
-
 * Timezone display corrected.  If available, cobalt will try to use the pytz
     library (Olsen Timezone Database).
 
@@ -26,7 +39,6 @@ Changes to 0.99.0pre26
     there into subsequent mpirun process environments.  These did not leak 
     into the backend-job environments.  Cluster-system component jobs did not
     see issues with this due to an apparent bug in envrionment handling.
-
 * A job's exit status is now added to the Cobalt Database as exit_status
 * COBALT_RESID is set in mpirun jobs
 

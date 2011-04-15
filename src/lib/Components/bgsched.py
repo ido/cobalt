@@ -436,13 +436,11 @@ class BGSched (Component):
         
         self.id_gen = IncrID()
         self.id_gen.set(state['next_res_id'])
-        print '#'*20, "next resid:", state['next_res_id']
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
         
         self.cycle_id_gen = IncrID()
         self.cycle_id_gen.set(state['next_cycle_id'])
-        print '#'*20, "next cycleid:", state['next_cycle_id']
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
 

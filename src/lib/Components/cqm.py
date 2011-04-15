@@ -1122,6 +1122,7 @@ class Job (StateMachine):
 
             dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", 
                     JobProgMsg(self))
+            self._write_end_records()
             self._sm_state = 'Terminal'
             return
 
@@ -1145,11 +1146,11 @@ class Job (StateMachine):
                         '%s_%s'%(self.jobid, self._sm_state),error) 
             except ComponentLookupError:
                 if self._sm_state != "Job_Epilogue_Retry":
-                     logger.warning("Job %s/%s: Unable to connect to forker "
+                    logger.warning("Job %s/%s: Unable to connect to forker "
                         "component to launch job postscripts.  Will retry", 
                         self.user, self.jobid)
-                     self._sm_state = "Job_Epilogue_Retry"
-                     return
+                    self._sm_state = "Job_Epilogue_Retry"
+                    return
             except Exception as e:
                 logger.error("Job %s/%s: %s exception recieved. Job epilogue "
                     "launcher has catastrophicaly failed.", self.user, 
@@ -1159,6 +1160,7 @@ class Job (StateMachine):
 
                 dbwriter.log_to_db(None, "job_epilogue_failed", 
                     "job_prog", JobProgMsg(self))
+                self._write_end_records()
                 self._sm_state = 'Terminal'
                 return
 
@@ -1176,6 +1178,7 @@ class Job (StateMachine):
                     "job_prog", JobProgMsg(self))
             dbwriter.log_to_db(None, "job_epilogue_finished", 
                     "job_prog", JobProgMsg(self))
+            self._write_end_records()
             self._sm_state = 'Terminal'
         else:
             logger.info("Job %s/%s: Job epilogue scripts started.", 
@@ -1287,112 +1290,120 @@ class Job (StateMachine):
             self._sm_state = queued_state
 
     def _sm_ready__run(self, args):
-        '''prepare a job for execution'''
-        self._sm_log_info("preparing job for execution")
-
-        # stop queue timers
-        self.__timers['queue'].stop()
-        self.__timers['current_queue'].stop()
-
-        # start job and resource timers
-        self.__timers['user'].start()
-        if self.walltime > 0:
-            self.__max_job_timer = Timer(self.walltime * 60)
-        else:
-            self.__max_job_timer = Timer()
-        self.__max_job_timer.start()
-        if self.preemptable:
-            self.__mintasktimer = Timer(max((self.mintasktime - self.maxcptime) * 60, 0))
-            self.__mintasktimer.start()
-            if self.maxtasktime > 0:
-                self.__maxtasktimer = Timer(max((self.maxtasktime - self.maxcptime) * 60, 0))
-            else:
-                self.__maxtasktimer = Timer()
-            self.__maxtasktimer.start()
-
-        self.starttime = str(time.time())
-
-        self.location = args['nodelist']
-        self.__locations.append(self.location)
-
-        # write job start and project information to CQM and accounting logs
-        if self.reservation:
-            logger.info('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
-            self.acctlog.LogMessage('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
-        else:
-            logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, self.jobname, self.nodes, self.procs, self.mode, \
-                self.walltime))
-            self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, self.jobname, self.nodes, self.procs, \
-                self.mode, self.walltime))
-        if self.project:
-            logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
-                ":".join(self.location)))
-            self.acctlog.LogMessage("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
-                ":".join(self.location)))
-        else:
-            logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, ":".join(self.location)))
-            self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, \
-                ":".join(self.location)))
-
-        optional = {}
-        if self.project:
-            optional['account'] = self.project
-        # group and session are unknown
-        accounting_logger.info(accounting.start(self.jobid, self.user,
-            "unknown", self.jobname, self.queue,
-            self.outputdir, self.command, self.args, self.mode,
-            self.ctime, self.qtime, self.etime, self.start, self.exec_host,
-            {'ncpus':self.procs, 'nodect':self.nodes,
-             'walltime':str_elapsed_time(self.walltime * 60)},
-            "unknown", **optional))
-
-        # notify the user that the job is starting; a separate thread is used to send the email so that cqm does not block
-        # waiting for the smtp server to respond
-        if self.notify:
-            mailserver = get_cqm_config('mailserver', None)
-            if mailserver == None:
-                mserver = 'localhost'
-            else:
-                mserver = mailserver
-            subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.jobid, self.user, self.queue, self.location[0])
-            mmsg = ("Job %s/%s, in the '%s' queue, starting at %s.\nJobName: %s\nCWD: %s\nCommand: %s\nArgs: %s\n" + \
-                    "Project: %s\nWallTime: %s\nSubmitTime: %s\nResources allocated: %s") % \
-                    (self.jobid, self.user, self.queue, time.strftime('%c', time.localtime()), self.jobname, self.cwd,
-                     self.command, self.args, self.project, str_elapsed_time(self.walltime), time.ctime(self.submittime),
-                     ":".join(self.location))
-            toaddr = []
-            if self.adminemail:
-                toaddr = toaddr + self.adminemail.split(':')
-            if self.notify:
-                toaddr = toaddr + self.notify.split(':')
-            thread.start_new_thread(Cobalt.Util.sendemail, (toaddr, subj, mmsg), {'smtpserver':mserver})
-
-        # set the output and error filenames (BRT: why is this not done in __init__?)
-        if not self.outputpath:
-            self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
-        else:
-            t = string.Template(self.outputpath)
-            self.outputpath = t.safe_substitute(jobid=self.jobid)
-        if not self.errorpath:
-            self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
-        else:
-            t = string.Template(self.errorpath)
-            self.errorpath = t.safe_substitute(jobid=self.jobid)
-
-        # add the cobolt job id to the list of environment variables
-        # same for reservation id
-        self.envs['COBALT_JOBID'] = str(self.jobid)
-        if self.resid != None:
-             self.envs['COBALT_RESID'] = str(self.resid)
+        '''prepare a job for execution
         
-        #This is being done later in the system component as well
-        #so that the mpirun library sees these.
+        '''
+        
+        self._sm_log_info("preparing job for execution") 
+        
+        try:
+            # stop queue timers
+            self.__timers['queue'].stop()
+            self.__timers['current_queue'].stop()
 
-        # start job and resource prologue scripts
+            # start job and resource timers
+            self.__timers['user'].start()
+            if self.walltime > 0:
+                self.__max_job_timer = Timer(self.walltime * 60)
+            else:
+                self.__max_job_timer = Timer()
+            self.__max_job_timer.start()
+            if self.preemptable:
+                self.__mintasktimer = Timer(max((self.mintasktime - self.maxcptime) * 60, 0))
+                self.__mintasktimer.start()
+                if self.maxtasktime > 0:
+                    self.__maxtasktimer = Timer(max((self.maxtasktime - self.maxcptime) * 60, 0))
+                else:
+                    self.__maxtasktimer = Timer()
+                self.__maxtasktimer.start()
 
-        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
-        self._sm_start_job_prologue_scripts()
+            self.starttime = str(time.time())
 
+            self.location = args['nodelist']
+            self.__locations.append(self.location)
+            
+            # write job start and project information to CQM and accounting logs
+            if self.reservation:
+                logger.info('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
+                self.acctlog.LogMessage('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
+            else:
+                logger.info('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, self.jobname, self.nodes, self.procs, self.mode, \
+                    self.walltime))
+                self.acctlog.LogMessage('S;%s;%s;%s;%s;%s;%s;%s' % (self.jobid, self.user, self.jobname, self.nodes, self.procs, \
+                    self.mode, self.walltime))
+            if self.project:
+                logger.info("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
+                    ":".join(self.location)))
+                self.acctlog.LogMessage("Job %s/%s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.project, self.queue, \
+                    ":".join(self.location)))
+            else:
+                logger.info("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, ":".join(self.location)))
+                self.acctlog.LogMessage("Job %s/%s/Q:%s: Running job on %s" % (self.jobid, self.user, self.queue, \
+                    ":".join(self.location)))
+
+            optional = {}
+            if self.project:
+                optional['account'] = self.project
+            # group and session are unknown
+            accounting_logger.info(accounting.start(self.jobid, self.user,
+                "unknown", self.jobname, self.queue,
+                self.outputdir, self.command, self.args, self.mode,
+                self.ctime, self.qtime, self.etime, self.start, self.exec_host,
+                {'ncpus':self.procs, 'nodect':self.nodes,
+                'walltime':str_elapsed_time(self.walltime * 60)},
+                "unknown", **optional))
+
+            # notify the user that the job is starting; a separate thread is used to send the email so that cqm does not block
+            # waiting for the smtp server to respond
+            if self.notify:
+                mailserver = get_cqm_config('mailserver', None)
+                if mailserver == None:
+                    mserver = 'localhost'
+                else:
+                    mserver = mailserver
+                subj = 'Cobalt: Job %s/%s starting - %s/%s' % (self.jobid, self.user, self.queue, self.location[0])
+                mmsg = ("Job %s/%s, in the '%s' queue, starting at %s.\nJobName: %s\nCWD: %s\nCommand: %s\nArgs: %s\n" + \
+                        "Project: %s\nWallTime: %s\nSubmitTime: %s\nResources allocated: %s") % \
+                        (self.jobid, self.user, self.queue, time.strftime('%c', time.localtime()), self.jobname, self.cwd,
+                        self.command, self.args, self.project, str_elapsed_time(self.walltime), time.ctime(self.submittime),
+                        ":".join(self.location))
+                toaddr = []
+                if self.adminemail:
+                    toaddr = toaddr + self.adminemail.split(':')
+                if self.notify:
+                    toaddr = toaddr + self.notify.split(':')
+                thread.start_new_thread(Cobalt.Util.sendemail, (toaddr, subj, mmsg), {'smtpserver':mserver})
+
+            # set the output and error filenames (BRT: why is this not done in __init__?)
+            if not self.outputpath:
+                self.outputpath = "%s/%s.output" % (self.outputdir, self.jobid)
+            else:
+                t = string.Template(self.outputpath)
+                self.outputpath = t.safe_substitute(jobid=self.jobid)
+            if not self.errorpath:
+                self.errorpath = "%s/%s.error" % (self.outputdir, self.jobid)
+            else:
+                t = string.Template(self.errorpath)
+                self.errorpath = t.safe_substitute(jobid=self.jobid)
+
+            # add the cobolt job id to the list of environment variables
+            # same for reservation id
+            self.envs['COBALT_JOBID'] = str(self.jobid)
+            if self.resid != None:
+                self.envs['COBALT_RESID'] = str(self.resid)
+        
+            #This is being done later in the system component as well
+            #so that the mpirun library sees these.
+
+            # start job and resource prologue scripts
+
+            dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
+            self._sm_start_job_prologue_scripts()
+        except Exception:
+            logger.error("Job %s/%s: Exception in starting job.  Job going to terminal state." %(self.jobid, self.user))
+            logger.error("Job %s/%s: Traceback:\n %s" % (self.jobid, self.user, traceback.format_exc()))
+            self._write_end_records()
+            self._sm_state = "Terminal"
 
     def _sm_start_job_prologue_scripts(self):
         '''Launch our job prescripts.
@@ -2564,6 +2575,13 @@ class Job (StateMachine):
         dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog",
                 JobProgMsg(self))
 
+        self._write_end_records()
+        self._sm_state = 'Terminal'
+
+
+    def _write_end_records(self):
+
+
         # stop the execution timer and get the stats; 
         # NOTE: the execution timer may not be running if the job was preempted
         if self.__timers['user'].is_active:
@@ -2625,8 +2643,6 @@ class Job (StateMachine):
         logger.info("Job %s/%s on %s nodes done. %s" % (self.jobid, self.user, self.nodes, stats))
         self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
             (self.jobid, self.user, self.nodes, stats, str(self.exit_status)))
-
-        self._sm_state = 'Terminal'
 
     def _sm_get_state(self):
         return StateMachine._state.__get__(self)
