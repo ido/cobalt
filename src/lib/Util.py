@@ -36,7 +36,8 @@ except ImportError:
 
 logger = logging.getLogger('Util')
 
-
+config_true_values = ['true', 'yes','1','on']
+config_false_values = ['false', 'no','0','off']
 
 def sleep(t):
     
