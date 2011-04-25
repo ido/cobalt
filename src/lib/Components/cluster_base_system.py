@@ -5,22 +5,103 @@ ClusterBaseSystem -- base system component
 """
 
 import time
+import sys
 import Cobalt
 import threading
+import pwd
+import grp
+import ConfigParser
 import Cobalt.Util
-from Cobalt.Exceptions import  JobValidationError, NotSupportedError
+from Cobalt.Exceptions import  JobValidationError, NotSupportedError, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 from Cobalt.Statistics import Statistics
-import ConfigParser
+from Cobalt.Data import DataDict
+from Cobalt.Proxy import ComponentProxy
 
 __all__ = [
     "ClusterBaseSystem",
 ]
 
-CP = ConfigParser.ConfigParser()
-CP.read(Cobalt.CONFIG_FILES)
+config = ConfigParser.ConfigParser()
+config.read(Cobalt.CONFIG_FILES)
 
+if not config.has_section('cluster_system'):
+    print '''"ERROR: cluster_system" section missing from cobalt config file'''
+    sys.exit(1)
+
+def get_cluster_system_config(option, default):
+    try:
+        value = config.get('cluster_system', option)
+    except ConfigParser.NoOptionError:
+        value = default
+    return value
+
+cluster_hostfile = get_cluster_system_config('hostfile', None)
+if cluster_hostfile == None:
+    print '''ERROR: No "hostfile" entry in "cluster_system" section of cobalt config file'''
+    sys.exit(1)
+
+
+class ClusterNode(object):
+    
+    def __init__(self, name):
+
+        self.name = name
+        self.running = False
+        self.down = False
+        self.queues = None
+        self.allocated = False
+        self.cleaning = False
+        self.cleaning_process = None
+        self.assigned_jobid = None
+        self.alloc_timeout = None
+        self.alloc_start = None
+        self.assigned_user = None
+
+    def allocate(self, jobid, user, t=None):
+
+        self.alloc_timeout = 300
+        if t == None:
+            self.alloc_start = time.time()
+        else:
+            self.alloc_start = t
+        self.allocated = True
+        self.assigned_user = user
+        self.assigned_jobid = jobid
+
+    def start_running(self):
+        self.running = True
+
+    def stop_running(self):
+
+        self.running = False
+        self.cleaning = True
+        #invoke cleanup
+
+    def deallocate(self):
+
+        self.assigned_user = None
+        self.assigned_jobid = None
+        self.alloc_timeout = None
+        self.alloc_start = None
+        self.allocated = False
+
+    def mark_up(self):
+        self.down = False
+
+    def mark_down (self):
+        self.down = True
+
+    
+
+class ClusterNodeDict(DataDict):
+    '''default container for ClusterNode information
+        
+       keyed by node name
+    '''
+    item_cls = ClusterNode
+    key = "name"
 
 
 class ClusterBaseSystem (Component):
@@ -34,21 +115,31 @@ class ClusterBaseSystem (Component):
     update_relatives -- should be called when partitions are added and removed from the managed list
     """
     
+    global cluster_hostfile
+    
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.process_groups = ProcessGroupDict()
-        self.pending_diags = dict()
-        self.failed_diags = list()
         self.all_nodes = set()
         self.running_nodes = set()
         self.down_nodes = set()
         self.queue_assignments = {}
         self.node_order = {}
+    
         try:
-            self.configure(CP.get("cluster_system", "hostfile"))
+            self.configure(cluster_hostfile)
         except:
             self.logger.error("unable to load hostfile")
+        
         self.queue_assignments["default"] = set(self.all_nodes)
+        self.alloc_only_nodes = {} # nodename:starttime
+        self.cleaning_processes = []
+        #keep track of which jobs still have hosts being cleaned
+        self.cleaning_host_count = {} # jobid:count
+        self.locations_by_jobid = {} #jobid:[locations]
+        self.jobid_to_user = {} #jobid:username
+        
+        self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
 
 
     def __getstate__(self):
@@ -62,19 +153,24 @@ class ClusterBaseSystem (Component):
         self.down_nodes = state["down_nodes"]
 
         self.process_groups = ProcessGroupDict()
-        self.pending_diags = dict()
-        self.failed_diags = list()
         self.all_nodes = set()
         self.running_nodes = set()
         self.node_order = {}
         try:
-            self.configure(CP.get("cluster_system", "hostfile"))
+            self.configure(cluster_hostfile)
         except:
             self.logger.error("unable to load hostfile")
         self.lock = threading.Lock()
         self.statistics = Statistics()
+        self.alloc_only_nodes = {} # nodename:starttime
+        if not state.has_key("cleaning_processes"):
+            self.cleaning_processes = []
+        self.cleaning_host_count = {} # jobid:count
+        self.locations_by_jobid = {} #jobid:[locations]
+        self.jobid_to_user = {} #jobid:username
 
-
+        self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
+    
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
@@ -142,100 +238,40 @@ class ClusterBaseSystem (Component):
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
-        
+     
+
+    #there is absolutely no reason for this to exist in cluster_systems at this point. --PMR
     def run_diags(self, partition_list, test_name):
-        def size_cmp(left, right):
-            return -cmp(left.size, right.size)
-        
-        def _find_covering(partition):
-            kids = [ self._partitions[c_name] for c_name in partition.children]
-            kids.sort(size_cmp)
-            n = len(kids)
-            part_node_cards = set(partition.node_cards)
-            # generate the power set, but try to use the big partitions first (hence the sort above)
-            for i in xrange(1, 2**n + 1):
-                test_cover = [ kids[j] for j in range(n) if i & 2**j ]
-                
-                test_node_cards = set()
-                for t in test_cover:
-                    test_node_cards.update(t.node_cards)
-                
-                if test_node_cards.issubset(part_node_cards) and test_node_cards.issuperset(part_node_cards):
-                    return test_cover
-                
-            return []
+     
+        self.logger.error("Run_diags not used on cluster systems.")
+        return None
 
-        def _run_diags(partition):
-            covering = _find_covering(partition)
-            for child in covering:
-                self.pending_diags[child] = test_name
-            return [child.name for child in covering]
-
-        results = []
-        for partition_name in partition_list:
-            p = self._partitions[partition_name]
-            results.append(_run_diags(p))
-        
-        return results
     run_diags = exposed(run_diags)
     
     def launch_diags(self, partition, test_name):
         '''override this method in derived classes!'''
-        pass
+        raise NotImplementedError("launch_diags is not implemented by this class.")
     
     def finish_diags(self, partition, test_name, exit_value):
         '''call this method somewhere in your derived class where you deal with the exit values of diags'''
-        if exit_value == 0:
-            for dead in self.failed_diags[:]:
-                if dead == partition.name or dead in partition.children:
-                    self.failed_diags.remove(dead)
-                    self.logger.info("removing %s from failed_diags list" % dead)
-        else:
-            if partition.children:
-                self.run_diags([partition.name], test_name)
-            else:
-                self.failed_diags.append(partition.name)
-                self.logger.info("adding %s to failed_diags list" % partition.name)
-    
+        raise NotImplementedError("Finish diags not implemented in this class.")
+
     def handle_pending_diags(self):
-        for p in self.pending_diags.keys():
-            if p.state in ["idle", "blocked by pending diags", "failed diags", "blocked by failed diags"]:
-                self.logger.info("launching diagnostics on %s" % p.name)
-                self.launch_diags(p, self.pending_diags[p])
-                del self.pending_diags[p]
-                
-    handle_pending_diags = automatic(handle_pending_diags)
+        '''implement to handle diags that are still running.
+
+        '''
+        raise NotImplementedError("handle_pending_diags not implemented in this class.")
+    #can't automate what isn't there
+    #handle_pending_diags = automatic(handle_pending_diags)
     
     def fail_partitions(self, specs):
-        parts = self.get_partitions(specs)
-        if not parts:
-            ret = "no matching partitions found\n"
-        else:
-            ret = ""
-        for p in parts:
-            if self.failed_diags.count(p.name) == 0:
-                ret += "failing %s\n" % p.name
-                self.failed_diags.append(p.name)
-            else:
-                ret += "%s is already marked as failing\n" % p.name
-
-        return ret
+        self.logger.error("Fail_partitions not used on cluster systems.")
+        return ""
     fail_partitions = exposed(fail_partitions)
     
     def unfail_partitions(self, specs):
-        parts = self.get_partitions(specs)
-        if not parts:
-            ret = "no matching partitions found\n"
-        else:
-            ret = ""
-        for p in self.get_partitions(specs):
-            if self.failed_diags.count(p.name):
-                ret += "unfailing %s\n" % p.name
-                self.failed_diags.remove(p.name)
-            else:
-                ret += "%s is not currently failing\n" % p.name
-        
-        return ret
+        self.logger.error("unfail_partitions not used on cluster systems.")
+        return ""
     unfail_partitions = exposed(unfail_partitions)
     
     def _find_job_location(self, args):
@@ -272,12 +308,17 @@ class ClusterBaseSystem (Component):
     def find_job_location(self, arg_list, end_times):
         best_location_dict = {}
         winner = arg_list[0]
+
+        jobid = None
+        user = None
         
         # first time through, try for starting jobs based on utility scores
         for args in arg_list:
             location_data = self._find_job_location(args)
             if location_data:
                 best_location_dict.update(location_data)
+                jobid = int(args['jobid'])
+                user = args['user']
                 break
         
         # the next time through, try to backfill, but only if we couldn't find anything to start
@@ -298,21 +339,79 @@ class ClusterBaseSystem (Component):
             for args in arg_list:
                 if 60*float(args['walltime']) > backfill_cutoff:
                     continue
-                
+               
                 location_data = self._find_job_location(args)
                 if location_data:
                     best_location_dict.update(location_data)
                     self.logger.info("backfilling job %s" % args['jobid'])
+                    jobid = int(args['jobid'])
+                    user = args['user']
                     break
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
         # be running jobs very soon
-        for location_list in best_location_dict.itervalues():
+        for jobid_str, location_list in best_location_dict.iteritems():
             self.running_nodes.update(location_list)
-
+            #just in case we're not going to be running a job soon, and have to
+            #return this to the pool:
+            self.jobid_to_user[jobid] = user
+            alloc_time = time.time()
+            for location in location_list:
+                self.alloc_only_nodes[location] = alloc_time
+            self.locations_by_jobid[jobid] = location_list
+        
+        
         return best_location_dict
     find_job_location = exposed(find_job_location)
     
+    def check_alloc_only_nodes(self):
+        loc_to_release = []
+        jobids = []
+        check_time = time.time()
+        dead_locations = []
+        for location, start_time in self.alloc_only_nodes.iteritems():
+            if int(check_time) - int(start_time) > self.alloc_timeout:
+                self.logger.warning("Location: %s: released.  Time between "\
+                        "allocation and run exceeded.")
+                dead_locations.append(location)
+        
+        if dead_locations == []:
+            #well we don't have anything dying this time.
+            return
+
+        for jobid, locations in self.locations_by_jobid.iteritems(): 
+            clear_from_dead_locations = False
+            for location in locations:
+                if location in dead_locations:
+                    clear_from_dead_locations = True
+                    jobids.append(jobid)
+            #bagging the jobid will cause all locs assoc with job to be
+            #cleaned so clear them out to make this faster
+            if clear_from_dead_locations:
+                for location in locations:
+                    dead_locations.remove(location)
+            if dead_locations == []:
+                #well we don't have anything dying this time.
+                break
+
+        self.invoke_node_cleanup(jobids)
+
+    check_alloc_only_nodes = automatic(check_alloc_only_nodes, 
+            get_cluster_system_config("automatic_method_interval",10.0))
+
+    def invoke_node_cleanup(self, jobids):
+        '''Invoke cleanup for nodes that have exceeded their allocated time
+           
+        '''
+        for jobid in jobids:
+            user = self.jobid_to_user[jobid]
+            locations = self.locations_by_jobid[jobid]
+            for location in locations:
+                del self.alloc_only_nodes[location]
+
+            self.clean_nodes(locations, user, jobid)
+
+
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
@@ -363,8 +462,6 @@ class ClusterBaseSystem (Component):
         return equiv
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
     
-    
-
     def reserve_resources_until(self, location, time, jobid):
         if time is None:
             for host in location:
@@ -473,6 +570,7 @@ class ClusterBaseSystem (Component):
     # it was written to provide the data that bgsched asks for and raises an exception
     # if you try to ask for more
     def get_partitions (self, specs):
+        
         partitions = []
         for spec in specs:
             item = {}
@@ -498,3 +596,209 @@ class ClusterBaseSystem (Component):
         
         return partitions
     get_partitions = exposed(get_partitions)
+
+
+    def clean_nodes(self, locations, user, jobid):
+        """Given a process group, start cleaning the nodes that were involved.
+        The rest of the cleanup is done in check_done_cleaning.
+        
+        """
+        self.logger.info("Job %s/%s: starting node cleanup." , user, jobid)
+        try:
+            tmp_data = pwd.getpwnam(user)
+            groupid = tmp_data.pw_gid
+            group_name = grp.getgrgid(groupid)[0]
+        except KeyError:
+            group_name = ""
+            self.logger.error("Job %s/%s: unable to determine group name for epilogue" % (user, jobid))
+     
+        self.cleaning_host_count[jobid] = 0
+        for host in locations:
+            h = host.split(":")[0]
+            cleaning_process_info ={
+                    "host": h, 
+                    "cleaning_id": None, 
+                    "user": user,
+                    "jobid": jobid,
+                    "group": group_name,
+                    "start_time":time.time(), 
+                    "completed":False, 
+                    "retry":False,
+                    }
+            try:
+                cleaning_id = self.launch_script("epilogue", h, jobid, user,
+                        group_name)
+                if cleaning_id == None:
+                    #there was no script to run.
+                    self.running_nodes.discard(cleaning_processes["host"]) 
+                    return 
+                self.cleaning_host_count[jobid] += 1
+                cleaning_process_info["cleaning_id"] = cleaning_id
+                self.cleaning_processes.append(cleaning_process_info)
+            except ComponentLookupError:
+                self.logger.warning("Job %s/%s: Error contacting forker "
+                        "component.  Will Retry until timeout." % (user, jobid))
+                cleaning_process_info["retry"] = True
+                self.cleaning_processes.append(cleaning_process_info)
+                self.cleaning_host_count[jobid] += 1
+            except:
+                self.logger.error("Job %s/%s: Failed to run epilogue on host "
+                        "%s, marking node down", jobid, user, h, exc_info=True)
+                self.down_nodes.add(h)
+                self.running_nodes.discard(h)
+    
+
+
+    def launch_script(self, config_option, host, jobid, user, group_name):
+        '''Start our script processes used for node prep and cleanup.
+
+        '''
+        script = get_cluster_system_config(config_option, None)
+        if script == None:
+            self.logger.error("Job %s/%s: %s not defined in the "\
+                    "cluster_system section of the cobalt config file!",
+                    user, jobid, config_option)
+            return None
+        else:
+            cmd = ["/usr/bin/ssh", host, script, 
+                    str(jobid), user, group_name]
+            return ComponentProxy("forker").fork(cmd, "system epilogue", 
+                    "Job %s/%s" % (jobid, user))
+
+        
+
+    #def launch_cleaning_process(self, host, jobid, user, group_name):
+    #    '''Ping the forker to launch the cleaning process.
+    #
+    #    '''
+    #    epilogue_script = get_cluster_system_config("epilogue", None)
+    #    if epilogue_script == None:
+    #        self.logger.error("Job %s/%s: epilogue not defined in the "\
+    #                "cluster_system section of the cobalt config file!",
+    #                user, jobid)
+    #        return None
+    #    else:
+    #        cmd = ["/usr/bin/ssh", host, epilogue_script, 
+    #                str(jobid), user, group_name]
+    #        return ComponentProxy("forker").fork(cmd, "system epilogue", 
+    #                "Job %s/%s" % (jobid, user))
+
+    
+    def retry_cleaning_scripts(self):
+        '''Continue retrying scripts in the event that we have lost contact 
+        with the forker component.  Reset start-time to when script starts.
+
+        '''
+        for cleaning_process in self.cleaning_processes:
+            if cleaning_process['retry'] == True:
+                try:
+                    cleaning_id = self.launch_script(
+                            "epilogue",
+                            cleaning_process["host"],
+                            cleaning_process['jobid'],
+                            cleaning_process['user'],
+                            cleaning_process['group'])
+                    cleaning_process["cleaning_id"] = cleaning_id
+                    cleaning_process["start_time"] = time.time()
+                    cleaning_process["retry"] = False
+                except ComponentLookupError:
+                    self.logger.warning("Job %s/%s: Error contacting forker "
+                        "component." % (pg.jobid, pg.user))
+                except:
+                    self.logger.error("Job %s/%s: Failed to run epilogue on "
+                            "host %s, marking node down", pg.jobid, pg.user, h,
+                            exc_info=True)
+                    self.cleaning_host_count[jobid] -= 1
+                    self.down_nodes.add(h)
+                    self.running_nodes.discard(h)
+
+    retry_cleaning_scripts = automatic(retry_cleaning_scripts,
+            get_cluster_system_config("automatic_method_interval", 10.0))
+
+    def check_done_cleaning(self):
+        """Check to see if the processes we are using to clean up nodes 
+        post-run are done. If they are, release the nodes back for general 
+        consumption.  If the cleanup fails for some reason, then mark the node
+        down and release it. 
+
+        """
+        
+        if self.cleaning_processes == []:
+            #don't worry if we have nothing to cleanup
+            return
+        
+        for cleaning_process in self.cleaning_processes: 
+
+            #if we can't reach the forker, we've lost all the cleanup scripts.
+            #don't try and recover, just assume all nodes that were being 
+            #cleaned are down. --PMR
+            if cleaning_process['retry'] == True:
+                continue #skip this.  Try anyway, if component came back up.
+            
+            jobid = cleaning_process['jobid']
+            user = cleaning_process['user']
+
+            try:
+                exit_status = ComponentProxy("forker").child_completed(
+                        cleaning_process['cleaning_id'])
+                ComponentProxy("forker").child_cleanup(
+                        [cleaning_process['cleaning_id']])
+
+            except ComponentLookupError:
+                self.logger.error("Job %s/%s: Error contacting forker "
+                        "component. Running child processes are "
+                        "unrecoverable." % (jobid, user))
+                return
+
+            if exit_status != None:
+                #we're done, this node is now free to be scheduled again.
+                self.running_nodes.discard(cleaning_process["host"])
+                cleaning_process["completed"] = True
+                self.cleaning_host_count[jobid] -= 1
+            else:
+                #timeout exceeded
+                if (time.time() - cleaning_process["start_time"] > 
+                        float(get_cluster_system_config("epilogue_timeout", 60.0))): 
+                    cleaning_process["completed"] = True
+                    try:
+                        forker = ComponentProxy("forker").signal(
+                                cleaning_process['cleaning_id'], "SIGINT")
+                        child_output = forker.get_child_data(
+                            cleaning_process['cleaning_id'])
+                        forker.child_cleanup([cleaning_process['cleaning_id']])
+                            
+                        #mark as dirty and arrange to mark down.
+                        self.down_nodes.add(cleaning_process['host'])
+                        self.running_nodes.discard(cleaning_process['host'].host) # <---????check this!
+                        self.logger.error("Job %s/%s: epilogue timed out on host %s, marking hosts down", 
+                            user, jobid, cleaning_process['host'])
+                        self.logger.error("Job %s/%s: stderr from epilogue on host %s: [%s]",
+                            user, jobid,
+                            cleaning_process['host'], 
+                            child_output['stderr'].strip())
+                        self.cleaning_host_count[jobid] -= 1
+                    except ComponentLookupError:
+                        self.logger.error("Job %s/%s: Error contacting forker "
+                            "component. Running child processes are "
+                            "unrecoverable." % (jobid, user))
+
+            if self.cleaning_host_count[jobid] == 0:
+                self.del_process_groups(jobid)
+                #clean up other cleanup-monitoring stuff
+                self.logger.info("Job %s/%s: job finished on %s",
+                    user, jobid, Cobalt.Util.merge_nodelist(self.locations_by_jobid[jobid]))
+                del self.locations_by_jobid[jobid]
+                del self.jobid_to_user[jobid]
+        
+        self.cleaning_processes = [cleaning_process for cleaning_process in self.cleaning_processes 
+                                    if cleaning_process["completed"] == False]
+            
+    check_done_cleaning = automatic(check_done_cleaning, 
+            get_cluster_system_config("automatic_method_interval", 10.0))
+
+
+
+    def del_process_groups(self, jobid):
+
+        raise NotImplementedError("Must be overridden in child class")
+

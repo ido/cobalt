@@ -13,6 +13,19 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 
+if not config.has_section('cluster_system'):
+    print '''"ERROR: cluster_system" section missing from cobalt config file'''
+    sys.exit(1)
+
+def get_cluster_system_config(option, default):
+    try:
+        value = config.get('cluster_system', option)
+    except ConfigParser.NoOptionError:
+        value = default
+    return value
+
+sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
+
 try:
     prologue = config.get("cluster_system", "prologue")
 except:
@@ -30,7 +43,15 @@ for s in sys.argv[1:]:
     key, value = s.split("=")
     args[key] = value
 
-nodefile = "/var/tmp/cobalt.%s" % args["jobid"]
+#FIXME: nodefile needs to be setable by the config parameter
+if not sim_mode: 
+    nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
+    self.nodefile = os.path.join((nodefile_dir, "cobalt.%s" % self.jobid))
+else:
+    self.nodefile = "fake"
+
+#nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
+#nodefile = os.path.join((nodefile_dir, "cobalt.%s" % args["jobid"]))
 user = args["user"]
 location = args["location"].split(":")
 jobid = args["jobid"]
@@ -40,12 +61,15 @@ for host in location:
     fd.write(host + "\n")
 fd.close()
 
+if sim_mode:
+    sys.exit(0)
+
 # run the prologue, while still root
 processes = []
 for host in location:
     h = host.split(":")[0]
     try:
-        p = subprocess.Popen(["/usr/bin/scp", nodefile, "%s:/var/tmp" % h], 
+        p = subprocess.Popen(["/usr/bin/scp", nodefile, "%s:%s" % (h, nodefile_dir)], 
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.host = h
         p.action = "nodefile copy"

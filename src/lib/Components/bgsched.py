@@ -622,6 +622,7 @@ class BGSched (Component):
                       'utility_score': job.score,
                       'walltime': job.walltime,
                       'attrs': job.attrs,
+                      'user': job.user,
                     } )
 
             # there's no backfilling in reservations
@@ -805,6 +806,7 @@ class BGSched (Component):
                       'walltime': job.walltime,
                       'walltime_p': job.walltime_p, #*AdjEst*
                       'attrs': job.attrs,
+                      'user': job.user,
                     } )
 
             try:

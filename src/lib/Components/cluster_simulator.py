@@ -43,17 +43,6 @@ logger = logging.getLogger(__name__)
 
 
 class ClusterProcessGroup (ProcessGroup):
-    _configfields = ['hostfile']
-    _config = ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('cluster_system'):
-        print '''"cluster_system" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['cluster_system']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file [cluster_system] section: %s" % (" ".join(mfields))
-        sys.exit(1)
 
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec, logger)
@@ -105,7 +94,7 @@ class ClusterProcessGroup (ProcessGroup):
 
 
 
-class Simulator (ClusterBaseSystem):
+class Simulator (ClusteSystem):
     
     """Generic system simulator.
     
@@ -118,6 +107,10 @@ class Simulator (ClusterBaseSystem):
     wait_process_groups -- get process groups that have exited, and remove them from the system (exposed, query)
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- simulates updating partition state from the bridge API (automatic)
+
+    Override the ClusterSystem so that it is recognized as a simulator component.  Done right, 
+    this can go away entirely.
+    
     """
     
     name = "system"
@@ -276,14 +269,3 @@ class Simulator (ClusterBaseSystem):
         process_group.exit_status = my_exit_status
     
     
-    
-    def launch_diags(self, partition, test_name):
-        exit_value = 0
-        for nc in partition.node_cards:
-            if nc.id in self.failed_components:
-                exit_value = 1
-        for switch in partition.switches:
-            if switch in self.failed_components:
-                exit_value = 2
-
-        self.finish_diags(partition, test_name, exit_value)

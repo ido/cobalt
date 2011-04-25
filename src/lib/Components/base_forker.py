@@ -352,7 +352,7 @@ class BaseForker (Component):
         if child.exit_status != None:
             #we're already done
             return child.exit_status
-
+        #FIXME: Brian has pointed out that there is a possibility of this next section hanging due to waiting for stdout/err
         retcode = child.proc.poll() 
         if (retcode != None):
             child.exit_status = retcode

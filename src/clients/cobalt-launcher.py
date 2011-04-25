@@ -23,8 +23,13 @@ if __name__ == '__main__':
     os.environ['COBALT_NODEFILE'] = opt.nodefile
 
     os.chdir(opt.cwd)
+    
+    #assume rest of args are to go to the executable and have the user script deal with it
+    
+    arg_tuple = (opt.executable,) + args
+
     try:
-        os.execvpe(opt.executable, (opt.executable, ), os.environ)
+        os.execvpe(opt.executable, arg_tuple, os.environ)
     except Exception, e:
         print >> sys.stderr, "error executing %s" % opt.executable
         print >> sys.stderr, e
