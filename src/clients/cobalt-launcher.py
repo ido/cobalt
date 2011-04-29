@@ -29,7 +29,6 @@ if __name__ == '__main__':
     #assume rest of args are to go to the executable and have the user script deal with it
     arg_tuple = (opt.executable, ) + tuple(args)
 
-    print arg_tuple
     try:
         os.execvpe(opt.executable, arg_tuple, os.environ)
     except Exception, e:
