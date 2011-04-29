@@ -170,8 +170,6 @@ class ClusterSystem (ClusterBaseSystem):
             for location in pg.location:
                 del self.alloc_only_nodes[location]
 
-        print self.alloc_only_nodes
-
         return process_groups
     add_process_groups = exposed(query(add_process_groups))
     

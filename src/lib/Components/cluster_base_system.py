@@ -141,6 +141,7 @@ class ClusterBaseSystem (Component):
         
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
 
+        self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def __getstate__(self):
         return {"queue_assignments": self.queue_assignments, "version": 1, 
@@ -170,6 +171,7 @@ class ClusterBaseSystem (Component):
         self.jobid_to_user = {} #jobid:username
 
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
+        self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
     
     def save_me(self):
         Component.save(self)
@@ -352,6 +354,7 @@ class ClusterBaseSystem (Component):
         # be running jobs very soon
         for jobid_str, location_list in best_location_dict.iteritems():
             self.running_nodes.update(location_list)
+            self.logger.info("Job %s: Allocating nodes: %s" % (int(jobid_str), location_list))
             #just in case we're not going to be running a job soon, and have to
             #return this to the pool:
             self.jobid_to_user[jobid] = user
@@ -372,7 +375,7 @@ class ClusterBaseSystem (Component):
         for location, start_time in self.alloc_only_nodes.iteritems():
             if int(check_time) - int(start_time) > self.alloc_timeout:
                 self.logger.warning("Location: %s: released.  Time between "\
-                        "allocation and run exceeded.")
+                        "allocation and run exceeded.", location)
                 dead_locations.append(location)
         
         if dead_locations == []:
@@ -384,7 +387,8 @@ class ClusterBaseSystem (Component):
             for location in locations:
                 if location in dead_locations:
                     clear_from_dead_locations = True
-                    jobids.append(jobid)
+                    if jobid not in jobids:
+                        jobids.append(jobid)
             #bagging the jobid will cause all locs assoc with job to be
             #cleaned so clear them out to make this faster
             if clear_from_dead_locations:
@@ -393,7 +397,6 @@ class ClusterBaseSystem (Component):
             if dead_locations == []:
                 #well we don't have anything dying this time.
                 break
-
         self.invoke_node_cleanup(jobids)
 
     check_alloc_only_nodes = automatic(check_alloc_only_nodes, 
