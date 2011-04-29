@@ -221,6 +221,8 @@ if __name__ == '__main__':
                   % (res['name'], newstart)
 
             updates['start'] = start
+            #add a field to updates to indicate we're deferring:
+            updates['defer'] = True
         else:
             if start:
                 updates['start'] = starttime
@@ -247,7 +249,7 @@ if __name__ == '__main__':
         print scheduler.check_reservations()
     except xmlrpclib.Fault, flt:
         if flt.faultCode == ComponentLookupError.fault_code:
-            print "Couldn't contact the queue manager"
+            print "Couldn't contact the scheduler"
             sys.exit(1)
         else:
             print flt.faultString

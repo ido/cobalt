@@ -125,8 +125,29 @@ class Reservation (Data):
         if spec.has_key('cycle') and not self.cycle:
             #we have just turned this into a cyclic reservation and need a cycle_id.
             spec['cycle_id'] = self.cycle_id_gen.get()
+        #get the user name of whoever issued the command
+        user_name = None
+        if spec.has_key('__cmd_user'):
+            user_name = spec['__cmd_user']
+            del spec['__cmd_user']
+
+        #if we're defering, pull out the 'defer' entry and send a cobalt db message.
+        #there really isn't a corresponding field to update
+        deferred = False
+        if spec.has_key('defer'):
+            logger.info("Res %s/%s: Deferring cyclic reservation: %s",
+                        self.res_id, self.cycle_id, self.name) 
+            dbwriter.log_to_db(user_name, "deferred", "reservation", self)
+            del spec['defer']
+            deferred = True
+        
+
         Data.update(self, spec)
-        #print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
+
+        if not deferred:
+            #we only want this if we aren't defering.  If we are, the cycle will 
+            #take care of the new data object creation.
+            dbwriter.log_to_db(user_name, "modifying", "reservation", self)
 
     
     def overlaps(self, start, duration):
@@ -215,8 +236,9 @@ class Reservation (Data):
             #but it does need a new res_id, cycle_id remains constant.
             if((((stime - self.start) % self.cycle) > self.duration) 
                and self.running):
+                #do this before incrementing id.
+                dbwriter.log_to_db(None, "deactivating", "reservation", self)
                 self.running = False
-                print "generating next id"
                 self.res_id = bgsched_id_gen.get()
                 logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
@@ -224,6 +246,13 @@ class Reservation (Data):
             return False        
         
         if (self.start + self.duration) <= stime:
+            if self.running == True:
+                #The active reservation is no longer considered active
+                #do this only once to prevent a potential double-deactivate depending
+                #on how/when this check is called.
+                logger.info("Res %s/%s: Deactivating reservation: %s", 
+                             self.res_id, self.cycle_id, self.name) 
+                dbwriter.log_to_db(None, "deactivating", "reservation", self)
             self.running = False
             return True
         else:
@@ -290,6 +319,10 @@ class ReservationDict (DataDict):
             qm.set_queues(spec, {'state':"dead"}, "bgsched")
         except Exception, e:
             logger.error("problem disabling reservation queue (%s)" % e)
+
+        for reservation in reservations:
+            #This should be the last place we have handles to reservations, after this they're heading to GC.
+            dbwriter.log_to_db(None, "terminated", "reservation", reservation)
         return reservations
 
 
@@ -529,7 +562,7 @@ class BGSched (Component):
                              (del_reservation.res_id,
                               del_reservation.cycle_id,
                               user_name, specs))
-            dbwriter.log_to_db(user_name, "ending", "reservation", del_reservation) 
+            #dbwriter.log_to_db(user_name, "ending", "reservation", del_reservation) 
         return del_reservations
 
     del_reservations = exposed(query(del_reservations))
@@ -541,18 +574,36 @@ class BGSched (Component):
     def set_reservations(self, specs, updates, user_name):
         log_str = "%s modifying reservation: %r with updates %r" % (user_name, specs, updates)
         self.logger.info(log_str)
+        #handle defers as a special case:  have to log these, and not drop a mod record.
         def _set_reservations(res, newattr):
             res.update(newattr)
+        updates['__cmd_user'] = user_name
         mod_reservations = self.reservations.q_get(specs, _set_reservations, updates)
         for mod_reservation in mod_reservations:
             self.logger.info("Res %s/%s: %s modifying reservation: %r" % 
                              (mod_reservation.res_id,
                               mod_reservation.cycle_id,
                               user_name, specs))
-            dbwriter.log_to_db(user_name, "modifying", "reservation", mod_reservation)
         return mod_reservations
         
     set_reservations = exposed(query(set_reservations))
+
+
+    def release_reservations(self, specs, user_name):
+        self.logger.info("%s requested release of reservation: %r" % (user_name, specs))
+        self.logger.info("%s releasing reservation: %r" % (user_name, specs))
+        rel_res = self.get_reservations(specs)
+        for res in rel_res:
+            dbwriter.log_to_db(user_name, "released", "reservation", res) 
+        del_reservations = self.reservations.q_del(specs)
+        for del_reservation in del_reservations:
+            self.logger.info("Res %s/%s/: %s releasing reservation: %r" % 
+                             (del_reservation.res_id,
+                              del_reservation.cycle_id,
+                              user_name, specs))
+        return del_reservations
+
+    release_reservations = exposed(query(release_reservations))
 
     def check_reservations(self):
         ret = ""
@@ -678,13 +729,10 @@ class BGSched (Component):
                             (res.name))
                     self.logger.info("Res %s/%s: Ending reservation: %r" % 
                              (res.res_id, res.cycle_id, res.name))
-
+                    #dbwriter.log_to_db(None, "ending", "reservation", 
+                    #        res) 
                     del_reservations = self.reservations.q_del([
                         {'name': res.name}])
-                    
-                    for del_reservation in del_reservations:
-                        dbwriter.log_to_db(None, "ending", "reservation", 
-                                del_reservation) 
     
             reservations_cache = self.reservations.copy()
         except:
