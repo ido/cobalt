@@ -454,7 +454,7 @@ class BaseForker (Component):
             #helper scripts.
             orig_env = copy.deepcopy(os.environ)
             child_env_dict = copy.deepcopy(os.environ.data)
-
+            
             command = [cmd[0]]
             command.extend(cmd)
             command_str = " ".join(cmd)

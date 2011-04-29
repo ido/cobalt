@@ -10,6 +10,8 @@ import grp
 import logging
 import thread
 import sys
+import os
+import re
 import ConfigParser
 import Cobalt
 import Cobalt.Data
@@ -55,7 +57,7 @@ class ClusterProcessGroup(ProcessGroup):
     
     def prefork (self):
         ret = {}
-         
+        
         sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
         # check for valid user/group
         try:
@@ -67,9 +69,10 @@ class ClusterProcessGroup(ProcessGroup):
         ret["primary_group"] = groupid
         if not sim_mode: 
             nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
-            self.nodefile = os.path.join((nodefile_dir, "cobalt.%s" % self.jobid))
+            self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
         else:
             self.nodefile = "fake"
+        
         # get supplementary groups
         supplementary_group_ids = []
         for g in grp.getgrall():
@@ -90,30 +93,36 @@ class ClusterProcessGroup(ProcessGroup):
         ret["stderr"] = self.stderr
         
         split_args = self.args.split()
-        cmd_args = ('-nf', str(self.nodefile),
+        cmd_args = ('--nf', str(self.nodefile),
                     '--jobid', str(self.jobid),
                     '--cwd', str(self.cwd),
                     '--exe', str(self.executable))
+        
+        rep_quote = re.compile(r'\'')
 
+        mod_args = []
+        for s in split_args:
+            mod_args.append("'" + rep_quote.sub('\'"\'"\'', s) + "'")
+                                
+        split_args = mod_args
+       
         cmd_exe = None
         if sim_mode: 
             cmd_exe = get_cluster_system_config("simulation_executable", None)
             if None == cmd_exe:
                 logger.critical("Job: %s/%s: Executable for simulator not specified! This job will not run!")
                 raise RuntimeError("Unspecified simulation_executable in cobalt config")
-
         else:
             #FIXME: Need to put launcher location into config
             cmd_exe = '/usr/bin/cobalt-launcher.py' 
-                        
-        #TODO: ABSOLUTELY CRITICAL TO TEST THIS.
+        
         #run the user script off the login node, and on the compute node
         if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and
                 not sim_mode):
             cmd = ("/usr/bin/ssh", rank0, cmd_exe) + cmd_args + tuple(split_args)
         else:
-            cmd = (cmd_exe,) + cmd_args + tuple(split_args) 
-        
+            cmd = (cmd_exe,) + cmd_args + tuple(split_args)
+
         ret["id"] = self.id
         ret["jobid"] = self.jobid
         ret["cobalt_log_file"] = self.cobalt_log_file

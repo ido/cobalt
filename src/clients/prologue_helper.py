@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import os
 import ConfigParser
 import Cobalt
 import subprocess
@@ -24,7 +25,7 @@ def get_cluster_system_config(option, default):
         value = default
     return value
 
-sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
+sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in Cobalt.Util.config_true_values
 
 try:
     prologue = config.get("cluster_system", "prologue")
@@ -43,15 +44,12 @@ for s in sys.argv[1:]:
     key, value = s.split("=")
     args[key] = value
 
-#FIXME: nodefile needs to be setable by the config parameter
 if not sim_mode: 
     nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
-    self.nodefile = os.path.join((nodefile_dir, "cobalt.%s" % self.jobid))
+    nodefile = os.path.join(nodefile_dir, "cobalt.%s" % args['jobid'])
 else:
-    self.nodefile = "fake"
+    nodefile = "fake"
 
-#nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
-#nodefile = os.path.join((nodefile_dir, "cobalt.%s" % args["jobid"]))
 user = args["user"]
 location = args["location"].split(":")
 jobid = args["jobid"]

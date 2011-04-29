@@ -3,7 +3,7 @@
 import sys
 import os
 import optparse
-
+import re
 
 if __name__ == '__main__':
     p = optparse.OptionParser()
@@ -17,7 +17,9 @@ if __name__ == '__main__':
         p.print_help()
         sys.exit(1)
         
-    opt, args = p.parse_args()
+    opt, args = p.parse_args(sys.argv[:9])
+    
+    args = sys.argv[9:]
 
     os.environ['COBALT_JOBID'] = opt.jobid
     os.environ['COBALT_NODEFILE'] = opt.nodefile
@@ -25,9 +27,9 @@ if __name__ == '__main__':
     os.chdir(opt.cwd)
     
     #assume rest of args are to go to the executable and have the user script deal with it
-    
-    arg_tuple = (opt.executable,) + args
+    arg_tuple = (opt.executable, ) + tuple(args)
 
+    print arg_tuple
     try:
         os.execvpe(opt.executable, arg_tuple, os.environ)
     except Exception, e:
