@@ -1,5 +1,31 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.0pre30
+
+* Improved logging of reservations to the cobalt database.
+    - "ending" event changed to "terminated"  indicates that the reservaiton 
+        has been ended and cleaned up.
+    - added "deferred" event for when reservations are deferred (setres -D)
+    - added "deactivating" event for when reservation come to a natural end
+        (i.e. run out of time)
+    - added "releasing" event for a user-requested release of a reservation
+    - deferrals of reservations now no longer cause new reservation_data 
+        table entries to be generated.  The subsequent cycle does that.
+* cluster_system has had a variety of enhancements.  Notably:
+    - setting simulation_mode true in the cobalt config file will allow the
+        cluster_system component to enter a test mode, where it can be run
+        on a development machine without a supporting cluster.
+    - nodes are now recognized as being allocated when a location is selected 
+        and sent back to the scheduler component as a runnable location.
+        A timeout is set for the partition, and by default this is 300 seconds
+        (5 minutes).  This can be changed reset at execution time from the 
+        cobalt config file.  Should resources be allocated, but the job be 
+        terminated prior to a run (prescript failure due to a dead node, or 
+        a hasty user kill, for instance), this will ensure that the nodes are
+        released.
+* Jobs submitted to cluster_system will now have arguments passed to the job
+    recognized, as they are on BlueGene type systems.
+
 
 Changes to 0.99.0pre29
 
