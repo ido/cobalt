@@ -10,6 +10,7 @@ import time
 import ConfigParser
 import threading
 import xmlrpclib
+import math
 
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, IncrID
@@ -104,8 +105,6 @@ class Reservation (Data):
 
         self.running = False
         
-        #self.id_gen = bgsched_id_gen
-        
 
     def _get_active(self):
         return self.is_active()
@@ -113,7 +112,6 @@ class Reservation (Data):
     active = property(_get_active)
     
     def update (self, spec):
-        #print "cycle check: %s, id: %s" % (self.cycle, self.cycle_id)
         if spec.has_key("users"):
             qm = ComponentProxy("queue-manager")
             try:
@@ -210,16 +208,27 @@ class Reservation (Data):
 
     
     def is_active(self, stime=False):
+        '''Determine if the reservation is active.  A reservation is active if we are
+            between it's start time and its start time + duration.
+
+        '''
+        
         if not stime:
             stime = time.time()
             
         if stime < self.start:
+            if self.running:
+                self.running = False
+                logger.warning("Res %s/%s: Active reservation %s deactivating: start time in future.",
+                    self.res_id, self.cycle_id, self.name)
+                dbwriter.log_to_db(None, "deactivating", "reservation", self)
             return False
         
         if self.cycle:
             now = (stime - self.start) % self.cycle
         else:
-            now = stime - self.start    
+            now = stime - self.start
+
         if now <= self.duration:
             if not self.running:
                 self.running = True
@@ -229,7 +238,10 @@ class Reservation (Data):
             return True
 
     def is_over(self):
-        
+        '''Determine if a reservation is over and initiate cleanup.
+
+        '''
+
         stime = time.time()
         # reservations with a cycle time are never "over"
         if self.cycle:
@@ -240,6 +252,9 @@ class Reservation (Data):
                 dbwriter.log_to_db(None, "deactivating", "reservation", self)
                 self.running = False
                 self.res_id = bgsched_id_gen.get()
+                #update time for record-keeping.
+                self.set_start_to_next_cycle()
+                #self.start += self.cycle
                 logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
@@ -257,7 +272,25 @@ class Reservation (Data):
             return True
         else:
             return False
-        
+    
+    def set_start_to_next_cycle(self):
+
+        if self.cycle:
+            
+            new_start = self.start
+            now = time.time()
+            periods = int(math.floor((now - self.start) / float(self.cycle)))
+
+            #so here, we should always be coming out of a reservation.  The only time we wouldn't be
+            #is if for some reason the scheduler was disrupted.
+            
+            if now < self.start:
+                #haven't even started, punt.
+                new_start += self.cycle
+            else: #this is not going to start during a reservation, so we only have to go periods + 1.
+                new_start += (periods + 1) * self.cycle
+            
+            self.start = new_start
         
 
 class ReservationDict (DataDict):
@@ -461,6 +494,7 @@ class BGSched (Component):
                 'overflow': dbwriter.overflow}
     
     def __setstate__(self, state):
+        print "loading state"
         self.reservations = state['reservations']
         if 'active' in state:
             self.active = state['active']
@@ -490,6 +524,9 @@ class BGSched (Component):
             dbwriter.msg_queue = state['msg_queue']
         if state.has_key('overflow') and (dbwriter.max_queued != None):
             dbwriter.overflow = state['overflow']
+
+        print "load complete"
+
 
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
