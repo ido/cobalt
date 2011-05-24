@@ -3612,7 +3612,8 @@ class QueueManager(Component):
                 if walltime_prediction_enabled:
                     spec['walltime_p'] = self.get_walltime_p(spec)        #*AdjEst*
                 else:
-                    spec['walltime_p'] = spec['walltime']
+                    if spec.has_key('walltime'):
+                        spec['walltime_p'] = spec['walltime']
             else:
                 failure_msg = "trying to add job to non-existant queue '%s'" % spec['queue']
                 logger.error(failure_msg)
