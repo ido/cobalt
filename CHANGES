@@ -1,5 +1,13 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.0pre31
+
+* Cleaned up reservation logging and database logging
+* Reservations can now be tagged by adding a -A flag to setres
+* A view of reservations with resid, cycleid and project can be obtained via
+    the -x flag to showres.
+
+
 Changes to 0.99.0pre30
 
 * Improved logging of reservations to the cobalt database.

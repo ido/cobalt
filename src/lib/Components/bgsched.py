@@ -259,7 +259,8 @@ class Reservation (Data):
             if((((stime - self.start) % self.cycle) > self.duration) 
                and self.running):
                 #do this before incrementing id.
-                logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling")
+                logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling",
+                    self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "deactivating", "reservation", self)
                 self.set_start_to_next_cycle()
                 self.running = False
@@ -292,7 +293,6 @@ class Reservation (Data):
 
             #so here, we should always be coming out of a reservation.  The only time we wouldn't be
             #is if for some reason the scheduler was disrupted.
-            print periods
             if now < self.start:
                 #haven't even started, punt.
                 new_start += self.cycle
@@ -503,7 +503,6 @@ class BGSched (Component):
                 'overflow': dbwriter.overflow}
     
     def __setstate__(self, state):
-        print "loading state"
         self.reservations = state['reservations']
         if 'active' in state:
             self.active = state['active']
@@ -534,7 +533,6 @@ class BGSched (Component):
         if state.has_key('overflow') and (dbwriter.max_queued != None):
             dbwriter.overflow = state['overflow']
 
-        print "load complete"
 
 
     # order the jobs with biggest utility first
