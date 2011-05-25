@@ -62,6 +62,10 @@ class ReservationStateEncoder(json.JSONEncoder):
             #Convert to UTC for consistiency
             start = datetime.datetime.utcfromtimestamp(obj.start)
             
+            my_proj = None
+            if hasattr(obj, "project"):
+                my_proj = obj.project
+
             return {'cycle' : obj.cycle,
                     'cycle_id' : obj.cycle_id,
                     'duration' : obj.duration,
@@ -72,7 +76,7 @@ class ReservationStateEncoder(json.JSONEncoder):
                     'start' : start.strftime(db2format),
                     'tag': obj.tag,
                     'users' : obj.users,
-                    'project' : obj.project}    
+                    'project' : my_proj}    
         else:
             return json.JSONEncoder.default(self, obj)
 
