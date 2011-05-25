@@ -362,7 +362,8 @@ class DatabaseWriter(object):
          'NAME':logMsg.item.name,
          'QUEUE': logMsg.item.queue,
          'RESID': logMsg.item.res_id,
-         'START': logMsg.item.start
+         'START': logMsg.item.start,
+         'PROJECT': logMsg.item.project
          })
       
       res_data_id = 1

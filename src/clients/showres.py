@@ -12,7 +12,7 @@ from Cobalt.Exceptions import ComponentLookupError
 from Cobalt.Util import sec_to_str
 
 
-__helpmsg__ = "Usage: showres [-l] [--oldts] [--version]"
+__helpmsg__ = "Usage: showres [-l] [-x] [--oldts] [--version]"
 
 def mergelist(location_string, cluster):
     if not cluster:
@@ -52,18 +52,23 @@ if __name__ == '__main__':
 
     reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 
         'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 
-        'queue': '*', 'res_id': '*', 'cycle_id': '*'}])
+        'queue': '*', 'res_id': '*', 'cycle_id': '*', 
+        'project':'*'}])
     output = []
  
+    verbose = False
+    really_verbose = False
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
+        'Partitions')]
     
     if '-l' in sys.argv:
         verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
             'End Time', 'Cycle Time', 'Partitions')]
-    else:
-        verbose = False
+    if '-x' in sys.argv:
+        really_verbose = True
         header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-            'Partitions')]
+            'End Time', 'Cycle Time', 'Partitions', 'Project', 'ResID', 'CycleID')]
 
     for res in reservations:
         start = float(res['start'])
@@ -110,7 +115,14 @@ if __name__ == '__main__':
             endtime = sec_to_str(start + duration)
     
 
-        if verbose:
+        if really_verbose:
+            output.append((res['name'], res['queue'], res['users'], 
+                starttime,
+                "%02d:%02d" % (dhour, dmin),
+                endtime, cycle, 
+                mergelist(res['partitions'], cluster), res['project'],
+                res['res_id'], res['cycle_id']))
+        elif verbose:
             output.append((res['name'], res['queue'], res['users'], 
                 starttime,
                 "%02d:%02d" % (dhour, dmin),

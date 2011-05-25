@@ -61,7 +61,7 @@ class ReservationStateEncoder(json.JSONEncoder):
             
             #Convert to UTC for consistiency
             start = datetime.datetime.utcfromtimestamp(obj.start)
-
+            
             return {'cycle' : obj.cycle,
                     'cycle_id' : obj.cycle_id,
                     'duration' : obj.duration,
@@ -71,7 +71,8 @@ class ReservationStateEncoder(json.JSONEncoder):
                     'res_id' : obj.res_id,
                     'start' : start.strftime(db2format),
                     'tag': obj.tag,
-                    'users' : obj.users}    
+                    'users' : obj.users,
+                    'project' : obj.project}    
         else:
             return json.JSONEncoder.default(self, obj)
 
@@ -80,19 +81,6 @@ class JobStateEncoder(json.JSONEncoder):
     
     def default(self, obj):
 
-        #elif isinstance(obj, Cobalt.Components
-        #elif isinstance(obj, Cobalt.Components.cqm.Job):
-        #    exclude_keys = ['_StateMachine__seas', 'stageid', 
-        #                    'stagein', 'stageout', 'url']
-        #    classAttrTable = {}
-        #    for key in obj.__dict__.keys():
-        #        if key not in exclude_keys:
-        #            classAttrTable[key] = obj.__dict__[key].__str__()
-                    
-            #Anything as a property.
-        #    classAttrTable['dep_hold'] = obj.has_dep_hold
-
-        #    return classAttrTable
         if isinstance(obj, Cobalt.Components.cqm.JobProgMsg):
             return obj.__dict__
             

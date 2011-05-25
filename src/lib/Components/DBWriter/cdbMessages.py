@@ -54,19 +54,27 @@ class ReservationStatus(object):
    """Cobalt reservation state as reconstructed from JSON data."""
    
    def __init__(self, spec):
+       self.tag = spec.get("tag", "reservation")
+       if spec.get("cycle") == None:
+           self.cycle = 0
+       else:
+           self.cycle = int(spec.get("cycle"))
+       self.cycle_id = spec.get("cycle_id")
+       self.users = spec.get("users")
+       self.partitions = spec.get("partitions")
+       self.name = spec.get("name")
+       self.start = spec.get('start')
+       self.queue = spec.get("queue")
+       self.duration = int(spec.get("duration"))
+       self.res_id = int(spec.get("res_id"))
+       
+       if spec.get("project") == None:
+           self.project = None
+       else:
+           self.project = spec.get("project")
+       
       
-      self.tag = spec.get("tag", "reservation")
-      self.cycle = bool(spec.get("cycle"))
-      self.cycle_id = spec.get("cycle_id")
-      self.users = spec.get("users")
-      self.partitions = spec.get("partitions")
-      self.name = spec.get("name")
-      self.start = spec.get('start')
-      self.queue = spec.get("queue")
-      self.duration = int(spec.get("duration"))
-      self.res_id = int(spec.get("res_id"))
-      
-      return
+       return
    
    def encode(self):
       """return a dict of everything in object"""

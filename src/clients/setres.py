@@ -37,7 +37,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id=', 'force_id'])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'A:c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id=', 'force_id'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -164,7 +164,16 @@ if __name__ == '__main__':
                 print "User %s does not exist" % (usr)
     else:
         user = None
-    
+
+    project_specified = False
+    if '-A' in sys.argv[1:]:
+        project_specified = True
+        project = [opt[1] for opt in opts if opt[0] == '-A'][0]
+        if project.lower() == 'none':
+            project = None
+    else:
+        project = None
+
     if '-n' in sys.argv[1:]:
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']
     else:
@@ -231,6 +240,8 @@ if __name__ == '__main__':
             
         if user:
             updates['users'] = user
+        if project_specified:
+            updates['project'] = project
         if cycle_time:
             updates['cycle'] = cycle_time
         if partitions:
@@ -240,8 +251,7 @@ if __name__ == '__main__':
         print scheduler.check_reservations()
 
         raise SystemExit, 0
-
-    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time }
+    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time, 'project': project }
     if '-q' in sys.argv:
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:

@@ -68,7 +68,6 @@ if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
        dbwriter.overflow_filename = overflow_filename
        dbwriter.max_queued = max_queued
 
-   #dbwriter.connect()
 
 
 class Reservation (Data):
@@ -77,7 +76,7 @@ class Reservation (Data):
     
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
-        "active", "queue", "res_id", "cycle_id" 
+        "active", "queue", "res_id", "cycle_id", 'project' 
     ]
     
     required = ["name", "start", "duration"]
@@ -104,8 +103,8 @@ class Reservation (Data):
             self.cycle_id = None
 
         self.running = False
+        self.project = spec.get("project", None)
         
-
     def _get_active(self):
         return self.is_active()
     
@@ -138,11 +137,10 @@ class Reservation (Data):
             dbwriter.log_to_db(user_name, "deferred", "reservation", self)
             del spec['defer']
             deferred = True
-        
 
         Data.update(self, spec)
 
-        if not deferred:
+        if not deferred or not self.running:
             #we only want this if we aren't defering.  If we are, the cycle will 
             #take care of the new data object creation.
             dbwriter.log_to_db(user_name, "modifying", "reservation", self)
@@ -219,9 +217,21 @@ class Reservation (Data):
         if stime < self.start:
             if self.running:
                 self.running = False
-                logger.warning("Res %s/%s: Active reservation %s deactivating: start time in future.",
-                    self.res_id, self.cycle_id, self.name)
-                dbwriter.log_to_db(None, "deactivating", "reservation", self)
+                if self.cycle:
+                    #handle a deferral of a cyclic reservation while active, shold not increment normally
+                    #Time's already tweaked at this point.
+                    logger.info("Res %s/%s: Active reservation %s deactivating: Deferred and cycling.",
+                        self.res_id, self.cycle_id, self.name)
+                    dbwriter.log_to_db(None, "deactivating", "reservation", self)
+
+                    self.res_id = bgsched_id_gen.get()
+                    logger.info("Res %s/%s: Cycling reservation: %s", 
+                             self.res_id, self.cycle_id, self.name) 
+                    dbwriter.log_to_db(None, "cycling", "reservation", self)
+                else:
+                    logger.info("Res %s/%s: Active reservation %s deactivating: start time in future.",
+                        self.res_id, self.cycle_id, self.name)
+                    dbwriter.log_to_db(None, "deactivating", "reservation", self)
             return False
         
         if self.cycle:
@@ -249,12 +259,11 @@ class Reservation (Data):
             if((((stime - self.start) % self.cycle) > self.duration) 
                and self.running):
                 #do this before incrementing id.
+                logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling")
                 dbwriter.log_to_db(None, "deactivating", "reservation", self)
+                self.set_start_to_next_cycle()
                 self.running = False
                 self.res_id = bgsched_id_gen.get()
-                #update time for record-keeping.
-                self.set_start_to_next_cycle()
-                #self.start += self.cycle
                 logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
@@ -283,7 +292,7 @@ class Reservation (Data):
 
             #so here, we should always be coming out of a reservation.  The only time we wouldn't be
             #is if for some reason the scheduler was disrupted.
-            
+            print periods
             if now < self.start:
                 #haven't even started, punt.
                 new_start += self.cycle

@@ -20,6 +20,7 @@ import ConfigParser
 import threading
 import time
 import Queue
+import traceback
 
 import Cobalt.JSONEncoders
 import Cobalt.Proxy
@@ -356,11 +357,12 @@ class dbwriter(object):
                 try:
                     message = Cobalt.JSONEncoders.ReportObject(user, event,
                                                                msg_type, obj).encode()
-                except:
-                    logger.error("Error encoding message to send to cdbwriter.")
+                except Exception as e:
+                    self.logger.error("Error encoding message to send to cdbwriter.")
+                    self.logger.error(traceback.format_exc())
                 else:
                     #done just about all I can.  At this point, I don't have much choice.
-                    logger.critical("MESSAGE DROPPED: %s" % message)
+                    self.logger.critical("MESSAGE DROPPED: %s" % message)
             else:
                 self.queue_to_overflow()
                 self.close_overflow()
@@ -370,9 +372,10 @@ class dbwriter(object):
         try:
             message = Cobalt.JSONEncoders.ReportObject(user, event, 
                                                            msg_type, obj).encode()
-        except:
+        except Exception as e:
             self.logger.error("Error encoding message to send to cdbwriter.")
-            #raise
+            self.logger.debug(traceback.format_exc())
+            
         else:
             self.msg_queue.append(message)
         
