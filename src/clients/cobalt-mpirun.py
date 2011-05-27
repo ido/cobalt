@@ -52,7 +52,7 @@ def check_env(env_name):
     try:
         os.environ[env_name]
     except KeyError:
-        print "Environment variable %s expected, but not found! Aborting." % env_name
+        print >> sys.stderr, "Environment variable %s expected, but not found! Aborting." % env_name
         sys.exit(1)
 
 
@@ -78,8 +78,8 @@ if __name__ == '__main__':
     try:
         idx = sys.argv.index("-partition")
         arglist = sys.argv[1:idx] + sys.argv[idx+2:]
-        print "NOTE: the -partition option should not be used, as the job"
-        print "will run in the partition reserved by cobalt."
+        print >> sys.stderr, "NOTE: the -partition option should not be used, as the job"
+        print >> sys.stderr, "will run in the partition reserved by cobalt."
     except ValueError:
         arglist = sys.argv[1:]
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     run_cmd = get_config_entry("bgpm", "mpirun", None)
     if run_cmd == None:
-        print "FATAL: cobalt.conf entry for mpirun not found.  Aborting run."
+        print >> sys.stderr, "FATAL: cobalt.conf entry for mpirun not found.  Aborting run."
         sys.exit(1)
 
     for expected_env in expected_envs:
@@ -101,14 +101,13 @@ if __name__ == '__main__':
     #setgid as user:
     try:
         user = pwd.getpwuid(os.getuid()).pw_name
-        print user
     except:
-        print "FATAL: failed to find a legitimate uid."
+        print >> sys.stderr, "FATAL: failed to find a legitimate uid."
         sys.exit(1)
     try:        
         os.setgid(pwd.getpwnam(user).pw_gid)
     except OSError:
-        print "FATAL: failed to reset group" 
+        print >> sys.stderr, "FATAL: failed to reset group" 
         sys.exit(1)
 
 
@@ -122,7 +121,7 @@ if __name__ == '__main__':
         try:
             idx = arglist.index(a)
             arglist = arglist[0:idx] + arglist[idx+2:]
-            print "NOTE: the %s option should not be used." % a
+            print >> sys.stderr, "NOTE: the %s option should not be used." % a
         except ValueError:
             pass
     
@@ -162,12 +161,13 @@ if __name__ == '__main__':
     # along with mpirun -free
     env_str = ''
     if '-env' in arglist:
-        env_str = arglist[sys.argv.index("-env")+1]
+        env_str = arglist[arglist.index("-env") + 1]
         arglist.remove(env_str)
-        arglist.remove("-env")
+        arglist.remove('-env')
 
-
-    cobalt_env_str = "COBALT_JOBID=%s" % os.getenv("COBALT_JOBID")
+    if "-free" not in arglist:
+        cobalt_env_str = "COBALT_JOBID=%s" % os.getenv("COBALT_JOBID")
+    
     if os.environ.has_key("COBALT_RESID"):
         cobalt_env_str = cobalt_env_str + ":COBALT_RESID=%s" % os.environ["COBALT_RESID"]
     if os.environ.has_key("COBALT_JOB_ENVS"):
@@ -175,8 +175,8 @@ if __name__ == '__main__':
 
     env_str = env_str + cobalt_env_str
 
-    if "-free" not in arglist:
-        arglist = ['-env', 'COBALT_JOBID='+os.environ["COBALT_JOBID"]] + arglist
+    #if "-free" not in arglist:
+    #    arglist = ['-env', 'COBALT_JOBID='+os.environ["COBALT_JOBID"]] + arglist
     
     if env_str != '':
         arglist = ['-env', env_str] + arglist
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     if idx > 0:
         if int(sys.argv[idx+1]) > (int(os.environ["COBALT_PARTSIZE"]) * 4):
             logger.error("Error: tried to request more processors (%s) than reserved (%s)." % \
-                    (sys.argv[idx+1], os.environ["COBALT_PARTSIZE"]))
+                    (sys.argv[idx+1], int(os.environ["COBALT_PARTSIZE"]) * 4))
             raise SystemExit, 1
         
     for key in io_redirect:
