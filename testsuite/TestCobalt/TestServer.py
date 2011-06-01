@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 import xmlrpclib
+import ssl
 
 import Cobalt.Server
 from Cobalt.Server import find_intended_location, XMLRPCServer
@@ -123,11 +124,11 @@ class TestXMLRPCServer_http (XMLRPCServerTester):
         self.proxy = xmlrpclib.ServerProxy("http://localhost:5900")
     
     def test_secure (self):
-        assert not self.server.secure
+        assert ssl.PROTOCOL_SSLv23 == self.server.ssl_protocol, self.server.ssl_protocol
     
     def test_url (self):
         hname = socket.gethostname()
-        assert self.server.url == "http://%s:5900" % hname
+        assert self.server.url == "https://%s:5900" % hname, self.server.url
 
 
 class TestXMLRPCServer_http_auth (TestXMLRPCServer_http):
@@ -196,8 +197,8 @@ class TestXMLRPCServer_https (XMLRPCServerTester):
         self.proxy = xmlrpclib.ServerProxy("https://localhost:5900")
     
     def test_secure (self):
-        assert self.server.secure
+        assert ssl.PROTOCOL_SSLv23 == self.server.ssl_protocol, self.server.ssl_protocol
     
     def test_url (self):
         hname = socket.gethostname()
-        assert self.server.url == "https://%s:5900" % hname
+        assert self.server.url == "https://%s:5900" % hname, self.server.url
