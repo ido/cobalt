@@ -64,13 +64,6 @@ class BGSimProcessGroup(ProcessGroup):
             os.path.basename(config.get("bgpm", "mpirun")),
         ]
         
-        if self.true_mpi_args is not None:
-            # arguments have been passed along in a special attribute.  These arguments have
-            # already been modified to include the partition that cobalt has selected
-            # for the process group.
-            argv.extend(self.true_mpi_args)
-            return argv
-    
         argv.extend([
             "-np", str(self.size),
             "-mode", self.mode,
@@ -391,9 +384,7 @@ class Simulator (BGBaseSystem):
         self.logger.info("wait_process_groups(%r)" % (specs))
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            # jobs that were launched on behalf of the script manager shouldn't release the partition
-            if not process_group.true_mpi_args:
-                self.reserve_resources_until(process_group.location, None, process_group.jobid)
+            self.reserve_resources_until(process_group.location, None, process_group.jobid)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))

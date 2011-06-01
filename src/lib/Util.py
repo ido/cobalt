@@ -349,6 +349,13 @@ def escape_string(string, chars = "\""):
         string = string.replace(char, '\\' + char)
     return string
 
+_replace_quote_re = re.compile(r'\'')
+def convert_argv_to_quoted_command_string(argv):
+    mod_argv = []
+    for arg in argv:
+        mod_argv.append("'" + _replace_quote_re.sub('\'"\'"\'', arg) + "'")
+    return " ".join(mod_argv)
+
 class AccountingLog:
     def __init__(self, name):
         CP = ConfigParser.ConfigParser()
