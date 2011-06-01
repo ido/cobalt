@@ -37,7 +37,7 @@ __all__ = [
 
 
 # A default logger for the component is instantiated here.
-module_logger = logging.getLogger("Cobalt.Components.BaseForker")
+_module_logger = logging.getLogger("Cobalt.Components.BaseForker")
 
 
 config = ConfigParser.ConfigParser()
@@ -48,7 +48,7 @@ def get_forker_config(option, default):
         value = config.get('forker', option)
     except Exception, e:
         if isinstance(e, ConfigParser.NoSectionError):
-            module_logger.info("[forker] section missing from cobalt.conf")
+            _module_logger.info("[forker] section missing from cobalt.conf")
             value = default
         elif isinstance(e, ConfigParser.NoOptionError):
             value = default
@@ -108,6 +108,23 @@ class Child(object):
     def __setstate__(self, state):
         self.from_dict(state)
 
+
+class BasePreexec(object):
+    '''Class for handling pre-exec tasks for a job.
+    Initilaization takes a job-data object.  This allows id's to be set 
+    properly and other bookkeeping tasks to be correctly set.
+
+    '''
+
+    _logger = _module_logger
+
+    def __init__(self, child):
+        self.label = child.label
+
+    def __call__(self):
+        os.setsid()
+
+
 class BaseForker (Component):
     
     """Generic implementation of the service-location component.
@@ -127,7 +144,7 @@ class BaseForker (Component):
     # A default logger for the class is placed here.
     # Assigning an instance-level logger is supported,
     # and expected in the case of multiple instances.
-    logger = module_logger
+    logger = _module_logger
    
     __statefields__ = ['next_task_id', 'children']
 

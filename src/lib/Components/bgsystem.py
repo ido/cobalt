@@ -672,7 +672,7 @@ class BGSystem (BGBaseSystem):
             if pg.exit_status is None:
                 try:
                     if pg.head_pid != None:
-                        self.logger.warning("%s: sending signal %s via %s", pg.label, pg.forker)
+                        self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
                         ComponentProxy(pg.forker).signal(pg.head_pid, signame)
                     else:
                         self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
