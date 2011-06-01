@@ -220,7 +220,7 @@ class Job (Data):
     '''
     
     fields = Data.fields + ["jobid", "submittime", "queue", "walltime",
-                            "nodes","runtime", "start_time", "end_time", "last_hold", "hold_time", "first_yield"
+                            "nodes","runtime", "start_time", "end_time", "last_hold", "hold_time", "first_yield",
                             "failure_time", "location", "state", "is_visible", 
                             "args",
                             "user",
