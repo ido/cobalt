@@ -5,14 +5,6 @@ BaseForker = Cobalt.Components.base_forker.BaseForker
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
-class SystemScriptPreexec(PGPreexec):
-    def __init__(self, cmd_str, child, logger):
-        BasePreexec.__init__(self, child)
-
-    def __call__(self):
-        BasePreexec.__call__(self)
-
-
 class SystemScriptForker (BaseForker):
     
     """Component for starting system script jobs such as the prologue and epilogue scripts run by cqm"""

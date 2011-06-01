@@ -22,9 +22,11 @@ class PGPreexec(object):
     '''
 
     def __init__(self, cmd_str, child, logger):
-        BasePreexec.__init__(self, child)
         self.cmd_str = cmd_str
+        self.logger = logger
         self.pg = child.pg
+        # self.label = "%s/%s" % (pg.jobid, pg.id)
+        self.label = child.label
 
     def _open_input(self, filename, desc):
         in_file = None
@@ -116,7 +118,6 @@ class PGPreexec(object):
         pg = self.pg
         label = self.label
 
-        BasePreexec.__call__(self)
         try:
             try:
                 # only root can set the supplementary groups, so that must be done before the effective uid is changed
