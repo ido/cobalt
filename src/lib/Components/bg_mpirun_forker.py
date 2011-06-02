@@ -1,5 +1,6 @@
 import copy
 import ConfigParser
+import logging
 import os
 import sys
 import subprocess
@@ -9,12 +10,18 @@ PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
-class BGMpirunPreexec(PGPreexec):
-    def __init__(self, cmd_str, child, logger):
-        PGPreexec.__init__(self, cmd_str, child, logger)
+_logger = logging.getLogger(__name__)
 
-    def __call__(self):
-        PGPreexec.__call__(self)
+
+class BGMpirunPreexec(PGPreexec):
+    def __init__(self, child, cmd_str, env):
+        PGPreexec.__init__(self, child, cmd_str, env)
+
+    def do_first(self):
+        PGPreexec.do_first(self)
+
+    def do_last(self):
+        PGPreexec.do_last(self)
 
 
 class BGMpirunForker (PGForker):
@@ -87,23 +94,23 @@ class BGMpirunForker (PGForker):
             cmd.extend(['-kernel_options', pg.kerneloptions])
 
         try:
-            preexec_fn = BGMpirunPreexec(convert_argv_to_quoted_command_string(cmd), child, self.logger)
+            preexec_fn = BGMpirunPreexec(child, convert_argv_to_quoted_command_string(cmd), postfork_env)
         except:
-            self.logger.error("%s: instantiation of preexec class failed; aborting execution")
+            _logger.error("%s: instantiation of preexec class failed; aborting execution")
             raise
 
         try:
             child.proc = subprocess.Popen(cmd, preexec_fn=preexec_fn, env=postfork_env)
             child.pid = child.proc.pid
-            self.logger.info("%s: forked with pid %s", child.label, child.pid)
+            _logger.info("%s: forked with pid %s", child.label, child.pid)
         except OSError as e:
-            self.logger.error("%s: failed to execute with a code of %s: %s", child.label, e.errno, e)
+            _logger.error("%s: failed to execute with a code of %s: %s", child.label, e.errno, e)
         except ValueError:
-            self.logger.error("%s: failed to run due to bad arguments.", child.label)
+            _logger.error("%s: failed to run due to bad arguments.", child.label)
         except Exception as e:
-            self.logger.error("%s: failed due to an unexpected exception: %s", child.label, e)
-            self.logger.debug("%s: Parent Traceback:", child.label, exc_info=True)
+            _logger.error("%s: failed due to an unexpected exception: %s", child.label, e)
+            _logger.debug("%s: Parent Traceback:", child.label, exc_info=True)
             if e.__dict__.has_key('child_traceback'):
-                self.logger.debug("%s: Child Traceback:\n %s", child.label, e.child_traceback)
+                _logger.debug("%s: Child Traceback:\n %s", child.label, e.child_traceback)
             #It may be valuable to get the child traceback for debugging.
             raise

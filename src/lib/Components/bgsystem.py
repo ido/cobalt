@@ -574,7 +574,7 @@ class BGSystem (BGBaseSystem):
         for pgroup in process_groups:
             pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
             pgroup.nodect = self._partitions[pgroup.location[0]].size
-            self.logger.info("%s: process group %s created to track mpirun status", pgroup.label, pgroup.id)
+            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
             try:
                 self._set_kernel(pgroup.location[0], pgroup.kernel)
             except Exception, e:
@@ -582,8 +582,8 @@ class BGSystem (BGBaseSystem):
                 # should be added to the process group that wait_process_group uses to determine when a process group is no
                 # longer active.  an error message should also be attached to the process group so that cqm can report the
                 # problem to the user.
-                pgroup.exit_status = 1
-                self.logger.info("%s: failed to set the kernel; %s", pgroup.label, e)
+                pgroup.exit_status = 255
+                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
             else:
                 if pgroup.kernel != "default":
                     self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
@@ -591,9 +591,15 @@ class BGSystem (BGBaseSystem):
                     pgroup.forker = 'user_script_forker'
                 else:
                     pgroup.forker = 'bg_mpirun_forker'
-                pgroup.start()
-                if pgroup.mode == "script" and pgroup.head_pid != None:
-                    self.reserve_resources_until(pgroup.location, time.time() + 60*float(pgroup.walltime), pgroup.jobid)
+                if self.reserve_resources_until(pgroup.location, time.time() + 60*float(pgroup.walltime), pgroup.jobid):
+                    pgroup.start()
+                    if pgroup.head_pid == None:
+                        self.logger.error("%s: process group failed to start; releasing resources", pgroup.label)
+                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                else:
+                    pgroup.exit_status = 255
+                    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
+                        pgroup.location)
         return process_groups
     
     add_process_groups = exposed(query(add_process_groups))
@@ -641,7 +647,7 @@ class BGSystem (BGBaseSystem):
                         else:
                             core_dump_str = ""
                         self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
-                    self.reserve_resources_until(each.location, None, each.jobid)
+                self.reserve_resources_until(each.location, None, each.jobid)
 
                 
     _get_exit_status = automatic(_get_exit_status)

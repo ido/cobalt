@@ -1,9 +1,25 @@
+import logging
 import subprocess
 PIPE = subprocess.PIPE
 import Cobalt.Components.base_forker
 BaseForker = Cobalt.Components.base_forker.BaseForker
+BasePreexec = Cobalt.Components.base_forker.BasePreexec
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
+
+_logger = logging.getLogger(__name__)
+
+
+class SystemScriptPreexec (BasePreexec):
+    def __init__(self, child):
+        BasePreexec.__init__(self, child)
+
+    def do_first(self):
+        BasePreexec.do_first(self)
+
+    def do_last(self):
+        BasePreexec.do_last(self)
+
 
 class SystemScriptForker (BaseForker):
     
@@ -31,19 +47,25 @@ class SystemScriptForker (BaseForker):
         command_str = convert_argv_to_quoted_command_string([child.cmd] + child.args)
 
         try:
-            self.logger.debug("%s: attempting to run %s", child.label, command_str)
-            child.proc = subprocess.Popen(command_str, shell=True, stdout=PIPE, stderr=PIPE)
+            preexec_fn = SystemScriptPreexec(child)
+        except:
+            _logger.error("%s: instantiation of preexec class failed; aborting execution")
+            raise
+
+        try:
+            _logger.debug("%s: attempting to run %s", child.label, command_str)
+            child.proc = subprocess.Popen(command_str, shell=True, stdout=PIPE, stderr=PIPE, preexec_fn=preexec_fn)
             child.pid = child.proc.pid
             child.ignore_output = False
-            self.logger.info("%s: forked with pid %s", child.label, child.pid)
+            _logger.info("%s: forked with pid %s", child.label, child.pid)
         except OSError as e:
-            self.logger.error("%s: failed to execute with a code of %s: %s", child.label, e.errno, e)
+            _logger.error("%s: failed to execute with a code of %s: %s", child.label, e.errno, e)
         except ValueError:
-            self.logger.error("%s: failed to run due to bad arguments.", child.label)
+            _logger.error("%s: failed to run due to bad arguments.", child.label)
         except Exception as e:
-            self.logger.error("%s: failed due to an unexpected exception: %s", child.label, e)
-            self.logger.debug("%s: Parent Traceback:", child.label, exc_info=True)
+            _logger.error("%s: failed due to an unexpected exception: %s", child.label, e)
+            _logger.debug("%s: Parent Traceback:", child.label, exc_info=True)
             if e.__dict__.has_key('child_traceback'):
-                self.logger.debug("%s: Child Traceback:\n %s", child.label, e.child_traceback)
+                _logger.debug("%s: Child Traceback:\n %s", child.label, e.child_traceback)
             #It may be valuable to get the child traceback for debugging.
             raise

@@ -30,15 +30,12 @@ IncrID = Cobalt.Data.IncrID
 import Cobalt.Util
 sleep = Cobalt.Util.sleep
 
-
 __all__ = [
     "BaseForker",
+    "BasePreexec",
 ]
 
-
-# A default logger for the component is instantiated here.
-module_logger = logging.getLogger("Cobalt.Components.BaseForker")
-
+_logger = logging.getLogger(__name__)
 
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
@@ -48,7 +45,7 @@ def get_forker_config(option, default):
         value = config.get('forker', option)
     except Exception, e:
         if isinstance(e, ConfigParser.NoSectionError):
-            module_logger.info("[forker] section missing from cobalt.conf")
+            _logger.info("[forker] section missing from cobalt.conf")
             value = default
         elif isinstance(e, ConfigParser.NoOptionError):
             value = default
@@ -108,6 +105,31 @@ class Child(object):
     def __setstate__(self, state):
         self.from_dict(state)
 
+
+class BasePreexec(object):
+    def __init__(self, child):
+        self.label = child.label
+
+    def do_first(self):
+        try:
+            os.setpgrp()
+            os.setsid()
+        except Exception, e:
+            _logger.error("%s: setting the process group and session id failed: %s", self.label, e)
+            os._exit(255)
+
+    def do_last(self):
+        pass
+
+    def __call__(self):
+        try:
+            self.do_first()
+            self.do_last()
+        except:
+            _logger.error("%s: Unhandled exception in BasePreexec.")
+            raise
+
+
 class BaseForker (Component):
     
     """Generic implementation of the service-location component.
@@ -124,11 +146,6 @@ class BaseForker (Component):
     # implementation = "generic"
     UNKNOWN_ERROR = 256
     
-    # A default logger for the class is placed here.
-    # Assigning an instance-level logger is supported,
-    # and expected in the case of multiple instances.
-    logger = module_logger
-   
     __statefields__ = ['next_task_id', 'children']
 
     def __init__ (self, *args, **kwargs):
@@ -191,7 +208,7 @@ class BaseForker (Component):
         try:
             child = self.children[local_id]
         except KeyError:
-            self.logger.warning("Could not find task id %s.  Assuming this "
+            _logger.warning("Could not find task id %s.  Assuming this "
                     "process died in an unknown error-state.", local_id)
             return self.UNKNOWN_ERROR
 
@@ -216,7 +233,7 @@ class BaseForker (Component):
 
         '''
         if not self.children.has_key(local_id):
-            self.logger.warning("Task %s: Could not locate child process data "
+            _logger.warning("Task %s: Could not locate child process data "
                     "entry.  Returning a dummy child.", local_id)
             return self._dummy_child()
         return self.children[local_id].get_dict()
@@ -239,10 +256,10 @@ class BaseForker (Component):
             if pg.returncode == None:
                 try:
                     if pg.poll() == None:
-                        os.kill(pid, signal.SIGTERM)
+                        os.killpg(pid, signal.SIGTERM)
                         sleep(5)
                     if pg.poll() == None:
-                        os.kill(pid, signal.SIGKILL)
+                        os.killpg(pid, signal.SIGKILL)
                 except OSError:
                     #apparently we're already dead.
                     pass
@@ -254,7 +271,7 @@ class BaseForker (Component):
     child_cleanup = exposed(child_cleanup)
 
     def _fork(self, data=None):
-        self.logger.error("%s: _fork not implemented by base forker", child.label, child.id)
+        _logger.error("%s: _fork not implemented by base forker", child.label, child.id)
         return
 
     def fork(self, cmd, tag=None, label=None, env=None, preexec_data=None,
@@ -280,7 +297,7 @@ class BaseForker (Component):
         try:
             #make sure that a job isn't retrying because the XML-RPC hung.
             if (runid != None) and (runid in self.active_runids):
-                self.logger.warning("%s: Attempting to start a task that is "\
+                _logger.warning("%s: Attempting to start a task that is "\
                         "already running. Returning running child id." % label)
                 for child,child_obj in self.children.iteritems():
                     if child_obj.runid == runid:
@@ -309,10 +326,10 @@ class BaseForker (Component):
                 if child.proc == None:
                     raise Exception("no process")
             except:
-                self.logger.error("%s: failed to start child process", child.label, exc_info=True)
+                _logger.error("%s: failed to start child process", child.label, exc_info=True)
 
             if orig_env != os.environ:
-                self.logger.error("forker environment changed during"
+                _logger.error("forker environment changed during"
                         " task initialization.")
 
             if child.proc != None:
@@ -322,7 +339,7 @@ class BaseForker (Component):
             else:
                 return None
         except Exception, e:
-            self.logger.error("%s: failed due to an unexpected exception: %s", child.label, e, exc_info=True)
+            _logger.error("%s: failed due to an unexpected exception: %s", child.label, e, exc_info=True)
             raise
 
     fork = exposed(fork)
@@ -335,16 +352,16 @@ class BaseForker (Component):
         signame -- signal name
         """
         if not self.children.has_key(local_id):
-            self.logger.error("signal found no child with id %s", local_id)
+            _logger.error("signal found no child with id %s", local_id)
             return
 
         kid = self.children[local_id]
-        self.logger.info("%s: sending %s to pid %s", kid.label, 
+        _logger.info("%s: sending %s to pid %s", kid.label, 
                 signame, kid.pid)
         try:
-            os.kill(kid.pid, getattr(signal, signame))
+            os.killpg(kid.pid, getattr(signal, signame))
         except OSError:
-            self.logger.error("%s: signal failure", kid.label, 
+            _logger.error("%s: signal failure", kid.label, 
                     exc_info=True)
 
     signal = exposed(signal)
@@ -393,17 +410,17 @@ class BaseForker (Component):
         local_id -- id of the child to signal
         """
 
-        self.logger.info("status requested for task id %s", local_id)
+        _logger.info("status requested for task id %s", local_id)
         if self.children.has_key(local_id):
             dead = self.children[local_id]
             if dead.exit_status is not None:
                 del self.children[local_id]
-                self.logger.info("%s: status returned", dead.label)
+                _logger.info("%s: status returned", dead.label)
                 return dead.__dict__
             else:
-                self.logger.info("%s: still running", dead.label)
+                _logger.info("%s: still running", dead.label)
         else:
-            self.logger.info("task id %s: not found", local_id)
+            _logger.info("task id %s: not found", local_id)
             
         return None
     get_status = exposed(get_status)
@@ -433,17 +450,17 @@ class BaseForker (Component):
                 exit_status = 128 + signum
                 
             if exit_status is None:
-                self.logger.info("pid %s died but had no status", pid)
+                _logger.info("pid %s died but had no status", pid)
                 break
             
             if signum:
-                self.logger.info("pid %s died with status %s and signal %s", 
-                        pid, status, signum)
+                _logger.info("pid %s died with status %s and signal %s; coredump=%s", 
+                        pid, exit_status, signum, core_dump)
             else:
-                self.logger.info("pid %s died with status %s", pid, status)
+                _logger.info("pid %s died with status %s", pid, exit_status)
             for each in self.children.itervalues():
                 if each.pid == pid:
-                    self.logger.info("task %s: dead pid %s matches", 
+                    _logger.info("task %s: dead pid %s matches", 
                             each.label, pid)
                     each.exit_status = exit_status
                     each.core_dump = core_dump

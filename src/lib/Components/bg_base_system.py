@@ -911,6 +911,7 @@ class BGBaseSystem (Component):
         return target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired
 
     def reserve_resources_until(self, location, new_time, jobid):
+        rc = False
         partition_name = location[0]
         pg = self.process_groups.find_by_jobid(jobid)
         try:
@@ -918,15 +919,11 @@ class BGBaseSystem (Component):
             used_by = self.partitions[partition_name].used_by
             if new_time:
                 if used_by == jobid:
-                    # only adjust partition reservation time for script mode jobs
-                    if pg != None and pg.mode == 'script':
-                        self.partitions[partition_name].reserved_until = new_time
-                        self.partitions[partition_name].reserved_by = jobid
-                        self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
-                            time.asctime(time.gmtime(new_time)))
-                    else:
-                        # FIXME: this will be removed when all jobs reserve the partitions to which they are assigned
-                        self.logger.info("job %s: only script mode jobs may reserve partitions", jobid)
+                    self.partitions[partition_name].reserved_until = new_time
+                    self.partitions[partition_name].reserved_by = jobid
+                    self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
+                        time.asctime(time.gmtime(new_time)))
+                    rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to update the reservation on partition %s (owner=%s)",
                         jobid, partition_name, used_by)
@@ -935,6 +932,7 @@ class BGBaseSystem (Component):
                     self.partitions[partition_name].reserved_until = False
                     self.partitions[partition_name].reserved_by = None
                     self.logger.info("reservation on partition '%s' has been removed", partition_name)
+                    rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to clear the reservation on partition %s (owner=%s)",
                         jobid, partition_name, used_by)
@@ -942,6 +940,7 @@ class BGBaseSystem (Component):
             self.logger.exception("an unexpected error occurred will adjusting the partition reservation time")
         finally:
             self._partitions_lock.release()
+        return rc
     reserve_resources_until = exposed(reserve_resources_until)
 
     # # yarrrrr!   deadlock ho!!
