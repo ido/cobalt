@@ -379,13 +379,15 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
 
     # these two "thread" functions need to be in a giant while loop inside serve_forever
     def _slp_thread (self, frequency=120):
-        try:
-            while self.register:
+        
+        while self.register:
+            try:
                 self.register_with_slp()
+            except:
+                self.logger.error("slp registration failed", exc_info=1)
+            finally:
                 Cobalt.Util.sleep(frequency)
-        except:
-            self.logger.error("slp_thread failed", exc_info=1)
-
+    
     def _tasks_thread (self):
         try:
             while self.serve:
