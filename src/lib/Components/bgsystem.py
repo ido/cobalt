@@ -568,8 +568,6 @@ class BGSystem (BGBaseSystem):
         
         self.logger.info("add_process_groups(%r)" % (specs))
 
-
-        # start up non-script mode jobs
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
             pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
