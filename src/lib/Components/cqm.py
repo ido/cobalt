@@ -1913,8 +1913,8 @@ class Job (StateMachine):
 
         
     def log_script_failure(self, job_dict, script_type):
-        logger.error("Job %s/%s: %s %s failed. Output follows:", 
-            self.jobid, self.user, script_type, job_dict['cmd'])
+        logger.error("Job %s/%s: %s %s failed with an exit status of %d. Output follows:", 
+            self.jobid, self.user, script_type, job_dict['cmd'], job_dict['exit_status'])
         logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, 
                 job_dict['args'])
         if job_dict['stderr'] != None:
