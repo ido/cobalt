@@ -819,6 +819,7 @@ class Job (StateMachine):
                 'umask':self.umask,
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
+                'starttime':starttime,
                 'walltime':walltime,
                 'resid': self.resid,
                 'runid': self.runid

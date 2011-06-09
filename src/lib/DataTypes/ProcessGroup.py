@@ -42,8 +42,8 @@ class ProcessGroup(Data):
                             "executable", "exit_status", "head_pid", "id",
                             "jobid", "kernel", "kerneloptions", "location",
                             "mode", "nodefile", "size", "state", "stderr",
-                            "stdin", "stdout", "umask", "user", "walltime",
-                            "resid", "runid", "forker"]
+                            "stdin", "stdout", "umask", "user", "starttime",
+                            "walltime", "resid", "runid", "forker"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -72,6 +72,7 @@ class ProcessGroup(Data):
         self.stdout = spec.get("stdout")
         self.umask = spec.get("umask")
         self.user = spec.get("user", "")
+        self.starttime = spec.get("starttime")
         self.walltime = spec.get("walltime")
         self.resid = spec.get("resid", None)
         self.runid = spec.get("runid", None)

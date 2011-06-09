@@ -568,6 +568,9 @@ class BGSystem (BGBaseSystem):
         
         self.logger.info("add_process_groups(%r)" % (specs))
 
+        # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
+        # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
+        # error message should also be attached to the process group so that cqm can report the problem to the user.
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
             pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
@@ -576,12 +579,8 @@ class BGSystem (BGBaseSystem):
             try:
                 self._set_kernel(pgroup.location[0], pgroup.kernel)
             except Exception, e:
-                # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag
-                # should be added to the process group that wait_process_group uses to determine when a process group is no
-                # longer active.  an error message should also be attached to the process group so that cqm can report the
-                # problem to the user.
-                pgroup.exit_status = 255
                 self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                pgroup.exit_status = 255
             else:
                 if pgroup.kernel != "default":
                     self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
@@ -589,15 +588,36 @@ class BGSystem (BGBaseSystem):
                     pgroup.forker = 'user_script_forker'
                 else:
                     pgroup.forker = 'bg_mpirun_forker'
-                if self.reserve_resources_until(pgroup.location, time.time() + 60*float(pgroup.walltime), pgroup.jobid):
-                    pgroup.start()
-                    if pgroup.head_pid == None:
-                        self.logger.error("%s: process group failed to start; releasing resources", pgroup.label)
+                if self.reserve_resources_until(pgroup.location, pgroup.starttime() + 60*float(pgroup.walltime), pgroup.jobid):
+                    try:
+                        pgroup.start()
+                        if pgroup.head_pid == None:
+                            self.logger.error("%s: process group failed to start using the %s component; releasing resources",
+                                pgroup.label, pgroup.forker)
+                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                            pgroup.exit_status = 255
+                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                        self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        del self.process_groups[process_group.id]
+                        raise
+                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                        self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
+                            "component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        del self.process_groups[process_group.id]
+                        raise
+                    except:
+                        self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
+                            "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
                         self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                        pgroup.exit_status = 255
                 else:
-                    pgroup.exit_status = 255
                     self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
                         pgroup.location)
+                    pgroup.exit_status = 255
         return process_groups
     
     add_process_groups = exposed(query(add_process_groups))
