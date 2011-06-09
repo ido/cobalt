@@ -105,8 +105,9 @@ class ProcessGroup(Data):
             self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
                 "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
         except:
-            _logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.id, self.user, self.id,
-                self.forker, exc_info=True)
+            _logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.jobid, self.user, self.id,
+                self.forker)
+            raise
 
     def prefork (self):
         """This method is called before the fork, while it's still safe to 
