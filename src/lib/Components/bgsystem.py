@@ -588,7 +588,7 @@ class BGSystem (BGBaseSystem):
                     pgroup.forker = 'user_script_forker'
                 else:
                     pgroup.forker = 'bg_mpirun_forker'
-                if self.reserve_resources_until(pgroup.location, pgroup.starttime() + 60*float(pgroup.walltime), pgroup.jobid):
+                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
                     try:
                         pgroup.start()
                         if pgroup.head_pid == None:
@@ -600,7 +600,7 @@ class BGSystem (BGBaseSystem):
                         self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
                         # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
                         # until the job has exhausted its maximum alloted time
-                        del self.process_groups[process_group.id]
+                        del self.process_groups[pgroup.id]
                         raise
                     except (ComponentLookupError, xmlrpclib.Fault), e:
                         self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
