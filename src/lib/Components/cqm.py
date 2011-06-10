@@ -819,7 +819,7 @@ class Job (StateMachine):
                 'umask':self.umask,
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
-                'starttime':starttime,
+                'starttime':self.starttime,
                 'walltime':walltime,
                 'resid': self.resid,
                 'runid': self.runid
@@ -838,6 +838,7 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
+            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
