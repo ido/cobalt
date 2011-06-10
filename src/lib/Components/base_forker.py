@@ -112,7 +112,7 @@ class BasePreexec(object):
 
     def do_first(self):
         try:
-            os.setpgrp()
+            #os.setpgrp()
             os.setsid()
         except Exception, e:
             _logger.error("%s: setting the process group and session id failed: %s", self.label, e)
@@ -415,7 +415,7 @@ class BaseForker (Component):
             dead = self.children[local_id]
             if dead.exit_status is not None:
                 del self.children[local_id]
-                _logger.info("%s: status returned", dead.label)
+                _logger.info("%s: status returned: %s", dead.label, dead.exit_status)
                 return dead.__dict__
             else:
                 _logger.info("%s: still running", dead.label)

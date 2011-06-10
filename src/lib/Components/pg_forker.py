@@ -94,7 +94,7 @@ class PGPreexec(BasePreexec):
                 supplementary_group_ids.append(g.gr_gid)
         try:
             os.setgroups([])
-            os.setgroups(groups)
+            os.setgroups(supplementary_group_ids)
         except:
             _logger.error("%s: failed to set supplementary groups for user %s", self.label, username)
             if not _ignore_setgroup_errors:
