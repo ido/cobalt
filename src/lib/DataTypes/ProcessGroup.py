@@ -3,16 +3,12 @@
 __revision__ = "$Revision$"
 
 
-import os
-import sys
-import signal
 import logging
-
-import Cobalt.Logging
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Exceptions import DataCreationError
 from Cobalt.Proxy import ComponentProxy
 
+_logger = logging.getLogger()
                                           
 class ProcessGroup(Data):
     """A job that runs on the system
@@ -38,7 +34,6 @@ class ProcessGroup(Data):
     stderr -- file to use for stderr of script
     stdin -- file to use for stdin of script
     stdout -- file to use for stdout of script
-    true_mpi_args -- args as passed by cobalt-mpirun call 
     umask -- permissions to set
     user -- the user the process group is running under
     """
@@ -47,16 +42,17 @@ class ProcessGroup(Data):
                             "executable", "exit_status", "head_pid", "id",
                             "jobid", "kernel", "kerneloptions", "location",
                             "mode", "nodefile", "size", "state", "stderr",
-                            "stdin", "stdout", "true_mpi_args", "umask",
-                            "user"]
+                            "stdin", "stdout", "umask", "user", "starttime",
+                            "walltime", "resid", "runid", "forker"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
 
-    def __init__(self, spec, logger):
+    def __init__(self, spec):
         Data.__init__(self, spec)
         self.tag = "process group"
-        self.args = " ".join(spec.get("args", []))
+        # self.args = " ".join(spec.get("args", []))
+        self.args = spec.get("args", [])
         self.cobalt_log_file = spec.get("cobalt_log_file")
         self.cwd = spec.get("cwd")
         self.env = spec.get("env", {})
@@ -74,13 +70,26 @@ class ProcessGroup(Data):
         self.stderr = spec.get("stderr")
         self.stdin = spec.get("stdin")
         self.stdout = spec.get("stdout")
-        self.true_mpi_args = spec.get("true_mpi_args")
         self.umask = spec.get("umask")
         self.user = spec.get("user", "")
+        self.starttime = spec.get("starttime")
+        self.walltime = spec.get("walltime")
         self.resid = spec.get("resid", None)
         self.runid = spec.get("runid", None)
+        self.forker = spec.get("forker", None)
 
-        self.logger = logger
+        # self.logger = logger
+
+    def __getstate__(self):
+        data = {}
+        for key, value in self.__dict__.iteritems():
+            if key not in ['logger', 'state']:
+                data[key] = value
+        return data
+
+    def __setstate__(self, data):
+        self.__dict__.update(data)
+        # self.logger = logging.getLogger()
 
     def _get_state(self):
         """Gets the current 'state' property of the process group"""
@@ -91,15 +100,15 @@ class ProcessGroup(Data):
     state = property(_get_state)
 
     def start(self):
-        """Start the process group by forking to _mpirun()"""
+        """Start the process group by contact the appropriate forker component"""
         try:
             data = self.prefork()
-            self.head_pid = ComponentProxy("forker", retry=False).fork(data['cmd'], 
-                self.tag, "Job %s/%s" %(self.jobid, self.user), None, 
-                data, self.runid)
+            self.head_pid = ComponentProxy(self.forker, retry=False).fork([self.executable] + self.args, self.tag,
+                "Job %s/%s/%s" %(self.jobid, self.user, self.id), self.env, data, self.runid)
         except:
-            self.logger.error("problem forking: pg %s did not find a "
-                "child pid", self.id)
+            _logger.error("Job %s/%s/%s: problem forking; %s did not return a child id", self.jobid, self.user, self.id,
+                self.forker)
+            raise
 
     def prefork (self):
         """This method is called before the fork, while it's still safe to 
@@ -108,17 +117,11 @@ class ProcessGroup(Data):
         process.
         
         """
-        
-        return {}
-    
-    def _runjob(self):
-        """This method is called from the forked process in start() to run a 
-        job on the system.  It should be overridden by whatever specialized 
-        Process Group class extends this one within each system component.
-        
-        """
-        os._exit(0)
-
+        data = {}
+        for key, value in self.__dict__.iteritems():
+            if key not in ['logger', 'state']:
+                data[key] = value
+        return data
 
 
 class ProcessGroupDict(DataDict):

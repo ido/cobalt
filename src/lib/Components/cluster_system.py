@@ -59,53 +59,23 @@ class ClusterProcessGroup(ProcessGroup):
         ret = {}
         
         sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
-        # check for valid user/group
-        try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError("error getting uid/gid")
-
-        ret["userid"] = userid
-        ret["primary_group"] = groupid
         if not sim_mode: 
             nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
             self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
         else:
             self.nodefile = "fake"
         
-        # get supplementary groups
-        supplementary_group_ids = []
-        for g in grp.getgrall():
-            if self.user in g.gr_mem:
-                supplementary_group_ids.append(g.gr_gid)
-        ret["other_groups"] = supplementary_group_ids
-        
-        ret["umask"] = self.umask
         try:
             rank0 = self.location[0].split(":")[0]
         except IndexError:
             raise ProcessGroupCreationError("no location")
-        kerneloptions = self.kerneloptions
 
-        ret["postfork_env"] = self.env
-        ret["stdin"] = self.stdin
-        ret["stdout"] = self.stdout
-        ret["stderr"] = self.stderr
-        
         split_args = self.args.split()
         cmd_args = ('--nf', str(self.nodefile),
                     '--jobid', str(self.jobid),
                     '--cwd', str(self.cwd),
                     '--exe', str(self.executable))
         
-        rep_quote = re.compile(r'\'')
-
-        mod_args = []
-        for s in split_args:
-            mod_args.append("'" + rep_quote.sub('\'"\'"\'', s) + "'")
-                                
-        split_args = mod_args
-       
         cmd_exe = None
         if sim_mode: 
             cmd_exe = get_cluster_system_config("simulation_executable", None)
@@ -123,9 +93,6 @@ class ClusterProcessGroup(ProcessGroup):
         else:
             cmd = (cmd_exe,) + cmd_args + tuple(split_args)
 
-        ret["id"] = self.id
-        ret["jobid"] = self.jobid
-        ret["cobalt_log_file"] = self.cobalt_log_file
         ret["cmd" ] = cmd
         ret["args"] = split_args
         

@@ -447,7 +447,7 @@ class BaseXMLRPCServer (SSLServer, CobaltXMLRPCDispatcher, object):
                     try:
                         self.instance.do_tasks()
                     except:
-                        self.logger.error("Task executaion failure", exc_info=1)
+                        self.logger.error("Task execution failure", exc_info=1)
                         
                 try:
                     now = time.time()

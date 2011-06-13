@@ -60,13 +60,6 @@ class ClusterProcessGroup (ProcessGroup):
             os.path.basename(config.get("bgpm", "mpirun")),
         ]
         
-        if self.true_mpi_args is not None:
-            # arguments have been passed along in a special attribute.  These arguments have
-            # already been modified to include the partition that cobalt has selected
-            # for the process group.
-            argv.extend(self.true_mpi_args)
-            return argv
-    
         argv.extend([
             "-np", str(self.size),
             "-mode", self.mode,

@@ -160,6 +160,8 @@ if __name__ == '__main__':
     # Add cobalt jobid environment variable to script job, but again, not to be used
     # along with mpirun -free
     env_str = ''
+    cobalt_env_str = ''
+
     if '-env' in arglist:
         env_str = arglist[arglist.index("-env") + 1]
         arglist.remove(env_str)

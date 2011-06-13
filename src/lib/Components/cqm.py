@@ -819,6 +819,7 @@ class Job (StateMachine):
                 'umask':self.umask,
                 'kernel':self.kernel,
                 'kerneloptions':self.kerneloptions,
+                'starttime':self.starttime,
                 'walltime':walltime,
                 'resid': self.resid,
                 'runid': self.runid
@@ -837,6 +838,7 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
+            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
@@ -1060,30 +1062,29 @@ class Job (StateMachine):
                     [Cobalt.Util.escape_string(str(v), ":") for v in value])))
             else:
                 params.append('%s=%s' % (attr, str(value)))
-        scripts = [[script] for script in scripts]
+        scripts = [[os.path.expandvars(script)] for script in scripts]
         for script in scripts:
             script.extend(params)
 
-        for script in scripts:
-            try:
-                self.resource_postscript_ids = self._start_common_scripts(
-                        scripts, '%s_%s'%(self.jobid, self._sm_state)) 
-            except ComponentLookupError:
-                if self._sm_state != "Resource_Epilogue_Retry":
-                     logger.warning("Job %s/%s: Unable to connect to forker "
-                        "component to launch resource postscripts.  Will "
-                        "retry", self.user, self.jobid)
-                     self._sm_state = "Resource_Prologue_Retry"
-                     return
-            except Exception as e:
-                logger.error("Job %s/%s: %s exception recieved. "
-                        "Resource_Epilogue "
-                    "launcher has catastrophicaly failed.", self.user, 
-                    self.jobid, str(e))
-                dbwriter.log_to_db(None, "resource_epilogue_failed", 
-                        "job_prog", JobProgMsg(self))
-                self._sm_start_job_epilogue_scripts(error=True)
-                return
+        try:
+            self.resource_postscript_ids = self._start_common_scripts(
+                    scripts, '%s_%s'%(self.jobid, self._sm_state)) 
+        except ComponentLookupError:
+            if self._sm_state != "Resource_Epilogue_Retry":
+                 logger.warning("Job %s/%s: Unable to connect to forker "
+                    "component to launch resource postscripts.  Will "
+                    "retry", self.user, self.jobid)
+                 self._sm_state = "Resource_Prologue_Retry"
+                 return
+        except Exception as e:
+            logger.error("Job %s/%s: %s exception recieved. "
+                    "Resource_Epilogue "
+                "launcher has catastrophicaly failed.", self.user, 
+                self.jobid, str(e))
+            dbwriter.log_to_db(None, "resource_epilogue_failed", 
+                    "job_prog", JobProgMsg(self))
+            self._sm_start_job_epilogue_scripts(error=True)
+            return
 
         if None in self.resource_postscript_ids:
             count = 0
@@ -1136,33 +1137,32 @@ class Job (StateMachine):
                     [Cobalt.Util.escape_string(str(v), ":") for v in value])))
             else:
                 params.append('%s=%s' % (attr, str(value)))
-        scripts = [[script] for script in scripts]
+        scripts = [[os.path.expandvars(script)] for script in scripts]
         for script in scripts:
             script.extend(params)
 
-        for script in scripts:
-            try:
-                self.job_postscript_ids = self._start_common_scripts(scripts, 
-                        '%s_%s'%(self.jobid, self._sm_state),error) 
-            except ComponentLookupError:
-                if self._sm_state != "Job_Epilogue_Retry":
-                    logger.warning("Job %s/%s: Unable to connect to forker "
-                        "component to launch job postscripts.  Will retry", 
-                        self.user, self.jobid)
-                    self._sm_state = "Job_Epilogue_Retry"
-                    return
-            except Exception as e:
-                logger.error("Job %s/%s: %s exception recieved. Job epilogue "
-                    "launcher has catastrophicaly failed.", self.user, 
-                    self.jobid, str(e))
-                # we have failed, but there is nothing left but the terminal 
-                # state anyway.  Things outside of cobalt need to catch this.
-
-                dbwriter.log_to_db(None, "job_epilogue_failed", 
-                    "job_prog", JobProgMsg(self))
-                self._write_end_records()
-                self._sm_state = 'Terminal'
+        try:
+            self.job_postscript_ids = self._start_common_scripts(scripts, 
+                    '%s_%s'%(self.jobid, self._sm_state),error) 
+        except ComponentLookupError:
+            if self._sm_state != "Job_Epilogue_Retry":
+                logger.warning("Job %s/%s: Unable to connect to forker "
+                    "component to launch job postscripts.  Will retry", 
+                    self.user, self.jobid)
+                self._sm_state = "Job_Epilogue_Retry"
                 return
+        except Exception as e:
+            logger.error("Job %s/%s: %s exception recieved. Job epilogue "
+                "launcher has catastrophicaly failed.", self.user, 
+                self.jobid, str(e))
+            # we have failed, but there is nothing left but the terminal 
+            # state anyway.  Things outside of cobalt need to catch this.
+
+            dbwriter.log_to_db(None, "job_epilogue_failed", 
+                "job_prog", JobProgMsg(self))
+            self._write_end_records()
+            self._sm_state = 'Terminal'
+            return
 
         if None in self.job_postscript_ids:
             count = 0
@@ -1432,7 +1432,7 @@ class Job (StateMachine):
                 params.append('%s=%s' % (attr, str(value)))
         
         #give a set of strings corresponding to [cmd, arg1,...,argn-1]
-        scripts = [[script] for script in scripts]
+        scripts = [[os.path.expandvars(script)] for script in scripts]
         for script in scripts:
             script.extend(params)
     
@@ -1495,8 +1495,8 @@ class Job (StateMachine):
 
         for script in scripts:
             try:
-               retval = ComponentProxy("forker").fork(script, tag, label, 
-                       passed_env)
+               retval = ComponentProxy("system_script_forker").fork(
+                   script, tag, label, passed_env)
                if retval != None:
                    script_ids.append(retval)
                else:
@@ -1797,7 +1797,7 @@ class Job (StateMachine):
                 params.append('%s=%s' % (attr, str(value)))
         
         #give a set of strings corresponding to [cmd, arg1,...,argn-1]
-        scripts = [[script] for script in scripts]
+        scripts = [[os.path.expandvars(script)] for script in scripts]
         for script in scripts:
             script.extend(params)
     
@@ -1914,8 +1914,8 @@ class Job (StateMachine):
 
         
     def log_script_failure(self, job_dict, script_type):
-        logger.error("Job %s/%s: %s %s failed. Output follows:", 
-            self.jobid, self.user, script_type, job_dict['cmd'])
+        logger.error("Job %s/%s: %s %s failed with an exit status of %d. Output follows:", 
+            self.jobid, self.user, script_type, job_dict['cmd'], job_dict['exit_status'])
         logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, 
                 job_dict['args'])
         if job_dict['stderr'] != None:
@@ -1936,7 +1936,7 @@ class Job (StateMachine):
         
         for script_id in script_ids:
             try:
-                retval = ComponentProxy("forker").child_completed(script_id)
+                retval = ComponentProxy("system_script_forker").child_completed(script_id)
                 if retval != None:
                     complete_scripts += 1
                 retvals.append(retval)
@@ -1955,7 +1955,7 @@ class Job (StateMachine):
             for script_id in script_ids:
                 try:
                     script_output.append(
-                        ComponentProxy("forker").get_child_data(script_id))
+                        ComponentProxy("system_script_forker").get_child_data(script_id))
                 except ComponentLookupError:
                     logger.error("Job %s/%s: Could not communicate with "
                         "forker component.", self.user, self.jobid)
@@ -1965,7 +1965,7 @@ class Job (StateMachine):
                 #we have to do this again, couldn't capture output
                 return None
             try:
-                ComponentProxy("forker").child_cleanup(script_ids)
+                ComponentProxy("system_script_forker").child_cleanup(script_ids)
             except ComponentLookupError:        
                 logger.error("Job %s/%s: Could not communicate with "
                     "forker component.", self.user, self.jobid)

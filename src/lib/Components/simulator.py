@@ -47,54 +47,8 @@ class BGSimProcessGroup(ProcessGroup):
     """Process Group modified for Blue Gene Simulator"""
 
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger)
-        self.nodect = None
-        self.script_id = None
-        self.signals = []
-    
-    def _get_argv (self, config_files=None):
-        """Get a command string for a process group for a process group."""
-        if config_files is None:
-            config_files = Cobalt.CONFIG_FILES
-        config = ConfigParser()
-        config.read(config_files)
-        
-        argv = [
-            config.get("bgpm", "mpirun"),
-            os.path.basename(config.get("bgpm", "mpirun")),
-        ]
-        
-        if self.true_mpi_args is not None:
-            # arguments have been passed along in a special attribute.  These arguments have
-            # already been modified to include the partition that cobalt has selected
-            # for the process group.
-            argv.extend(self.true_mpi_args)
-            return argv
-    
-        argv.extend([
-            "-np", str(self.size),
-            "-mode", self.mode,
-            "-cwd", self.cwd,
-            "-exe", self.executable,
-        ])
-        
-        try:
-            partition = self.location[0]
-        except (KeyError, IndexError):
-            raise ProcessGroupCreationError("location")
-        argv.extend(["-partition", partition])
-        
-        if self.kerneloptions:
-            argv.extend(['-kernel_options', self.kerneloptions])
-        
-        if self.args:
-            argv.extend(["-args", " ".join(self.args)])
-        
-        if self.env:
-            env_kvstring = " ".join(["%s=%s" % (key, value) for key, value in self.env.iteritems()])
-            argv.extend(["-env",  env_kvstring])
-        
-        return argv
+        ProcessGroup.__init__(self, spec)
+        self.nodect = spec.get("nodect",None)
 
 
 
@@ -123,7 +77,7 @@ class Simulator (BGBaseSystem):
 
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
-        sys.setrecursionlimit(5000)
+        sys.setrecursionlimit(5000) #why this magic number?
         self.process_groups.item_cls = BGSimProcessGroup
         self.config_file = kwargs.get("config_file", None)
         self.failed_components = set()
@@ -351,220 +305,165 @@ class Simulator (BGBaseSystem):
         """
         
         self.logger.info("add_process_groups(%r)" % (specs))
-        
-        script_specs = []
-        other_specs = []
-        for spec in specs:
-            if spec.get('mode') == "script":
-                script_specs.append(spec)
-            else:
-                other_specs.append(spec)
-        
-        # start up script jobs
-        new_pgroups = []
-        if script_specs:
-            try:
-                for spec in script_specs:
-                    script_pgroup = ComponentProxy("script-manager").add_jobs([spec])
-                    new_pgroup = self.process_groups.q_add([spec])
-                    new_pgroup[0].script_id = script_pgroup[0]['id']
-                    self.reserve_resources_until(spec['location'], time.time() + 60*float(spec['walltime']),
-                        new_pgroup[0].jobid)
-                    new_pgroups.append(new_pgroup[0])
-            except (ComponentLookupError, xmlrpclib.Fault):
-                raise ProcessGroupCreationError("system::add_process_groups failed to communicate with script-manager")
 
-        process_groups = self.process_groups.q_add(other_specs)
-        for process_group in process_groups:
-            self.start(process_group)
-            
-        return new_pgroups + process_groups
+        # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
+        # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
+        # error message should also be attached to the process group so that cqm can report the problem to the user.
+        process_groups = self.process_groups.q_add(specs)
+        for pgroup in process_groups:
+            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
+            pgroup.nodect = self._partitions[pgroup.location[0]].size
+            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
+            try:
+                #TODO: allow the kernel set step to work in the simulator.  For now this doesn't fly.
+                pass
+                #self._set_kernel(pgroup.location[0], pgroup.kernel)
+            except Exception, e:
+                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                pgroup.exit_status = 255
+            else:
+                if pgroup.kernel != "default":
+                    self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
+                if pgroup.mode == "script":
+                    pgroup.forker = 'user_script_forker'
+                else:
+                    pgroup.forker = 'bg_mpirun_forker'
+                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
+                    try:
+                        pgroup.start()
+                        if pgroup.head_pid == None:
+                            self.logger.error("%s: process group failed to start using the %s component; releasing resources",
+                                pgroup.label, pgroup.forker)
+                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                            pgroup.exit_status = 255
+                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                        self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        del self.process_groups[pgroup.id]
+                        raise
+                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                        self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
+                            "component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        del self.process_groups[process_group.id]
+                        raise
+                    except:
+                        self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
+                            "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
+                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                        pgroup.exit_status = 255
+                else:
+                    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
+                        pgroup.location)
+                    pgroup.exit_status = 255
+        return process_groups
+
+        
     add_process_groups = exposed(query(all_fields=True)(add_process_groups))
     
     def get_process_groups (self, specs):
         """Query process_groups from the simulator."""
+        self._get_exit_status()
         return self.process_groups.q_get(specs)
+    
     get_process_groups = exposed(query(get_process_groups))
+
+
+    def _get_exit_status (self):
+
+        #common to bgsystem
+
+        running = []
+        active_forker_components = []
+        for forker_component in ['bg_mpirun_forker', 'user_script_forker']:
+            try:
+                running.extend(ComponentProxy(forker_component).active_list("process group"))
+                active_forker_components.append(forker_component)
+            except:
+                self.logger.error("failed to contact %s component for list of running jobs", forker_component)
+
+        for each in self.process_groups.itervalues():
+            if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
+                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
+                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
+                # maybe the second choice is better
+                try:
+                    if each.head_pid != None:
+                        dead_dict = ComponentProxy(each.forker).get_status(each.head_pid)
+                    else:
+                        dead_dict = None
+                except:
+                    self.logger.error("%s: RPC to get_status method in %s component failed", each.label, each.forker)
+                    return
+                
+                if dead_dict is None:
+                    self.logger.info("%s: job exited with unknown status", each.label)
+                    # FIXME: should we use a negative number instead to indicate internal errors? --brt
+                    each.exit_status = 1234567
+                else:
+                    each.exit_status = dead_dict["exit_status"]
+                    if dead_dict["signum"] == 0:
+                        self.logger.info("%s: job exited with status %i", each.label, each.exit_status)
+                    else:
+                        if dead_dict["core_dump"]:
+                            core_dump_str = ", core dumped"
+                        else:
+                            core_dump_str = ""
+                        self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
+                    self.reserve_resources_until(each.location, None, each.jobid)
+            
+    _get_exit_status = automatic(_get_exit_status)
+
     
     def wait_process_groups (self, specs):
         """get process groups that have finished running."""
-        self.logger.info("wait_process_groups(%r)" % (specs))
+        
+            
+        #self.logger.info("wait_process_groups(%r)" % (specs))
+        self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            # jobs that were launched on behalf of the script manager shouldn't release the partition
-            if not process_group.true_mpi_args:
-                self.reserve_resources_until(process_group.location, None, process_group.jobid)
+            self.reserve_resources_until(process_group.location, None, process_group.jobid)
             del self.process_groups[process_group.id]
         return process_groups
+    
     wait_process_groups = exposed(query(wait_process_groups))
     
     def signal_process_groups (self, specs, signame="SIGINT"):
         """Simulate the signaling of a process_group."""
-        self.logger.info("signal_process_groups(%r, %r)" % (specs, signame))
-        process_groups = self.process_groups.q_get(specs)
-        for process_group in process_groups:
-            if process_group.mode == "script":
+        
+        my_process_groups = self.process_groups.q_get(specs)
+        for pg in my_process_groups:
+            if pg.exit_status is None:
                 try:
-                    pgroup = ComponentProxy("script-manager").signal_jobs([{'id':process_group.script_id}], "SIGTERM")
-                except (ComponentLookupError, xmlrpclib.Fault):
-                    logger.error("Failed to communicate with script manager when killing job")
-            else:
-                process_group.signals.append(signame)
-        return process_groups
+                    if pg.head_pid != None:
+                        self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
+                        ComponentProxy(pg.forker).signal(pg.head_pid, signame)
+                    else:
+                        self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
+                except:
+                    self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
+
+                if signame == "SIGKILL":
+                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
+
+        return my_process_groups
+        
+        #self.logger.info("signal_process_groups(%r, %r)" % (specs, signame))
+        #process_groups = self.process_groups.q_get(specs)
+        #for process_group in process_groups:
+        #    if process_group.mode == "script":
+        #        try:
+        #            pgroup = ComponentProxy("script-manager").signal_jobs([{'id':process_group.script_id}], "SIGTERM")
+        #        except (ComponentLookupError, xmlrpclib.Fault):
+        #            logger.error("Failed to communicate with script manager when killing job")
+        #    else:
+        #        process_group.signals.append(signame)
+        #return process_groups
     signal_process_groups = exposed(query(signal_process_groups))
     
-    def start (self, process_group):
-        thread.start_new_thread(self._mpirun, (process_group, ))
-    
-    def _mpirun (self, process_group):
-        argv = process_group._get_argv()
-        try:
-            stdout = open(process_group.stdout or "/dev/null", "a")
-        except:
-            stdout = open("/dev/null", "a")
-        try:
-            stderr = open(process_group.stderr or "/dev/null", "a")
-        except:
-            stderr = open("/dev/null", "a")
-        
-        try:
-            clfn = process_group.cobalt_log_file or "/dev/null"
-            cobalt_log_file = open(clfn, "a")
-            print >> cobalt_log_file, "%s\n" % " ".join(argv[1:])
-            cobalt_log_file.close()
-        except:
-            logger.error("Job %s/%s: unable to open cobaltlog file %s", process_group.id, process_group.user, clfn, exc_info = True)
-        
-        try:
-            partition = argv[argv.index("-partition") + 1]
-        except ValueError:
-            print >> stderr, "ERROR: '-partition' is a required flag"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        except IndexError:
-            print >> stderr, "ERROR: '-partition' requires a value"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        
-        try:
-            mode = argv[argv.index("-mode") + 1]
-        except ValueError:
-            print >> stderr, "ERROR: '-mode' is a required flag"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        except IndexError:
-            print >> stderr, "ERROR: '-mode' requires a value"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        
-        try:
-            size = argv[argv.index("-np") + 1]
-        except ValueError:
-            print >> stderr, "ERROR: '-np' is a required flag"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        except IndexError:
-            print >> stderr, "ERROR: '-np' requires a value"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        try:
-            size = int(size)
-        except ValueError:
-            print >> stderr, "ERROR: '-np' got invalid value %r" % (size)
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-        
-        print >> stdout, "ENVIRONMENT"
-        print >> stdout, "-----------"
-        for key, value in process_group.env.iteritems():
-            print >> stdout, "%s=%s" % (key, value)
-        print >> stdout
-        
-        print >> stderr, "FE_MPI (Info) : Initializing MPIRUN"
-        reserved = self.reserve_partition(partition, size)
-        if not reserved:
-            print >> stderr, "BE_MPI (ERROR): Failed to run process on partition"
-            print >> stderr, "BE_MPI (Info) : BE completed"
-            print >> stderr, "FE_MPI (ERROR): Failure list:"
-            print >> stderr, "FE_MPI (ERROR): - 1. ProcessGroup execution failed - unable to reserve partition", partition
-            print >> stderr, "FE_MPI (Info) : FE completed"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        
-        
-        hardware_failure = False
-        for nc in self.partitions[partition].node_cards:
-            if nc.id in self.failed_components:
-                hardware_failure = True
-                break
-        for switch in self.partitions[partition].switches:
-            if switch in self.failed_components:
-                hardware_failure = True
-                break
-
-        if hardware_failure:
-            excuses = ["incorrectly polarized packet accelerator", "the Internet is full", "side fumbling detected", "unilateral phase detractors offline", ]
-            print >> stderr, "BE_MPI (ERROR): Booting aborted - partition is in DEALLOCATING ('D') state"
-            print >> stderr, "BE_MPI (ERROR): Partition has not reached the READY ('I') state"
-            print >> stderr, "BE_MPI (Info) : Checking for block error text:"
-            print >> stderr, "BE_MPI (ERROR): block error text '%s.'" % random.choice(excuses)
-            print >> stderr, "BE_MPI (Info) : Starting cleanup sequence"
-            Cobalt.Util.sleep(20)
-            self.release_partition(partition)
-            print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
-            print >> stderr, "FE_MPI (ERROR): Failure list:"
-            print >> stderr, "FE_MPI (ERROR): - 1.", partition, "couldn't boot."
-            print >> stderr, "FE_MPI (Info) : FE completed"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-
-
-        
-        print >> stderr, "FE_MPI (Info) : process group with id", process_group.id
-        print >> stderr, "FE_MPI (Info) : Waiting for process_group to terminate"
-        
-        print >> stdout, "Running process_group: %s" % " ".join(argv)
-        
-        start_time = time.time()
-        run_time = random.randint(self.MIN_RUN_TIME, self.MAX_RUN_TIME)
-        my_exit_status = 0
-         
-        self.logger.info("process group %d running for about %f seconds", process_group.id, run_time)
-        while time.time() < (start_time + run_time):
-            if "SIGKILL" in process_group.signals:
-                process_group.exit_status = 1
-                return
-            elif "SIGTERM" in process_group.signals:
-                print >> stderr, "FE_MPI (Info) : ProcessGroup got signal SIGTERM"
-                my_exit_status = 1
-                break
-            else:
-                Cobalt.Util.sleep(1) # tumblers better than pumpers
-        
-        print >> stderr, "FE_MPI (Info) : ProcessGroup", process_group.id, "switched to state TERMINATED ('T')"
-        print >> stderr, "FE_MPI (Info) : ProcessGroup sucessfully terminated"
-        print >> stderr, "BE_MPI (Info) : Releasing partition", partition
-        released = self.release_partition(partition)
-        if not released:
-            print >> stderr, "BE_MPI (ERROR): Partition", partition, "could not switch to state FREE ('F')"
-            print >> stderr, "BE_MPI (Info) : BE completed"
-            print >> stderr, "FE_MPI (Info) : FE completed"
-            print >> stderr, "FE_MPI (Info) : Exit status: 1"
-            process_group.exit_status = 1
-            return
-        print >> stderr, "BE_MPI (Info) : Partition", partition, "switched to state FREE ('F')"
-        print >> stderr, "BE_MPI (Info) : BE completed"
-        print >> stderr, "FE_MPI (Info) : FE completed"
-        print >> stderr, "FE_MPI (Info) : Exit status:", my_exit_status
-        
-        process_group.exit_status = my_exit_status
     
     
     def update_partition_state(self):
