@@ -1,6 +1,6 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.99.0pre31
+Version: 0.99.0pre32
 
 Release: 1
 License: GPL
@@ -39,9 +39,10 @@ install -m 755 src/clients/wrapper ${RPM_BUILD_ROOT}/usr/bin
 install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/slp.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgsched.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/scriptm.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/user_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqm.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgforker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bg_mpirun_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/system_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/brooklyn.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/setres.py ${RPM_BUILD_ROOT}%{_sbindir}

@@ -328,7 +328,7 @@ class DatabaseWriter(object):
       
    def addMessage(self, logMsg):
 
-      logger.info("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
+      logger.debug("Inserting Data message of type: %s.%s " % (logMsg.item_type, logMsg.state))
       #print logMsg
 
       if logMsg.item_type == 'reservation':
