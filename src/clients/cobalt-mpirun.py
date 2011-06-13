@@ -180,7 +180,7 @@ if __name__ == '__main__':
     #if "-free" not in arglist:
     #    arglist = ['-env', 'COBALT_JOBID='+os.environ["COBALT_JOBID"]] + arglist
     
-    if env_str != '':
+    if ((env_str != '') and ("-free" not in arglist)):
         arglist = ['-env', env_str] + arglist
 
     if "-np" in sys.argv:
