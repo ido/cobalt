@@ -817,6 +817,7 @@ class BGBaseSystem (Component):
                 
             for jobid, partition_list in best_partition_dict.iteritems():
                 part = self.partitions[partition_list[0]]
+                # FIXME: use reserve_resources_until() here? --brt
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
                 part.state = "allocated"
@@ -917,6 +918,9 @@ class BGBaseSystem (Component):
         try:
             self._partitions_lock.acquire()
             used_by = self.partitions[partition_name].used_by
+            if used_by == None:
+                self.partitions[partition_name].used_by = jobid
+                used_by = jobid
             if new_time:
                 if used_by == jobid:
                     self.partitions[partition_name].reserved_until = new_time
@@ -928,7 +932,7 @@ class BGBaseSystem (Component):
                     self.logger.error("job %s wasn't allowed to update the reservation on partition %s (owner=%s)",
                         jobid, partition_name, used_by)
             else:
-                if used_by == jobid or used_by == None:
+                if used_by == jobid:
                     self.partitions[partition_name].reserved_until = False
                     self.partitions[partition_name].reserved_by = None
                     self.logger.info("reservation on partition '%s' has been removed", partition_name)

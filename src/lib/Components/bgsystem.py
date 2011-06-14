@@ -397,6 +397,8 @@ class BGSystem (BGBaseSystem):
                                 p.cleanup_pending = False
                                 self.logger.info("partition %s: cleaning complete", p.name)
                     if p.state == "busy":
+                        # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
+
                         # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
                         if not p.reserved_by:
                             p.reserved_until = False
@@ -410,6 +412,10 @@ class BGSystem (BGBaseSystem):
                                 if part.state == "idle":
                                     part.state = "blocked (%s)" % (p.name,)
                         elif bridge_partition_cache[p.name].state == "RM_PARTITION_FREE" and p.used_by:
+                            # FIXME: should we check the partition state or use reserved by == NULL instead?  now that all jobs
+                            # reserve resources, a partition without a reservation that is also in use should probably be cleaned
+                            # up regardless of partition state.  --brt
+
                             # if the job assigned to the partition has completed, then set the state so that cleanup will be
                             # performed
                             _start_partition_cleanup(p)
@@ -588,7 +594,8 @@ class BGSystem (BGBaseSystem):
                     pgroup.forker = 'user_script_forker'
                 else:
                     pgroup.forker = 'bg_mpirun_forker'
-                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
+                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime),
+                        pgroup.jobid):
                     try:
                         pgroup.start()
                         if pgroup.head_pid == None:
