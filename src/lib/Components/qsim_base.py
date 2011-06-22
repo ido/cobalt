@@ -107,19 +107,21 @@ def parseline_alt(line):
     submittime_sec = date_to_sec(fmtdate, "%Y-%m-%d %H:%M:%S")
     submittime_date = sec_to_date(submittime_sec)
     temp['submittime'] = submittime_date
-    start_date = temp['start']
-    start_sec = date_to_sec(start_date, "%Y-%m-%d %H:%M:%S")
-    temp['start'] = start_sec
-    end_date = temp['end']
-    end_sec = date_to_sec(end_date, "%Y-%m-%d %H:%M:%S")
-    temp['end'] = end_sec
-#    walltime_sec = temp['Resource_List.walltime']
-#    wall_time = int(float(walltime_sec) / 60) 
-#    walltime_minutes = len2(wall_time % 60)
-#    walltime_hours = len2(wall_time // 60)
-#    fmt_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
-#    temp['Resource_List.walltime'] = fmt_walltime
 
+    if temp.has_key('start') and temp.has_key('end'):
+        start_date = temp['start']
+        start_sec = date_to_sec(start_date, "%Y-%m-%d %H:%M:%S")
+        temp['start'] = start_sec
+        end_date = temp['end']
+        end_sec = date_to_sec(end_date, "%Y-%m-%d %H:%M:%S")
+        temp['end'] = end_sec
+
+    walltime_sec = temp['Resource_List.walltime']
+    wall_time = int(float(walltime_sec) / 60)
+    walltime_minutes = len2(wall_time % 60)
+    walltime_hours = len2(wall_time // 60)
+    fmt_walltime = "%s:%s:00" % (walltime_hours, walltime_minutes)
+    temp['Resource_List.walltime'] = fmt_walltime
     return temp
 
 def parse_work_load(filename):

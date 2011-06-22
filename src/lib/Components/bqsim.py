@@ -347,7 +347,9 @@ class BGQsim(Simulator):
             else:  #invalid job entry, discard
                 continue
             
-            if tmp.get('start') and tmp.get('end'):
+            if tmp.get('runtime'):
+                spec['runtime'] = tmp.get('runtime')
+            elif tmp.get('start') and tmp.get('end'):
                 act_run_time = float(tmp.get('end')) - float(tmp.get('start'))
                 if act_run_time <= 0:
                     continue
