@@ -897,12 +897,17 @@ class BGQsim(Simulator):
         if not best_partition_dict:
             
             # arg_list.sort(self._walltimecmp)
+            
+            #for best-fit backfilling (large job first and then longer job first) 
+            arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes']), -float(d['walltime'])))
 
             for args in arg_list:
                 partition_name = self._find_job_location(args, backfilling=True)
                 if partition_name:
                     self.logger.info("backfilling job %s" % args['jobid'])
                     best_partition_dict.update(partition_name)
+                    dbgmsg = "backfilling:%s" % args['jobid']
+                    self.dbglog.LogMessage(dbgmsg)
                     break
                 
 #        print "best_partition_dict", best_partition_dict

@@ -29,7 +29,7 @@ Options:
                         bg job submission times (in job trace) should be after
                         12.01am on this date.        By default it equals to
                         the first job submission time in job trace 'bgjob'
-  -E BG_TRACE_END, --End=BG_TRACE_END                                                                                                                      
+  -E BG_TRACE_END, --End=BG_TRACE_END
                         bg job submission time (in job trace) should be prior
                         to 12.01am on this date.  By default it equals
                         to the last job submission time in job trace 'bgjob'                                           
