@@ -42,6 +42,9 @@ MIDPLANE_SIZE = 512
 TOTAL_NODES = 40960
 TOTAL_MIDPLANE = 80
 YIELD_THRESHOLD = 0
+
+BESTFIT_BACKFILL = False
+SJF_BACKFILL = True
     
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -898,8 +901,12 @@ class BGQsim(Simulator):
             
             # arg_list.sort(self._walltimecmp)
             
-            #for best-fit backfilling (large job first and then longer job first) 
-            arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes']), -float(d['walltime'])))
+            #for best-fit backfilling (large job first and then longer job first)
+            if BESTFIT_BACKFILL:
+                arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes']), -float(d['walltime'])))
+                
+            if SJF_BACKFILL:
+                arg_list.sort(self._walltimecmp)
 
             for args in arg_list:
                 partition_name = self._find_job_location(args, backfilling=True)
