@@ -879,10 +879,16 @@ class BGQsim(Simulator):
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
         
+        pos = 0
         for job in arg_list:
+            pos += 1
             partition_name = self._find_job_location(job, drain_partitions)
             if partition_name:
                 best_partition_dict.update(partition_name)
+                #logging the scheduled job's postion in the queue, used for measuring fairness, 
+                #e.g. pos=1 means job scheduled from the head of the queue
+                dbgmsg = "starting_position:%s:%s" % (job['jobid'], pos)
+                self.dbglog.LogMessage(dbgmsg)
                 break
             
             location = self._find_drain_partition(job)
@@ -913,7 +919,8 @@ class BGQsim(Simulator):
                 if partition_name:
                     self.logger.info("backfilling job %s" % args['jobid'])
                     best_partition_dict.update(partition_name)
-                    dbgmsg = "backfilling:%s" % args['jobid']
+                    #logging the starting postion in the queue, 0 means backfilled
+                    dbgmsg = "starting_position:%s:0" % (job['jobid'])
                     self.dbglog.LogMessage(dbgmsg)
                     break
                 
@@ -1768,7 +1775,7 @@ class BGQsim(Simulator):
         '''post screen after simulation completes'''
         #print self.first_yield_hold_time_dict
         capacity_loss_rate = self.total_capacity_loss_rate()
-        msg  = "capacity loss=%f" % capacity_loss_rate 
+        msg  = "capacity_loss:%f" % capacity_loss_rate 
         self.dbglog.LogMessage(msg)
         pass
     post_simulation_handling = exposed(post_simulation_handling)    
