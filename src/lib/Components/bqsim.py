@@ -887,7 +887,8 @@ class BGQsim(Simulator):
                 best_partition_dict.update(partition_name)
                 #logging the scheduled job's postion in the queue, used for measuring fairness, 
                 #e.g. pos=1 means job scheduled from the head of the queue
-                dbgmsg = "starting_position:%s:%s" % (job['jobid'], pos)
+                print job['jobid'], pos, job['utility_score']
+                dbgmsg = "starting_position:%s:%s:%s" % (job['jobid'], pos, job.get('utility_score', -1))
                 self.dbglog.LogMessage(dbgmsg)
                 break
             
@@ -920,7 +921,7 @@ class BGQsim(Simulator):
                     self.logger.info("backfilling job %s" % args['jobid'])
                     best_partition_dict.update(partition_name)
                     #logging the starting postion in the queue, 0 means backfilled
-                    dbgmsg = "starting_position:%s:0" % (job['jobid'])
+                    dbgmsg = "starting_position:%s:0:%s" % (job['jobid'], job.get('utility_score', -1))
                     self.dbglog.LogMessage(dbgmsg)
                     break
                 
@@ -1083,7 +1084,7 @@ class BGQsim(Simulator):
             else:
                 wall_time_sched = wall_time
                             
-            val = ( queued_time / wall_time_sched)**3 * (size/64.0)
+            val = ( queued_time / wall_time_sched)**3 * (size/40960)
             
             return val
         
