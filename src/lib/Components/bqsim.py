@@ -44,7 +44,7 @@ TOTAL_MIDPLANE = 80
 YIELD_THRESHOLD = 0
 
 BESTFIT_BACKFILL = False
-SJF_BACKFILL = True
+SJF_BACKFILL = False
     
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -276,6 +276,8 @@ class BGQsim(Simulator):
                 message = "%s;S;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s start=%s exec_host=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
                  spec['nodes'], log_walltime, spec['start_time'], ":".join(spec['location']))
+                #dbgmsg = "%s:Start:%s:%s" % (timestamp, spec['jobid'], ":".join(spec['location']))
+                #self.dbglog.LogMessage(dbgmsg)
             elif eventtype == 'H':  #hold some resources  
                 message = "%s;H;%s;queue=%s qtime=%s Resource_List.nodect=%s Resource_List.walltime=%s exec_host=%s" % \
                 (timestamp, spec['jobid'], spec['queue'], spec['submittime'], 
@@ -662,7 +664,7 @@ class BGQsim(Simulator):
             temp.update(newattr)
             job.update(newattr)
             self.log_job_event('S', self.get_current_time_date(), temp)
-        
+            
         return self.queues.get_jobs(specs, _start_job, updates)
     
     def run_job_updates(self, jobspec, newattr):
@@ -780,6 +782,8 @@ class BGQsim(Simulator):
         
         available_partitions -= drain_partitions
         now = self.get_current_time()
+        available_partitions = list(available_partitions)
+        available_partitions.sort(key=lambda d: (d.name))
         best_partition_list = []
         
         for partition in available_partitions:
@@ -887,8 +891,7 @@ class BGQsim(Simulator):
                 best_partition_dict.update(partition_name)
                 #logging the scheduled job's postion in the queue, used for measuring fairness, 
                 #e.g. pos=1 means job scheduled from the head of the queue
-                print job['jobid'], pos, job['utility_score']
-                dbgmsg = "starting_position:%s:%s:%s" % (job['jobid'], pos, job.get('utility_score', -1))
+                dbgmsg = "%s;S;%s;%s;%s;%s" % (self.get_current_time_date(), job['jobid'], pos, job.get('utility_score', -1), partition_name)
                 self.dbglog.LogMessage(dbgmsg)
                 break
             
@@ -906,7 +909,7 @@ class BGQsim(Simulator):
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
             
-            # arg_list.sort(self._walltimecmp)
+            # arg_list.sorlst(self._walltimecmp)
             
             #for best-fit backfilling (large job first and then longer job first)
             if BESTFIT_BACKFILL:
@@ -921,7 +924,7 @@ class BGQsim(Simulator):
                     self.logger.info("backfilling job %s" % args['jobid'])
                     best_partition_dict.update(partition_name)
                     #logging the starting postion in the queue, 0 means backfilled
-                    dbgmsg = "starting_position:%s:0:%s" % (job['jobid'], job.get('utility_score', -1))
+                    dbgmsg = "%s;S;%s;0;%s;%s" % (self.get_current_time_date(), args['jobid'], args.get('utility_score', -1), partition_name)
                     self.dbglog.LogMessage(dbgmsg)
                     break
                 
@@ -1072,12 +1075,12 @@ class BGQsim(Simulator):
             val = queue_priority + 0.1
             return val
         
-        def default1():
+        def default():
             '''FCFS'''
             val = queued_time
             return val
         
-        def default():
+        def default1():
             '''WFP'''
             if self.predict_queue:
                 wall_time_sched = wall_time_p
