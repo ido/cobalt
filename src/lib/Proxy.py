@@ -80,8 +80,9 @@ def ComponentProxy (component_name, **kwargs):
     user = 'root'
     try:
         config = SafeConfigParser()
-        config.read(Cobalt.CONFIG_FILES)
-        passwd = config.get('communication', 'password')
+        #config.read(Cobalt.CONFIG_FILES)
+        #passwd = config.get('communication', 'password')
+        passwd = 'password'  #this line is only for simulation
     except:
         passwd = 'default'
     
