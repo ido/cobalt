@@ -575,16 +575,17 @@ class Simulator (BGBaseSystem):
             for p in self._partitions.values():
                 p._update_node_cards()
                 
-            now = time.time()
+            # remove real time related statement for simulation avoiding stat local time file repeatedly
+            #now = time.time()
             
             # since we don't have the bridge, a partition which isn't busy
             # should be set to idle and then blocked states can be derived
             for p in self._partitions.values():
                 if p.state != "busy":
                     p.state = "idle"
-                if p.reserved_until and now > p.reserved_until:
-                    p.reserved_until = None
-                    p.reserved_by = None
+             #   if p.reserved_until and now > p.reserved_until:
+              #      p.reserved_until = None
+               #     p.reserved_by = None
                     
             for p in self._partitions.values():
                 if p.state == "busy":

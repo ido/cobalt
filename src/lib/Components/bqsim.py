@@ -43,7 +43,7 @@ TOTAL_NODES = 40960
 TOTAL_MIDPLANE = 80
 YIELD_THRESHOLD = 0
 
-BESTFIT_BACKFILL = False
+BESTFIT_BACKFILL = True
 SJF_BACKFILL = False
     
 class BGQsim(Simulator):
@@ -979,7 +979,7 @@ class BGQsim(Simulator):
     
     def compute_utility_scores (self):
         utility_scores = []
-        current_time = time.time()
+        current_time = self.get_current_time_sec()
             
         for job in self.queues.get_jobs([{'is_runnable':True}]):    
             utility_name = self.queues[job.queue].policy
@@ -1075,12 +1075,12 @@ class BGQsim(Simulator):
             val = queue_priority + 0.1
             return val
         
-        def default():
+        def default0():
             '''FCFS'''
             val = queued_time
             return val
         
-        def default1():
+        def default():
             '''WFP'''
             if self.predict_queue:
                 wall_time_sched = wall_time_p

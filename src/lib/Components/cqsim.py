@@ -699,7 +699,7 @@ class ClusterQsim(ClusterBaseSystem):
     
     def compute_utility_scores (self):
         utility_scores = []
-        current_time = time.time()
+        current_time = self.get_current_time_sec()
             
         for job in self.queues.get_jobs([{'is_runnable':True}]):    
             utility_name = self.queues[job.queue].policy
