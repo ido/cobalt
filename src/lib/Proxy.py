@@ -31,6 +31,13 @@ known_servers = dict()
 
 log = logging.getLogger("Proxy")
 
+try:
+    config = SafeConfigParser()
+    config.read(Cobalt.CONFIG_FILES)
+    passwd = config.get('communication', 'password')
+except:
+    passwd = 'default'
+
 class RetryMethod(_Method):
     """Method with error handling and retries built in"""
     log = logging.getLogger('xmlrpc')
@@ -78,13 +85,7 @@ def ComponentProxy (component_name, **kwargs):
         return DeferredProxy(component_name)
 
     user = 'root'
-    try:
-        config = SafeConfigParser()
-        #config.read(Cobalt.CONFIG_FILES)
-        #passwd = config.get('communication', 'password')
-        passwd = 'password'  #this line is only for simulation
-    except:
-        passwd = 'default'
+
     
     if component_name in local_components:
         return LocalProxy(local_components[component_name])
