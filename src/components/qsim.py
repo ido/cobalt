@@ -24,7 +24,7 @@ import time
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
             'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 
-            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch']
+            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch', 'backfill']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -188,6 +188,10 @@ if __name__ == "__main__":
         help="Specifies the ratio of number mate jobs to number total jobs. Used in the case two job traces have the same number of total jobs.")
     p.add_option("-b", "--batch", dest="batch", action = "store_true", default = False, 
         help="enable batch execution model, do not print screen")
+    p.add_option(Option("-l", "--backfill",
+        dest="backfill", type="string",
+        help="specify backfilling scheme [ff|bf|sjfb] ff=first-fit, bf=best-fit, sjfb=short-job-first backfill"))
+
         
     coscheduling_schemes = ["hold", "yield"]
     wass_schemes = ["cons", "aggr", "both"]
