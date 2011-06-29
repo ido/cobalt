@@ -133,7 +133,7 @@ def integrated_main(options):
        
     endtime_sec = time.time()
     print "----Simulation is finished, please check output log for further analysis.----"
-    print "the simulation lasts %s seconds (~%s minutes)" % (int(endtime_sec - starttime_sec), int((endtime_sec - starttime_sec)/60))
+#    print "the simulation lasts %s seconds (~%s minutes)" % (int(endtime_sec - starttime_sec), int((endtime_sec - starttime_sec)/60))
     
 if __name__ == "__main__":
     
@@ -192,6 +192,7 @@ if __name__ == "__main__":
         dest="backfill", type="string",
         help="specify backfilling scheme [ff|bf|sjfb] ff=first-fit, bf=best-fit, sjfb=short-job-first backfill"))
 
+    start_sec = time.time()
         
     coscheduling_schemes = ["hold", "yield"]
     wass_schemes = ["cons", "aggr", "both"]
@@ -272,4 +273,10 @@ if __name__ == "__main__":
             options[argname] = getattr(opts, argname)
         
     integrated_main(options)
+    
+    
+    end_sec = time.time()
+    
+    print "the simulation totally lasts %s seconds (~%s minutes)" % (int(end_sec - start_sec), int((end_sec - start_sec)/60))
+
     #profile_main(options)

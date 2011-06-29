@@ -915,9 +915,9 @@ class BGQsim(Simulator):
             #for best-fit backfilling (large job first and then longer job first)
             if not self.backfill == "ff":
                 if self.backfill == "bf":
-                    arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes']), -float(d['walltime'])))
+                    arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes']), -int(d['nodes'])*float(d['walltime'])))
                 elif self.backfill == "sjfb":
-                    arg_list.sort(self._walltimecmp)                    
+                    arg_list = sorted(arg_list, key=lambda d:float(d['walltime']))
 
             for args in arg_list:
                 partition_name = self._find_job_location(args, backfilling=True)
