@@ -1,5 +1,5 @@
 '''Bcfg2 logging support'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2154 $'
 
 # import lxml.etree
 import copy

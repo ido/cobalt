@@ -11,7 +11,7 @@
    prnt_verbose_conflicts --
    gen_image --
 """
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1189 $'
 
 # BASIC USAGE:
 #

@@ -1,6 +1,6 @@
 """Cobalt component XML-RPC server."""
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2179 $'
 
 __all__ = [
     "TCPServer", "XMLRPCRequestHandler", "XMLRPCServer",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt queue delete'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2030 $'
 __version__ = '$Version$'
 
 import getopt, os, pwd, sys, time

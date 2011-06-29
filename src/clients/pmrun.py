@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''This command runs through a basic sequence of pm ops'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2030 $'
 
 import sys, time, Cobalt.Proxy, Cobalt.Logging
 import pwd

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt queue history command'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1557 $'
 __version__ = '$Version$'
 
 #

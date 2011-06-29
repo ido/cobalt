@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Partlist displays online partitions for users'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1981 $'
 __version__ = '$Version$'
 
 import sys, operator

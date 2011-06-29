@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Super-Simple Scheduler for BG/L'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2156 $'
 
 import logging
 import os.path

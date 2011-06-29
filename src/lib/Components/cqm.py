@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# $Id$
+# $Id: cqm.py 2179 2011-06-13 02:07:44Z richp $
 
 '''Cobalt Queue Manager'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2179 $'
 
 #
 # TODO:

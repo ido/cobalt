@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt queue converter script'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 194 $'
 
 __helpmsg__ ="""This script converts queue and job data to the 0.96.0 format, and is
 intended to be run after installing 0.96.0. It takes no arguments, and

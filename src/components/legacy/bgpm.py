@@ -2,7 +2,7 @@
 
 """Process manager for Blue Gene/L systems"""
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1100 $'
 
 import sys
 

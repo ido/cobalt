@@ -12,7 +12,7 @@
 # This script parses the Cobalt logs and presents a data structure
 # representing user jobs.
 #
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1579 $'
 
 import datetime
 import os

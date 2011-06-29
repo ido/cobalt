@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt job administration command'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1978 $'
 __version__ = '$Version$'
 
 import sys, xmlrpclib

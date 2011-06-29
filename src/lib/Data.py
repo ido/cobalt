@@ -1,6 +1,6 @@
 """XML-transportable state objects."""
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1916 $'
 
 import time
 import random

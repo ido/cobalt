@@ -1,5 +1,5 @@
 '''Utility funtions for Cobalt programs'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2179 $'
 
 import copy_reg
 import cPickle

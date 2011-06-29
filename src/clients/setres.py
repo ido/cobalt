@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Setup reservations in the scheduler'''
-__revision__ = '$Id$'
+__revision__ = '$Id: setres.py 2154 2011-05-25 00:22:56Z richp $'
 __version__ = '$Version$'
 
 import getopt, math, pwd, sys, time
