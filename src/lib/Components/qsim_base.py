@@ -116,7 +116,7 @@ def parseline_alt(line):
         end_sec = date_to_sec(end_date, "%Y-%m-%d %H:%M:%S")
         temp['end'] = end_sec
 
-    walltime_sec = temp['Resource_List.walltime']
+    walltime_sec = temp['Resource_List.walltime']  #sec in log
     wall_time = int(float(walltime_sec) / 60)
     walltime_minutes = len2(wall_time % 60)
     walltime_hours = len2(wall_time // 60)
@@ -144,7 +144,7 @@ def parse_work_load(filename):
             raw_job_dict[jobid] = temp
         else:  #not a new job id, update the existing entry
             raw_job_dict[jobid].update(temp)
-            
+
     return raw_job_dict
 
 

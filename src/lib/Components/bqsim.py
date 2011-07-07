@@ -372,12 +372,15 @@ class BGQsim(Simulator):
             else:  #invalid job entry, discard
                 continue
             
-            if self.walltime_prediction: #*AdjEst*  
-                ap = self.get_walltime_Ap(spec)
-                spec['walltime_p'] = int(spec['walltime']) * ap
+            if self.walltime_prediction: #*AdjEst*
+                if tmp.has_key('walltime_p'):
+                    spec['walltime_p'] = int(tmp.get('walltime_p')) / 60 #convert from sec (in log) to min, in line with walltime
+                else:
+                    ap = self.get_walltime_Ap(spec)
+                    spec['walltime_p'] = int(spec['walltime']) * ap
             else:
                 spec['walltime_p'] = int(spec['walltime'])
-             
+                
             spec['state'] = 'invisible'
             spec['start_time'] = '0'
             spec['end_time'] = '0'
@@ -915,7 +918,7 @@ class BGQsim(Simulator):
             #for best-fit backfilling (large job first and then longer job first)
             if not self.backfill == "ff":
                 if self.backfill == "bf":
-                    arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes']), -int(d['nodes'])*float(d['walltime'])))
+                    arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes'])*float(d['walltime'])))
                 elif self.backfill == "sjfb":
                     arg_list = sorted(arg_list, key=lambda d:float(d['walltime']))
 
