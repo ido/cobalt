@@ -61,7 +61,8 @@ class NodeCard (object):
         self.state = ''
         
     def __eq__(self, other):
-        return self.id == other.id        
+        return self.id == other.id
+            
 
 class Partition (Data):
     

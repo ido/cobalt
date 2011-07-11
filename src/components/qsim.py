@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Event Simulator executable."""
+"""Qsim executable."""
 
 import inspect 
 import optparse

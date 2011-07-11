@@ -547,7 +547,7 @@ class BGQsim(Simulator):
                 
         return 0
     
-    def run_jobs(self, specs, nodelist):
+    def run_jobs(self, specs, nodelist, user_name=None, resid=None):
         '''run a queued job, by updating the job state, start_time and
         end_time, invoked by bgsched'''
         #print "run job ", specs, " on nodes", nodelist
