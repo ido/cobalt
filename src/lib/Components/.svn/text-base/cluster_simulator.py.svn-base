@@ -6,7 +6,6 @@ Simulator -- simulated system component
 """
 
 import pwd
-from sets import Set as set
 import logging
 import sys
 import os
@@ -14,7 +13,6 @@ import operator
 import random
 import time
 import thread
-import sets
 from datetime import datetime
 from ConfigParser import ConfigParser
 
@@ -45,17 +43,6 @@ logger = logging.getLogger(__name__)
 
 
 class ClusterProcessGroup (ProcessGroup):
-    _configfields = ['hostfile']
-    _config = ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('cluster_system'):
-        print '''"cluster_system" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['cluster_system']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file [cluster_system] section: %s" % (" ".join(mfields))
-        sys.exit(1)
 
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec, logger)
@@ -73,13 +60,6 @@ class ClusterProcessGroup (ProcessGroup):
             os.path.basename(config.get("bgpm", "mpirun")),
         ]
         
-        if self.true_mpi_args is not None:
-            # arguments have been passed along in a special attribute.  These arguments have
-            # already been modified to include the partition that cobalt has selected
-            # for the process group.
-            argv.extend(self.true_mpi_args)
-            return argv
-    
         argv.extend([
             "-np", str(self.size),
             "-mode", self.mode,
@@ -107,7 +87,7 @@ class ClusterProcessGroup (ProcessGroup):
 
 
 
-class Simulator (ClusterBaseSystem):
+class Simulator (ClusteSystem):
     
     """Generic system simulator.
     
@@ -120,6 +100,10 @@ class Simulator (ClusterBaseSystem):
     wait_process_groups -- get process groups that have exited, and remove them from the system (exposed, query)
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- simulates updating partition state from the bridge API (automatic)
+
+    Override the ClusterSystem so that it is recognized as a simulator component.  Done right, 
+    this can go away entirely.
+    
     """
     
     name = "system"
@@ -265,7 +249,7 @@ class Simulator (ClusterBaseSystem):
                 my_exit_status = 1
                 break
             else:
-                time.sleep(1) # tumblers better than pumpers
+                Cobalt.Util.sleep(1) # tumblers better than pumpers
         
         print >> stderr, "FE_MPI (Info) : ProcessGroup", process_group.id, "switched to state TERMINATED ('T')"
         print >> stderr, "FE_MPI (Info) : ProcessGroup sucessfully terminated"
@@ -278,14 +262,3 @@ class Simulator (ClusterBaseSystem):
         process_group.exit_status = my_exit_status
     
     
-    
-    def launch_diags(self, partition, test_name):
-        exit_value = 0
-        for nc in partition.node_cards:
-            if nc.id in self.failed_components:
-                exit_value = 1
-        for switch in partition.switches:
-            if switch in self.failed_components:
-                exit_value = 2
-
-        self.finish_diags(partition, test_name, exit_value)

@@ -8,7 +8,6 @@ BGSystem -- Blue Gene system component
 import atexit
 import pwd
 import grp
-import sets
 import logging
 import sys
 import os
@@ -19,13 +18,10 @@ import thread
 import threading
 import xmlrpclib
 import ConfigParser
-try:
-    set = set
-except NameError:
-    from sets import Set as set
 
 import Cobalt
 import Cobalt.Data
+import Cobalt.Util
 from Cobalt.Components.base import Component, exposed, automatic, query
 import Cobalt.bridge
 from Cobalt.bridge import BridgeException
@@ -44,201 +40,16 @@ __all__ = [
 logger = logging.getLogger(__name__)
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
+
 class BGProcessGroup(ProcessGroup):
     """ProcessGroup modified by Blue Gene systems"""
-    fields = ProcessGroup.fields + ["nodect", "script_id"]
+    fields = ProcessGroup.fields + ["nodect"]
 
-    _configfields = ['mpirun']
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('bgpm'):
-        print '''"bgpm" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['bgpm']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file: %s" % (" ".join(mfields))
-        sys.exit(1)
-    
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger)
-        self.nodect = None
-        self.script_id = None
-
-
-    def prefork (self):
-        ret = {}
-        
-        # check for valid user/group
-        try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError("error getting uid/gid")
-
-        ret["userid"] = userid
-        ret["primary_group"] = groupid
-        
-        # get supplementary groups
-        supplementary_group_ids = []
-        for g in grp.getgrall():
-            if self.user in g.gr_mem:
-                supplementary_group_ids.append(g.gr_gid)
-        
-        ret["other_groups"] = supplementary_group_ids
-        
-        ret["umask"] = self.umask
-        
-        try:
-            partition = self.location[0]
-        except IndexError:
-            raise ProcessGroupCreationError("no location")
-
-        kerneloptions = self.kerneloptions
-
-        # export subset of MPIRUN_* variables to mpirun's environment
-        # we explicitly state the ones we want since some are "dangerous"
-        exportenv = [ 'MPIRUN_CONNECTION', 'MPIRUN_KERNEL_OPTIONS',
-                      'MPIRUN_MAPFILE', 'MPIRUN_START_GDBSERVER',
-                      'MPIRUN_LABEL', 'MPIRUN_NW', 'MPIRUN_VERBOSE',
-                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE' ]
-        postfork_env = {}
-        app_envs = []
-        for key, value in self.env.iteritems():
-            if key in exportenv:
-                postfork_env[key] = value
-            else:
-                app_envs.append((key, value))
-            
-        envs = " ".join(["%s=%s" % x for x in app_envs])
-
-        ret["postfork_env"] = postfork_env
-        ret["stdin"] = self.stdin
-        ret["stdout"] = self.stdout
-        ret["stderr"] = self.stderr
-        
-        cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
-              '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
-               '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
-               '-exe', self.executable)
-        if self.args:
-            cmd = cmd + ('-args', self.args)
-        if envs:
-            cmd = cmd + ('-env',  envs)
-        if kerneloptions:
-            cmd = cmd + ('-kernel_options', kerneloptions)
-        
-        # If this mpirun command originated from a user script, its arguments
-        # have been passed along in a special attribute.  These arguments have
-        # already been modified to include the partition that cobalt has selected
-        # for the job, and can just replace the arguments built above.
-        if self.true_mpi_args:
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
-    
-        ret["id"] = self.id
-        ret["jobid"] = self.jobid
-        ret["cobalt_log_file"] = self.cobalt_log_file
-        ret["cmd" ] = cmd
-
-        return ret
+        ProcessGroup.__init__(self, spec)
+        self.nodect = spec.get('nodect', None)
 
     
-    def _runjob (self):
-        """Runs a job"""
-        #check for valid user/group
-        try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError("error getting uid/gid")
-        
-        try:
-            os.setgid(groupid)
-            os.setuid(userid)
-        except OSError:
-            logger.error("failed to change userid/groupid for process group %s" % (self.id))
-            os._exit(1)
-
-        if self.umask != None:
-            try:
-                os.umask(self.umask)
-            except:
-                logger.error("Failed to set umask to %s" % self.umask)
-        try:
-            partition = self.location[0]
-        except IndexError:
-            raise ProcessGroupCreationError("no location")
-
-        kerneloptions = self.kerneloptions
-
-        # export subset of MPIRUN_* variables to mpirun's environment
-        # we explicitly state the ones we want since some are "dangerous"
-        exportenv = [ 'MPIRUN_CONNECTION', 'MPIRUN_KERNEL_OPTIONS',
-                      'MPIRUN_MAPFILE', 'MPIRUN_START_GDBSERVER',
-                      'MPIRUN_LABEL', 'MPIRUN_NW', 'MPIRUN_VERBOSE',
-                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE' ]
-        app_envs = []
-        for key, value in self.env.iteritems():
-            if key in exportenv:
-                os.environ[key] = value
-            else:
-                app_envs.append((key, value))
-            
-        envs = " ".join(["%s=%s" % x for x in app_envs])
-        atexit._atexit = []
-
-        try:
-            stdin = open(self.stdin, 'r')
-        except (IOError, OSError, TypeError), e:
-            logger.error("process group %s: error opening stdin file %s: %s (stdin will be /dev/null)" % (self.id, self.stdin, e))
-            stdin = open("/dev/null", 'r')
-        os.dup2(stdin.fileno(), sys.__stdin__.fileno())
-        
-        try:
-            stdout = open(self.stdout, 'a')
-        except (IOError, OSError, TypeError), e:
-            logger.error("process group %s: error opening stdout file %s: %s (stdout will be lost)" % (self.id, self.stdout, e))
-            stdout = open("/dev/null", 'a')
-        os.dup2(stdout.fileno(), sys.__stdout__.fileno())
-        
-        try:
-            stderr = open(self.stderr, 'a')
-        except (IOError, OSError, TypeError), e:
-            logger.error("process group %s: error opening stderr file %s: %s (stderr will be lost)" % (self.id, self.stderr, e))
-            stderr = open("/dev/null", 'a')
-        os.dup2(stderr.fileno(), sys.__stderr__.fileno())
-        
-        cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun']),
-              '-host', self.config['mmcs_server_ip'], '-np', str(self.size),
-               '-partition', partition, '-mode', self.mode, '-cwd', self.cwd,
-               '-exe', self.executable)
-        if self.args:
-            cmd = cmd + ('-args', self.args)
-        if envs:
-            cmd = cmd + ('-env',  envs)
-        if kerneloptions:
-            cmd = cmd + ('-kernel_options', kerneloptions)
-        
-        # If this mpirun command originated from a user script, its arguments
-        # have been passed along in a special attribute.  These arguments have
-        # already been modified to include the partition that cobalt has selected
-        # for the job, and can just replace the arguments built above.
-        if self.true_mpi_args:
-            cmd = (self.config['mpirun'], os.path.basename(self.config['mpirun'])) + tuple(self.true_mpi_args)
-    
-        try:
-            cobalt_log_file = open(self.cobalt_log_file or "/dev/null", "a")
-            print >> cobalt_log_file, "%s\n" % " ".join(cmd[1:])
-            print >> cobalt_log_file, "called with environment:\n"
-            for key in os.environ:
-                print >> cobalt_log_file, "%s=%s" % (key, os.environ[key])
-            print >> cobalt_log_file, "\n"
-            cobalt_log_file.close()
-        except:
-            logger.error("Job %s/%s:  unable to open cobaltlog file %s" % \
-                         (self.id, self.user, self.cobalt_log_file))
-
-        os.execl(*cmd)
-
-
 # convenience function used several times below
 def _get_state(bridge_partition):
     if bridge_partition.state == "RM_PARTITION_FREE":
@@ -306,21 +117,24 @@ class BGSystem (BGBaseSystem):
             if hasattr(part, 'queue'):
                 queue = part.queue
             flags[part.name] =  (sched, func, queue)
-        return {'managed_partitions':self._managed_partitions, 'version':1,
-                'partition_flags': flags}
+        return {'managed_partitions':self._managed_partitions, 'version':2,
+                'partition_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1}
     
     def __setstate__(self, state):
         sys.setrecursionlimit(5000)
+        Cobalt.Util.fix_set(state)
         self._managed_partitions = state['managed_partitions']
         self._partitions = PartitionDict()
         self.process_groups = BGProcessGroupDict()
         self.process_groups.item_cls = BGProcessGroup
+        if state.has_key("next_pg_id"):
+            self.process_groups.id_gen.set(state['next_pg_id'])
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
         self.pending_diags = dict()
         self.failed_diags = list()
         self.diag_pids = dict()
-        self.pending_script_waits = sets.Set()
+        self.pending_script_waits = set()
         self.bridge_in_error = False
         self.cached_partitions = None
         self.offline_partitions = []
@@ -377,7 +191,6 @@ class BGSystem (BGBaseSystem):
             name = partition_def.id,
             queue = "default",
             size = NODES_PER_NODECARD * len(node_list),
-            bridge_partition = partition_def,
             node_cards = node_list,
             switches = [ s.id for s in partition_def.switches ],
             state = _get_state(partition_def),
@@ -387,14 +200,14 @@ class BGSystem (BGBaseSystem):
 
     def _detect_wiring_deps(self, partition, wiring_cache={}):
         def _kernel():
-            s2 = sets.Set(p.switches)
+            s2 = set(p.switches)
 
             if s1.intersection(s2):
                 p._wiring_conflicts.add(partition.name)
                 partition._wiring_conflicts.add(p.name)
                 self.logger.debug("%s and %s havening problems" % (partition.name, p.name))
 
-        s1 = sets.Set(partition.switches)
+        s1 = set(partition.switches)
 
         if wiring_cache.has_key(partition.size):
             for p in wiring_cache[partition.size]:
@@ -476,7 +289,7 @@ class BGSystem (BGBaseSystem):
         def _set_partition_cleanup_state(p):
             p.state = "cleanup"
             for part in p._children:
-                if part.bridge_partition.state == "RM_PARTITION_FREE":
+                if bridge_partition_cache[part.name].state == "RM_PARTITION_FREE":
                     part.state = "blocked (%s)" % (p.name,)
                 else:
                     part.state = "cleanup"
@@ -490,7 +303,7 @@ class BGSystem (BGBaseSystem):
             except BridgeException:
                 self.logger.error("Error communicating with the bridge to update partition state information.")
                 self.bridge_in_error = True
-                time.sleep(5) # wait a little bit...
+                Cobalt.Util.sleep(5) # wait a little bit...
                 continue # then try again
     
             try:
@@ -501,7 +314,7 @@ class BGSystem (BGBaseSystem):
             except:
                 self.logger.error("Error communicating with the bridge to update nodecard state information.")
                 self.bridge_in_error = True
-                time.sleep(5) # wait a little bit...
+                Cobalt.Util.sleep(5) # wait a little bit...
                 continue # then try again
 
             self.bridge_in_error = False
@@ -518,16 +331,17 @@ class BGSystem (BGBaseSystem):
             self._partitions_lock.acquire()
             now = time.time()
             partitions_cleanup = []
+            bridge_partition_cache = {}
             self.offline_partitions = []
             missing_partitions = set(self._partitions.keys())
             new_partitions = []
             try:
                 for partition in system_def:
+                    bridge_partition_cache[partition.id] = partition
                     missing_partitions.discard(partition.id)
                     if self._partitions.has_key(partition.id):
                         p = self._partitions[partition.id]
                         p.state = _get_state(partition)
-                        p.bridge_partition = partition
                         p._update_node_cards()
                         if p.reserved_until and now > p.reserved_until:
                             p.reserved_until = False
@@ -556,7 +370,6 @@ class BGSystem (BGBaseSystem):
                     bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._partitions.q_add([self._new_partition_dict(bridge_p, bp_cache)])
                     p = self._partitions[bridge_p.id]
-                    p.bridge_partition = partition
                     self._detect_wiring_deps(p, wiring_cache)
 
                 # if partitions were added or removed, then update the relationships between partitions
@@ -575,7 +388,7 @@ class BGSystem (BGBaseSystem):
                             parts = list(p._all_children)
                             parts.append(p)
                             for part in parts:
-                                if part.bridge_partition.state != "RM_PARTITION_FREE":
+                                if bridge_partition_cache[part.name].state != "RM_PARTITION_FREE":
                                     busy.append(part.name)
                             if len(busy) > 0:
                                 _set_partition_cleanup_state(p)
@@ -584,6 +397,8 @@ class BGSystem (BGBaseSystem):
                                 p.cleanup_pending = False
                                 self.logger.info("partition %s: cleaning complete", p.name)
                     if p.state == "busy":
+                        # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
+
                         # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
                         if not p.reserved_by:
                             p.reserved_until = False
@@ -596,7 +411,11 @@ class BGSystem (BGBaseSystem):
                             for part in p._children:
                                 if part.state == "idle":
                                     part.state = "blocked (%s)" % (p.name,)
-                        elif p.bridge_partition.state == "RM_PARTITION_FREE" and p.used_by:
+                        elif bridge_partition_cache[p.name].state == "RM_PARTITION_FREE" and p.used_by:
+                            # FIXME: should we check the partition state or use reserved by == NULL instead?  now that all jobs
+                            # reserve resources, a partition without a reservation that is also in use should probably be cleaned
+                            # up regardless of partition state.  --brt
+
                             # if the job assigned to the partition has completed, then set the state so that cleanup will be
                             # performed
                             _start_partition_cleanup(p)
@@ -638,16 +457,16 @@ class BGSystem (BGBaseSystem):
                 parts.append(p)
                 for part in parts:
                     pnames_cleaned.append(part.name)
+                    bpart = bridge_partition_cache[part.name]
                     try:
-                        bpart = part.bridge_partition
                         if bpart.state != "RM_PARTITION_FREE":
                             bpart.destroy()
                             pnames_destroyed.append(part.name)
                     except Cobalt.bridge.IncompatibleState:
                         pass
                     except:
-                        self.logger.info("partition %s: an exception occurred while attempting to destroy partition %s",
-                            p.name, part.name)
+                        self.logger.info("partition %s: an exception occurred while attempting to destroy the partition",
+                            p.name, part.name, exc_info=1)
                 if len(pnames_destroyed) > 0:
                     self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
                 else:
@@ -668,7 +487,7 @@ class BGSystem (BGBaseSystem):
                     except (Cobalt.bridge.IncompatibleState, Cobalt.bridge.JobNotFound):
                         pass
 
-            time.sleep(10)
+            Cobalt.Util.sleep(10)
 
     def _mark_partition_for_cleaning(self, pname, jobid):
         self._partitions_lock.acquire()
@@ -755,68 +574,58 @@ class BGSystem (BGBaseSystem):
         
         self.logger.info("add_process_groups(%r)" % (specs))
 
-        script_specs = []
-        other_specs = []
-        for spec in specs:
-            if spec.get('mode', False) == "script":
-                script_specs.append(spec)
-            else:
-                other_specs.append(spec)
-
-        # start up script jobs
-        script_pgroups = []
-        if script_specs:
-            for spec in script_specs:
-                try:
-                    self._set_kernel(spec.get('location')[0], spec.get('kernel', "default"))
-                except Exception, e:
-                    new_pgroup = self.process_groups.q_add([spec])
-                    pgroup = new_pgroup[0]
-                    pgroup.nodect = self._partitions[pgroup.location[0]].size
-                    pgroup.exit_status = 1
-                    self.logger.info("process group %s: job %s/%s failed to set the kernel; %s", pgroup.id, pgroup.jobid, 
-                        pgroup.user, e)
-                else:
-                    try:
-                        script_pgroup = ComponentProxy("script-manager").add_jobs([spec])
-                    except (ComponentLookupError, xmlrpclib.Fault):
-                        self._clear_kernel(spec.get('location')[0])
-                        # FIXME: jobs that were already started are not reported
-                        raise ProcessGroupCreationError("system::add_process_groups failed to communicate with script-manager")
-                    new_pgroup = self.process_groups.q_add([spec])
-                    pgroup = new_pgroup[0]
-                    pgroup.script_id = script_pgroup[0]['id']
-                    pgroup.nodect = self._partitions[pgroup.location[0]].size
-                    self.logger.info("job %s/%s: process group %s created to track script", pgroup.jobid, pgroup.user, pgroup.id)
-                    self.reserve_resources_until(spec['location'], time.time() + 60*float(spec['walltime']), pgroup.jobid)
-                    if pgroup.kernel != "default":
-                        self.logger.info("process group %s: job %s/%s using kernel %s", pgroup.id, pgroup.jobid, pgroup.user, 
-                            pgroup.kernel)
-                    script_pgroups.append(pgroup)
-
-        # start up non-script mode jobs
-        process_groups = self.process_groups.q_add(other_specs)
+        # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
+        # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
+        # error message should also be attached to the process group so that cqm can report the problem to the user.
+        process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
+            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
             pgroup.nodect = self._partitions[pgroup.location[0]].size
-            self.logger.info("job %s/%s: process group %s created to track mpirun status", pgroup.jobid, pgroup.user, pgroup.id)
+            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
             try:
-                if not pgroup.true_mpi_args:
-                    self._set_kernel(pgroup.location[0], pgroup.kernel)
+                self._set_kernel(pgroup.location[0], pgroup.kernel)
             except Exception, e:
-                # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag
-                # should be added to the process group that wait_process_group uses to determine when a process group is no
-                # longer active.  an error message should also be attached to the process group so that cqm can report the
-                # problem to the user.
-                pgroup.exit_status = 1
-                self.logger.info("process group %s: job %s/%s failed to set the kernel; %s", pgroup.id, pgroup.jobid, 
-                    pgroup.user, e)
+                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                pgroup.exit_status = 255
             else:
-                if pgroup.kernel != "default" and not pgroup.true_mpi_args:
-                    self.logger.info("process group %s: job %s/%s using kernel %s", pgroup.id, pgroup.jobid, pgroup.user,
-                        pgroup.kernel)
-                pgroup.start()
-            
-        return script_pgroups + process_groups
+                if pgroup.kernel != "default":
+                    self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
+                if pgroup.mode == "script":
+                    pgroup.forker = 'user_script_forker'
+                else:
+                    pgroup.forker = 'bg_mpirun_forker'
+                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime),
+                        pgroup.jobid):
+                    try:
+                        pgroup.start()
+                        if pgroup.head_pid == None:
+                            self.logger.error("%s: process group failed to start using the %s component; releasing resources",
+                                pgroup.label, pgroup.forker)
+                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                            pgroup.exit_status = 255
+                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                        self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        del self.process_groups[pgroup.id]
+                        raise
+                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                        self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
+                            "component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        del self.process_groups[process_group.id]
+                        raise
+                    except:
+                        self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
+                            "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
+                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                        pgroup.exit_status = 255
+                else:
+                    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
+                        pgroup.location)
+                    pgroup.exit_status = 255
+        return process_groups
     
     add_process_groups = exposed(query(add_process_groups))
     
@@ -826,106 +635,82 @@ class BGSystem (BGBaseSystem):
     get_process_groups = exposed(query(get_process_groups))
     
     def _get_exit_status (self):
-        try:
-            running = ComponentProxy("forker").active_list()
-        except:
-            self.logger.error("failed to contact forker component for list of running jobs")
-            return
+        running = []
+        active_forker_components = []
+        for forker_component in ['bg_mpirun_forker', 'user_script_forker']:
+            try:
+                running.extend(ComponentProxy(forker_component).active_list("process group"))
+                active_forker_components.append(forker_component)
+            except:
+                self.logger.error("failed to contact %s component for list of running jobs", forker_component)
 
         for each in self.process_groups.itervalues():
-            if each.head_pid not in running and each.exit_status is None and each.mode != "script":
+            if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
                 # maybe the second choice is better
                 try:
-                    dead_dict = ComponentProxy("forker").get_status(each.head_pid)
-                except Queue.Empty:
-                    self.logger.error("failed call for get_status from forker component for pg %s", each.head_pid)
+                    if each.head_pid != None:
+                        dead_dict = ComponentProxy(each.forker).get_status(each.head_pid)
+                    else:
+                        dead_dict = None
+                except:
+                    self.logger.error("%s: RPC to get_status method in %s component failed", each.label, each.forker)
                     return
                 
                 if dead_dict is None:
-                    self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
+                    self.logger.info("%s: job exited with unknown status", each.label)
+                    # FIXME: should we use a negative number instead to indicate internal errors? --brt
                     each.exit_status = 1234567
                 else:
                     each.exit_status = dead_dict["exit_status"]
                     if dead_dict["signum"] == 0:
-                        self.logger.info("process group %i: job %s/%s exited with status %i", 
-                            each.id, each.jobid, each.user, each.exit_status)
+                        self.logger.info("%s: job exited with status %i", each.label, each.exit_status)
                     else:
                         if dead_dict["core_dump"]:
                             core_dump_str = ", core dumped"
                         else:
                             core_dump_str = ""
-                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
-                            each.id, each.jobid, each.user, dead_dict["signum"], core_dump_str)
+                        self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
+                self.reserve_resources_until(each.location, None, each.jobid)
 
                 
-        block_comment = """
-        while True:
-            try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
-            except OSError: # there are no child processes
-                break
-            status = 0
-            signum = 0
-            core_dump = False
-            if os.WIFEXITED(status):
-                status = os.WEXITSTATUS(status)
-            elif os.WIFSIGNALED(status):
-                signum = os.WTERMSIG(status)
-                if os.WCOREDUMP(status):
-                    core_dump = True
-            else:
-                break
-            for each in self.process_groups.itervalues():
-                if each.head_pid == pid:
-                    if signum == 0:
-                        each.exit_status = status
-                        self.logger.info("process group %i: job %s/%s exited with status %i", 
-                            each.id, each.jobid, each.user, status)
-                    else:
-                        each.exit_status = 128 + signum
-                        if core_dump:
-                            core_dump_str = ", core dumped"
-                        else:
-                            core_dump_str = ""
-                        self.logger.info("process group %i: job %s/%s terminated with signal %s%s", 
-                            each.id, each.jobid, each.user, signum, core_dump_str)
-            if pid in self.diag_pids:
-                part, test = self.diag_pids[pid]
-                del self.diag_pids[pid]
-                self.logger.info("Diagnostic %s on %s finished. rc=%d" % \
-                                 (test, part.name, status))
-                self.finish_diags(part, test, status)
-        """
     _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
+        """Get the exit status of any completed process groups.  If completed,
+        initiate the partition cleaning process, and remove the process group 
+        from system's list of active processes.
+
+        """
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            if not process_group.true_mpi_args:
-                self._mark_partition_for_cleaning(process_group.location[0], process_group.jobid)
+            self._mark_partition_for_cleaning(process_group.location[0], process_group.jobid)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
     
     def signal_process_groups (self, specs, signame="SIGINT"):
+        """Send a signal to a currently running process group as specified by signame.
+
+        if no signame, then SIGINT is the default.
+
+        """
+
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
             if pg.exit_status is None:
-                if pg.mode == "script":
-                    try:
-                        ComponentProxy("script-manager").signal_jobs([{'id':pg.script_id}], signame)
-                    except (ComponentLookupError, xmlrpclib.Fault):
-                        self.logger.error("Failed to communicate with script manager when killing job")
-                else:
-                    try:
-                        ComponentProxy("forker").signal(pg.head_pid, signame)
-                    except:
-                        self.logger.error("Failed to communicate with forker when signalling job")
+                try:
+                    if pg.head_pid != None:
+                        self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
+                        ComponentProxy(pg.forker).signal(pg.head_pid, signame)
+                    else:
+                        self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
+                except:
+                    self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
 
-                if signame == "SIGKILL" and not pg.true_mpi_args:
+                if signame == "SIGKILL":
                     self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
 
         return my_process_groups

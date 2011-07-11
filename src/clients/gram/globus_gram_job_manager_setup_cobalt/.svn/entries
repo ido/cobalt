@@ -1,7 +1,7 @@
 10
 
 dir
-1792
+2185
 https://svn.mcs.anl.gov/repos/cobalt/trunk/src/clients/gram/globus_gram_job_manager_setup_cobalt
 https://svn.mcs.anl.gov/repos/cobalt
 
@@ -60,14 +60,14 @@ copej
 
 26432
 
-setup-globus-job-manager-cobalt.in
+find-cobalt-tools
 file
 
 
 
 
 2010-07-16T17:38:26.000000Z
-eb4de535b2cdda520a61283f966b7a3a
+4878c2274e10ac27df81d8855511f7ef
 2007-05-28T05:08:34.870973Z
 478
 copej
@@ -92,7 +92,7 @@ has-props
 
 
 
-399
+75475
 
 mkinstalldirs
 file
@@ -128,14 +128,14 @@ has-props
 
 722
 
-find-cobalt-tools
+setup-globus-job-manager-cobalt.in
 file
 
 
 
 
 2010-07-16T17:38:26.000000Z
-4878c2274e10ac27df81d8855511f7ef
+eb4de535b2cdda520a61283f966b7a3a
 2007-05-28T05:08:34.870973Z
 478
 copej
@@ -160,7 +160,7 @@ has-props
 
 
 
-75475
+399
 
 configure
 file
@@ -196,40 +196,6 @@ has-props
 
 54182
 
-LICENSE
-file
-
-
-
-
-2010-07-16T17:38:26.000000Z
-0894ccf5cae4957edbfb1a443f4a7f3c
-2007-05-28T05:08:34.870973Z
-478
-copej
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-204
-
 Makefile.in
 file
 
@@ -264,18 +230,17 @@ copej
 
 16428
 
-setup-globus-job-manager-cobalt.pl
+LICENSE
 file
 
 
 
 
 2010-07-16T17:38:26.000000Z
-7af809fd7ea65ce8de6b3676d0386cff
+0894ccf5cae4957edbfb1a443f4a7f3c
 2007-05-28T05:08:34.870973Z
 478
 copej
-has-props
 
 
 
@@ -296,7 +261,8 @@ has-props
 
 
 
-3509
+
+204
 
 AUTHORS
 file
@@ -332,17 +298,18 @@ copej
 
 376
 
-globus_automake_post
+setup-globus-job-manager-cobalt.pl
 file
 
 
 
 
 2010-07-16T17:38:26.000000Z
-d41d8cd98f00b204e9800998ecf8427e
+7af809fd7ea65ce8de6b3676d0386cff
 2007-05-28T05:08:34.870973Z
 478
 copej
+has-props
 
 
 
@@ -363,8 +330,7 @@ copej
 
 
 
-
-0
+3509
 
 configure.in
 file
@@ -400,14 +366,14 @@ copej
 
 1402
 
-globus_automake_pre
+globus_automake_post
 file
 
 
 
 
 2010-07-16T17:38:26.000000Z
-97f7ac5065bf3ac4663f0ce2de9b727d
+d41d8cd98f00b204e9800998ecf8427e
 2007-05-28T05:08:34.870973Z
 478
 copej
@@ -432,7 +398,7 @@ copej
 
 
 
-789
+0
 
 LICENSE.GTPL
 file
@@ -467,6 +433,40 @@ copej
 
 
 10489
+
+globus_automake_pre
+file
+
+
+
+
+2010-07-16T17:38:26.000000Z
+97f7ac5065bf3ac4663f0ce2de9b727d
+2007-05-28T05:08:34.870973Z
+478
+copej
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+789
 
 config.guess
 file

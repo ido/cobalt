@@ -17,7 +17,7 @@ import Cobalt
 from Cobalt.Data import Data, DataDict
 from Cobalt.Exceptions import JobValidationError, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
-import sets, thread, ConfigParser
+import thread, ConfigParser
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 
@@ -36,6 +36,22 @@ try:
     max_drain_hours = float(CP.get('bgsystem', 'max_drain_hours'))
 except:
     max_drain_hours = float(sys.maxint)
+    
+# *AdjEst*
+config = ConfigParser.ConfigParser() 
+config.read(Cobalt.CONFIG_FILES)
+def get_histm_config(option, default):
+    try:
+        value = config.get('histm', option)
+    except ConfigParser.NoSectionError:
+        value = default
+    return value
+walltime_prediction = get_histm_config("walltime_prediction", "False").lower()
+if walltime_prediction  == "true":
+    walltime_prediction_enabled = True
+else:
+    walltime_prediction_enabled = False
+# *AdjEst*
 
 class NodeCard (object):
     """node cards make up Partitions"""
@@ -83,9 +99,9 @@ class Partition (Data):
         self.queue = spec.pop("queue", "default")
         self.size = spec.pop("size", None)
         # these hold Partition objects
-        self._parents = sets.Set()
-        self._children = sets.Set()
-        self._all_children = sets.Set()
+        self._parents = set()
+        self._children = set()
+        self._all_children = set()
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.bridge_partition = None
@@ -97,7 +113,7 @@ class Partition (Data):
         self.cleanup_pending = False
 
         # this holds partition names
-        self._wiring_conflicts = sets.Set()
+        self._wiring_conflicts = set()
         self.backfill_time = None
         self.draining = False
 
@@ -175,7 +191,7 @@ class BGBaseSystem (Component):
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self._partitions = PartitionDict()
-        self._managed_partitions = sets.Set()
+        self._managed_partitions = set()
         self.process_groups = BGProcessGroupDict()
         self.node_card_cache = dict()
         self._partitions_lock = thread.allocate_lock()
@@ -249,7 +265,7 @@ class BGBaseSystem (Component):
             self.logger.error("error in del_partitions", exc_info=True)
         self._partitions_lock.release()
         
-        self._managed_partitions -= sets.Set( [partition.name for partition in partitions] )
+        self._managed_partitions -= set( [partition.name for partition in partitions] )
         self.update_relatives()
         return partitions
     del_partitions = exposed(query(del_partitions))
@@ -273,26 +289,43 @@ class BGBaseSystem (Component):
     def update_relatives(self):
         """Call this method after changing the contents of self._managed_partitions"""
         for p_name in self._managed_partitions:
-            self._partitions[p_name]._parents = sets.Set()
-            self._partitions[p_name]._children = sets.Set()
+            self._partitions[p_name]._parents = set()
+            self._partitions[p_name]._children = set()
 
         for p in self._partitions.itervalues():
-            p._all_children = sets.Set()
+            p._all_children = set()
 
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
             
+            #Check the wiring dependencies of our children.
+            #Touching those would be bad. --PMR
+
+#            new_parents = []
+#            for par in p._parents:       
+#                for dep_name in par._wiring_conflicts:
+#                    if dep_name in self._managed_partitions:        
+#                        new_parents.append(self._partitions[dep_name])
+#            p._parents.union(set(new_parents))
+#
+#            for child in p._children:       
+#                for dep_name in child._wiring_conflicts:
+#                    if dep_name in self._managed_partitions:        
+#                        p._parents.add(self._partitions[dep_name])
+
+
             # toss the wiring dependencies in with the parents
             for dep_name in p._wiring_conflicts:
                 if dep_name in self._managed_partitions:
                     p._parents.add(self._partitions[dep_name])
             
+
             for other in self._partitions.itervalues():
                 if p.name == other.name:
                     continue
 
-                p_set = sets.Set(p.node_cards)
-                other_set = sets.Set(other.node_cards)
+                p_set = set(p.node_cards)
+                other_set = set(other.node_cards)
 
                 if other.name in self._managed_partitions:
                     # if p is a subset of other, then p is a child; add other to p's list of managed parent partitions, and p to
@@ -309,6 +342,38 @@ class BGBaseSystem (Component):
                 # if p contains other, then p is a parent; add other to p's list of all child partitions
                 if p_set.union(other_set)==p_set:
                     p._all_children.add(other)
+
+        #Let's get the wiring conflicts for direct childeren as well, 
+        #we shouldn't be able to run on these either. --PMR
+        for p_name in self._managed_partitions:
+
+            #if p_name != "ANL-R10-R47-32768":
+             #   continue
+
+            p = self._partitions[p_name]
+            for child in p._children:
+                #print "Child %s:" % child.name
+                for dep_name in child._wiring_conflicts:
+                    #print "Conflict: %s" % dep_name
+                    if dep_name in self._managed_partitions:        
+                        p._parents.add(self._partitions[dep_name])
+                #we shouldn't be scheduling on the parents of our children either
+                for par in child._parents:
+                    #print "Parent: %s" % par.name
+                    if ((par.name != p_name) and
+                        (par.name in self._managed_partitions)):
+                        p._parents.add(self._partitions[par.name])
+                    
+            
+        #for p_name in self._managed_partitions:
+            
+            #if p_name != "ANL-R10-R47-32768":
+             #   continue
+         #   print str(p_name) + ":"
+         #   print "Parents: " + str(":".join([par.name for par in self._partitions[p_name]._parents]))
+         #   print "Children:" + str(":".join([child.name for child in self._partitions[p_name]._children]))
+         #   print "Conflicts:" +  str(":".join([con for con in self._partitions[p_name]._wiring_conflicts]))              
+
 
     def validate_job(self, spec):
         """validate a job for submission
@@ -385,12 +450,12 @@ class BGBaseSystem (Component):
             kids = [ self._partitions[c_name] for c_name in partition.children]
             kids.sort(size_cmp)
             n = len(kids)
-            part_node_cards = sets.Set(partition.node_cards)
+            part_node_cards = set(partition.node_cards)
             # generate the power set, but try to use the big partitions first (hence the sort above)
             for i in xrange(1, 2**n + 1):
                 test_cover = [ kids[j] for j in range(n) if i & 2**j ]
                 
-                test_node_cards = sets.Set()
+                test_node_cards = set()
                 for t in test_cover:
                     test_node_cards.update(t.node_cards)
                 
@@ -480,8 +545,14 @@ class BGBaseSystem (Component):
         queue = args['queue']
         utility_score = args['utility_score']
         walltime = args['walltime']
+        walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
         forbidden = args.get("forbidden", [])
         required = args.get("required", [])
+        
+        if walltime_prediction_enabled:  # *Adj_Est*
+            runtime_estimate = float(walltime_p)  
+        else:
+            runtime_estimate = float(walltime)
         
         best_score = sys.maxint
         best_partition = None
@@ -535,7 +606,15 @@ class BGBaseSystem (Component):
         
         for partition in available_partitions:
             # if the job needs more time than the partition currently has available, look elsewhere    
-            if backfilling:
+            if backfilling: 
+                               
+                if partition.reserved_by:
+                    #if the partition is reserved, we don't use predicted walltime to backfill
+                    runtime_estimate = float(walltime)
+                
+                if 60 * runtime_estimate > (partition.backfill_time - now):      # *Adj_Est*
+                    continue
+                
                 if 60*float(walltime) > (partition.backfill_time - now):
                     continue
                 
@@ -737,6 +816,7 @@ class BGBaseSystem (Component):
                 
             for jobid, partition_list in best_partition_dict.iteritems():
                 part = self.partitions[partition_list[0]]
+                # FIXME: use reserve_resources_until() here? --brt
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
                 part.state = "allocated"
@@ -831,30 +911,31 @@ class BGBaseSystem (Component):
         return target_partition.scheduled and target_partition.functional and int(target_partition.size) == desired
 
     def reserve_resources_until(self, location, new_time, jobid):
+        rc = False
         partition_name = location[0]
         pg = self.process_groups.find_by_jobid(jobid)
         try:
             self._partitions_lock.acquire()
             used_by = self.partitions[partition_name].used_by
+            if used_by == None:
+                self.partitions[partition_name].used_by = jobid
+                used_by = jobid
             if new_time:
                 if used_by == jobid:
-                    # only adjust partition reservation time for script mode jobs
-                    if pg != None and pg.mode == 'script':
-                        self.partitions[partition_name].reserved_until = new_time
-                        self.partitions[partition_name].reserved_by = jobid
-                        self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
-                            time.asctime(time.gmtime(new_time)))
-                    else:
-                        # FIXME: this will be removed when all jobs reserve the partitions to which they are assigned
-                        self.logger.info("job %s: only script mode jobs may reserve partitions", jobid)
+                    self.partitions[partition_name].reserved_until = new_time
+                    self.partitions[partition_name].reserved_by = jobid
+                    self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
+                        time.asctime(time.gmtime(new_time)))
+                    rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to update the reservation on partition %s (owner=%s)",
                         jobid, partition_name, used_by)
             else:
-                if used_by == jobid or used_by == None:
+                if used_by == jobid:
                     self.partitions[partition_name].reserved_until = False
                     self.partitions[partition_name].reserved_by = None
                     self.logger.info("reservation on partition '%s' has been removed", partition_name)
+                    rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to clear the reservation on partition %s (owner=%s)",
                         jobid, partition_name, used_by)
@@ -862,39 +943,40 @@ class BGBaseSystem (Component):
             self.logger.exception("an unexpected error occurred will adjusting the partition reservation time")
         finally:
             self._partitions_lock.release()
+        return rc
     reserve_resources_until = exposed(reserve_resources_until)
 
-    # yarrrrr!   deadlock ho!!
-    # making more than one RPC call in the same atomic method is a recipe for disaster
-    # maybe i need a second automatic method to do the waiting?
-    def sm_sync(self):
-        '''Resynchronize with the script manager'''
-        # get this cache first -- it's no problem if this data is old, but bad things
-        # happen when this data is newer than the list of running processes in scriptm
-        self.lock.acquire()
-        try:
-            process_groups_cache = self.process_groups.values()
-        except:
-            self.logger.error("error copying process_groups.values()", exc_info=True)
-        self.lock.release()
-
-        try:
-            pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
-        except (ComponentLookupError, xmlrpclib.Fault):
-            self.logger.error("Failed to communicate with script manager")
-            return
-        live = [item['id'] for item in pgroups]
-        
-        for each in process_groups_cache:
-            if each.mode == 'script' and each.script_id not in live:
-                self.logger.info("Found dead pg for script job %s" % (each.script_id))
-                result = ComponentProxy("script-manager").wait_jobs([{'id':each.script_id, 'exit_status':'*'}])
-                self.logger.info("wait returned %r" % result)
-                for r in result:
-                    which_one = None
-                    if r['id'] == each.script_id:
-                        each.exit_status = r['exit_status']
-                        self.reserve_resources_until(each.location, None, each.jobid)
-
-    sm_sync = locking(automatic(sm_sync))
+    # # yarrrrr!   deadlock ho!!
+    # # making more than one RPC call in the same atomic method is a recipe for disaster
+    # # maybe i need a second automatic method to do the waiting?
+    # def sm_sync(self):
+    #     '''Resynchronize with the script manager'''
+    #     # get this cache first -- it's no problem if this data is old, but bad things
+    #     # happen when this data is newer than the list of running processes in scriptm
+    #     self.lock.acquire()
+    #     try:
+    #         process_groups_cache = self.process_groups.values()
+    #     except:
+    #         self.logger.error("error copying process_groups.values()", exc_info=True)
+    #     self.lock.release()
+    # 
+    #     try:
+    #         pgroups = ComponentProxy("script-manager").get_jobs([{'id':'*', 'state':'running'}])
+    #     except (ComponentLookupError, xmlrpclib.Fault):
+    #         self.logger.error("Failed to communicate with script manager")
+    #         return
+    #     live = [item['id'] for item in pgroups]
+    #     
+    #     for each in process_groups_cache:
+    #         if each.mode == 'script' and each.script_id not in live:
+    #             self.logger.info("Found dead pg for script job %s" % (each.script_id))
+    #             result = ComponentProxy("script-manager").wait_jobs([{'id':each.script_id, 'exit_status':'*'}])
+    #             self.logger.info("wait returned %r" % result)
+    #             for r in result:
+    #                 which_one = None
+    #                 if r['id'] == each.script_id:
+    #                     each.exit_status = r['exit_status']
+    #                     self.reserve_resources_until(each.location, None, each.jobid)
+    # 
+    # sm_sync = locking(automatic(sm_sync))
 

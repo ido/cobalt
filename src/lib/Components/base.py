@@ -1,6 +1,6 @@
 """Cobalt component base."""
 
-__revision__ = '$Revision: 1768 $'
+__revision__ = '$Revision: 2130 $'
 
 __all__ = ["Component", "exposed", "automatic", "run_component"]
 
@@ -27,6 +27,13 @@ from Cobalt.Statistics import Statistics
 
 
 def state_file_location():
+    
+    '''Grab the location of the Cobalt statefiles.  
+
+    default: /var/spool/cobalt
+
+    '''
+
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
     if _config._sections.has_key("statefiles"):
@@ -39,6 +46,23 @@ def state_file_location():
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10,
                    single_threaded=False):
+    '''Run the Cobalt component.  
+
+    arguments:
+
+    component_cls
+    argv
+    register
+    state_name
+    cls_kwargs
+    extra_getopt
+    time_out
+    single_threaded
+    
+    This will run until a the component is terminated.
+
+    '''
+
     if argv is None:
         argv = sys.argv
     try:
@@ -62,8 +86,8 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             level = logging.DEBUG
     
     logging.getLogger().setLevel(level)
-    Cobalt.Logging.log_to_stderr(logging.getLogger())
-    Cobalt.Logging.setup_logging(component_cls.implementation)
+    Cobalt.Logging.log_to_stderr(logging.getLogger(), timestamp=True)
+    Cobalt.Logging.setup_logging(component_cls.implementation, console_timestamp=True)
 
     if daemon:
         child_pid = os.fork()
@@ -104,15 +128,19 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         cp = ConfigParser.ConfigParser()
         cp.read([Cobalt.CONFIG_FILES[0]])
         keypath = os.path.expandvars(cp.get('communication', 'key'))
+        certpath = os.path.expandvars(cp.get('communication', 'cert'))
+        capath = os.path.expandvars(cp.get('communication', 'ca'))
     except:
         keypath = '/etc/cobalt.key'
+        certpath = None
+        capath = None
 
     if single_threaded:
-        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=keypath,
-                          register=register, timeout=time_out)
+        server = BaseXMLRPCServer(location, keyfile=keypath, certfile=certpath, 
+                          cafile=capath, register=register, timeout=time_out)
     else:
-        server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
-                          register=register, timeout=time_out)
+        server = XMLRPCServer(location, keyfile=keypath, certfile=certpath,
+                          cafile=capath, register=register, timeout=time_out)
     server.register_instance(component)
     
     try:
@@ -188,6 +216,7 @@ class Component (object):
     Methods:
     save -- pickle the component to a file
     do_tasks -- perform automatic tasks for the component
+
     """
     
     name = "component"
@@ -348,3 +377,5 @@ class Component (object):
         """Get current statistics about component execution"""
         return self.statistics.display()
     get_statistics = exposed(get_statistics)
+
+ 

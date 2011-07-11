@@ -123,17 +123,17 @@ svn:wc:ra_dav:version-url
 V 54
 /repos/cobalt/!svn/ver/1267/trunk/src/clients/Makefile
 END
-cqwait.py
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/repos/cobalt/!svn/ver/2030/trunk/src/clients/cqwait.py
-END
 heckle_cqsub.py
 K 25
 svn:wc:ra_dav:version-url
 V 61
 /repos/cobalt/!svn/ver/1860/trunk/src/clients/heckle_cqsub.py
+END
+cqwait.py
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/cobalt/!svn/ver/2030/trunk/src/clients/cqwait.py
 END
 cqhist.py
 K 25
@@ -153,17 +153,17 @@ svn:wc:ra_dav:version-url
 V 64
 /repos/cobalt/!svn/ver/2149/trunk/src/clients/cobalt-launcher.py
 END
-test-failure.py
-K 25
-svn:wc:ra_dav:version-url
-V 60
-/repos/cobalt/!svn/ver/838/trunk/src/clients/test-failure.py
-END
 bgctl
 K 25
 svn:wc:ra_dav:version-url
 V 50
 /repos/cobalt/!svn/ver/838/trunk/src/clients/bgctl
+END
+test-failure.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/cobalt/!svn/ver/838/trunk/src/clients/test-failure.py
 END
 setres.py
 K 25

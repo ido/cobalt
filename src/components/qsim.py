@@ -14,7 +14,6 @@ from Cobalt.Components.cqsim import ClusterQsim
 from Cobalt.Components.histm import HistoryManager
 from Cobalt.Components.base import run_component
 from Cobalt.Components.slp import TimingServiceLocator
-from Cobalt.Components.scriptm import ScriptManager
 from Cobalt.Components.bgsched import BGSched
 from Cobalt.Components.qsim import Qsimulator
 from Cobalt.Proxy import ComponentProxy, local_components

@@ -9,6 +9,7 @@ import smtplib
 import socket
 import sys
 import time
+import datetime
 import ConfigParser
 import os.path
 import subprocess
@@ -17,16 +18,48 @@ from getopt import getopt, GetoptError
 from Cobalt.Exceptions import TimeFormatError, TimerException, ThreadPickledAliveException
 import logging
 from threading import Thread
+from Queue import Queue
 import inspect
 import re
+import select
+import errno
 
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
 
+no_pytz = False
+try:
+    from pytz import timezone
+    import pytz
+except ImportError:
+    no_pytz = True
+
 logger = logging.getLogger('Util')
 
+config_true_values = ['true', 'yes','1','on']
+config_false_values = ['false', 'no','0','off']
+
+def sleep(t):
+    
+    """The python sleep uses a select() to handle sleep to allow for
+       subsecond sleeps.  Apparently, on 64-bit Linux kernels, this
+       use of select() has been known to throw a  kernel error into 
+       user-space.  In the case of Cobalt, this can cause components to
+       unregister themselves.  Use this function to prevent such pain."""
+
+    try:
+        time.sleep(t)
+    except IOError:
+        logger.warning("IOError trapped from time.sleep() and ignored.")
+    
 
 def check_dependencies(dependency_string):
+
+    if dependency_string.lower() == 'none':
+        #we are removing all job dependencies.
+        print "Removing job dependencies"
+        return
+
     deps = set(dependency_string.split(":"))
     
     query = []
@@ -43,11 +76,16 @@ def check_dependencies(dependency_string):
     missing = deps.difference(job_ids)
     
     if missing:
-        print "WARNING: dependencies %s do not match jobs currently in the queue" % ":".join(missing)
+        print "WARNING: dependencies %s do not match jobs currently in the "\
+                "queue" % ":".join(missing)
     
 
 def get_time(date_string):
-    '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, or DD:HH:MM:SS, and return the total number of minutes.  Raise an exception for bad values.'''
+    '''Parse a time string that may be specified as minutes, HH:MM, HH:MM:SS, 
+    or DD:HH:MM:SS, and return the total number of minutes.  Raise an 
+    exception for bad values.
+    
+    '''
     time_info = {}
 
     units = date_string.split(":")
@@ -310,6 +348,13 @@ def escape_string(string, chars = "\""):
     for char in list(chars):
         string = string.replace(char, '\\' + char)
     return string
+
+_replace_quote_re = re.compile(r'\'')
+def convert_argv_to_quoted_command_string(argv):
+    mod_argv = []
+    for arg in argv:
+        mod_argv.append("'" + _replace_quote_re.sub('\'"\'"\'', arg) + "'")
+    return " ".join(mod_argv)
 
 class AccountingLog:
     def __init__(self, name):
@@ -663,7 +708,241 @@ def _pickle_method(method):
     return _unpickle_method, (func_name, func_cls, obj, cls)
 
 def _unpickle_method(func_name, func_cls, obj, cls):
-    func = func_cls.__dict__[func_name]
+    try:
+        func = func_cls.__dict__[func_name]
+    except KeyError:
+        #no longer exists.
+        return None
     return func.__get__(obj, cls)
 
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
+
+
+# we made a huge mistake using pickle
+def fix_set(state):
+    import sets
+    for k in state:
+        if isinstance(state[k], sets.Set):
+            state[k] = set(state[k])
+
+
+def sec_to_str(t):
+
+    '''convert a time in secs since epoch into a formated string for output
+    viewing, containing timezone information.
+
+    '''
+
+    timestamp = None
+    offset = None
+    tzname = None
+
+    
+
+    if no_pytz:
+        timestamp = time.strftime("%c", time.localtime(t))
+        
+        tzh = 0
+        tzm = 0
+
+        if time.strftime("%Z", time.localtime(t)).find('DT') != -1:
+            tzh = (time.timezone / 3600) - 1
+            tzm = time.timezone / 60 % 60
+        
+        else:
+            tzh = time.timezone / 3600
+            tzm = time.timezone / 60 % 60
+
+        offset = "%+.2d%.2d" % (-tzh,tzm)
+        tzname = time.strftime("(%Z)", time.localtime(t))
+
+    else:
+        tzname = os.environ.get('TZ','UTC')
+        try:
+            tz = timezone(tzname)
+        except pytz.exceptions.UnknownTimeZoneError:
+            tz = timezone('UTC')
+
+        dt = datetime.fromtimestamp(t, tz)
+        
+        timestamp = dt.strftime("%c")
+        offset = dt.strftime("%z")
+        tzname = dt.strftime("(%Z)")
+
+    time_str =  "%s %s %s" % (timestamp, offset, tzname)
+
+    return time_str
+
+
+
+class file_message(object):
+    
+    def __init__(self, filename, msg):
+        self.filename = filename
+        self.msg = msg
+        self.msg_len = len(msg)
+        self.written = 0
+
+
+class disk_writer_thread(Thread):
+    
+    '''Thread for enabling safe non-blocking disk writes
+
+    '''
+
+    def __init__(self, *args, **kwargs):
+        '''Initialize the thread.  And prepare it for running.
+
+        '''
+        super(disk_writer_thread, self).__init__(*args, **kwargs)
+        self.msg_queue = Queue()
+
+    
+    def send(self, item):
+        #Item should be a list of filename, msg tupples
+        self.msg_queue.put(item)
+
+    def extract(self):
+        '''Pull out all pending messages.
+
+        '''
+        item_list = []
+        while not self.msg_queue.empty():
+            item_list.append(self.msg_queue.get())
+        return item_list
+
+    def close(self):
+        self.msg_queue.put(None)
+        self.msg_queue.join()
+
+    def run(self):
+
+        active_file_msgs = []
+        active_fds = {}
+        os.environ["STAT_SLEEP"] = '10'
+        while True: #keep this thread alive
+
+            if not self.msg_queue.empty():
+                item = self.msg_queue.get()
+                if item == None:
+                    break
+            
+                active_file_msgs.append(file_message(item[0],item[1]+"\n"))
+            
+            if active_file_msgs == []:
+                #We have no pending messages
+                Cobalt.Util.sleep(5.0)
+                continue
+
+
+            messages_to_remove = []
+            for file_msg in active_file_msgs:
+                
+                try:
+                    fd = os.open(file_msg.filename, os.O_WRONLY|os.O_CREAT|os.O_APPEND|os.O_NONBLOCK)
+                except IOError as (num, strerror):
+                    
+                    errcode = errno.errorcode[num]
+
+                    if num == errno.EACCES:
+                        logger.error("Unable to write to %s with error code: "
+                                "%s. Permission Denied.", errcode,
+                                    file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num == errno.EDQUOT: 
+                        logger.error("Unable to write to %s. Quota Exceeded.", file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num in [errno.EFAULT,errno.EINVAL,errno.EIO]:
+                        logger.error("Unable to write to %s. Fatal Error.", file_msg.filename)
+                        messages_to_remove.append(file_msg) 
+                    elif num == errno.ENXIO:
+                        logger.error("Why are you trying to open a pipe?")
+                        messages_to_remove.append(file_msg) 
+                    else:
+                        logger.debug("Failed to write to %s.  Holding message for retry.",
+                                file_msg.filename)
+                        continue
+                except OSError as (num, strerror):
+
+                    if num == errno.EACCES:
+                        logger.error("Unable to write to %s. Permission Denied.",file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num == errno.EDQUOT: 
+                        logger.error("Unable to write to %s. Quota Exceeded.", file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                    elif num in [errno.EFAULT,errno.EINVAL,errno.EIO]:
+                        logger.error("Unable to write to %s. Fatal Error.", file_msg.filename)
+                        messages_to_remove.append(file_msg) 
+                    elif num == errno.ENXIO:
+                        logger.error("Why are you trying to open a pipe?")
+                        messages_to_remove.append(file_msg) 
+                    else:
+                        logger.debug("Failed to write to %s.  Holding message for retry.", 
+                                file_msg.filename)
+                        continue
+                except Exception:
+                    logger.critical("Unknown error recieved when writing to cobaltlog %s. "\
+                            "Traceback follows:" % file_msg.filename)
+                    logger.critical(traceback.format_exc())
+                    logger.critical("This message has been discarded.")
+                    messages_to_remove.append(file_msg)
+
+                else:
+                    active_fds[fd] = file_msg
+
+            #if we had any error out badly enough, just remove the messages for lack of being able to write
+            for msg in messages_to_remove:
+                active_file_msgs.remove(msg)
+
+            timeout = 0
+            while (timeout < 3):
+
+                try:
+                
+                    r_fd, w_fd, x_fd = select.select([], active_fds.keys(), [], 5.0)
+                
+                except IOError:
+                    logger.info("Select failed for open file descriptors.  Kernel bug?")
+                    break
+
+                if w_fd == []:
+                    timeout += 1
+                    if timeout > 3:
+                        logger.warn("Unable to write to all file descriptors this pass due to timeout.")
+                    continue
+
+                for fd in w_fd:
+                    
+                    #Only you can prevent partial writes
+                    count = 0
+                    try:
+                        count = os.write(fd, file_msg.msg[file_msg.written:])
+                    except IOError:
+                        logger.warn("Unable to complete write to ")
+
+                    if active_fds[fd].msg_len > (active_fds[fd].written + count):
+                        active_fds[fd].written += count
+                    else:
+                        active_file_msgs.remove(active_fds[fd])
+                        del active_fds[fd]
+                        os.close(fd)
+
+                if active_fds == {}:
+                    #yep, we're done
+                    break
+                
+            #End while timeout > 3
+
+            #Not running out of descriptors would be nice
+            if active_fds != {}:
+                fd_list = active_fds.keys()
+                for fd in fd_list:
+                    os.close(fd)
+                    del active_fds[fd]
+            
+            Cobalt.Util.sleep(1.0) #Don't hammer this into the ground
+
+        #End of while True:
+
+        logger.warn("Non-blocking File IO thread terminated.")
+

@@ -8,22 +8,20 @@ BGSystem -- Blue Gene system component
 import pwd
 import grp
 import logging
+import thread
 import sys
 import os
-import signal
-import tempfile
-import time
-import thread
+import re
 import ConfigParser
-import subprocess
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
 from Cobalt.Components.base import exposed, automatic, query, locking
-from Cobalt.Exceptions import ProcessGroupCreationError
+from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
 from Cobalt.Components.cluster_base_system import ClusterBaseSystem
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from Cobalt.Proxy import ComponentProxy
+from Cobalt.Util import config_true_values
 
 
 __all__ = [
@@ -33,19 +31,23 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-class ClusterProcessGroup(ProcessGroup):
-    _configfields = ['prologue', 'epilogue', 'epilogue_timeout', 'epi_epilogue', 'hostfile', 'prologue_timeout']
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('cluster_system'):
-        print '''"cluster_system" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['cluster_system']
-    mfields = [field for field in _configfields if not config.has_key(field)]
-    if mfields:
-        print "Missing option(s) in cobalt config file [cluster_system] section: %s" % (" ".join(mfields))
-        sys.exit(1)
+config = ConfigParser.ConfigParser()
+config.read(Cobalt.CONFIG_FILES)
 
+if not config.has_section('cluster_system'):
+    print '''"ERROR: cluster_system" section missing from cobalt config file'''
+    sys.exit(1)
+
+def get_cluster_system_config(option, default):
+    try:
+        value = config.get('cluster_system', option)
+    except ConfigParser.NoOptionError:
+        value = default
+    return value
+
+
+
+class ClusterProcessGroup(ProcessGroup):
     
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec, logger)
@@ -56,48 +58,44 @@ class ClusterProcessGroup(ProcessGroup):
     def prefork (self):
         ret = {}
         
-        # check for valid user/group
-        try:
-            userid, groupid = pwd.getpwnam(self.user)[2:4]
-        except KeyError:
-            raise ProcessGroupCreationError("error getting uid/gid")
-
-        ret["userid"] = userid
-        ret["primary_group"] = groupid
-        
-        self.nodefile = "/var/tmp/cobalt.%s" % self.jobid
-        
-        # get supplementary groups
-        supplementary_group_ids = []
-        for g in grp.getgrall():
-            if self.user in g.gr_mem:
-                supplementary_group_ids.append(g.gr_gid)
-        
-        ret["other_groups"] = supplementary_group_ids
-        
-        ret["umask"] = self.umask
+        sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
+        if not sim_mode: 
+            nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
+            self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
+        else:
+            self.nodefile = "fake"
         
         try:
             rank0 = self.location[0].split(":")[0]
         except IndexError:
             raise ProcessGroupCreationError("no location")
 
-        kerneloptions = self.kerneloptions
-
-        ret["postfork_env"] = self.env
-        ret["stdin"] = self.stdin
-        ret["stdout"] = self.stdout
-        ret["stderr"] = self.stderr
+        split_args = self.args.split()
+        cmd_args = ('--nf', str(self.nodefile),
+                    '--jobid', str(self.jobid),
+                    '--cwd', str(self.cwd),
+                    '--exe', str(self.executable))
         
-        cmd_string = "/usr/bin/cobalt-launcher.py --nf %s --jobid %s --cwd %s --exe %s" % (self.nodefile, self.jobid, self.cwd, self.executable)
-        cmd = ("/usr/bin/ssh", "/usr/bin/ssh", rank0, cmd_string)
-
+        cmd_exe = None
+        if sim_mode: 
+            cmd_exe = get_cluster_system_config("simulation_executable", None)
+            if None == cmd_exe:
+                logger.critical("Job: %s/%s: Executable for simulator not specified! This job will not run!")
+                raise RuntimeError("Unspecified simulation_executable in cobalt config")
+        else:
+            #FIXME: Need to put launcher location into config
+            cmd_exe = '/usr/bin/cobalt-launcher.py' 
         
-        ret["id"] = self.id
-        ret["jobid"] = self.jobid
-        ret["cobalt_log_file"] = self.cobalt_log_file
+        #run the user script off the login node, and on the compute node
+        if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and
+                not sim_mode):
+            cmd = ("/usr/bin/ssh", rank0, cmd_exe) + cmd_args + tuple(split_args)
+        else:
+            cmd = (cmd_exe,) + cmd_args + tuple(split_args)
+
         ret["cmd" ] = cmd
-
+        ret["args"] = split_args
+        
         return ret
 
     
@@ -125,12 +123,10 @@ class ClusterSystem (ClusterBaseSystem):
     def __init__ (self, *args, **kwargs):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ClusterProcessGroup
-
         
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup
-
     
     def add_process_groups (self, specs):
         """Create a process group.
@@ -142,8 +138,13 @@ class ClusterSystem (ClusterBaseSystem):
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
-            self.logger.info("job %s/%s: process group %s created to track script", 
-                    pgroup.jobid, pgroup.user, pgroup.id)
+            self.logger.info("Job %s/%s: process group %s created to track script", 
+                    pgroup.user, pgroup.jobid, pgroup.id)
+        #System has started the job.  We need remove them from the temp, alloc array
+        #in cluster_base_system.
+        for pg in process_groups:
+            for location in pg.location:
+                del self.alloc_only_nodes[location]
 
         return process_groups
     add_process_groups = exposed(query(add_process_groups))
@@ -155,7 +156,7 @@ class ClusterSystem (ClusterBaseSystem):
     
     def _get_exit_status (self):
         try:
-            running = ComponentProxy("forker").active_list()
+            running = ComponentProxy("forker").active_list("process group")
         except:
             self.logger.error("failed to contact forker component for list of running jobs")
             return
@@ -172,7 +173,7 @@ class ClusterSystem (ClusterBaseSystem):
                     return
                 
                 if dead_dict is None:
-                    self.logger.info("process group %i: job %s/%s exited with unknown status", each.id, each.jobid, each.user)
+                    self.logger.info("Job %s/%s: process group %i: exited with unknown status", each.user, each.jobid, each.id)
                     each.exit_status = 1234567
                 else:
                     each.exit_status = dead_dict["exit_status"]
@@ -193,10 +194,11 @@ class ClusterSystem (ClusterBaseSystem):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            thread.start_new_thread(self.clean_nodes, (process_group,))
+            self.clean_nodes(pg.location, pg.user, pg.jobid) #FIXME: This call is a good place to look for problems
         return process_groups
     wait_process_groups = locking(exposed(query(wait_process_groups)))
-    
+   
+     
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
@@ -209,71 +211,18 @@ class ClusterSystem (ClusterBaseSystem):
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
-    def clean_nodes(self, pg):
-        try:
-            tmp_data = pwd.getpwnam(pg.user)
-            groupid = tmp_data.pw_gid
-            group_name = grp.getgrgid(groupid)[0]
-        except KeyError:
-            group_name = ""
-            self.logger.error("Job %s/%s unable to determine group name for epilogue" % (pg.jobid, pg.user))
- 
-        processes = []
-        for host in pg.location:
-            h = host.split(":")[0]
-            try:
-                p = subprocess.Popen(["/usr/bin/ssh", h, pg.config.get("epilogue"), str(pg.jobid), pg.user, group_name], 
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                p.host = h
-                processes.append(p)
-            except:
-                self.logger.error("Job %s/%s failed to run epilogue on host %s", pg.jobid, pg.user, h, exc_info=True)
-        
-        start = time.time()
-        dirty_nodes = []
-        while True:
-            running = False
-            for p in processes:
-                if p.poll() is None:
-                    running = True
-                    break
-            
-            if not running:
-                break
-            
-            if time.time() - start > float(pg.config.get("epilogue_timeout")):
-                for p in processes:
-                    if p.poll() is None:
-                        try:
-                            os.kill(p.pid, signal.SIGTERM)
-                            dirty_nodes.append(p.host)
-                            self.logger.error("Job %s/%s epilogue timed out on host %s" % (pg.jobid, pg.user, p.host))
-                        except:
-                            self.logger.error("epilogue for %s already terminated" %p.host)
-                break
-            else:
-                time.sleep(5)
+    def del_process_groups(self, jobid):
+        '''delete a process group and don't track it anymore.
 
-        for p in processes:
-            if p.poll() > 0:
-                self.logger.error("epilogue failed for host %s", p.host)
-                self.logger.error("stderr from epilogue on host %s: [%s]", p.host, p.stderr.read().strip())
-            
-            
-        self.lock.acquire()
-        try:
-            self.logger.info("job finished on %s", Cobalt.Util.merge_nodelist(pg.location))
-            for host in pg.location:
-                self.running_nodes.discard(host)
-            
-            if dirty_nodes:    
-                for host in dirty_nodes:
-                    self.down_nodes.add(host)
-                    self.logger.info("epilogue timed out, marking host %s down" % host)
-                p = subprocess.Popen([pg.config.get("epi_epilogue"), str(pg.jobid), pg.user, group_name] + dirty_nodes)
-            
-            del self.process_groups[pg.id]
-        except:
-            self.logger.error("error in clean_nodes", exc_info=True)
-        self.lock.release()
+           jobid -- jobid associated with the process group we are removing
+
+        '''
+
+        del_items = self.process_groups.q_del([{'jobid':jobid}])
         
+
+        if del_items == []:
+            self.logger.warning("Job %s: Process group not found for this jobid.", jobid)
+        else:
+            self.logger.info("Job %s: Process group deleted.", jobid)
+

@@ -1,12 +1,10 @@
 """XML-transportable state objects."""
 
-__revision__ = '$Revision: 1602 $'
+__revision__ = '$Revision: 1916 $'
 
 import time
 import random
 import warnings
-
-from sets import Set as set
 
 import Cobalt.Util
 from Cobalt.Exceptions import DataCreationError, IncrIDError, DataStateError, DataStateTransitionError
