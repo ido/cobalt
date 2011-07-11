@@ -31,8 +31,6 @@ if not config.has_section('bgsched'):
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
-COMP_QUEUE_MANAGER = "queue-manager"
-
 def get_bgsched_config(option, default):
     try:
         value = config.get('bgsched', option)
