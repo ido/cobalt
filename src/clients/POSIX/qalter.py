@@ -24,13 +24,16 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
               -e <error file path> -o <output file path> 
               --dependencies <jobid1>:<jobid2>
               -n <number of nodes> -h --proccount <processor count> 
-              -M <email address> --mode <mode co/vn> <jobid1> <jobid2> """
+              -M <email address> --mode <mode co/vn> 
+              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>"""
 
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
+               'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies', 
-                'M':'notify', 'e':'error', 'o':'output'}
+                'M':'notify', 'e':'error', 'o':'output', 
+                'run_users':'user_list'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -80,7 +83,8 @@ if __name__ == '__main__':
         if not 0 < nc <= sys_size:
             logger.error("node count out of realistic range")
             sys.exit(1)
-        updates['nodes'] = opts['nodecount']
+        updates['nodes'] = nc 
+       
     # ensure time is actually in minutes
     if opts['time']:
         if opts['time'][0] in [ '+', '-']:
@@ -137,6 +141,7 @@ if __name__ == '__main__':
             opts['mode'] = 'SMP'
         updates['mode'] = opts['mode']
 
+    #TODO: This is bugged and must be handled on a per-job basis. --PMR
     if opts['nodecount'] and not opts['proccount']:
         if opts.get('mode', 'co') == 'vn':
             # set procs to 2 x nodes
@@ -148,21 +153,44 @@ if __name__ == '__main__':
                 logger.error("Unknown bgtype %s" % (sys_type))
                 sys.exit(1)
         else:
-            opts['proccount'] = opts['nodecount']
-        updates['procs'] = opts['proccount']
+            opts['proccount'] = int(opts['nodecount'])
+        updates['procs'] = int(opts['proccount'])
     if opts['proccount']:
         try:
             int(opts['proccount'])
         except:
             logger.error("non-integer node count specified")
             sys.exit(1)
-        updates['procs'] = opts['proccount']
+        updates['procs'] = int(opts['proccount'])
 
     if opts['project']:
         updates['project'] = opts['project']
 
     if opts['notify']:
         updates['notify'] = opts['notify']
+
+    if opts['user_list']:
+        if opts['user_list'].lower() == 'none':
+            updates['user_list'] = [user]
+        else:
+            #we really should be adding users that actually exist.
+            updates['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]
+            for auth_user in updates['user_list']:
+                try:
+                    pwd.getpwnam(auth_user)
+                except KeyError:
+                    logger.error("user %s does not exist." % auth_user)
+                    sys.exit(1)
+                except Exception:
+                    raise
+            if user not in updates['user_list']:
+                updates['user_list'].insert(0, user)
+    
+            
+    if opts['run_project'] == True:
+        if not opts['user_list']:
+            updates['user_list'] = [user]
+        updates['run_project'] = True
 
     if opts['error']:
         updates.update({'errorpath': opts['error']})
@@ -204,7 +232,7 @@ if __name__ == '__main__':
         if job['is_active']:
             job_running = True
             
-    if job_running:
+    if job_running and (updates.keys() != ['user_list']):
         if updates.has_key('procs'):
             print >> sys.stderr, "cannot change processor count of a running job"
         if updates.has_key('nodes'):
@@ -232,7 +260,8 @@ if __name__ == '__main__':
             for key in jobinfo:
                 if not original_spec.has_key(key):
                     if key == "all_dependencies":
-                        print "dependencies set to %s" % ":".join(jobinfo[key])
+                        if not (opts['dependencies'].lower() == 'none'):
+                            print "dependencies set to %s" % ":".join(jobinfo[key])
                     else:
                         print "%s set to %s" % (key, jobinfo[key])
                 elif jobinfo[key] != original_spec[key]:

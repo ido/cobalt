@@ -41,7 +41,7 @@ if __name__ == '__main__':
         result = scheduler.get_reservations(spec)
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 1:
-            print "Error communicating with queue manager"
+            print "Error communicating with scheduler"
             sys.exit(1)
 
     if len(result) and len(result) != len(args):
@@ -52,10 +52,10 @@ if __name__ == '__main__':
 
 
     try:
-        result = scheduler.del_reservations(spec, pwd.getpwuid(os.getuid())[0])
+        result = scheduler.release_reservations(spec, pwd.getpwuid(os.getuid())[0])
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 1:
-            print "Error communicating with queue manager"
+            print "Error communicating with scheduler"
             sys.exit(1)
 
     print "Released reservation '%s', matched on %d partitions" % \

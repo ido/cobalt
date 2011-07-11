@@ -2,14 +2,14 @@
 
 '''Program that does not return until the job(s) specified is not
    present in the queue'''
-__revision__ = '$Revision: 1579 $'
+__revision__ = '$Revision: 2030 $'
 __version__ = '$Version$'
 
 import sys, time
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
-
+import Cobalt.Util
 
 __helpmsg__ = "Usage: cqwait [--version] [-vr] [--start] <jobid> <jobid>\n"
 
@@ -59,4 +59,4 @@ if __name__ == '__main__':
         if len(response) == 0:
             raise SystemExit, 0
         else:
-            time.sleep(2)
+            Cobalt.Util.sleep(2)

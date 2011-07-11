@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 '''Partadm sets partition attributes in the scheduler'''
-__revision__ = '$Revision: 1791 $'
+__revision__ = '$Revision: 1981 $'
 __version__ = '$Version$'
 
 import sys, getopt, xmlrpclib
-import sets
 import os
 import getpass
 
@@ -165,7 +164,7 @@ if __name__ == '__main__':
                         if expanded_parts.has_key(res['queue']):
                             expanded_parts[res['queue']].update(p['children'])
                         else:
-                            expanded_parts[res['queue']] = sets.Set( p['children'] )
+                            expanded_parts[res['queue']] = set( p['children'] )
                         expanded_parts[res['queue']].add(p['name'])
             
         

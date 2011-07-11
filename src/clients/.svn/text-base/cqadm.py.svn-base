@@ -24,6 +24,7 @@ def get_queues(cqm_conn):
     info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*',
              'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
              'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*',
+             'maxnodehours':'*',
              'adminemail':'*', 'totalnodes':'*', 'cron':'*', 'policy':'*', 'priority':'*'}]
     try:
         ret = cqm_conn.get_queues(info)
@@ -173,12 +174,13 @@ if __name__ == '__main__':
             if q['mintime'] is not None:
                 q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
         header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
-                   'MaxQueued', 'MaxUserNodes', 'TotalNodes',
+                   'MaxQueued', 'MaxUserNodes', 'MaxNodeHours', 'TotalNodes',
                    'AdminEmail', 'State', 'Cron', 'Policy', 'Priority')]
         datatoprint = [(q['name'], q['users'],
                         q['mintime'], q['maxtime'],
                         q['maxrunning'], q['maxqueued'],
-                        q['maxusernodes'], q['totalnodes'],
+                        q['maxusernodes'], q['maxnodehours'], 
+                        q['totalnodes'],
                         q['adminemail'], q['state'],
                         q['cron'], q['policy'], q['priority'])
                        for q in response]

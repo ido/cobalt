@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''This script removes reservations'''
-__revision__ = '$Id: releaseres.py 1361 2008-08-08 16:22:14Z buettner $'
+__revision__ = '$Id: releaseres.py 2146 2011-04-29 16:19:22Z richp $'
 __version__ = '$Version$'
 
 import getopt, sys
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         result = scheduler.get_reservations(spec)
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 1:
-            print "Error communicating with queue manager"
+            print "Error communicating with scheduler"
             sys.exit(1)
 
     if len(result) and len(result) != len(args):
@@ -52,10 +52,10 @@ if __name__ == '__main__':
 
 
     try:
-        result = scheduler.del_reservations(spec, pwd.getpwuid(os.getuid())[0])
+        result = scheduler.release_reservations(spec, pwd.getpwuid(os.getuid())[0])
     except xmlrpclib.Fault, flt:
         if flt.faultCode == 1:
-            print "Error communicating with queue manager"
+            print "Error communicating with scheduler"
             sys.exit(1)
 
     print "Released reservation '%s', matched on %d partitions" % \

@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 '''This command runs through a basic sequence of pm ops'''
-__revision__ = '$Revision: 1221 $'
+__revision__ = '$Revision: 2030 $'
 
 import sys, time, Cobalt.Proxy, Cobalt.Logging
 import pwd
 import os
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+import Cobalt.Util
 
 if __name__ == '__main__':
     level = 20
@@ -30,7 +31,7 @@ if __name__ == '__main__':
         r = pm.get_jobs([{'tag':'process-group', 'id':pgid, 'state':'*'}])
         state = r[0]['state']
         if state == 'running':
-            time.sleep(5)
+            Cobalt.Util.sleep(5)
             continue
         else:
             break

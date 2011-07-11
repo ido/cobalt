@@ -18,6 +18,7 @@ import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Util import sec_to_str
 
 __helpmsg__ = "Usage: qstat [-d] [-f] [-l] [-u username] [--sort <fields>] [--header <fields>] [--reverse] [<jobid|queue> ...]\n" + \
               "       qstat [-d] -Q <queue> <queue>\n" + \
@@ -131,7 +132,7 @@ if __name__ == '__main__':
                       'ErrorPath', 'OutputPath',
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'Dependencies', 'short_state', 'Notify', 
-                      'Score', 'Maxtasktime', 'attrs',]
+                      'Score', 'Maxtasktime', 'attrs', 'dep_frac','user_list']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
 
@@ -149,9 +150,12 @@ if __name__ == '__main__':
         query = [{'name':qname, 'users':'*', 
                   'mintime':'*', 'maxtime':'*', 'maxrunning':'*',
                   'maxqueued':'*', 'maxusernodes':'*',
+                  'maxnodehours': '*', 
                   'totalnodes':'*', 'state':'*'} for qname in names]
-        header = ['Name', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
-                  'MaxQueued', 'MaxUserNodes', 'TotalNodes', 'State']
+        header = ['Name', 'Users', 'MinTime', 'MaxTime', 
+                  'MaxRunning', 'MaxQueued', 'MaxUserNodes', 
+                  'MaxNodeHours',
+                  'TotalNodes', 'State']
         response = cqm.get_queues(query)
     else:
         if opts['full'] and opts['long']:
@@ -233,7 +237,7 @@ if __name__ == '__main__':
             if j.get('starttime') in ('-1', 'BUG', None):
                 j['starttime'] = 'N/A'
             else:
-                j['starttime'] = time.strftime("%m/%d/%y %T", time.localtime(float(j['starttime'])))
+                j['starttime'] = sec_to_str(float(j['starttime']))
             # jobname
             outputpath = j.get('outputpath')
             if outputpath:
@@ -249,10 +253,11 @@ if __name__ == '__main__':
             j['args'] = ' '.join(j['args'])
             
             # make the SubmitTime readable by humans
-            j['submittime'] = time.ctime(float(j['submittime']))
+            j['submittime'] = sec_to_str(float(j['submittime']))
             
             j['outputpath'] = outputpath
             j['errorpath'] = j.get('errorpath')
+            j['user_list'] = ':'.join(j['user_list'])
 
         # any header that was not present in the query response has value set to '-'
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]

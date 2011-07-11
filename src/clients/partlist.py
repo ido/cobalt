@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 '''Partlist displays online partitions for users'''
-__revision__ = '$Revision: 1696 $'
+__revision__ = '$Revision: 1981 $'
 __version__ = '$Version$'
 
 import sys, operator
-import sets
 import time
 from optparse import OptionParser
 import Cobalt.Util
@@ -55,7 +54,7 @@ if __name__ == '__main__':
                     if expanded_parts.has_key(res['queue']):
                         expanded_parts[res['queue']].update(p['children'])
                     else:
-                        expanded_parts[res['queue']] = sets.Set( p['children'] )
+                        expanded_parts[res['queue']] = set( p['children'] )
                     expanded_parts[res['queue']].add(p['name'])
         
     

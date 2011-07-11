@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__revision__ = '$Revision: 1140 $'
+__revision__ = '$Revision: 1981 $'
 
 import sys
 

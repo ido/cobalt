@@ -3,6 +3,7 @@
 '''This script simulates the standard bridge mpirun for brooklyn'''
 
 import signal, sys, Cobalt.Proxy, time, datetime, math, os, random
+import Cobalt.Util
 
 def timestamp():
     now = datetime.datetime.now()
@@ -106,7 +107,7 @@ if __name__ == '__main__':
         print "Running job with args: " + str(sys.argv)
         print "Sleeping for " + str(walltime) + " seconds"
         sys.stdout.flush()
-        time.sleep(walltime)
+        Cobalt.Util.sleep(walltime)
         print "Wake up!  Time to die!"
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : Job " + str(bjobid) + " switched to state TERMINATED ('T')"
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : Job sucessfully terminated"

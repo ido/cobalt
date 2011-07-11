@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Setup reservations in the scheduler'''
-__revision__ = '$Id: setres.py 1590 2009-06-24 18:25:45Z toonen $'
+__revision__ = '$Id: setres.py 2154 2011-05-25 00:22:56Z richp $'
 __version__ = '$Version$'
 
 import getopt, math, pwd, sys, time
@@ -10,10 +10,13 @@ import xmlrpclib
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Util import sec_to_str
 
 helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
                   -c <cycle time> -p <partition> -q <queue name> 
                   -D -u <user> [-f] [partion1] .. [partionN]
+                  --res_id <new res_id>
+                  --cycle_id <new cycle_id>
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 cycle time may be in minutes or DD:HH:MM:SS
@@ -34,7 +37,7 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'c:s:d:mn:p:q:u:axD', [])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'A:c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id=', 'force_id'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -44,12 +47,64 @@ if __name__ == '__main__':
     except ValueError:
         if args:
             partitions = args
+    
+    opt_dict = {}
+    for opt in opts:
+        opt_dict[opt[0]] = opt[1] 
 
-    if not partitions and '-m' not in sys.argv[1:]:
+    
+    only_id_change = True
+    for key in opt_dict:
+        if key not in ['--cycle_id', '--res_id', '--force_id']:
+            only_id_change = False
+            break
+
+    force_id = False
+    if '--force_id' in opt_dict.keys():
+        force_id = True
+        if not only_id_change:
+            print "--force_id can only be used with --cycle_id and/or --res_id."
+            raise SystemExit, 1
+
+    if (not partitions and '-m' not in sys.argv[1:]) and (not only_id_change):
         print "Must supply either -p with value or partitions as arguments"
         print helpmsg
         raise SystemExit, 1
+    
+
+
+    if '--res_id' in opt_dict.keys():
+        try:
+            if force_id:
+                scheduler.force_res_id(int(opt_dict['--res_id']))
+                print "WARNING: Forcing res id to %s" % opt_dict['--res_id']
+            else:
+                scheduler.set_res_id(int(opt_dict['--res_id']))
+                print "Setting res id to %s" % opt_dict['--res_id']
+        except ValueError:
+            print "res_id must be set to an integer value."
+            raise SystemExit, 1
+        except xmlrpclib.Fault, flt:
+            print flt.faultString
+            raise SystemExit, 1
         
+    if '--cycle_id' in opt_dict.keys():
+        try:
+            if force_id:
+                scheduler.force_cycle_id(int(opt_dict['--cycle_id']))
+                print "WARNING: Forcing cycle id to %s" % opt_dict['--cycle_id']
+            else:
+                scheduler.set_cycle_id(int(opt_dict['--cycle_id']))
+                print "Setting cycle_id to %s" % opt_dict['--cycle_id']
+        except ValueError:
+            print "cycle_id must be set to an integer value."
+            raise SystemExit, 1
+        except xmlrpclib.Fault, flt:
+            print flt.faultString
+            raise SystemExit, 1
+
+    if only_id_change:
+        raise SystemExit, 0
 
     if '-f' not in sys.argv:
         # we best check that the partitions are valid
@@ -95,7 +150,7 @@ if __name__ == '__main__':
             (syear, smonth, sday) = [int(field) for field in day.split('_')]
             (shour, smin) = [int(field) for field in rtime.split(':')]
             starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
-            print "Got starttime %s" % (time.strftime('%c', time.localtime(starttime)))
+            print "Got starttime %s" % (sec_to_str(starttime))
         except ValueError:
             print "Error: start time '%s' is invalid" % start
             print "start time is expected to be in the format: YYYY_MM_DD-HH:MM"
@@ -109,7 +164,16 @@ if __name__ == '__main__':
                 print "User %s does not exist" % (usr)
     else:
         user = None
-    
+
+    project_specified = False
+    if '-A' in sys.argv[1:]:
+        project_specified = True
+        project = [opt[1] for opt in opts if opt[0] == '-A'][0]
+        if project.lower() == 'none':
+            project = None
+    else:
+        project = None
+
     if '-n' in sys.argv[1:]:
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']
     else:
@@ -166,6 +230,8 @@ if __name__ == '__main__':
                   % (res['name'], newstart)
 
             updates['start'] = start
+            #add a field to updates to indicate we're deferring:
+            updates['defer'] = True
         else:
             if start:
                 updates['start'] = starttime
@@ -174,6 +240,8 @@ if __name__ == '__main__':
             
         if user:
             updates['users'] = user
+        if project_specified:
+            updates['project'] = project
         if cycle_time:
             updates['cycle'] = cycle_time
         if partitions:
@@ -183,8 +251,7 @@ if __name__ == '__main__':
         print scheduler.check_reservations()
 
         raise SystemExit, 0
-
-    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time }
+    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time, 'project': project }
     if '-q' in sys.argv:
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:
@@ -192,7 +259,7 @@ if __name__ == '__main__':
         print scheduler.check_reservations()
     except xmlrpclib.Fault, flt:
         if flt.faultCode == ComponentLookupError.fault_code:
-            print "Couldn't contact the queue manager"
+            print "Couldn't contact the scheduler"
             sys.exit(1)
         else:
             print flt.faultString
