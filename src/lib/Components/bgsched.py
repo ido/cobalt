@@ -31,6 +31,9 @@ if not config.has_section('bgsched'):
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
 
+bgsched_id_gen = None
+bgsched_cycle_id_gen = None
+
 def get_bgsched_config(option, default):
     try:
         value = config.get('bgsched', option)
@@ -50,7 +53,23 @@ if running_job_walltime_prediction == "true":
     running_job_walltime_prediction = True
 else:
     running_job_walltime_prediction = False
- #*AdjEst*    
+
+#db writer initialization
+dbwriter = Cobalt.Logging.dbwriter(logger)
+use_db_logging = get_bgsched_config('use_db_logging', 'false')
+if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
+   dbwriter.enabled = True
+   overflow_filename = get_bgsched_config('overflow_file', None)
+   max_queued = int(get_bgsched_config('max_queued_msgs', '-1'))
+   if max_queued <= 0:
+       max_queued = None
+   if (overflow_filename == None) and (max_queued != None):
+       logger.warning('No filename set for database logging messages, max_queued_msgs set to unlimited')
+   if max_queued != None:
+       dbwriter.overflow_filename = overflow_filename
+       dbwriter.max_queued = max_queued
+
+
 
 class Reservation (Data):
     
@@ -58,11 +77,14 @@ class Reservation (Data):
     
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
-        "active", "queue", 
+        "active", "queue", "res_id", "cycle_id", 'project' 
     ]
     
     required = ["name", "start", "duration"]
-    
+
+    global bgsched_id_gen
+    global bgsched_cycle_id_gen
+
     def __init__ (self, spec):
         Data.__init__(self, spec)
         self.tag = spec.get("tag", "reservation")
@@ -74,6 +96,15 @@ class Reservation (Data):
         self.start = spec['start']
         self.queue = spec.get("queue", "R.%s" % self.name)
         self.duration = spec.get("duration")
+        self.res_id = spec.get("res_id")
+        self.cycle_id_gen = bgsched_cycle_id_gen
+        if self.cycle:
+            self.cycle_id = spec.get("cycle_id",self.cycle_id_gen.get())
+        else:
+            self.cycle_id = None
+
+        self.running = False
+        self.project = spec.get("project", None)
         
     def _get_active(self):
         return self.is_active()
