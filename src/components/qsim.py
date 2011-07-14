@@ -273,9 +273,10 @@ if __name__ == "__main__":
         
     integrated_main(options)
     
+    #profile_main(options)
     
     end_sec = time.time()
     
     print "the simulation totally lasts %s seconds (~%s minutes)" % (int(end_sec - start_sec), int((end_sec - start_sec)/60))
 
-    #profile_main(options)
+    

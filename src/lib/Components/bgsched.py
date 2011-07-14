@@ -27,6 +27,8 @@ config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('bgsched'):
     print '''"bgsched" section missing from cobalt config file'''
     sys.exit(1)
+    
+__running_mode__ = "simulation"
 
 SLOP_TIME = 180
 DEFAULT_RESERVATION_POLICY = "default"
@@ -53,6 +55,8 @@ if running_job_walltime_prediction == "true":
     running_job_walltime_prediction = True
 else:
     running_job_walltime_prediction = False
+    
+print "running_job_walltime_prediction=", running_job_walltime_prediction
 
 #db writer initialization
 dbwriter = Cobalt.Logging.dbwriter(logger)
@@ -819,15 +823,18 @@ class BGSched (Component):
         self._run_reservation_jobs(reservations_cache)
 
         # figure out stuff about queue equivalence classes
-        res_info = {}
-        for cur_res in reservations_cache.values():
-            res_info[cur_res.name] = cur_res.partitions
-        try:
-            equiv = ComponentProxy(self.COMP_SYSTEM).find_queue_equivalence_classes(
+        if __running_mode__=="simulation":
+            equiv= [{'reservations': [], 'queues': ['default']}]
+        else:
+            res_info = {}
+            for cur_res in reservations_cache.values():
+                res_info[cur_res.name] = cur_res.partitions
+            try:
+                equiv = ComponentProxy(self.COMP_SYSTEM).find_queue_equivalence_classes(
                     res_info, [q.name for q in active_queues + spruce_queues])
-        except:
-            self.logger.error("failed to connect to system component")
-            return
+            except:
+                self.logger.error("failed to connect to system component")
+                return
         
         for eq_class in equiv:
             # recall that is_runnable is True for certain types of holds

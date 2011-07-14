@@ -337,6 +337,7 @@ class ClusterBaseSystem (Component):
             for num in sorted(job_end_times):
                 if needed <= num:
                     backfill_cutoff = job_end_times[num] - now
+                    break
 
             for args in arg_list:
                 if 60*float(args['walltime']) > backfill_cutoff:

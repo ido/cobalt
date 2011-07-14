@@ -71,6 +71,7 @@ class BGQsim(Simulator):
         partnames = self._partitions.keys()
         self.init_partition(partnames)
         self.inhibit_small_partitions()
+        
         self.total_nodes = TOTAL_NODES
         self.total_midplane = TOTAL_MIDPLANE
         
@@ -81,6 +82,9 @@ class BGQsim(Simulator):
                 if part.size >= MIDPLANE_SIZE:
                     self.part_size_list.append(int(part.size))
         self.part_size_list.sort()
+        
+        self.cached_partitions = self.partitions
+        self._build_locations_cache()
 
 ###-------Job related
         self.workload_file =  kwargs.get("bgjob")
@@ -848,10 +852,8 @@ class BGQsim(Simulator):
         if self.bridge_in_error:
             return {}
         
-        self.cached_partitions = self.partitions
-
-        # build the cached_partitions structure first
-        self._build_locations_cache()
+        # build the cached_partitions structure first  (in simulation conducted in init_part()
+#        self._build_locations_cache()
 
         # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
         job_end_times = {}
@@ -1079,7 +1081,7 @@ class BGQsim(Simulator):
             val = queue_priority + 0.1
             return val
         
-        def default0():
+        def default1():
             '''FCFS'''
             val = queued_time
             return val
