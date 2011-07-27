@@ -294,6 +294,7 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = BGProcessGroup
         self.diag_pids = dict()
         self.configure()
+                
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_partition_state, tuple())
     
@@ -357,8 +358,11 @@ class BGSystem (BGBaseSystem):
         return self.node_card_cache[name]
 
     def _new_partition_dict(self, partition_def, bp_cache={}):
-        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
-        NODES_PER_NODECARD = 32
+        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API -- replaced for now by config file check.
+        #NODES_PER_NODECARD = 32
+        #we're going to get this from the bridge.  I think we can get the 
+        #size of the target partition and eliminate this.
+        
 
         node_list = []
 
@@ -381,7 +385,7 @@ class BGSystem (BGBaseSystem):
         d = dict(
             name = partition_def.id,
             queue = "default",
-            size = NODES_PER_NODECARD * len(node_list),
+            size = partition_def.partition_size #self.NODES_PER_NODECARD * len(node_list),
             node_cards = node_list,
             switches = [ s.id for s in partition_def.switches ],
             state = _get_state(partition_def),
@@ -416,8 +420,6 @@ class BGSystem (BGBaseSystem):
         
         """Read partition data from the bridge."""
         
-   
-           
         self.logger.info("configure()")
         try:
             system_def = Cobalt.bridge.PartitionList.by_filter()
