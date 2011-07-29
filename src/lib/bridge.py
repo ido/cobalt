@@ -464,7 +464,7 @@ class Partition (Resource):
    
     def _get_partition_size(self):
         size = self._get_data(RM_PartitionSize, c_int)
-        return size
+        return size.value
 
     partition_size = property(_get_partition_size)
 
