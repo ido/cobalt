@@ -101,6 +101,7 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = BGProcessGroup
         self.diag_pids = dict()
         self.configure()
+                
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_partition_state, tuple())
     
@@ -166,8 +167,11 @@ class BGSystem (BGBaseSystem):
         return self.node_card_cache[name]
 
     def _new_partition_dict(self, partition_def, bp_cache={}):
-        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
-        NODES_PER_NODECARD = 32
+        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API -- replaced for now by config file check.
+        #NODES_PER_NODECARD = 32
+        #we're going to get this from the bridge.  I think we can get the 
+        #size of the target partition and eliminate this.
+        
 
         node_list = []
 
@@ -190,7 +194,7 @@ class BGSystem (BGBaseSystem):
         d = dict(
             name = partition_def.id,
             queue = "default",
-            size = NODES_PER_NODECARD * len(node_list),
+            size = partition_def.partition_size, #self.NODES_PER_NODECARD * len(node_list),
             node_cards = node_list,
             switches = [ s.id for s in partition_def.switches ],
             state = _get_state(partition_def),
@@ -205,7 +209,7 @@ class BGSystem (BGBaseSystem):
             if s1.intersection(s2):
                 p._wiring_conflicts.add(partition.name)
                 partition._wiring_conflicts.add(p.name)
-                self.logger.debug("%s and %s havening problems" % (partition.name, p.name))
+                self.logger.debug("%s and %s havening problems (wiring conflict)" % (partition.name, p.name))
 
         s1 = set(partition.switches)
 
@@ -225,8 +229,6 @@ class BGSystem (BGBaseSystem):
         
         """Read partition data from the bridge."""
         
-   
-           
         self.logger.info("configure()")
         try:
             system_def = Cobalt.bridge.PartitionList.by_filter()
@@ -266,14 +268,40 @@ class BGSystem (BGBaseSystem):
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.used_by:
-                        p.state = "blocked (%s)" % nc.used_by
-                        break
+                        if self.partition_really_busy(p, nc):
+                            p.state = "blocked (%s)" % nc.used_by
+                            break
                 for dep_name in p._wiring_conflicts:
                     if self._partitions[dep_name].state == "busy":
                         p.state = "blocked-wiring (%s)" % dep_name
                         break
         
-   
+    def partition_really_busy(self, part, nc):
+        '''Check to see if a 16-node partiton is really busy, or it just
+        it's neighbor is using the nodecard.
+
+        True if really busy, else False
+        '''
+        if part.size != 16: #Everything else is a full nodecard
+            return True
+        really_busy = False
+        for nc in part.node_cards:
+            #break out information and see if this is in-use by a sibling.
+            if nc.used_by:
+                try:
+                    rack, midplane, nodecard = Cobalt.Components.bg_base_system.parse_nodecard_location(nc.used_by)
+                except RuntimeError:
+                    #This isn't in use by a nodecard-level partition, so yeah, this is busy.
+                    really_busy = True
+                    break
+                if (int(rack) != nc.rack 
+                        or int(midplane) != nc.midplane 
+                        or int(nodecard) != nc.nodecard):
+                    really_busy = True
+                    break
+        return really_busy
+
+  
     def update_partition_state(self):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
         
@@ -425,7 +453,8 @@ class BGSystem (BGBaseSystem):
                                 p.state = "blocked by pending diags"
                         for nc in p.node_cards:
                             if nc.used_by:
-                                p.state = "blocked (%s)" % nc.used_by
+                                if self.partition_really_busy(p, nc):
+                                    p.state = "blocked (%s)" % nc.used_by
                             if nc.state != "RM_NODECARD_UP":
                                 p.state = "hardware offline: nodecard %s" % nc.id
                                 self.offline_partitions.append(p.name)

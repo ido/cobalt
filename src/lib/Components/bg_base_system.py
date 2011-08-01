@@ -13,6 +13,7 @@ import sys
 import time
 import xmlrpclib
 import copy
+import re
 import Cobalt
 from Cobalt.Data import Data, DataDict
 from Cobalt.Exceptions import JobValidationError, ComponentLookupError
@@ -53,16 +54,54 @@ else:
     walltime_prediction_enabled = False
 # *AdjEst*
 
+def parse_nodecard_location(name):
+    '''convert a location string to a R,M,N tuple
+    must have up to nodecard information in name.
+
+    '''
+    parser = re.compile(r'R(?P<rack>[0-9]{2})-M(?P<midplane>[0-9])-N(?P<nodecard>[0-9]{2})')
+    match = parser.search(name)
+    if match == None:
+        raise RuntimeError("%s caused a parser error!"% name)
+    return match.groups()
+    
+
 class NodeCard (object):
-    """node cards make up Partitions"""
+    """node cards make up Partitions
+    
+        useful members:
+        id - Nodecard location, according to the control system (RXX-MY-NZZ)
+        used_by - Name of <something> using a particular nodecard
+        state - state of the nodecard (like RM_NODECARD_UP)
+        rack - rack location
+        midplane - midplane location in rack
+        nodecard - nodecard location in midplane
+
+        __eq__ - nodecards are equal if their id's are equal
+        
+    """
     def __init__(self, name, state="RM_NODECARD_UP"):
         self.id = name
         self.used_by = ''
         self.state = ''
-        
+        self.set_physical_location(name)
+
     def __eq__(self, other):
         return self.id == other.id
-        
+
+    def set_physical_location(self, name):
+        try:
+            rack, midplane, nodecard = parse_nodecard_location(name)
+        except RuntimeError:
+            self.rack = 0
+            self.midplane = 0
+            self.nodecard = 0
+            return
+        self.rack = int(rack)
+        self.midplane = int(midplane)
+        self.nodecard = int(nodecard)
+        return
+    
 
 class Partition (Data):
     
@@ -299,83 +338,57 @@ class BGBaseSystem (Component):
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
             
-            #Check the wiring dependencies of our children.
-            #Touching those would be bad. --PMR
-
-#            new_parents = []
-#            for par in p._parents:       
-#                for dep_name in par._wiring_conflicts:
-#                    if dep_name in self._managed_partitions:        
-#                        new_parents.append(self._partitions[dep_name])
-#            p._parents.union(set(new_parents))
-#
-#            for child in p._children:       
-#                for dep_name in child._wiring_conflicts:
-#                    if dep_name in self._managed_partitions:        
-#                        p._parents.add(self._partitions[dep_name])
-
 
             # toss the wiring dependencies in with the parents
             for dep_name in p._wiring_conflicts:
                 if dep_name in self._managed_partitions:
                     p._parents.add(self._partitions[dep_name])
             
-
             for other in self._partitions.itervalues():
                 if p.name == other.name:
                     continue
 
                 p_set = set(p.node_cards)
                 other_set = set(other.node_cards)
+                
+               
+                if p.size == 16 and other.size == 16 and len(p_set ^ other_set) == 0:
+                    continue
 
                 if other.name in self._managed_partitions:
                     # if p is a subset of other, then p is a child; add other to p's list of managed parent partitions, and p to
                     # other's list of managed child partitions
                     if p_set.intersection(other_set)==p_set:
-                        p._parents.add(other)
-                        other._children.add(p)
+                        if p.size < other.size:
+                            p._parents.add(other)
+                            other._children.add(p)
                     # if p contains other, then p is a parent; add other to p's list of managed child partitions and p to other's
                     # list of managed parent partitions
                     elif p_set.union(other_set)==p_set:
-                        p._children.add(other)
-                        other._parents.add(p)
+                        if p.size > other.size:
+                            p._children.add(other)
+                            other._parents.add(p)
 
                 # if p contains other, then p is a parent; add other to p's list of all child partitions
                 if p_set.union(other_set)==p_set:
-                    p._all_children.add(other)
+                    if p.size > other.size:
+                        p._all_children.add(other)
 
         #Let's get the wiring conflicts for direct childeren as well, 
         #we shouldn't be able to run on these either. --PMR
         for p_name in self._managed_partitions:
 
-            #if p_name != "ANL-R10-R47-32768":
-             #   continue
-
             p = self._partitions[p_name]
             for child in p._children:
-                #print "Child %s:" % child.name
                 for dep_name in child._wiring_conflicts:
-                    #print "Conflict: %s" % dep_name
                     if dep_name in self._managed_partitions:        
                         p._parents.add(self._partitions[dep_name])
                 #we shouldn't be scheduling on the parents of our children either
                 for par in child._parents:
-                    #print "Parent: %s" % par.name
                     if ((par.name != p_name) and
                         (par.name in self._managed_partitions)):
                         p._parents.add(self._partitions[par.name])
                     
-            
-        #for p_name in self._managed_partitions:
-            
-            #if p_name != "ANL-R10-R47-32768":
-             #   continue
-         #   print str(p_name) + ":"
-         #   print "Parents: " + str(":".join([par.name for par in self._partitions[p_name]._parents]))
-         #   print "Children:" + str(":".join([child.name for child in self._partitions[p_name]._children]))
-         #   print "Conflicts:" +  str(":".join([con for con in self._partitions[p_name]._wiring_conflicts]))              
-
-
     def validate_job(self, spec):
         """validate a job for submission
 
@@ -821,9 +834,11 @@ class BGBaseSystem (Component):
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
                 part.state = "allocated"
+                print "parents:"
                 for p in part._parents:
                     if p.state == "idle":
                         p.state = "blocked (%s)" % (part.name,)
+                print "children:"
                 for p in part._children:
                     if p.state == "idle":
                         p.state = "blocked (%s)" % (part.name,)
