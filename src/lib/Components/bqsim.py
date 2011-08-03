@@ -96,7 +96,7 @@ class BGQsim(Simulator):
         self.cur_time_index = 0
         self.queues = SimQueueDict(policy=None)
         
-        self.unsubmitted_job_spec_dict = {}   #{jobid: jobspec}
+        self.unsubmitted_job_spec_dict = {}   #{jobid_stringtype: jobspec}
 
         self.num_running = 0
         self.num_waiting = 0
@@ -188,6 +188,14 @@ class BGQsim(Simulator):
             self.coscheduling = False
             
         self.max_holding_sys_util = DEFAULT_MAX_HOLDING_SYS_UTIL
+                        
+####----reservation related
+        self.reservations = {}
+        self.reserve_ratio = kwargs.get("reserve_ratio", 0)
+        if self.reserve_ratio > 0:
+            self.init_jobid_qtime_pairs()
+            self.init_reservations_by_ratio(self.reserve_ratio)
+            print self.reservations    
                         
 ####----log and other 
         #initialize PBS-style logger
@@ -315,6 +323,69 @@ class BGQsim(Simulator):
         return [job for job in self.queues.get_jobs([{'has_resources':True}])]
     running_jobs = property(_get_running_jobs)
     
+    def init_reservations_by_ratio(self, ratio):
+        '''init self.reservations dictionary'''
+        
+        if ratio <= 0.5:
+            step = int(1.0 / ratio)
+            reverse_step = 1
+        else:
+            step = 1
+            reverse_step = int(1.0/(1-ratio))
+        
+        print "step=", step
+        print "reverse_step=", reverse_step
+        
+        i = 0
+        temp_dict = {}
+        for item in self.jobid_qtime_pairs:
+            #remote_item = self.remote_jobid_qtime_pairs[i]
+            i += 1
+            
+            if step > 1 and i % step != 0:
+                continue
+            
+            if reverse_step > 1 and i % reverse_step == 0:
+                continue
+            
+            jobid = item[1]
+            reserved_time = item[0]
+            jobspec = self.unsubmitted_job_spec_dict[str(jobid)]
+            
+            nodes = int(jobspec['nodes'])
+            if nodes < 512 or nodes> 16384:
+                continue
+            
+            reserved_location = jobspec['location']
+            self.reservations[jobid] = (reserved_time, reserved_location)
+        print "totally reserved jobs: ", len(self.reservations.keys())
+        
+    def reservation_violated(self, expect_end, location):
+        '''test if placing a job with current expected end time (expect_end) 
+        on partition (location) will violate any reservation'''
+        violated = False
+        for resrv in self.reservations.values():
+            start = resrv[0]
+            if expect_end < start:
+                continue
+            
+            reserved_partition = resrv[1]
+            if self.location_conflict(location, reserved_partition):
+                #print "location conflict:", location, reserved_partition
+                violated = True
+            
+        return violated
+    
+    def location_conflict(self, partname1, partname2):
+        '''test if partition 1 is parent or children or same of partition2 '''
+        conflict = False
+         
+        p = self._partitions[partname2]
+        #print partname1, partname2, p.children, p.parents
+        if partname1==partname2 or partname1 in p.parents or partname1 in p.parents:
+            conflict = True
+        return conflict
+            
     def init_queues(self):
         '''parses the work load log file, initializes queues and sorted time 
         stamp list'''
@@ -391,6 +462,7 @@ class BGQsim(Simulator):
             spec['queue'] = "default"
             spec['has_resources'] = False
             spec['is_runnable'] = False
+            spec['location'] =tmp.get('exec_host', '')
             
             #add the job spec to the spec list            
             specs.append(spec)
@@ -501,7 +573,9 @@ class BGQsim(Simulator):
         #print "current event=", cur_event, " ", ids
         for Id in ids:
             
+
             if cur_event == "Q":  # Job (Id) is submitted
+                
                 tempspec = self.unsubmitted_job_spec_dict.get(Id, None)
                 
                 if tempspec == None:
@@ -515,7 +589,15 @@ class BGQsim(Simulator):
                 
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
+                            #handle reserved job (first priority)
+                if int(Id) in self.reservations.keys():
+                    reserved_location = self.reservations.get(int(Id))[1]
+                    self.start_reserved_job(int(Id), [reserved_location])
+                    continue #skip "Q" and "E" operation
+                
                 del self.unsubmitted_job_spec_dict[Id]
+                
+                
 
             elif cur_event=="E":  # Job (Id) is completed
                 completed_job = self.get_live_job_by_id(Id)
@@ -550,6 +632,11 @@ class BGQsim(Simulator):
             self.print_screen(cur_event)
                 
         return 0
+    
+    def start_reserved_job(self, jobid, nodelist):
+        #print "start reserved job %s at %s" % (jobid, nodelist)
+        self.start_job([{'jobid':int(jobid)}], {'location': nodelist})
+        del self.reservations[jobid]
     
     def run_jobs(self, specs, nodelist, user_name=None, resid=None):
         '''run a queued job, by updating the job state, start_time and
@@ -805,6 +892,10 @@ class BGQsim(Simulator):
                 if 60*runtime_estimate > (partition.backfill_time - now):
                     continue
                 
+            if self.reserve_ratio > 0:
+                if self.reservation_violated(self.get_current_time_sec() + 60*runtime_estimate, partition.name):
+                   continue
+                
             if partition.state == "idle":
                 # let's check the impact on partitions that would become blocked
                 
@@ -960,15 +1051,19 @@ class BGQsim(Simulator):
         if size is not None and size > partition.size:
             self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
             return False
+        
+        if partition.state == "busy":
+            print "try to reserve a busy partition: %s!!!" % name
+            return False
 
-        self._partitions_lock.acquire()
+        #self._partitions_lock.acquire()
         try:
             partition.state = "busy"
             partition.reserved_until = False
         except:
             self.logger.error("error in reserve_partition", exc_info=True)
             print "try to reserve a busy partition!!"
-        self._partitions_lock.release()
+        #self._partitions_lock.release()
         # explicitly call this, since the above "busy" is instantaneously available
         self.update_partition_state()
         
@@ -1303,7 +1398,6 @@ class BGQsim(Simulator):
             
         def _qtimecmp(tup1, tup2):
             return cmp(tup1[0], tup2[0])
-
         
         self.jobid_qtime_pairs.sort(_qtimecmp)
                            

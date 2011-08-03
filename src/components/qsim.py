@@ -23,7 +23,7 @@ import time
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
             'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 
-            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch', 'backfill']
+            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch', 'backfill', 'reserve_ratio']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -190,6 +190,9 @@ if __name__ == "__main__":
     p.add_option(Option("-l", "--backfill",
         dest="backfill", type="string",
         help="specify backfilling scheme [ff|bf|sjfb] ff=first-fit, bf=best-fit, sjfb=short-job-first backfill"))
+    p.add_option(Option("-R", "--reservation",
+        dest="reserve_ratio", type="float", default=0.0,
+        help="float (0--1), specify the proportion of reserved jobs in the job trace, by default it is 0."))
 
     start_sec = time.time()
         

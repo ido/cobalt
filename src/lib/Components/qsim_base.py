@@ -273,7 +273,7 @@ class Job (Data):
         self.progress = 0
         #self.checkpoint = 1
         self.recovering = False
-        self.location = []
+        self.location = spec.get('location', '')  #original location read from job trace, used for job reservation
 
 class JobList(DataList):
     '''the list of job objects'''
