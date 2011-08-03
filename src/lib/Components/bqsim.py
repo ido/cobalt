@@ -195,7 +195,6 @@ class BGQsim(Simulator):
         if self.reserve_ratio > 0:
             self.init_jobid_qtime_pairs()
             self.init_reservations_by_ratio(self.reserve_ratio)
-            print self.reservations    
                         
 ####----log and other 
         #initialize PBS-style logger
@@ -313,15 +312,23 @@ class BGQsim(Simulator):
                 return
         self.pbslog.LogMessage(message)
 
-##### job/queue related
-    def _get_queuing_jobs(self):
-        jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
-        return jobs
-    queuing_jobs = property(_get_queuing_jobs)
+
+ ####reservation related
     
-    def _get_running_jobs(self):
-        return [job for job in self.queues.get_jobs([{'has_resources':True}])]
-    running_jobs = property(_get_running_jobs)
+    def init_starttime_jobid_pairs(self):
+        '''used for initializing reservations'''
+        pair_list = []
+        
+        for id, spec in self.unsubmitted_job_spec_dict.iteritems():
+            start = spec['start_time']
+            pair_list.append((float(start), int(id)))
+            
+        def _stimecmp(tup1, tup2):
+            return cmp(tup1[0], tup2[0])
+        
+        pair_list.sort(_stimecmp)
+        
+        return pair_list
     
     def init_reservations_by_ratio(self, ratio):
         '''init self.reservations dictionary'''
@@ -333,12 +340,10 @@ class BGQsim(Simulator):
             step = 1
             reverse_step = int(1.0/(1-ratio))
         
-        print "step=", step
-        print "reverse_step=", reverse_step
-        
         i = 0
         temp_dict = {}
-        for item in self.jobid_qtime_pairs:
+        start_time_pairs = self.init_starttime_jobid_pairs()
+        for item in start_time_pairs:
             #remote_item = self.remote_jobid_qtime_pairs[i]
             i += 1
             
@@ -358,6 +363,9 @@ class BGQsim(Simulator):
             
             reserved_location = jobspec['location']
             self.reservations[jobid] = (reserved_time, reserved_location)
+            
+            self.insert_time_stamp(reserved_time, "S", {'jobid':jobid})
+            
         print "totally reserved jobs: ", len(self.reservations.keys())
         
     def reservation_violated(self, expect_end, location):
@@ -385,7 +393,17 @@ class BGQsim(Simulator):
         if partname1==partname2 or partname1 in p.parents or partname1 in p.parents:
             conflict = True
         return conflict
-            
+    
+##### job/queue related
+    def _get_queuing_jobs(self):
+        jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
+        return jobs
+    queuing_jobs = property(_get_queuing_jobs)
+    
+    def _get_running_jobs(self):
+        return [job for job in self.queues.get_jobs([{'has_resources':True}])]
+    running_jobs = property(_get_running_jobs)
+                
     def init_queues(self):
         '''parses the work load log file, initializes queues and sorted time 
         stamp list'''
@@ -462,7 +480,8 @@ class BGQsim(Simulator):
             spec['queue'] = "default"
             spec['has_resources'] = False
             spec['is_runnable'] = False
-            spec['location'] =tmp.get('exec_host', '')
+            spec['location'] =tmp.get('exec_host', '')  #used for reservation jobs only
+            spec['start_time'] = tmp.get('start', 0)  #used for reservation jobs only
             
             #add the job spec to the spec list            
             specs.append(spec)
@@ -535,8 +554,14 @@ class BGQsim(Simulator):
             del self.yielding_job_list[:]
                         
             cur_event = self.event_manager.get_current_event_type()
+            cur_event_job = self.event_manager.get_current_event_job
+            
+            if cur_event == "S":
+                #start reserved job at this time point
+                self.run_reserved_jobs()
                         
             if cur_event in ["Q", "E"]:
+                #scheduling related events
                 self.update_job_states(specs, {}, cur_event)
             
             self.compute_utility_scores()
@@ -560,6 +585,10 @@ class BGQsim(Simulator):
         
         if self.yielding_job_list:
             jobs = [job for job in jobs if job.jobid not in self.yielding_job_list]
+            
+        #before handling the jobs to scheduler, rule out the jobs already having reservations
+        if self.reservations:
+            jobs = [job for job in jobs if job.jobid not in self.reservations.keys()]
   
         return jobs
     get_jobs = exposed(query(get_jobs))
@@ -589,12 +618,7 @@ class BGQsim(Simulator):
                 
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
-                            #handle reserved job (first priority)
-                if int(Id) in self.reservations.keys():
-                    reserved_location = self.reservations.get(int(Id))[1]
-                    self.start_reserved_job(int(Id), [reserved_location])
-                    continue #skip "Q" and "E" operation
-                
+                  
                 del self.unsubmitted_job_spec_dict[Id]
                 
                 
@@ -633,10 +657,18 @@ class BGQsim(Simulator):
                 
         return 0
     
+    def run_reserved_jobs(self):
+        #handle reserved job (first priority)
+        jobid = int(self.event_manager.get_current_event_job())
+        
+        if jobid in self.reservations.keys():
+            reserved_location = self.reservations.get(jobid)[1]
+            self.start_reserved_job(jobid, [reserved_location])
+            
     def start_reserved_job(self, jobid, nodelist):
-        #print "start reserved job %s at %s" % (jobid, nodelist)
+       # print "%s: start reserved job %s at %s" % (self.get_current_time_date(), jobid, nodelist)
         self.start_job([{'jobid':int(jobid)}], {'location': nodelist})
-        del self.reservations[jobid]
+        del self.reservations[jobid]   
     
     def run_jobs(self, specs, nodelist, user_name=None, resid=None):
         '''run a queued job, by updating the job state, start_time and
