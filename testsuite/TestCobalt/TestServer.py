@@ -10,7 +10,7 @@ from Cobalt.Server import find_intended_location, XMLRPCServer
 from Cobalt.Components.base import Component
 
 cp = ConfigParser.ConfigParser()
-cp.read("testsuite/TestCobalt/cobalt.test_server.conf")
+cp.read("testsuite/configs/cobalt.test_server.conf")
 keypath = os.path.expandvars(cp.get('communication', 'key'))
 certpath = os.path.expandvars(cp.get('communication', 'cert'))
 capath = os.path.expandvars(cp.get('communication', 'ca'))
