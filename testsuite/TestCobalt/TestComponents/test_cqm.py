@@ -72,11 +72,6 @@ import TestCobalt.Utilities.WhiteBox
 from TestCobalt.Utilities.WhiteBox import whitebox
 TestCobalt.Utilities.WhiteBox.WHITEBOX_TESTING = WHITEBOX_TESTING
 
-#get our mock forker:
-from TestCobalt.TestComponents.forker_mock_up import MockForker
-
-
-
 # get name of user running the tests
 try:
     uid = os.getuid()
@@ -105,7 +100,6 @@ class TestCQMQueueManagement (TestCQMComponent):
     def setup(self):
         TestCQMComponent.setup(self)
         self.cqm = QueueManager()
-        self.forker = MockForker()
         self.setup_jobid()
 
     def teardown(self):
@@ -199,7 +193,6 @@ class TestCQMJobManagement (TestCQMComponent):
     def setup(self):
         TestCQMComponent.setup(self)
         self.cqm = QueueManager()
-        self.forker = MockForker()
         self.setup_jobid()
 
     def teardown(self):
@@ -702,7 +695,6 @@ class CQMIntegrationTestBase (TestCQMComponent):
     def setup(self):
         TestCQMComponent.setup(self)
         self.slp = TimingServiceLocator()
-        self.forker = MockForker()
 
     def setup_cqm(self):
         self.qm = QueueManager()
@@ -3289,7 +3281,6 @@ class TestCQMIntegration (CQMIntegrationTestBase):
     def setup(self):
         CQMIntegrationTestBase.setup(self)
         self.taskman = SimulatedSystem()
-        self.forker = MockForker()
         self.setup_cqm()
 
     def teardown(self):
