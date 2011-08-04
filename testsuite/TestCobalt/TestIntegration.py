@@ -4,34 +4,58 @@ import xmlrpclib
 import time
 import traceback
 import logging
+import subprocess
+
 
 import TestCobalt
 from Cobalt.Components.slp import TimingServiceLocator
 from Cobalt.Components.cqm import QueueManager
 from Cobalt.Components.simulator import Simulator
-from Cobalt.Components.scriptm import ScriptManager
+#Scriptm has left the Cobalt: 08-03-2011 --PMR
+#from Cobalt.Components.scriptm import ScriptManager
+from Cobalt.Components.bg_mpirun_forker import BGMpirunForker
 from Cobalt.Proxy import ComponentProxy
 import Cobalt.Proxy
 from Cobalt.Exceptions import ComponentLookupError
 from Utilities.ThreadSupport import *
+from subprocess import PIPE
 
 class TestIntegration (object):
     def setup (self):
-        self.slp = TimingServiceLocator()
-        self.system = Simulator(config_file="simulator.xml")
-        self.system_thr = ComponentProgressThread(self.system)
-        self.system_thr.start()
-        self.scriptm = ScriptManager()
-        self.scriptm_thr = ComponentProgressThread(self.scriptm)
-        self.scriptm_thr.start()
-        self.qm = QueueManager()
-        self.qm_thr = ComponentProgressThread(self.qm)
-        self.qm_thr.start()
+        #self.slp = TimingServiceLocator()
+        #self.slp_thr = ComponentProgressThread(self.slp)
+        #self.slp_thr.start()
+        #self.system = Simulator(config_file="simulator.xml")
+        #self.system_thr = ComponentProgressThread(self.system)
+        #self.system_thr.start()
+        self.slp_handle = subprocess.Popen("src/components/slp.py", stdout=PIPE, stderr=PIPE)
+        time.sleep(30)
+        self.cqm_handle = subprocess.Popen("src/components/cqm.py", stdout=PIPE, stderr=PIPE)
+        self.system_handle = subprocess.Popen("src/components/brooklyn.py", stdout=PIPE, stderr=PIPE)
+        self.bg_mpirun_forker_handle = subprocess.Popen("src/components/bg_mpirun_forker.py", stdout=PIPE, stderr=PIPE)
+        self.user_script_forker_handle = subprocess.Popen("src/components/user_script_forker.py", stdout=PIPE, stderr=PIPE)
+        time.sleep(30)
+        print "ALL INITIALIZED"
+        print os.environ["COBALT_CONFIG_FILES"]
+        #self.qm = QueueManager()
+        #self.qm_thr = ComponentProgressThread(self.qm)
+        #self.qm_thr.start()
+        #self.bg_mpirun_forker = BGMpirunForker()
+        
+        #self.bg_mpirun_forker_thr = ComponentProgressThread(self.bg_mpirun_forker)
+        #self.bg_mpirun_forker_thr.start()
+
         
     def teardown (self):
-        self.qm_thr.stop()
-        self.scriptm_thr.stop()
-        self.system_thr.stop()
+        #self.qm_thr.stop()
+        #self.system_thr.stop()
+        #self.bg_mpirun_forker_thr.stop()
+        self.cqm_handle.terminate() 
+        self.bg_mpirun_forker_handle.terminate() 
+        self.user_script_forker_handle.terminate() 
+        self.system_handle.terminate() 
+        self.slp_handle.terminate() 
+        #self.slp_thr.stop()
         Cobalt.Proxy.local_components.clear()
 
     def test_something(self):
@@ -40,6 +64,7 @@ class TestIntegration (object):
         try:
             cqm = ComponentProxy("queue-manager")
         except ComponentLookupError:
+            traceback.print_exc()
             assert not "failed to connect to queue manager"
         
         # add a queue    
