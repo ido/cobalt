@@ -311,6 +311,7 @@ def get_job_sm_transitions():
         ('Job_Prologue', 'Job_Prologue_Retry'),             # Lost communication to forker during progress
         ('Job_Prologue', 'Job_Epilogue'),                   # job_prologue failed.  Initiate job cleanup
         ('Job_Prologue', 'Job_Epilogue_Retry'),             # job_prologue failed.  Error communicatiing with forker
+        ('Job_Prologue', 'Release_Resources_Retry'),   # kill; error contacting system component to release resource
         ('Job_Prologue_Retry', 'Job_Prologue'),             # forker starting job prologue scripts
         ('Job_Prologue_Retry', 'Terminal'),                 # kill; error contacting forker component
         ('Resource_Prologue', 'Release_Resources_Retry'),   # kill; error contacting system component to release resource
@@ -323,6 +324,8 @@ def get_job_sm_transitions():
         ('Resource_Prologue_Retry','Job_Epilogue'),         # kill; run any required job cleanup
         ('Release_Resources_Retry', 'Resource_Epilogue'),   # resource successfully released
         ('Release_Resources_Retry', 'Resource_Epilogue_Retry'), # error contacting forker component
+        ('Release_Resources_Retry', 'Job_Epilogue'),   # resource successfully released
+        ('Release_Resources_Retry', 'Job_Epilogue_Retry'), # error contacting forker component
         ('Run_Retry', 'Running'),                           # system component starting task
         ('Run_Retry', 'Resource_Epilogue'),                 # kill
         ('Run_Retry', 'Resource_Epilogue_Retry'),           # kill; error contacting forker component
@@ -1765,6 +1768,25 @@ class Job (StateMachine):
             else:
                 logger.info("Job %s/%s: Job Prologue scripts completed "
                     "successfuly.", self.jobid, self.user)
+                #if we have recieved a kill, we shouldn't bother running any further
+                #scripts and should invoke cleanup.
+                if (has_private_attr(self, '__signaling_info')  and 
+                        self.__signaling_info.pending and 
+                        self.__signaling_info.reason == Signal_Info.Reason.delete):
+                    self.__signaled_info = self.__signaling_info
+                    self.__signaled_info.pending = False
+                    del self.__signaling_info
+                    self._sm_log_info("pending user delete; releasing resources", 
+                        cobalt_log = True)
+                    rc = self.__release_resources()
+                    if rc == Job.__rc_success:
+                        self._sm_log_info("resources released; initiating job cleanup "
+                            "and removal", cobalt_log = True)
+                        self._sm_start_job_epilogue_scripts()
+                    else:
+                        self._sm_state = 'Release_Resources_Retry'
+                    return
+                
                 self._sm_start_resource_prologue_scripts()
 
 
