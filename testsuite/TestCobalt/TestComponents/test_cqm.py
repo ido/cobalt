@@ -73,6 +73,9 @@ import TestCobalt.Utilities.WhiteBox
 from TestCobalt.Utilities.WhiteBox import whitebox
 TestCobalt.Utilities.WhiteBox.WHITEBOX_TESTING = WHITEBOX_TESTING
 
+#Bring in our forker mock-up for pre/postscript testing
+from Cobalt.Components.system_script_forker import SystemScriptForker
+
 # get name of user running the tests
 try:
     uid = os.getuid()
@@ -692,6 +695,7 @@ def get_script_filenames(fn_bases):
 
 class CQMIntegrationTestBase (TestCQMComponent):
     taskman = None
+    system_script_forker = None
 
     def setup(self):
         TestCQMComponent.setup(self)
@@ -1162,13 +1166,28 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_finished_wait()
         self.test_calls = []
         self.job_exec_driver(
-            num_preempts = 1, job_queued = _job_queued, job_pretask = _job_pretask, resource_pretask = _resource_pretask,
-            task_active = _task_active, preempt_posttask = _preempt_posttask, job_preempted = _job_preempted,
-            preempt_pretask = _preempt_pretask, resource_posttask = _resource_posttask, job_posttask = _job_posttask,
+            #num_preempts = 1, 
+            job_queued = _job_queued, 
+            job_pretask = _job_pretask, 
+            resource_pretask = _resource_pretask,
+            task_active = _task_active, 
+            #preempt_posttask = _preempt_posttask, 
+            #job_preempted = _job_preempted,
+            #preempt_pretask = _preempt_pretask, 
+            resource_posttask = _resource_posttask, 
+            job_posttask = _job_posttask,
             job_complete = _job_complete)
-        assert self.test_calls == ["_job_queued", "_job_pretask", "_resource_pretask", "_task_active", "_preempt_posttask", 
-                                   "_job_preempted", "_preempt_pretask", "_task_active", "_resource_posttask", "_job_posttask",
-                                   "_job_complete"]
+        #assert self.test_calls == ["_job_queued", "_job_pretask", "_resource_pretask", "_task_active", "_preempt_posttask", 
+        #                           "_job_preempted", "_preempt_pretask", "_task_active", "_resource_posttask", "_job_posttask",
+        #                           "_job_complete"]
+        #This is adjusted until we have preemption back: PMR 8/8/2011
+        assert self.test_calls == ["_job_queued", 
+                                   "_job_pretask", 
+                                   "_resource_pretask", 
+                                   "_task_active", 
+                                   "_resource_posttask", 
+                                   "_job_posttask",
+                                   "_job_complete"], "Test-call mismatch.  Got:%s" % self.test_calls
         del self.test_calls
 
     #
@@ -3334,10 +3353,12 @@ class TestCQMIntegration (CQMIntegrationTestBase):
     def setup(self):
         CQMIntegrationTestBase.setup(self)
         self.taskman = SimulatedSystem()
+        self.system_script_forker = SystemScriptForker()
         self.setup_cqm()
 
     def teardown(self):
         del self.taskman
+        del self.system_script_forker
         CQMIntegrationTestBase.teardown(self)
 
 
