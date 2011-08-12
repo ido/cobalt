@@ -39,6 +39,49 @@ logger = logging.getLogger('Util')
 config_true_values = ['true', 'yes','1','on']
 config_false_values = ['false', 'no','0','off']
 
+config = ConfigParser.ConfigParser()
+
+def init_cobalt_config():
+    try:
+        config.read(Cobalt.CONFIG_FILES)
+    except:
+        logger.critical("init_cobalt_config: Error Opening Cobalt Config File")
+        raise
+
+
+def get_config_option(section, option, default=None):
+    '''Get an option from the cobalt config file.  Must be called after
+       Cobalt.Util.init_cobalt_cofig.
+       
+       If the option is not found and a default is specified, then the default
+       will be returned.  If the default is None, then an exception will be 
+       raised, appropriate to whether or not the section is found and a message
+       will be written to the log.  
+
+       If a non-None default is specified, then the default value will be used
+       no message is logged.
+        
+
+    '''
+    try:
+        value = config.get(section, option)
+    except ConfigParser.NoOptionError:
+        if default == None:
+            logger.error("get_config_option: Option %s not found in section [%s]", 
+                option, section)
+            raise
+        else:
+            value = default
+    except ConfigParser.NoSectionError:
+        if default == None:
+            logger.error("get_config_option: Section [%s] not found", section)
+            raise
+        else:
+            value = default
+
+    return value
+
+
 def sleep(t):
     
     """The python sleep uses a select() to handle sleep to allow for
