@@ -4072,7 +4072,7 @@ class JobDataMsg(object):
                      'path', 'mode', 'envs', 'queue', 'priority_core_hours',
                      'force_kill_delay', 'all_dependencies', 'attribute', 
                      'attrs', 'satisfied_dependencies', 'preemptable', 
-                     'user_list', 'dep_frac', 'resid'
+                     'user_list', 'dep_frac', 'resid', 'cwd'
                      ]
         
         for attr in attr_list:
