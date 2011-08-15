@@ -135,7 +135,10 @@ class EventSimulator(Component):
         self.finished = False
                 
         self.bgsched = Sim_bg_Sched(**kwargs)
-        self.csched = Sim_Cluster_Sched()
+        
+        #inhibit coscheduling and cluster simulation feature before bgsched.py makes change
+        #self.csched = Sim_Cluster_Sched()
+        
         self.go_next = True
         
     def set_go_next(self, bool_value):

@@ -88,7 +88,11 @@ class BGQsim(Simulator):
 
 ###-------Job related
         self.workload_file =  kwargs.get("bgjob")
-        self.output_log = MACHINE_NAME + "-" + kwargs.get("outputlog", "")
+        outputlog = kwargs.get("outputlog", "")
+        if outputlog:
+            self.output_log = MACHINE_NAME + "-" + outputlog
+        else:
+            self.output_log = MACHINE_NAME
         
         self.event_manager = ComponentProxy("event-manager")
         
