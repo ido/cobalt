@@ -48,10 +48,10 @@ class data_dao(db2util.dao):
 								'EXIT_STATUS' ]
 
 	def set_summary_fields(self, field_list):
-		if not set(field_list).issubset(set(['ID', 'JOBID'])):
+		if not set(field_list).issuperset(set(['ID', 'JOBID'])):
 			raise ValueError("Field List for set_summary_fields must contain 'ID' and 'JOBID'")
 
-		if not set(field_list).issubset(set(self.summary_fields)):
+		if not set(field_list).issubset(set(self.table.fieldNames)):
 			raise ValueError("Field List for set_summary_fields contains an unknown field name")
 
 		self.summary_fields = field_list
