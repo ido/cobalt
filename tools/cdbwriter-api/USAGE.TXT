@@ -1,0 +1,179 @@
+note - Non-released distributions include the development version of db2util that cobaltDB is written against.  db2util is fairly stable at this point, but until the most recent version is propegated to our environment, it's likely best to use the private copy.
+
+Initialization
+--------------
+# required packages
+import db2util
+import cobaltDB
+import datetime # most likely
+
+# If overriding how data is initially loaded, this is useful
+from cobaltDB import DATA_LOAD
+
+# Need a database handle for the database that has cobalt data
+dbh = db2util.db()
+dbh.connect('COBALT_I', '<username>', '<password>')
+
+# Instantiate cobaltDB for a particular cobalt database
+# Need to specify schema
+cdb = cobaltDB.cobaltDB(dbh, "INTREPID")
+
+CobaltDB API General Notes
+--------------------------
+- Job and reservation methods are accessed through the cobaltDB object via .job and .res, respectively
+- Timestamps are specified and returned as datetime objects
+
+Deferred loading and attribute availability
+-------------------------------------------
+Several methods allow specifying how much data is to be gathered using 'data_load' during object instantiation:
+
+NONE         - Do not load any job/reservation data rows
+LAST         - Load all fields from the last data record
+LAST_SUMMARY - Load only 'summary' fields from the last data record
+ALL          - Load all fields from all data records
+ALL_SUMMARY  - Load only 'summary' fields from all data records
+
+Reservations default to ALL. *_SUMMARY is not supported, nor necessary, as reservation objects are relatively lightweight.  Jobs default to LAST_SUMMARY, as a single complete data record can start as high as 512kB and grow substantially depending on how many modifications were made.  The summary field list includes essential fields and specifically exclude LOBs to improve performance.
+
+The list of summary fields (columns) is returned by the job summary_fields attribute:
+
+cobaltDB.job.summary_fields
+
+Which fields are used for summary loads may be set by set_summary_fields.  'ID' and 'JOBID' must be included (experimental):
+
+cobaltDB.job.set_summary_fields(['ID', 'JOBID', 'JOB_USER'])
+
+Support for examining how a job's attribute changes over time is limited for this version, largely negating the utility of ALL or ALL_SUMMARY.
+
+Transparent deferred loading is supported.  If a request is made for a job or reservation attribute which was not loaded from the underlying database at object instantiation, the object will fetch the missing data and return the attribute value.  Subsequent requests for other attributes from the same data row will not incur another fetch.  Iterating over a large number of jobs asking for attributes affected by deferred load will incur substantial performance penalties.  Consider changing data_load to include more data at instantiation.
+
+Common Methods
+--------------
+.job and .res share some common methods:
+
+cobaltid(cobaltid, data_load = DATA_LOAD.NONE)
+
+Return a list of job or reservation object(s) corresponding to the given cobalt ID (job ID or res ID).  A list of IDs may also be supplied.
+
+active_by_daterange(start_DT, end_DT, data_load = DATA_LOAD_DEFAULT)
+
+Return a list of job or reservation object(s) which were active during the specified timeframe.
+
+Job Methods
+-----------
+cobaltDB.job.jobid(jobid, data_load = DATA_LOAD_DEFAULT)
+
+Return a list of job object(s) corresponding to the given job ID (or list of job IDs).
+
+cobaltDB.job.running(data_load = DATA_LOAD_DEFAULT)
+
+Return a list of job object(s) which are presently running
+
+cobaltDB.job.nonterminal(data_load = DATA_LOAD_DEFAULT)
+
+Return a list of job object(s) which are nonterminal (queued or running)
+
+cobaltDB.job.min_jobid(jobid, data_load = DATA_LOAD_DEFAULT)
+
+Return a list of job object(s) whose job ID is equal to or greater than the given job ID.
+
+Reservation Methods
+-------------------
+cobaltDB.res.resid(resid, data_load = DATA_LOAD.ALL):
+
+Return a list of reservation object(s) corresponding to the given reservation ID (or list of reservation IDs).
+
+cobaltDB.res.active()
+
+Return a list of reservation object(s) which are active
+
+cobaltDB.res.nonterminal()
+
+Return a list of reservation object(s) which are pending or active
+
+cobaltDB.res.all()
+
+Return a list of reservation object(s) corresponding to every reservation recorded in cobaltDB.
+
+Job and Reservation Objects
+---------------------------
+Several attributes are derived directly from the underlying database structure and will not show up in the object's directory.  These attributes are available through the dynamic_attrs property:
+
+cobaltDB.job.dynamic_attrs
+cobaltDB.res.dynamic_attrs
+
+Any job or reservation object should always have all associated progress records for the object to be considered valid.  Validity may be tested with the valid property:
+
+cobaltDB.job.valid
+cobaltDB.res.valid
+
+A job or reservation object's cobalt ID (job ID/reservation ID) is accessed through the cobaltid property:
+
+cobaltDB.job.cobaltid
+cobaltDB.res.cobaltid
+
+The calling program can check if an object's progress has changed since instantiation.  prog_changed will be True if so.  Doing so results in a database transaction:
+
+cobaltDB.job.prog_changed
+cobaltDB.res.prog_changed
+
+Attributes derived from all data row(s) can be flushed to force a reload using purge_data:
+
+cobaltDB.job.purge_data()
+cobaltDB.res.purge_data()
+
+The most recent job data, all progress records and optionally a reanalysis (see below on analysis) may be forced with referesh:
+
+cobaltDB.job.refresh(reanalyze = True)
+cobaltDB.res.refresh(reanalyze = True)
+
+Analysis
+--------
+Several interesting aspects of both job and reservation objects such as eligible wait time and duration have a time component which requires a specified end time.  This is termed the 'end_window' and is a datetime object.  One possible practice is to capture a single value of 'now' when the calling program starts (now = datetime.datetime.now()) and supplying 'now' as the analysis time.  Keep in mind the TZ in the calling environment should match the TZ used in the underlying database.
+
+Analysis objects are not available until analysis() has been called with the end_window as its argument.  All job and reservation methods except jobid/resid/cobaltid will call analysis() on every instantiated record using the value of datetime.now().  This is known to be somewhat inconsistent and will be addressed in a later revision.  Recalling analysis() with a new end_window is permitted.  If no end_window is provided on subsequent calls, analysis is not rerun and the previously computed attributes are returned.  Normal usage is to call analysis() with an end_window only once.  Attempting to access analysis attributes prior to calling with end_window results in an error.  A quick and dirty way to see a job or reservation's object's analysis data is available through the debug() method:
+
+obj.analysis(datetime.datetime.now()).debug()
+
+See source documentation for the _analysis_template class in job_state.py and res_state.py for a complete list of analysis attributes.  Note that effective use of reservation objects
+will require iterating through the reservation segments.
+
+Example
+-------
+import db2util
+import cobaltDB
+import datetime
+now = datetime.datetime.now()
+dbh_cobalt_i = db2util.db()
+dbh_cobalt_i.connect('cobalt_i', '<user>', '<password>')
+intrepid_cdb = cobaltDB.cobaltDB(dbh_cobalt_i, "INTREPID")
+from cobaltDB import DATA_LOAD
+
+# Fetch reservation 5209 (always get lists, just want first object)
+
+res = intrepid_cdb.res.cobaltid(5209)[0]
+
+# cobaltid/resid/jobid don't do analysis on their own, do it now
+
+res.analysis(now)
+
+# When did it first start (become active)?
+
+print res.analysis().start
+
+# We could also have done:
+# print res.analysis(now).start
+
+# Lazy listing of what partitions for how long:
+
+for seg in res.analysis().segments:
+    print segment.partitions, segment.duration
+
+# Very lazy dump of reservation data:
+
+res.analysis().debug()
+
+# 
+
+
+
