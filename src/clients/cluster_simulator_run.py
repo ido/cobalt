@@ -32,7 +32,8 @@ if __name__ == '__main__':
 
     exit_status = 0 #so we can make flags for non-zero statuses later.
     timeout = None
-
+    
+    print >> stdout, "Stdout: CHECK!"
     print >> stderr, '#' * 80
     print >> stderr, "Args:\n", "\n".join(argv)
     print >> stderr, '#' * 80

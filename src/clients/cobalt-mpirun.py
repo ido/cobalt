@@ -55,6 +55,32 @@ def check_env(env_name):
         print >> sys.stderr, "Environment variable %s expected, but not found! Aborting." % env_name
         sys.exit(1)
 
+def open_output(filename, desc):
+    #filename always being set for these operations, no need for a scratch, if we can't write,
+    #then we're already writing to default for script.  Seems to be a safe failover.
+    out_file = None
+    try:
+        try:
+            out_file = open(filename, 'a')
+        except (IOError, OSError, TypeError), e:
+            _logger.error("%s: error opening %s file %s: %s: Refusing to redirect", self.label, desc, filename, e)
+    except Exception, e:
+        _logger.error("%s: an unexpected error occurred while opening output file %s: %s", self.label, filename, e)
+    return out_file
+
+
+def open_input(filename, desc):
+    in_file = None
+    try:
+        try:
+            in_file = open(filename, 'r')
+        except (IOError, OSError, TypeError), e:
+            _logger.error("%s: error opening %s file %s; Refusing to redirect: %s", self.label, desc, filename, e)
+    except Exception, e:
+        _logger.error("%s: an unexpected error occurred while opening input file %s: %s", self.label, filename, e)
+    return in_file
+
+
 
 if __name__ == '__main__':
 
@@ -199,8 +225,29 @@ if __name__ == '__main__':
             raise SystemExit, 1
         
     for key in io_redirect:
+        #redirect only if user specified.
         if io_redirect[key]:
-            jobspec.update({key: io_redirect[key]})
+            if key in ['stdin']:
+                fd = open_input(io_redirect[key], key)
+            elif key in ['stdout','stderr']:
+                fd = open_output(io_redirect[key], key)
+            else:
+                #unknown key, but we're not redirecting IO at this point.
+                logger.error("Error: Tried to redirect something other than stdout, stderr or stdin.")
+                continue
+            try:
+                if fd != None:
+                    if key == 'stdout':
+                        os.dup2(fd.fileno(), sys.__stdout__.fileno())
+                    elif key == 'stderr':
+                        os.dup2(fd.fileno(), sys.__stderr__.fileno())
+                    elif key == 'stdin':
+                        os.dup2(fd.fileno(), sys.__stdin__.fileno())
+            except Exception:
+                logger.error("%s/%s: an error occurred while redirecting %s to %s.  This output stream will not be redirected.")
+            finally:
+                fd.close()
+            
 
     #don't fork, just exec. Keep the PID the same for user scripts (?)
     arglist.insert(0, run_cmd)
