@@ -81,10 +81,6 @@ then
     groupadd cobalt
 fi
 
-%post -n cobalt-clients
-chgrp cobalt /usr/bin/wrapper
-chmod g+s /usr/bin/wrapper
-
 %post -n cobalt
 if test ! -d /var/spool/cobalt ; then
     mkdir -p /var/spool/cobalt
@@ -106,7 +102,7 @@ fi
 
 %files -n cobalt-clients
 /usr/bin/*
-%attr(755,root,cobalt) /usr/bin/wrapper
+%attr(2755,root,cobalt) /usr/bin/wrapper
 /usr/lib*/python2.6/site-packages/Cobalt/*
 /usr/lib*/python2.6/site-packages/Cobalt-*egg-info*
 /usr/share/man/man1/*.1*
