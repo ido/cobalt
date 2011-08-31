@@ -1,0 +1,9 @@
+Jason Cope <jason.cope@colorado.edu>,
+University of Colorado at Boulder
+
+GT4 Cobalt-GRAM integration code derived from the Sun Grid Engine GT4 GRAM Integration code
+ provided at http://www.lesc.ic.ac.uk/projects/SGE-GT4.html and the PBS GRAM Integration code
+ provided in the GT4 distribution at http://www.globus.org
+
+David McBride <dwm@doc.ic.ac.uk>,
+London e-Science Centre

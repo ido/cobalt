@@ -1,0 +1,27 @@
+Cobalt cdbwriter db2 DDL generation script information
+
+Site configuration
+------------------
+
+Modify cobalt-db-config.  Comments in the config file explain the
+various settings.  Some parameters in cobalt.conf must match what was
+specified in cobalt-db-config, and are noted in the comments.  Sites
+may want to keep this file someplace safe as it will be referenced
+by future DDL generation scripts if schema changes are necessary.
+
+Base DDL generation
+-------------------
+
+After modifying cobalt-db-config, execute the following script:
+
+build-cdbwriter-ddl.sh
+
+The script will create DDL appropriate for creating all required database
+entries for cdbwriter.
+
+
+
+Change log
+----------
+
+10/07/2010 - Initial Release, generates base DDL (cheetah)
