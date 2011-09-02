@@ -128,7 +128,7 @@ def verify_extents_for_size(coords, size):
     extents = _get_extents_from_size(size)
 
     for i in range(0,5):
-        if coords[i] + extents[i] > 4
+        if (coords[i] + extents[i]) > 4:
             return False
     return True
 
@@ -228,8 +228,8 @@ class NodeCoard (object):
         for i in range(0, 32):
             nodes[i] = Node({'nodecard_pos': self.nodeboard,
                              'position': i,
-                             'status', 'A',
-                             'name', 'R%02d-M%d-N%02d-J%02d' %(self.rack, 
+                             'status': 'A',
+                             'name': 'R%02d-M%d-N%02d-J%02d' % (self.rack,  
                                  self.midplane, self.nodeboard, i),
                              })
 
@@ -270,7 +270,7 @@ class NodeCoard (object):
 
         if len(ret_nodes) != extent_size:
             #we are looking for nodes not on this nodeboard.  That is likely an error.
-            raise RuntimeError "bgq_base_system.NodeCard: Mismatch in extent size and number of nodes returned."
+            raise RuntimeError("bgq_base_system.NodeCard: Mismatch in extent size and number of nodes returned.")
 
         return ret_nodes
 
@@ -354,14 +354,14 @@ class Block (Data):
         else:
             self.block_type = "normal"
 
-        if self.block_type = "normal"
+        if self.block_type == "normal":
             for nc in self.node_cards:
                 self.nodes.extend(nc.nodes)
-        else self.block_type = "pseudoblock":
+        elif self.block_type == "pseudoblock":
             #these are not being tracked by the control system, and are not allocated by it
             #these are just subrun targets.
-            if size >= nodes_per_nodecard
-                for nc in self.node_cards
+            if size >= nodes_per_nodecard:
+                for nc in self.node_cards:
                     self.nodes.extend(nc.nodes)
             else:
                 #parse name to get corner node
@@ -375,6 +375,15 @@ class Block (Data):
                 #pull in all nodenames by coords from nodecard.
                 nc = self.node_cards[0] #only one node_card is in use in this case.
                 self.nodes.extend(nc.extract_nodes(corner_coord, _get_extents_for_size(self.size)))
+
+    def split_in_two(self):
+        
+        ret_blocks = []
+
+        return ret_blocks
+
+    def gen_recursive_list(self):
+
 
     def _update_nodecards(self):
         if self.state == "busy":
