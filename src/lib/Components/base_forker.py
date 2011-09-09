@@ -256,10 +256,10 @@ class BaseForker (Component):
             if pg.returncode == None:
                 try:
                     if pg.poll() == None:
-                        os.killpg(pid, signal.SIGTERM)
+                        os.kill(pid, signal.SIGTERM)
                         sleep(5)
                     if pg.poll() == None:
-                        os.killpg(pid, signal.SIGKILL)
+                        os.kill(pid, signal.SIGKILL)
                 except OSError:
                     #apparently we're already dead.
                     pass
@@ -359,7 +359,7 @@ class BaseForker (Component):
         _logger.info("%s: sending %s to pid %s", kid.label, 
                 signame, kid.pid)
         try:
-            os.killpg(kid.pid, getattr(signal, signame))
+            os.kill(kid.pid, getattr(signal, signame))
         except OSError:
             _logger.error("%s: signal failure", kid.label, 
                     exc_info=True)
