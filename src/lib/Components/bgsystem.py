@@ -287,6 +287,10 @@ class BGSystem (BGBaseSystem):
         really_busy = False
         for nc in part.node_cards:
             #break out information and see if this is in-use by a sibling.
+            #get the size of the nc.used_by partition, if it's used by something 32 or larger then we really are busy
+            if self._partitions[nc.used_by].size > 16:
+                really_busy = True
+                break
             if nc.used_by:
                 try:
                     rack, midplane, nodecard = Cobalt.Components.bg_base_system.parse_nodecard_location(nc.used_by)
