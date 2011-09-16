@@ -4033,7 +4033,7 @@ class JobProgMsg(object):
         self.score = job.score
         self.satisfied_dependencies  = job.satisfied_dependencies
 
-        if job.state == "running":
+        if job.state == "starting":
             self.envs = job.envs
             self.priority_core_hours = 20.0 #job.priority_core_hours
             self.location = job.location
