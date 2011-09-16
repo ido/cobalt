@@ -102,8 +102,8 @@ if __name__ == '__main__':
         args = (args[0],)
     elif '-l' in sys.argv:
         func = system.get_partitions
-        args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
-                  'queue':'*', 'parents':'*', 'children':'*'}], )
+        args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
+                  'queue':'*', 'relatives':'*'}], )
     elif '--queue' in [opt for (opt, arg)  in opts]:
         try:
             cqm = ComponentProxy("queue-manager", defer=False)
@@ -162,9 +162,9 @@ if __name__ == '__main__':
                 for p in parts:
                     if p['name'] == res_part:
                         if expanded_parts.has_key(res['queue']):
-                            expanded_parts[res['queue']].update(p['children'])
+                            expanded_parts[res['queue']].update(p['relatives'])
                         else:
-                            expanded_parts[res['queue']] = set( p['children'] )
+                            expanded_parts[res['queue']] = set( p['relatives'] )
                         expanded_parts[res['queue']].add(p['name'])
             
         
@@ -185,7 +185,7 @@ if __name__ == '__main__':
         offline = [part['name'] for part in parts if not part['functional']]
         forced = [part for part in parts \
                   if [down for down in offline \
-                      if down in part['children'] + part['parents']]]
+                      if down in part['relatives']]]
         [part.__setitem__('functional', '-') for part in forced]
         data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
         # FIXME find something useful to output in the 'deps' column, since the deps have vanished
