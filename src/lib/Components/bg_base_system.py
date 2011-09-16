@@ -834,11 +834,9 @@ class BGBaseSystem (Component):
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
                 part.state = "allocated"
-                print "parents:"
                 for p in part._parents:
                     if p.state == "idle":
                         p.state = "blocked (%s)" % (part.name,)
-                print "children:"
                 for p in part._children:
                     if p.state == "idle":
                         p.state = "blocked (%s)" % (part.name,)

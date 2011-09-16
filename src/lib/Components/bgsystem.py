@@ -420,8 +420,20 @@ class BGSystem (BGBaseSystem):
                             parts = list(p._all_children)
                             parts.append(p)
                             for part in parts:
-                                if bridge_partition_cache[part.name].state != "RM_PARTITION_FREE":
-                                    busy.append(part.name)
+                                bpart = bridge_partition_cache[part.name]
+                                try:
+                                    if bpart.state != "RM_PARTITION_FREE":
+                                        self.logger.debug(
+                                            "partition %s: sub-partition %s is still busy; attempting another destroy",
+                                            p.name, part.name)
+                                        busy.append(part.name)
+                                        bpart.destroy()
+                                except Cobalt.bridge.IncompatibleState:
+                                    pass
+                                except:
+                                    self.logger.info(
+                                        "partition %s: an exception occurred while attempting to destroy partition %s",
+                                        p.name, part.name, exc_info=1)
                             if len(busy) > 0:
                                 _set_partition_cleanup_state(p)
                                 self.logger.info("partition %s: still cleaning; busy partition(s): %s", p.name, ", ".join(busy))
@@ -498,7 +510,7 @@ class BGSystem (BGBaseSystem):
                     except Cobalt.bridge.IncompatibleState:
                         pass
                     except:
-                        self.logger.info("partition %s: an exception occurred while attempting to destroy the partition",
+                        self.logger.info("partition %s: an exception occurred while attempting to destroy partition %s",
                             p.name, part.name, exc_info=1)
                 if len(pnames_destroyed) > 0:
                     self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
