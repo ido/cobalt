@@ -1,8 +1,8 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.99.0pre32
+Version: 0.99.0pre33
 
-Release: 3
+Release: 1
 License: GPL
 Group: System Software
 URL: http://www.mcs.anl.gov/cobalt
