@@ -334,8 +334,9 @@ elif systype == 'BGP':
     RM_PartitionNextNodeCard = 10021
     RM_PartitionPsetsPerBP = 10006
     RM_PartitionUsersNum = 10022
-    RM_PartitionFirstUser = 10017
-    RM_PartitionNextUser = 10018
+    RM_PartitionFirstUser = 10023
+    RM_PartitionNextUser = 10024
+    RM_PartitionSize = 10026
 
 class Partition (Resource):
     
@@ -460,7 +461,13 @@ class Partition (Resource):
         return options.value
     
     options = property(_get_options)
-    
+   
+    def _get_partition_size(self):
+        size = self._get_data(RM_PartitionSize, c_int)
+        return size.value
+
+    partition_size = property(_get_partition_size)
+
     def _get_mode (self):
         mode = self._get_data(RM_PartitionMode, rm_partition_mode_t)
         return rm_partition_mode_values[mode.value]
