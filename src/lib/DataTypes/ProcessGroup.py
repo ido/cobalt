@@ -77,7 +77,7 @@ class ProcessGroup(Data):
         self.resid = spec.get("resid", None)
         self.runid = spec.get("runid", None)
         self.forker = spec.get("forker", None)
-
+        self.ranks_per_node = spec.get("ranks_per_node", None)
         # self.logger = logger
 
     def __getstate__(self):

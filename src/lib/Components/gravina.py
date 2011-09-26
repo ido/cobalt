@@ -478,7 +478,7 @@ class BGSystem (BGBaseSystem):
                 if pgroup.mode == "script":
                     pgroup.forker = 'user_script_forker'
                 else:
-                    pgroup.forker = 'bg_mpirun_forker'
+                    pgroup.forker = 'bg_runjob_forker'
                 if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
                     try:
                         pgroup.start()
@@ -521,7 +521,7 @@ class BGSystem (BGBaseSystem):
     def _get_exit_status (self):
         running = []
         active_forker_components = []
-        for forker_component in ['bg_mpirun_forker', 'user_script_forker']:
+        for forker_component in ['bg_runjob_forker', 'user_script_forker']:
             try:
                 running.extend(ComponentProxy(forker_component).active_list("process group"))
                 active_forker_components.append(forker_component)

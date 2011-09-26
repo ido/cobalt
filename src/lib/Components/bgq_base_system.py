@@ -709,11 +709,11 @@ class BGBaseSystem (Component):
         try:
             sys_type = CP.get('bgsystem', 'bgtype')
         except:
-            sys_type = 'bgl'
-        if sys_type == 'bgp':
-            job_types = ['smp', 'dual', 'vn', 'script']
+            sys_type = 'bgq'
+        if sys_type == 'bgq':
+            job_types = ['c1', 'c2', 'c4', 'c8','c16','c32','c64', 'script']
         else:
-            job_types = ['co', 'vn', 'script']
+            raise JobValidationError("[bgq_base_system]: Unsupported System Type.")
         try:
             spec['nodecount'] = int(spec['nodecount'])
         except:
@@ -723,42 +723,49 @@ class BGBaseSystem (Component):
         if float(spec['time']) < 5:
             raise JobValidationError("Walltime less than minimum")
         if not spec['mode']:
-            if sys_type == 'bgp':
-                spec['mode'] = 'smp'
-            else:
-                spec['mode'] = 'co'
+            if sys_type == 'bgq':
+                spec['mode'] = 'c1'
         if spec['mode'] not in job_types:
             raise JobValidationError("Invalid mode")
         if spec['attrs'].has_key("location"):
             p_name = spec['attrs']['location']
             if not self.blocks.has_key(p_name):
                 raise JobValidationError("Partition %s not found" % p_name)
-        if not spec['proccount']:
-            if spec.get('mode', 'co') == 'vn':
-                if sys_type == 'bgl':
-                    spec['proccount'] = str(2 * int(spec['nodecount']))
-                elif sys_type == 'bgp':
-                    spec['proccount'] = str(4 * int(spec['nodecount']))
-                else:
-                    self.logger.error("Unknown bgtype %s" % (sys_type))
-            elif spec.get('mode', 'co') == 'dual':
-                spec['proccount'] = 2 * int(spec['nodecount'])
-            else:
-                spec['proccount'] = spec['nodecount']
-        else:
-            try:
-                spec['proccount'] = int(spec['proccount'])
-            except:
-                JobValidationError("non-integer proccount")
-            if spec['proccount'] < 1:
-                raise JobValidationError("negative proccount")
-            if spec['proccount'] > spec['nodecount']:
-                if spec['mode'] not in ['vn', 'dual']:
-                    raise JobValidationError("proccount too large")
-                if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodecount'])):
-                    raise JobValidationError("proccount too large")
-                elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodecount'])):
-                    raise JobValidationError("proccount too large")
+        spec['proccount'] = spec['nodecount']
+        #if not spec['proccount']:
+        #    if spec.get('mode', 'co') == 'vn':
+        #        if sys_type == 'bgl':
+        #            spec['proccount'] = str(2 * int(spec['nodecount']))
+        #        elif sys_type == 'bgp':
+        #            spec['proccount'] = str(4 * int(spec['nodecount']))
+        #        else:
+        #            self.logger.error("Unknown bgtype %s" % (sys_type))
+        #    elif spec.get('mode', 'co') == 'dual':
+        #        spec['proccount'] = 2 * int(spec['nodecount'])
+        #    else:
+        #        spec['proccount'] = spec['nodecount']
+        #else:
+        #    try:
+        #        spec['proccount'] = int(spec['proccount'])
+        #    except:
+        #        JobValidationError("non-integer proccount")
+        #    if spec['proccount'] < 1:
+        #        raise JobValidationError("negative proccount")
+        #    if spec['proccount'] > spec['nodecount']:
+        #        if spec['mode'] not in ['vn', 'dual']:
+        #            raise JobValidationError("proccount too large")
+        #        if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodecount'])):
+        #            raise JobValidationError("proccount too large")
+        #        elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodecount'])):
+        #            raise JobValidationError("proccount too large")
+        
+        # have to set ranks per node based on mode:
+
+        if spec['mode'] == 'script':
+            spec['ranks_per_node'] = None
+        else: #remember c1 is default, so ranks_per_node defaults to 1
+            rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
+            spec['ranks_per_node'] = int(rpn_re.match(spec['mode']).groups()[0])
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
