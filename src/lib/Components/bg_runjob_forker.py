@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import subprocess
+import re
 import Cobalt.Components.pg_forker
 PGPreexec = Cobalt.Components.pg_forker.PGPreexec
 PGForker = Cobalt.Components.pg_forker.PGForker
@@ -12,6 +13,7 @@ convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_comma
 
 _logger = logging.getLogger(__name__)
 
+rpn_re  = re.compile(r'c(?P<pos>[0-9]*)') 
 
 class BGRunjobPreexec(PGPreexec):
     def __init__(self, child, cmd_str, env):
@@ -80,17 +82,19 @@ class BGRunjobForker (PGForker):
         # add the cobalt env vars last so as overwrite any value provided by the user
         self._add_cobalt_env_vars(child, postfork_env)
 
+        #determine ranks from mode:
+        
         cmd = [self.config['runjob'],
               #'-host', self.config['mmcs_server_ip'],
                '--np', str(pg.size),
                '--block', pg.partition, #corner and shape derived from this.
-               '-p', pg.mode,
+               '--ranks-per-node', rpn_re.match(pg.mode).groups()[0], #default 1.  valid values are 2^n for n <= 6.
                '--cwd', pg.cwd,
                '--exe', pg.executable]
         if pg.args:
-            cmd.extend(['-args', " ".join(pg.args)])
+            cmd.extend(['--args', " ".join(pg.args)])
         if len(app_envs) > 0:
-            cmd.extend(['-env', " ".join(["%s=%s" % x for x in app_envs])])
+            cmd.extend(['--envs', " ".join(["%s=%s" % x for x in app_envs])])
         #if pg.kerneloptions: FIXME: No kernel support yet
         #    cmd.extend(['-kernel_options', pg.kerneloptions])
 
