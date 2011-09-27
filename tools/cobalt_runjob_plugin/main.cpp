@@ -15,8 +15,9 @@ int main(int argc, char **argv){
     std::cout << "plugin open." << std::endl;
     bgsched::runjob::Plugin *p = create();
     std::cout << "Created" << std::endl;
-    parse_block_info(std::string("EAS-R00-M1-N02-J03-16"));
-    parse_block_info(std::string("EAS-R00-M1-N02-32"));
+    parse_block_info(std::string("R00-M1-N02-J03-16"));
+    parse_block_info(std::string("R00-M1-N01-32"));
+    parse_block_info(std::string("R00-M1-N02-64"));
     destroy(p);
     std::cout << "Done." << std::endl;
     return 0;

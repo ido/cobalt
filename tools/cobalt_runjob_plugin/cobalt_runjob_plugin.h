@@ -38,7 +38,7 @@ block_info *parse_block_info(std::string block_id);
 void get_extents_from_size(int size, int extents[5]);
 
 /* Useful defines for getting our dimensions right*/
-
+/*
 static int NODECARD_A_DIM_MASK = 4;
 static int NODECARD_B_DIM_MASK = 8;
 static int NODECARD_C_DIM_MASK = 1;
@@ -50,4 +50,5 @@ static int B_DIM = 1;
 static int C_DIM = 2;
 static int D_DIM = 3;
 static int E_DIM = 4;
+*/
 #endif
