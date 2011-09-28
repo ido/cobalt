@@ -1,6 +1,6 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.99.0pre32
+Version: 0.99.1alpha
 
 Release: 1
 License: GPL
@@ -43,7 +43,7 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/bg_mpirun_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/system_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/brooklyn.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/gravina.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/setres.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/releaseres.py ${RPM_BUILD_ROOT}%{_sbindir}
@@ -65,6 +65,7 @@ mkdir -p ${RPM_BUILD_ROOT}%{_initrddir}
 install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
 #mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
+install -m 644 misc/bgq_simulator.xml ${RPM_BUILD_ROOT}/etc
 cd ${RPM_BUILD_ROOT}%{_sbindir}
 #for file in `find . -name \*.py | sed -e 's/\.py//' ` ; do ln -s cobalt-admin $file ; done
 cd ${RPM_BUILD_ROOT}%{_bindir}
@@ -100,6 +101,7 @@ fi
 /usr/sbin/*
 %config (noreplace) %attr(640,root,cobalt) /etc/cobalt.conf
 %config(noreplace) /etc/init.d/cobalt
+%config(noreplace) /etc/bgq_simulator.xml
 /usr/share/man/man5/*
 /usr/share/man/man8/*.8*
 

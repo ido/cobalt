@@ -99,7 +99,8 @@ class BGSystem (BGBaseSystem):
         sys.setrecursionlimit(5000)
         self.process_groups.item_cls = BGProcessGroup
         self.node_card_cache = dict()
-        self.configure(config_file="bgq_simulator.xml")
+        sim_xml_file = get_config_option("gravina","simulator_xml", "bgq_simulator.xml")
+        self.configure(config_file=sim_xml_file)
         
 
         # initiate the process before starting any threads
@@ -139,7 +140,8 @@ class BGSystem (BGBaseSystem):
         self.cached_blocks = None
         self.offline_blocks = []
 
-        self.configure(config_file="bgq_simulator.xml")
+        sim_xml_file = get_config_option("gravina","simulator_xml", "bgq_simulator.xml")
+        self.configure(config_file=sim_xml_file)
         if 'block_flags' in state:
             for bname, flags in state['block_flags'].items():
                 if bname in self._blocks:
