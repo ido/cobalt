@@ -1,0 +1,70 @@
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."JOB_EVENTS"
+------------------------------------------------
+
+update "##COBALT_SCHEMA##"."JOB_EVENTS" set "##COBALT_SCHEMA##"."JOB_EVENTS"."NAME"='running_failed' where "##COBALT_SCHEMA##"."JOB_EVENTS"."NAME"='failed';
+update "##COBALT_SCHEMA##"."JOB_EVENTS" set CLASS='Y' where "##COBALT_SCHEMA##"."JOB_EVENTS"."NAME" in ('resource_epilogue_start', 'resource_epilogue_finished', 'job_epilogue_start', 'all_holds_clear', 'run_retrying');
+update "##COBALT_SCHEMA##"."JOB_EVENTS" set CLASS='F' where "##COBALT_SCHEMA##"."JOB_EVENTS"."NAME" in ('running_failed', 'dep_fail');
+
+insert into "##COBALT_SCHEMA##"."JOB_EVENTS" values
+    (default,'job_prologue_start','Y'),
+    (default,'job_prologue_failed','F'),
+    (default,'resource_prologue_start','Y'),
+    (default,'resource_prologue_failed','F'),
+    (default,'resource_epilogue_failed','F'),
+    (default,'job_epilogue_failed','F');
+
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES"
+------------------------------------------------
+
+CREATE TABLE "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES" (
+    "CLASS" CHAR(1) UNIQUE NOT NULL,
+    "NAME" VARCHAR(32) NOT NULL);
+
+-- C: Created (Queued)
+-- Y: System Event (User can not cause directly)
+-- F: Failure (F class events are really a subset of system events)
+
+insert into "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES" values
+    ('C', 'Created'),
+    ('S', 'Starting'),
+    ('R', 'Running'),
+    ('Y', 'System Event'),
+    ('T', 'Terminal'),
+    ('H', 'Hold'),
+    ('E', 'Release'),
+    ('M', 'Modify'),
+    ('F', 'Failure');
+
+ALTER TABLE "##COBALT_SCHEMA##"."JOB_EVENTS"
+    ADD CONSTRAINT "FK_JEVENTS_CLASS" FOREIGN KEY
+        ("CLASS")
+    REFERENCES "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES"
+        ("CLASS")
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+    ENFORCED
+    ENABLE QUERY OPTIMIZATION;
+
+
+GRANT SELECT ON TABLE "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES" TO USER ##COBALT_USER## ;
+GRANT SELECT ON TABLE "##COBALT_SCHEMA##"."JOB_EVENT_CLASSES" TO USER ##RO_USER## ;
+
+------------------------------------------------
+-- DDL Statements for table "##COBALT_SCHEMA##"."JOB_DATA"
+------------------------------------------------
+
+alter table "##COBALT_SCHEMA##"."JOB_DATA"
+      add RESID INT
+      add EXIT_STATUS SMALLINT;
+
+update "##COBALT_SCHEMA##"."JOB_COBALT_STATES" set "##COBALT_SCHEMA##"."JOB_COBALT_STATES"."NAME"='Job_Prologue' where "##COBALT_SCHEMA##"."JOB_COBALT_STATES"."NAME"='Prologue';
+
+insert into "##COBALT_SCHEMA##"."JOB_COBALT_STATES" values
+    (default,'Job_Prologue_Retry'),
+    (default,'Resource_Prologue'),
+    (default,'Resource_Prologue_Retry'),
+    (default,'Resource_Epilogue_Retry'),
+    (default,'Job_Epilogue_Retry'); 
+

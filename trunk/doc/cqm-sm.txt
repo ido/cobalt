@@ -1,0 +1,490 @@
+Graph {Cobalt Queue Manager State Machine}
+Node {fontname=Arial, fontsize=10, height=0.25, width=0.25}
+Edge {fontname=Arial, fontsize=10}
+
+State {Ready}, {peripheries=2}
+    Event {Run}
+	stop execution timer
+	start job (maximum execution) countdown timer
+	write start of job information to accounting and CQM logs
+	write project information to accounting and CQM logs
+	write start of job record (S) to PBS log
+	send start of job message to user via email
+	start thread to execute job and resource prologue scripts
+	Invoke_Action {Start}, {label="Run"}
+    Event {Hold}
+	set specified user/admin_hold flag to true
+	Change_State {Hold}, {label="Hold"}
+    Event {Release}
+	write illegal request warning to CQM and job logs
+	Change_State {Ready}, {label="Release"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	write job killed message to CQM and job logs
+        Change_State {Terminal}, {label="Kill"}
+
+State {Hold}
+    Event {Hold}
+	Change_State {Hold}, {label="Hold"}
+    Event {Release}
+	set specified user/admin_hold flag to false
+	if both user and admin holds have been cleared
+	    Change_State {Ready}, {label="Release,\nno holds"}
+	else
+	    Change_State {Hold}, {label="Release,\nholds"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	write job killed message to CQM and job logs
+        Change_State {Terminal}, {label="Kill"}
+
+Action {Start}
+	Change_State {Job_Prologue}, {label="Run/\nSOJ accounting,\nresource and\njob prologue\nscripts"}
+    Change_State {Job_Prologue_Retry},{label="Run: Communication failed"}
+
+State {Job_Prologue_Retry}, {label="Job\nPrologue\nRetry"}
+     Event {Progress}, {label="Connection OK}
+        Change_State {Job_Prologue}, {label="Reconnected"}
+     Event {Progress_Fail}, {label="Connection still out"}
+        Change_State {Job_Prologue_Retry}, {label="Reconnect pending"}
+     Event {Hold}
+       We are beginning to run, holds are irrelevant
+	   Change_State {Job_Prologue_Retry}, {label="Hold"}
+     Event {Kill}
+        Note and wait to deal with this until we run.
+	    Change_State {Job_Prologue_Retry}, {label="Kill"}
+     Event {Preempt}
+       Note and wait until we run to deal with this, or
+            at least wait until the resource prologue.
+            Job prescripts must run at this point.
+	   Change_State {Job_Prologue_Retry}, {label="Preempt"}
+     Event {Release}
+       We are beginning to run, relesaes are irrelevant
+	   Change_State {Job_Prologue_Retry}, {label="Release"}
+
+
+State {Job_Prologue}, {label="Job\nPrologue"}
+    Event {Progress}
+    if job prologue scripts completed successfully
+    Invoke_Action{Start_Resource_Prologue}, {label="Scripts\nComplete"}
+    if job prologue scripts failed
+    Invoke_Action{Job_Epilogue}, {label="Scripts\nFailed"}
+
+    if they have a kill waiting
+    Invoke_Action {Job_Epilogue}, {label="kill\npending"}
+    
+
+    ****Below this is old information****
+	if job/resource prologue scripts have completed
+	    write messages from scripts to CQM log
+	    if kill{pending} is true
+		set kill{pending} to false
+		write job killed message to CQM and job log
+		Invoke_Action {Resource_Epilogue}, {label="kill\npending"}
+	    else
+    Event {Hold}
+	if job is preemptable
+	    set specified user/admin_hold flag to true
+	else
+	    write illegal request warning to CQM and job logs
+	Change_State {Job_Prologue}, {label="Hold"}
+    Event {Release}
+	if job is preemptable
+	    set specified user/admin_hold flag to false
+	else
+	    write illegal request warning to CQM and job logs
+	Change_State {Job_Prologue}, {label="Release"}
+    Event {Preempt}
+	if job is preemptable
+	    set preempt_pending to true
+	else
+	    write illegal event error to CQM log
+	Change_State {Job_Prologue}, {label="Preempt"}
+    Event {Kill}
+	if specified signal == kill{signal}
+	    write equivalent signal in progress, kill event ignored message to CQM and job logs
+	else if kill{signal} is SIGKILL or (kill{signal} is SIGTERM and specified signal is not SIGKILL)
+	    write attemped signal demotion, kill event ignored message to CQM and job logs
+	else
+	    set kill{reason} to 'delete'
+	    set kill{user} to specified user
+	    set kill{signal} to specified signal
+	    set kill{pending} to true
+	    write pending kill message to CQM and job logs
+	Change_State {Job_Epilogue}, {label="Kill"}
+
+Action {Start_Resource_Prologue}, {label="Start\nResource\nPrologue"}
+    Change_State {Resource_Prologue}, {label="Progress"}
+    
+    Change_State {Resource_Prologue_Retry}, {label="Communication\nFailure"}
+
+State {Resource_Prologue},{label="Resource\nPrologue"}
+    Event{Progress}, {label="Scripts\nComplete"}
+    Invoke_Action {Run}, {label="Scripts\nComplete"}
+    If scripts fail, do not run, but drop to cleanup
+    Event{Progress_Fail}
+        Change_State{Resource_Epilogue}, {label="Scripts\nFailed"}
+
+State {Resource_Prologue_Retry},{label="Resource\nPrologue\nRetry"}
+    Event{Progress}
+        if we have reconnected
+        Change_State{Resource_Prologue}, {label="Reconnected"}
+        otherwise
+        Change_State{Resource_Prologue_Retry}, {label="Communication\nRetry"}
+
+
+
+Action {Run}
+    invoke scriptm.add_jobs or system.add_process_groups to start the job
+    if failed to contact scriptm/system component
+	Change_State {Run_Retry}, {label="fail"}
+    else
+        if job is preemptable, start minimum resource countdown timer
+	Change_State {Running}, {label="started"}
+
+State {Run_Retry}, {label="Run\nRetry"}
+    Event {Progress}
+        Invoke_Action {Run}, {label="retry"}
+    Event {Hold}
+	if job is preemptable
+	    set specified user/admin_hold flag to true
+	else
+	    write illegal request warning to CQM and job logs
+	Change_State {Run_Retry}, {label="Hold"}
+    Event {Release}
+	if job is preemptable
+	    set specified user/admin_hold flag to false
+	else
+	    write illegal request warning to CQM and job logs
+	Change_State {Run_Retry}, {label="Release"}
+    Event {Preempt}
+	if job is preemptable
+	    set preempt_pending to true
+	else
+	    write illegal event error to CQM log
+	Change_State {Run_Retry}, {label="Preempt"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	set kill{signal} to specified signal
+	write killing job message to CQM and job logs
+	Invoke_Action {Resource_Epilogue}, {label="Kill"}
+
+State {Running}
+    Event {Progress}
+	if job (maximum execution) timer has expired
+	    set kill{reason} to 'overtime'
+	    set kill{signal} to SIGTERM
+	    write abort by server (A) record to PBS log
+	    Invoke_Action {Kill}, {label="job\ntimer"}
+	if job is preemptable, preempt_pending is true, and minimum resource timer has expired
+	    write preempting message to CQM log
+	    set kill{reason} to 'preempt'
+	    set kill{signal} to SIGUSR1
+	    Invoke_Action {Preempt_Signal}, {label="resource\ntimer"}
+    Event {JobEnd}
+	Invoke_Action {Resource_Epilogue}, {label="JobEnd"}
+    Event {Hold}
+	if job is preemptable
+	    set specified user/admin_hold flag to true
+	else
+	    write illegal request warning to CQM and job logs
+	Change_State {Running}, {label="Hold"}
+    Event {Release}
+	if job is preemptable
+	    set specified user/admin_hold flag to false
+	else
+	    write illegal request warning to CQM and job logs
+	Change_State {Running}, {label="Release"}
+    Event {Preempt}
+	if job is preemptable
+	    if minimum resource timer has expired
+		write preempting job message to CQM log
+		set kill{reason} to 'preempt'
+		set kill{signal} to SIGUSR1
+		Invoke_Action {Preempt_Signal}, {label="Preempt"}
+	    else
+		set preempt_pending to true
+	else
+	    write illegal event error to CQM log
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	set kill{signal} to specified signal
+	write killing job message to CQM and job logs
+        Invoke_Action {Kill}, {label="Kill"}
+
+Action {Resource_Epilogue}, {label="Resource\nEpilogue"}
+    start thread to execute resource epilogue scripts
+    Change_State {Resource_Epilogue_Wait}
+
+State {Resource_Epilogue_Wait}, {label="Resource\nEpilogue\nWait"}
+    Event {Progress}
+	if resource epilogue scripts have completed
+	    write messages from scripts to CQM log
+	    Invoke_Action {Job_Epilogue}, {label="scripts\ncomplete"}
+    Event {Hold}
+	if job is not preemptable
+	    write illegal request warning to CQM and job logs
+	else
+	    write job execution complete, hold event ignored message to CQM and job logs
+        Change_State {Resource_Epilogue_Wait}, {label="Hold"}
+    Event {Release}
+	if job is not preemptable
+	    write illegal request warning to CQM and job logs
+	else
+	    write job execution complete, release event ignored message to CQM and job logs
+        Change_State {Resource_Epilogue_Wait}, {label="Release"}
+    Event {Preempt}
+	if job is not preemptable
+	    write illegal event error to CQM log
+	else
+	    write job execution complete, preempt event ignored message to CQM log
+        Change_State {Resource_Epilogue_Wait}, {label="Preempt"}
+    Event {Kill}
+	write job execution complete, kill event ignore message to CQM and job logs
+        Change_State {Resource_Epilogue_Wait}, {label="Kill"}
+    
+Action {Job_Epilogue}, {label="Job\nEpilogue"}
+    start thread to execute job epilogue scripts
+    Change_State {Job_Epilogue_Wait}
+
+State {Job_Epilogue_Wait}, {label="Job\nEpilogue\nWait"}
+    Event {Progress}
+	if job prologue scripts are complete
+	    write messages from scripts to CQM log
+	    stop execution timer
+	    write end of job information to accounting and CQM logs
+	    write job end (termination) record (E) to PBS log
+	    send end of job message to user via email
+	    Change_State {Terminal}, {label="scripts complete/\nEOJ accounting"}
+    Event {Hold}
+	if job is not preemptable
+	    write illegal warning error to CQM and job logs
+	else
+	    write job execution complete, hold event ignored message to CQM and job logs
+        Change_State {Job_Epilogue_Wait}, {label="Hold"}
+    Event {Release}
+	if job is not preemptable
+	    write illegal warning error to CQM and job logs
+	else
+	    write job execution complete, release event ignored message to CQM and job logs
+        Change_State {Job_Epilogue_Wait}, {label="Release"}
+    Event {Preempt}
+	if job is not preemptable
+	    write illegal event error to CQM log
+	else
+	    write job execution complete, preempt event ignored message to CQM log
+        Change_State {Job_Epilogue_Wait}, {label="Preempt"}
+    Event {Kill}
+	write job execution complete, kill event ignore message to CQM and job logs
+        Change_State {Job_Epilogue_Wait}, {label="Kill"}
+
+State {Terminal}, {shape=doubleoctagon}
+    Event {Terminal_Action}
+	if kill{reason} is 'delete'
+	    write deleted by user (D) record to PBS log
+	delete job from queue
+	Change_State {Terminal}, {label="Run\nTerminal\nActions"}
+
+Action {Kill}
+    invoke scriptm.signal_jobs or system.signal_process_groups with signal specified in the signal attribute
+    if failed to contact scriptm/system component
+	Change_State {Kill_Retry}, {label="fail"}
+    else
+        start kill countdown timer
+	Change_State {Kill_Wait}, {label="signaled"}
+
+State {Kill_Retry}, {label="Kill\nRetry"}
+    Event {Progress}
+	Invoke_Action {Kill}, {label="retry"}
+    Event {Hold}
+	if job is not preemptable
+	    write illegal request warning to CQM and job logs
+	else
+	    write killing job, hold event ignored message to CQM and job logs
+	Change_State {Kill_Retry}, {label="Hold"}
+    Event {Release}
+	if job is not preemptable
+	    write illegal request warning to CQM and job logs
+	else
+	    write killing job, release event ignored message to CQM and job logs
+	Change_State {Kill_Retry}, {label="Release"}
+    Event {Preempt}
+	if job is not preemptable
+	    write illegal event error to CQM log
+	else
+	    write killing job, preempt event ignored message to CQM log
+	Change_State {Kill_Retry}, {label="Preempt"}
+    Event {Kill}
+	if kill{reason} == 'overtime'
+	    write terminating overtime job, kill event ignore message to CQM and job logs
+	else if specified signal == kill{signal}
+	    write equivalent signal in progress, kill event ignored message to CQM and job logs
+	else if kill{signal} is SIGKILL or (kill{signal} is SIGTERM and specified signal is not SIGKILL)
+	    write attemped signal demotion, kill event ignored message to CQM and job logs
+	else
+	    set kill{reason} to 'delete'
+	    set kill{user} to specified user
+	    set kill{signal} to specified signal
+	    write killing job message to CQM and job logs
+            Invoke_Action {Kill}, {label="Kill/\nnew\nsignal"}
+
+State {Kill_Wait}, {label="Kill\nWait"}
+    Event {JobEnd}
+	write job killed message to CQM log
+        Invoke_Action {Resource_Epilogue}, {label="JobEnd"}
+    Event {Progress}
+	if kill timer has expired
+	    set kill{signal} to SIGKILL
+	    Invoke_Action {Kill}, {label="kill\ntimer"}
+    Event {Hold}
+	if job is not preemptable
+	    write illegal request warning to CQM and job logs
+	else
+	    write killing job, hold event ignored message to CQM and job logs
+	Change_State {Kill_Wait}, {label="Hold"}
+    Event {Release}
+	if job is not preemptable
+	    write illegal request warning to CQM and job logs
+	else
+	    write killing job, release event ignored message to CQM and job logs
+	Change_State {Kill_Wait}, {label="Release"}
+    Event {Preempt}
+	if job is not preemptable
+	    write illegal event error to CQM log
+	else
+	    write killing job, preempt event ignored message to CQM log
+	Change_State {Kill_Wait}, {label="Preempt"}
+    Event {Kill}
+	if kill{reason} == 'overtime'
+	    write terminating overtime job, kill event ignore message to CQM and job logs
+	else if specified signal == kill{signal}
+	    write equivalent signal in progress, kill event ignored message to CQM and job logs
+	else if kill{signal} is SIGKILL or (kill{signal} is SIGTERM and specified signal is not SIGKILL)
+	    write attemped signal demotion, kill event ignored message to CQM and job logs
+	else
+	    set kill{reason} to 'delete'
+	    set kill{user} to specified user
+	    set kill{signal} to specified signal
+	    write killing job message to CQM and job logs
+            Invoke_Action {Kill}, {label="Kill/\nnew\nsignal"}
+
+Action {Preempt_Signal}, {label="Preempt\nSignal"}
+    invoke scriptm.signal_jobs or system.signal_process_groups with signal specified in the signal attribute
+    if failed to contact scriptm/system component
+	Change_State {Preempt_Retry}, {label="fail"}
+    else
+        start kill timer
+	Change_State {Preempt_Wait}, {label="signaled"}
+
+State {Preempt_Retry}, {label="Preempt\nRetry"}
+    Event {Progress}
+        Invoke_Action {Preempt_Signal}, {label="retry"}
+    Event {Hold}
+	set specified user/admin_hold to true
+	Change_State {Preempt_Retry}, {label="Hold"}
+    Event {Release}
+	set specified user/admin_hold to false
+	Change_State {Preempt_Retry}, {label="Release"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	set kill{signal} to specified signal
+	set kill{pending} to true
+	write killing job message to CQM log
+	Invoke_Action {Kill}, {label="Kill"}
+
+State {Preempt_Wait}, {label="Preempt\nWait"}
+    Event {Progress}
+	if kill timer has expired
+	    if signal attribute is SIGUSR1
+		set signal to SIGTERM
+	    else
+		set signal to SIGKILL
+	    reset kill timer
+	    Invoke_Action {Preempt_Signal}, {label="timer\nexpired"}
+    Event {JobEnd}
+	start thread to execute resource epilogue scripts
+	Change_State {Preempt_Epilogue_Wait}, {label="JobEnd/\nresource\nepilogue\nscripts"}
+    Event {Hold}
+	set specified user/admin_hold flag to true
+	!Change_State {Preempt_Wait}, {label="Hold"}
+    Event {Release}
+	set specified user/admin_hold flag to false
+	!Change_State {Preempt_Wait}, {label="Release"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	if specified signal == kill{signal}
+	    write equivalent signal in progress, kill event ignored message to CQM and job logs
+	    Change_State {Kill_Wait}, {label="Kill,\nsame\nsignal"}
+	else if kill{signal} is SIGKILL or (kill{signal} is SIGTERM and specified signal is not SIGKILL)
+	    write attemped signal demotion, kill event ignored message to CQM and job logs
+	    Change_State {Kill_Wait}, {label="Kill,\nattempted\ndemotion"}
+	else
+	    set kill{signal} to specified signal
+	    write killing job message to CQM and job logs
+	    Invoke_Action {Kill}, {label="Kill,\nnew\nsignal"}
+
+State {Preempt_Epilogue_Wait}, {label="Preempt\nEpilogue\nWait"}
+    Event {Progress}
+	if resource epilogue scripts have completed
+	    write messages from scripts to CQM log
+	    write preemption complete message to CQM and user log logs
+	    write abort by server record (A) to PBS log
+	    if kill{pending} is true
+		set kill{pending} to false
+		write job killed message to CQM and job logs
+		Invoke_Action {Job_Epilogue}, {label="kill\npending"}
+	    else if admin_hold or user_hold is true
+		Change_State {Preempted_Hold}, {label="hold(s)\npending"}
+	    else
+		Change_State {Preempted}, {label="no\nholds"}
+    Event {Hold}
+	set specified user/admin_hold flag to true
+	!Change_State {Preempt_Epilogue_Wait}, {label="Hold"}
+    Event {Release}
+	set specified user/admin_hold flag to false
+	!Change_State {Preempt_Epilogue_Wait}, {label="Release"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	set kill{pending} to true
+	write kill pending message to CQM and job logs
+	!Change_State {Preempt_Epilogue_Wait}, {label="Kill"}
+
+State {Preempted}
+    Event {Run}
+	write rerun record (R) to PBS log
+	write resumption message to CQM and user log logs
+	start thread to execute resource prologue scripts
+	Invoke_Action{Start_Resource_Prologue}, {label="Run/\nresource\nprologue\nscripts"}
+    Event {Hold}
+	set specified user/admin_hold flag to true
+	Change_State {Preempted_Hold}, {label="Hold"}
+    Event {Release}
+	write illegal request warning to CQM and job logs
+	Change_State {Preempted}, {label="Release"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	write job killed message to CQM and job logs
+	Invoke_Action {Job_Epilogue}, {label="kill\npending"}
+
+State {Preempted_Hold}, {label="Preempted\nHold"}
+    Event {Hold}
+	set specified user/admin_hold flag to true
+	Change_State {Preempted_Hold}, {label="Hold"}
+    Event {Resume}
+	set specified user/admin_hold flag to false
+	if both user_hold and admin_hold are false
+	    Change_State {Preempted}, {label="Release,\nno holds"}
+	else
+	    Change_State {Preempted_Hold}, {label="Release,\nholds"}
+    Event {Kill}
+	set kill{reason} to 'delete'
+	set kill{user} to specified user
+	write job killed message to CQM and job logs
+	Invoke_Action {Job_Epilogue}, {label="kill\npending"}
