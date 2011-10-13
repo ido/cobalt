@@ -94,7 +94,9 @@ class BGRunjobForker (PGForker):
         if pg.args:
             cmd.extend(['--args', " ".join(pg.args)])
         if len(app_envs) > 0:
-            cmd.extend(['--envs', " ".join(["%s=%s" % x for x in app_envs])])
+            for e in app_envs:
+                cmd.extend(['--envs', ("%s=%s" % e)])
+            #cmd.extend(['--envs', " ".join(["%s=%s" % x for x in app_envs])])
         #if pg.kerneloptions: FIXME: No kernel support yet
         #    cmd.extend(['-kernel_options', pg.kerneloptions])
 
