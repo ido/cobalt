@@ -185,29 +185,12 @@ if __name__ == '__main__':
 
     # Add cobalt jobid environment variable to script job, but again, not to be used
     # along with mpirun -free
-    env_str = ''
-    cobalt_env_str = ''
-
-    if '-env' in arglist:
-        env_str = arglist[arglist.index("-env") + 1]
-        arglist.remove(env_str)
-        arglist.remove('-env')
-
     if "-free" not in arglist:
-        cobalt_env_str = "COBALT_JOBID=%s" % os.getenv("COBALT_JOBID")
-    
-    if os.environ.has_key("COBALT_RESID"):
-        cobalt_env_str = cobalt_env_str + ":COBALT_RESID=%s" % os.environ["COBALT_RESID"]
-    if os.environ.has_key("COBALT_JOB_ENVS"):
-        cobalt_env_str = cobalt_env_str + ":" + os.environ("COBALT_JOB_ENVS")
-
-    env_str = env_str + cobalt_env_str
-
-    #if "-free" not in arglist:
-    #    arglist = ['-env', 'COBALT_JOBID='+os.environ["COBALT_JOBID"]] + arglist
-    
-    if ((env_str != '') and ("-free" not in arglist)):
-        arglist = ['-env', env_str] + arglist
+        if os.environ.has_key("COBALT_JOB_ENVS"):
+            arglist = ['-env', os.environ["COBALT_JOB_ENVS"]] + arglist
+        if os.environ.has_key("COBALT_RESID"):
+            arglist = ['-env', "COBALT_RESID=" + os.environ["COBALT_RESID"]] + arglist
+        arglist = ['-env', "COBALT_JOBID=" + os.environ["COBALT_JOBID"]] + arglist
 
     if "-np" in sys.argv:
         idx = sys.argv.index("-np")
