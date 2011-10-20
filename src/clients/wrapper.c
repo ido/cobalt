@@ -4,6 +4,10 @@
 #include<libgen.h>
 #include<stdio.h>
 
+#if !defined(PYTHONPATH)
+#   define PYTHONPATH ""
+#endif
+
 int main(int argc, char **argv){
   char **args;
   char *cmd;
@@ -12,7 +16,11 @@ int main(int argc, char **argv){
   unsetenv("IFS");
   unsetenv("LD_PRELOAD");
   unsetenv("LD_LIBRARY_PATH");
-  unsetenv("PYTHONPATH");
+  if (strlen(PYTHONPATH) > 0) {
+      setenv("PYTHONPATH", PYTHONPATH, 1);
+  } else {
+      unsetenv("PYTHONPATH");
+  }
   /* To disable the user's ability to override the default configuration file,
      uncomment the following line.  In addition, the argument processing code
      below should be modfied to strip the --config-files option from the
