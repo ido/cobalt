@@ -141,6 +141,7 @@ class prog_dao(db2util.dao):
 
 	# override parent method for TS-DT conversion
 	def processSQL(self, SQL, SQLargs = tuple()):
+
 		rList = super(prog_dao, self).processSQL(SQL, SQLargs)
 
 		db2util.helpers.cvtRecordsTStoDT(rList)

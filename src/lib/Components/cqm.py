@@ -97,7 +97,7 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError, DataStateTransitionError, StateMachineError,
     StateMachineIllegalEventError, StateMachineNonexistentEventError, ThreadPickledAliveException, JobProcessingError,
-    JobRunError, JobPreemptionError, JobDeleteError)
+    JobRunError, JobPreemptionError, JobDeleteError, IncrIDError)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 
@@ -158,7 +158,7 @@ accounting_logger.addHandler(
 
 dbwriter = Cobalt.Logging.dbwriter(logging)
 use_db_logging = get_cqm_config('use_db_logging','false')
-if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
+if use_db_logging.lower() in Cobalt.Util.config_true_values:
     dbwriter.enabled = True
     overflow_filename = get_cqm_config('overflow_file', None)
     max_queued = int(get_cqm_config('max_queued_msgs', '-1'))
@@ -3390,7 +3390,8 @@ class QueueManager(Component):
         Component.__init__(self, *args, **kwargs)
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
-        self.id_gen = IncrID()
+        use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
+        self.id_gen = IncrID(use_database = use_db_jobid_generator)
         self.run_id_gen = IncrID()
         global cqm_id_gen
         cqm_id_gen = self.id_gen
@@ -3411,6 +3412,11 @@ class QueueManager(Component):
         else:
             logger.info("Logging to cdbwriter disabled.")
            
+        if use_db_jobid_generator:
+            logger.info("Using DB to generate job IDs.")
+        else:
+            logger.info("Using internal job ID generator.")
+           
 
     def __getstate__(self):
         
@@ -3420,8 +3426,9 @@ class QueueManager(Component):
                 
     def __setstate__(self, state):
         self.Queues = state['Queues']
-        self.id_gen = IncrID()
-        self.id_gen.set(state['next_job_id'])
+        use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
+        self.id_gen = IncrID(use_database = use_db_jobid_generator)
+        self.id_gen.set(state['next_job_id'], override = True)
         global cqm_id_gen
         cqm_id_gen = self.id_gen
 
@@ -3450,6 +3457,11 @@ class QueueManager(Component):
             logger.info("Logging to database enabled.")
         else:
             logger.info("Logging to database disabled.")
+
+        if use_db_jobid_generator:
+            logger.info("Using DB to generate job IDs.")
+        else:
+            logger.info("Using internal job ID generator.")
 
         if state.has_key("msg_queue"):
             logger.info("loading pending messages.")

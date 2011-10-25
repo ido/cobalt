@@ -5,10 +5,14 @@ __revision__ = '$Revision$'
 import time
 import random
 import warnings
+import sys
+import socket
 
 import Cobalt.Util
 from Cobalt.Exceptions import DataCreationError, IncrIDError, DataStateError, DataStateTransitionError
 
+DB_SECTION = "cdbwriter"
+DB_COMMON_SCHEMA = "COMMON"
 
 def get_spec_fields (specs):
     """Given a list of specs, return the set of all fields used."""
@@ -22,27 +26,110 @@ def get_spec_fields (specs):
 
 class IncrID (object):
     
-    """Generator for incrementing integer IDs."""
+    """Generator for incrementing integer IDs.  At maximum only
+	one instantiation of IncrID should use DB generation, as
+	there is only a single ID pool presently supported."""
     
-    def __init__(self):
+    def __getstate__(self):
+        d = dict(self.__dict__)
+
+        # Can't pickle DB objects
+        del d['db']
+        del d['id_DAO']
+        return d
+
+    def __setstate__(self, d):
+        self.__dict__.update(d)
+        
+        # Downrev state files won't have use_database in the pickle
+        # Current usage for IncrID doesn't actually use the entire
+        # pickled object; IncrID is instantiated fresh each run
+
+        if not hasattr(self, 'use_database'):
+            # Unfortunatly we have no idea of knowing in this scope
+            # if db ID generation is desirable, so assume not
+            self.use_database = False
+            self.db = None
+            self.id_DAO = None
+            self.hostname = None
+            self.resource_name = None
+
+        if self.use_database:
+            self.__db_startup()
+       
+    def __init__(self, use_database = False):
         """Initialize a new IncrID."""
         self.idnum = 0
+        self.use_database = use_database
+        self.db = None
+        self.id_DAO = None
+        self.hostname = None
+        self.resource_name = None
+
+        if self.use_database:
+            self.__db_startup()
+
+    def __db_startup(self):
+        Cobalt.Util.init_cobalt_config()
+        if 'db2util' not in sys.modules:
+           global db2util
+           import db2util
+        self.hostname = socket.getfqdn()
+        self.resource_name = Cobalt.Util.get_config_option(DB_SECTION, "resource_name")
+        self.db = db2util.db()
+
+        try:
+            # No defaults here; if the param doesn't exist we may as well bomb out
+            self.db.connect(Cobalt.Util.get_config_option(DB_SECTION, "database"),
+                            Cobalt.Util.get_config_option(DB_SECTION, "user"),
+                            Cobalt.Util.get_config_option(DB_SECTION, "pwd"))
+        except db2util.dbError, err:
+            # We wanted to log here, but no logging available (yet)
+            raise
+
+        self.id_DAO = db2util.dao(self.db, DB_COMMON_SCHEMA, "JOB_ID")
+
+    def close(self):
+        """Clean up"""
+        if self.use_database:
+            self.db.close()
 
     def get(self):
         """Get the next id."""
-        self.idnum += 1
-        return self.idnum
+        if self.use_database:
+            # Instantitate empty record each cycle to ensure a fresh record
+            record = self.id_DAO.emptyRecord()
+            record.v.HOST = self.hostname
+            record.v.RESOURCE_NAME = self.resource_name
+            try:
+                self.idnum = self.id_DAO.insert(record)
+            except db2util.dbError, err:
+                # We wanted to log here, but no logging available (yet)
+                # Consider improved error handling here if db unavailable
+                raise
+            return self.idnum
+        else:
+            self.idnum += 1
+            return self.idnum
     
     def next (self):
         """Iterator interface."""
         return self.get()
-
-    def set(self, val):
+    
+    def set(self, val, override = False):
         """Set the next id.  val cannot be less than the current value of idnum."""
-        if val - 1 < self.idnum:
-            raise IncrIDError("The new jobid must be greater than the next jobid (%d)" % (self.idnum + 1))
+        # override allows __setstate__ to set the ID anyway
+        # This avoids a potential loss of state where if db generation is used
+        # and cqm is terminated prior to fetching a job ID, and cqm is changed
+        # from db generation to internal generation
+        if self.use_database and not override:
+            raise IncrIDError("Job IDs are provided by the database, change rejected")
         else:
-            self.idnum = val - 1
+            if val - 1 < self.idnum:
+                raise IncrIDError("The new jobid must be greater than the next jobid (%d)" % (self.idnum + 1))
+            else:
+                self.idnum = val - 1
+
 
 class RandomID (object):
     """Generator for non-repeating random integer IDs."""

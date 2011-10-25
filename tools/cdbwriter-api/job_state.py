@@ -321,6 +321,13 @@ class events(object):
 															# lack of a start record is DOOM, so we'll
 															# take what we can get
 
+			#
+			# Eventually the end event will be a resource release
+			# For now, end is the last observed terminal event
+			#
+			# SQL defines 'active' as start class -> terminal class
+			#
+
 			if event in self.__by_class[E_TERMINAL]:		# Multiple terminal events possible
 				analysis.terminal = True					
 				analysis.end = dt							# Record the last observed terminal event

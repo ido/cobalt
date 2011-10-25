@@ -45,10 +45,10 @@ class _jr_obj(object):
 		if name.upper() == 'ID':
 			return self._last_prog.valueByName('ID')
 
-		if name.upper() in self._last_prog.fieldNames:
+		if name.upper() in self.__prog_fields:
 			return self._last_prog.valueByName(name.upper())
 
-		if name.upper() in self._last_data.fieldNames:
+		if name.upper() in self.__data_fields:
 			# Force db load if asking for non-summary field
 			if self._last_data.s.partial_load and name not in self._last_data.s.partial_fields:
 				self.refresh()
@@ -58,8 +58,16 @@ class _jr_obj(object):
 		raise AttributeError("object '_jr_obj' has no attribute '%s'" % (name))
 
 	@property
+	def __prog_fields(self):
+		return self._prog_callback.table.fieldNames
+
+	@property
+	def __data_fields(self):
+		return self._data_callback.table.fieldNames
+
+	@property
 	def dynamic_attrs(self):
-		return [str(f) for f in self._last_prog.fieldNames + self._last_data.fieldNames]
+		return [str(f) for f in self.__prog_fields + self.__data_fields]
 
 	@property
 	def valid(self):
@@ -81,7 +89,7 @@ class _jr_obj(object):
 
 	@property
 	def prog_changed(self):
-		test_prog = self._prog_callback(self.cobaltid)
+		test_prog = self._prog_callback.cobaltid(self.cobaltid)
 		return (test_prog == self._prog)
 
 	def purge_data(self):
@@ -106,12 +114,12 @@ class _jr_obj(object):
 
 	def _data_record(self, data_id):
 		if not self._data[data_id]:
-			self._data[data_id] = self._data_callback(data_id)
+			self._data[data_id] = self._data_callback.getID(data_id)
 
 		return self._data[data_id]
 		
 	def _get_prog(self):
-		return self._prog_callback(self.cobaltid)
+		return self._prog_callback.cobaltid(self.cobaltid)
 
 	def _refresh_prog(self, prog_records = []):
 		if prog_records:
@@ -281,8 +289,8 @@ class _wrangler(object):
 
 		for cobaltid in prog:
 			cobalt_objects.append(self._cobalt_object( cobaltid,					# cobalt ID (jobid/resid)
-														self.dao.prog.cobaltid,		# callback to load prog records by cobaltid
-														self.dao.data.getID,		# callback to load data records by data row ID
+														self.dao.prog,				# callback to load prog records (assumes cobaltid method)
+														self.dao.data,				# callback to load data records (assumes getID (data row ID) method)
 														self._analysis,				# callback for analysis
 														self.dao._DATA_FK_FIELD,	# FK field name from Prog -> Data
 														defer_prog_load = True))	# Defer loading progress data (no autoload)
