@@ -1453,7 +1453,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_pretask = _pretask)
         self.job_exec_driver(resource_pretask = _pretask)
 
-    @timeout(1200)
+    @timeout(60)
     def test_nonpreempt_starting__kill(self):
         # the job is starting but a task has not been started; attempts to kill the job should succeed without the task ever
         # starting
@@ -1469,7 +1469,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
         self.job_exec_driver(resource_pretask = _pretask, task_run = _task_run)
 
-    @timeout(120)
+    @timeout(60)
     def test_nonpreempt_starting__kill_failed(self):
         def _pretask():
             self.assert_job_state("starting")
@@ -1483,7 +1483,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
         self.job_exec_driver(resource_pretask = _pretask, task_run = _task_run)
 
-    @timeout(120)
+    @timeout(60)
     def test_nonpreempt_starting__kill_failed__wb(self):
         def _progress_off(op, exc):
             assert op == "reserve"
