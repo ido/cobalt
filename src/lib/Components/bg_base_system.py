@@ -931,10 +931,10 @@ class BGBaseSystem (Component):
         try:
             self._partitions_lock.acquire()
             used_by = self.partitions[partition_name].used_by
-            if used_by == None:
-                self.partitions[partition_name].used_by = jobid
-                used_by = jobid
             if new_time:
+                if used_by == None:
+                    self.partitions[partition_name].used_by = jobid
+                    used_by = jobid
                 if used_by == jobid:
                     self.partitions[partition_name].reserved_until = new_time
                     self.partitions[partition_name].reserved_by = jobid

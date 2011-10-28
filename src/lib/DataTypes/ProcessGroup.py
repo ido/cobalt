@@ -74,6 +74,7 @@ class ProcessGroup(Data):
         self.user = spec.get("user", "")
         self.starttime = spec.get("starttime")
         self.walltime = spec.get("walltime")
+        self.killtime = spec.get("killtime")
         self.resid = spec.get("resid", None)
         self.runid = spec.get("runid", None)
         self.forker = spec.get("forker", None)

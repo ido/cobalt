@@ -37,7 +37,7 @@ __all__ = [
     "Simulator",
 ]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__.split('.')[-1])
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
 
@@ -72,7 +72,7 @@ class BGSystem (BGBaseSystem):
     """
     
     name = "system"
-    implementation = "bgsystem"
+    implementation = __name__.split('.')[-1]
     
     logger = logger
 
@@ -376,6 +376,7 @@ class BGSystem (BGBaseSystem):
                         p.state = _get_state(partition)
                         p._update_node_cards()
                         if p.reserved_until and now > p.reserved_until:
+                            self.logger.info("partition %s: reservation has expired; clearing reservation.", p.name)
                             p.reserved_until = False
                             p.reserved_by = None
                     else:
@@ -639,8 +640,8 @@ class BGSystem (BGBaseSystem):
                     pgroup.forker = 'user_script_forker'
                 else:
                     pgroup.forker = 'bg_mpirun_forker'
-                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime),
-                        pgroup.jobid):
+                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60 * float(pgroup.walltime) +
+                        60 * float(pgroup.killtime), pgroup.jobid):
                     try:
                         pgroup.start()
                         if pgroup.head_pid == None:
@@ -684,13 +685,15 @@ class BGSystem (BGBaseSystem):
         active_forker_components = []
         for forker_component in ['bg_mpirun_forker', 'user_script_forker']:
             try:
-                running.extend(ComponentProxy(forker_component).active_list("process group"))
+                running.extend([{'forker':forker_component, 'pid':pid} for pid in 
+                    ComponentProxy(forker_component).active_list("process group")])
                 active_forker_components.append(forker_component)
             except:
                 self.logger.error("failed to contact %s component for list of running jobs", forker_component)
 
         for each in self.process_groups.itervalues():
-            if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
+            if {'forker':each.forker, 'pid':each.head_pid} not in running and each.exit_status is None and \
+                    each.forker in active_forker_components:
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
                 # maybe the second choice is better
@@ -718,6 +721,7 @@ class BGSystem (BGBaseSystem):
                             core_dump_str = ""
                         self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
                 self.reserve_resources_until(each.location, None, each.jobid)
+                self._mark_partition_for_cleaning(each.location[0], each.jobid)
 
                 
     _get_exit_status = automatic(_get_exit_status)
@@ -731,7 +735,6 @@ class BGSystem (BGBaseSystem):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            self._mark_partition_for_cleaning(process_group.location[0], process_group.jobid)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
@@ -756,7 +759,7 @@ class BGSystem (BGBaseSystem):
                     self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
 
                 if signame == "SIGKILL":
-                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
+                   self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
 
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))

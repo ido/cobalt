@@ -101,7 +101,7 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 
-logger = logging.getLogger('cqm')
+logger = logging.getLogger(__name__.split('.')[-1])
 
 cqm_id_gen = None
 run_id_gen = None #IncrID()
@@ -824,6 +824,7 @@ class Job (StateMachine):
                 'kerneloptions':self.kerneloptions,
                 'starttime':self.starttime,
                 'walltime':walltime,
+                'killtime':self.force_kill_delay + 1,
                 'resid': self.resid,
                 'runid': self.runid
             }])
@@ -2702,7 +2703,8 @@ class Job (StateMachine):
         if self._sm_state == 'Running':
             remaining_time = walltime - int(self.__timers['user'].elapsed_time) / 60
             if remaining_time > 0:
-                ComponentProxy("system").reserve_resources_until(self.location, time.time() + remaining_time * 60, self.jobid)
+                ComponentProxy("system").reserve_resources_until(self.location, time.time() + remaining_time * 60 +
+                    (self.force_kill_delay + 1) * 60, self.jobid)
         self.__walltime = int(float(walltime))
         try:
             self.__max_job_timer.max_time = walltime * 60
@@ -2888,6 +2890,14 @@ class Job (StateMachine):
             except Exception, mmsg:
                 logger.error("timer: %s wasn't started: %s" % (name, mmsg))
         return result
+
+    def __get_hold_time(self):
+        try:
+            return self.__timers['hold'].elapsed_time
+        except KeyError:
+            return 0.0
+
+    hold_time = property(__get_hold_time)
 
     def __write_cobalt_log(self, message):
 
@@ -3378,8 +3388,8 @@ class QueueDict(DataDict):
 class QueueManager(Component):
     '''Cobalt Queue Manager'''
 
-    implementation = 'cqm'
     name = 'queue-manager'
+    implementation = __name__.split('.')[-1]
 
     logger = logger
 
@@ -3940,6 +3950,7 @@ class QueueManager(Component):
             args = {'queued_time':current_time - float(job.submittime), 
                     'wall_time': 60*float(job.walltime),
                     'wall_time_p': 60*float(job.walltime_p), 
+                    'hold_time' : job.hold_time,
                     'size': float(job.nodes),
                     'user_name': job.user,
                     'project': job.project,
