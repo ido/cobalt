@@ -7,7 +7,7 @@ BasePreexec = Cobalt.Components.base_forker.BasePreexec
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__.split('.')[-1])
 
 
 class SystemScriptPreexec (BasePreexec):
@@ -25,8 +25,10 @@ class SystemScriptForker (BaseForker):
     
     """Component for starting system script jobs such as the prologue and epilogue scripts run by cqm"""
     
-    name = "system_script_forker"
-    # implementation = "generic"
+    name = __name__.split('.')[-1]
+    implementation = name
+
+    logger = _logger
 
     def __init__ (self, *args, **kwargs):
         """Initialize a new system script forker.

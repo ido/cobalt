@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.6
-
 """Implementations of the forker component.
 
 Classes:
@@ -35,7 +33,7 @@ __all__ = [
     "BasePreexec",
 ]
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__.split('.')[-1])
 
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
@@ -142,8 +140,9 @@ class BaseForker (Component):
     wait -- wait on children and record their status (automatic)
     """
     
-    name = "forker"
-    # implementation = "generic"
+    # name = __name__.split('.')[-1]
+    # implementation = name
+
     UNKNOWN_ERROR = 256
     
     __statefields__ = ['next_task_id', 'children']
@@ -154,6 +153,10 @@ class BaseForker (Component):
         All arguments are passed to the component constructor.
         """
         Component.__init__(self, *args, **kwargs)
+
+        global _logger
+        _logger = self.logger
+
         self.children = {}
         self.active_runids = []
         self.id_gen = IncrID()
@@ -168,6 +171,9 @@ class BaseForker (Component):
         #  or whatever we eventually decide to do.
 
     def __setstate__(self, state):
+        global _logger
+        _logger = self.logger
+
         self.id_gen = IncrID()
         self.id_gen.set(state['next_task_id'])
         if state.has_key('children'):

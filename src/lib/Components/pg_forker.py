@@ -15,7 +15,7 @@ __all__ = [
     "PGPreexec",
 ]
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__.split('.')[-1])
 
 _scratch_dir = get_forker_config("scratch_dir", None)
 if get_forker_config("ignore_setgroup_errors", "false") in ["true", "True", "TRUE", "1"]:
@@ -213,8 +213,8 @@ class PGForker (BaseForker):
     
     """Component for starting script jobs"""
     
-    name = "pg_forker"
-    # implementation = "generic"
+    # name = __name__.split('.')[-1]
+    # implementation = name
 
     def __init__ (self, *args, **kwargs):
         """Initialize a new BG mpirun forker.
@@ -222,12 +222,18 @@ class PGForker (BaseForker):
         All arguments are passed to the base forker constructor.
         """
         BaseForker.__init__(self, *args, **kwargs)
+        
+        global _logger
+        _logger = self.logger
 
     def __getstate__(self):
         return BaseForker.__getstate__(self)
 
     def __setstate__(self, state):
         BaseForker.__setstate__(self, state)
+
+        global _logger
+        _logger = self.logger
 
     def _add_cobalt_env_vars(self, child, postfork_env):
         #COBALT_JOBID and COBALT_RESID are special and must be passed to

@@ -9,7 +9,7 @@ PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__.split('.')[-1])
 
 
 class UserScriptPreexec(PGPreexec):
@@ -35,9 +35,11 @@ class UserScriptPreexec(PGPreexec):
 
 class UserScriptForker (PGForker):
     """Component for starting script jobs"""
-    
-    name = "user_script_forker"
-    # implementation = "generic"
+
+    name = __name__.split('.')[-1]
+    implementation = name
+
+    logger = _logger
 
     def __init__ (self, *args, **kwargs):
         """Initialize a new user script forker.
@@ -77,6 +79,8 @@ class UserScriptForker (PGForker):
         postfork_env.update(pg.env)
         postfork_env['HOME'] = homedir
         postfork_env['USER'] = pg.user
+        postfork_env['LOGNAME'] = pg.user
+        postfork_env['SHELL'] = shell
         postfork_env["COBALT_PARTNAME"] = pg.partition
         postfork_env["COBALT_PARTSIZE"] = str(pg.nodect)
         postfork_env["COBALT_JOBSIZE"] = str(pg.size)

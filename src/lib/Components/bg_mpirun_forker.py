@@ -10,7 +10,7 @@ PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__.split('.')[-1])
 
 
 class BGMpirunPreexec(PGPreexec):
@@ -28,8 +28,10 @@ class BGMpirunForker (PGForker):
     
     """Component for starting mpirun jobs on the Blue Gene"""
     
-    name = "bg_mpirun_forker"
-    # implementation = "generic"
+    name = __name__.split('.')[-1]
+    implementation = name
+
+    logger = _logger
 
     _configfields = ['mpirun']
     _config = ConfigParser.ConfigParser()
