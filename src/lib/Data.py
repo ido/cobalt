@@ -27,15 +27,21 @@ def get_spec_fields (specs):
 class IncrID (object):
     
     """Generator for incrementing integer IDs.  At maximum only
-	one instantiation of IncrID should use DB generation, as
-	there is only a single ID pool presently supported."""
+    one instantiation of IncrID should use DB generation, as
+    there is only a single ID pool presently supported."""
     
     def __getstate__(self):
         d = dict(self.__dict__)
 
         # Can't pickle DB objects
-        del d['db']
-        del d['id_DAO']
+        try:
+            del d['db']
+            del d['id_DAO']
+        except KeyError:
+            # We might not have these two attributes; ignore on failure
+            # Not checking use_database, as that may not exist in certain
+            # conditions early in execution
+            pass
         return d
 
     def __setstate__(self, d):
