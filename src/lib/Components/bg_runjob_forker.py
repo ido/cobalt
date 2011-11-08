@@ -31,7 +31,7 @@ class BGRunjobForker (PGForker):
     """Component for starting mpirun jobs on the Blue Gene"""
     
     name = "bg_runjob_forker"
-    # implementation = "generic"
+    implementation = "bg_runjob_forker"
 
     _configfields = ['mpirun']
     _config = ConfigParser.ConfigParser()
@@ -73,12 +73,19 @@ class BGRunjobForker (PGForker):
                       'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE']
 
         app_envs = []
+        set_label = False
+        set_verbose = None
+        
         for key, value in pg.env.iteritems():
             if key in exportenv:
-                postfork_env[key] = value
+    	        if key == 'MPIRUN_LABEL':
+    	            set_label = True
+    	        elif key == 'MPIRUN_VERBOSE':
+    	            set_verbose = int(value)
+                    postfork_env[key] = value
             else:
                 app_envs.append((key, value))
-
+         
         # add the cobalt env vars last so as overwrite any value provided by the user
         self._add_cobalt_env_vars(child, postfork_env)
 
@@ -86,19 +93,31 @@ class BGRunjobForker (PGForker):
         
         cmd = [self.config['runjob'],
               #'-host', self.config['mmcs_server_ip'],
-               '--np', str(pg.size),
+              #get proccount from pg
+               '--np', str(int(pg.size) * int(rpn_re.match(pg.mode).groups()[0])),
                '--block', pg.partition, #corner and shape derived from this.
                '--ranks-per-node', rpn_re.match(pg.mode).groups()[0], #default 1.  valid values are 2^n for n <= 6.
-               '--cwd', pg.cwd,
-               '--exe', pg.executable]
-        if pg.args:
-            cmd.extend(['--args', " ".join(pg.args)])
+               '--cwd', pg.cwd]
+        #if pg.args:
+        #    cmd.extend(['--args', " ".join(pg.args)]
         if len(app_envs) > 0:
-	    for e in app_envs:
-		cmd.extend(['--envs', ("%s=%s" % e)])
+            for e in app_envs:
+                cmd.extend(['--envs', ("%s=%s" % e)])
             #cmd.extend(['--envs', " ".join(["%s=%s" % x for x in app_envs])])
         #if pg.kerneloptions: FIXME: No kernel support yet
         #    cmd.extend(['-kernel_options', pg.kerneloptions])
+        
+        if set_label:
+            cmd.extend(['--label', 'long'])
+        if set_verbose != None:
+            cmd.extend(['--verbose', str(set_verbose)])
+        else:
+            cmd.extend(['--verbose', '4'])
+
+        #last append the binary and it's args:
+        cmd.extend([':',pg.executable])
+        if pg.args:
+            cmd.extend(pg.args)
 
         try:
             preexec_fn = BGRunjobPreexec(child, convert_argv_to_quoted_command_string(cmd), postfork_env)
