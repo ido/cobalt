@@ -1,5 +1,37 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.0pre36
+
+* Fixed bug in resource reservation that would leave a reserved partition in
+  the 'idle' state
+* Updated the code that sets the kernel profile for a partition to set the
+  profile even if no profile is currently set
+
+
+Changes to 0.99.0pre35
+
+* Fixed bug where pickling IncrID could fail when deleting db related
+  attributes from the object's dictionary
+
+
+Changes to 0.99.0pre34
+
+* Time spent in the hold state is now exported to the utility function
+* bgsystem now tracks forked tasks using a (forker, id) tuple instead of just
+  id in order to prevent id collisions in the active jobs list
+* Updated cleanup and resource reservation in bgsystem updated to prevent
+  multiple partition cleanups for a single job
+* Forker classes updated so that logging messages properly identify the
+  component from which they came
+* Added LOGNAME and SHELL to the environment of script jobs
+* Resolved a bug in the cdbwriter-api where a job object which had no data
+  records could endless recurse in _jr_obj.__getattr__ looking for valid fields
+* Implemented support for common job ID pool through database ID generation
+* PYTHONPATH may now be explicitly set when building the wrapper program
+* Fix for cobalt-mpirun where the -env flag was being improperly handled
+* Updated Cobalt's database documentation diagrams
+
+
 Changes to 0.99.0pre31
 
 * Cleaned up reservation logging and database logging
