@@ -47,7 +47,7 @@ BESTFIT_BACKFILL = False
 SJF_BACKFILL = True
     
 class BGQsim(Simulator):
-    '''Cobalt Queue Simulator for cluster systems'''
+    '''Cobalt Queue Simulator for Blue Gene systems'''
     
     implementation = "qsim"
     name = "queue-manager"
