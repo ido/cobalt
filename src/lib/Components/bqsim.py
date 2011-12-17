@@ -1823,6 +1823,11 @@ class BGQsim(Simulator):
          
         print "number of waiting jobs: ", self.num_waiting
         
+        max_wait, avg_wait = self.get_currnt_max_avg_queue_time()
+        
+        print "maxium waiting time (min): ", int(max_wait / 60.0)
+        print "average waiting time (min): ", int(avg_wait / 60.0)
+        
         waiting_job_bar = REDS
         for i in range(self.num_waiting):
             waiting_job_bar += "*"
@@ -1914,4 +1919,19 @@ class BGQsim(Simulator):
         msg  = "capacity_loss:%f" % capacity_loss_rate 
         self.dbglog.LogMessage(msg)
         pass
-    post_simulation_handling = exposed(post_simulation_handling)    
+    post_simulation_handling = exposed(post_simulation_handling)
+    
+#############metric-aware###
+    
+    def get_currnt_max_avg_queue_time(self):
+        '''return the average waiting time of jobs in the current queue'''
+        current_time = self.get_current_time_sec()
+        queued_times =[current_time - float(job.submittime) for job in self.queuing_jobs]
+        if len(queued_times) > 0:
+            max_wait = max(queued_times)
+            avg_wait = sum(queued_times) / len(queued_times)
+        else:
+            max_wait = 0
+            avg_wait = 0
+        return max_wait, avg_wait
+        
