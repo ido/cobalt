@@ -304,10 +304,10 @@ class NodeCard (object):
         return ret_nodes
 
 
-block_states = ['idle', #nodeboard is idle and can be used in scheduling decisions
-                'allocated', #nodeboard is booted by control system, nothing running on it
-                'reserved', #nodeboard is a part of a reservation
-                'disabled', #admin has disabled the nodebaord in question
+block_states = ['idle', #block is idle and can be used in scheduling decisions
+                'allocated', #block is booted by control system, nothing running on it
+                'reserved', #block is a part of a reservation
+                'disabled', #admin has disabled the block in question
                 'busy', #control system reporting block busy
                 ]
 
@@ -734,7 +734,8 @@ class BGBaseSystem (Component):
         #spec['proccount'] = spec['nodecount']
         if not spec['proccount']:
             if spec['mode'] != 'script':
-                spec['proccount'] = str(int(spec['nodecount']) * int(rpm_re.match(spec['mode']).groups()[0]))
+                rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
+                spec['proccount'] = str(int(spec['nodecount'])) #* int(rpn_re.match(spec['mode']).groups()[0]))
             else:
                 spec['proccount'] = str(spec['nodecount'])
 
@@ -758,8 +759,9 @@ class BGBaseSystem (Component):
             spec['ranks_per_node'] = int(rpn_re.match(spec['mode']).groups()[0])
         #further proccount validation:
         if spec['ranks_per_node'] != None:
-            if spec['proccount'] > (spec['ranks_per_node'] * int(spec['nodecount'])):
-                raise JobValidationError("proccount too large")
+            print spec['proccount'], spec['ranks_per_node'] 
+            if int(spec['proccount']) > int(spec['ranks_per_node'] * int(spec['nodecount'])):
+                raise JobValidationError("proccount of %d is too large." % spec['proccount'])
         #bring this back to a string, as this is what it comes in as (or should...)
         spec['proccount'] = str(spec['proccount'])
 
