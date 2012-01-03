@@ -45,6 +45,11 @@ YIELD_THRESHOLD = 0
 
 BESTFIT_BACKFILL = False
 SJF_BACKFILL = True
+
+MIN_WALLTIME = 60
+MAX_WALLTIME = 43200
+
+BALANCE_FACTOR = 1
     
 class BGQsim(Simulator):
     '''Cobalt Queue Simulator for cluster systems'''
@@ -225,6 +230,10 @@ class BGQsim(Simulator):
         self.reset_rack_matrix()
         
         self.batch = kwargs.get("batch", False)
+        
+######adaptive metric-aware cheduling
+        self.metric_aware = kwargs.get("metrica", False)
+        self.balance_factor = float(kwargs.get("balance_factor")) 
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -1113,9 +1122,15 @@ class BGQsim(Simulator):
     def compute_utility_scores (self):
         utility_scores = []
         current_time = self.get_current_time_sec()
+        
+        #for balanced utility computing
+        if self.metric_aware:
+            max_wait, avg_wait = self.get_current_max_avg_queue_time()
+            max_walltime, min_walltime = self.get_current_max_min_walltime()
             
         for job in self.queues.get_jobs([{'is_runnable':True}]):    
             utility_name = self.queues[job.queue].policy
+            
             args = {'queued_time':current_time - float(job.submittime), 
                     'wall_time': 60*float(job.walltime),    
                     'wall_time_p':  60*float(job.walltime_p), ##  *AdjEst*
@@ -1134,8 +1149,16 @@ class BGQsim(Simulator):
                     utility_func = self.builtin_utility_functions[utility_name]
                 else:
                     utility_func = self.user_utility_functions[utility_name]
+                    
+                if self.metric_aware:
+                    utility_func = self.comput_utility_score_balanced
+                                
                 utility_func.func_globals.update(args)
-                score = utility_func()
+                
+                if self.metric_aware:
+                    score = utility_func(self.balance_factor, max_wait, max_walltime, min_walltime)
+                else:
+                    score = utility_func()
             except KeyError:
                 # do something sensible when the requested utility function doesn't exist
                 # probably go back to the "default" one
@@ -1157,6 +1180,7 @@ class BGQsim(Simulator):
             
             try:
                 job.score = score #in trunk it is job.score += score, (coscheduling need to temperally change score)
+                #print "job id=%s, score=%s" % (job.jobid, job.score)
             except:
                 self.logger.error("utility function '%s' named by queue '%s' returned a non-number" % (utility_name, job.queue), \
                     exc_info=True)
@@ -1220,7 +1244,7 @@ class BGQsim(Simulator):
             else:
                 wall_time_sched = wall_time
                             
-            val = ( queued_time / wall_time_sched)**3 * (size/40960)
+            val = ( queued_time / wall_time_sched)**3 * size
             
             return val
         
@@ -1823,10 +1847,10 @@ class BGQsim(Simulator):
          
         print "number of waiting jobs: ", self.num_waiting
         
-        max_wait, avg_wait = self.get_currnt_max_avg_queue_time()
+#        max_wait, avg_wait = self.get_current_max_avg_queue_time()
         
-        print "maxium waiting time (min): ", int(max_wait / 60.0)
-        print "average waiting time (min): ", int(avg_wait / 60.0)
+        #print "maxium waiting time (min): ", int(max_wait / 60.0)
+        #print "average waiting time (min): ", int(avg_wait / 60.0)
         
         waiting_job_bar = REDS
         for i in range(self.num_waiting):
@@ -1923,7 +1947,7 @@ class BGQsim(Simulator):
     
 #############metric-aware###
     
-    def get_currnt_max_avg_queue_time(self):
+    def get_current_max_avg_queue_time(self):
         '''return the average waiting time of jobs in the current queue'''
         current_time = self.get_current_time_sec()
         queued_times =[current_time - float(job.submittime) for job in self.queuing_jobs]
@@ -1934,4 +1958,40 @@ class BGQsim(Simulator):
             max_wait = 0
             avg_wait = 0
         return max_wait, avg_wait
+    
+    def get_current_max_min_walltime(self):
+        '''return the max and min walltime in the current queue (in seconds)'''
+        current_time = self.get_current_time_sec()
+        wall_times =[60*float(job.walltime) for job in self.queuing_jobs]
+        if len(wall_times) > 0:
+            max_walltime = max(wall_times)
+            min_walltime = min(wall_times)
+        else:
+            max_walltime = 0
+            min_walltime = 0
+        return max_walltime, min_walltime
+        
+        
+    def comput_utility_score_balanced(self, balance_factor, max_wait, max_walltime, min_walltime):
+        '''compute utility score balancing FCFS and SJF using a balance factor [0, 1]'''
+        
+        if max_wait == 0:
+            wait_score = 0
+        else:
+            wait_score = 100.0 * queued_time / max_wait
+        
+        if max_walltime == min_walltime:
+            length_score = 0
+        else:
+            length_score = 100.0 * (max_walltime - wall_time)/(max_walltime - min_walltime)
+        
+        balanced_score = wait_score * balance_factor + length_score * (1.0 - balance_factor)
+        
+        #print "wait=%s, max_wait=%s" % (queued_time, max_wait)
+        #print "walltime=%s, MAX_WALLTIME=%s, MIN_WALLTIME=%s" % (wall_time, max_walltime, min_walltime)
+        #print "wait_score=%s, length_score=%s, balanced_score=%s" % (wait_score, length_score, balanced_score)
+        
+        return balanced_score
+    
+    
         
