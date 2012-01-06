@@ -50,27 +50,30 @@ def get_cluster_system_config(option, default):
 class ClusterProcessGroup(ProcessGroup):
     
     def __init__(self, spec):
-        ProcessGroup.__init__(self, spec, logger)
+        spec['forker'] = "cluster_run_forker"
+        ProcessGroup.__init__(self, spec)
         self.nodefile = ""
         self.start()
         
     
     def prefork (self):
         ret = {}
-        
+        ret = ProcessGroup.prefork(self)
+
         sim_mode  = get_cluster_system_config("simulation_mode", 'false').lower() in config_true_values
-        if not sim_mode: 
+        if not sim_mode:
             nodefile_dir = get_cluster_system_config("nodefile_dir", "/var/tmp")
             self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
         else:
             self.nodefile = "fake"
         
         try:
+            #This is the head node, return this to the user.
             rank0 = self.location[0].split(":")[0]
         except IndexError:
             raise ProcessGroupCreationError("no location")
 
-        split_args = self.args.split()
+        split_args = self.args
         cmd_args = ('--nf', str(self.nodefile),
                     '--jobid', str(self.jobid),
                     '--cwd', str(self.cwd),
@@ -78,6 +81,7 @@ class ClusterProcessGroup(ProcessGroup):
         
         cmd_exe = None
         if sim_mode: 
+            logger.debug("We are setting up with simulation mode.")
             cmd_exe = get_cluster_system_config("simulation_executable", None)
             if None == cmd_exe:
                 logger.critical("Job: %s/%s: Executable for simulator not specified! This job will not run!")
@@ -94,8 +98,12 @@ class ClusterProcessGroup(ProcessGroup):
             cmd = (cmd_exe,) + cmd_args + tuple(split_args)
 
         ret["cmd" ] = cmd
-        ret["args"] = split_args
-        
+        ret["args"] = cmd[1:]
+        ret["executable"] = cmd[0]
+        self.executable = ret["executable"]
+        self.cmd = ret["cmd"]
+        self.args = list(ret["args"])
+
         return ret
 
     
@@ -154,9 +162,9 @@ class ClusterSystem (ClusterBaseSystem):
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
     
-    def _get_exit_status (self):
+    def _get_exit_status (self, forker="cluster_run_forker"):
         try:
-            running = ComponentProxy("forker").active_list("process group")
+            running = ComponentProxy(forker).active_list("process group")
         except:
             self.logger.error("failed to contact forker component for list of running jobs")
             return
@@ -167,9 +175,9 @@ class ClusterSystem (ClusterBaseSystem):
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
                 # maybe the second choice is better
                 try:
-                    dead_dict = ComponentProxy("forker").get_status(each.head_pid)
-                except Queue.Empty:
-                    self.logger.error("failed call for get_status from forker component for pg %s", each.head_pid)
+                    dead_dict = ComponentProxy(forker).get_status(each.head_pid)
+                except Queue.Empty: #<---FIXME: What should this be?
+                    self.logger.error("failed call for get_status from cluster_run_forker component for pg %s", each.head_pid)
                     return
                 
                 if dead_dict is None:
@@ -204,7 +212,7 @@ class ClusterSystem (ClusterBaseSystem):
         for pg in my_process_groups:
             if pg.exit_status is None:
                 try:
-                    ComponentProxy("forker").signal(pg.head_pid, signame)
+                    ComponentProxy(forker).signal(pg.head_pid, signame)
                 except:
                     self.logger.error("Failed to communicate with forker when signalling job")
 

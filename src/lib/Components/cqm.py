@@ -4058,7 +4058,7 @@ class JobProgMsg(object):
 
         if job.state == "starting":
             self.envs = job.envs
-            self.priority_core_hours = 20.0 #job.priority_core_hours
+            self.priority_core_hours = job.priority_core_hours
             self.location = job.location
             self.resid = job.resid
             #self.nodects = job._Job__resource_nodects

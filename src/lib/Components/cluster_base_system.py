@@ -665,7 +665,7 @@ class ClusterBaseSystem (Component):
         else:
             cmd = ["/usr/bin/ssh", host, script, 
                     str(jobid), user, group_name]
-            return ComponentProxy("forker").fork(cmd, "system epilogue", 
+            return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
                     "Job %s/%s" % (jobid, user))
 
         
@@ -683,7 +683,7 @@ class ClusterBaseSystem (Component):
     #    else:
     #        cmd = ["/usr/bin/ssh", host, epilogue_script, 
     #                str(jobid), user, group_name]
-    #        return ComponentProxy("forker").fork(cmd, "system epilogue", 
+    #        return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
     #                "Job %s/%s" % (jobid, user))
 
     
@@ -742,9 +742,9 @@ class ClusterBaseSystem (Component):
             user = cleaning_process['user']
 
             try:
-                exit_status = ComponentProxy("forker").child_completed(
+                exit_status = ComponentProxy("system_script_forker").child_completed(
                         cleaning_process['cleaning_id'])
-                ComponentProxy("forker").child_cleanup(
+                ComponentProxy("system_script_forker").child_cleanup(
                         [cleaning_process['cleaning_id']])
 
             except ComponentLookupError:
@@ -764,7 +764,7 @@ class ClusterBaseSystem (Component):
                         float(get_cluster_system_config("epilogue_timeout", 60.0))): 
                     cleaning_process["completed"] = True
                     try:
-                        forker = ComponentProxy("forker").signal(
+                        forker = ComponentProxy("system_script_forker").signal(
                                 cleaning_process['cleaning_id'], "SIGINT")
                         child_output = forker.get_child_data(
                             cleaning_process['cleaning_id'])
