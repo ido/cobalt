@@ -382,7 +382,7 @@ class Job (ForeignData):
     def __init__ (self, spec):
         ForeignData.__init__(self, spec)
         spec = spec.copy()
-        print spec
+        # print spec
         self.partition = "none"
         self.nodes = spec.pop("nodes", None)
         self.location = spec.pop("location", None)
@@ -461,7 +461,7 @@ class BGSched (Component):
 
     _configfields = ['utility_file']
     _config = ConfigParser.ConfigParser()
-    print Cobalt.CONFIG_FILES
+    # print Cobalt.CONFIG_FILES
     _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsched'):
         print '''"bgsched" section missing from cobalt config file'''
@@ -492,17 +492,23 @@ class BGSched (Component):
         self.cycle_id_gen = IncrID()
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
-        
-        
 
     def __getstate__(self):
-        return {'reservations':self.reservations, 'version':1,
-                'active':self.active, 'next_res_id':self.id_gen.idnum+1, 
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                'sched_version':1,
+                'reservations':self.reservations,
+                'active':self.active,
+                'next_res_id':self.id_gen.idnum+1, 
                 'next_cycle_id':self.cycle_id_gen.idnum+1, 
                 'msg_queue': dbwriter.msg_queue, 
-                'overflow': dbwriter.overflow}
+                'overflow': dbwriter.overflow})
+        return state
     
     def __setstate__(self, state):
+        Component.__setstate__(self, state)
+
         self.reservations = state['reservations']
         if 'active' in state:
             self.active = state['active']
@@ -525,15 +531,11 @@ class BGSched (Component):
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         
         self.get_current_time = time.time
-        self.lock = threading.Lock()
-        self.statistics = Statistics()
 
         if state.has_key('msg_queue'):
             dbwriter.msg_queue = state['msg_queue']
         if state.has_key('overflow') and (dbwriter.max_queued != None):
             dbwriter.overflow = state['overflow']
-
-
 
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
@@ -764,7 +766,7 @@ class BGSched (Component):
             return
         self.sync_state.Pass()
         
-        self.lock.acquire()
+        self.component_lock_acquire()
         try:
             # cleanup any reservations which have expired
             for res in self.reservations.values():
@@ -777,12 +779,14 @@ class BGSched (Component):
                     #        res) 
                     del_reservations = self.reservations.q_del([
                         {'name': res.name}])
-    
+
+            # FIXME: this isn't a deepcopy.  it copies references to each reservation in the reservations dict.  is that really
+            # sufficient?  --brt
             reservations_cache = self.reservations.copy()
         except:
             # just to make sure we don't keep the lock forever
             self.logger.error("error in schedule_jobs", exc_info=True)
-        self.lock.release()
+        self.component_lock_release()
         
         # clean up the started_jobs cached data
         # TODO: Make this tunable.

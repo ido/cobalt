@@ -144,12 +144,17 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def __getstate__(self):
-        return {"queue_assignments": self.queue_assignments, "version": 1, 
-                "down_nodes": self.down_nodes }
-
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                "cluster_base_version": 1, 
+                "queue_assignments": self.queue_assignments,
+                "down_nodes": self.down_nodes })
+        return state
 
     def __setstate__(self, state):
-        Cobalt.Util.fix_set(state)
+        Component.__setstate__(self, state)
+
         self.queue_assignments = state["queue_assignments"]
         self.down_nodes = state["down_nodes"]
 
@@ -161,8 +166,6 @@ class ClusterBaseSystem (Component):
             self.configure(cluster_hostfile)
         except:
             self.logger.error("unable to load hostfile")
-        self.lock = threading.Lock()
-        self.statistics = Statistics()
         self.alloc_only_nodes = {} # nodename:starttime
         if not state.has_key("cleaning_processes"):
             self.cleaning_processes = []
@@ -172,7 +175,7 @@ class ClusterBaseSystem (Component):
 
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
-    
+
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)

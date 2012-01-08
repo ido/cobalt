@@ -11,6 +11,7 @@ import grp
 import logging
 import sys
 import os
+import errno
 import signal
 import tempfile
 import time
@@ -106,55 +107,21 @@ class BGSystem (BGBaseSystem):
         thread.start_new_thread(self.update_partition_state, tuple())
     
     def __getstate__(self):
-        flags = {}
-        for part in self._partitions.values():
-            sched = None
-            func = None
-            queue = None
-            if hasattr(part, 'scheduled'):
-                sched = part.scheduled
-            if hasattr(part, 'functional'):
-                func = part.functional
-            if hasattr(part, 'queue'):
-                queue = part.queue
-            flags[part.name] =  (sched, func, queue)
-        return {'managed_partitions':self._managed_partitions, 'version':2,
-                'partition_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1}
-    
-    def __setstate__(self, state):
-        sys.setrecursionlimit(5000)
-        Cobalt.Util.fix_set(state)
-        self._managed_partitions = state['managed_partitions']
-        self._partitions = PartitionDict()
-        self.process_groups = BGProcessGroupDict()
-        self.process_groups.item_cls = BGProcessGroup
-        if state.has_key("next_pg_id"):
-            self.process_groups.id_gen.set(state['next_pg_id'])
-        self.node_card_cache = dict()
-        self._partitions_lock = thread.allocate_lock()
-        self.pending_diags = dict()
-        self.failed_diags = list()
-        self.diag_pids = dict()
-        self.pending_script_waits = set()
-        self.bridge_in_error = False
-        self.cached_partitions = None
-        self.offline_partitions = []
+        state = {}
+        state.update(BGBaseSystem.__getstate__(self))
+        state.update({
+                'bgsystem_version':3})
+        return state
 
+    def __setstate__(self, state):
+        BGBaseSystem.__setstate__(self, state)
+        self.process_groups.item_cls = BGProcessGroup
         self.configure()
-        if 'partition_flags' in state:
-            for pname, flags in state['partition_flags'].items():
-                if pname in self._partitions:
-                    self._partitions[pname].scheduled = flags[0]
-                    self._partitions[pname].functional = flags[1]
-                    self._partitions[pname].queue = flags[2]
-                else:
-                    logger.info("Partition %s is no longer defined" % pname)
-        
         self.update_relatives()
+        self._restore_partition_state(state)
+
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_partition_state, tuple())
-        self.lock = threading.Lock()
-        self.statistics = Statistics()
 
     def save_me(self):
         Component.save(self)
@@ -565,21 +532,41 @@ class BGSystem (BGBaseSystem):
         kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
         try:
             current = os.readlink(partition_link)
-        except OSError:
-            self.logger.error("partition %s: failed to read partitionboot location %s" % (partition, partition_link))
-            raise Exception("failed to read partitionboot location %s" % (partition_link,))
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                self.logger.warning("partition %s: partitionboot location %s does not exist; creating link",
+                    partition, partition_link)
+                current = None
+            elif e.errno == errno.EINVAL:
+                self.logger.warning("partition %s: partitionboot location %s is not a symlink; removing and resetting",
+                    partition, partition_link)
+                current = None
+            else:
+                self.logger.warning("partition %s: failed to read partitionboot location %s: %s",
+                    partition, partition_link, e.strerror)
+                raise
         if current != kernel_dir:
             if not self._validate_kernel(kernel):
-                self.logger.error("partition %s: kernel directory \"%s\" does not exist" % (partition, kernel_dir))
+                self.logger.error("partition %s: kernel directory \"%s\" does not exist", partition, kernel_dir)
                 raise Exception("kernel directory \"%s\" does not exist" % (kernel_dir,))
-            self.logger.info("partition %s: updating boot image; currently set to \"%s\"" % (partition, current.split('/')[-1]))
+            if current:
+                self.logger.info("partition %s: updating boot image; currently set to \"%s\"", partition, current.split('/')[-1])
             try:
-                os.unlink(partition_link)
-                os.symlink(kernel_dir, partition_link)
+                try:
+                    os.unlink(partition_link)
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, e.strerror)
+                        raise
+                try:
+                    os.symlink(kernel_dir, partition_link)
+                except OSError, e:
+                    self.logger.error("partition %s: failed to reset boot location \"%s\" to \"%s\": %s" %
+                        (partition, partition_link, kernel_dir, e.strerror))
+                    raise
             except OSError:
-                self.logger.error("partition %s: failed to reset boot location" % (partition,))
-                raise Exception("failed to reset boot location for partition" % (partition,))
-            self.logger.info("partition %s: boot image updated; now set to \"%s\"" % (partition, kernel))
+                raise Exception("failed to reset boot location for partition", partition)
+            self.logger.info("partition %s: boot image updated; now set to \"%s\"", partition, kernel)
 
     def _clear_kernel(self, partition):
         '''Set the kernel to be used by a partition to the default value'''
@@ -587,8 +574,7 @@ class BGSystem (BGBaseSystem):
             try:
                 self._set_kernel(partition, "default")
             except:
-                logger.error("partition %s: failed to reset boot location" % (partition,))
-
+                logger.error("partition %s: failed to reset boot location", partition)
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
         ret = "<BG>\n"
@@ -632,6 +618,7 @@ class BGSystem (BGBaseSystem):
                 self._set_kernel(pgroup.location[0], pgroup.kernel)
             except Exception, e:
                 self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
                 pgroup.exit_status = 255
             else:
                 if pgroup.kernel != "default":

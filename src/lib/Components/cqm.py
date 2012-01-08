@@ -3396,8 +3396,8 @@ class QueueManager(Component):
     __statefields__ = ['Queues']
     
     def __init__(self, *args, **kwargs):
-        self.Queues = QueueDict()
         Component.__init__(self, *args, **kwargs)
+        self.Queues = QueueDict()
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
         use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
@@ -3429,12 +3429,20 @@ class QueueManager(Component):
            
 
     def __getstate__(self):
-        
-        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
-                'msg_queue':dbwriter.msg_queue, 'next_run_id':self.run_id_gen.idnum+1,
-                'overflow': dbwriter.overflow}
-                
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                'cqm_version':3,
+                'Queues':self.Queues,
+                'next_job_id':self.id_gen.idnum+1,
+                'next_run_id':self.run_id_gen.idnum+1,
+                'msg_queue':dbwriter.msg_queue,
+                'overflow': dbwriter.overflow})
+        return state
+
     def __setstate__(self, state):
+        Component.__setstate__(self, state)
+
         self.Queues = state['Queues']
         use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
         self.id_gen = IncrID(use_database = use_db_jobid_generator)
@@ -3452,8 +3460,6 @@ class QueueManager(Component):
         
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
-        self.lock = Lock()
-        self.statistics = Statistics()
         
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
@@ -3516,7 +3522,7 @@ class QueueManager(Component):
                 " attempting to acquire a list of active process groups")
             return
 
-        self.lock.acquire()
+        self.component_lock_acquire()
         try:
             live = [item['id'] for item in pgroups]
             for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
@@ -3524,7 +3530,7 @@ class QueueManager(Component):
                     logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
                     job.task_end()
         finally:
-            self.lock.release()
+            self.component_lock_release()
     __poll_process_groups = locking(automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10))))
 
     #
@@ -3891,7 +3897,12 @@ class QueueManager(Component):
             exec code in globals, locals
         except:
             self.logger.error("Problem executing utility function definitions.", exc_info=True)
-            
+
+        # functions, classes and attributes defined in the utility file are put in locals.  in order for those definitions to be
+        # accessible to the utility function during execution, they must be added to globals which is automatically attached to
+        # the function as <func_obj>.func_globals.
+        globals.update(locals)
+
         for thing in locals.values():
             if type(thing) is types.FunctionType:
                 if thing.func_name in self.builtin_utility_functions:

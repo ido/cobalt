@@ -94,6 +94,16 @@ class ServiceLocator (Component):
         Component.__init__(self, *args, **kwargs)
         self.services = ServiceDict()
     
+    def __getstate__(self):
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                'slp_version': 1})
+        return state
+   
+    def __setstate__(self, state):
+        Component.__setstate__(self, state)
+
     def register (self, service_name, location):
         """Register the availability of a service.
         

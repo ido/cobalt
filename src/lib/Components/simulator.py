@@ -85,51 +85,21 @@ class Simulator (BGBaseSystem):
             self.configure(self.config_file)
     
     def __getstate__(self):
-        flags = {}
-        for part in self._partitions.values():
-            sched = None
-            func = None
-            queue = None
-            if hasattr(part, 'scheduled'):
-                sched = part.scheduled
-            if hasattr(part, 'functional'):
-                func = part.functional
-            if hasattr(part, 'queue'):
-                queue = part.queue
-            flags[part.name] =  (sched, func, queue)
-        return {'managed_partitions':self._managed_partitions, 'version':2, 'config_file':self.config_file, 'partition_flags': flags}
+        state = {}
+        state.update(BGBaseSystem.__getstate__(self))
+        state.update({
+                'simulator_version':3,
+                'config_file':self.config_file})
+        return state
     
     def __setstate__(self, state):
-        Cobalt.Util.fix_set(state)
-        sys.setrecursionlimit(5000)
-        self._managed_partitions = state['managed_partitions']
+        BGBaseSystem.__setstate__(self, state)
         self.config_file = state['config_file']
-        self._partitions = PartitionDict()
-        self.process_groups = BGProcessGroupDict()
         self.process_groups.item_cls = BGSimProcessGroup
-        self.node_card_cache = dict()
-        self._partitions_lock = thread.allocate_lock()
-        self.failed_components = set()
-        self.pending_diags = dict()
-        self.failed_diags = list()
-        self.bridge_in_error = False
-        self.cached_partitions = None
-        self.offline_partitions = []
         if self.config_file is not None:
             self.configure(self.config_file)
-
-        if 'partition_flags' in state:
-            for pname, flags in state['partition_flags'].items():
-                if pname in self._partitions:
-                    self._partitions[pname].scheduled = flags[0]
-                    self._partitions[pname].functional = flags[1]
-                    self._partitions[pname].queue = flags[2]
-                else:
-                    logger.info("Partition %s is no longer defined" % pname)
-
         self.update_relatives()
-        self.lock = threading.Lock()
-        self.statistics = Statistics()
+        self._restore_partition_state(state)
         
     def save_me(self):
         Component.save(self)

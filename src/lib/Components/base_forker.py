@@ -162,15 +162,17 @@ class BaseForker (Component):
         self.id_gen = IncrID()
 
     def __getstate__(self):
-
-        return {'next_task_id': self.id_gen.idnum+1,
-                'children'  : self.children}
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                'base_forker_version': 1,
+                'next_task_id': self.id_gen.idnum+1,
+                'children': self.children})
+        return state
    
-        #FIXME: Single threaded things don't need a lock but components do.
-        #  It will do nothing, fortunately. Parent needs to be picked as well
-        #  or whatever we eventually decide to do.
-
     def __setstate__(self, state):
+        Component.__setstate__(self, state)
+
         global _logger
         _logger = self.logger
 
@@ -180,8 +182,6 @@ class BaseForker (Component):
             self.children = state['children']
         else:
             self.children = []
-        self.lock = Lock()
-        self.statistics = Statistics()
         self.active_runids = []
 
     def __save_me(self):

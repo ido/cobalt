@@ -132,6 +132,13 @@ class ClusterSystem (ClusterBaseSystem):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ClusterProcessGroup
         
+    def __getstate__(self):
+        state = {}
+        state.update(Component.__getstate__(self))
+        # state.update({
+        #         "cluster_system_version": 1 }) 
+        return state
+
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup

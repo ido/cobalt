@@ -230,16 +230,115 @@ class BGBaseSystem (Component):
     
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
-        self._partitions = PartitionDict()
         self._managed_partitions = set()
-        self.process_groups = BGProcessGroupDict()
-        self.node_card_cache = dict()
+        self._partitions = PartitionDict()
         self._partitions_lock = thread.allocate_lock()
+        self.process_groups = BGProcessGroupDict()
         self.pending_diags = dict()
         self.failed_diags = list()
         self.bridge_in_error = False
+        self.node_card_cache = dict()
         self.cached_partitions = None
         self.offline_partitions = []
+
+    def __getstate__(self):
+        state = {}
+        state.update(Component.__getstate__(self))
+
+        self._partitions_lock.acquire()
+        try:
+            flags = {}
+            for part in self._partitions.values():
+                sched = None
+                func = None
+                queue = None
+                reserved_until = None
+                reserved_by = None
+                used_by = None
+                cleanup_pending = False
+                if hasattr(part, 'scheduled'):
+                    sched = part.scheduled
+                if hasattr(part, 'functional'):
+                    func = part.functional
+                if hasattr(part, 'queue'):
+                    queue = part.queue
+                if hasattr(part, 'reserved_until'):
+                    reserved_until = part.reserved_until
+                if hasattr(part, 'reserved_by'):
+                    reserved_by = part.reserved_by
+                if hasattr(part, 'used_by'):
+                    used_by = part.used_by
+                if hasattr(part, 'cleanup_pending'):
+                    cleanup_pending = part.cleanup_pending
+                flags[part.name] =  (sched, func, queue, reserved_until, reserved_by, used_by, cleanup_pending)
+        finally:
+            self._partitions_lock.release()
+
+        state.update({
+                'bg_base_system_version':2,
+                'managed_partitions':self._managed_partitions,
+                'partition_flags': flags,
+                'process_groups':self.process_groups,
+                'next_pg_id':self.process_groups.id_gen.idnum+1})
+        return state
+
+    def __setstate__(self, state):
+        Component.__setstate__(self, state)
+
+        sys.setrecursionlimit(5000)
+        self._managed_partitions = state['managed_partitions']
+        self._partitions = PartitionDict()
+        self._partitions_lock = thread.allocate_lock()
+        if state.has_key("process_groups"):
+            self.process_groups = state['process_groups']
+        else:
+            self.process_groups = BGProcessGroupDict()
+        if state.has_key("next_pg_id"):
+            self.process_groups.id_gen.set(state['next_pg_id'])
+        self.pending_diags = dict()
+        self.failed_diags = list()
+        self.diag_pids = dict()
+        self.node_card_cache = dict()
+        self.bridge_in_error = False
+        self.cached_partitions = None
+        self.offline_partitions = []
+
+    def _restore_partition_state(self, state):
+        if 'partition_flags' in state:
+            for pname, flags in state['partition_flags'].items():
+                part = self._partitions[pname]
+                fl = len(flags)
+                if pname in self._partitions:
+                    if fl > 0:
+                        part.scheduled = flags[0]
+                    if fl > 1:
+                        part.functional = flags[1]
+                    if fl > 2:
+                        part.queue = flags[2]
+                    if fl > 3:
+                        part.reserved_until = flags[3]
+                    if fl > 4:
+                        part.reserved_by = flags[4]
+                    if fl > 5:
+                        part.used_by = flags[5]
+                    if fl > 6:
+                        part.cleanup_pending = flags[6]
+                else:
+                    logger.info("Partition %s is no longer defined" % pname)
+
+            for part in self._partitions.values():
+                if part.state == 'idle':
+                    if part.reserved_until or part.reserved_by or part.used_by:
+                        part.state = 'allocated'
+                    elif part.cleanup_pending:
+                            part.state = 'cleanup'
+                if part.state != 'idle':
+                    for p in part._parents:
+                        if p.state == "idle":
+                            p.state = "blocked (%s)" % (part.name,)
+                    for p in part._children:
+                        if p.state == "idle":
+                            p.state = "blocked (%s)" % (part.name,)
 
     def _get_partitions (self):
         return PartitionDict([
@@ -703,7 +802,7 @@ class BGBaseSystem (Component):
         not_functional_set = set()
         for target_partition in self.cached_partitions.itervalues():
             usable = True
-            if target_partition.name in self.offline_partitions:
+            if target_partition.name in self.cached_offline_partitions:
                 usable = False
             else:
                 for part in self.cached_partitions.itervalues():
@@ -736,15 +835,16 @@ class BGBaseSystem (Component):
     def find_job_location(self, arg_list, end_times):
         best_partition_dict = {}
         
-        if self.bridge_in_error:
-            return {}
-        
         self._partitions_lock.acquire()
         try:
-            self.cached_partitions = copy.deepcopy(self.partitions)
-        except:
-            self.logger.error("error in copy.deepcopy", exc_info=True)
-            return {}
+            try:
+                if self.bridge_in_error:
+                    return {}
+                self.cached_partitions = copy.deepcopy(self.partitions)
+                self.cached_offline_partitions = copy.deepcopy(self.offline_partitions)
+            except:
+                self.logger.error("error in copy.deepcopy", exc_info=True)
+                return {}
         finally:
             self._partitions_lock.release()
 
@@ -930,14 +1030,17 @@ class BGBaseSystem (Component):
         pg = self.process_groups.find_by_jobid(jobid)
         try:
             self._partitions_lock.acquire()
-            used_by = self.partitions[partition_name].used_by
+            part = self.partitions[partition_name]
+            used_by = part.used_by
             if new_time:
                 if used_by == None:
-                    self.partitions[partition_name].used_by = jobid
+                    part.used_by = jobid
                     used_by = jobid
                 if used_by == jobid:
-                    self.partitions[partition_name].reserved_until = new_time
-                    self.partitions[partition_name].reserved_by = jobid
+                    part.reserved_until = new_time
+                    part.reserved_by = jobid
+                    if part.state == 'idle':
+                        part.state = 'allocated'
                     self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
                         time.asctime(time.gmtime(new_time)))
                     rc = True
@@ -946,8 +1049,8 @@ class BGBaseSystem (Component):
                         jobid, partition_name, used_by)
             else:
                 if used_by == jobid:
-                    self.partitions[partition_name].reserved_until = False
-                    self.partitions[partition_name].reserved_by = None
+                    part.reserved_until = False
+                    part.reserved_by = None
                     self.logger.info("reservation on partition '%s' has been removed", partition_name)
                     rc = True
                 else:

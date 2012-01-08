@@ -230,10 +230,43 @@ class Component (object):
         """
         self.statefile = kwargs.get("statefile", None)
         if kwargs.get("register", True):
+            self._registered_component=True
             Cobalt.Proxy.register_component(self)
+        else:
+            self._registered_component=False
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
-        self.lock = threading.Lock()
+        self._component_lock = threading.Lock()
+        self._component_lock_acquired_time = None
         self.statistics = Statistics()
+
+    def __getstate__(self):
+        state = {}
+        return {
+            'base_component_version':1,
+            'register_component':self._registered_component}
+
+    def __setstate__(self, state):
+        Cobalt.Util.fix_set(state)
+        if hasattr(state, 'register_component') and state['register_component']:
+            self._registered_component=True
+            Cobalt.Proxy.register_component(self)
+        else:
+            self._registered_component=False
+        self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
+        self._component_lock = threading.Lock()
+        self._component_lock_acquired_time = None
+        self.statistics = Statistics()
+
+    def component_lock_acquire(self):
+        entry_time = time.time()
+        self._component_lock.acquire()
+        self._component_lock_acquired_time = time.time()
+        self.statistics.add_value('component_lock_wait', self._component_lock_acquired_time - entry_time)
+        
+    def component_lock_release(self):
+        self.statistics.add_value('component_lock_held', time.time() - self._component_lock_acquired_time)
+        self._component_lock_acquired_time = None
+        self._component_lock.release()
         
     def save (self, statefile=None):
         """Pickle the component.
@@ -268,10 +301,7 @@ class Component (object):
                 need_to_lock = not getattr(func, 'locking', False)
                 if (time.time() - func.automatic_ts) > func.automatic_period:
                     if need_to_lock:
-                        t1 = time.time()
-                        self.lock.acquire()
-                        t2 = time.time()
-                        self.statistics.add_value('component_lock', t2-t1)
+                        self.component_lock_acquire()
                     try:
                         mt1 = time.time()
                         func()
@@ -280,9 +310,10 @@ class Component (object):
                                           % (name), exc_info=1)
                     finally:
                         mt2 = time.time()
-                        if need_to_lock:
-                            self.lock.release()
+                        if not need_to_lock:
+                            self.component_lock_acquire()
                         self.statistics.add_value(name, mt2-mt1)
+                        self.component_lock_release()
                         func.__dict__['automatic_ts'] = time.time()
 
     def _resolve_exposed_method (self, method_name):
@@ -317,9 +348,7 @@ class Component (object):
         
         need_to_lock = not getattr(method_func, 'locking', False)
         if need_to_lock:
-            lock_start = time.time()
-            self.lock.acquire()
-            lock_done = time.time()
+            self.component_lock_acquire()
         try:
             method_start = time.time()
             result = method_func(*args)
@@ -329,11 +358,10 @@ class Component (object):
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         finally:
             method_done = time.time()
-            if need_to_lock:
-                self.lock.release()
-                self.statistics.add_value('component_lock',
-                                      lock_done - lock_start)
+            if not need_to_lock:
+                self.component_lock_acquire()
             self.statistics.add_value(method, method_done - method_start)
+            self.component_lock_release()
         if getattr(method_func, "query", False):
             if not getattr(method_func, "query_all_methods", False):
                 margs = args[:1]

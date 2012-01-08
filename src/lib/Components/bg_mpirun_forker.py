@@ -11,7 +11,7 @@ import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
 _logger = logging.getLogger(__name__.split('.')[-1])
-print __name__
+
 
 class BGMpirunPreexec(PGPreexec):
     def __init__(self, child, cmd_str, env):
