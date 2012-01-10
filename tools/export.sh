@@ -12,9 +12,9 @@ if [ -z "$version" ] ; then
     exit 1
 fi
 tagstr=`echo ${version} | sed -e 's/\./_/g'`
-#svn copy "${url}" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} release"
+svn copy "${url}" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} release"
 svn export . "${expath}"
-#svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
+svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
 cd "${expath}" ; perl -p -i -e "s/\\\$Version\\\$/${version}/" src/clients/*.py ; rm src/clients/*.bak 
 cd /tmp
 

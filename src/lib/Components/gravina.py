@@ -20,8 +20,6 @@ import threading
 import xmlrpclib
 import ConfigParser
 import traceback
-import pybgsched
-
 
 import Cobalt
 import Cobalt.Data
@@ -35,9 +33,6 @@ from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGrou
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
-from pybgsched import SWIG_vector_to_list
-
-from bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp
 
 try:
     from elementtree import ElementTree
@@ -52,13 +47,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 Cobalt.Util.init_cobalt_config()
 #Cobalt.bridge.set_serial(Cobalt.bridge.systype)
-
-sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
-                       'B': pybgsched.Dimension(pybgsched.Dimension.B),
-                       'C': pybgsched.Dimension(pybgsched.Dimension.C),
-                       'D': pybgsched.Dimension(pybgsched.Dimension.D),
-                       'E': pybgsched.Dimension(pybgsched.Dimension.E),
-                       }
 
 
 class BGProcessGroup(ProcessGroup):
@@ -76,10 +64,10 @@ def _get_state(bridge_partition):
 
     '''
     pass
-    if bridge_partition.getStatus() == pybgsched.Block.Free:
-        return "idle"
-    else:
-        return "busy"
+    #if bridge_partition.state == "RM_PARTITION_FREE":
+    #    return "idle"
+    #else:
+    #    return "busy"
 
 blocked_re = re.compile("blocked")
 
@@ -111,14 +99,9 @@ class BGSystem (BGBaseSystem):
         sys.setrecursionlimit(5000)
         self.process_groups.item_cls = BGProcessGroup
         self.node_card_cache = dict()
-        self.compute_hardware_vec = None
-        try:
-            sim_xml_file = get_config_option("gravina","simulator_xml")
-        except ConfigParser.NoOptionError:
-            sim_xml_file = None
-        except ConfigParser.NoSectionError:
-            sim_xml_file = None
+        sim_xml_file = get_config_option("gravina","simulator_xml", "bgq_simulator.xml")
         self.configure(config_file=sim_xml_file)
+        
 
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
@@ -156,15 +139,8 @@ class BGSystem (BGBaseSystem):
         self.bridge_in_error = False
         self.cached_blocks = None
         self.offline_blocks = []
-        self.compute_hardware_vec = None
-        
-        try:
-            sim_xml_file = get_config_option("gravina","simulator_xml")
-        except ConfigParser.NoOptionError:
-            sim_xml_file = None
-        except ConfigParser.NoSectionError:
-            sim_xml_file = None
 
+        sim_xml_file = get_config_option("gravina","simulator_xml", "bgq_simulator.xml")
         self.configure(config_file=sim_xml_file)
         if 'block_flags' in state:
             for bname, flags in state['block_flags'].items():
@@ -173,7 +149,7 @@ class BGSystem (BGBaseSystem):
                     self._blocks[bname].functional = flags[1]
                     self._blocks[bname].queue = flags[2]
                 else:
-                    LOgger.info("Block %s is no longer defined" % bname)
+                    logger.info("Block %s is no longer defined" % bname)
        
         self.update_relatives()
         # initiate the process before starting any threads
@@ -185,204 +161,61 @@ class BGSystem (BGBaseSystem):
         Component.save(self)
     save_me = automatic(save_me)
 
-    def _get_node_card(self, name, state="idle"):
+    def _get_node_card(self, name, state):
         if not self.node_card_cache.has_key(name):
             self.node_card_cache[name] = NodeCard(name, state)
             
         return self.node_card_cache[name]
 
-    def _get_midplane_from_location(self, loc_name):
-        '''get the midplane associated with a hardware location, like a switch, or a nodecard.'''
-
-        rack_pos = int(rack_exp.search(loc_name).groups()[0])
-        midplane_pos = int(midplane_exp.search(loc_name).groups()[0])
-
-        if self.compute_hardware_vec == None:
-            raise RuntimeError("attempting to obtain nodecard state without initializing compute_hardware_vec.")
-        mp = self.compute_hardware_vec.getMidplane("R%02d-M%d" % (rack_pos, midplane_pos))
-        return mp
-
-    def get_nodecard_state(self, loc_name):
-        '''Get the node card state as described by the control system.'''
-        nodecard_pos = int(nodecard_exp.search(loc_name).groups()[0])
-
-        mp = self._get_midplane_from_location(loc_name)
-        return mp.getNodeBoard(nodecard_pos).getState()
-    
-    def get_switch_state(self, sw_name):
+    def _new_block_dict(self, block_def, bp_cache={}):
         
-        #first character in the switch name is the direction of the switch:
-        # A,B,C, or D format: L_RXX-MY
-        sw_id = sw_name.split("_")[0]
-        mp = self._get_midplane_from_location(sw_name)
-        return mp.getSwitch(sw_char_to_dim_dict[sw_id]).getState()  
+
+        '''This is bridge-tastic.
+
+        '''
+        blockcomment = '''
+        NODES_PER_NODECARD = 32
+
+        node_list = []
+
+        if partition_def.small:
+            bp_name = partition_def.base_partitions[0].id
+            for nc in partition_def._node_cards:
+                node_list.append(self._get_node_card(bp_name + "-" + nc.id, nc.state))
+        else:
+            try:
+                for bp in partition_def.base_partitions:
+                    if bp.id not in bp_cache:
+                        bp_cache[bp.id] = []
+                        for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
+                            bp_cache[bp.id].append(self._get_node_card(bp.id + "-" + nc.id, nc.state))
+                    node_list += bp_cache[bp.id]
+            except BridgeException:
+                print "Error communicating with the bridge during initial config.  Terminating."
+                sys.exit(1)
+
+        d = dict(
+            name = partition_def.id,
+            queue = "default",
+            size = NODES_PER_NODECARD * len(node_list),
+            node_cards = node_list,
+            switches = [ s.id for s in partition_def.switches ],
+            state = _get_state(partition_def),
+        )
+        return d
+        '''
+        pass
+
 
     def _detect_wiring_deps(self, block, wiring_cache={}):
-        """
+        """Detect dependencies on shared links.  This will probably get rolled 
         into a general resource intersection check.
 
         """
-        def _kernel():
-            s2 = set(p.switches)
-
-            if s1.intersection(s2):
-                p._wiring_conflicts.add(block.name)
-                block._wiring_conflicts.add(p.name)
-                self.logger.debug("%s and %s havening problems" % (block.name, p.name))
-
-        s1 = set(block.switches)
-
-        if wiring_cache.has_key(block.size):
-            for p in wiring_cache[block.size]:
-                if block.name!=p.name:
-                    _kernel()
-        else:
-            wiring_cache[block.size] = [block]
-            for p in self._blocks.values():
-                if p.size==block.size and block.name!=p.name:
-                    wiring_cache[block.size].append(p)
-                    _kernel()
+        #TODO: Add once we have a bridge
         return 
-
+ 
     def configure (self, bridgeless=True, config_file=None):
-
-        if config_file == None and bridgeless:
-            self._configure_from_bridge()  
-            self.logger.debug("Bridge Init Complete.")
-        else:
-            self._configure_from_file(bridgeless, config_file)
-            self.logger.debug("File Init Complete.")
-
-
-    def _configure_from_bridge(self):
-
-        """Read partition data from the bridge."""
-        
-        self.logger.info("configure()")
-        
-        start = time.time()
-        #This initialization must occur successfully prior to anything else being done
-        #with the scheduler API, or else you'll segfault out.  Absolute paths should be
-        #used for init.  While init can take a relative path, the refreshConfig function will
-        #error out.
-        
-        def init_fail_exit():
-            self.logger.alert("System Component Exiting!")
-            sys.exit(1)
-
-        try:
-            pybgsched.init(get_config_option("bgsystem","bg_properties","/home/richp/bg.properties"))
-        except IOError:
-            self.logger.critical("IOError initializing bridge.  Check bg.properties file and database connection.")
-            init_fail_exit()
-        except RuntimeError:
-            self.logger.critical("Abnormal RuntimeError from the bridge during initialization.")
-            init_fail_exit()
-        try:
-            #grab the hardware state:
-            hw_start = time.time()
-            self.compute_hardware_vec = pybgsched.getComputeHardware()
-            hw_end = time.time()
-            self.logger.debug("Acquiring hardware state: took %s sec", hw_end - hw_start)
-        except RuntimeError:
-            self.logger.critical ("Error communicating with the bridge while acquiring hardware information.")
-            init_fail_exit()
-        try:
-            #get all blocks on the system
-            blk_start = time.time()
-            ext_info_block_filter = pybgsched.BlockFilter()
-            ext_info_block_filter.setExtendedInfo(True) #get the midplane data 
-            system_def = pybgsched.getBlocks(ext_info_block_filter)
-            blk_end = time.time()
-            self.logger.debug("Acquiring block states: took %s sec", blk_end - blk_start)
-        except RuntimeError:
-            self.logger.critical ("Error communicating with the bridge during Block Initialization.")
-            init_fail_exit()
-                
-        # initialize a new partition dict with all partitions
-        
-        blocks = BlockDict()
-        
-        tmp_list = []
-
-        wiring_cache = {}
-        
-        for block_def in system_def:
-            tmp_list.append(self._new_block_dict(block_def))
-        
-        blocks.q_add(tmp_list)
-
-        # update object state
-        self._blocks.clear()
-        self._blocks.update(blocks)
-
-        # find the wiring deps
-        wd_start = time.time()
-        for block in self._blocks.values():
-            self._detect_wiring_deps(block, wiring_cache)
-        wd_end = time.time()
-        self.logger.debug("Detecting Wiring Deps: took %s sec", wd_end - wd_start)
- 
-        # update state information
-        for block in self._blocks.values():
-            if block.state != "busy":
-                for nc in block.node_cards:
-                    if nc.used_by:
-                        block.state = "blocked (%s)" % nc.used_by 
-                        break
-                for dep_name in block._wiring_conflicts:
-                    if self._blocks[dep_name].state == "busy":
-                        block.state = "blocked-wiring (%s)" % dep_name
-                        break
- 
-        end = time.time()
-        self.logger.info("block configuration took %f sec" % (end - start))
-        return
-
-    def _new_block_dict(self, block_def):
-        #pull block info into a dict so that we can create internal blocks to track.
-        
-        #block_def must be a block from pybgsched
-
-        switch_list=[]
-        midplane_list=[]
-        nodecard_list=[]
-        midplane_ids = block_def.getMidplanes()
-        for midplane_id in midplane_ids:
-            #grab the switch data from all associated midplanes
-            midplane = self.compute_hardware_vec.getMidplane(midplane_id)
-            midplane_list.append(midplane) 
-            for i in range(0, 4):
-                switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
-            #for small partitions may have a subset of nodecards, fortunately the block knows this.i
-            #try: #This calls out, not using cached ComputeHardware data.  Not sure if this is desirable.
-            #    possible_nodecards = pybgsched.getNodeBoards(midplane_id)
-            #except RuntimeError:
-            #    self.logger.critical ("Error communicating with the bridge during NodeBoard acquisition")
-            #    init_fail_exit()
-            
-            block_nodecards = SWIG_vector_to_list(block_def.getNodeBoards())
-            for i in range(1, midplane.MaxNodeBoards):
-                nc = midplane.getNodeBoard(i)
-                if nc.getLocation() in block_nodecards:
-                    state = "idle"
-                    if pybgsched.hardware_in_error_state(nc):
-                        state = "error"
-                    nodecard_list.append(self._get_node_card(nc.getLocation(), state))
-
-        d = dict(
-            name = block_def.getName(), 
-            queue = "default",
-            size = block_def.getComputeNodeCount(),
-            midplanes = midplane_list,
-            node_cards = nodecard_list,
-            switches = switch_list,
-            state = block_def.getStatus()
-        )
-        return d
-
-
-    def _configure_from_file (self, bridgeless=True, config_file=None):
         
         """Read partition data from the bridge, ultimately.  Until then we're working from an XML file.
         
@@ -391,6 +224,13 @@ class BGSystem (BGBaseSystem):
         if config_file == None and bridgeless:
             raise RuntimeError("config file for bridgeless operation not specified.")
         
+        def _get_node_card(name):
+            if not self.node_card_cache.has_key(name):
+                self.node_card_cache[name] = NodeCard(name)
+                
+            return self.node_card_cache[name]
+
+            
         def _get_node(name):
             if not self.node_cache.has_key(name):
                 self.node_cache[name] = NodeCard(name)
@@ -434,7 +274,7 @@ class BGSystem (BGBaseSystem):
             switch_list = []
             
             for nc in block_def.getiterator("NodeCard"):
-                node_card_list.append(self._get_node_card(nc.get("id")))
+                node_card_list.append(_get_node_card(nc.get("id")))
             nc_count = len(node_card_list)
             if nc_count <= 0:
                 raise RuntimeError("BOOM: Block %s defined without nodecards!", block_def.get('name'))
@@ -475,263 +315,26 @@ class BGSystem (BGBaseSystem):
             p.used_by = None
 
         def _set_block_cleanup_state(b):
-
-            #set the block to the free state and kill everything on it.
-            
-            try:
-                if b.state not in ["idle","cleanup-initiate", "cleanup"]: 
-                    pybgsched.Block.initiateFree(b.name)
-                    b.state = "cleanup-initiate"
-                else:
-                    b.state = "idle"
-                    self.logger.info("block %s: no block cleanup was required", b.name)
-                    return
-            except:
-                self.logger.critical("Unable to initiate block free from bridge!")
-                raise
-            #at this point new jobs cannot start on this block
-            block_jobs = None
-            
-            try:
-                job_block_filter = pybgsched.JobFilter()
-                job_block_filter.setComputeBlockName(b.name)
-                jobs = SWIG_vector_to_list(pybgsched.getJobs(job_block_filter))
-            except:
-                self.logger.critical("Unable to obtain list of jobs for block %s from bridge!", b.name)
-                raise
-            #At this point new
-            if len(jobs) != 0:
-                for job in jobs:
-                  nuke_job(job)  
+            #will have to set this in the final component, for now just go through the motions
+            #If nothing else, we're still blocked.
             b.state = "cleanup"
-
-            #from here on, we should be able to see if the block has returned to the free state, if, so
-            #and nothing else is blocking, we can safely set to idle.
-            
-            
             #block.state = "blocked (%s)" % (p.name,)
         
-        def nuke_job(bg_job):
-            #As soon as I get an API this is going to change.  Assume all on SN.
-            loc,pid = bg_job.getClientInfo().split(":")
-            pid = int(pid)
-           
-            if loc == "localhost": #otherwise we will need admin intervention
-                #need to determine how control system is really set up and what it should support
-                #not killing miscellaneous processes would be nice.
-                os.kill(pid, signal.SIGTERM) 
-                self.logger.info("killing pid: %s", pid)
-            return
-
         while True:
-            #self.logger.debug("Acquiring block update lock.")
-            
-            #acquire states: this is going to be the biggest pull from the control system.
-            self.bridge_in_error = False
-            try:
-                #grab hardware state
-                #self.logger.debug("acquiring hardware state")
-                self.compute_hardware_vec = pybgsched.getComputeHardware()
-            except:
-                self.logger.error("Error communicating with the bridge to update partition state information.")
-                self.bridge_in_error = True
-                Cobalt.Util.sleep(5) # wait a little bit...
-            try:
-                #self.logger.debug("acquiring block states")
-                #grab block states
-                bf = pybgsched.BlockFilter()
-                bg_cached_blocks = SWIG_vector_to_list(pybgsched.getBlocks(bf))
-            except:
-                self.logger.error("Error communicating with the bridge to update block information.")
-                self.bridge_in_error = True
-                Cobalt.Util.sleep(5) # wait a little bit...
-            if self.bridge_in_error:
-                self.logger.critical("Cannot contact bridge, update suspended.")
-                #try again until we can acquire a link to the control system
-                continue
-
-   
-   
+            self._blocks_lock.acquire()
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
                 nc.used_by = ''
-            self._blocks_lock.acquire()
-            now = time.time()
-            partitions_cleanup = []
-            bridge_partition_cache = {}
-            self.offline_blocks = []
-            missing_blocks = set(self._blocks.keys())
-            new_blocks = []
 
-            try:
-                for block in bg_cached_blocks:
-                    #find and update idle based on whether control system reads block as
-                    #free or not. 
-                    bridge_partition_cache[block.getName()] = block
-                    missing_blocks.discard(block.getName())
-                    if self._blocks.has_key(block.getName()):
-                        b = self._blocks[block.getName()]
-                        b.state = _get_state(block)
-                        b._update_node_cards()
-                        if b.reserved_until and now > b.reserved_until:
-                            b.reserved_until = False
-                            b.reserved_by = None
-                    else:
-                        new_blocks.append(block)
-
-                # remove the missing partitions and their wiring relations
-                for bname in missing_blocks:
-                    self.logger.info("missing partition removed: %s", bname)
-                    b = self._blocks[bname]
-                    for dep_name in b._wiring_conflicts:
-                        self.logger.debug("removing wiring dependency from: %s", dep_name)
-                        self._blocks[dep_name]._wiring_conflicts.discard(b.name)
-                    if b.name in self._managed_blocks:
-                        self._managed_blocks.discard(b.name)
-                    del self._blocks[b.name]
-
-                bp_cache = {}
-                wiring_cache = {}
-                
-                # throttle the adding of new partitions so updating of
-                # machine state doesn't get bogged down
-                for block in new_blocks[:8]:
-                    self.logger.info("new partition found: %s", partition.id)
-                    #we need the full info for the new ones
-                    detailed_block_filter = pybgsched.BlockFilter()
-                    detailed_block_filter.setName(block.getName())
-                    detailed_block_filter.getExtendedInfo(True)
-                    new_block_info = pybgsched.getBlocks(detailed_block_filter)
-                    #bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
-                    self._blocks.q_add([self._new_block_dict(new_block_info)])
-                    b = self._blocks[block.getName()]
-                    self._detect_wiring_deps(b, wiring_cache)
-
-                # if partitions were added or removed, then update the relationships between partitions
-                if len(missing_blocks) > 0 or len(new_blocks) > 0:
-                    self.update_relatives()
-                
-                for b in self._blocks.values():
-                    #self.logger.debug("Updating block %s", b.name)
-                    if b.cleanup_pending:
-                        if b.used_by:
-                            # if the partition has a pending cleanup request, then set the state so that cleanup will be
-                            # performed
-                            _start_partition_cleanup(b)
-                        else:
-                            # if the cleanup has already been initiated, then see how it's going
-                            busy = []
-                            parts = list(b._all_children)
-                            parts.append(b)
-                            for part in parts:
-                                if bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
-                                    busy.append(part.name)
-                            if len(busy) > 0:
-                                _set_partition_cleanup_state(b)
-                                self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
-                            else:
-                                p.cleanup_pending = False
-                                self.logger.info("partition %s: cleaning complete", b.name)
-                    if b.state == "busy":
-                        # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
-
-                        # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
-                        if not b.reserved_by:
-                            b.reserved_until = False
-                    elif b.state not in ["cleanup","cleanup-initiate"]:
-                        #block out childeren involved in the cleaning partitons
-                        if b.reserved_until:
-                            b.state = "allocated"
-                            for block in b._parents:
-                                if block.state == "idle":
-                                    block.state = "blocked (%s)" % (b.name,)
-                            for block in b._children:
-                                if block.state == "idle":
-                                    block.state = "blocked (%s)" % (b.name,)
-                        elif bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free and b.used_by:
-                            # FIXME: should we check the partition state or use reserved by == NULL instead?  now that all jobs
-                            # reserve resources, a partition without a reservation that is also in use should probably be cleaned
-                            # up regardless of partition state.  --brt
-
-                            # if the job assigned to the partition has completed, then set the state so that cleanup will be
-                            # performed
-                            _start_partition_cleanup(b)
-                            continue
-
-                        #TODO: Assess if this is even needed before.  We now run diags through a zero-priority queue.
-                        #for diag_part in self.pending_diags:
-                        #    if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
-                        #        p.state = "blocked by pending diags"
-
-                        for nc in b.node_cards:
-                            if nc.used_by:
-                                #block if other stuff is running on our node cards.  
-                                #remember subblock jobs can violate this 
-                                #TODO: test with subblock
-                                p.state = "blocked (%s)" % nc.used_by
-
-                            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
-                                #if control system reports down, then we're really down.
-                                p.state = "hardware offline: nodecard %s" % nc.id
-                                self.offline_blocks.append(b.name)
-
-                        for sw in b.switches:
-                            if self.get_switch_state(sw) != pybgsched.Hardware.Available:
-                                b.state = "hardware offline: switch %s" % sw 
-                                self.offline_blocks.append(b.name)
-                        for dep_name in b._wiring_conflicts:
-                            if self._blocks[dep_name].state in ["busy", "allocated", "cleanup"]:
-                                b.state = "blocked-wiring (%s)" % dep_name
-                                break
-                        
-                        #Not doing diags in cobalt anymore.
-                        #for part_name in self.failed_diags:
-                        #    part = self._partitions[part_name]
-                        #    if p.name == part.name:
-                        #        p.state = "failed diags"
-                        #    elif p.name in part.parents or p.name in part.children:
-                        #        p.state = "blocked by failed diags"
-            except:
-                self.logger.error("error in update_partition_state", exc_info=True)
-
-            self._blocks_lock.release()
-            
-            #now continue with the cleanup
-
-            # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
-            pnames_cleaned = []
-            for p in partitions_cleanup:
-                self.logger.info("block %s: starting block cleanup", p.name)
-                
-                if len(pnames_destroyed) > 0:
-                    self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
-                else:
-                    self.logger.info("partition %s: no partition destruction was required", p.name)
-                try:
-                    self._clear_kernel(p.name)
-                    self.logger.info("partition %s: kernel settings cleared", p.name)
-                except:
-                    self.logger.error("partition %s: failed to clear kernel settings", p.name)
-            #job-killing now handled elsewhere
-
-            Cobalt.Util.sleep(10)
-
-            #simulation mode. No idea how I'm going to unify these.
-            blockcomment = '''
             try:
                 for p in self._blocks.values():
                     p._update_node_cards()
                 
-                #now = time.time()
+                now = time.time()
             
                 # since we don't have the bridge, a partition which isn't busy
                 # should be set to idle and then blocked states can be derived
                 for p in self._blocks.values():
-
-                    # did we use the partadm --failed flag?
-                    # TODO: Reevaluate removing this.  Diags are no longer internal
-                    #       We have other ways of doing this.  And how does this
-                    #       affect out ability to determine availability?
                     if p.admin_failed:
                         p.state ="admin failed"
                         for rel in p._relatives:
@@ -739,7 +342,6 @@ class BGSystem (BGBaseSystem):
 
 
                     if p.state != "busy":
-                        #Assume idle?
                         p.state = "idle"
                     if p.reserved_until and now > p.reserved_until:
                         p.reserved_until = None
@@ -772,8 +374,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("error in update_block_state", exc_info=True)
         
             self._blocks_lock.release()
-            '''
-
+            Cobalt.Util.sleep(10)
 
     def _mark_block_for_cleaning(self, block_name, jobid):
         '''Mark a partition as needing to have cleanup code run on it.
@@ -787,10 +388,10 @@ class BGSystem (BGBaseSystem):
             if block.used_by == jobid:
                 block.cleanup_pending = True
                 self.logger.info("block %s: block marked for cleanup", block_name)
-                #block.state = "cleanup"            
-                #block.reserved_until = False
-                #block.reserved_by = None
-                #block.used_by = None
+                block.state = "cleanup"            
+                block.reserved_until = False
+                block.reserved_by = None
+                block.used_by = None
 
 
             elif block.used_by != None:
@@ -881,22 +482,6 @@ class BGSystem (BGBaseSystem):
                 else:
                     pgroup.forker = 'bg_runjob_forker'
                 if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
-                    
-                    #This absolutely has to move.  
-                    try: #Initiate boot here, I guess?  Need to make this not block.
-                        block_location_filter = pybgsched.BlockFilter()
-                        block_location_filter.setName(pgroup.location[0])
-                        boot_block = pybgsched.getBlocks(block_location_filter)[0]
-                        boot_block.initiateBoot(pgroup.location[0])
-                        status = boot_block.getStatus()
-                        while status != pybgsched.Block.Initialized:
-                            boot_block = pybgsched.getBlocks(block_location_filter)[0]
-                            status = boot_block.getStatus()
-                            status_str = boot_block.getStatusString()
-                            self.logger.debug("waiting for boot: %s", status_str)
-                            time.sleep(10)
-                    except RuntimeError:
-                        self.logger.warning("Unable to boot block %s.  Aborting job startup.")
                     try:
                         pgroup.start()
                         if pgroup.head_pid == None:
