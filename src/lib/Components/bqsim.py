@@ -234,6 +234,7 @@ class BGQsim(Simulator):
 ######adaptive metric-aware cheduling
         self.metric_aware = kwargs.get("metrica", False)
         self.balance_factor = float(kwargs.get("balance_factor")) 
+        self.window_size = kwargs.get("window_size", 1)
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -685,7 +686,7 @@ class BGQsim(Simulator):
         #print "run job ", specs, " on nodes", nodelist
         if specs == None:
             return 0
-        
+               
         for spec in specs:
             
             action = "start"
@@ -858,7 +859,7 @@ class BGQsim(Simulator):
                 {'scheduled':False})
         apply(func, args)
         
-    def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
+    def _find_job_location(self, args, drain_partitions=set(), taken_partition=set(), backfilling=False):
         jobid = args['jobid']
         nodes = args['nodes']
         queue = args['queue']
@@ -978,7 +979,7 @@ class BGQsim(Simulator):
         if best_partition:
             return {jobid: [best_partition.name]}
 
-    def find_job_location(self, arg_list, end_times):
+    def find_job_location0(self, arg_list, end_times):
         best_partition_dict = {}
         
         if self.bridge_in_error:
@@ -1069,7 +1070,260 @@ class BGQsim(Simulator):
 #        print "best_partition_dict", best_partition_dict
 
         return best_partition_dict
-    find_job_location = locking(exposed(find_job_location))
+    find_job_location0 = locking(exposed(find_job_location0))
+    
+    def permute(inputData, outputSoFar):
+        for a in inputData:
+            if a not in outputSoFar:
+                if len(outputSoFar) == len(inputData) - 1:
+                    yield outputSoFar + [a]
+                else:
+                    for b in permute(inputData, outputSoFar + [a]): # --- Recursion
+                        yield b
+                        
+    def find_job_location(self, arg_list, end_times):
+        best_partition_dict = {}
+        minimum_makespan = 100000
+        
+        if self.bridge_in_error:
+            return {}
+        
+        # build the cached_partitions structure first  (in simulation conducted in init_part()
+#        self._build_locations_cache()
+
+        # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
+        job_end_times = {}
+        for item in end_times:
+            job_end_times[item[0][0]] = item[1]
+            
+        now = self.get_current_time()
+        for p in self.cached_partitions.itervalues():
+            if p.state == "idle":
+                p.backfill_time = now
+            else:
+                p.backfill_time = now + 5*60
+            p.draining = False
+            
+        for p in self.cached_partitions.itervalues():    
+            if p.name in job_end_times:
+                if job_end_times[p.name] > p.backfill_time:
+                    p.backfill_time = job_end_times[p.name]
+                for parent_name in p.parents:
+                    parent_partition = self.cached_partitions[parent_name]
+                    if p.backfill_time > parent_partition.backfill_time:
+                        parent_partition.backfill_time = p.backfill_time
+        
+        for p in self.cached_partitions.itervalues():
+            if p.backfill_time == now:
+                continue
+            
+            for child_name in p.children:
+                child_partition = self.cached_partitions[child_name]
+                if child_partition.backfill_time == now or child_partition.backfill_time > p.backfill_time:
+                    child_partition.backfill_time = p.backfill_time
+                    
+        def permute(inputData, outputSoFar):
+            for a in inputData:
+                if a not in outputSoFar:
+                    if len(outputSoFar) == len(inputData) - 1:
+                        yield outputSoFar + [a]
+                    else:
+                        for b in permute(inputData, outputSoFar + [a]): # --- Recursion
+                            yield b
+
+        def permute_first_N(inputData, window_size):
+            if window_size == 1:
+                yield inputData
+            else:
+                list1 = inputData[0:window_size]
+                list2 = inputData[window_size:]
+                for i in permute(list1, []):
+                    list3 = i + list2
+                    yield list3
+                
+        
+        ###print self.get_current_time_date()
+        #print [job.jobid for job in self.queuing_jobs]
+        
+        ###print "length of arg_list=", len(arg_list)
+        #print arg_list
+        permutes = []
+        for i in permute_first_N(arg_list, self.window_size):
+            permutes.append(i) 
+        
+        ###for perm in permutes:
+            ###print [item.get('jobid') for item in perm],
+        ###print ""
+        
+        perm_count = 1
+                
+        for perm in permutes:
+            
+           # print "round=", perm_count
+            #print "perm=", perm
+            perm_count += 1
+            # first time through, try for starting jobs based on utility scores
+            drain_partitions = set()
+        
+            pos = 0
+            last_end = 0
+            
+            jl_matches = {}
+            
+            for job in perm:
+                
+            ###    print "try jobid %s" % job.get('jobid')
+                
+                pos += 1
+                job_partition_match = self._find_job_location(job, drain_partitions)
+                if job_partition_match:  # partition found
+               ###     print "found a match=", job_partition_match
+                    jl_matches.update(job_partition_match)
+                    #logging the scheduled job's postion in the queue, used for measuring fairness, 
+                    #e.g. pos=1 means job scheduled from the head of the queue
+                    dbgmsg = "%s;S;%s;%s;%s;%s" % (self.get_current_time_date(), job['jobid'], pos, job.get('utility_score', -1), job_partition_match)
+                    self.dbglog.LogMessage(dbgmsg)
+                    
+                    #pre-allocate job
+                    for partnames in job_partition_match.values():
+                        for partname in partnames:
+                            self.allocate_partition(partname)
+                    #break
+                    
+                    #calculate makespan this job contribute
+                    if pos <= self.window_size:
+                        expected_end = int(job.get("walltime"))*60
+                        if expected_end > last_end:
+                            last_end = expected_end 
+                            
+              ###          print "expected_end=", expected_end
+                    
+                else:  # partition not found, start draining
+
+                    location = self._find_drain_partition(job)
+                    if location is not None:
+                       # print "match not found, draing location %s for job %s " % (location, job.get("jobid"))
+                        for p_name in location.parents:
+                            drain_partitions.add(self.cached_partitions[p_name])
+                        for p_name in location.children:
+                            drain_partitions.add(self.cached_partitions[p_name])
+                            self.cached_partitions[p_name].draining = True
+                        drain_partitions.add(location)
+                        #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
+                        location.draining = True
+                        
+                        expected_start = location.backfill_time - self.get_current_time_sec()
+                 ###       print "expected_start=", expected_start
+                        expected_end = expected_start + int(job.get("walltime"))*60
+                 ###       print "expected_end=", expected_end
+                        if expected_end > last_end:
+                            last_end = expected_end
+                            
+            ###print "matches for round ", perm_count-1, jl_matches
+            ###print "last_end=%s, min makespan=%s" % (last_end, minimum_makespan)
+            
+            #deallocate in order to reallocate for a next round 
+            for partnames in jl_matches.values():
+                for partname in partnames:
+                    self.deallocate_partition(partname)            
+            
+            if last_end < minimum_makespan:
+                minimum_makespan = last_end
+                best_partition_dict = jl_matches 
+                    
+###            print "best_partition_dict=", best_partition_dict 
+   ###         if len(best_partition_dict.keys()) > 1:
+      ###          print "****************"
+                
+
+        
+        # the next time through, try to backfill, but only if we couldn't find anything to start
+        if not best_partition_dict:
+         ###   print "start backfill-----"
+            # arg_list.sorlst(self._walltimecmp)
+            
+            #for best-fit backfilling (large job first and then longer job first)
+            if not self.backfill == "ff":
+                if self.backfill == "bf":
+                    arg_list = sorted(arg_list, key=lambda d: (-int(d['nodes'])*float(d['walltime'])))
+                elif self.backfill == "sjfb":
+                    arg_list = sorted(arg_list, key=lambda d:float(d['walltime']))
+
+            for args in arg_list:
+                partition_name = self._find_job_location(args, backfilling=True)
+                if partition_name:
+                    self.logger.info("backfilling job %s" % args['jobid'])
+                    best_partition_dict.update(partition_name)
+                    #logging the starting postion in the queue, 0 means backfilled
+           #         dbgmsg = "%s;S;%s;0;%s;%s" % (self.get_current_time_date(), args['jobid'], args.get('utility_score', -1), partition_name)
+            #        self.dbglog.LogMessage(dbgmsg)
+                    break
+                
+#        print "best_partition_dict", best_partition_dict
+
+        return best_partition_dict
+    find_job_location = locking(exposed(find_job_location))   
+ 
+    def allocate_partition(self, name):
+        """temperarly allocate a partition avoiding being allocated by other job"""
+        #print "in allocate_partition, name=", name
+        try:
+            part = self.partitions[name]
+        except KeyError:
+            self.logger.error("reserve_partition(%r, %r) [does not exist]" % (name, size))
+            return False
+        if part.state == "idle":
+            part.state = "allocated"
+            for p in part._parents:
+                if p.state == "idle":
+                    p.state = "temp_blocked"
+            for p in part._children:
+                if p.state == "idle":
+                    p.state = "temp_blocked"
+                
+    def deallocate_partition(self, name):
+        """the reverse process of allocate_partition"""
+        part = self.partitions[name]
+        
+        if part.state == "allocated":
+            part.state = "idle"
+            
+            for p in part._parents:
+                if p.state == "temp_blocked":
+                    p.state = "idle"
+            for p in part._children:
+                if p.state != "temp_blocked":
+                    p.state = "idle"
+    
+    def release_partition (self, name):
+        """Release a reserved partition.
+        
+        Arguments:
+        name -- name of the partition to release
+        """
+        try:
+            partition = self.partitions[name]
+        except KeyError:
+            self.logger.error("release_partition(%r) [already free]" % (name))
+            return False
+        if not partition.state == "busy":
+            self.logger.info("release_partition(%r) [not busy]" % (name))
+            return False
+                
+        self._partitions_lock.acquire()
+        try:
+            partition.state = "idle"
+        except:
+            self.logger.error("error in release_partition", exc_info=True)
+        self._partitions_lock.release()
+        
+        # explicitly unblock the blocked partitions
+        self.update_partition_state()
+
+        self.logger.info("release_partition(%r)" % (name))
+        return True
+    release_partition = exposed(release_partition)
+        
     
     def reserve_partition (self, name, size=None):
         """Reserve a partition and block all related partitions.
@@ -1846,6 +2100,7 @@ class BGQsim(Simulator):
         self.show_resource()
          
         print "number of waiting jobs: ", self.num_waiting
+
         
 #        max_wait, avg_wait = self.get_current_max_avg_queue_time()
         
@@ -1917,8 +2172,14 @@ class BGQsim(Simulator):
             progress_bar += "-"
         progress_bar += "|"
         print progress_bar
+        
+        #if self.get_current_time_sec() > 1275393600:
+         #   time.sleep(1)
+             
         if self.sleep_interval:
             time.sleep(self.sleep_interval)
+            
+        print "waiting jobs:", [(job.jobid, job.nodes) for job in self.queuing_jobs]
             
 #        wait_jobs = [job for job in self.queues.get_jobs([{'is_runnable':True}])]
 #        

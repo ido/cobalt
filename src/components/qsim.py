@@ -24,7 +24,7 @@ arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval',
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
             'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 
             'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch', 'backfill', 'reserve_ratio',
-            'metrica', 'balance_factor']
+            'metrica', 'balance_factor', 'window_size']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -197,7 +197,9 @@ if __name__ == "__main__":
     p.add_option("-m", "--metrica", dest="metrica", action = "store_true", default = False, 
         help="enable metric aware job scheduling")
     p.add_option("--bf", dest="balance_factor", type = "string", default = "1.0", 
-        help="balance factor used for metric aware job scheduling")
+        help="balance factor used for metric aware job scheduling.")
+    p.add_option("-w","--win_size", dest="window_size", type = "int", default = "1", 
+        help="window size used in window based job allocation. default is 1.")
 
     start_sec = time.time()
         
