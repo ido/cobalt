@@ -235,6 +235,10 @@ class BGQsim(Simulator):
         self.metric_aware = kwargs.get("metrica", False)
         self.balance_factor = float(kwargs.get("balance_factor")) 
         self.window_size = kwargs.get("window_size", 1)
+        
+        self.history_wait = {}
+        self.history_slowdown = {}
+        self.history_utilization = {}
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -2253,6 +2257,11 @@ class BGQsim(Simulator):
         #print "wait_score=%s, length_score=%s, balanced_score=%s" % (wait_score, length_score, balanced_score)
         
         return balanced_score
+    
+    def monitor_metrics(self):
+        '''main function of metrics monitoring activities'''
+        print self.get_current_time_date(), " metrics monitor invoked"
+    monitor_metrics = exposed(monitor_metrics)
     
     
         
