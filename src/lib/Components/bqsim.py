@@ -239,6 +239,13 @@ class BGQsim(Simulator):
         self.history_wait = {}
         self.history_slowdown = {}
         self.history_utilization = {}
+        
+        self.delivered_node_hour = 0
+        self.delivered_node_hour2 = 0
+        self.jobcount = 0
+        self.counted_jobs = []
+        self.num_started = 0
+        self.started_job_dict = {}
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -633,7 +640,7 @@ class BGQsim(Simulator):
                 self.log_job_event("Q", self.get_current_time_date(), tempspec)
                 
                   
-                del self.unsubmitted_job_spec_dict[Id]
+                #del self.unsubmitted_job_spec_dict[Id]
                 
                 
 
@@ -835,8 +842,29 @@ class BGQsim(Simulator):
         self.insert_time_stamp(end, "E", {'jobid':jobspec['jobid']})
         
         updates.update(newattr)
+         
+         
+         
+        #self.update_jobdict(str(jobid), 'start_time', start)
+        #self.update_jobdict(str(jobid), 'end_time', end)
+        #self.update_jobdict(str(jobid), 'location', location)
+        self.num_started += 1
+        #print "start job %s" % self.num_started
+        partsize = int(location[0].split('-')[-1])
+        #print "now=%s, jobid=%s, start=%s, end=%s, partsize=%s" % (self.get_current_time_date(), jobspec['jobid'], sec_to_date(start), sec_to_date(end), partsize)
+        
+        started_job_spec = {'jobid':str(jobspec['jobid']), 'submittime': jobspec['submittime'], 'start_time': start, 'end_time': end, 'location': location, 'partsize': partsize}
+        self.started_job_dict[str(jobspec['jobid'])] = started_job_spec
+        
+        self.delivered_node_hour2 += (end-start)* partsize / 3600.0
     
         return updates
+    
+    def update_jobdict(self, jobid, _key, _value):
+        '''update self.unsubmitted_jobdict'''
+        self.unsubmitted_job_spec_dict[jobid][_key] = _value
+        if jobid == '280641':
+            print "update job %s=, _key=%s, _value=%s, afterupdate=%s" % (jobid, _key, _value, self.unsubmitted_job_spec_dict[jobid][_key]) 
     
 ##### system related   
     def init_partition(self, namelist):
@@ -2207,6 +2235,23 @@ class BGQsim(Simulator):
         capacity_loss_rate = self.total_capacity_loss_rate()
         msg  = "capacity_loss:%f" % capacity_loss_rate 
         self.dbglog.LogMessage(msg)
+        print "delivered node hour=", self.delivered_node_hour
+        print "delivered node hour2=", self.delivered_node_hour2
+        #print "jobcount=", self.jobcount
+        uncounted=[]
+        for k in self.unsubmitted_job_spec_dict.keys():
+            if k not in self.counted_jobs:
+                uncounted.append(k)
+        
+        
+        for jobid in uncounted:
+            jobspec = self.unsubmitted_job_spec_dict.get(jobid)
+            jobstart = float(jobspec['start_time'])
+            jobend = float(jobspec['end_time'])
+            #print jobstart, jobend, jobspec['location']
+        
+        print "uncounted", len(uncounted)
+        print self.num_started
         pass
     post_simulation_handling = exposed(post_simulation_handling)
     
@@ -2260,8 +2305,86 @@ class BGQsim(Simulator):
     
     def monitor_metrics(self):
         '''main function of metrics monitoring activities'''
-        print self.get_current_time_date(), " metrics monitor invoked"
+    #    print self.get_current_time_date(), " metrics monitor invoked"
+        self.get_utilization_rate(3600*24)
     monitor_metrics = exposed(monitor_metrics)
     
+    def get_last_avg_wait(self, period):
+        '''get the average waiting time in the last 'period' of time'''
+         
+        pass
     
+    def get_utilization_rate(self, period):
+        '''get the average utilization rate in the last 'period' of time'''
         
+        def _subtimecmp(spec1, spec2):
+            return cmp(spec1.get('submittime'), spec2.get('submittime'))
+        
+        now = self.get_current_time_sec()
+
+        utilization = 0
+        if period==0:
+            utilization = float(self.num_busy) / TOTAL_NODES
+            print utilization
+        elif period > 0:
+            start_point = now - period
+            total_busy_node_sec = 0
+            
+            for k, v in self.started_job_dict.iteritems():
+                jobid = k
+                if jobid != v.get('jobid'):
+                    print "jobid=", jobid, "valueid=", v.get('jobid')
+                jobstart = float(v.get("start_time"))
+                jobend = float(v.get("end_time"))
+                partitions = v.get("location")
+                partsize = int(partitions[0].split('-')[-1])
+                
+#                if jobstart > start_point and jobstart < now:
+#                    print "0 now=%s, jobid=%s, start=%s, end=%s, partsize=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize)         
+
+                #jobs totally within the period
+                if jobstart > start_point and jobend < now:
+                    node_sec =  (jobend - jobstart) * partsize 
+                    total_busy_node_sec += node_sec
+                    self.delivered_node_hour += node_sec / 3600
+                    self.jobcount += 1
+                    if jobid not in self.counted_jobs:
+                        self.counted_jobs.append(jobid)
+                    #print "1 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))
+                              
+                #jobs starting in the period but not ended yet
+                if jobstart > start_point and jobstart < now and jobend >= now:
+                    node_sec = (now - jobstart) * partsize
+                    total_busy_node_sec += node_sec
+                    self.delivered_node_hour += node_sec / 3600
+                    self.jobcount += 1  
+                    if jobid not in self.counted_jobs:
+                        self.counted_jobs.append(jobid) 
+                    #print "2 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))           
+                    
+                #jobs started before the period start but ended in the period
+                if jobstart <= start_point and jobend > start_point and jobend < now:
+                    node_sec = (jobend - start_point) * partsize
+                    total_busy_node_sec += node_sec  
+                    self.delivered_node_hour += node_sec / 3600
+                    self.jobcount += 1
+                    if jobid not in self.counted_jobs:
+                        self.counted_jobs.append(jobid)
+                    #print "3 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))
+                    
+                #jobs started before the period start but ended after the period end
+                if jobstart <= start_point and jobend >= now:
+                    node_sec = period * partsize
+                    total_busy_node_sec += node_sec   
+                    self.delivered_node_hour += node_sec / 3600
+                    self.jobcount += 1
+                    if jobid not in self.counted_jobs:
+                        self.counted_jobs.append(jobid)
+                    #print "4 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960.0*3600))
+                    
+            
+                    
+            avg_utilization = float(total_busy_node_sec) / (period*TOTAL_NODES)
+            
+            print avg_utilization
+            
