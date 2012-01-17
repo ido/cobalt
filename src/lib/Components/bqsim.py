@@ -2235,23 +2235,16 @@ class BGQsim(Simulator):
         capacity_loss_rate = self.total_capacity_loss_rate()
         msg  = "capacity_loss:%f" % capacity_loss_rate 
         self.dbglog.LogMessage(msg)
-        print "delivered node hour=", self.delivered_node_hour
-        print "delivered node hour2=", self.delivered_node_hour2
         #print "jobcount=", self.jobcount
-        uncounted=[]
-        for k in self.unsubmitted_job_spec_dict.keys():
-            if k not in self.counted_jobs:
-                uncounted.append(k)
+               
+        #calculate avgwait
+        total_wait = 0
+        count = 0
+        for job in self.started_job_dict.itervalues():
+            total_wait += job.get('start_time') - job.get('submittime')
+            count += 1
+        print "average waiting=", (total_wait / count)/60.0
         
-        
-        for jobid in uncounted:
-            jobspec = self.unsubmitted_job_spec_dict.get(jobid)
-            jobstart = float(jobspec['start_time'])
-            jobend = float(jobspec['end_time'])
-            #print jobstart, jobend, jobspec['location']
-        
-        print "uncounted", len(uncounted)
-        print self.num_started
         pass
     post_simulation_handling = exposed(post_simulation_handling)
     
@@ -2281,10 +2274,8 @@ class BGQsim(Simulator):
             min_walltime = 0
         return max_walltime, min_walltime
         
-        
     def comput_utility_score_balanced(self, balance_factor, max_wait, max_walltime, min_walltime):
         '''compute utility score balancing FCFS and SJF using a balance factor [0, 1]'''
-        
         if max_wait == 0:
             wait_score = 0
         else:
@@ -2304,28 +2295,53 @@ class BGQsim(Simulator):
         return balanced_score
     
     def monitor_metrics(self):
-        '''main function of metrics monitoring activities'''
-    #    print self.get_current_time_date(), " metrics monitor invoked"
-        self.get_utilization_rate(3600*24)
+        '''main function of metrics monitoring'''
+        self.monitor_metrics_util()
+        self.monitor_metrics_wait()
+        
     monitor_metrics = exposed(monitor_metrics)
+               
+            
+    def monitor_metrics_wait(self):
+        '''main function of metrics monitoring activities for wait'''
+    #    print self.get_current_time_date(), " metrics monitor invoked"
+        #self.get_utilization_rate(3600*24)
+        #current_avg_wait = self.get_avg_wait_last_period(0)
+        aggr_wait = self.get_aggr_wait_last_period(0)
+        before = self.balance_factor
+#        if aggr_wait > 60000:
+#            self.balance_factor = 0.5
+#        else:
+#            self.balance_factor = 1
+        print aggr_wait / 60
+#        if self.balance_factor != before:
+#            print "balance_factor changed to:", self.balance_factor
     
-    def get_last_avg_wait(self, period):
-        '''get the average waiting time in the last 'period' of time'''
-         
-        pass
-    
+    def monitor_metrics_util(self):
+        '''main function of metrics monitoring actitivies for utilization'''
+        util_instant = self.get_utilization_rate(0)
+        util_1h = self.get_utilization_rate(3600)
+        util_10h = self.get_utilization_rate(3600*10)
+        util_24h = self.get_utilization_rate(3600*24)
+        #print util_instant, util_1h, util_10h, util_24h
+#        before = self.window_size
+        if util_10h > util_24h:
+            self.window_size = 1
+        else:
+            self.window_size = 4
+            
+#        if self.window_size != before:
+#            print "window size changed to:", self.window_size
+   
     def get_utilization_rate(self, period):
         '''get the average utilization rate in the last 'period' of time'''
-        
-        def _subtimecmp(spec1, spec2):
-            return cmp(spec1.get('submittime'), spec2.get('submittime'))
-        
+                
         now = self.get_current_time_sec()
 
         utilization = 0
         if period==0:
             utilization = float(self.num_busy) / TOTAL_NODES
-            print utilization
+            return utilization
         elif period > 0:
             start_point = now - period
             total_busy_node_sec = 0
@@ -2339,17 +2355,11 @@ class BGQsim(Simulator):
                 partitions = v.get("location")
                 partsize = int(partitions[0].split('-')[-1])
                 
-#                if jobstart > start_point and jobstart < now:
-#                    print "0 now=%s, jobid=%s, start=%s, end=%s, partsize=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize)         
-
                 #jobs totally within the period
                 if jobstart > start_point and jobend < now:
                     node_sec =  (jobend - jobstart) * partsize 
                     total_busy_node_sec += node_sec
                     self.delivered_node_hour += node_sec / 3600
-                    self.jobcount += 1
-                    if jobid not in self.counted_jobs:
-                        self.counted_jobs.append(jobid)
                     #print "1 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))
                               
                 #jobs starting in the period but not ended yet
@@ -2357,9 +2367,6 @@ class BGQsim(Simulator):
                     node_sec = (now - jobstart) * partsize
                     total_busy_node_sec += node_sec
                     self.delivered_node_hour += node_sec / 3600
-                    self.jobcount += 1  
-                    if jobid not in self.counted_jobs:
-                        self.counted_jobs.append(jobid) 
                     #print "2 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))           
                     
                 #jobs started before the period start but ended in the period
@@ -2367,9 +2374,6 @@ class BGQsim(Simulator):
                     node_sec = (jobend - start_point) * partsize
                     total_busy_node_sec += node_sec  
                     self.delivered_node_hour += node_sec / 3600
-                    self.jobcount += 1
-                    if jobid not in self.counted_jobs:
-                        self.counted_jobs.append(jobid)
                     #print "3 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960*3600))
                     
                 #jobs started before the period start but ended after the period end
@@ -2377,14 +2381,90 @@ class BGQsim(Simulator):
                     node_sec = period * partsize
                     total_busy_node_sec += node_sec   
                     self.delivered_node_hour += node_sec / 3600
-                    self.jobcount += 1
-                    if jobid not in self.counted_jobs:
-                        self.counted_jobs.append(jobid)
                     #print "4 now=%s, jobid=%s, start=%s, end=%s, partsize=%s, nodehour=%s" % (sec_to_date(now), jobid, sec_to_date(jobstart), sec_to_date(jobend), partsize, node_sec /(40960.0*3600))
-                    
-            
-                    
+                     
             avg_utilization = float(total_busy_node_sec) / (period*TOTAL_NODES)
             
-            print avg_utilization
+            return avg_utilization
             
+    def get_avg_wait_last_period(self, period):
+        '''get the average waiting in the last 'period' of time'''
+
+        total_wait = 0
+        now = self.get_current_time_sec()
+        
+        if period==0: #calculate the average waiting of current queuing jobs
+            count = 0        
+            for job in self.queuing_jobs:
+                submittime = job.submittime
+                wait = now - submittime
+                total_wait += wait
+                count += 1
+            
+            if count > 0:
+                avg_wait = total_wait / count
+            else:
+                avg_wait = 0
+                    
+        elif period > 0:  #calculate the average waiting of jobs *started* within last period winodw
+            start_point = now - period
+            count = 0
+            
+            for k, v in self.started_job_dict.iteritems():
+                jobid = k
+                jobsubmit = float(v.get("submittime"))
+                jobstart = float(v.get("start_time"))
+                
+                #jobs started within the period
+                if jobstart > start_point and jobstart < now:
+                    jobwait = jobstart - jobsubmit
+                    total_wait += jobwait
+                    count += 1
+            
+            if count > 0:
+                avg_wait = total_wait / count
+            else:
+                avg_wait = 0
+            
+        print avg_wait
+        return avg_wait
+    
+    def get_aggr_wait_last_period(self, period=0):
+        '''get the aggregate waiting in the last 'period' of time'''
+
+        total_wait = 0
+        now = self.get_current_time_sec()
+        
+        if period==0: #calculate the aggr waiting of current queuing jobs
+            count = 0        
+            for job in self.queuing_jobs:
+                submittime = job.submittime
+                wait = now - submittime
+                total_wait += wait
+                count += 1
+            
+            #agg_wait = total_wait
+                    
+        elif period > 0:  #calculate the aggr waiting of jobs *started* within last period winodw
+            start_point = now - period
+            count = 0
+            
+            for k, v in self.started_job_dict.iteritems():
+                jobid = k
+                jobsubmit = float(v.get("submittime"))
+                jobstart = float(v.get("start_time"))
+                
+                #jobs started within the period
+                if jobstart > start_point and jobstart < now:
+                    jobwait = jobstart - jobsubmit
+                    total_wait += jobwait
+                    count += 1
+            
+            if count > 0:
+                avg_wait = total_wait / count
+            else:
+                avg_wait = 0
+            
+        #print total_wait / 60
+        return total_wait
+                    
