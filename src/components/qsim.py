@@ -23,7 +23,8 @@ import time
 arg_list = ['bgjob', 'cjob', 'config_file', 'outputlog', 'sleep_interval', 
             'predict', 'coscheduling', 'wass', 'BG_Fraction', 'cluster_fraction',
             'bg_trace_start', 'bg_trace_end', 'c_trace_start', 'c_trace_end', 
-            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch', 'backfill', 'reserve_ratio']
+            'Anchor', 'anchor', 'vicinity', 'mate_ratio', 'batch', 'backfill', 'reserve_ratio',
+            'metrica', 'balance_factor', 'window_size', 'adaptive']
 
 def datetime_strptime (value, format):
     """Parse a datetime like datetime.strptime in Python >= 2.5"""
@@ -103,6 +104,10 @@ def integrated_main(options):
             evsim.init_unhold_events(0)
         if opts.coscheduling[1] == "hold":
             evsim.init_unhold_events(1)
+            
+    if opts.adaptive:
+        print "inserting metrics monitor events into event list..."
+        evsim.init_mmon_events()  
 
     if opts.batch:
         print "simulation started"
@@ -193,6 +198,14 @@ if __name__ == "__main__":
     p.add_option(Option("-R", "--reservation",
         dest="reserve_ratio", type="float", default=0.0,
         help="float (0--1), specify the proportion of reserved jobs in the job trace, by default it is 0."))
+    p.add_option("-m", "--metrica", dest="metrica", action = "store_true", default = False, 
+        help="enable metric aware job scheduling")
+    p.add_option("--bf", dest="balance_factor", type = "string", default = "1.0", 
+        help="balance factor used for metric aware job scheduling.")
+    p.add_option("-w","--win_size", dest="window_size", type = "int", default = "1", 
+        help="window size used in window based job allocation. default is 1.")
+    p.add_option("--adaptive", dest="adaptive", type = "string", default = False, 
+        help="enable adaptive policy tuning and specify scheme.  [00 | 10 | 01 | 11] ")
 
     start_sec = time.time()
         
@@ -268,6 +281,8 @@ if __name__ == "__main__":
         print "cluster simulation start date=", opts.anchor
         t_tuple = time.strptime(str(opts.anchor), "%Y-%m-%d %H:%M:%S")
         opts.anchor = time.mktime(t_tuple)
+        
+
                        
     options = {}
     for argname in arg_list:
