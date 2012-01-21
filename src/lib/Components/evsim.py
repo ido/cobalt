@@ -227,7 +227,7 @@ class EventSimulator(Component):
         if self.time_stamp < len(self.event_list) - 1:
             return self.event_list[self.time_stamp + 1].get('unixtime')
         else:
-            return self.get_current_time_date()
+            return self.event_list[self.time_stamp].get('unixtime')
     get_next_event_time_sec = exposed(get_next_event_time_sec)
     
         

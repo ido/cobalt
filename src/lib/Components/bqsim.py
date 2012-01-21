@@ -246,6 +246,10 @@ class BGQsim(Simulator):
         self.counted_jobs = []
         self.num_started = 0
         self.started_job_dict = {}
+        self.queue_depth_data = []
+        self.adaptive = kwargs.get("adaptive", False)
+        if self.adaptive:
+            print "adaptive scheme=", self.adaptive  
             
 ####----print some configuration            
         if self.wass_scheme:
@@ -1518,12 +1522,12 @@ class BGQsim(Simulator):
             val = queue_priority + 0.1
             return val
         
-        def default1():
+        def default():
             '''FCFS'''
             val = queued_time
             return val
         
-        def default():
+        def default1():
             '''WFP'''
             if self.predict_queue:
                 wall_time_sched = wall_time_p
@@ -2245,7 +2249,10 @@ class BGQsim(Simulator):
             count += 1
         print "average waiting=", (total_wait / count)/60.0
         
-        pass
+        for qd in self.queue_depth_data:
+            avg_qd = sum(self.queue_depth_data) / len(self.queue_depth_data)        
+        
+        print "average queue depth=", avg_qd
     post_simulation_handling = exposed(post_simulation_handling)
     
 #############metric-aware###
@@ -2296,6 +2303,7 @@ class BGQsim(Simulator):
     
     def monitor_metrics(self):
         '''main function of metrics monitoring'''
+        
         self.monitor_metrics_util()
         self.monitor_metrics_wait()
         
@@ -2308,12 +2316,15 @@ class BGQsim(Simulator):
         #self.get_utilization_rate(3600*24)
         #current_avg_wait = self.get_avg_wait_last_period(0)
         aggr_wait = self.get_aggr_wait_last_period(0)
-        before = self.balance_factor
-#        if aggr_wait > 60000:
-#            self.balance_factor = 0.5
-#        else:
-#            self.balance_factor = 1
-        print aggr_wait / 60
+        
+        if self.adaptive in ["10", "11"]:
+            if aggr_wait > 1000:
+                self.balance_factor = 0.5
+            else:
+                self.balance_factor = 1
+                print aggr_wait / 60
+
+        self.queue_depth_data.append(aggr_wait / 60)
 #        if self.balance_factor != before:
 #            print "balance_factor changed to:", self.balance_factor
     
@@ -2323,16 +2334,15 @@ class BGQsim(Simulator):
         util_1h = self.get_utilization_rate(3600)
         util_10h = self.get_utilization_rate(3600*10)
         util_24h = self.get_utilization_rate(3600*24)
+        
         #print util_instant, util_1h, util_10h, util_24h
-#        before = self.window_size
-        if util_10h > util_24h:
-            self.window_size = 1
-        else:
-            self.window_size = 4
-            
-#        if self.window_size != before:
-#            print "window size changed to:", self.window_size
-   
+
+        if self.adaptive in ["01", "11"]:
+            if util_10h > util_24h:
+                self.window_size = 1
+            else:
+                self.window_size = 4
+        
     def get_utilization_rate(self, period):
         '''get the average utilization rate in the last 'period' of time'''
                 
@@ -2430,7 +2440,7 @@ class BGQsim(Simulator):
         return avg_wait
     
     def get_aggr_wait_last_period(self, period=0):
-        '''get the aggregate waiting in the last 'period' of time'''
+        '''get the queue depth (aggregate waiting) in the last 'period' of time (in minutes)'''
 
         total_wait = 0
         now = self.get_current_time_sec()
@@ -2466,5 +2476,5 @@ class BGQsim(Simulator):
                 avg_wait = 0
             
         #print total_wait / 60
-        return total_wait
+        return total_wait / 60 
                     

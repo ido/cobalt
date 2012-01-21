@@ -204,8 +204,8 @@ if __name__ == "__main__":
         help="balance factor used for metric aware job scheduling.")
     p.add_option("-w","--win_size", dest="window_size", type = "int", default = "1", 
         help="window size used in window based job allocation. default is 1.")
-    p.add_option("--adaptive", dest="adaptive", action = "store_true", default = False, 
-        help="enable adaptive policy tuning")
+    p.add_option("--adaptive", dest="adaptive", type = "string", default = False, 
+        help="enable adaptive policy tuning and specify scheme.  [00 | 10 | 01 | 11] ")
 
     start_sec = time.time()
         
