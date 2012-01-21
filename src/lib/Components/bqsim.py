@@ -1591,11 +1591,12 @@ class BGQsim(Simulator):
         loss  = 0
         current_time = self.get_current_time_sec()
         next_time = self.event_manager.get_next_event_time_sec()
-        time_length = next_time - current_time
         
-        idle_midplanes = len(self.get_midplanes_by_state('idle'))
-        idle_node = idle_midplanes * MIDPLANE_SIZE
-        loss = time_length * idle_node
+        if next_time > current_time:
+            time_length = next_time - current_time
+            idle_midplanes = len(self.get_midplanes_by_state('idle'))
+            idle_node = idle_midplanes * MIDPLANE_SIZE
+            loss = time_length * idle_node
         return loss
     
     def total_capacity_loss_rate(self):
@@ -2248,10 +2249,10 @@ class BGQsim(Simulator):
             count += 1
         print "average waiting=", (total_wait / count)/60.0
         
-        for qd in self.queue_depth_data:
-            avg_qd = sum(self.queue_depth_data) / len(self.queue_depth_data)        
-        
-        print "average queue depth=", avg_qd
+        if self.adaptive:
+            for qd in self.queue_depth_data:
+                avg_qd = sum(self.queue_depth_data) / len(self.queue_depth_data)
+            print "average queue depth=", avg_qd
     post_simulation_handling = exposed(post_simulation_handling)
     
 #############metric-aware###
