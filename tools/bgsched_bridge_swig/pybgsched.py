@@ -67,35 +67,6 @@ except AttributeError:
     _newclass = 0
 
 
-class SwigPyIterator(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, SwigPyIterator, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, SwigPyIterator, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
-    __repr__ = _swig_repr
-    __swig_destroy__ = _pybgsched.delete_SwigPyIterator
-    __del__ = lambda self : None;
-    def value(self): return _pybgsched.SwigPyIterator_value(self)
-    def incr(self, n = 1): return _pybgsched.SwigPyIterator_incr(self, n)
-    def decr(self, n = 1): return _pybgsched.SwigPyIterator_decr(self, n)
-    def distance(self, *args): return _pybgsched.SwigPyIterator_distance(self, *args)
-    def equal(self, *args): return _pybgsched.SwigPyIterator_equal(self, *args)
-    def copy(self): return _pybgsched.SwigPyIterator_copy(self)
-    def next(self): return _pybgsched.SwigPyIterator_next(self)
-    def __next__(self): return _pybgsched.SwigPyIterator___next__(self)
-    def previous(self): return _pybgsched.SwigPyIterator_previous(self)
-    def advance(self, *args): return _pybgsched.SwigPyIterator_advance(self, *args)
-    def __eq__(self, *args): return _pybgsched.SwigPyIterator___eq__(self, *args)
-    def __ne__(self, *args): return _pybgsched.SwigPyIterator___ne__(self, *args)
-    def __iadd__(self, *args): return _pybgsched.SwigPyIterator___iadd__(self, *args)
-    def __isub__(self, *args): return _pybgsched.SwigPyIterator___isub__(self, *args)
-    def __add__(self, *args): return _pybgsched.SwigPyIterator___add__(self, *args)
-    def __sub__(self, *args): return _pybgsched.SwigPyIterator___sub__(self, *args)
-    def __iter__(self): return self
-SwigPyIterator_swigregister = _pybgsched.SwigPyIterator_swigregister
-SwigPyIterator_swigregister(SwigPyIterator)
-
 SHARED_PTR_DISOWN = _pybgsched.SHARED_PTR_DISOWN
 class SortOrder(_object):
     __swig_setmethods__ = {}
@@ -202,8 +173,6 @@ class Job(_object):
         this = _pybgsched.new_Job(*args)
         try: self.this.append(this)
         except: self.this = this
-    def getStatusValue(self): return _pybgsched.Job_getStatusValue(self)
-    def getInUseString(self): return _pybgsched.Job_getInUseString(self)
     __swig_destroy__ = _pybgsched.delete_Job
     __del__ = lambda self : None;
 Job_swigregister = _pybgsched.Job_swigregister
@@ -329,13 +298,8 @@ class Hardware(_object):
     __swig_destroy__ = _pybgsched.delete_Hardware
     __del__ = lambda self : None;
     def getPimpl(self): return _pybgsched.Hardware_getPimpl(self)
-    def getStateValue(self): return _pybgsched.Hardware_getStateValue(self)
-    def getStateString(self): return _pybgsched.Hardware_getStateString(self)
-    def __str__(self): return _pybgsched.Hardware___str__(self)
 Hardware_swigregister = _pybgsched.Hardware_swigregister
 Hardware_swigregister(Hardware)
-
-Hardware.getState = Hardware.getStateValue
 
 class Node(Hardware):
     __swig_setmethods__ = {}
@@ -447,14 +411,10 @@ class Switch(Hardware):
         this = _pybgsched.new_Switch(*args)
         try: self.this.append(this)
         except: self.this = this
-    def getInUseValue(self): return _pybgsched.Switch_getInUseValue(self)
-    def getInUseString(self): return _pybgsched.Switch_getInUseString(self)
     __swig_destroy__ = _pybgsched.delete_Switch
     __del__ = lambda self : None;
 Switch_swigregister = _pybgsched.Switch_swigregister
 Switch_swigregister(Switch)
-
-Switch.getInUse = Switch.getInUseValue
 
 class NodeBoard(Hardware):
     __swig_setmethods__ = {}
@@ -475,20 +435,14 @@ class NodeBoard(Hardware):
     def getComputeBlockName(self): return _pybgsched.NodeBoard_getComputeBlockName(self)
     def getMidplaneCoordinates(self): return _pybgsched.NodeBoard_getMidplaneCoordinates(self)
     def getMidplaneLocation(self): return _pybgsched.NodeBoard_getMidplaneLocation(self)
-    def getAvailableNodeCount(self): return _pybgsched.NodeBoard_getAvailableNodeCount(self)
-    def isMetaState(self): return _pybgsched.NodeBoard_isMetaState(self)
     def __init__(self, *args): 
         this = _pybgsched.new_NodeBoard(*args)
         try: self.this.append(this)
         except: self.this = this
-    def getQuadrantValue(self): return _pybgsched.NodeBoard_getQuadrantValue(self)
-    def getQuadrantString(self): return _pybgsched.NodeBoard_getQuadrantString(self)
     __swig_destroy__ = _pybgsched.delete_NodeBoard
     __del__ = lambda self : None;
 NodeBoard_swigregister = _pybgsched.NodeBoard_swigregister
 NodeBoard_swigregister(NodeBoard)
-
-NodeBoard.getQuadrant = NodeBoard.getQuadrantValue
 
 class Midplane(Hardware):
     __swig_setmethods__ = {}
@@ -519,14 +473,10 @@ class Midplane(Hardware):
         try: self.this.append(this)
         except: self.this = this
     def getPimpl(self): return _pybgsched.Midplane_getPimpl(self)
-    def getInUseValue(self): return _pybgsched.Midplane_getInUseValue(self)
-    def getInUseString(self): return _pybgsched.Midplane_getInUseString(self)
     __swig_destroy__ = _pybgsched.delete_Midplane
     __del__ = lambda self : None;
 Midplane_swigregister = _pybgsched.Midplane_swigregister
 Midplane_swigregister(Midplane)
-
-Midplane.getInUse = Midplane.getInUseValue
 
 class ComputeHardware(_object):
     __swig_setmethods__ = {}
@@ -626,6 +576,54 @@ class BlockSort(_object):
 BlockSort_swigregister = _pybgsched.BlockSort_swigregister
 BlockSort_swigregister(BlockSort)
 BlockSort.AnyOrder = _pybgsched.cvar.BlockSort_AnyOrder
+
+class BlockSize(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockSize, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, BlockSize, name)
+    __repr__ = _swig_repr
+    Large = _pybgsched.BlockSize_Large
+    Small = _pybgsched.BlockSize_Small
+    All = _pybgsched.BlockSize_All
+    def __init__(self): 
+        this = _pybgsched.new_BlockSize()
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _pybgsched.delete_BlockSize
+    __del__ = lambda self : None;
+BlockSize_swigregister = _pybgsched.BlockSize_swigregister
+BlockSize_swigregister(BlockSize)
+
+class BlockFilter(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockFilter, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, BlockFilter, name)
+    __repr__ = _swig_repr
+    def __init__(self): 
+        this = _pybgsched.new_BlockFilter()
+        try: self.this.append(this)
+        except: self.this = this
+    def setStatuses(self, *args): return _pybgsched.BlockFilter_setStatuses(self, *args)
+    def setExtendedInfo(self, *args): return _pybgsched.BlockFilter_setExtendedInfo(self, *args)
+    def setIncludeJobs(self, *args): return _pybgsched.BlockFilter_setIncludeJobs(self, *args)
+    def setName(self, *args): return _pybgsched.BlockFilter_setName(self, *args)
+    def setOwner(self, *args): return _pybgsched.BlockFilter_setOwner(self, *args)
+    def setUser(self, *args): return _pybgsched.BlockFilter_setUser(self, *args)
+    def setSize(self, *args): return _pybgsched.BlockFilter_setSize(self, *args)
+    def getStatuses(self): return _pybgsched.BlockFilter_getStatuses(self)
+    def getName(self): return _pybgsched.BlockFilter_getName(self)
+    def getOwner(self): return _pybgsched.BlockFilter_getOwner(self)
+    def getUser(self): return _pybgsched.BlockFilter_getUser(self)
+    def getExtendedInfo(self): return _pybgsched.BlockFilter_getExtendedInfo(self)
+    def getIncludeJobs(self): return _pybgsched.BlockFilter_getIncludeJobs(self)
+    def getSize(self): return _pybgsched.BlockFilter_getSize(self)
+    def getPimpl(self): return _pybgsched.BlockFilter_getPimpl(self)
+    __swig_destroy__ = _pybgsched.delete_BlockFilter
+    __del__ = lambda self : None;
+BlockFilter_swigregister = _pybgsched.BlockFilter_swigregister
+BlockFilter_swigregister(BlockFilter)
 
 class IOLink(Hardware):
     __swig_setmethods__ = {}
@@ -731,8 +729,6 @@ class Block(_object):
         this = _pybgsched.new_Block(*args)
         try: self.this.append(this)
         except: self.this = this
-    def getStatusValue(self): return _pybgsched.Block_getStatusValue(self)
-    def getStatusString(self): return _pybgsched.Block_getStatusString(self)
     __swig_destroy__ = _pybgsched.delete_Block
     __del__ = lambda self : None;
 Block_swigregister = _pybgsched.Block_swigregister
@@ -781,56 +777,6 @@ Block_isAuthorized = _pybgsched.Block_isAuthorized
 def Block_getUsers(*args):
   return _pybgsched.Block_getUsers(*args)
 Block_getUsers = _pybgsched.Block_getUsers
-
-Block.getStatus = Block.getStatusValue
-
-class BlockSize(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockSize, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, BlockSize, name)
-    __repr__ = _swig_repr
-    Large = _pybgsched.BlockSize_Large
-    Small = _pybgsched.BlockSize_Small
-    All = _pybgsched.BlockSize_All
-    def __init__(self): 
-        this = _pybgsched.new_BlockSize()
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _pybgsched.delete_BlockSize
-    __del__ = lambda self : None;
-BlockSize_swigregister = _pybgsched.BlockSize_swigregister
-BlockSize_swigregister(BlockSize)
-
-class BlockFilter(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockFilter, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, BlockFilter, name)
-    __repr__ = _swig_repr
-    def __init__(self): 
-        this = _pybgsched.new_BlockFilter()
-        try: self.this.append(this)
-        except: self.this = this
-    def setStatuses(self, *args): return _pybgsched.BlockFilter_setStatuses(self, *args)
-    def setExtendedInfo(self, *args): return _pybgsched.BlockFilter_setExtendedInfo(self, *args)
-    def setIncludeJobs(self, *args): return _pybgsched.BlockFilter_setIncludeJobs(self, *args)
-    def setName(self, *args): return _pybgsched.BlockFilter_setName(self, *args)
-    def setOwner(self, *args): return _pybgsched.BlockFilter_setOwner(self, *args)
-    def setUser(self, *args): return _pybgsched.BlockFilter_setUser(self, *args)
-    def setSize(self, *args): return _pybgsched.BlockFilter_setSize(self, *args)
-    def getStatuses(self): return _pybgsched.BlockFilter_getStatuses(self)
-    def getName(self): return _pybgsched.BlockFilter_getName(self)
-    def getOwner(self): return _pybgsched.BlockFilter_getOwner(self)
-    def getUser(self): return _pybgsched.BlockFilter_getUser(self)
-    def getExtendedInfo(self): return _pybgsched.BlockFilter_getExtendedInfo(self)
-    def getIncludeJobs(self): return _pybgsched.BlockFilter_getIncludeJobs(self)
-    def getSize(self): return _pybgsched.BlockFilter_getSize(self)
-    def getPimpl(self): return _pybgsched.BlockFilter_getPimpl(self)
-    __swig_destroy__ = _pybgsched.delete_BlockFilter
-    __del__ = lambda self : None;
-BlockFilter_swigregister = _pybgsched.BlockFilter_swigregister
-BlockFilter_swigregister(BlockFilter)
 
 class SchedUtil_Errors(_object):
     __swig_setmethods__ = {}
@@ -1039,157 +985,6 @@ def RuntimeErrors_toString(*args):
   return _pybgsched.RuntimeErrors_toString(*args)
 RuntimeErrors_toString = _pybgsched.RuntimeErrors_toString
 
-class AllocatorEventListener(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, AllocatorEventListener, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, AllocatorEventListener, name)
-    __repr__ = _swig_repr
-    def handleAllocate(self, *args): return _pybgsched.AllocatorEventListener_handleAllocate(self, *args)
-    def handleDeallocate(self, *args): return _pybgsched.AllocatorEventListener_handleDeallocate(self, *args)
-    __swig_destroy__ = _pybgsched.delete_AllocatorEventListener
-    __del__ = lambda self : None;
-    def __init__(self): 
-        this = _pybgsched.new_AllocatorEventListener()
-        try: self.this.append(this)
-        except: self.this = this
-AllocatorEventListener_swigregister = _pybgsched.AllocatorEventListener_swigregister
-AllocatorEventListener_swigregister(AllocatorEventListener)
-
-class ResourceSpec(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, ResourceSpec, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, ResourceSpec, name)
-    __repr__ = _swig_repr
-    def getShape(self): return _pybgsched.ResourceSpec_getShape(self)
-    def canRotateShape(self): return _pybgsched.ResourceSpec_canRotateShape(self)
-    def canUsePassthrough(self): return _pybgsched.ResourceSpec_canUsePassthrough(self)
-    def getNodeCount(self): return _pybgsched.ResourceSpec_getNodeCount(self)
-    def getConnectivitySpec(self, *args): return _pybgsched.ResourceSpec_getConnectivitySpec(self, *args)
-    def setConnectivitySpec(self, *args): return _pybgsched.ResourceSpec_setConnectivitySpec(self, *args)
-    def getDrainedMidplanes(self): return _pybgsched.ResourceSpec_getDrainedMidplanes(self)
-    def addDrainedMidplane(self, *args): return _pybgsched.ResourceSpec_addDrainedMidplane(self, *args)
-    def removeDrainedMidplane(self, *args): return _pybgsched.ResourceSpec_removeDrainedMidplane(self, *args)
-    def getExtendedOptions(self): return _pybgsched.ResourceSpec_getExtendedOptions(self)
-    def addExtendedOption(self, *args): return _pybgsched.ResourceSpec_addExtendedOption(self, *args)
-    def removeExtendedOption(self, *args): return _pybgsched.ResourceSpec_removeExtendedOption(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_ResourceSpec(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _pybgsched.delete_ResourceSpec
-    __del__ = lambda self : None;
-ResourceSpec_swigregister = _pybgsched.ResourceSpec_swigregister
-ResourceSpec_swigregister(ResourceSpec)
-
-class Midplanes(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, Midplanes, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, Midplanes, name)
-    __repr__ = _swig_repr
-    def get(self, *args): return _pybgsched.Midplanes_get(self, *args)
-    def getMachineSize(self): return _pybgsched.Midplanes_getMachineSize(self)
-    def __init__(self, *args): 
-        this = _pybgsched.new_Midplanes(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _pybgsched.delete_Midplanes
-    __del__ = lambda self : None;
-Midplanes_swigregister = _pybgsched.Midplanes_swigregister
-Midplanes_swigregister(Midplanes)
-
-class Model(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, Model, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, Model, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
-    __repr__ = _swig_repr
-    def allocate(self, *args): return _pybgsched.Model_allocate(self, *args)
-    def deallocate(self, *args): return _pybgsched.Model_deallocate(self, *args)
-    def addBlock(self, *args): return _pybgsched.Model_addBlock(self, *args)
-    def removeBlock(self, *args): return _pybgsched.Model_removeBlock(self, *args)
-    def getBlock(self, *args): return _pybgsched.Model_getBlock(self, *args)
-    def getBlockStatus(self, *args): return _pybgsched.Model_getBlockStatus(self, *args)
-    def getMidplanes(self): return _pybgsched.Model_getMidplanes(self)
-    def getMidplane(self, *args): return _pybgsched.Model_getMidplane(self, *args)
-    def getDrainedMidplanes(self): return _pybgsched.Model_getDrainedMidplanes(self)
-    def addDrainedMidplane(self, *args): return _pybgsched.Model_addDrainedMidplane(self, *args)
-    def removeDrainedMidplane(self, *args): return _pybgsched.Model_removeDrainedMidplane(self, *args)
-    def syncState(self): return _pybgsched.Model_syncState(self)
-    def dump(self, *args): return _pybgsched.Model_dump(self, *args)
-    __swig_destroy__ = _pybgsched.delete_Model
-    __del__ = lambda self : None;
-    def getPimpl(self): return _pybgsched.Model_getPimpl(self)
-Model_swigregister = _pybgsched.Model_swigregister
-Model_swigregister(Model)
-
-class LiveModel(Model):
-    __swig_setmethods__ = {}
-    for _s in [Model]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, LiveModel, name, value)
-    __swig_getmethods__ = {}
-    for _s in [Model]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
-    __getattr__ = lambda self, name: _swig_getattr(self, LiveModel, name)
-    __repr__ = _swig_repr
-    def allocate(self, *args): return _pybgsched.LiveModel_allocate(self, *args)
-    def deallocate(self, *args): return _pybgsched.LiveModel_deallocate(self, *args)
-    def addBlock(self, *args): return _pybgsched.LiveModel_addBlock(self, *args)
-    def removeBlock(self, *args): return _pybgsched.LiveModel_removeBlock(self, *args)
-    def getBlock(self, *args): return _pybgsched.LiveModel_getBlock(self, *args)
-    def getBlockStatus(self, *args): return _pybgsched.LiveModel_getBlockStatus(self, *args)
-    def getFilteredBlocks(self, *args): return _pybgsched.LiveModel_getFilteredBlocks(self, *args)
-    def getMidplanes(self): return _pybgsched.LiveModel_getMidplanes(self)
-    def getMidplane(self, *args): return _pybgsched.LiveModel_getMidplane(self, *args)
-    def getDrainedMidplanes(self): return _pybgsched.LiveModel_getDrainedMidplanes(self)
-    def addDrainedMidplane(self, *args): return _pybgsched.LiveModel_addDrainedMidplane(self, *args)
-    def removeDrainedMidplane(self, *args): return _pybgsched.LiveModel_removeDrainedMidplane(self, *args)
-    def syncState(self): return _pybgsched.LiveModel_syncState(self)
-    def dump(self, *args): return _pybgsched.LiveModel_dump(self, *args)
-    def registerListener(self, *args): return _pybgsched.LiveModel_registerListener(self, *args)
-    def notifyAllocated(self, *args): return _pybgsched.LiveModel_notifyAllocated(self, *args)
-    def notifyDeallocated(self, *args): return _pybgsched.LiveModel_notifyDeallocated(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_LiveModel(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def getBlockStatusValue(self, *args): return _pybgsched.LiveModel_getBlockStatusValue(self, *args)
-    def getBlockStatusString(self, *args): return _pybgsched.LiveModel_getBlockStatusString(self, *args)
-    __swig_destroy__ = _pybgsched.delete_LiveModel
-    __del__ = lambda self : None;
-LiveModel_swigregister = _pybgsched.LiveModel_swigregister
-LiveModel_swigregister(LiveModel)
-
-LiveModel.getBlockStatus = LiveModel.getBlockStatusValue
-
-class Allocator(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, Allocator, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, Allocator, name)
-    __repr__ = _swig_repr
-    def __init__(self): 
-        this = _pybgsched.new_Allocator()
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _pybgsched.delete_Allocator
-    __del__ = lambda self : None;
-    def getLiveModel(self): return _pybgsched.Allocator_getLiveModel(self)
-    def getPluginList(self): return _pybgsched.Allocator_getPluginList(self)
-    def getShapesForSize(self, *args): return _pybgsched.Allocator_getShapesForSize(self, *args)
-    def getShapes(self): return _pybgsched.Allocator_getShapes(self)
-    def getRotations(self, *args): return _pybgsched.Allocator_getRotations(self, *args)
-    def createMidplaneShape(self, *args): return _pybgsched.Allocator_createMidplaneShape(self, *args)
-    def createSmallShape(self, *args): return _pybgsched.Allocator_createSmallShape(self, *args)
-    def findBlockResources(self, *args): return _pybgsched.Allocator_findBlockResources(self, *args)
-    def prepare(self, *args): return _pybgsched.Allocator_prepare(self, *args)
-    def release(self, *args): return _pybgsched.Allocator_release(self, *args)
-    def dump(self, *args): return _pybgsched.Allocator_dump(self, *args)
-Allocator_swigregister = _pybgsched.Allocator_swigregister
-Allocator_swigregister(Allocator)
-
 
 def init(*args):
   return _pybgsched.init(*args)
@@ -1198,10 +993,6 @@ init = _pybgsched.init
 def refreshConfiguration():
   return _pybgsched.refreshConfiguration()
 refreshConfiguration = _pybgsched.refreshConfiguration
-
-def getIOUsageLimit():
-  return _pybgsched.getIOUsageLimit()
-getIOUsageLimit = _pybgsched.getIOUsageLimit
 
 def getComputeHardware():
   return _pybgsched.getComputeHardware()
@@ -1215,10 +1006,6 @@ def getMidplaneCoordinates(*args):
   return _pybgsched.getMidplaneCoordinates(*args)
 getMidplaneCoordinates = _pybgsched.getMidplaneCoordinates
 
-def getNodeMidplaneCoordinates(*args):
-  return _pybgsched.getNodeMidplaneCoordinates(*args)
-getNodeMidplaneCoordinates = _pybgsched.getNodeMidplaneCoordinates
-
 def getNodeBoards(*args):
   return _pybgsched.getNodeBoards(*args)
 getNodeBoards = _pybgsched.getNodeBoards
@@ -1227,79 +1014,11 @@ def getNodes(*args):
   return _pybgsched.getNodes(*args)
 getNodes = _pybgsched.getNodes
 
-def getMidplaneNodes(*args):
-  return _pybgsched.getMidplaneNodes(*args)
-getMidplaneNodes = _pybgsched.getMidplaneNodes
-
 def getIOLinks(*args):
   return _pybgsched.getIOLinks(*args)
 getIOLinks = _pybgsched.getIOLinks
-def SWIG_vector_to_list(vec):
-    ret_list = []
-    for i in range(0, len(vec)):
-        ret_list.append(vec[i])
-    return ret_list
+# This file is compatible with both classic and new-style classes.
 
-def hardware_in_error_state(hw):
-     
-    hw_error_list = [Hardware.Error,
-                     Hardware.Missing,
-                     Hardware.Service,
-                     Hardware.SoftwareFailure,
-                    ]
-
-    v = hw.getState()
-    if v in hw_error_list:
-        return True
-    return False
-
-
-class NodeBoardPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, NodeBoardPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, NodeBoardPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.NodeBoardPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.NodeBoardPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.NodeBoardPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.NodeBoardPtrVector___len__(self)
-    def pop(self): return _pybgsched.NodeBoardPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.NodeBoardPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.NodeBoardPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.NodeBoardPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.NodeBoardPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.NodeBoardPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.NodeBoardPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.NodeBoardPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.NodeBoardPtrVector_empty(self)
-    def size(self): return _pybgsched.NodeBoardPtrVector_size(self)
-    def clear(self): return _pybgsched.NodeBoardPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.NodeBoardPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.NodeBoardPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.NodeBoardPtrVector_begin(self)
-    def end(self): return _pybgsched.NodeBoardPtrVector_end(self)
-    def rbegin(self): return _pybgsched.NodeBoardPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.NodeBoardPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.NodeBoardPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.NodeBoardPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_NodeBoardPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.NodeBoardPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.NodeBoardPtrVector_front(self)
-    def back(self): return _pybgsched.NodeBoardPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.NodeBoardPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.NodeBoardPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.NodeBoardPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.NodeBoardPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.NodeBoardPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_NodeBoardPtrVector
-    __del__ = lambda self : None;
-NodeBoardPtrVector_swigregister = _pybgsched.NodeBoardPtrVector_swigregister
-NodeBoardPtrVector_swigregister(NodeBoardPtrVector)
 major = cvar.major
 minor = cvar.minor
 mod = cvar.mod
@@ -1312,987 +1031,4 @@ getBlocks = _pybgsched.getBlocks
 def getJobs(*args):
   return _pybgsched.getJobs(*args)
 getJobs = _pybgsched.getJobs
-
-class NodeBoardCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, NodeBoardCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, NodeBoardCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.NodeBoardCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.NodeBoardCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.NodeBoardCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.NodeBoardCPtrVector___len__(self)
-    def pop(self): return _pybgsched.NodeBoardCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.NodeBoardCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.NodeBoardCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.NodeBoardCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.NodeBoardCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.NodeBoardCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.NodeBoardCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.NodeBoardCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.NodeBoardCPtrVector_empty(self)
-    def size(self): return _pybgsched.NodeBoardCPtrVector_size(self)
-    def clear(self): return _pybgsched.NodeBoardCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.NodeBoardCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.NodeBoardCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.NodeBoardCPtrVector_begin(self)
-    def end(self): return _pybgsched.NodeBoardCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.NodeBoardCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.NodeBoardCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.NodeBoardCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.NodeBoardCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_NodeBoardCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.NodeBoardCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.NodeBoardCPtrVector_front(self)
-    def back(self): return _pybgsched.NodeBoardCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.NodeBoardCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.NodeBoardCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.NodeBoardCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.NodeBoardCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.NodeBoardCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_NodeBoardCPtrVector
-    __del__ = lambda self : None;
-NodeBoardCPtrVector_swigregister = _pybgsched.NodeBoardCPtrVector_swigregister
-NodeBoardCPtrVector_swigregister(NodeBoardCPtrVector)
-
-class MidplanePtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, MidplanePtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, MidplanePtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.MidplanePtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.MidplanePtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.MidplanePtrVector___bool__(self)
-    def __len__(self): return _pybgsched.MidplanePtrVector___len__(self)
-    def pop(self): return _pybgsched.MidplanePtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.MidplanePtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.MidplanePtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.MidplanePtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.MidplanePtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.MidplanePtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.MidplanePtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.MidplanePtrVector_append(self, *args)
-    def empty(self): return _pybgsched.MidplanePtrVector_empty(self)
-    def size(self): return _pybgsched.MidplanePtrVector_size(self)
-    def clear(self): return _pybgsched.MidplanePtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.MidplanePtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.MidplanePtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.MidplanePtrVector_begin(self)
-    def end(self): return _pybgsched.MidplanePtrVector_end(self)
-    def rbegin(self): return _pybgsched.MidplanePtrVector_rbegin(self)
-    def rend(self): return _pybgsched.MidplanePtrVector_rend(self)
-    def pop_back(self): return _pybgsched.MidplanePtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.MidplanePtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_MidplanePtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.MidplanePtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.MidplanePtrVector_front(self)
-    def back(self): return _pybgsched.MidplanePtrVector_back(self)
-    def assign(self, *args): return _pybgsched.MidplanePtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.MidplanePtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.MidplanePtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.MidplanePtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.MidplanePtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_MidplanePtrVector
-    __del__ = lambda self : None;
-MidplanePtrVector_swigregister = _pybgsched.MidplanePtrVector_swigregister
-MidplanePtrVector_swigregister(MidplanePtrVector)
-
-class MidplaneCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, MidplaneCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, MidplaneCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.MidplaneCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.MidplaneCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.MidplaneCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.MidplaneCPtrVector___len__(self)
-    def pop(self): return _pybgsched.MidplaneCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.MidplaneCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.MidplaneCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.MidplaneCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.MidplaneCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.MidplaneCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.MidplaneCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.MidplaneCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.MidplaneCPtrVector_empty(self)
-    def size(self): return _pybgsched.MidplaneCPtrVector_size(self)
-    def clear(self): return _pybgsched.MidplaneCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.MidplaneCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.MidplaneCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.MidplaneCPtrVector_begin(self)
-    def end(self): return _pybgsched.MidplaneCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.MidplaneCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.MidplaneCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.MidplaneCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.MidplaneCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_MidplaneCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.MidplaneCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.MidplaneCPtrVector_front(self)
-    def back(self): return _pybgsched.MidplaneCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.MidplaneCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.MidplaneCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.MidplaneCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.MidplaneCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.MidplaneCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_MidplaneCPtrVector
-    __del__ = lambda self : None;
-MidplaneCPtrVector_swigregister = _pybgsched.MidplaneCPtrVector_swigregister
-MidplaneCPtrVector_swigregister(MidplaneCPtrVector)
-
-class NodePtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, NodePtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, NodePtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.NodePtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.NodePtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.NodePtrVector___bool__(self)
-    def __len__(self): return _pybgsched.NodePtrVector___len__(self)
-    def pop(self): return _pybgsched.NodePtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.NodePtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.NodePtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.NodePtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.NodePtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.NodePtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.NodePtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.NodePtrVector_append(self, *args)
-    def empty(self): return _pybgsched.NodePtrVector_empty(self)
-    def size(self): return _pybgsched.NodePtrVector_size(self)
-    def clear(self): return _pybgsched.NodePtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.NodePtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.NodePtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.NodePtrVector_begin(self)
-    def end(self): return _pybgsched.NodePtrVector_end(self)
-    def rbegin(self): return _pybgsched.NodePtrVector_rbegin(self)
-    def rend(self): return _pybgsched.NodePtrVector_rend(self)
-    def pop_back(self): return _pybgsched.NodePtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.NodePtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_NodePtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.NodePtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.NodePtrVector_front(self)
-    def back(self): return _pybgsched.NodePtrVector_back(self)
-    def assign(self, *args): return _pybgsched.NodePtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.NodePtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.NodePtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.NodePtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.NodePtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_NodePtrVector
-    __del__ = lambda self : None;
-NodePtrVector_swigregister = _pybgsched.NodePtrVector_swigregister
-NodePtrVector_swigregister(NodePtrVector)
-
-class NodeCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, NodeCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, NodeCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.NodeCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.NodeCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.NodeCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.NodeCPtrVector___len__(self)
-    def pop(self): return _pybgsched.NodeCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.NodeCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.NodeCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.NodeCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.NodeCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.NodeCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.NodeCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.NodeCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.NodeCPtrVector_empty(self)
-    def size(self): return _pybgsched.NodeCPtrVector_size(self)
-    def clear(self): return _pybgsched.NodeCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.NodeCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.NodeCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.NodeCPtrVector_begin(self)
-    def end(self): return _pybgsched.NodeCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.NodeCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.NodeCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.NodeCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.NodeCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_NodeCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.NodeCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.NodeCPtrVector_front(self)
-    def back(self): return _pybgsched.NodeCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.NodeCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.NodeCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.NodeCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.NodeCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.NodeCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_NodeCPtrVector
-    __del__ = lambda self : None;
-NodeCPtrVector_swigregister = _pybgsched.NodeCPtrVector_swigregister
-NodeCPtrVector_swigregister(NodeCPtrVector)
-
-class SwitchPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, SwitchPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, SwitchPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.SwitchPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.SwitchPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.SwitchPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.SwitchPtrVector___len__(self)
-    def pop(self): return _pybgsched.SwitchPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.SwitchPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.SwitchPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.SwitchPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.SwitchPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.SwitchPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.SwitchPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.SwitchPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.SwitchPtrVector_empty(self)
-    def size(self): return _pybgsched.SwitchPtrVector_size(self)
-    def clear(self): return _pybgsched.SwitchPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.SwitchPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.SwitchPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.SwitchPtrVector_begin(self)
-    def end(self): return _pybgsched.SwitchPtrVector_end(self)
-    def rbegin(self): return _pybgsched.SwitchPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.SwitchPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.SwitchPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.SwitchPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_SwitchPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.SwitchPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.SwitchPtrVector_front(self)
-    def back(self): return _pybgsched.SwitchPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.SwitchPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.SwitchPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.SwitchPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.SwitchPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.SwitchPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_SwitchPtrVector
-    __del__ = lambda self : None;
-SwitchPtrVector_swigregister = _pybgsched.SwitchPtrVector_swigregister
-SwitchPtrVector_swigregister(SwitchPtrVector)
-
-class SwitchCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, SwitchCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, SwitchCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.SwitchCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.SwitchCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.SwitchCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.SwitchCPtrVector___len__(self)
-    def pop(self): return _pybgsched.SwitchCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.SwitchCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.SwitchCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.SwitchCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.SwitchCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.SwitchCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.SwitchCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.SwitchCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.SwitchCPtrVector_empty(self)
-    def size(self): return _pybgsched.SwitchCPtrVector_size(self)
-    def clear(self): return _pybgsched.SwitchCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.SwitchCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.SwitchCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.SwitchCPtrVector_begin(self)
-    def end(self): return _pybgsched.SwitchCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.SwitchCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.SwitchCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.SwitchCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.SwitchCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_SwitchCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.SwitchCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.SwitchCPtrVector_front(self)
-    def back(self): return _pybgsched.SwitchCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.SwitchCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.SwitchCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.SwitchCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.SwitchCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.SwitchCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_SwitchCPtrVector
-    __del__ = lambda self : None;
-SwitchCPtrVector_swigregister = _pybgsched.SwitchCPtrVector_swigregister
-SwitchCPtrVector_swigregister(SwitchCPtrVector)
-
-class IOLinkPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, IOLinkPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, IOLinkPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.IOLinkPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.IOLinkPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.IOLinkPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.IOLinkPtrVector___len__(self)
-    def pop(self): return _pybgsched.IOLinkPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.IOLinkPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.IOLinkPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.IOLinkPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.IOLinkPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.IOLinkPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.IOLinkPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.IOLinkPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.IOLinkPtrVector_empty(self)
-    def size(self): return _pybgsched.IOLinkPtrVector_size(self)
-    def clear(self): return _pybgsched.IOLinkPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.IOLinkPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.IOLinkPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.IOLinkPtrVector_begin(self)
-    def end(self): return _pybgsched.IOLinkPtrVector_end(self)
-    def rbegin(self): return _pybgsched.IOLinkPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.IOLinkPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.IOLinkPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.IOLinkPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_IOLinkPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.IOLinkPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.IOLinkPtrVector_front(self)
-    def back(self): return _pybgsched.IOLinkPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.IOLinkPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.IOLinkPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.IOLinkPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.IOLinkPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.IOLinkPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_IOLinkPtrVector
-    __del__ = lambda self : None;
-IOLinkPtrVector_swigregister = _pybgsched.IOLinkPtrVector_swigregister
-IOLinkPtrVector_swigregister(IOLinkPtrVector)
-
-class IOLinkCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, IOLinkCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, IOLinkCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.IOLinkCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.IOLinkCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.IOLinkCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.IOLinkCPtrVector___len__(self)
-    def pop(self): return _pybgsched.IOLinkCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.IOLinkCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.IOLinkCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.IOLinkCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.IOLinkCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.IOLinkCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.IOLinkCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.IOLinkCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.IOLinkCPtrVector_empty(self)
-    def size(self): return _pybgsched.IOLinkCPtrVector_size(self)
-    def clear(self): return _pybgsched.IOLinkCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.IOLinkCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.IOLinkCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.IOLinkCPtrVector_begin(self)
-    def end(self): return _pybgsched.IOLinkCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.IOLinkCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.IOLinkCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.IOLinkCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.IOLinkCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_IOLinkCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.IOLinkCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.IOLinkCPtrVector_front(self)
-    def back(self): return _pybgsched.IOLinkCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.IOLinkCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.IOLinkCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.IOLinkCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.IOLinkCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.IOLinkCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_IOLinkCPtrVector
-    __del__ = lambda self : None;
-IOLinkCPtrVector_swigregister = _pybgsched.IOLinkCPtrVector_swigregister
-IOLinkCPtrVector_swigregister(IOLinkCPtrVector)
-
-class CablePtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, CablePtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, CablePtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.CablePtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.CablePtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.CablePtrVector___bool__(self)
-    def __len__(self): return _pybgsched.CablePtrVector___len__(self)
-    def pop(self): return _pybgsched.CablePtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.CablePtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.CablePtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.CablePtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.CablePtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.CablePtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.CablePtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.CablePtrVector_append(self, *args)
-    def empty(self): return _pybgsched.CablePtrVector_empty(self)
-    def size(self): return _pybgsched.CablePtrVector_size(self)
-    def clear(self): return _pybgsched.CablePtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.CablePtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.CablePtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.CablePtrVector_begin(self)
-    def end(self): return _pybgsched.CablePtrVector_end(self)
-    def rbegin(self): return _pybgsched.CablePtrVector_rbegin(self)
-    def rend(self): return _pybgsched.CablePtrVector_rend(self)
-    def pop_back(self): return _pybgsched.CablePtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.CablePtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_CablePtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.CablePtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.CablePtrVector_front(self)
-    def back(self): return _pybgsched.CablePtrVector_back(self)
-    def assign(self, *args): return _pybgsched.CablePtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.CablePtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.CablePtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.CablePtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.CablePtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_CablePtrVector
-    __del__ = lambda self : None;
-CablePtrVector_swigregister = _pybgsched.CablePtrVector_swigregister
-CablePtrVector_swigregister(CablePtrVector)
-
-class CableCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, CableCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, CableCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.CableCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.CableCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.CableCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.CableCPtrVector___len__(self)
-    def pop(self): return _pybgsched.CableCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.CableCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.CableCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.CableCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.CableCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.CableCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.CableCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.CableCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.CableCPtrVector_empty(self)
-    def size(self): return _pybgsched.CableCPtrVector_size(self)
-    def clear(self): return _pybgsched.CableCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.CableCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.CableCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.CableCPtrVector_begin(self)
-    def end(self): return _pybgsched.CableCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.CableCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.CableCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.CableCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.CableCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_CableCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.CableCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.CableCPtrVector_front(self)
-    def back(self): return _pybgsched.CableCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.CableCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.CableCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.CableCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.CableCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.CableCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_CableCPtrVector
-    __del__ = lambda self : None;
-CableCPtrVector_swigregister = _pybgsched.CableCPtrVector_swigregister
-CableCPtrVector_swigregister(CableCPtrVector)
-
-class JobPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, JobPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, JobPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.JobPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.JobPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.JobPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.JobPtrVector___len__(self)
-    def pop(self): return _pybgsched.JobPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.JobPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.JobPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.JobPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.JobPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.JobPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.JobPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.JobPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.JobPtrVector_empty(self)
-    def size(self): return _pybgsched.JobPtrVector_size(self)
-    def clear(self): return _pybgsched.JobPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.JobPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.JobPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.JobPtrVector_begin(self)
-    def end(self): return _pybgsched.JobPtrVector_end(self)
-    def rbegin(self): return _pybgsched.JobPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.JobPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.JobPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.JobPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_JobPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.JobPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.JobPtrVector_front(self)
-    def back(self): return _pybgsched.JobPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.JobPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.JobPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.JobPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.JobPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.JobPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_JobPtrVector
-    __del__ = lambda self : None;
-JobPtrVector_swigregister = _pybgsched.JobPtrVector_swigregister
-JobPtrVector_swigregister(JobPtrVector)
-
-class JobCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, JobCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, JobCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.JobCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.JobCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.JobCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.JobCPtrVector___len__(self)
-    def pop(self): return _pybgsched.JobCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.JobCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.JobCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.JobCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.JobCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.JobCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.JobCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.JobCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.JobCPtrVector_empty(self)
-    def size(self): return _pybgsched.JobCPtrVector_size(self)
-    def clear(self): return _pybgsched.JobCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.JobCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.JobCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.JobCPtrVector_begin(self)
-    def end(self): return _pybgsched.JobCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.JobCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.JobCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.JobCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.JobCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_JobCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.JobCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.JobCPtrVector_front(self)
-    def back(self): return _pybgsched.JobCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.JobCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.JobCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.JobCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.JobCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.JobCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_JobCPtrVector
-    __del__ = lambda self : None;
-JobCPtrVector_swigregister = _pybgsched.JobCPtrVector_swigregister
-JobCPtrVector_swigregister(JobCPtrVector)
-
-class BlockPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, BlockPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.BlockPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.BlockPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.BlockPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.BlockPtrVector___len__(self)
-    def pop(self): return _pybgsched.BlockPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.BlockPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.BlockPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.BlockPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.BlockPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.BlockPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.BlockPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.BlockPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.BlockPtrVector_empty(self)
-    def size(self): return _pybgsched.BlockPtrVector_size(self)
-    def clear(self): return _pybgsched.BlockPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.BlockPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.BlockPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.BlockPtrVector_begin(self)
-    def end(self): return _pybgsched.BlockPtrVector_end(self)
-    def rbegin(self): return _pybgsched.BlockPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.BlockPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.BlockPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.BlockPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_BlockPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.BlockPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.BlockPtrVector_front(self)
-    def back(self): return _pybgsched.BlockPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.BlockPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.BlockPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.BlockPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.BlockPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.BlockPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_BlockPtrVector
-    __del__ = lambda self : None;
-BlockPtrVector_swigregister = _pybgsched.BlockPtrVector_swigregister
-BlockPtrVector_swigregister(BlockPtrVector)
-
-class BlockCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, BlockCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.BlockCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.BlockCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.BlockCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.BlockCPtrVector___len__(self)
-    def pop(self): return _pybgsched.BlockCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.BlockCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.BlockCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.BlockCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.BlockCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.BlockCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.BlockCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.BlockCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.BlockCPtrVector_empty(self)
-    def size(self): return _pybgsched.BlockCPtrVector_size(self)
-    def clear(self): return _pybgsched.BlockCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.BlockCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.BlockCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.BlockCPtrVector_begin(self)
-    def end(self): return _pybgsched.BlockCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.BlockCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.BlockCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.BlockCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.BlockCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_BlockCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.BlockCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.BlockCPtrVector_front(self)
-    def back(self): return _pybgsched.BlockCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.BlockCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.BlockCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.BlockCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.BlockCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.BlockCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_BlockCPtrVector
-    __del__ = lambda self : None;
-BlockCPtrVector_swigregister = _pybgsched.BlockCPtrVector_swigregister
-BlockCPtrVector_swigregister(BlockCPtrVector)
-
-class ShapePtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, ShapePtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, ShapePtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.ShapePtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.ShapePtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.ShapePtrVector___bool__(self)
-    def __len__(self): return _pybgsched.ShapePtrVector___len__(self)
-    def pop(self): return _pybgsched.ShapePtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.ShapePtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.ShapePtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.ShapePtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.ShapePtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.ShapePtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.ShapePtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.ShapePtrVector_append(self, *args)
-    def empty(self): return _pybgsched.ShapePtrVector_empty(self)
-    def size(self): return _pybgsched.ShapePtrVector_size(self)
-    def clear(self): return _pybgsched.ShapePtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.ShapePtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.ShapePtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.ShapePtrVector_begin(self)
-    def end(self): return _pybgsched.ShapePtrVector_end(self)
-    def rbegin(self): return _pybgsched.ShapePtrVector_rbegin(self)
-    def rend(self): return _pybgsched.ShapePtrVector_rend(self)
-    def pop_back(self): return _pybgsched.ShapePtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.ShapePtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_ShapePtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.ShapePtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.ShapePtrVector_front(self)
-    def back(self): return _pybgsched.ShapePtrVector_back(self)
-    def assign(self, *args): return _pybgsched.ShapePtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.ShapePtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.ShapePtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.ShapePtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.ShapePtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_ShapePtrVector
-    __del__ = lambda self : None;
-ShapePtrVector_swigregister = _pybgsched.ShapePtrVector_swigregister
-ShapePtrVector_swigregister(ShapePtrVector)
-
-class ShapeCPtrVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, ShapeCPtrVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, ShapeCPtrVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.ShapeCPtrVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.ShapeCPtrVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.ShapeCPtrVector___bool__(self)
-    def __len__(self): return _pybgsched.ShapeCPtrVector___len__(self)
-    def pop(self): return _pybgsched.ShapeCPtrVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.ShapeCPtrVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.ShapeCPtrVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.ShapeCPtrVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.ShapeCPtrVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.ShapeCPtrVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.ShapeCPtrVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.ShapeCPtrVector_append(self, *args)
-    def empty(self): return _pybgsched.ShapeCPtrVector_empty(self)
-    def size(self): return _pybgsched.ShapeCPtrVector_size(self)
-    def clear(self): return _pybgsched.ShapeCPtrVector_clear(self)
-    def swap(self, *args): return _pybgsched.ShapeCPtrVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.ShapeCPtrVector_get_allocator(self)
-    def begin(self): return _pybgsched.ShapeCPtrVector_begin(self)
-    def end(self): return _pybgsched.ShapeCPtrVector_end(self)
-    def rbegin(self): return _pybgsched.ShapeCPtrVector_rbegin(self)
-    def rend(self): return _pybgsched.ShapeCPtrVector_rend(self)
-    def pop_back(self): return _pybgsched.ShapeCPtrVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.ShapeCPtrVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_ShapeCPtrVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.ShapeCPtrVector_push_back(self, *args)
-    def front(self): return _pybgsched.ShapeCPtrVector_front(self)
-    def back(self): return _pybgsched.ShapeCPtrVector_back(self)
-    def assign(self, *args): return _pybgsched.ShapeCPtrVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.ShapeCPtrVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.ShapeCPtrVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.ShapeCPtrVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.ShapeCPtrVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_ShapeCPtrVector
-    __del__ = lambda self : None;
-ShapeCPtrVector_swigregister = _pybgsched.ShapeCPtrVector_swigregister
-ShapeCPtrVector_swigregister(ShapeCPtrVector)
-
-class ShapeVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, ShapeVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, ShapeVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.ShapeVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.ShapeVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.ShapeVector___bool__(self)
-    def __len__(self): return _pybgsched.ShapeVector___len__(self)
-    def pop(self): return _pybgsched.ShapeVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.ShapeVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.ShapeVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.ShapeVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.ShapeVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.ShapeVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.ShapeVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.ShapeVector_append(self, *args)
-    def empty(self): return _pybgsched.ShapeVector_empty(self)
-    def size(self): return _pybgsched.ShapeVector_size(self)
-    def clear(self): return _pybgsched.ShapeVector_clear(self)
-    def swap(self, *args): return _pybgsched.ShapeVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.ShapeVector_get_allocator(self)
-    def begin(self): return _pybgsched.ShapeVector_begin(self)
-    def end(self): return _pybgsched.ShapeVector_end(self)
-    def rbegin(self): return _pybgsched.ShapeVector_rbegin(self)
-    def rend(self): return _pybgsched.ShapeVector_rend(self)
-    def pop_back(self): return _pybgsched.ShapeVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.ShapeVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_ShapeVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.ShapeVector_push_back(self, *args)
-    def front(self): return _pybgsched.ShapeVector_front(self)
-    def back(self): return _pybgsched.ShapeVector_back(self)
-    def assign(self, *args): return _pybgsched.ShapeVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.ShapeVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.ShapeVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.ShapeVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.ShapeVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_ShapeVector
-    __del__ = lambda self : None;
-ShapeVector_swigregister = _pybgsched.ShapeVector_swigregister
-ShapeVector_swigregister(ShapeVector)
-
-class BlockStatusSet(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, BlockStatusSet, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, BlockStatusSet, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.BlockStatusSet_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.BlockStatusSet___nonzero__(self)
-    def __bool__(self): return _pybgsched.BlockStatusSet___bool__(self)
-    def __len__(self): return _pybgsched.BlockStatusSet___len__(self)
-    def append(self, *args): return _pybgsched.BlockStatusSet_append(self, *args)
-    def __contains__(self, *args): return _pybgsched.BlockStatusSet___contains__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.BlockStatusSet___getitem__(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_BlockStatusSet(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def empty(self): return _pybgsched.BlockStatusSet_empty(self)
-    def size(self): return _pybgsched.BlockStatusSet_size(self)
-    def clear(self): return _pybgsched.BlockStatusSet_clear(self)
-    def swap(self, *args): return _pybgsched.BlockStatusSet_swap(self, *args)
-    def count(self, *args): return _pybgsched.BlockStatusSet_count(self, *args)
-    def begin(self): return _pybgsched.BlockStatusSet_begin(self)
-    def end(self): return _pybgsched.BlockStatusSet_end(self)
-    def rbegin(self): return _pybgsched.BlockStatusSet_rbegin(self)
-    def rend(self): return _pybgsched.BlockStatusSet_rend(self)
-    def erase(self, *args): return _pybgsched.BlockStatusSet_erase(self, *args)
-    def find(self, *args): return _pybgsched.BlockStatusSet_find(self, *args)
-    def lower_bound(self, *args): return _pybgsched.BlockStatusSet_lower_bound(self, *args)
-    def upper_bound(self, *args): return _pybgsched.BlockStatusSet_upper_bound(self, *args)
-    def equal_range(self, *args): return _pybgsched.BlockStatusSet_equal_range(self, *args)
-    def insert(self, *args): return _pybgsched.BlockStatusSet_insert(self, *args)
-    __swig_destroy__ = _pybgsched.delete_BlockStatusSet
-    __del__ = lambda self : None;
-BlockStatusSet_swigregister = _pybgsched.BlockStatusSet_swigregister
-BlockStatusSet_swigregister(BlockStatusSet)
-
-class DimensionConnectivityMap(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, DimensionConnectivityMap, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, DimensionConnectivityMap, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.DimensionConnectivityMap_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.DimensionConnectivityMap___nonzero__(self)
-    def __bool__(self): return _pybgsched.DimensionConnectivityMap___bool__(self)
-    def __len__(self): return _pybgsched.DimensionConnectivityMap___len__(self)
-    def __iter__(self): return self.key_iterator()
-    def iterkeys(self): return self.key_iterator()
-    def itervalues(self): return self.value_iterator()
-    def iteritems(self): return self.iterator()
-    def __getitem__(self, *args): return _pybgsched.DimensionConnectivityMap___getitem__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.DimensionConnectivityMap___delitem__(self, *args)
-    def has_key(self, *args): return _pybgsched.DimensionConnectivityMap_has_key(self, *args)
-    def keys(self): return _pybgsched.DimensionConnectivityMap_keys(self)
-    def values(self): return _pybgsched.DimensionConnectivityMap_values(self)
-    def items(self): return _pybgsched.DimensionConnectivityMap_items(self)
-    def __contains__(self, *args): return _pybgsched.DimensionConnectivityMap___contains__(self, *args)
-    def key_iterator(self): return _pybgsched.DimensionConnectivityMap_key_iterator(self)
-    def value_iterator(self): return _pybgsched.DimensionConnectivityMap_value_iterator(self)
-    def __setitem__(self, *args): return _pybgsched.DimensionConnectivityMap___setitem__(self, *args)
-    def asdict(self): return _pybgsched.DimensionConnectivityMap_asdict(self)
-    def __init__(self, *args): 
-        this = _pybgsched.new_DimensionConnectivityMap(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def empty(self): return _pybgsched.DimensionConnectivityMap_empty(self)
-    def size(self): return _pybgsched.DimensionConnectivityMap_size(self)
-    def clear(self): return _pybgsched.DimensionConnectivityMap_clear(self)
-    def swap(self, *args): return _pybgsched.DimensionConnectivityMap_swap(self, *args)
-    def get_allocator(self): return _pybgsched.DimensionConnectivityMap_get_allocator(self)
-    def begin(self): return _pybgsched.DimensionConnectivityMap_begin(self)
-    def end(self): return _pybgsched.DimensionConnectivityMap_end(self)
-    def rbegin(self): return _pybgsched.DimensionConnectivityMap_rbegin(self)
-    def rend(self): return _pybgsched.DimensionConnectivityMap_rend(self)
-    def count(self, *args): return _pybgsched.DimensionConnectivityMap_count(self, *args)
-    def erase(self, *args): return _pybgsched.DimensionConnectivityMap_erase(self, *args)
-    def find(self, *args): return _pybgsched.DimensionConnectivityMap_find(self, *args)
-    def lower_bound(self, *args): return _pybgsched.DimensionConnectivityMap_lower_bound(self, *args)
-    def upper_bound(self, *args): return _pybgsched.DimensionConnectivityMap_upper_bound(self, *args)
-    __swig_destroy__ = _pybgsched.delete_DimensionConnectivityMap
-    __del__ = lambda self : None;
-DimensionConnectivityMap_swigregister = _pybgsched.DimensionConnectivityMap_swigregister
-DimensionConnectivityMap_swigregister(DimensionConnectivityMap)
-
-class StringVector(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, StringVector, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, StringVector, name)
-    __repr__ = _swig_repr
-    def iterator(self): return _pybgsched.StringVector_iterator(self)
-    def __iter__(self): return self.iterator()
-    def __nonzero__(self): return _pybgsched.StringVector___nonzero__(self)
-    def __bool__(self): return _pybgsched.StringVector___bool__(self)
-    def __len__(self): return _pybgsched.StringVector___len__(self)
-    def pop(self): return _pybgsched.StringVector_pop(self)
-    def __getslice__(self, *args): return _pybgsched.StringVector___getslice__(self, *args)
-    def __setslice__(self, *args): return _pybgsched.StringVector___setslice__(self, *args)
-    def __delslice__(self, *args): return _pybgsched.StringVector___delslice__(self, *args)
-    def __delitem__(self, *args): return _pybgsched.StringVector___delitem__(self, *args)
-    def __getitem__(self, *args): return _pybgsched.StringVector___getitem__(self, *args)
-    def __setitem__(self, *args): return _pybgsched.StringVector___setitem__(self, *args)
-    def append(self, *args): return _pybgsched.StringVector_append(self, *args)
-    def empty(self): return _pybgsched.StringVector_empty(self)
-    def size(self): return _pybgsched.StringVector_size(self)
-    def clear(self): return _pybgsched.StringVector_clear(self)
-    def swap(self, *args): return _pybgsched.StringVector_swap(self, *args)
-    def get_allocator(self): return _pybgsched.StringVector_get_allocator(self)
-    def begin(self): return _pybgsched.StringVector_begin(self)
-    def end(self): return _pybgsched.StringVector_end(self)
-    def rbegin(self): return _pybgsched.StringVector_rbegin(self)
-    def rend(self): return _pybgsched.StringVector_rend(self)
-    def pop_back(self): return _pybgsched.StringVector_pop_back(self)
-    def erase(self, *args): return _pybgsched.StringVector_erase(self, *args)
-    def __init__(self, *args): 
-        this = _pybgsched.new_StringVector(*args)
-        try: self.this.append(this)
-        except: self.this = this
-    def push_back(self, *args): return _pybgsched.StringVector_push_back(self, *args)
-    def front(self): return _pybgsched.StringVector_front(self)
-    def back(self): return _pybgsched.StringVector_back(self)
-    def assign(self, *args): return _pybgsched.StringVector_assign(self, *args)
-    def resize(self, *args): return _pybgsched.StringVector_resize(self, *args)
-    def insert(self, *args): return _pybgsched.StringVector_insert(self, *args)
-    def reserve(self, *args): return _pybgsched.StringVector_reserve(self, *args)
-    def capacity(self): return _pybgsched.StringVector_capacity(self)
-    __swig_destroy__ = _pybgsched.delete_StringVector
-    __del__ = lambda self : None;
-StringVector_swigregister = _pybgsched.StringVector_swigregister
-StringVector_swigregister(StringVector)
-
-# This file is compatible with both classic and new-style classes.
-
 

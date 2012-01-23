@@ -4,6 +4,30 @@
 %{
 #include <bgsched/core/core.h>
 %}
+namespace bgsched {
+namespace core{
 
-%include "/bgsys/drivers/ppcfloor/hlcs/include/bgsched/core/core.h"
+bgsched::ComputeHardware::ConstPtr getComputeHardware();
+Coordinates getMachineSize();
+Coordinates getMidplaneCoordinates(const std::string & midplaneLocation);
+NodeBoard::ConstPtrs getNodeBoards(const std::string& midplaneLocation);
 
+Node::ConstPtrs getNodes(const std::string& nodeBoardLocation);
+
+IOLink::ConstPtrs getIOLinks(const std::string& midplaneLocation);
+
+
+Block::Ptrs getBlocks(
+        const BlockFilter& filter,
+        const BlockSort& sort = BlockSort::AnyOrder,
+        const std::string& user = std::string()
+);
+
+
+Job::ConstPtrs getJobs(
+        const JobFilter& filter,
+        const JobSort& sort = JobSort::AnyOrder,
+        const std::string& user = std::string()
+);
+}
+}

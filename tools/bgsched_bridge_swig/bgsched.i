@@ -5,17 +5,5 @@
 
 %immutable bgsched::version::driver;
 
-%exception bgsched::init {
-    try{
-        $action
-    } catch(bgsched::InitializationException &e) {
-        PyErr_SetString(PyExc_IOError, const_cast<char *>(e.what()));
-        return NULL;
-    }
-}
-
-
-
 %include "/bgsys/drivers/ppcfloor/hlcs/include/bgsched/bgsched.h"
-
 

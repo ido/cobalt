@@ -122,8 +122,8 @@ class BGSystem (BGBaseSystem):
 
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
-        
-
+        self.killing_jobs = {} 
+        self.booting_blocks = {}
 
     def __getstate__(self):
         flags = {}
@@ -180,6 +180,8 @@ class BGSystem (BGBaseSystem):
         thread.start_new_thread(self.update_block_state, tuple())
         self.lock = threading.Lock()
         self.statistics = Statistics()
+        self.killing_jobs = {} #bg_jobid:forker_handle
+        self.booting_blocks = {} #block location:pgroup
 
     def save_me(self):
         Component.save(self)
@@ -229,8 +231,16 @@ class BGSystem (BGBaseSystem):
                 p._wiring_conflicts.add(block.name)
                 block._wiring_conflicts.add(p.name)
                 self.logger.debug("%s and %s havening problems" % (block.name, p.name))
+        
+        if int(block.size) <= 512:
+            #anything midplane or smaller cannot have wiring conflicts.
+            #Also, I think we will have to look closer at switch states to determine if a block is actually
+            #caught in a conflict.  Two midplanes in the same rack should never have a wiring conflict (maybe?)
+            #TODO: Check this assumption --PMR
+            return
 
         s1 = set(block.switches)
+
 
         if wiring_cache.has_key(block.size):
             for p in wiring_cache[block.size]:
@@ -468,11 +478,11 @@ class BGSystem (BGBaseSystem):
         def _start_block_cleanup(block):
             self.logger.info("partition %s: marking partition for cleaning", block.name)
             block.cleanup_pending = True
-            blocks_cleanup.append(p)
-            _set_block_cleanup_state(p)
-            p.reserved_until = False
-            p.reserved_by = None
-            p.used_by = None
+            blocks_cleanup.append(block)
+            _set_block_cleanup_state(block)
+            block.reserved_until = False
+            block.reserved_by = None
+            block.used_by = None
 
         def _set_block_cleanup_state(b):
 
@@ -502,26 +512,55 @@ class BGSystem (BGBaseSystem):
             #At this point new
             if len(jobs) != 0:
                 for job in jobs:
-                  nuke_job(job)  
+                    if job.getId() in self.killing_jobs.keys():
+                        pass
+                    nuke_job(job)  
             b.state = "cleanup"
 
+
+            #don't track jobs whose kills have already completed.
+            check_killing_jobs()
             #from here on, we should be able to see if the block has returned to the free state, if, so
             #and nothing else is blocking, we can safely set to idle.
             
             
             #block.state = "blocked (%s)" % (p.name,)
         
-        def nuke_job(bg_job):
+        def nuke_job(bg_job, block_name):
             #As soon as I get an API this is going to change.  Assume all on SN.
-            loc,pid = bg_job.getClientInfo().split(":")
-            pid = int(pid)
-           
-            if loc == "localhost": #otherwise we will need admin intervention
-                #need to determine how control system is really set up and what it should support
-                #not killing miscellaneous processes would be nice.
-                os.kill(pid, signal.SIGTERM) 
-                self.logger.info("killing pid: %s", pid)
+            #for now make a call to kill_job Job should die after 60 sec, if not earlier.
+
+            try:
+                retval = ComponentProxy('system_script_forker').fork(
+                        ['kill_job', '%d'%bg_job.getId() ], 'bg_system_cleanup', '%s cleanup:')
+                self.logger.info("killing backend job: %s for block %s", bg_job.getID(), block_name)
+            except xmlrpc.Fault:
+                self.logger.warning("XMLRPC Error while killing backend job: %s for block %s, will retry.", bg_job.getID(), block_name)
+            except:
+                self.logger.critical("Unknown Error while killing backend job: %s for block %s, will retry.", bg_job.getID(), block_name)
+            else:
+                self.killing_jobs[bg_job.getId()] = retval
+
             return
+
+        def check_killing_jobs():
+
+            try:
+                system_script_forker = ComponentProxy('system_script_forker')
+            except:
+                self.logger.critical("Cannot connect to system_script forker.")
+                return
+            complete_jobs = []
+            for bg_jobid, script_id in self.killing_jobs.iteritems():
+               ret = system_script_forker.child_completed(script_id)
+               if ret != None:
+                   complete_jobs.append(bg_jobid)
+
+            if complete_jobs != []:
+                for job in complete_jobs:
+                    del self.killing_jobs[job]
+            return
+
 
         while True:
             #self.logger.debug("Acquiring block update lock.")
@@ -557,7 +596,7 @@ class BGSystem (BGBaseSystem):
                 nc.used_by = ''
             self._blocks_lock.acquire()
             now = time.time()
-            partitions_cleanup = []
+            blocks_cleanup = []
             bridge_partition_cache = {}
             self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
@@ -617,20 +656,21 @@ class BGSystem (BGBaseSystem):
                         if b.used_by:
                             # if the partition has a pending cleanup request, then set the state so that cleanup will be
                             # performed
-                            _start_partition_cleanup(b)
+                            _start_block_cleanup(b)
                         else:
                             # if the cleanup has already been initiated, then see how it's going
                             busy = []
-                            parts = list(b._all_children)
+                            parts = list(b._children)
                             parts.append(b)
                             for part in parts:
                                 if bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
                                     busy.append(part.name)
                             if len(busy) > 0:
-                                _set_partition_cleanup_state(b)
+                                _set_block_cleanup_state(b)
                                 self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
                             else:
-                                p.cleanup_pending = False
+                                b.state = "idle"
+                                b.cleanup_pending = False
                                 self.logger.info("partition %s: cleaning complete", b.name)
                     if b.state == "busy":
                         # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
@@ -700,18 +740,18 @@ class BGSystem (BGBaseSystem):
 
             # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
             pnames_cleaned = []
-            for p in partitions_cleanup:
+            for p in blocks_cleanup:
                 self.logger.info("block %s: starting block cleanup", p.name)
                 
-                if len(pnames_destroyed) > 0:
-                    self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
-                else:
-                    self.logger.info("partition %s: no partition destruction was required", p.name)
-                try:
-                    self._clear_kernel(p.name)
-                    self.logger.info("partition %s: kernel settings cleared", p.name)
-                except:
-                    self.logger.error("partition %s: failed to clear kernel settings", p.name)
+                #if len(pnames_destroyed) > 0:
+                #    self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
+                #else:
+                #    self.logger.info("partition %s: no partition destruction was required", p.name)
+                #try:
+                #    self._clear_kernel(p.name)
+                #    self.logger.info("partition %s: kernel settings cleared", p.name)
+                #except:
+                #    self.logger.error("partition %s: failed to clear kernel settings", p.name)
             #job-killing now handled elsewhere
 
             Cobalt.Util.sleep(10)
@@ -882,46 +922,18 @@ class BGSystem (BGBaseSystem):
                     pgroup.forker = 'bg_runjob_forker'
                 if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
                     
-                    #This absolutely has to move.  
+                    #TODO:This absolutely has to move.  
                     try: #Initiate boot here, I guess?  Need to make this not block.
+                        #if we're already booted, (subblock), we can immediately move to start.
                         block_location_filter = pybgsched.BlockFilter()
                         block_location_filter.setName(pgroup.location[0])
                         boot_block = pybgsched.getBlocks(block_location_filter)[0]
                         boot_block.initiateBoot(pgroup.location[0])
-                        status = boot_block.getStatus()
-                        while status != pybgsched.Block.Initialized:
-                            boot_block = pybgsched.getBlocks(block_location_filter)[0]
-                            status = boot_block.getStatus()
-                            status_str = boot_block.getStatusString()
-                            self.logger.debug("waiting for boot: %s", status_str)
-                            time.sleep(10)
                     except RuntimeError:
                         self.logger.warning("Unable to boot block %s.  Aborting job startup.")
-                    try:
-                        pgroup.start()
-                        if pgroup.head_pid == None:
-                            self.logger.error("%s: process group failed to start using the %s component; releasing resources",
-                                pgroup.label, pgroup.forker)
-                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                            pgroup.exit_status = 255
-                    except (ComponentLookupError, xmlrpclib.Fault), e:
-                        self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        del self.process_groups[pgroup.id]
-                        raise
-                    except (ComponentLookupError, xmlrpclib.Fault), e:
-                        self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
-                            "component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        del self.process_groups[process_group.id]
-                        raise
-                    except:
-                        self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
-                            "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
-                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                        pgroup.exit_status = 255
+                    else:
+                        self.booting_blocks[pgroup.location[0]] = pgroup
+                        
                 else:
                     self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
                         pgroup.location)
@@ -929,6 +941,79 @@ class BGSystem (BGBaseSystem):
         return process_groups
     
     add_process_groups = exposed(query(add_process_groups))
+    
+    @automatic
+    def check_boot_status(self):
+
+        booted_blocks = []
+
+        for block_loc in self.booting_blocks.keys():
+            try:
+                block_location_filter = pybgsched.BlockFilter()
+                block_location_filter.setName(block_loc)
+                boot_block = pybgsched.getBlocks(block_location_filter)[0]
+            except RuntimeError:
+                self.logger.warning("Unable to get block status from control system during block boot.")
+                continue
+
+            status = boot_block.getStatus()
+            status_str = boot_block.getStatus
+            if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated]:
+                #we are in a state we really shouldn't be in.  Time to fail.
+                self.logger.warning("Error in block initialization. Aborting job startup.")
+            elif status != pybgsched.Block.Initialized:
+                self.logger.debug("waiting for boot: %s", boot_block.getStatusString())
+                continue
+            else:
+                #we are good: start the job.
+                self.logger.info("Block %s successfully booted.  Initiating job")
+                pgroup = self.booting_blocks[block_loc]
+                try:
+                    pgroup.start()
+                    #should the fork fail, do not release the block location from status check, just let it retry.
+                    #TODO: need to insure that the job is removed if this takes too long.
+                        #move to a wait loop function
+                        #while status != pybgsched.Block.Initialized:
+                        #    boot_block = pybgsched.getBlocks(block_location_filter)[0]
+                        #    status = boot_block.getStatus()
+                        #    status_str = boot_block.getStatusString()
+                        #    time.sleep(10)
+                    #except RuntimeError:
+                        #self.logger.warning("Unable to boot block %s.  Aborting job startup.")
+
+                    #move to a job_start function
+                    booted_blocks.append(block_loc)
+                    if pgroup.head_pid == None:
+                    
+                        self.logger.error("%s: process group failed to start using the %s component; releasing resources",
+                                pgroup.label, pgroup.forker)
+                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                        pgroup.exit_status = 255
+                except (ComponentLookupError, xmlrpclib.Fault), e:
+                    self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
+                    # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                    # until the job has exhausted its maximum alloted time
+                    #del self.process_groups[pgroup.id]
+                    continue #do we need to start the whole thing again (retry state from cqm?)
+                except (ComponentLookupError, xmlrpclib.Fault), e:
+                    self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
+                            "component", pgroup.label, pgroup.forker)
+                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+                        # until the job has exhausted its maximum alloted time
+                        #del self.process_groups[process_group.id]
+                    #raise
+                    continue
+                except:
+                    self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
+                         "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
+                    self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                    pgroup.exit_status = 255
+                #else:
+                #    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
+                #        pgroup.location)
+                #    pgroup.exit_status = 255
+        for block_id in booted_blocks:
+            del self.booting_blocks[block_id]
     
     def get_process_groups (self, specs):
         self._get_exit_status()
@@ -946,6 +1031,16 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("failed to contact %s component for list of running jobs", forker_component)
 
         for each in self.process_groups.itervalues():
+
+            #skip if we're still booting
+            found = False
+            for pg in self.booting_blocks.values():
+                if each.id == pg.id:
+                    found = True
+                    break
+            if found:
+                continue
+
             if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
