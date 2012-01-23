@@ -1915,7 +1915,6 @@ class Job (StateMachine):
 
 
     def _start_run_from_prologue(self):
-
         # attempt to run task
         rc = self.__task_run()
         if rc == Job.__rc_success:
@@ -1937,12 +1936,19 @@ class Job (StateMachine):
 
         
     def log_script_failure(self, job_dict, script_type):
-        logger.error("Job %s/%s: %s %s failed with an exit status of %d. Output follows:", 
-            self.jobid, self.user, script_type, job_dict['cmd'], job_dict['exit_status'])
-        logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, 
-                job_dict['args'])
-        if job_dict['stderr'] != None:
-            logger.error("stderr: %s", "\n".join(job_dict['stderr']))
+        try:
+            cmd = job_dict['args'][0]
+        except:
+            cmd = "(unknown)"
+        try:
+            args = job_dict['args'][1:]
+        except:
+            args = "(unknown)"
+        logger.error("Job %s/%s: %s %s failed with an exit status of %s. Output follows:", 
+            self.jobid, self.user, script_type, cmd, job_dict['exit_status'])
+        logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, args)
+        if job_dict.has_key('stderr') and job_dict['stderr'] != None:
+            logger.error("stderr:\n%s", "\n".join(job_dict['stderr']))
         else:
             logger.error("Job %s/%s: No stderr for failed script.",
                     self.jobid, self.user)
@@ -1953,51 +1959,36 @@ class Job (StateMachine):
         all child processes have completed and are cleaned up.
 
         '''
-        complete_scripts = 0
-        retvals = []
-        proxy_error = False
-        
-        for script_id in script_ids:
-            try:
-                retval = ComponentProxy("system_script_forker").child_completed(script_id)
-                if retval != None:
-                    complete_scripts += 1
-                retvals.append(retval)
-            except ComponentLookupError:
-                logger.error("Job %s/%s: Could not communicate with "
+        try:
+            children = ComponentProxy("system_script_forker").get_children(None, script_ids)
+        except ComponentLookupError:
+            logger.error("Job %s/%s: Could not communicate with "
                         "forker component.", self.user, self.jobid)
-                proxy_error = True
-                break
-        if proxy_error:
             return None
-                
-        if len(script_ids) == complete_scripts:
-            #all jobs have completed. Pass results up, what to do with them
-            #is implementation specific
-            script_output = []
-            for script_id in script_ids:
-                try:
-                    script_output.append(
-                        ComponentProxy("system_script_forker").get_child_data(script_id))
-                except ComponentLookupError:
-                    logger.error("Job %s/%s: Could not communicate with "
-                        "forker component.", self.user, self.jobid)
-                    proxy_error = True
-                    break
-            if proxy_error:
-                #we have to do this again, couldn't capture output
+        
+        # check if all of the scripts have completed
+        lost_children = []
+        for child in children:
+            if not child['complete']:
                 return None
-            try:
-                ComponentProxy("system_script_forker").child_cleanup(script_ids)
-            except ComponentLookupError:        
-                logger.error("Job %s/%s: Could not communicate with "
-                    "forker component.", self.user, self.jobid)
-                proxy_error = True
-            if proxy_error:
-                #died on the cleanup itself.  Force this to go again.
-                return None
-            return script_output #Yay! Success!
-        return None
+            if child['lost_child']:
+                lost_children.append(child['id'])
+
+        # all scripts have completed. we have all of the information and output, so tell the forker that it can release any
+        # resources still used by the scripts
+        try:
+            ComponentProxy("system_script_forker").cleanup_children(script_ids)
+        except ComponentLookupError:        
+            logger.error("Job %s/%s: Could not communicate with "
+                "forker component.", self.user, self.jobid)
+            # cleanup faled.  reattempt in a little while...
+            return None
+
+        if len(lost_children) > 0:
+            logger.warning("Job %s/%s: one or more scripts were lost: %s", self.user, self.jobid, child['id'],
+                " ".join([str(id) for id in lost_children]))
+
+        return children #Yay! Success!
 
     def _sm_release_resources_retry__progress(self, args):
         self._sm_log_info("retrying release of resources")

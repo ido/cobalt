@@ -597,11 +597,11 @@ class BGSystem (BGBaseSystem):
     generate_xml = exposed(generate_xml)
     
     def add_process_groups (self, specs):
-        
-        """Create a process group.
+        """
+        Create a process group.
         
         Arguments:
-        spec -- dictionary hash specifying a process group to start
+        specs -- list of dictionary hashes, each specifying a process group to start
         """
         
         self.logger.info("add_process_groups(%r)" % (specs))
@@ -636,13 +636,13 @@ class BGSystem (BGBaseSystem):
                                 pgroup.label, pgroup.forker)
                             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
                             pgroup.exit_status = 255
-                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                    except ComponentLookupError, e:
                         self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
                         # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
                         # until the job has exhausted its maximum alloted time
                         del self.process_groups[pgroup.id]
                         raise
-                    except (ComponentLookupError, xmlrpclib.Fault), e:
+                    except xmlrpclib.Fault, e:
                         self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
                             "component", pgroup.label, pgroup.forker)
                         # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
@@ -659,65 +659,85 @@ class BGSystem (BGBaseSystem):
                         pgroup.location)
                     pgroup.exit_status = 255
         return process_groups
-    
     add_process_groups = exposed(query(add_process_groups))
     
     def get_process_groups (self, specs):
+        """
+        Query progress groups dictionary and return matching records
+
+        specs -- list of dictionary hashes used as match criteria
+        """
         self._get_exit_status()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
-    
+
     def _get_exit_status (self):
-        running = []
-        active_forker_components = []
-        for forker_component in ['bg_mpirun_forker', 'user_script_forker']:
+        children = {}
+        cleanup = {}
+        for forker in ['bg_mpirun_forker', 'user_script_forker']:
             try:
-                running.extend([{'forker':forker_component, 'pid':pid} for pid in 
-                    ComponentProxy(forker_component).active_list("process group")])
-                active_forker_components.append(forker_component)
+                for child in ComponentProxy(forker).get_children("process group", None):
+                    children[(forker, child['id'])] = child
+                    child['pg'] = None
+                cleanup[forker] = []
+            except ComponentLookupError, e:
+                self.logger.error("failed to contact the %s component to obtain a list of children", forker)
             except:
-                self.logger.error("failed to contact %s component for list of running jobs", forker_component)
-
-        for each in self.process_groups.itervalues():
-            if {'forker':each.forker, 'pid':each.head_pid} not in running and each.exit_status is None and \
-                    each.forker in active_forker_components:
-                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
-                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
-                # maybe the second choice is better
-                try:
-                    if each.head_pid != None:
-                        dead_dict = ComponentProxy(each.forker).get_status(each.head_pid)
-                    else:
-                        dead_dict = None
-                except:
-                    self.logger.error("%s: RPC to get_status method in %s component failed", each.label, each.forker)
-                    return
-                
-                if dead_dict is None:
-                    self.logger.info("%s: job exited with unknown status", each.label)
-                    # FIXME: should we use a negative number instead to indicate internal errors? --brt
-                    each.exit_status = 1234567
+                self.logger.error("unexpected exception while getting a list of children from the %s component",
+                    forker, exc_info=True)
+        for pg in self.process_groups.itervalues():
+            if pg.forker in cleanup:
+                clean_partition = False
+                if (pg.forker, pg.head_pid) in children:
+                    child = children[(pg.forker, pg.head_pid)]
+                    child['pg'] = pg
+                    if child['complete']:
+                        if pg.exit_status is None:
+                            pg.exit_status = child["exit_status"]
+                            if child["signum"] == 0:
+                                self.logger.info("%s: job exited with status %s", pg.label, pg.exit_status)
+                            else:
+                                if child["core_dump"]:
+                                    core_dump_str = ", core dumped"
+                                else:
+                                    core_dump_str = ""
+                                self.logger.info("%s: terminated with signal %s%s", pg.label, child["signum"], core_dump_str)
+                        cleanup[pg.forker].append(child['id'])
+                        clean_partition = True
                 else:
-                    each.exit_status = dead_dict["exit_status"]
-                    if dead_dict["signum"] == 0:
-                        self.logger.info("%s: job exited with status %i", each.label, each.exit_status)
-                    else:
-                        if dead_dict["core_dump"]:
-                            core_dump_str = ", core dumped"
-                        else:
-                            core_dump_str = ""
-                        self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
-                self.reserve_resources_until(each.location, None, each.jobid)
-                self._mark_partition_for_cleaning(each.location[0], each.jobid)
+                    if pg.exit_status is None:
+                        # the forker has lost the child for our process group
+                        self.logger.info("%s: job exited with unknown status", pg.label)
+                        # FIXME: should we use a negative number instead to indicate internal errors? --brt
+                        pg.exit_status = 1234567
+                        clean_partition = True
+                if clean_partition:
+                    self.reserve_resources_until(pg.location, None, pg.jobid)
+                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
 
+        # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
+        # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
+        for forker, child_id in children.keys():
+            if children[(forker, child_id)]['pg'] is None:
+                cleanup[pg.forker].append(child['id'])
                 
+        # cleanup any children that have completed and been processed
+        for forker in cleanup.keys():
+            if len(cleanup[forker]) > 0:
+                try:
+                    ComponentProxy(forker).cleanup_children(cleanup[forker])
+                except ComponentLookupError, e:
+                    self.logger.error("failed to contact the %s component to cleanup children", forker)
+                except:
+                    self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
+                        forker, exc_info=True)
     _get_exit_status = automatic(_get_exit_status)
     
     def wait_process_groups (self, specs):
-        """Get the exit status of any completed process groups.  If completed,
+        """
+        Get the exit status of any completed process groups.  If completed,
         initiate the partition cleaning process, and remove the process group 
         from system's list of active processes.
-
         """
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
@@ -727,12 +747,11 @@ class BGSystem (BGBaseSystem):
     wait_process_groups = exposed(query(wait_process_groups))
     
     def signal_process_groups (self, specs, signame="SIGINT"):
-        """Send a signal to a currently running process group as specified by signame.
+        """
+        Send a signal to a currently running process group as specified by signame.
 
         if no signame, then SIGINT is the default.
-
         """
-
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
             if pg.exit_status is None:
@@ -747,12 +766,12 @@ class BGSystem (BGBaseSystem):
 
                 if signame == "SIGKILL":
                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
-
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
     def validate_job(self, spec):
-        """validate a job for submission
+        """
+        validate a job for submission
 
         Arguments:
         spec -- job specification dictionary

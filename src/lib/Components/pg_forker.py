@@ -3,16 +3,20 @@ import logging
 import os
 import pwd
 import sys
-import Cobalt.DataTypes.ProcessGroup
-ProcessGroup = Cobalt.DataTypes.ProcessGroup.ProcessGroup
+
+import Cobalt
 import Cobalt.Components.base_forker
 BaseForker = Cobalt.Components.base_forker.BaseForker
-BasePreexec = Cobalt.Components.base_forker.BasePreexec
+BaseChild = Cobalt.Components.base_forker.BaseChild
 get_forker_config = Cobalt.Components.base_forker.get_forker_config
+import Cobalt.DataTypes.ProcessGroup
+ProcessGroup = Cobalt.DataTypes.ProcessGroup.ProcessGroup
+import Cobalt.Util
+convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
 __all__ = [
     "PGForker",
-    "PGPreexec",
+    "PGChild",
 ]
 
 _logger = logging.getLogger(__name__.split('.')[-1])
@@ -24,22 +28,36 @@ else:
     _ignore_setgroup_errors = False
 
 
-class PGPreexec(BasePreexec):
+class PGChild (BaseChild):
     '''Class for handling pre-exec tasks for a job.
     Initilaization takes a job-data object.  This allows id's to be set 
     properly and other bookkeeping tasks to be correctly set.
 
     '''
 
-    def __init__(self, child, cmd_str, env):
-        BasePreexec.__init__(self, child)
-        self.cmd_str = cmd_str
-        self.env = env
-        self.pg = child.pg
-        self.cobalt_log_file = None
-        self.stdin = None
-        self.stdout = None
-        self.stderr = None
+    def __init__(self, id = None, **kwargs):
+        BaseChild.__init__(self, id=id, **kwargs)
+
+        try:
+            self.pg = ProcessGroup(kwargs['data'])
+        except KeyError:
+            _logger.error("process group data not provided to PGChild constructor")
+            raise
+
+        self.cwd = self.pg.cwd
+        self.umask = self.pg.umask
+        self.cobalt_log_filename = self.pg.cobalt_log_file
+
+        self.cmd_string = None
+
+    def __getstate__(self):
+        state = {}
+        state.update(BaseChild.__getstate__(self))
+        # BaseChild.__getstate__ copies __dict__ and thus automatically acquires what PGChild needs
+        return state
+
+    def __setstate__(self, state):
+        BaseChild.__setstate__(self, state)
 
     def _open_input(self, filename, desc):
         in_file = None
@@ -47,10 +65,12 @@ class PGPreexec(BasePreexec):
             try:
                 in_file = open(filename or "/dev/null", 'r')
             except (IOError, OSError, TypeError), e:
-                _logger.error("%s: error opening %s file %s; redirecting to /dev/null: %s", self.label, desc, filename, e)
+                _logger.error("%s: unable to open %s file %s; redirecting to /dev/null: %s", self.label, desc, filename, e)
+                self.print_clf_error("unable to open %s file %s; redirecting to /dev/null: %s", desc, filename, e)
                 in_file = open("/dev/null", 'r')
         except Exception, e:
-                _logger.error("%s: an unexpected error occurred while opening input file %s: %s", self.label, filename, e)
+                _logger.error("%s: an unexpected exception occurred while opening %s file %s: %s", self.label, desc, filename, e)
+                self.print_clf_error("an unexpected exception occurred while opening %s file %s: %s", desc, filename, e)
         return in_file
     
     def _open_output(self, filename, scratch_filename, desc):
@@ -60,31 +80,36 @@ class PGPreexec(BasePreexec):
                 out_file = open(filename, 'a')
             except (IOError, OSError, TypeError), e:
                 _logger.error("%s: error opening %s file %s: %s", self.label, desc, filename, e)
+                self.print_clf_error("error opening %s file %s: %s", desc, filename, e)
                 output_to_devnull = False
                 if _scratch_dir:
                     try:
                         fn = os.path.join(_scratch_dir, scratch_filename)
                     except Exception, e:
                         _logger.error("%s: unable to construct path to scratch file", self.label)
+                        self.print_clf_error("unable to construct path to scratch file")
                         output_to_devnull = True
                     else:
                         try:
-                            _logger.error("%s: sending %s to scratch_dir %s", self.label, desc, fn)
-                        except Exception, e:
-                            _logger.error("%s: error opening %s file %s: %s", self.label, desc, fn, e)
                             out_file = open(fn, 'a')
+                            _logger.warning("%s: sending %s to scratch_dir %s", self.label, desc, fn)
+                            self.print_clf_warning("sending %s to scratch_dir %s", desc, fn)
+                        except Exception, e:
+                            _logger.error("%s: unable to open secondary %s file %s: %s", self.label, desc, fn, e)
+                            self.print_clf_error("unable to open secondary %s file %s: %s", desc, fn, e)
                             output_to_devnull = True
                 else:
-                    _logger.error(
-                        "%s: set the scratch_dir option in the [forker] section of cobalt.conf to salvage %s",
+                    _logger.warning("%s: set the scratch_dir option in the [forker] section of cobalt.conf to salvage %s",
                         self.label, desc)
                     output_to_devnull = True
     
                 if output_to_devnull:
                     out_file = open("/dev/null", 'a')
-                    _logger.error("%s: sending %s to /dev/null", self.label, desc)
+                    _logger.warning("%s: sending %s to /dev/null", self.label, desc)
+                    self.print_clf_warning("sending %s to /dev/null", desc)
         except Exception, e:
-            _logger.error("%s: an unexpected error occurred while opening output file %s: %s", self.label, filename, e)
+            _logger.error("%s: an unexpected exception occurred while opening %s file %s: %s", self.label, desc, filename, e)
+            self.print_clf_error("an unexpected exception occurred while opening %s file %s: %s", desc, filename, e)
         return out_file
 
     def _set_supplementary_groups(self, username):
@@ -106,6 +131,9 @@ class PGPreexec(BasePreexec):
         except KeyError:
             _logger.error("%s: failed to get uid/gid for user %s", self.label, username)
             raise
+
+        self._open_clf(uid=uid, gid=gid)
+
         try:
             os.setgid(gid)
         except OSError:
@@ -117,96 +145,54 @@ class PGPreexec(BasePreexec):
             _logger.error("%s: failed to change user id to %d", self.label, uid)
             raise
 
-    def _set_umask(self, umask):
-        if umask != None:
-            try:
-                os.umask(umask)
-            except:
-                _logger.error("%s: failed to set umask to %s", self.label, umask)
-
-    def print_clf(self, fmt, *args):
-        if self.cobalt_log_file:
-            try:
-                print >>self.cobalt_log_file, fmt % args
-            except:
-                _logger.error("%s: unable to write to cobaltlog file %s", self.label, self.pg.cobalt_log_file, exc_info=True)
-
-    def do_first(self):
+    def preexec_first(self):
         '''
         Set important bits for cobalt jobs and redirect files as needed.
         '''
 
-        BasePreexec.do_first(self)
-
-        try:
-            self.cobalt_log_file = open(self.pg.cobalt_log_file, "a")
-        except:
-            _logger.error("%s: unable to open cobaltlog file %s", self.label, self.pg.cobalt_log_file, exc_info=True)
+        BaseChild.preexec_first(self)
 
         try:
             # only root can set the supplementary groups, so that must be done before the effective uid is changed
             self._set_supplementary_groups(self.pg.user)
             self._set_uid_gid(self.pg.user)
         except:
-            _logger.error("%s: failed to set user information; terminating task", self.label, exc_info=True)
-            os._exit(255)
-
-        self._set_umask(self.pg.umask)
+            _logger.error("%s: failed to set user and group information; terminating task", self.label)
+            self.print_clf_error("failed to set the process' user and group information")
+            raise
 
         try:
-            self.stdin = self._open_input(self.pg.stdin, "stdin")
-            if self.stdin:
-                os.dup2(self.stdin.fileno(), sys.__stdin__.fileno())
-                self.stdin.close()
+            self.stdin_file = self._open_input(self.pg.stdin, "stdin")
         except Exception, e:
             _logger.error("%s: an error occurred while redirecting stdin to file %s: %s", self.label, self.pg.stdin, e)
-            self.print_clf("ERROR: unable to redirect stdin to file %s: %s", self.pg.stdin, e)
+            self.print_clf_error("unable to redirect stdin from file %s: %s", self.pg.stdin, e)
         try:
-            self.stdout = self._open_output(self.pg.stdout, "%s.output" % (self.pg.jobid,), "stdout")
-            if self.stdout:
-                os.dup2(self.stdout.fileno(), sys.__stdout__.fileno())
-                self.stdout.close()
+            self.stdout_file = self._open_output(self.pg.stdout, "%s.output" % (self.pg.jobid,), "stdout")
         except Exception, e:
             _logger.error("%s: an error occurred while redirecting stdout to file %s: %s", self.label, self.pg.stdout, e)
-            self.print_clf("ERROR: unable to redirect stdout to file %s: %s", self.pg.stdout, e)
+            self.print_clf_error("unable to redirect stdout to file %s: %s", self.pg.stdout, e)
         try:
-            self.stderr = self._open_output(self.pg.stderr, "%s.error" % (self.pg.jobid,), "stderr")
-            # skip redirection of stderr until the end so that log messages are still send to the component's stderr
+            self.stderr_file = self._open_output(self.pg.stderr, "%s.error" % (self.pg.jobid,), "stderr")
         except Exception, e:
             _logger.error("%s: an error occurred while redirecting stderr to file %s: %s", self.label, self.pg.stderr, e)
-            self.print_clf("%s: an error occurred while redirecting stderr to file %s: %s", self.label, self.pg.stderr, e)
-        if self.stdout:
-            self.print_clf("Info: stdout sent to %s", self.stdout.name)
-        if self.stderr:
-            self.print_clf("Info: stderr sent to %s", self.stderr.name)
-        if self.stdout or self.stderr:
-            self.print_clf("")
+            self.print_clf_error("unable to redirect stderr to file %s: %s", self.pg.stderr, e)
 
-    def do_last(self):
-        self.print_clf("Command: %s\n", self.cmd_str)
+    def preexec_last(self):
+        # COBALT_JOBID and COBALT_RESID are special and must be part of the mpirun environment and the environment of any script
+        # invoking mpirun.  they are added to the environment last so any values provided by the user are overwritten
+        self.env['COBALT_JOBID'] = str(self.pg.jobid)
+        if self.pg.resid != None:
+            self.env['COBALT_RESID'] = str(self.pg.resid)
+
+        self.print_clf("")
+        self.print_clf("Command: %s", self.cmd_string or convert_argv_to_quoted_command_string(self.args))
+        self.print_clf("")
         self.print_clf("Environment:")
-        if self.env:
-            env = self.env
-        else:
-            env = os.environ
-        for key in env:
-            self.print_clf("%s=%s", key, env[key])
+        for key in self.env:
+            self.print_clf("%s=%s", key, self.env[key])
         self.print_clf("")
 
-        try:
-            if self.stderr:
-                os.dup2(self.stderr.fileno(), sys.__stderr__.fileno())
-                self.stderr.close()
-        except Exception, e:
-            _logger.error("%s: an error occurred while redirecting stderr to file %s: %s", self.label, self.pg.stderr, e)
-            self.print_clf("ERROR: unable to redirect stderr to file %s: %s", self.pg.stderr, e)
-
-        try:
-            self.cobalt_log_file.close()
-        except:
-            pass
-
-        BasePreexec.do_last(self)
+        BaseChild.preexec_last(self)
 
 
 class PGForker (BaseForker):
@@ -221,32 +207,19 @@ class PGForker (BaseForker):
         
         All arguments are passed to the base forker constructor.
         """
+        global _logger
+        _logger = self.logger
+
         BaseForker.__init__(self, *args, **kwargs)
         
-        global _logger
-        _logger = self.logger
-
     def __getstate__(self):
-        return BaseForker.__getstate__(self)
+        state = {}
+        state.update(BaseForker.__getstate__(self))
+        return state
 
     def __setstate__(self, state):
-        BaseForker.__setstate__(self, state)
-
         global _logger
         _logger = self.logger
 
-    def _add_cobalt_env_vars(self, child, postfork_env):
-        #COBALT_JOBID and COBALT_RESID are special and must be passed to
-        #the mpirun environment.
-        postfork_env['COBALT_JOBID'] = str(child.pg.jobid)
-        if child.pg.resid != None:
-            postfork_env['COBALT_RESID'] = str(child.pg.resid)
+        BaseForker.__setstate__(self, state)
 
-    def _fork(self, child, data):
-        child.pg = ProcessGroup(data)
-        child.ignore_output = True
-        try:
-            child.pg.partition = child.pg.location[0]
-        except IndexError:
-            _logger.error("%s: no partition was specified", child.label)
-            raise
