@@ -8,7 +8,6 @@ import os
 import sys
 import logging
 import ConfigParser
-import threading
 import traceback
 
 try:
@@ -63,8 +62,6 @@ class MessageQueue(Component):
       self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
       self.connected = False
       self.msg_queue = []
-      self.lock = threading.Lock()
-      self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
 
       self.overflow = False
@@ -84,11 +81,20 @@ class MessageQueue(Component):
          self.max_queued = None
 
 
+   def __getstate__(self):
+       state = {}
+       state.update(Component.__getstate__(self))
+       state.update({
+               'cdbwriter_version': 1,
+               'msg_queue': self.msg_queue,
+               'overflow': self.overflow})
+       return state
+             
    def __setstate__(self, state):
+      Component.__setstate__(self, state)
+
       self.msg_queue = state['msg_queue']
       self.connected = False
-      self.lock = threading.Lock()
-      self.statistics = Statistics()
       self.decoder = LogMessageDecoder()
       self.clearing_overflow = False
       self.overflow_filename = None
@@ -110,11 +116,6 @@ class MessageQueue(Component):
       else:
          self.overflow = False
 
-   def __getstate__(self):
-      return {'msg_queue': self.msg_queue,
-              'overflow': self.overflow}
-     
-             
    def init_database_connection(self):
       user = get_cdbwriter_config('user', None)
       pwd =  get_cdbwriter_config('pwd', None)
