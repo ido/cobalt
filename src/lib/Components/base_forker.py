@@ -341,7 +341,7 @@ class BaseChild (object):
                 self.print_clf_error("unable to redirect stderr to file %s: %s", self.stderr_file.name, e)
                 self.stderr_file = None
         if self.stdin_file:
-            self.print_clf_info("stdout sent to %s", self.stdout_file.name)
+            self.print_clf_info("stdin received from %s", self.stdin_file.name)
         if self.stdout_file:
             self.print_clf_info("stdout sent to %s", self.stdout_file.name)
         if self.stderr_file:
@@ -378,6 +378,9 @@ class BaseChild (object):
         if not self.exe:
             self.exe = self.args[0]
 
+        if self._cobalt_log_file:
+            self._cobalt_log_file.flush()
+
         try:
             if self.env is None:
                 os.execvp(self.exe, self.args)
@@ -389,6 +392,8 @@ class BaseChild (object):
             msg = ""
         _logger.error("%s: exec() failed to start process%s", self.label, msg)
         self.print_clf_error("exec() failed to start process%s", msg)
+        if self._cobalt_log_file:
+            self._cobalt_log_file.flush()
         os._exit(255)
 
     _signum_map = {}
