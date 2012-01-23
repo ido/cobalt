@@ -13,9 +13,8 @@ PYTHON_INCLUDE = /usr/include/python2.6
 PYTHON_WRAPPER = $(MODULE).py
 
 HLCS = /bgsys/drivers/ppcfloor/hlcs
-LOG4CXX = /bgsys/drivers/ppcfloor/extlib
 CFLAGS = -Wall -c -fPIC -g -Wall -I$(HLCS)/include -I$(PYTHON_INCLUDE)
-LFLAGS = -Wall -shared -fPIC -Wl,-rpath,$(HLCS)/lib,-rpath,$(LOG4CXX)/lib -o
+LFLAGS = -Wall -shared -fPIC -Wl,-rpath,$(HLCS)/lib -o
 LIBS = -L$(HLCS)/lib -lbgsched
 
 
