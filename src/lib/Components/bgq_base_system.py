@@ -372,6 +372,8 @@ class Block (Data):
         self.admin_failed = False #set this to true if a partadm --fail is issued
 
         self._update_node_cards()
+        
+        self.subblock_parent = self.name #parent block to boot for subblocks.  If not a subblock, will be self.
 
         if self.size < subrun_only_size:
             #we have to make a pseudoblock
@@ -380,11 +382,13 @@ class Block (Data):
             self.block_type = "normal"
 
         if self.block_type == "normal":
+            self.subblock_parent = self.name
             for nc in self.node_cards:
                 self.nodes.extend(nc.nodes)
         elif self.block_type == "pseudoblock":
             #these are not being tracked by the control system, and are not allocated by it
             #these are just subrun targets.
+            self.subblock_parent = spec.get("subblock_parent")
             if self.size >= nodes_per_nodecard:
                 for nc in self.node_cards:
                     self.nodes.extend(nc.nodes)
@@ -401,21 +405,16 @@ class Block (Data):
                 nc = self.node_cards[0] #only one node_card is in use in this case.
                 self.nodes.extend(nc.extract_nodes_by_extent(corner_coords, _get_extents_from_size(self.size)))
 
+
     def _update_node_cards(self):
-        if self.state != "idle":
+        if self.state == "busy":
             for nc in self.node_cards:
                 nc.used_by = self.name
-        else:
-            for nc in self.node_cards:
-                nc.used_by = ''
    
     def _update_nodes(self):
-        if self.state != "idle":
+        if self.state == "busy":
             for node in self.nodes:
                 node.in_use = True
-        else:
-            for node in self.nodes:
-                node.in_use = False
 
     def _get_relatives (self):
         return [r.name for r in self._relatives]
@@ -457,15 +456,15 @@ class Block (Data):
         
         b1_nc_names = set(self.node_card_names)
         b2_nc_names = set(block.node_card_names)
-    
+         
         if not (b1_nc_names & b2_nc_names):
             return False
         
-        b1_node_names = set(self.node_names)
-        b2_node_names = set(block.node_names)
+        #b1_node_names = set(self.node_names)
+        #b2_node_names = set(block.node_names)
 
-        if not (b1_node_names & b2_node_names):
-            return False
+        #if not (b1_node_names & b2_node_names):
+        #    return False
         
         return True
 
@@ -494,18 +493,20 @@ class Block (Data):
         
         b1_nc_names = set(self.node_card_names)
         b2_nc_names = set(block.node_card_names)
+        
         if not (b1_nc_names >= b2_nc_names):
             return False
-        if len(b1_nc_names ^ b2_nc_names) == 0:
-            b1_node_names = set(self.node_names)
-            b2_node_names = set(block.node_names)
+        #if len(b1_nc_names ^ b2_nc_names) == 0:
+        #    b1_node_names = set(self.node_names)
+        #    b2_node_names = set(block.node_names)
 
-            if not (b1_node_names >= b2_node_names): 
-                return False
+        #    if not (b1_node_names >= b2_node_names): 
+        #        return False
 
         return True
     
     def is_subblock(self, block):
+        
         if self.name == block.name:
             return False
         return not self.is_superblock(block)

@@ -173,7 +173,7 @@ class BGSystem (BGBaseSystem):
                     self._blocks[bname].functional = flags[1]
                     self._blocks[bname].queue = flags[2]
                 else:
-                    LOgger.info("Block %s is no longer defined" % bname)
+                    self.logger.info("Block %s is no longer defined" % bname)
        
         self.update_relatives()
         # initiate the process before starting any threads
@@ -211,6 +211,14 @@ class BGSystem (BGBaseSystem):
         mp = self._get_midplane_from_location(loc_name)
         return mp.getNodeBoard(nodecard_pos).getState()
     
+    def get_nodecard_state_str(self, loc_name):
+        '''Get the node card state as described by the control system.'''
+        nodecard_pos = int(nodecard_exp.search(loc_name).groups()[0])
+
+        mp = self._get_midplane_from_location(loc_name)
+        return mp.getNodeBoard(nodecard_pos).getStateString()
+    
+
     def get_switch_state(self, sw_name):
         
         #first character in the switch name is the direction of the switch:
@@ -347,7 +355,104 @@ class BGSystem (BGBaseSystem):
  
         end = time.time()
         self.logger.info("block configuration took %f sec" % (end - start))
+        start = time.time()
+        #set up subblocks, this is software only, and shared between modes (ultimately)
+        subblock_spec_dict = self.parse_subblock_config()
+        subblocks = []
+        subblockDict = BlockDict()
+        for block_id, minimum_size in subblock_spec_dict.iteritems():
+            subblocks.extend(self.gen_subblocks(block_id, minimum_size))
+        subblockDict.q_add(subblocks)
+        self._blocks.update(subblockDict)
+        end = time.time()
+        self.logger.info("subblock configuration took %f sec" % (end - start))
+            
         return
+    
+    ## BGSystem.parse_subblock_config
+    #  Inputs: cobalt config file
+    #  Output: dictionary: key: block names, values: minimum size to slice to
+    #  
+    #  Read from the config file a list of blocks and the smallest size to divide them to.
+    #  The expected string in the config file looks like Loc:XX,Loc2:YY,Loc3:ZZ
+    def parse_subblock_config(self):
+        subblock_config_string = get_config_option("bgsystem","subblock_config","Empty")
+        self.logger.debug(subblock_config_string)
+        if subblock_config_string == "Empty":
+            return {}
+        retdict = {}
+        for subblock_config in subblock_config_string.split(","):
+            split_config = subblock_config.split(":")
+            retdict[split_config[0]] = int(split_config[1])
+
+        self.logger.debug('Setting new dict to: %s' % retdict)
+        return retdict
+
+    def gen_subblocks(self, parent_name, min_size):
+
+        parent_block = self._blocks[parent_name]
+        self.logger.debug("%s", parent_block)
+        curr_size = parent_block.size #most likely to be 128
+        nodecard_pos = int(nodecard_exp.search(parent_block.name).groups()[0])
+        midplane_pos = int(midplane_exp.search(parent_block.name).groups()[0])
+        rack_pos = int(rack_exp.search(parent_block.name).groups()[0])
+
+        #get parent midplane information.  we only need this once:
+        hw = pybgsched.getComputeHardware()
+        midplane = hw.getMidplane("R%02d-M%d" % (rack_pos, midplane_pos))
+        ret_blocks = []
+        while (curr_size >= min_size):
+            if curr_size >= 128:
+                curr_size = 64
+                continue
+            if curr_size == 64:
+                for i in range(0,2):
+                    curr_name = "R%02d-M%d-N%02d-64" % (rack_pos, midplane_pos, nodecard_pos+(2*i))
+                    nodecard_list = [] 
+                    block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)),
+                                       "R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)+1)]
+                    for j in range(0,2):
+                        nc = midplane.getNodeBoard(nodecard_pos+(2*i)+j)
+                        if nc.getLocation() in block_nodecards:
+                            state = "idle"
+                            if pybgsched.hardware_in_error_state(nc):
+                                state = "error"
+                            nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+                    
+                    ret_blocks.append((dict(
+                        name = curr_name, 
+                        queue = "default",
+                        size = curr_size,
+                        node_cards = nodecard_list,
+                        subblock_parent = parent_name,
+                        state = 'idle'
+                        )))
+    
+            elif curr_size == 32:
+                for i in range(0,4):
+                    curr_name = "R%02d-M%d-N%02d-32" % (rack_pos, midplane_pos, nodecard_pos+i)
+                    nodecard_list = [] 
+                    block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+i)]
+                                       
+                    nc = midplane.getNodeBoard(i)
+                    if nc.getLocation() in block_nodecards:
+                        state = "idle"
+                        if pybgsched.hardware_in_error_state(nc):
+                            state = "error"
+                        nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+                    ret_blocks.append((dict(
+                        name = curr_name, 
+                        queue = "default",
+                        size = curr_size,
+                        node_cards = nodecard_list,
+                        subblock_parent = parent_name,
+                        state = 'idle'
+                        )))
+            else:
+                break
+            curr_size = curr_size / 2
+        
+        return ret_blocks
 
     def _new_block_dict(self, block_def):
         #pull block info into a dict so that we can create internal blocks to track.
@@ -358,12 +463,15 @@ class BGSystem (BGBaseSystem):
         midplane_list=[]
         nodecard_list=[]
         midplane_ids = block_def.getMidplanes()
+        midplane_nodecards = []
         for midplane_id in midplane_ids:
             #grab the switch data from all associated midplanes
             midplane = self.compute_hardware_vec.getMidplane(midplane_id)
-            midplane_list.append(midplane) 
+            midplane_list.append(midplane)
             for i in range(0, 4):
                 switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
+                midplane_nodecards.extend([nb.getLocation() 
+                    for nb in SWIG_vector_to_list(pybgsched.getNodeBoards(midplane.getLocation()))])
             #for small partitions may have a subset of nodecards, fortunately the block knows this.i
             #try: #This calls out, not using cached ComputeHardware data.  Not sure if this is desirable.
             #    possible_nodecards = pybgsched.getNodeBoards(midplane_id)
@@ -372,7 +480,9 @@ class BGSystem (BGBaseSystem):
             #    init_fail_exit()
             
             block_nodecards = SWIG_vector_to_list(block_def.getNodeBoards())
-            for i in range(1, midplane.MaxNodeBoards):
+            if block_nodecards == []:
+                block_nodecards = midplane_nodecards
+            for i in range(0, midplane.MaxNodeBoards):
                 nc = midplane.getNodeBoard(i)
                 if nc.getLocation() in block_nodecards:
                     state = "idle"
@@ -487,22 +597,41 @@ class BGSystem (BGBaseSystem):
         def _set_block_cleanup_state(b):
 
             #set the block to the free state and kill everything on it.
-            
             try:
+                self.logger.debug("CLEANUP: Block %s reporting state as %s.", b.name, b.state)
                 if b.state not in ["idle","cleanup-initiate", "cleanup"]: 
-                    pybgsched.Block.initiateFree(b.name)
+                    clean_location_filter = pybgsched.BlockFilter()
+                    clean_location_filter.setName(b.name)
+                    clean_block = pybgsched.getBlocks(clean_location_filter)[0]
+                    pybgsched.Block.removeUser(b.name, clean_block.getUser())
+                    self.logger.debug("Block %s reporting status: %s", b.name, clean_block.getStatusString())
+                    if clean_block.getStatus() == pybgsched.Block.Initialized:
+                        pybgsched.Block.initiateFree(b.name)
                     b.state = "cleanup-initiate"
-                else:
-                    b.state = "idle"
+                elif b.state == "idle":
                     self.logger.info("block %s: no block cleanup was required", b.name)
                     return
+            except RuntimeError:
+                #we are already freeing, ignore and go on
+                self.logger.info("Free for block %s already in progress", b.name)
             except:
                 self.logger.critical("Unable to initiate block free from bridge!")
                 raise
             #at this point new jobs cannot start on this block
             block_jobs = None
+
+            #don't track jobs whose kills have already completed.
+            check_killing_jobs()
+            #from here on, we should be able to see if the block has returned to the free state, if, so
+            #and nothing else is blocking, we can safely set to idle.
             
+            
+            #block.state = "blocked (%s)" % (p.name,)
+
+            if b.state == "cleanup":
+                return
             try:
+                
                 job_block_filter = pybgsched.JobFilter()
                 job_block_filter.setComputeBlockName(b.name)
                 jobs = SWIG_vector_to_list(pybgsched.getJobs(job_block_filter))
@@ -514,7 +643,7 @@ class BGSystem (BGBaseSystem):
                 for job in jobs:
                     if job.getId() in self.killing_jobs.keys():
                         pass
-                    nuke_job(job)  
+                    nuke_job(job, b.name)  
             b.state = "cleanup"
 
 
@@ -532,12 +661,12 @@ class BGSystem (BGBaseSystem):
 
             try:
                 retval = ComponentProxy('system_script_forker').fork(
-                        ['kill_job', '%d'%bg_job.getId() ], 'bg_system_cleanup', '%s cleanup:')
-                self.logger.info("killing backend job: %s for block %s", bg_job.getID(), block_name)
-            except xmlrpc.Fault:
-                self.logger.warning("XMLRPC Error while killing backend job: %s for block %s, will retry.", bg_job.getID(), block_name)
+                        ['/bgsys/drivers/ppcfloor/hlcs/bin/kill_job', '%d'%bg_job.getId() ], 'bg_system_cleanup', '%s cleanup:'% bg_job.getId())
+                self.logger.info("killing backend job: %s for block %s", bg_job.getId(), block_name)
+            except xmlrpclib.Fault:
+                self.logger.warning("XMLRPC Error while killing backend job: %s for block %s, will retry.", bg_job.getId(), block_name)
             except:
-                self.logger.critical("Unknown Error while killing backend job: %s for block %s, will retry.", bg_job.getID(), block_name)
+                self.logger.critical("Unknown Error while killing backend job: %s for block %s, will retry.", bg_job.getId(), block_name)
             else:
                 self.killing_jobs[bg_job.getId()] = retval
 
@@ -606,6 +735,7 @@ class BGSystem (BGBaseSystem):
                 for block in bg_cached_blocks:
                     #find and update idle based on whether control system reads block as
                     #free or not. 
+                    
                     bridge_partition_cache[block.getName()] = block
                     missing_blocks.discard(block.getName())
                     if self._blocks.has_key(block.getName()):
@@ -618,8 +748,11 @@ class BGSystem (BGBaseSystem):
                     else:
                         new_blocks.append(block)
 
+                
                 # remove the missing partitions and their wiring relations
                 for bname in missing_blocks:
+                    if self._blocks[bname].size < 128 and self._blocks[bname].subblock_parent not in missing_blocks:
+                        continue
                     self.logger.info("missing partition removed: %s", bname)
                     b = self._blocks[bname]
                     for dep_name in b._wiring_conflicts:
@@ -635,11 +768,11 @@ class BGSystem (BGBaseSystem):
                 # throttle the adding of new partitions so updating of
                 # machine state doesn't get bogged down
                 for block in new_blocks[:8]:
-                    self.logger.info("new partition found: %s", partition.id)
+                    self.logger.info("new block found: %s", block.getName())
                     #we need the full info for the new ones
                     detailed_block_filter = pybgsched.BlockFilter()
                     detailed_block_filter.setName(block.getName())
-                    detailed_block_filter.getExtendedInfo(True)
+                    detailed_block_filter.setExtendedInfo(True)
                     new_block_info = pybgsched.getBlocks(detailed_block_filter)
                     #bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._blocks.q_add([self._new_block_dict(new_block_info)])
@@ -651,6 +784,11 @@ class BGSystem (BGBaseSystem):
                     self.update_relatives()
                 
                 for b in self._blocks.values():
+                    
+                    if b.block_type == "pseudoblock":
+                        #we don't get this from the control system here.
+                        b.state = 'idle'
+                        
                     #self.logger.debug("Updating block %s", b.name)
                     if b.cleanup_pending:
                         if b.used_by:
@@ -663,7 +801,9 @@ class BGSystem (BGBaseSystem):
                             parts = list(b._children)
                             parts.append(b)
                             for part in parts:
-                                if bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
+                                if part.block_type != 'pseudoblock' and bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
+                                    busy.append(part.name)
+                                elif part.block_type == 'pseudoblock' and bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free:
                                     busy.append(part.name)
                             if len(busy) > 0:
                                 _set_block_cleanup_state(b)
@@ -674,7 +814,6 @@ class BGSystem (BGBaseSystem):
                                 self.logger.info("partition %s: cleaning complete", b.name)
                     if b.state == "busy":
                         # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
-
                         # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
                         if not b.reserved_by:
                             b.reserved_until = False
@@ -688,14 +827,14 @@ class BGSystem (BGBaseSystem):
                             for block in b._children:
                                 if block.state == "idle":
                                     block.state = "blocked (%s)" % (b.name,)
-                        elif bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free and b.used_by:
+                        elif b.block_type != 'pseudoblock' and bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free and b.used_by:
                             # FIXME: should we check the partition state or use reserved by == NULL instead?  now that all jobs
                             # reserve resources, a partition without a reservation that is also in use should probably be cleaned
                             # up regardless of partition state.  --brt
 
                             # if the job assigned to the partition has completed, then set the state so that cleanup will be
                             # performed
-                            _start_partition_cleanup(b)
+                            _start_block_cleanup(b)
                             continue
 
                         #TODO: Assess if this is even needed before.  We now run diags through a zero-priority queue.
@@ -703,17 +842,30 @@ class BGSystem (BGBaseSystem):
                         #    if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
                         #        p.state = "blocked by pending diags"
 
+                        freeing_error_blocks = []
                         for nc in b.node_cards:
                             if nc.used_by:
                                 #block if other stuff is running on our node cards.  
                                 #remember subblock jobs can violate this 
                                 #TODO: test with subblock
-                                p.state = "blocked (%s)" % nc.used_by
+                                b.state = "blocked (%s)" % nc.used_by
 
                             if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
                                 #if control system reports down, then we're really down.
-                                p.state = "hardware offline: nodecard %s" % nc.id
+                                b.state = "hardware offline (%s): nodecard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
                                 self.offline_blocks.append(b.name)
+                                if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
+                                    #we are in a soft error and should attempt to free
+                                    if not nc.used_by in freeing_error_blocks:
+                                        try:
+                                            #_start_block_cleanup(b)
+                                            pybgsched.Block.initiateFree(nc.used_by)
+                                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
+                                        except RuntimeError:
+                                            pass
+                                        except:
+                                            self.logger.debug("error initiating free for soft error block.")
+                                        freeing_error_blocks.append(nc.used_by)
 
                         for sw in b.switches:
                             if self.get_switch_state(sw) != pybgsched.Hardware.Available:
@@ -732,7 +884,7 @@ class BGSystem (BGBaseSystem):
                         #    elif p.name in part.parents or p.name in part.children:
                         #        p.state = "blocked by failed diags"
             except:
-                self.logger.error("error in update_partition_state", exc_info=True)
+                self.logger.error("error in update_block_state", exc_info=True)
 
             self._blocks_lock.release()
             
@@ -928,6 +1080,7 @@ class BGSystem (BGBaseSystem):
                         block_location_filter = pybgsched.BlockFilter()
                         block_location_filter.setName(pgroup.location[0])
                         boot_block = pybgsched.getBlocks(block_location_filter)[0]
+                        boot_block.addUser(pgroup.location[0], pgroup.user)
                         boot_block.initiateBoot(pgroup.location[0])
                     except RuntimeError:
                         self.logger.warning("Unable to boot block %s.  Aborting job startup.")
@@ -957,7 +1110,7 @@ class BGSystem (BGBaseSystem):
                 continue
 
             status = boot_block.getStatus()
-            status_str = boot_block.getStatus
+            status_str = boot_block.getStatusString()
             if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated]:
                 #we are in a state we really shouldn't be in.  Time to fail.
                 self.logger.warning("Error in block initialization. Aborting job startup.")
@@ -966,7 +1119,7 @@ class BGSystem (BGBaseSystem):
                 continue
             else:
                 #we are good: start the job.
-                self.logger.info("Block %s successfully booted.  Initiating job")
+                self.logger.info("Block %s successfully booted.  Initiating job", block_loc)
                 pgroup = self.booting_blocks[block_loc]
                 try:
                     pgroup.start()
