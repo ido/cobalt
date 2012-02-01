@@ -28,8 +28,8 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              -K <kernel options> -O <outputprefix> -t time <in minutes>
              -e <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h --proccount <processor count> -u <umask>
-             --mode <mode co/vn> --debuglog <cobaltlog file path> <command> <args>
-             --users <user1>:<user2>
+             --mode <mode> --debuglog <cobaltlog file path> <command> <args>
+             --users <user1>:<user2> --run_project
 """
 
 if __name__ == '__main__':
