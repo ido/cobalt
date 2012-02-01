@@ -289,7 +289,7 @@ class BGSystem (BGBaseSystem):
             sys.exit(1)
 
         try:
-            pybgsched.init(get_config_option("bgsystem","bg_properties","/home/richp/bg.properties"))
+            pybgsched.init(get_config_option("bgsystem","bg_properties","/bgsys/local/etc/bg.properties"))
         except IOError:
             self.logger.critical("IOError initializing bridge.  Check bg.properties file and database connection.")
             init_fail_exit()
