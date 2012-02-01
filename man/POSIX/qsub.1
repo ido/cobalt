@@ -3,11 +3,11 @@
 qsub \- submit jobs to the queue manager for execution
 .SH "SYNOPSIS"
 .B qsub 
-.I [--version] [-d] [-q queue] [-A project] [-t time] [-n number of nodes] [--mode mode] [--procccount process count] [--run_users user1:user2:...] [--run_project] <executable> <options>
+.I [--version] [-d] [-q queue] [-A project] [-t time] [-n number of nodes] [--mode mode] [--procccount process count] [--run_users user1:user2:...] [--run_project] [--kernel profile] [-K kernel_options] [--env envs] [-h] [--dependencies dep_jobids] <executable> <executable_arguments>
 .SH "DESCRIPTION"
 .PP
 .B qsub
-submits a job to the queue manager for execution. 
+submits a job to the queue manager for execution.
 .SH "OPTIONS"
 .TP
 .B \-d
@@ -36,13 +36,18 @@ Set environment variables for the job.
 Submit job in user hold state
 .TP
 .B \-\-mode "mode"
-Either co (for coprocessor mode) or vn (for virtual node mode) or script (for script jobs)
+Valid values for this flag are system dependent, and is only valid on BlueGene systems.
+BG/L: Either co (for coprocessor mode) or vn (for virtual node mode) or script (for script jobs)
+BG/P: smp, dual, vn or script. 'smp' is the default value. 
+BG/Q: c1, c2, c4, c8, c16, c32, c64, script.  'c1' is the default value. For non-script-mode jobs, the c# mode corresponds to 
+the runjob --ranks-per-node flag, and sets the number of MPI ranks you get for your job.
+Script mode sets the job to a user submittable script.
 .TP
 .B \-n "node count"
 Specifies the node count for a job
 .TP
 .B \-\-proccount "process count"
-Specify the number of processes to start
+Specify the number of processes to start. 
 .TP
 .B \-A "project"
 Associate the job with the allocation for project project. This is
