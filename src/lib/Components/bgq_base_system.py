@@ -690,10 +690,10 @@ class BGBaseSystem (Component):
                 #no wiring dependencies to determine yet
                 pass
 
-            for other in self._blocks.itervalues():
-                if b.name == other.name:
+            for other_name in self._managed_blocks:
+                if b.name == other_name:
                     continue
-                b.mark_if_overlap(other)
+                b.mark_if_overlap(self._blocks[other_name])
             
             b._parents = [block for block in b._relatives if block.is_superblock(b)]
             b._children = [block for block in b._relatives if block.is_subblock(b)]
@@ -732,24 +732,27 @@ class BGBaseSystem (Component):
             p_name = spec['attrs']['location']
             if not self.blocks.has_key(p_name):
                 raise JobValidationError("Partition %s not found" % p_name)
+        
+        #validate proccount.
         #spec['proccount'] = spec['nodecount']
         if not spec['proccount']:
             if spec['mode'] != 'script':
                 rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
-                spec['proccount'] = str(int(spec['nodecount'])) #* int(rpn_re.match(spec['mode']).groups()[0]))
+                ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0]
+                spec['proccount'] = str(int(spec['nodecount'])) * ranks_per_node
             else:
                 spec['proccount'] = str(spec['nodecount'])
 
         else:
+            ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0]
             try:
                 spec['proccount'] = int(spec['proccount'])
             except:
                 JobValidationError("non-integer proccount")
             if spec['proccount'] < 1:
                 raise JobValidationError("negative proccount")
-            if spec['proccount'] > int(spec['nodecount']):
-                if spec['mode'] in ['c1']:
-                    raise JobValidationError("proccount too large")
+            if spec['proccount'] > (int(spec['nodecount']) * ranks_per_node):
+                raise JobValidationError("proccount too large")
         
         # have to set ranks per node based on mode:
 
@@ -760,7 +763,6 @@ class BGBaseSystem (Component):
             spec['ranks_per_node'] = int(rpn_re.match(spec['mode']).groups()[0])
         #further proccount validation:
         if spec['ranks_per_node'] != None:
-            print spec['proccount'], spec['ranks_per_node'] 
             if int(spec['proccount']) > int(spec['ranks_per_node'] * int(spec['nodecount'])):
                 raise JobValidationError("proccount of %d is too large." % spec['proccount'])
         #bring this back to a string, as this is what it comes in as (or should...)
