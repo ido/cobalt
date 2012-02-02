@@ -101,6 +101,8 @@ from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError,
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 
+CLOB_SIZE = 4096
+
 logger = logging.getLogger(__name__.split('.')[-1])
 
 cqm_id_gen = None
@@ -4099,7 +4101,9 @@ class JobDataMsg(object):
                      'attrs', 'satisfied_dependencies', 'preemptable', 
                      'user_list', 'dep_frac', 'resid', 'cwd'
                      ]
-        
+        small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
+                           'outputdir', 'errorpath','path','cwd']
+
         for attr in attr_list:
             
             if attr == 'job_type':
@@ -4108,7 +4112,10 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
-
+            elif attr in small_clob_list:
+                clob_str = job.__getattribute__(attr)
+                if clob_str != None:
+                    self.__setattr__(attr, clob_str[:CLOB_SIZE])
             else:
                 self.__setattr__(attr, job.__getattribute__(attr))
 
