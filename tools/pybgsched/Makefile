@@ -2,7 +2,7 @@
 
 
 CC = /usr/bin/g++
-SWIG = /home/richp/swig/bin/swig 
+SWIG = /usr/bin/swig 
 
 MODULE = pybgsched
 
