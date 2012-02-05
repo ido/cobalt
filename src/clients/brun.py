@@ -25,8 +25,8 @@ def signal_handler(signum, frame):
     print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Failure list:"
     print >> sys.stderr, timestamp() + " FE_MPI (ERROR):   - 1. Job was killed by SIGTERM"
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
-    print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
-    raise SystemExit, 1
+    print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   %d ==" % (128 + signum,)
+    raise SystemExit, 128 + signum
 
 signal.signal(signal.SIGTERM, signal_handler)
 
