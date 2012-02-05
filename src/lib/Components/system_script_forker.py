@@ -87,7 +87,7 @@ class SystemScriptChild (BaseChild):
 
         # /bin/sh is used to execute system shell scripts.  the original executable and arguments are converted to a single
         # string with quoting properly escaped to prevent premature splitting of args.
-        self.args = ['/bin/sh', '-c', convert_argv_to_quoted_command_string(self.args)]
+        self.args = ['/bin/sh', '-c', "exec " + convert_argv_to_quoted_command_string(self.args)]
 
     def preexec_last(self):
         BaseChild.preexec_last(self)

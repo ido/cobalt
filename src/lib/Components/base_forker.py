@@ -471,6 +471,11 @@ class BaseForker (Component):
         global _logger
         _logger = self.logger
 
+        if not state.has_key('base_forker_version') or state['base_forker_version'] < 2:
+            _logger.error("The state file for the %s component is incompatible with the current implementation.  Please " +
+                "remove the state file and try again.", self.implementation)
+            os._exit(1)
+
         BaseChild.id_gen = IncrID()
         BaseChild.id_gen.set(state['next_task_id'])
         if state.has_key('children'):

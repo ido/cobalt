@@ -68,7 +68,7 @@ class BGMpirunChild (PGChild):
                 app_envs.append((key, value))
 
         self.args = [
-            _Config.bgpm['mpirun'],
+            os.path.expandvars(_Config.bgpm['mpirun']),
             '-host', _Config.bgpm['mmcs_server_ip'],
             '-np', str(self.pg.size),
             '-partition', self.bg_partition,

@@ -76,7 +76,7 @@ class UserScriptChild (PGChild):
         # quote the argument strings so the shell doesn't eat them.
         self.cmd_string = convert_argv_to_quoted_command_string(self.args)
         self.exe = shell
-        self.args = ["-", "-c", self.cmd_string]
+        self.args = ["-", "-c", "exec " + self.cmd_string]
 
     def preexec_last(self):
         PGChild.preexec_last(self)
