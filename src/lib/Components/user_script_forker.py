@@ -61,6 +61,12 @@ class UserScriptChild (PGChild):
         self.env["COBALT_PARTNAME"] = self.bg_partition
         self.env["COBALT_PARTSIZE"] = str(self.pg.nodect)
         self.env["COBALT_JOBSIZE"] = str(self.pg.size)
+        if os.environ.has_key('COBALT_CONFIG_FILES'):
+            self.env['COBALT_CONFIG_FILES'] = os.environ['COBALT_CONFIG_FILES']
+        if os.environ.has_key('COBALT_SOURCE_DIR'):
+            self.env['COBALT_SOURCE_DIR'] = os.environ['COBALT_SOURCE_DIR']
+        if os.environ.has_key('COBALT_RUNTIME_DIR'):
+            self.env['COBALT_RUNTIME_DIR'] = os.environ['COBALT_RUNTIME_DIR']
 
         # create a nodefile in /tmp
         try:

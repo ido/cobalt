@@ -2,8 +2,11 @@
 
 '''This script simulates the standard bridge mpirun for brooklyn'''
 
-import signal, sys, Cobalt.Proxy, time, datetime, math, os, random
+import signal, sys, time, datetime, math, os, random, logging
+import Cobalt
+import Cobalt.Proxy
 import Cobalt.Util
+import Cobalt.Logging
 
 def timestamp():
     now = datetime.datetime.now()
@@ -31,16 +34,36 @@ def signal_handler(signum, frame):
 signal.signal(signal.SIGTERM, signal_handler)
 
 if __name__ == '__main__':
-    for flag in ['-partition', '-np', '-mode']:
-        if flag not in sys.argv[1:]:
-            print >> sys.stderr, "ERROR: %s is a required flag" % (flag)
+    # setup logging
+    level = 20
+    Cobalt.Logging.setup_logging('brun', to_syslog=False, level=level)
+    logger = logging.getLogger('brun')
+
+    try:
+        partition = sys.argv[sys.argv.index('-partition') + 1]
+    except ValueError:
+        print >> sys.stderr, "ERROR: -partition is a required flag"
+        raise SystemExit, 1
+    try:
+        size = sys.argv[sys.argv.index('-np') + 1]
+    except ValueError:
+        size = None
+    else:
+        try:
+            size = int(size)
+        except ValueError:
+            print >> sys.stderr, "ERROR: -np must specify an integer number of processes"
             raise SystemExit, 1
-    partition = sys.argv[sys.argv.index('-partition') + 1]
-    mode = sys.argv[sys.argv.index('-mode') + 1]
-    size = int(sys.argv[sys.argv.index('-np') + 1])
-    if mode == 'vn':
-        size = int(math.ceil(float(size) / 2))
-   
+        try:
+            mode = sys.argv[sys.argv.index('-mode') + 1]
+        except ValueError:
+            mode = 'smp'
+        # FIXME: this assumes a BG/P system
+        if mode == 'vn':
+            size = int(math.ceil(float(size) / 4))
+        elif mode == "dual":
+            size = int(math.ceil(float(size) / 2))
+
     print "ENVIRONMENT"
     print "-----------"
     for envvar in os.environ.keys():

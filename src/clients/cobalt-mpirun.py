@@ -119,6 +119,7 @@ if __name__ == '__main__':
     if run_cmd == None:
         print >> sys.stderr, "FATAL: cobalt.conf entry for mpirun not found.  Aborting run."
         sys.exit(1)
+    run_cmd = os.path.expandvars(run_cmd)
 
     for expected_env in expected_envs:
         #if this check fails, the program will abort
@@ -237,7 +238,7 @@ if __name__ == '__main__':
     try:
         os.execvpe(run_cmd, arglist, os.environ)
     except Exception, e:
-        print >> sys.stderr, "error executing %s" % opt.executable
+        print >> sys.stderr, "error executing %s" % (run_cmd,)
         print >> sys.stderr, e
         sys.exit(1)
 
