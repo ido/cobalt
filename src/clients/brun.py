@@ -15,7 +15,7 @@ def signal_handler(signum, frame):
     print >> sys.stderr, timestamp() + " BE_MPI (Info) : Cleaning up"
     try:
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : Destroying partition " + partition + " (nuke)"
-        brooklyn.ReleasePartition(partition)
+        brooklyn.release_partition(partition)
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
     except:
         print "BE_MPI (ERROR): Failure destroying partition " + partition
@@ -121,19 +121,22 @@ if __name__ == '__main__':
         print "Wake up!  Time to die!"
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : Job " + str(bjobid) + " switched to state TERMINATED ('T')"
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : Job sucessfully terminated"
-    except:
-        print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Job run failure of some sort; may have been killed"
-        print >> sys.stderr, timestamp() + " BE_MPI (Info) : Destroying partition " + partition
-        pct = float(os.environ.get("FAILED_RELEASE_FRAC", 0))
-        if random.random() < pct:
-            pass
+    except Exception, e:
+        if not isinstance(e, SystemExit):
+            print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Job run failure of some sort; may have been killed"
+            print >> sys.stderr, timestamp() + " BE_MPI (Info) : Destroying partition " + partition
+            pct = float(os.environ.get("FAILED_RELEASE_FRAC", 0))
+            if random.random() < pct:
+                pass
+            else:
+                brooklyn.release_partition(partition)
+                print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
+            print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
+            print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
+            print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
+            raise SystemExit, 1
         else:
-            brooklyn.release_partition(partition)
-            print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
-        print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
-        print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
-        print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
-        raise SystemExit, 1
+            raise
 
     print >> sys.stderr, timestamp() + " BE_MPI (Info) : Destroying partition " + partition
     pct = float(os.environ.get("FAILED_RELEASE_FRAC", 0))
