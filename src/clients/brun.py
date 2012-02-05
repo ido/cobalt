@@ -50,7 +50,7 @@ if __name__ == '__main__':
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : Initializing MPIRUN"    
 
     try:
-        brooklyn = Cobalt.Proxy.system()
+        brooklyn = Cobalt.Proxy.ComponentProxy('system', defer=False)
     except:
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): East River transit failure: bridge is missing"
         print >> sys.stderr, timestamp() + " FE_MPI (ERROR): Terminating due to asphyxia"
@@ -63,32 +63,42 @@ if __name__ == '__main__':
     walltime = 0
 
     try:
-        jobid = os.environ["COBALT_JOBID"]
-        bjobid = int(jobid) + 1024   # Why not?
+        jobid = int(os.environ["COBALT_JOBID"])
+        bjobid = jobid + 1024   # Why not?
+    except ValueError:
+        print >> sys.stderr, timestamp() + " FE_MPI (Info) : job id '%s' is not an integer" % (jobid,)
+        print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
+        print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
+        raise SystemExit, 1
+    except KeyError:
+        print >> sys.stderr, timestamp() + " FE_MPI (Info) : COBALT_JOBID not found, can't determine runtime"
+        walltime = int(random.random() * 9 + 1) * 60
+        print >> sys.stderr, timestamp() + " FE_MPI (Info) : Using %d seconds instead" % (walltime,)
+        bjobid = 99999  # Why not, indeed
+    else:
         try:
-            cqm = Cobalt.Proxy.queue_manager()
+            cqm = Cobalt.Proxy.ComponentProxy('queue-manager', defer=False)
             query =  [{'tag':'job', 'user':'*', 'walltime':'*', 'jobid':jobid}]
-            response = cqm.GetJobs(query)
-            for j in response:
+            response = cqm.get_jobs(query)
+            if len(response) > 0:
                 pct = float(os.environ.get("OVERTIME_FRAC", 0))
                 if random.random() < pct:
-                    walltime = float(j['walltime']) * 60 * 2.0
+                    walltime = float(response[0]['walltime']) * 60 * 2.0
                 else:
-                    walltime = float(j['walltime']) * 60 * 0.9
-        except Cobalt.Proxy.CobaltComponentError:
-            print >> sys.stderr, timestamp() + " FE_MPI (Info) : Failed to connect to queue manager"
-            print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
-            print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
+                    walltime = float(response[0]['walltime']) * 60 * 0.9
+            else:
+                print >> sys.stderr, timestamp() + " FE_MPI (Info) : queue manager has no information on job %s" % (jobid,)
+                print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
+                print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
+                raise SystemExit, 1
+        except Exception, e:
+            if not isinstance(e, SystemExit):
+                print >> sys.stderr, timestamp() + " FE_MPI (Info) : Failed to connect to queue manager"
+                print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
+                print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   1 =="
             raise SystemExit, 1
-    except:
-        print >> sys.stderr, timestamp() + " FE_MPI (Info) : COBALT_JOBID not found, can't determine runtime"
-        print >> sys.stderr, timestamp() + " FE_MPI (Info) : Using first argument of job instead"
-        
-        walltime = int(sys.argv[sys.argv.index('-args') + 1]) * 60
-
-        bjobid = 99999  # Why not, indeed
-        
-    stat = brooklyn.ReservePartition(partition, size)
+            
+    stat = brooklyn.reserve_partition(partition, size)
     if not stat:
         print >> sys.stderr, timestamp() + " BE_MPI (ERROR): Failed to run process on partition"
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
@@ -118,7 +128,7 @@ if __name__ == '__main__':
         if random.random() < pct:
             pass
         else:
-            brooklyn.ReleasePartition(partition)
+            brooklyn.release_partition(partition)
             print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
         print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
@@ -130,10 +140,8 @@ if __name__ == '__main__':
     if random.random() < pct:
         pass
     else:
-        brooklyn.ReleasePartition(partition)
+        brooklyn.release_partition(partition)
         print >> sys.stderr, timestamp() + " BE_MPI (Info) : Partition " + partition + " switched to state FREE ('F')"
     print >> sys.stderr, timestamp() + " BE_MPI (Info) : ==    BE completed   =="
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==    FE completed   =="
     print >> sys.stderr, timestamp() + " FE_MPI (Info) : ==  Exit status:   0 =="
-
-
