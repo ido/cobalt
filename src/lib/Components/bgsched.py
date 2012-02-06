@@ -584,7 +584,7 @@ class BGSched (Component):
 
     def save_me(self):
         Component.save(self)
-    save_me = automatic(save_me)
+    save_me = automatic(save_me, float(get_bgsched_config('save_me_interval', 10)))
 
     #user_name in this context is the user setting/modifying the res.
     def add_reservations (self, specs, user_name):
@@ -917,7 +917,7 @@ class BGSched (Component):
     
 
         # print "took %f seconds for scheduling loop" % (time.time() - started_scheduling, )
-    schedule_jobs = locking(automatic(schedule_jobs))
+    schedule_jobs = locking(automatic(schedule_jobs, float(get_bgsched_config('schedule_jobs_interval', 10))))
 
     def get_resid(self, queue_name):
         

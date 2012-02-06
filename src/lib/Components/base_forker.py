@@ -55,12 +55,6 @@ def get_forker_config(option, default):
     return value
 
 
-try:
-    MAX_FDS = os.sysconf("SC_OPEN_MAX")
-except:
-    MAX_FDS = 65536
-
-
 class BaseChild (object):
     '''Base class for child processes.'''
 
@@ -494,8 +488,7 @@ class BaseForker (Component):
     def __save_me(self):
         '''Periodically save off a statefile.'''
         Component.save(self)
-    __save_me = automatic(__save_me, 
-            float(get_forker_config('save_me_interval', 10)))
+    __save_me = automatic(__save_me, float(get_forker_config('save_me_interval', 10)))
         
     def fork(self, args, tag=None, label=None, env=None, preexec_data=None, runid=None):
         """Fork a child task.  
@@ -725,7 +718,7 @@ class BaseForker (Component):
                 else:
                     child.death_timer.max_time = child.death_timer.elapsed_time + self.DEATH_TIMEOUT
 
-    _wait = automatic(_wait)
+    _wait = automatic(_wait, float(get_forker_config('wait_interval', 10)))
 
 
 if __name__ == "__main__":
