@@ -65,10 +65,6 @@ class BGSystem (BGBaseSystem):
     
     Methods:
     configure -- load partitions from the bridge API
-    add_process_groups -- add (start) an mpirun process on the system (exposed, ~query)
-    get_process_groups -- retrieve mpirun processes (exposed, query)
-    wait_process_groups -- get process groups that have exited, and remove them from the system (exposed, query)
-    signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- update partition state from the bridge API (runs as a thread)
     """
     
@@ -77,21 +73,15 @@ class BGSystem (BGBaseSystem):
     
     logger = logger
 
-    
+    bgsystem_config = BGBaseSystem.bgsystem_config
     _configfields = ['diag_script_location', 'diag_log_file', 'kernel']
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('bgsystem'):
-        print '''"bgsystem" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['bgsystem']
-    mfields = [field for field in _configfields if not config.has_key(field)]
+    mfields = [field for field in _configfields if not bgsystem_config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
         sys.exit(1)
-    if config.get('kernel') == "true":
+    if bgsystem_config.get('kernel') == "true":
         _kernel_configfields = ['bootprofiles', 'partitionboot']
-        mfields = [field for field in _kernel_configfields if not config.has_key(field)]
+        mfields = [field for field in _kernel_configfields if not bgsystem_config.has_key(field)]
         if mfields:
             print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
             sys.exit(1)
@@ -125,7 +115,7 @@ class BGSystem (BGBaseSystem):
 
     def save_me(self):
         Component.save(self)
-    save_me = automatic(save_me)
+    save_me = automatic(save_me, float(bgsystem_config.get('save_me_interval', 10)))
 
     def _get_node_card(self, name, state):
         if not self.node_card_cache.has_key(name):
@@ -517,19 +507,19 @@ class BGSystem (BGBaseSystem):
         self._partitions_lock.release()
 
     def _validate_kernel(self, kernel):
-        if self.config.get('kernel') != 'true':
+        if self.bgsystem_config.get('kernel') != 'true':
             return True
-        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        kernel_dir = "%s/%s" % (os.path.expandvars(self.bgsystem_config.get('bootprofiles')), kernel)
         return os.path.exists(kernel_dir)
 
     def _set_kernel(self, partition, kernel):
         '''Set the kernel to be used by jobs run on the specified partition'''
-        if self.config.get('kernel') != 'true':
+        if self.bgsystem_config.get('kernel') != 'true':
             if kernel != "default":
                 raise Exception("custom kernel capabilities disabled")
             return
-        partition_link = "%s/%s" % (os.path.expandvars(self.config.get('partitionboot')), partition)
-        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        partition_link = "%s/%s" % (os.path.expandvars(self.bgsystem_config.get('partitionboot')), partition)
+        kernel_dir = "%s/%s" % (os.path.expandvars(self.bgsystem_config.get('bootprofiles')), kernel)
         try:
             current = os.readlink(partition_link)
         except OSError, e:
@@ -570,7 +560,7 @@ class BGSystem (BGBaseSystem):
 
     def _clear_kernel(self, partition):
         '''Set the kernel to be used by a partition to the default value'''
-        if self.config.get('kernel') == 'true':
+        if self.bgsystem_config.get('kernel') == 'true':
             try:
                 self._set_kernel(partition, "default")
             except:
@@ -596,179 +586,6 @@ class BGSystem (BGBaseSystem):
         return ret
     generate_xml = exposed(generate_xml)
     
-    def add_process_groups (self, specs):
-        """
-        Create a process group.
-        
-        Arguments:
-        specs -- list of dictionary hashes, each specifying a process group to start
-        """
-        
-        self.logger.info("add_process_groups(%r)" % (specs))
-
-        # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
-        # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
-        # error message should also be attached to the process group so that cqm can report the problem to the user.
-        process_groups = self.process_groups.q_add(specs)
-        for pgroup in process_groups:
-            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
-            pgroup.nodect = self._partitions[pgroup.location[0]].size
-            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
-            try:
-                self._set_kernel(pgroup.location[0], pgroup.kernel)
-            except Exception, e:
-                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
-                self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                pgroup.exit_status = 255
-            else:
-                if pgroup.kernel != "default":
-                    self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
-                if pgroup.mode == "script":
-                    pgroup.forker = 'user_script_forker'
-                else:
-                    pgroup.forker = 'bg_mpirun_forker'
-                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60 * float(pgroup.walltime) +
-                        60 * float(pgroup.killtime), pgroup.jobid):
-                    try:
-                        pgroup.start()
-                        if pgroup.head_pid == None:
-                            self.logger.error("%s: process group failed to start using the %s component; releasing resources",
-                                pgroup.label, pgroup.forker)
-                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                            pgroup.exit_status = 255
-                    except ComponentLookupError, e:
-                        self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        del self.process_groups[pgroup.id]
-                        raise
-                    except xmlrpclib.Fault, e:
-                        self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
-                            "component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        del self.process_groups[process_group.id]
-                        raise
-                    except:
-                        self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
-                            "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
-                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                        pgroup.exit_status = 255
-                else:
-                    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
-                        pgroup.location)
-                    pgroup.exit_status = 255
-        return process_groups
-    add_process_groups = exposed(query(add_process_groups))
-    
-    def get_process_groups (self, specs):
-        """
-        Query progress groups dictionary and return matching records
-
-        specs -- list of dictionary hashes used as match criteria
-        """
-        self._get_exit_status()
-        return self.process_groups.q_get(specs)
-    get_process_groups = exposed(query(get_process_groups))
-
-    def _get_exit_status (self):
-        children = {}
-        cleanup = {}
-        for forker in ['bg_mpirun_forker', 'user_script_forker']:
-            try:
-                for child in ComponentProxy(forker).get_children("process group", None):
-                    children[(forker, child['id'])] = child
-                    child['pg'] = None
-                cleanup[forker] = []
-            except ComponentLookupError, e:
-                self.logger.error("failed to contact the %s component to obtain a list of children", forker)
-            except:
-                self.logger.error("unexpected exception while getting a list of children from the %s component",
-                    forker, exc_info=True)
-        for pg in self.process_groups.itervalues():
-            if pg.forker in cleanup:
-                clean_partition = False
-                if (pg.forker, pg.head_pid) in children:
-                    child = children[(pg.forker, pg.head_pid)]
-                    child['pg'] = pg
-                    if child['complete']:
-                        if pg.exit_status is None:
-                            pg.exit_status = child["exit_status"]
-                            if child["signum"] == 0:
-                                self.logger.info("%s: job exited with status %s", pg.label, pg.exit_status)
-                            else:
-                                if child["core_dump"]:
-                                    core_dump_str = ", core dumped"
-                                else:
-                                    core_dump_str = ""
-                                self.logger.info("%s: terminated with signal %s%s", pg.label, child["signum"], core_dump_str)
-                        cleanup[pg.forker].append(child['id'])
-                        clean_partition = True
-                else:
-                    if pg.exit_status is None:
-                        # the forker has lost the child for our process group
-                        self.logger.info("%s: job exited with unknown status", pg.label)
-                        # FIXME: should we use a negative number instead to indicate internal errors? --brt
-                        pg.exit_status = 1234567
-                        clean_partition = True
-                if clean_partition:
-                    self.reserve_resources_until(pg.location, None, pg.jobid)
-                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
-
-        # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
-        # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
-        for forker, child_id in children.keys():
-            if children[(forker, child_id)]['pg'] is None:
-                cleanup[pg.forker].append(child['id'])
-                
-        # cleanup any children that have completed and been processed
-        for forker in cleanup.keys():
-            if len(cleanup[forker]) > 0:
-                try:
-                    ComponentProxy(forker).cleanup_children(cleanup[forker])
-                except ComponentLookupError, e:
-                    self.logger.error("failed to contact the %s component to cleanup children", forker)
-                except:
-                    self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
-                        forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status)
-    
-    def wait_process_groups (self, specs):
-        """
-        Get the exit status of any completed process groups.  If completed,
-        initiate the partition cleaning process, and remove the process group 
-        from system's list of active processes.
-        """
-        self._get_exit_status()
-        process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
-        for process_group in process_groups:
-            del self.process_groups[process_group.id]
-        return process_groups
-    wait_process_groups = exposed(query(wait_process_groups))
-    
-    def signal_process_groups (self, specs, signame="SIGINT"):
-        """
-        Send a signal to a currently running process group as specified by signame.
-
-        if no signame, then SIGINT is the default.
-        """
-        my_process_groups = self.process_groups.q_get(specs)
-        for pg in my_process_groups:
-            if pg.exit_status is None:
-                try:
-                    if pg.head_pid != None:
-                        self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
-                        ComponentProxy(pg.forker).signal(pg.head_pid, signame)
-                    else:
-                        self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
-                except:
-                    self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
-
-                if signame == "SIGKILL":
-                   self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
-        return my_process_groups
-    signal_process_groups = exposed(query(signal_process_groups))
-
     def validate_job(self, spec):
         """
         validate a job for submission
@@ -783,7 +600,7 @@ class BGSystem (BGBaseSystem):
     validate_job = exposed(validate_job)
 
     def launch_diags(self, partition, test_name):
-        diag_exe = os.path.join(os.path.expandvars(self.config.get("diag_script_location")), test_name) 
+        diag_exe = os.path.join(os.path.expandvars(self.bgsystem_config.get("diag_script_location")), test_name) 
         try:
             sdata = os.stat(diag_exe)
         except:
@@ -794,14 +611,14 @@ class BGSystem (BGBaseSystem):
             self.diag_pids[pid] = (partition, test_name)
         else:
             try:
-                stdout = open(os.path.expandvars(self.config.get("diag_log_file")) or "/dev/null", 'a')
+                stdout = open(os.path.expandvars(self.bgsystem_config.get("diag_log_file")) or "/dev/null", 'a')
                 stdout.write("[%s] starting %s on partition %s\n" % (time.ctime(), test_name, partition))
                 stdout.flush()
                 os.dup2(stdout.fileno(), sys.__stdout__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stdout will be lost)" % e)
             try:
-                stderr = open(os.path.expandvars(self.config.get("diag_log_file")) or "/dev/null", 'a')
+                stderr = open(os.path.expandvars(self.bgsystem_config.get("diag_log_file")) or "/dev/null", 'a')
                 os.dup2(stderr.fileno(), sys.__stderr__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stderr will be lost)" % e)
