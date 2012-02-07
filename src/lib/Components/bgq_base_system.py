@@ -735,16 +735,16 @@ class BGBaseSystem (Component):
         
         #validate proccount.
         #spec['proccount'] = spec['nodecount']
+        rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
         if not spec['proccount']:
             if spec['mode'] != 'script':
-                rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
-                ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0]
+                ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
                 spec['proccount'] = str(int(spec['nodecount'])) * ranks_per_node
             else:
                 spec['proccount'] = str(spec['nodecount'])
 
         else:
-            ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0]
+            ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
             try:
                 spec['proccount'] = int(spec['proccount'])
             except:

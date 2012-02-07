@@ -92,9 +92,7 @@ class BGRunjobForker (PGForker):
         #determine ranks from mode:
         
         cmd = [self.config['runjob'],
-              #'-host', self.config['mmcs_server_ip'],
-              #get proccount from pg
-               '--np', str(int(pg.size) #* int(rpn_re.match(pg.mode).groups()[0])),
+               '--np', str(int(pg.size)), #* int(rpn_re.match(pg.mode).groups()[0])),
                '--block', pg.partition, #corner and shape derived from this.
                '--ranks-per-node', rpn_re.match(pg.mode).groups()[0], #default 1.  valid values are 2^n for n <= 6.
                '--cwd', pg.cwd]

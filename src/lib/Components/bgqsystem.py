@@ -775,7 +775,7 @@ class BGSystem (BGBaseSystem):
                     detailed_block_filter.setExtendedInfo(True)
                     new_block_info = pybgsched.getBlocks(detailed_block_filter)
                     #bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
-                    self._blocks.q_add([self._new_block_dict(new_block_info)])
+                    self._blocks.q_add([self._new_block_dict(new_block_info[0])])
                     b = self._blocks[block.getName()]
                     self._detect_wiring_deps(b, wiring_cache)
 
