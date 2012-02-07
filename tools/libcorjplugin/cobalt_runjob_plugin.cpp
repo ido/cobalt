@@ -104,15 +104,18 @@ block_info *parse_block_info(string block_id){
      * >128.  Really, don't change the block name, it's a headache we don't want.
      */
     //ret->loc_id = tokens[0];
+    if (ret->size >= 512){
+        ret->rack_id = NULL;
+        ret->midplane_id = NULL;
+        ret->node_board_id = NULL;
+        ret->node_id = NULL;
+        return ret;
+    }
+    else if(ret->size >= 32){
+        ret->rack_id = atoi(tokens[tokens.size()-4].erase(0,1).c_str()); 
+        ret->midplane_id = atoi(tokens[tokens.size()-3].erase(0,1).c_str());
+        ret->node_board_id = atoi(tokens[tokens.size()-2].erase(0,1).c_str()); 
     
-    ret->rack_id = atoi(tokens[0].erase(0,1).c_str()); 
-    ret->midplane_id = atoi(tokens[1].erase(0,1).c_str());
-     
-    ret->node_board_id = atoi(tokens[2].erase(0,1).c_str()); 
-    if(tokens.size() > 4)
-        ret->node_id = atoi(tokens[3].erase(0,1).c_str());
-    else{
-
         /* Take the nodes from the base node map, apply a series of masks based
          * on the nodeboard hardware address (the NXX value) to determine which 
          * dimensions are "reversed." Since a nodeboard is size 2 in all dims
@@ -132,13 +135,42 @@ block_info *parse_block_info(string block_id){
                 break;
             }
         }
+
+        cout << "tokens:" << tokens.size() << tokens[0] <<endl;
+        if (tokens.size() > 4){
+            ret->loc_id = tokens[0];
+        }
+        else {
+            ret->loc_id = "";
+        }
+    }
+    else{
+        ret->rack_id = atoi(tokens[tokens.size()-5].erase(0,1).c_str()); 
+        ret->midplane_id = atoi(tokens[tokens.size()-4].erase(0,1).c_str());
+        ret->node_board_id = atoi(tokens[tokens.size()-3].erase(0,1).c_str()); 
+        ret->node_id = atoi(tokens[tokens.size()-2].erase(0,1).c_str());
+        if (tokens.size() > 5){
+            ret->loc_id = tokens[0];
+        }
+        else {
+            ret->loc_id = "";
+        }
     } 
     
     /*we use 128's as our parent block for this plugin, smallest part size we have*/
     const char *parent_block_fmt = "R%02d-M%d-N%02d-128";
+    const char *loc_parent_block_fmt =  "%s-R%02d-M%d-N%02d-128";
+    
     char pb_name[32];
-    sprintf(pb_name, parent_block_fmt,  ret->rack_id,
+    cout << ret->loc_id << endl;
+    if (!ret->loc_id.empty()){
+        sprintf(pb_name, loc_parent_block_fmt, ret->loc_id.c_str() ,ret->rack_id,
             ret->midplane_id, (ret->node_board_id/4 * 4) );
+    }
+    else{
+        sprintf(pb_name, parent_block_fmt,  ret->rack_id,
+            ret->midplane_id, (ret->node_board_id/4 * 4) );
+    }
     ret->parent_block = string(pb_name);
 
     //cout << "Parent Block: " << pb_name <<endl;
