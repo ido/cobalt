@@ -739,7 +739,7 @@ class BGBaseSystem (Component):
         if not spec['proccount']:
             if spec['mode'] != 'script':
                 ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
-                spec['proccount'] = str(int(spec['nodecount'])) * ranks_per_node
+                spec['proccount'] = str(int(spec['nodecount']) * ranks_per_node)
             else:
                 spec['proccount'] = str(spec['nodecount'])
 
@@ -759,12 +759,11 @@ class BGBaseSystem (Component):
         if spec['mode'] == 'script':
             spec['ranks_per_node'] = None
         else: #remember c1 is default, so ranks_per_node defaults to 1
-            rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
             spec['ranks_per_node'] = int(rpn_re.match(spec['mode']).groups()[0])
         #further proccount validation:
         if spec['ranks_per_node'] != None:
             if int(spec['proccount']) > int(spec['ranks_per_node'] * int(spec['nodecount'])):
-                raise JobValidationError("proccount of %d is too large." % spec['proccount'])
+                raise JobValidationError("proccount of %s is too large." % spec['proccount'])
         #bring this back to a string, as this is what it comes in as (or should...)
         spec['proccount'] = str(spec['proccount'])
 
