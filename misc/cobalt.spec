@@ -1,6 +1,6 @@
 Summary: Cobalt System Software Suite
 Name: cobalt
-Version: 0.99.1beta
+Version: 0.99.1beta.1
 
 Release: 1
 License: GPL
