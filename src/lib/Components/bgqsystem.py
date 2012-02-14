@@ -1111,9 +1111,10 @@ class BGSystem (BGBaseSystem):
 
             status = boot_block.getStatus()
             status_str = boot_block.getStatusString()
-            if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated]:
+            if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
                 #we are in a state we really shouldn't be in.  Time to fail.
                 self.logger.warning("Error in block initialization. Aborting job startup.")
+                booted_blocks.append(block_loc)
             elif status != pybgsched.Block.Initialized:
                 self.logger.debug("waiting for boot: %s", boot_block.getStatusString())
                 continue
