@@ -1261,7 +1261,7 @@ class BGSystem (BGBaseSystem):
                     self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
 
                 if signame == "SIGKILL":
-                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
+                    self._mark_block_for_cleaning(pg.location[0], pg.jobid)
 
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
