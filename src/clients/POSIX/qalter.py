@@ -66,7 +66,7 @@ if __name__ == '__main__':
             logger.error("jobid must be an integer")
             sys.exit(1)
     spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*', 'procs':'*',
-             'nodes':'*', 'is_active':"*"} for jobid in args]
+        'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in args]
     updates = {}
     nc = 0
     if opts['nodecount']:
