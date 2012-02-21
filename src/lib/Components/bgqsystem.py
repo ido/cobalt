@@ -1082,10 +1082,10 @@ class BGSystem (BGBaseSystem):
                         boot_block = pybgsched.getBlocks(block_location_filter)[0]
                         boot_block.addUser(pgroup.location[0], pgroup.user)
                         boot_block.initiateBoot(pgroup.location[0])
+                        self.booting_blocks[pgroup.location[0]] = pgroup
                     except RuntimeError:
                         self.logger.warning("Unable to boot block %s.  Aborting job startup.")
-                    else:
-                        self.booting_blocks[pgroup.location[0]] = pgroup
+                    #else:
                         
                 else:
                     self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
@@ -1111,10 +1111,11 @@ class BGSystem (BGBaseSystem):
 
             status = boot_block.getStatus()
             status_str = boot_block.getStatusString()
-            if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
+            if status in [pybgsched.Block.Terminating, pybgsched.Block.Free]:
                 #we are in a state we really shouldn't be in.  Time to fail.
                 self.logger.warning("Error in block initialization. Aborting job startup.")
                 booted_blocks.append(block_loc)
+                _mark_block_for_cleaning(block_loc)
             elif status != pybgsched.Block.Initialized:
                 self.logger.debug("waiting for boot: %s", boot_block.getStatusString())
                 continue
@@ -1136,9 +1137,7 @@ class BGSystem (BGBaseSystem):
                         #self.logger.warning("Unable to boot block %s.  Aborting job startup.")
 
                     #move to a job_start function
-                    booted_blocks.append(block_loc)
                     if pgroup.head_pid == None:
-                    
                         self.logger.error("%s: process group failed to start using the %s component; releasing resources",
                                 pgroup.label, pgroup.forker)
                         self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
@@ -1162,6 +1161,10 @@ class BGSystem (BGBaseSystem):
                          "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
                     self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
                     pgroup.exit_status = 255
+                    _mark_block_for_cleaning(block_loc)
+                finally:
+                    #we're off to the races.
+                    booted_blocks.append(block_loc)
                 #else:
                 #    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
                 #        pgroup.location)
@@ -1173,6 +1176,7 @@ class BGSystem (BGBaseSystem):
         self._get_exit_status()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
+    
     
     def _get_exit_status (self):
         running = []
@@ -1226,7 +1230,8 @@ class BGSystem (BGBaseSystem):
 
                 
     _get_exit_status = automatic(_get_exit_status)
-    
+ 
+
     def wait_process_groups (self, specs):
         """Get the exit status of any completed process groups.  If completed,
         initiate the partition cleaning process, and remove the process group 

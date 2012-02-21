@@ -3494,7 +3494,7 @@ class QueueManager(Component):
                 " attempting to acquire a list of active process groups")
             return
 
-        self.lock.acquire()
+        #self.lock.acquire()
         try:
             live = [item['id'] for item in pgroups]
             for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
@@ -3502,8 +3502,9 @@ class QueueManager(Component):
                     logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
                     job.task_end()
         finally:
-            self.lock.release()
-    __poll_process_groups = locking(automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10))))
+            pass
+            #self.lock.release()
+    __poll_process_groups = automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10)))
 
     #
     # job operations
