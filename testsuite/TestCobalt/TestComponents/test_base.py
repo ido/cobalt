@@ -3,6 +3,7 @@ import logging
 from Cobalt.Components.base import Component, exposed, automatic
 import Cobalt.Proxy
 import time, random
+from TestCobalt.Utilities.Time import timeout
 
 class TestComponent (object):
     

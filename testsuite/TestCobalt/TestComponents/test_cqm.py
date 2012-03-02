@@ -7,6 +7,10 @@ LOG_FILE = "test_cqm.log"
 CQM_CONFIG_FILE_ENTRY = """
 [bgsched]
 
+[bgpm]
+mpirun: /bin/true
+mmcs_server_ip = 127.0.0.1
+
 [cqm]
 log_dir: /tmp
 progress_interval: 0.2
@@ -76,6 +80,8 @@ TestCobalt.Utilities.WhiteBox.WHITEBOX_TESTING = WHITEBOX_TESTING
 
 #Bring in our forker mock-up for pre/postscript testing
 from Cobalt.Components.system_script_forker import SystemScriptForker
+from Cobalt.Components.user_script_forker import UserScriptForker
+from Cobalt.Components.bg_mpirun_forker import BGMpirunForker
 
 # get name of user running the tests
 try:
@@ -697,6 +703,8 @@ def get_script_filenames(fn_bases):
 class CQMIntegrationTestBase (TestCQMComponent):
     taskman = None
     system_script_forker = None
+    bg_mpirun_forker = None
+    user_script_forker = None
 
     def setup(self):
         TestCQMComponent.setup(self)
@@ -3355,11 +3363,15 @@ class TestCQMIntegration (CQMIntegrationTestBase):
         CQMIntegrationTestBase.setup(self)
         self.taskman = SimulatedSystem()
         self.system_script_forker = SystemScriptForker()
+        self.user_script_forker = UserScriptForker()
+        self.bg_mpirun_forker = BGMpirunForker()
         self.setup_cqm()
 
     def teardown(self):
         del self.taskman
         del self.system_script_forker
+        del self.user_script_forker
+        del self.bg_mpirun_forker
         CQMIntegrationTestBase.teardown(self)
 
 
