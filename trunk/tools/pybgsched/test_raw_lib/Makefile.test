@@ -1,0 +1,33 @@
+#Makefile for python bindings for SWIG
+
+
+CC = /usr/bin/g++
+
+
+
+HLCS = /bgsys/drivers/ppcfloor/hlcs
+CFLAGS = -c -g -Wall -I$(HLCS)/include
+LFLAGS = -Wall -Wl,-rpath,$(HLCS)/lib -o
+LIBS = -L$(HLCS)/lib -lbgsched
+
+
+LIBNAME = test_bgsched_init
+OBJS = test_bgsched_init.o
+
+.SUFFIXES: .cpp .cxx .o 
+.cpp.o :
+	$(CC) $(CFLAGS) $(wildcard *.cpp)
+
+#SWIG likes to make these.
+.cxx.o :
+	$(CC) $(CFLAGS) test_bgsched_init.cxx
+
+all: $(LIBNAME)
+.PHONY: all
+
+$(LIBNAME): $(OBJS) 
+	$(CC) $(LFLAGS) $(LIBNAME) $(OBJS) $(LIBS)
+
+.PHONY: clean
+clean:
+	rm $(OBJS) $(LIBNAME) $(PYTHON_WRAPPER)
