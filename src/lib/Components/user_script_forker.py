@@ -80,6 +80,16 @@ class UserScriptForker (PGForker):
         postfork_env["COBALT_PARTNAME"] = pg.partition
         postfork_env["COBALT_PARTSIZE"] = str(pg.nodect)
         postfork_env["COBALT_JOBSIZE"] = str(pg.size)
+        
+        if pb.subblock == True:
+            postfork_env["COBALT_SUBBLOCK"] = str(pg.subblock)
+            postfork_env["COBALT_PARTNAME"] = pg.subblock_parent
+            postfork_env["COBALT_CORNER"] = pg.corner
+            postfork_env["COBALT_SHAPE"] = "x".join([str(ext) for ext in pg.extents])
+
+            #TODO: Have to add better env variables to describe what you're getting shape-wise
+            # This is a must-do for Mira
+
         # add the cobalt env vars last so as overwrite any value provided by the user
         self._add_cobalt_env_vars(child, postfork_env)
 
