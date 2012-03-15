@@ -38,6 +38,9 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 from pybgsched import SWIG_vector_to_list
 
 from bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp
+from bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK, NODECARD_D_DIM_MASK, NODECARD_E_DIM_MASK
+from bgq_base_system import A_DIM, B_DIM, C_DIM, D_DIM, E_DIM
+from bgq_base_system import get_extents_from_size
 
 try:
     from elementtree import ElementTree
@@ -62,13 +65,16 @@ sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
 
 
 class BGProcessGroup(ProcessGroup):
-    """ProcessGroup modified by Blue Gene systems"""
-    fields = ProcessGroup.fields + ["nodect"]
+    """ProcessGroup modified by BlueGene/Q systems"""
+    fields = ProcessGroup.fields + ["nodect", "subblock", "subblock_parent", "corner", "extents"]
 
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec)
         self.nodect = spec.get('nodect', None)
-
+        self.subblock = False
+        self.subblock_parent = None
+        self.corner = None
+        self.extents = None
     
 # convenience function used several times below
 def _get_state(bridge_partition):
@@ -118,12 +124,16 @@ class BGSystem (BGBaseSystem):
             sim_xml_file = None
         except ConfigParser.NoSectionError:
             sim_xml_file = None
-        self.configure(config_file=sim_xml_file)
+        
+        run_config = kwargs.pop('run_config',True)
+        if run_config:
+            self.configure(config_file=sim_xml_file)
 
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
         self.killing_jobs = {} 
         self.booting_blocks = {}
+        self.pgroups_pending_boot = []
 
     def __getstate__(self):
         flags = {}
@@ -166,6 +176,7 @@ class BGSystem (BGBaseSystem):
             sim_xml_file = None
 
         self.configure(config_file=sim_xml_file)
+        
         if 'block_flags' in state:
             for bname, flags in state['block_flags'].items():
                 if bname in self._blocks:
@@ -183,6 +194,8 @@ class BGSystem (BGBaseSystem):
         self.killing_jobs = {} #bg_jobid:forker_handle
         self.booting_blocks = {} #block location:pgroup
 
+        self.pgroups_pending_boot = []
+    
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
@@ -357,7 +370,8 @@ class BGSystem (BGBaseSystem):
         self.logger.info("block configuration took %f sec" % (end - start))
         start = time.time()
         #set up subblocks, this is software only, and shared between modes (ultimately)
-        subblock_spec_dict = self.parse_subblock_config()
+        subblock_config_string = get_config_option("bgsystem","subblock_config","Empty")
+        subblock_spec_dict = self.parse_subblock_config(subblock_config_string)
         subblocks = []
         subblockDict = BlockDict()
         for block_id, minimum_size in subblock_spec_dict.iteritems():
@@ -370,45 +384,102 @@ class BGSystem (BGBaseSystem):
         return
     
     ## BGSystem.parse_subblock_config
-    #  Inputs: cobalt config file
+    #  Inputs: string of subblock configuration information
     #  Output: dictionary: key: block names, values: minimum size to slice to
     #  
     #  Read from the config file a list of blocks and the smallest size to divide them to.
     #  The expected string in the config file looks like Loc:XX,Loc2:YY,Loc3:ZZ
-    def parse_subblock_config(self):
-        subblock_config_string = get_config_option("bgsystem","subblock_config","Empty")
-        self.logger.debug(subblock_config_string)
-        if subblock_config_string == "Empty":
+    def parse_subblock_config(self, subblock_config_string):
+        #subblock_config_string = get_config_option("bgsystem","subblock_config","Empty")
+        #self.logger.debug(subblock_config_string)
+        if subblock_config_string in ["Empty", '', None]:
             return {}
         retdict = {}
         for subblock_config in subblock_config_string.split(","):
             split_config = subblock_config.split(":")
             retdict[split_config[0]] = int(split_config[1])
 
-        self.logger.debug('Setting new dict to: %s' % retdict)
+        #self.logger.debug('Setting new dict to: %s' % retdict)
         return retdict
+
 
     def gen_subblocks(self, parent_name, min_size):
 
-        parent_block = self._blocks[parent_name]
-        self.logger.debug("%s", parent_block)
-        curr_size = parent_block.size #most likely to be 128
-        nodecard_pos = int(nodecard_exp.search(parent_block.name).groups()[0])
-        midplane_pos = int(midplane_exp.search(parent_block.name).groups()[0])
-        rack_pos = int(rack_exp.search(parent_block.name).groups()[0])
+        '''Generate subblock names based on a parent and the minimum size.  
+        For now, this is restricted to size 128 partitions.
 
+        keyword arguments:
+        parent_name -- name of the block that we are using as the parent of 
+                       subblocks we're generating.
+        min_size    -- the smallest size block to generate
+
+        '''
+        try:
+            parent_block = self._blocks[parent_name]
+        except KeyError:
+            self.logger.warning("Nonexistent block specified as parent. "\
+                    "Generating zero blocks for name: %s", parent_name)
+            return []
+        self.logger.info("Generating subblocks for block %s, down to size %d", 
+                parent_block, min_size)
+        curr_size = parent_block.size #most likely to be 128
+        #TODO: Make this work for <=512 for block size
+        if curr_size != 128:
+            self.logger.info("subrun pseudoblocks only supported for size 128 nodes")
+            return []
+
+        bg_block_filter = pybgsched.BlockFilter()
+        bg_block_filter.setName(parent_name)
+        bg_block_filter.setExtendedInfo(True)
+        bg_parent_block = pybgsched.getBlocks(bg_block_filter)[0]
+
+        bgpb_nodeboards = SWIG_vector_to_list(bg_parent_block.getNodeBoards())
+
+        #FIXME: make MAX_NODEBOARD or the like.
+        nodecard_pos = 15
+        for nb in bgpb_nodeboards:
+          nb_pos = int(nodecard_exp.search(nb).groups()[0])
+          nodecard_pos = min(nodecard_pos, nb_pos)
+        
+        midplane_hw_loc = SWIG_vector_to_list(bg_parent_block.getMidplanes())[0]
+       
+        midplane_pos = int(midplane_exp.search(midplane_hw_loc).groups()[0])
+        rack_pos = int(rack_exp.search(midplane_hw_loc).groups()[0])
         #get parent midplane information.  we only need this once:
-        hw = pybgsched.getComputeHardware()
-        midplane = hw.getMidplane("R%02d-M%d" % (rack_pos, midplane_pos))
+        midplane = self.compute_hardware_vec.getMidplane(midplane_hw_loc)
+        midplane_logical_coords = pybgsched.getMidplaneCoordinates(midplane_hw_loc)
+
+        subblock_prefix = get_config_option("bgsystem", "subblock_prefix", "COBALT")
+    
         ret_blocks = []
         while (curr_size >= min_size):
             if curr_size >= 128:
                 curr_size = 64
                 continue
             if curr_size == 64:
+                extents = get_extents_from_size(curr_size)
+                #corner_node_j_loc_list = get_corner_nodes_for_size(rack_pos, midplane_pos, nodecard_pos, curr_size)
                 for i in range(0,2):
-                    curr_name = "R%02d-M%d-N%02d-64" % (rack_pos, midplane_pos, nodecard_pos+(2*i))
-                    nodecard_list = [] 
+                    #curr_name = "%sR%02d-M%d-N%02d-64" % (rack_pos, midplane_pos, nodecard_pos+(2*i))
+                    #nodecard_list = []
+                    curr_nb_pos = nodecard_pos + (2*i)
+                    a_corner = midplane_logical_coords[A_DIM]*4 + int(bool(NODECARD_A_DIM_MASK & curr_nb_pos))*2
+                    b_corner = midplane_logical_coords[B_DIM]*4 + int(bool(NODECARD_B_DIM_MASK & curr_nb_pos))*2
+                    c_corner = midplane_logical_coords[C_DIM]*4 + int(bool(NODECARD_C_DIM_MASK & curr_nb_pos))*2
+                    d_corner = midplane_logical_coords[D_DIM]*4 + int(bool(NODECARD_D_DIM_MASK & curr_nb_pos))*2
+                    e_corner = 0
+
+
+                    curr_name = '%s-%d%d%d%d%d-%d%d%d%d%d-%d' % (subblock_prefix,
+                            a_corner, b_corner, c_corner, d_corner, e_corner,
+                            a_corner + extents[A_DIM] - 1,
+                            b_corner + extents[B_DIM] - 1,
+                            c_corner + extents[C_DIM] - 1,
+                            d_corner + extents[D_DIM] - 1,
+                            e_corner + extents[E_DIM] - 1,
+                            curr_size)
+
+                    nodecard_list = []
                     block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)),
                                        "R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)+1)]
                     for j in range(0,2):
@@ -419,40 +490,150 @@ class BGSystem (BGBaseSystem):
                                 state = "error"
                             nodecard_list.append(self._get_node_card(nc.getLocation(), state))
                     
+                    corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
+                    
+                    self.logger.debug("Creating subblock name: %s, corner: %s, extents %s.", curr_name, corner_node, extents)
+
                     ret_blocks.append((dict(
                         name = curr_name, 
                         queue = "default",
                         size = curr_size,
                         node_cards = nodecard_list,
                         subblock_parent = parent_name,
+                        corner_node = corner_node,
+                        extents = extents,
                         state = 'idle'
                         )))
     
             elif curr_size == 32:
+                 
+                extents = get_extents_from_size(curr_size)
                 for i in range(0,4):
-                    curr_name = "R%02d-M%d-N%02d-32" % (rack_pos, midplane_pos, nodecard_pos+i)
+                    curr_nb_pos = nodecard_pos + i
+                    a_corner = midplane_logical_coords[A_DIM]*4 + int(bool(NODECARD_A_DIM_MASK & curr_nb_pos))*2
+                    b_corner = midplane_logical_coords[B_DIM]*4 + int(bool(NODECARD_B_DIM_MASK & curr_nb_pos))*2
+                    c_corner = midplane_logical_coords[C_DIM]*4 + int(bool(NODECARD_C_DIM_MASK & curr_nb_pos))*2
+                    d_corner = midplane_logical_coords[D_DIM]*4 + int(bool(NODECARD_D_DIM_MASK & curr_nb_pos))*2
+                    e_corner = 0
+
+                    curr_name = '%s-%d%d%d%d%d-%d%d%d%d%d-%d' % (subblock_prefix,
+                            a_corner, b_corner, c_corner, d_corner, e_corner,
+                            a_corner + extents[A_DIM] - 1,
+                            b_corner + extents[B_DIM] - 1,
+                            c_corner + extents[C_DIM] - 1,
+                            d_corner + extents[D_DIM] - 1,
+                            e_corner + extents[E_DIM] - 1,
+                            curr_size)
+                    
                     nodecard_list = [] 
-                    block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+i)]
-                                       
-                    nc = midplane.getNodeBoard(i)
+                    block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, curr_nb_pos)]
+                    
+                    nc = midplane.getNodeBoard(curr_nb_pos)
                     if nc.getLocation() in block_nodecards:
                         state = "idle"
                         if pybgsched.hardware_in_error_state(nc):
                             state = "error"
                         nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+                   
+                    corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
+
+                    self.logger.debug("Creating subblock name: %s, corner: %s, extents %s, nodecards: %s", curr_name, corner_node, extents, nodecard_list)
+                    
                     ret_blocks.append((dict(
                         name = curr_name, 
                         queue = "default",
                         size = curr_size,
                         node_cards = nodecard_list,
                         subblock_parent = parent_name,
+                        corner_node = corner_node,
+                        extents = extents,
                         state = 'idle'
                         )))
+    
             else:
-                break
+                extents = get_extents_from_size(curr_size)
+                
+                #yes, do these for each nodecard.
+                for curr_nb_pos in range(nodecard_pos, nodecard_pos + 4):
+                    for i in range(0, (32/curr_size)):
+                    
+                        #Yes these bitmasks are important.
+                        a_corner = midplane_logical_coords[A_DIM]*4 + int(bool(NODECARD_A_DIM_MASK & curr_nb_pos))*2 + (int(bool(i & 1)))
+                        b_corner = midplane_logical_coords[B_DIM]*4 + int(bool(NODECARD_B_DIM_MASK & curr_nb_pos))*2 + (int(bool(i & 2)))
+                        c_corner = midplane_logical_coords[C_DIM]*4 + int(bool(NODECARD_C_DIM_MASK & curr_nb_pos))*2 + (int(bool(i & 4)))
+                        d_corner = midplane_logical_coords[D_DIM]*4 + int(bool(NODECARD_D_DIM_MASK & curr_nb_pos))*2 + (int(bool(i & 8)))
+                        e_corner = int(bool(i & 16))
+
+                        curr_name = '%s-%d%d%d%d%d-%d%d%d%d%d-%d' % (subblock_prefix,
+                                a_corner, b_corner, c_corner, d_corner, e_corner,
+                                a_corner + extents[A_DIM] - 1,
+                                b_corner + extents[B_DIM] - 1,
+                                c_corner + extents[C_DIM] - 1,
+                                d_corner + extents[D_DIM] - 1,
+                                e_corner + extents[E_DIM] - 1,
+                                curr_size)
+                    
+                        nodecard_list = [] 
+                        block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, curr_nb_pos)]
+                    
+                        nc = midplane.getNodeBoard(curr_nb_pos)
+                        if nc.getLocation() in block_nodecards:
+                            state = "idle"
+                            if pybgsched.hardware_in_error_state(nc):
+                                state = "error"
+                            nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+                   
+                        corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
+
+                        self.logger.debug("Creating subblock name: %s, corner: %s, extents %s, nodecards: %s", curr_name, corner_node, extents, nodecard_list)
+                    
+                        ret_blocks.append((dict(
+                            name = curr_name, 
+                            queue = "default",
+                            size = curr_size,
+                            node_cards = nodecard_list,
+                            subblock_parent = parent_name,
+                            corner_node = corner_node,
+                            extents = extents,
+                            state = 'idle'
+                            )))
+                    # for i
+                # for curr_nb_pos
+
             curr_size = curr_size / 2
         
         return ret_blocks
+
+    def _get_compute_node_from_global_coords(self, global_coords):
+        '''Takes a global machine coord and generates the compute node at that location
+
+        '''
+        #Once again proving that Integer division is the right default.
+        
+        midplane_coords = [c/4 for c in global_coords]
+        midplane_torus_coords = [c%4 for c in global_coords]
+        nodeboard_loc = [c/2 for c in midplane_torus_coords] #if a 2 or a 3 reversed dim
+        node_coords = [c%2 for c in midplane_torus_coords] #location on a nodeboard itself
+
+        nodeboard_pos = nodeboard_loc[A_DIM] * 4 + \
+                        nodeboard_loc[B_DIM] * 8 + \
+                        nodeboard_loc[C_DIM] * 1 + \
+                        nodeboard_loc[D_DIM] * 2
+        node_pos = Cobalt.Components.bgq_base_system.get_transformed_loc(nodeboard_pos, node_coords)
+        
+        #TODO: make less machine specific, more configurable.  For T&D and Mira this should work, though.
+
+        rack_pos = 0
+
+        rack_pos = rack_pos + midplane_coords[A_DIM]*8
+        rack_pos = rack_pos + midplane_coords[A_DIM]*16
+        #TODO: have to handle C dimension.  Will fix for mira, Vesta, Cetus not needed.
+        rack_pos = rack_pos + (midplane_coords[D_DIM]/2) #will add 1 if the D-dim is 2 or 3.
+
+        midplane_pos = 0
+        if midplane_coords[D_DIM] in [1,2]:
+            midplane_pos = 1
+        return "R%02X-M%d-N%02d-J%02d" % (rack_pos, midplane_pos, nodeboard_pos, node_pos)
 
     def _new_block_dict(self, block_def):
         #pull block info into a dict so that we can create internal blocks to track.
@@ -462,6 +643,7 @@ class BGSystem (BGBaseSystem):
         switch_list=[]
         midplane_list=[]
         nodecard_list=[]
+        io_link_list=[]
         midplane_ids = block_def.getMidplanes()
         midplane_nodecards = []
         for midplane_id in midplane_ids:
@@ -594,53 +776,95 @@ class BGSystem (BGBaseSystem):
             block.reserved_by = None
             block.used_by = None
 
-        def _set_block_cleanup_state(b):
+        def _initiate_block_free(block):
 
-            #set the block to the free state and kill everything on it.
             try:
-                self.logger.debug("CLEANUP: Block %s reporting state as %s.", b.name, b.state)
-                if b.state not in ["idle","cleanup-initiate", "cleanup"]: 
-                    clean_location_filter = pybgsched.BlockFilter()
-                    clean_location_filter.setName(b.name)
-                    clean_block = pybgsched.getBlocks(clean_location_filter)[0]
-                    pybgsched.Block.removeUser(b.name, clean_block.getUser())
-                    self.logger.debug("Block %s reporting status: %s", b.name, clean_block.getStatusString())
-                    if clean_block.getStatus() == pybgsched.Block.Initialized:
-                        pybgsched.Block.initiateFree(b.name)
-                    b.state = "cleanup-initiate"
-                elif b.state == "idle":
-                    self.logger.info("block %s: no block cleanup was required", b.name)
+                self.logger.debug("CLEANUP: Block %s reporting state as %s", block.name, block.state)
+                if block.state not in ["idle", "cleanup-initiate", "cleanup"]:
+                    
+                    compute_block = self.get_compute_block(block.name)
+                    if compute_block.getStatus() == pybgsched.Block.Initialized:
+                        pybgsched.Block.initiateFree(block.name)
+                elif block.state == "idle":
+                    self.logger.info("block %s: no block cleanup was required", block.name)
                     return
             except RuntimeError:
                 #we are already freeing, ignore and go on
-                self.logger.info("Free for block %s already in progress", b.name)
+                self.logger.info("Free for block %s already in progress", block.name)
             except:
+                #ummm, I think the control system went away!
                 self.logger.critical("Unable to initiate block free from bridge!")
+                raise                   
+            return
+
+        def _get_jobs_on_block(block_name):
+            try: 
+                job_block_filter = pybgsched.JobFilter()
+                job_block_filter.setComputeBlockName(block_name)
+                jobs = SWIG_vector_to_list(pybgsched.getJobs(job_block_filter))
+            except:
+                self.logger.critical("Unable to obtain list of jobs for block %s from bridge!", block_name)
                 raise
-            #at this point new jobs cannot start on this block
-            block_jobs = None
+            return jobs
+
+
+        def _children_still_allocated(block):
+            for b in block._children:
+                    if b.reserved_until:
+                        return True
+            return False
+
+        def _set_block_cleanup_state(b):
+
+            #set the block to the free state and kill everything on it.
+            #only if we aren't a subblock job!
+            if b.block_type != 'pseudoblock':
+                #not a subblock, proceed to clean up normally.
+                self.logger.info("initiaitng normal block cleanup for block %s", b.name)
+                _initiate_block_free(b)
+                b.state = 'cleanup-initiate'
+            else:
+                #ensure nothing else is running on the subblock parent.  If we're the last one out, 
+                #then free the subblock.
+                self.logger.info("initiaitng normal block cleanup for subblockblock %s, parent: %s", b.name, b.subblock_parent)
+                pb = self._blocks[b.subblock_parent]
+                still_reserved_children = _children_still_allocated(pb)
+                block_jobs = _get_jobs_on_block(b.subblock_parent)
+                #if len(block_jobs) < 1:
+                #    pb = self._blocks[b.subblock_parent]
+                if not still_reserved_children:
+                    self.logger.info("All subblock jobs done, freeing block %s", pb.name)
+                    _initiate_block_free(pb)
+                    #and we keep going.
+                else:
+                    local_job_found = False
+                    for job in block_jobs:
+                        if job.getCorner() == b.corner_node and job.getShape().getNodeCount() == b.size and job.getID() not in self.killing_jobs.keys():
+                            local_job_found =  True
+                            nuke_job(job.getID(), b.subblock_parent)
+                            b.state = "cleanup"
+                            #make sure the backend job is dead.
+                            
+                
+
+            #NOTE: at this point new jobs cannot start on this block if we're not a pseudoblock
 
             #don't track jobs whose kills have already completed.
             check_killing_jobs()
             #from here on, we should be able to see if the block has returned to the free state, if, so
             #and nothing else is blocking, we can safely set to idle.
             
-            
-            #block.state = "blocked (%s)" % (p.name,)
+            #if b.subblock_parent != b.name:
+                #don't kill everything.
+            #    return
 
             if b.state == "cleanup":
                 return
-            try:
-                
-                job_block_filter = pybgsched.JobFilter()
-                job_block_filter.setComputeBlockName(b.name)
-                jobs = SWIG_vector_to_list(pybgsched.getJobs(job_block_filter))
-            except:
-                self.logger.critical("Unable to obtain list of jobs for block %s from bridge!", b.name)
-                raise
-            #At this point new
-            if len(jobs) != 0:
-                for job in jobs:
+            
+            block_jobs = _get_jobs_on_block(b.subblock_parent)
+            #At this point new for the Q.  Blow everything away!
+            if len(block_jobs) != 0:
+                for job in block_jobs:
                     if job.getId() in self.killing_jobs.keys():
                         pass
                     nuke_job(job, b.name)  
@@ -648,7 +872,7 @@ class BGSystem (BGBaseSystem):
 
 
             #don't track jobs whose kills have already completed.
-            check_killing_jobs()
+            check_killing_jobs() #do we need this?
             #from here on, we should be able to see if the block has returned to the free state, if, so
             #and nothing else is blocking, we can safely set to idle.
             
@@ -699,6 +923,7 @@ class BGSystem (BGBaseSystem):
             try:
                 #grab hardware state
                 #self.logger.debug("acquiring hardware state")
+                # Should this be locked?
                 self.compute_hardware_vec = pybgsched.getComputeHardware()
             except:
                 self.logger.error("Error communicating with the bridge to update partition state information.")
@@ -784,12 +1009,68 @@ class BGSystem (BGBaseSystem):
                     self.update_relatives()
                 
                 for b in self._blocks.values():
+                    if b.block_type == "pseudoblock":
+                        b.state = 'idle'
+                
+                for b in self._blocks.values():
                     
                     if b.block_type == "pseudoblock":
                         #we don't get this from the control system here.
-                        b.state = 'idle'
+                        #b.state = 'idle'
+                        if b.state != 'idle':
+                            continue #already sorted this guy out.
+
+                        is_allocated = self.check_allocated(b)
+                        if is_allocated: #we aren't going to be busy if we're not allocated (for much longer)
+                            #but we might be busy
+                            block_jobs = _get_jobs_on_block(b.subblock_parent)
+                            for job in block_jobs:
+                                if job.getCorner() in b.nodes: #If I have a backend job on my nodes, then I'm busy.
+                                    b.state = "busy"
+                                    #we're really busy and need to mark relatives.
+                                    for block in b._relatives:
+                                        if block.state == "idle":
+                                            block.state = "blocked (%s)" % (b.name)
+                                    break
+
+                        if b.state == ['busy', 'allocated']:
+                            continue #yeah we're done with this block
                         
-                    #self.logger.debug("Updating block %s", b.name)
+                        is_blocked = self.check_subblock_blocked(b)
+                        if is_blocked:
+                            continue #we are state blocked.
+                        
+                        #Remember: bad hardware takes out all child pseudoblocks as well, since you
+                        #can't boot the parent.
+                        #bad hardware hoits!
+                        subblock_parent_block = self._blocks[b.subblock_parent]
+                        for nc in subblock_parent_block.node_cards:
+                           if nc.used_by:
+                               #block if other stuff is running on our node cards.  
+                               #remember subblock jobs can violate this 
+                               #TODO: test with subblock
+                               if b.subblock_parent != nc.used_by or b.subblock_parent == b.name: 
+                                   b.state = "blocked (%s)" % nc.used_by
+
+                           if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
+                               #if control system reports down, then we're really down.
+                               b.state = "hardware offline (%s): nodecard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
+                               self.offline_blocks.append(b.name)
+                               if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
+                                   #we are in a soft error and should attempt to free
+                                   if not nc.used_by in freeing_error_blocks:
+                                       try:
+                                           #_start_block_cleanup(b)
+                                           pybgsched.Block.initiateFree(nc.used_by)
+                                           self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
+                                       except RuntimeError:
+                                           pass
+                                       except:
+                                           self.logger.debug("error initiating free for soft error block.")
+                                       freeing_error_blocks.append(nc.used_by)
+                         # I think we can fall into cleanup code here?
+
+
                     if b.cleanup_pending:
                         if b.used_by:
                             # if the partition has a pending cleanup request, then set the state so that cleanup will be
@@ -806,28 +1087,76 @@ class BGSystem (BGBaseSystem):
                                 elif part.block_type == 'pseudoblock' and bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free:
                                     busy.append(part.name)
                             if len(busy) > 0:
-                                _set_block_cleanup_state(b)
+                                _set_block_cleanup_state(self._blocks[b.subblock_parent])
                                 self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
                             else:
                                 b.state = "idle"
                                 b.cleanup_pending = False
                                 self.logger.info("partition %s: cleaning complete", b.name)
+                    #check the state of the block's IOLinks.  If not all are connected, put the block into an error state.
+                    bad_links = pybgsched.StringVector()
+                    if not pybgsched.Block.isIOConnected(b.subblock_parent, bad_links):
+                        b.state = "IO Link Unconnected: %s" % bad_links[0]
+                    #don't even bother if we failed the last test, this one checks do we have enough links/midplane to start?
+                    #Assume losing 50% of links is fatal for now.  Will need to ultimately make this configurable.
+                    #Even better if I can get IONs that are mapped to blocks, but that will have to come in on Rev2 --PMR
+                    else:
+                        try:
+                            current_system_block = pybgsched.BlockFilter()
+                            current_system_block.setName(b.subblock_parent)
+                            current_system_block.setExtendedInfo(True)
+                            sys_block = pybgsched.getBlocks(current_system_block)[0] 
+                            midplanes = sys_block.getMidplanes()
+                        except:
+                            self.logger.critical('Error fetching block data in update blocks. Marking %s down due to control system error.', b.name)
+                            b.state = "Control System Error"
+                            continue
+                        for mp in midplanes:
+                            try:
+                                iolv = pybgsched.getIOLinks(mp)
+                            except RuntimeError, e:
+                                if str(e) == "Data record(s) not found.":
+                                    b.state = "Insufficient IO Links: %s" % mp
+                                else:
+                                    self.logger.warning("Unknown RunntimeError encountered!")
+                                    raise
+                                break
+                            io_links = SWIG_vector_to_list(iolv)
+                            if len(io_links) < 4:#FIXME: Make this a threshold
+                                b.state = "Insufficient IO Links: %s" % mp
+                                break
+
+                    # We have a prayer of booting now: so why shouldn't we boot this block?
+                    # The answer is below:
+
                     if b.state == "busy":
                         # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
                         # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
                         if not b.reserved_by:
                             b.reserved_until = False
-                    elif b.state not in ["cleanup","cleanup-initiate"]:
-                        #block out childeren involved in the cleaning partitons
-                        if b.reserved_until:
-                            b.state = "allocated"
-                            for block in b._parents:
-                                if block.state == "idle":
-                                    block.state = "blocked (%s)" % (b.name,)
+                        # We may not actually be busy, if not then fall back to idle and take a pass below.
+                        block_jobs = _get_jobs_on_block(b.subblock_parent) 
+                        if b.block_type != "pseudoblock" and len(block_jobs) == 1 and block_jobs[0].getComputeNodesUsed() == b.size:
+                            #no, we really are busy.  Make sure our pseudoblock children are marked as such.
                             for block in b._children:
                                 if block.state == "idle":
-                                    block.state = "blocked (%s)" % (b.name,)
-                        elif b.block_type != 'pseudoblock' and bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free and b.used_by:
+                                    block.state = "blocked (%s)" % b.name
+                        elif b.size > 128: #FIXME: make this settable in the cobalt.conf
+                            pass #Yep, busy.  Probably a script job
+                        
+                    elif b.state not in ["cleanup","cleanup-initiate"] and b.block_type != 'pseudoblock':
+                        #block out childeren involved in the cleaning partitons
+                        is_allocated = self.check_allocated(b)
+                        #if b.reserved_until:
+                        #    self.check_allocated(b)
+                            #b.state = "allocated"
+                            #for block in b._parents:
+                            #    if block.state == "idle":
+                            #        block.state = "blocked (%s)" % (b.name,)
+                            #for block in b._children:
+                            #    if block.state == "idle":
+                            #        block.state = "blocked (%s)" % (b.name,)
+                        if (not is_allocated) and (b.block_type != 'pseudoblock') and (bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free) and (b.used_by):
                             # FIXME: should we check the partition state or use reserved by == NULL instead?  now that all jobs
                             # reserve resources, a partition without a reservation that is also in use should probably be cleaned
                             # up regardless of partition state.  --brt
@@ -965,6 +1294,101 @@ class BGSystem (BGBaseSystem):
         
             self._blocks_lock.release()
             '''
+    def check_IO_connected(self, block, hardware):
+        pass
+
+    def check_sufficient_IO(self, block, hardware):
+        pass
+
+    def check_allocated(self, b):
+        '''Check to see if this block is allocated by cobalt to a job.
+           
+           If so, then mark all of this block's parents and children as
+           blocked, by the allocated partition.
+
+        '''
+        
+        allocated = False
+        if b.reserved_until:
+            b.state = "allocated"
+            allocated = True
+            #for block in b._parents:
+            #    if block.state == "idle":
+            #        block.state = "blocked (%s)" % (b.name,)
+            for block in b._relatives:
+                if block.state == "idle":
+                    block.state = "blocked (%s)" % (b.name,)
+        return allocated
+
+    def initiate_cleanup(self, block):
+        pass
+
+    def check_subblock_blocked(self, block):
+        '''mark a subblock as blocked based on relative's activities.
+           return true if we are blocked (don't really have to update status beyond that.
+         
+        '''
+        
+        retval = False
+        for rel in block._relatives:
+            if rel.state in ['busy', 'allocated', 'cleanup', 'cleanup-initiate']:
+                if rel.name != block.subblock_parent:
+                    retval = True
+                    block.state = 'blocked (%s)' % rel.name
+                    break
+                else:
+                    if rel.state == 'busy':
+                        found = False
+                        for pg in self.process_groups.itervalues():
+                            #if we have a pgroup with our parent's location
+                            #then we're really blocked.  Gets script jobs too.
+                            if pg.location[0] == rel.name:
+                                found = True
+                                break
+                        if found:
+                            retval = True
+                            block.state = 'blocked (%s)' % rel.name
+                            break
+                    else:
+                        retval = True
+                        block.state = 'blocked (%s)' % rel.name
+                        break
+                    
+        return retval
+
+    def check_nodeboard_offline(self, block, freeing_error_blocks):
+     
+        for nc in b.node_cards:
+            if nc.used_by:
+                #block if other stuff is running on our node cards.  
+                #remember subblock jobs can violate this 
+                #TODO: test with subblock
+                b.state = "blocked (%s)" % nc.used_by
+            
+            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
+                #if control system reports down, then we're really down.
+                b.state = "hardware offline (%s): nodecard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
+                self.offline_blocks.append(b.name)
+                if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
+                    #we are in a soft error and should attempt to free
+                    if not nc.used_by in freeing_error_blocks:
+                        try:
+                            #_start_block_cleanup(b)
+                            pybgsched.Block.initiateFree(nc.used_by)
+                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
+                        except RuntimeError:
+                            pass
+                        except:
+                            self.logger.debug("error initiating free for soft error block.")
+                        freeing_error_blocks.append(nc.used_by)
+
+        return
+
+    def check_switch_offline(self, block):
+        pass
+
+    def check_wiring_conflict(self, block):
+        pass
 
 
     def _mark_block_for_cleaning(self, block_name, jobid):
@@ -1041,7 +1465,9 @@ class BGSystem (BGBaseSystem):
             
         return ret
     generate_xml = exposed(generate_xml)
-    
+   
+    @exposed
+    @query
     def add_process_groups (self, specs):
         
         """Create a process group.
@@ -1055,6 +1481,7 @@ class BGSystem (BGBaseSystem):
         # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
         # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
         # error message should also be attached to the process group so that cqm can report the problem to the user.
+        start_apg_timer = time.time()
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
             pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
@@ -1073,33 +1500,97 @@ class BGSystem (BGBaseSystem):
                 else:
                     pgroup.forker = 'bg_runjob_forker'
                 if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
-                    
-                    #TODO:This absolutely has to move.  
+                    boot_location_block = self._blocks[pgroup.location[0]]
+                    boot_location = boot_location_block.subblock_parent
+                    try:
+                        compute_block = self.get_compute_block(boot_location)
+                    except RuntimeError:
+                        self.logger.warning("Unable to retrieve block data for %s.  Aborting Job.", boot_location)
+                        pgroup.exit_status = 255
+                        self._mark_block_for_cleaning(pgroup.location[0])
+
+                    if boot_location_block.block_type == 'pseudoblock':
+                        #we have to boot a subblock job.  This block may already be booted.
+                        pgroup.subblock = True
+                        pgroup.subblock_parent = boot_location
+                        pgroup.corner = boot_location_block.corner_node
+                        pgroup.extents = boot_location_block.extents
+                        boot_block = self.get_compute_block(boot_location)
+                        if boot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]:
+                            #we are in the middle of starting another on the same subblock. We need to wait until this 
+                            #block has completed booting.
+                            self.pgroups_pending_boot.append(pgroup)
+                            continue
+                        elif boot_block.getStatus() == pybgsched.Block.Initialized:
+                            #already booted, we can start right away.
+                            boot_block.addUser(boot_location, pgroup.user)
+                            self._start_process_group(pgroup)
+                            continue
+                        #otherwise we should proceed through normal block booting proceedures.
+                        
                     try: #Initiate boot here, I guess?  Need to make this not block.
                         #if we're already booted, (subblock), we can immediately move to start.
-                        block_location_filter = pybgsched.BlockFilter()
-                        block_location_filter.setName(pgroup.location[0])
-                        boot_block = pybgsched.getBlocks(block_location_filter)[0]
-                        boot_block.addUser(pgroup.location[0], pgroup.user)
-                        boot_block.initiateBoot(pgroup.location[0])
-                        self.booting_blocks[pgroup.location[0]] = pgroup
+                        boot_block = self.get_compute_block(boot_location)
+                        boot_block.addUser(boot_location, pgroup.user)
+                        boot_block.initiateBoot(boot_location)
                     except RuntimeError:
-                        self.logger.warning("Unable to boot block %s.  Aborting job startup.")
-                    #else:
-                        
+                        self.logger.warning("Unable to boot block %s.  Aborting job startup.", boot_location)
+                        pgroup.exit_status = 255 #do we want to encode this somehow? --PMR
+                        self._mark_block_for_cleaning(boot_location)
+                    else:
+                        self.booting_blocks[boot_location] = pgroup
                 else:
                     self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
                         pgroup.location)
                     pgroup.exit_status = 255
+        
+        end_apg_timer = time.time()
+        self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
-    
-    add_process_groups = exposed(query(add_process_groups))
-    
-    @automatic
+   
+    def get_compute_block(self, block, extended_info=False):
+
+        block_location_filter = pybgsched.BlockFilter()
+        block_location_filter.setName(block)
+        if extended_info:
+            block_location_filter.setExtendedInfo(True)
+        return pybgsched.getBlocks(block_location_filter)[0]
+
+        
+    def set_block_user(self, user, block):
+
+        '''set the user's permission to run on a block.
+
+        '''
+        block_location_filter = pybgsched.BlockFilter()
+        block_location_filter.setName(boot_location)
+
+    def check_pgroups_pending_boot(self):
+        '''check up on groups that are waiting to start up.
+
+        '''
+
+        booted_pgroups = []
+        for pgroup in self.pgroups_pending_boot:
+            boot_block = self.get_compute_block(pgroup.subblock_parent)
+            if boot_block.getStatus() == pybgsched.Block.Initialized:
+                boot_block.addUser(pgroup.subblock_parent, pgroup_user)
+                self._start_process_group(pgroup)
+                booted_pgroups.append(pgroup)
+            elif boot_block.getStatus() == pybgsched.Block.Free: #Something has gone very wrong here, abort. Should we try and boot again?
+                pgroup.exit_status = 255
+                self.logger.error("%s: Block for pending subblock job on %s free.  Assuming catastrophic failure and aborting.", pgroup.label, pgroup.location[0])
+                booted_pgroups.append(pgroup)
+
+        #clean up the ones we've stopped tracking
+        for pgroup in booted_pgroups:
+            self.pgroups_penidng_boot.pop(pgroup)
+
+    check_pgroups_pending_boot = automatic(check_pgroups_pending_boot, 10.0)
+   
     def check_boot_status(self):
-
+        
         booted_blocks = []
-
         for block_loc in self.booting_blocks.keys():
             try:
                 block_location_filter = pybgsched.BlockFilter()
@@ -1111,11 +1602,9 @@ class BGSystem (BGBaseSystem):
 
             status = boot_block.getStatus()
             status_str = boot_block.getStatusString()
-            if status in [pybgsched.Block.Terminating, pybgsched.Block.Free]:
+            if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
                 #we are in a state we really shouldn't be in.  Time to fail.
                 self.logger.warning("Error in block initialization. Aborting job startup.")
-                booted_blocks.append(block_loc)
-                _mark_block_for_cleaning(block_loc)
             elif status != pybgsched.Block.Initialized:
                 self.logger.debug("waiting for boot: %s", boot_block.getStatusString())
                 continue
@@ -1123,8 +1612,19 @@ class BGSystem (BGBaseSystem):
                 #we are good: start the job.
                 self.logger.info("Block %s successfully booted.  Initiating job", block_loc)
                 pgroup = self.booting_blocks[block_loc]
-                try:
-                    pgroup.start()
+                self._start_process_group(pgroup, block_loc)
+    check_boot_status = automatic(check_boot_status, 10.0)
+    
+    def _start_process_group(self, pgroup, block_loc=None):
+        '''Start a process group at a specified location.
+            
+           A block_loc of None means to not do any boot check or boot tracking cleanup.
+
+        '''
+        booted_blocks = []
+        try:
+            self.logger.debug("Init job, pgroup: %s", pgroup.__dict__)
+            pgroup.start()
                     #should the fork fail, do not release the block location from status check, just let it retry.
                     #TODO: need to insure that the job is removed if this takes too long.
                         #move to a wait loop function
@@ -1137,46 +1637,48 @@ class BGSystem (BGBaseSystem):
                         #self.logger.warning("Unable to boot block %s.  Aborting job startup.")
 
                     #move to a job_start function
-                    if pgroup.head_pid == None:
-                        self.logger.error("%s: process group failed to start using the %s component; releasing resources",
-                                pgroup.label, pgroup.forker)
-                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                        pgroup.exit_status = 255
-                except (ComponentLookupError, xmlrpclib.Fault), e:
-                    self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
-                    # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                    # until the job has exhausted its maximum alloted time
-                    #del self.process_groups[pgroup.id]
-                    continue #do we need to start the whole thing again (retry state from cqm?)
-                except (ComponentLookupError, xmlrpclib.Fault), e:
-                    self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
-                            "component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        #del self.process_groups[process_group.id]
-                    #raise
-                    continue
-                except:
-                    self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
-                         "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
-                    self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                    pgroup.exit_status = 255
-                    _mark_block_for_cleaning(block_loc)
-                finally:
-                    #we're off to the races.
-                    booted_blocks.append(block_loc)
+            if block_loc != None:
+                booted_blocks.append(block_loc)
+            if pgroup.head_pid == None:
+                self.logger.error("%s: process group failed to start using the %s component; releasing resources",
+                        pgroup.label, pgroup.forker)
+                self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                pgroup.exit_status = 255
+        except (ComponentLookupError, xmlrpclib.Fault), e:
+            self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
+            # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+            # until the job has exhausted its maximum alloted time
+            #del self.process_groups[pgroup.id]
+            return #do we need to start the whole thing again (retry state from cqm?)
+        except (ComponentLookupError, xmlrpclib.Fault), e:
+            self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
+                    "component", pgroup.label, pgroup.forker)
+            # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
+            # until the job has exhausted its maximum alloted time
+            #del self.process_groups[process_group.id]
+            #raise
+            return
+        except:
+            self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
+                    "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
+            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+            pgroup.exit_status = 255
                 #else:
                 #    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
                 #        pgroup.location)
                 #    pgroup.exit_status = 255
         for block_id in booted_blocks:
             del self.booting_blocks[block_id]
+       
+
+        return
+
+    check_boot_status = automatic(check_boot_status, 10.0)
     
     def get_process_groups (self, specs):
-        self._get_exit_status()
+        #self._get_exit_status()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
-    
     
     def _get_exit_status (self):
         running = []
@@ -1198,7 +1700,7 @@ class BGSystem (BGBaseSystem):
                     break
             if found:
                 continue
-
+            
             if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
                 # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
                 # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
@@ -1230,20 +1732,19 @@ class BGSystem (BGBaseSystem):
 
                 
     _get_exit_status = automatic(_get_exit_status)
- 
-
+    
     def wait_process_groups (self, specs):
         """Get the exit status of any completed process groups.  If completed,
         initiate the partition cleaning process, and remove the process group 
         from system's list of active processes.
 
         """
-        self._get_exit_status()
+        #self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
             self._mark_block_for_cleaning(process_group.location[0], process_group.jobid)
             del self.process_groups[process_group.id]
-        return process_groups
+        return []#process_groups
     wait_process_groups = exposed(query(wait_process_groups))
     
     def signal_process_groups (self, specs, signame="SIGINT"):
