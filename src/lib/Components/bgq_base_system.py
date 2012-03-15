@@ -120,6 +120,20 @@ nodecard_exp = re.compile(r'-N(?P<pos>[0-9][0-9])')
 midplane_exp = re.compile(r'-M(?P<pos>[0-9])')
 rack_exp = re.compile(r'R(?P<pos>[0-9][0-9])')
 
+
+def get_transformed_loc(nodeboard_pos, coords):
+    ''' Return an node postion based on coordiantes and nodecard position
+
+    '''
+    for i in range(0,32):
+        if ((base_node_map[i][A_DIM] ^ bool(NODECARD_A_DIM_MASK & nodeboard_pos) == coords[A_DIM]) and
+            (base_node_map[i][B_DIM] ^ bool(NODECARD_B_DIM_MASK & nodeboard_pos) == coords[B_DIM]) and
+            (base_node_map[i][C_DIM] ^ bool(NODECARD_C_DIM_MASK & nodeboard_pos) == coords[C_DIM]) and
+            (base_node_map[i][D_DIM] ^ bool(NODECARD_D_DIM_MASK & nodeboard_pos) == coords[D_DIM]) and
+            (base_node_map[i][E_DIM] ^ bool(NODECARD_E_DIM_MASK & nodeboard_pos) == coords[E_DIM])
+            ):
+            return i
+
 def get_node_coords(node_pos, nodecard_pos):
 
     ret_coords = list(base_node_map[node_pos])
@@ -141,14 +155,14 @@ def verify_extents_for_size(coords, size):
        Must be < 512 nodes for now.
 
     '''
-    extents = _get_extents_from_size(size)
+    extents = get_extents_from_size(size)
 
     for i in range(0,5):
         if (coords[i] + extents[i]) > 4:
             return False
     return True
 
-def _get_extents_from_size(size):
+def get_extents_from_size(size):
     '''Given a size, generate the extents for BG/Q subblock job use.
 
     '''
@@ -162,11 +176,11 @@ def _get_extents_from_size(size):
         dim_order = [2,3,0,1,-1] #nodecard in midplane order #c,d,a,b
             #E dimension doens't figure in, should cause an error
         left /= 32
-
     
     #for the subnodeboard shape 32 or less
     elif size <= 32:
-        dim_order = [0,3,4,1,2] #Order for nodecards: c,b,e,d,a
+        #order is now supposed to be a,b,c,d,e
+        dim_order = [4,3,2,1,0] #Order for nodecards: c,b,e,d,a
     else:
         raise ValueError(("Size %s to get_extents_from_size outside of proper range." % size))
 
@@ -355,6 +369,7 @@ class Block (Data):
         self.node_cards = spec.get("node_cards", [])
         self.nodes = spec.get("nodes", []) 
         self.switches = spec.get("switches", [])
+        self.io_links = spec.get("io_links", [])
         self.reserved_until = False
         self.reserved_by = None
         self.used_by = None
@@ -389,13 +404,20 @@ class Block (Data):
             #these are not being tracked by the control system, and are not allocated by it
             #these are just subrun targets.
             self.subblock_parent = spec.get("subblock_parent")
+            self.extents = spec.pop("extents", None)
+            if self.extents == None:
+                raise KeyError('extents not found.  Subblock not properly generated!')
+            self.corner_node = spec.pop("corner_node", None)
+            if self.corner_node == None:
+                raise KeyError('corner_node not found.  Subblock not properly generated!')    
             if self.size >= nodes_per_nodecard:
                 for nc in self.node_cards:
                     self.nodes.extend(nc.nodes)
             else:
                 #parse name to get corner node
-                node_pos = int(node_position_exp.search(self.name).groups()[0])
-                nodecard_pos = int(nodecard_exp.search(self.name).groups()[0])
+                
+                node_pos = int(node_position_exp.search(self.corner_node).groups()[0])
+                nodecard_pos = int(nodecard_exp.search(self.corner_node).groups()[0])
                 #sanity check extents
                 corner_coords = get_node_coords(node_pos, nodecard_pos)
                 stat = verify_extents_for_size(corner_coords, self.size)
@@ -403,7 +425,7 @@ class Block (Data):
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
                 nc = self.node_cards[0] #only one node_card is in use in this case.
-                self.nodes.extend(nc.extract_nodes_by_extent(corner_coords, _get_extents_from_size(self.size)))
+                self.nodes.extend(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
 
 
     def _update_node_cards(self):
@@ -460,11 +482,11 @@ class Block (Data):
         if not (b1_nc_names & b2_nc_names):
             return False
         
-        #b1_node_names = set(self.node_names)
-        #b2_node_names = set(block.node_names)
+        b1_node_names = set(self.node_names)
+        b2_node_names = set(block.node_names)
 
-        #if not (b1_node_names & b2_node_names):
-        #    return False
+        if not (b1_node_names & b2_node_names):
+            return False
         
         return True
 
@@ -642,7 +664,7 @@ class BGBaseSystem (Component):
             self.logger.error("error in del_blocks", exc_info=True)
         self._blocks_lock.release()
         
-        self._managed_blocks -= set( [block for block in blocks] )
+        self._managed_blocks -= set( [block.name for block in blocks] )
         import copy
         
         self.update_relatives()
@@ -681,7 +703,6 @@ class BGBaseSystem (Component):
         #resources can be determined. More granularity may be needed.
 
         #partial overlaps are being tracked, not sure what to do about paternity.
-
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
 
@@ -697,6 +718,9 @@ class BGBaseSystem (Component):
             
             b._parents = [block for block in b._relatives if block.is_superblock(b)]
             b._children = [block for block in b._relatives if block.is_subblock(b)]
+            #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
+
+
 
     def validate_job(self, spec):
         """validate a job for submission
@@ -762,7 +786,7 @@ class BGBaseSystem (Component):
             spec['ranks_per_node'] = int(rpn_re.match(spec['mode']).groups()[0])
         #further proccount validation:
         if spec['ranks_per_node'] != None:
-            if int(spec['proccount']) > int(spec['ranks_per_node'] * int(spec['nodecount'])):
+            if int(spec['proccount']) > int((spec['ranks_per_node']) * int(spec['nodecount'])):
                 raise JobValidationError("proccount of %s is too large." % spec['proccount'])
         #bring this back to a string, as this is what it comes in as (or should...)
         spec['proccount'] = str(spec['proccount'])
