@@ -374,8 +374,13 @@ class BGSystem (BGBaseSystem):
         subblock_spec_dict = self.parse_subblock_config(subblock_config_string)
         subblocks = []
         subblockDict = BlockDict()
+        ignore_subblock_sizes_str = get_config_option("bgsystem","ignore_subblock_sizes","Empty")
+        ignore_sizes = []
+        if ignore_subblock_sizes_str != "Empty":
+            ignore_sizes.extend([int(ignore_size) for ignore_size in list(ignore_subblock_sizes_str.split(','))])
+
         for block_id, minimum_size in subblock_spec_dict.iteritems():
-            subblocks.extend(self.gen_subblocks(block_id, minimum_size))
+            subblocks.extend(self.gen_subblocks(block_id, minimum_size, ignore_sizes))
         subblockDict.q_add(subblocks)
         self._blocks.update(subblockDict)
         end = time.time()
@@ -403,7 +408,7 @@ class BGSystem (BGBaseSystem):
         return retdict
 
 
-    def gen_subblocks(self, parent_name, min_size):
+    def gen_subblocks(self, parent_name, min_size, ignore_sizes=[]):
 
         '''Generate subblock names based on a parent and the minimum size.  
         For now, this is restricted to size 128 partitions.
@@ -453,6 +458,10 @@ class BGSystem (BGBaseSystem):
     
         ret_blocks = []
         while (curr_size >= min_size):
+            if curr_size in ignore_sizes:
+                curr_size = curr_size / 2
+                continue
+
             if curr_size >= 128:
                 curr_size = 64
                 continue
