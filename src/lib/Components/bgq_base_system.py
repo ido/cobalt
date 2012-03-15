@@ -714,7 +714,11 @@ class BGBaseSystem (Component):
             for other_name in self._managed_blocks:
                 if b.name == other_name:
                     continue
-                b.mark_if_overlap(self._blocks[other_name])
+                if other_name not in self._blocks.keys():
+                    b._relatives.pop(other_name, None)
+                    self.logger.warning("Block %s not managed, removed from relatives.", other_name)
+                else:
+                    b.mark_if_overlap(self._blocks[other_name])
             
             b._parents = [block for block in b._relatives if block.is_superblock(b)]
             b._children = [block for block in b._relatives if block.is_subblock(b)]
