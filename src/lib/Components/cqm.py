@@ -3493,8 +3493,7 @@ class QueueManager(Component):
             logger.error("Failed to communicate with the system component when"
                 " attempting to acquire a list of active process groups")
             return
-
-        #self.lock.acquire()
+        self.lock.acquire()
         try:
             live = [item['id'] for item in pgroups]
             for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
@@ -3503,8 +3502,9 @@ class QueueManager(Component):
                     job.task_end()
         finally:
             pass
-            #self.lock.release()
-    __poll_process_groups = automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10)))
+            self.lock.release()
+    
+    __poll_process_groups = locking(automatic(__poll_process_groups, 10))#float(get_cqm_config('poll_process_groups_interval', 1.0))))
 
     #
     # job operations
