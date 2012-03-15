@@ -85,6 +85,11 @@ class BGRunjobForker (PGForker):
                     postfork_env[key] = value
             else:
                 app_envs.append((key, value))
+
+        #we want this set to at least 32 MB.  Don't reset if the user has set it.  
+        if 'BG_SHAREDMEMSIZE' not in pg.env.keys():
+            _logger.debug("adding sharedmemsize.")
+            app_envs.append(('BG_SHAREDMEMSIZE','32'))
          
         # add the cobalt env vars last so as overwrite any value provided by the user
         self._add_cobalt_env_vars(child, postfork_env)
