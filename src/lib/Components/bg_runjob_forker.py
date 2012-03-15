@@ -8,6 +8,7 @@ import re
 import Cobalt.Components.pg_forker
 PGPreexec = Cobalt.Components.pg_forker.PGPreexec
 PGForker = Cobalt.Components.pg_forker.PGForker
+
 import Cobalt.Util
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
@@ -33,7 +34,7 @@ class BGRunjobForker (PGForker):
     name = "bg_runjob_forker"
     implementation = "bg_runjob_forker"
 
-    _configfields = ['mpirun']
+    _configfields = ['runjob']
     _config = ConfigParser.ConfigParser()
     _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgpm'):
@@ -63,7 +64,6 @@ class BGRunjobForker (PGForker):
         pg = child.pg
 
         postfork_env = copy.deepcopy(os.environ)
-
         # export subset of MPIRUN_* variables to mpirun's environment
         # we explicitly state the ones we want since some are "dangerous"
         #I don't think we have these anymore. FIXME
@@ -93,9 +93,18 @@ class BGRunjobForker (PGForker):
         
         cmd = [self.config['runjob'],
                '--np', str(int(pg.size)), #* int(rpn_re.match(pg.mode).groups()[0])),
-               '--block', pg.partition, #corner and shape derived from this.
+               #'--block', pg.partition, #corner and shape derived from this.
                '--ranks-per-node', rpn_re.match(pg.mode).groups()[0], #default 1.  valid values are 2^n for n <= 6.
                '--cwd', pg.cwd]
+        if pg.subblock:
+            cmd.extend(['--block',pg.subblock_parent,
+                        '--corner', pg.corner,
+                        '--shape', "x".join([str(ext) for ext in pg.extents])
+                        ])
+           
+        else:
+            cmd.extend(['--block', pg.partition])
+        
         #if pg.args:
         #    cmd.extend(['--args', " ".join(pg.args)]
         if len(app_envs) > 0:
@@ -116,6 +125,7 @@ class BGRunjobForker (PGForker):
         cmd.extend([':',pg.executable])
         if pg.args:
             cmd.extend(pg.args)
+
 
         try:
             preexec_fn = BGRunjobPreexec(child, convert_argv_to_quoted_command_string(cmd), postfork_env)
