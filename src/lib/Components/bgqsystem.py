@@ -511,7 +511,8 @@ class BGSystem (BGBaseSystem):
                         subblock_parent = parent_name,
                         corner_node = corner_node,
                         extents = extents,
-                        state = 'idle'
+                        state = 'idle',
+                        block_type = 'pseudoblock'
                         )))
     
             elif curr_size == 32:
@@ -556,7 +557,8 @@ class BGSystem (BGBaseSystem):
                         subblock_parent = parent_name,
                         corner_node = corner_node,
                         extents = extents,
-                        state = 'idle'
+                        state = 'idle',
+                        block_type = 'pseudoblock'
                         )))
     
             else:
@@ -604,7 +606,8 @@ class BGSystem (BGBaseSystem):
                             subblock_parent = parent_name,
                             corner_node = corner_node,
                             extents = extents,
-                            state = 'idle'
+                            state = 'idle',
+                            block_type = 'pseudoblock'
                             )))
                     # for i
                 # for curr_nb_pos
@@ -688,7 +691,8 @@ class BGSystem (BGBaseSystem):
             midplanes = midplane_list,
             node_cards = nodecard_list,
             switches = switch_list,
-            state = block_def.getStatus()
+            state = block_def.getStatus(),
+            block_type = 'normal'
         )
         return d
 
