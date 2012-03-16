@@ -81,7 +81,7 @@ class UserScriptForker (PGForker):
         postfork_env["COBALT_PARTSIZE"] = str(pg.nodect)
         postfork_env["COBALT_JOBSIZE"] = str(pg.size)
         
-        if pb.subblock == True:
+        if pg.subblock == True:
             postfork_env["COBALT_SUBBLOCK"] = str(pg.subblock)
             postfork_env["COBALT_PARTNAME"] = pg.subblock_parent
             postfork_env["COBALT_CORNER"] = pg.corner
