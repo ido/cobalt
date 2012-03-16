@@ -390,11 +390,14 @@ class Block (Data):
         
         self.subblock_parent = self.name #parent block to boot for subblocks.  If not a subblock, will be self.
 
-        if self.size < subrun_only_size:
-            #we have to make a pseudoblock
-            self.block_type = "pseudoblock"
-        else:
-            self.block_type = "normal"
+        self.block_type = spec.get('block_type', None)
+
+        if self.block_type == None:
+            if self.size < subrun_only_size:
+                #we have to make a pseudoblock
+                self.block_type = "pseudoblock"
+            else:
+                self.block_type = "normal"
 
         if self.block_type == "normal":
             self.subblock_parent = self.name
