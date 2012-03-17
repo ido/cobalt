@@ -134,6 +134,7 @@ class BGSystem (BGBaseSystem):
         self.killing_jobs = {} 
         self.booting_blocks = {}
         self.pgroups_pending_boot = []
+        self.pgroups_wait_reboot = []
 
     def __getstate__(self):
         flags = {}
@@ -195,6 +196,7 @@ class BGSystem (BGBaseSystem):
         self.booting_blocks = {} #block location:pgroup
 
         self.pgroups_pending_boot = []
+        self.pgroups_wait_reboot = []
     
     def save_me(self):
         Component.save(self)
@@ -798,6 +800,7 @@ class BGSystem (BGBaseSystem):
                     compute_block = self.get_compute_block(block.name)
                     if compute_block.getStatus() == pybgsched.Block.Initialized:
                         pybgsched.Block.initiateFree(block.name)
+                        block.freeing = True
                 elif block.state == "idle":
                     self.logger.info("block %s: no block cleanup was required", block.name)
                     return
@@ -979,6 +982,8 @@ class BGSystem (BGBaseSystem):
                     if self._blocks.has_key(block.getName()):
                         b = self._blocks[block.getName()]
                         b.state = _get_state(block)
+                        if b.state == 'idle' and b.freeing == True:
+                            b.freeing = False
                         b._update_node_cards()
                         if b.reserved_until and now > b.reserved_until:
                             b.reserved_until = False
@@ -1520,7 +1525,7 @@ class BGSystem (BGBaseSystem):
                     except RuntimeError:
                         self.logger.warning("Unable to retrieve block data for %s.  Aborting Job.", boot_location)
                         pgroup.exit_status = 255
-                        self._mark_block_for_cleaning(pgroup.location[0])
+                        self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
 
                     if boot_location_block.block_type == 'pseudoblock':
                         #we have to boot a subblock job.  This block may already be booted.
@@ -1536,9 +1541,14 @@ class BGSystem (BGBaseSystem):
                             continue
                         elif boot_block.getStatus() == pybgsched.Block.Initialized:
                             #already booted, we can start right away.
-                            boot_block.addUser(boot_location, pgroup.user)
-                            self._start_process_group(pgroup)
-                            continue
+                            if not self._blocks[boot_location].freeing: #well almost.  the block appears to be freeing.
+                                self.logger.debug("%s trying to start on freeing block %s. waiting until free.", pgroup.label, boot_location)
+                                boot_block.addUser(boot_location, pgroup.user)
+                                self._start_process_group(pgroup)
+                                continue
+                            else: #we're going to have to wait for this block to free and reboot the block.
+                                self.pgroups_wait_reboot.append(pgroup)
+                                continue
                         #otherwise we should proceed through normal block booting proceedures.
                         
                     try: #Initiate boot here, I guess?  Need to make this not block.
@@ -1549,7 +1559,7 @@ class BGSystem (BGBaseSystem):
                     except RuntimeError:
                         self.logger.warning("Unable to boot block %s.  Aborting job startup.", boot_location)
                         pgroup.exit_status = 255 #do we want to encode this somehow? --PMR
-                        self._mark_block_for_cleaning(boot_location)
+                        self._mark_block_for_cleaning(proup.location[0], pgroup.jobid)
                     else:
                         self.booting_blocks[boot_location] = pgroup
                 else:
@@ -1578,6 +1588,43 @@ class BGSystem (BGBaseSystem):
         block_location_filter = pybgsched.BlockFilter()
         block_location_filter.setName(boot_location)
 
+    
+    def check_pgroups_wait_reboot (self):
+
+        progressing_pgroups = []
+        for pgroup in self.pgroups_wait_reboot:
+            reboot_block = self.get_compute_block(pgroup.subblock_parent)
+            if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
+                progressing_pgroups.append(pgroup) 
+                boot_location_block = self._blocks[pgroup.location[0]]
+                boot_location = boot_location_block.subblock_parent
+                try: #Initiate boot here, I guess?  Need to make this not block.
+                    #if we're already booted, (subblock), we can immediately move to start.
+                    boot_block = self.get_compute_block(boot_location)
+                    boot_block.addUser(boot_location, pgroup.user)
+                    boot_block.initiateBoot(boot_location)
+                except RuntimeError:
+                    self.logger.warning("Unable to boot block %s.  Aborting job startup.", boot_location)
+                    pgroup.exit_status = 255 #do we want to encode this somehow? --PMR
+                    self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
+                else:
+                    self.booting_blocks[boot_location] = pgroup   
+            elif reboot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]: # block rebooting, check pending boot
+                self.logger.warning("%s: Block for pending subblock job on %s is booting.  Waiting for boot completion.", pgroup.label, pgroup.location[0])
+                progressing_pgroups.append(pgroup)
+                self.pgroups_pending_boot.append(pgroup)
+            elif reboot_block.getStatus == pybgsched.Block.Initialized:
+                if self._blocks[reboot_block.getName()].freeing == False: #block rebooted. Go ahead and start job.
+                    self.logger.warning("%s: Block for pending subblock job on %s is rebooted.  Starting job.", pgroup.label, pgroup.location[0])
+                    progressing_pgroups.append(pgroup)
+                    reboot_block.addUser(pgroup.subblock_parent, pgroup.user)
+                    self._start_process_group(pgroup)
+
+        for pgroup in progressing_pgroups:
+            self.pgroups_wait_reboot.remove(pgroup)
+
+    check_pgroups_wait_reboot = automatic(check_pgroups_wait_reboot, 10.0)
+
     def check_pgroups_pending_boot(self):
         '''check up on groups that are waiting to start up.
 
@@ -1587,17 +1634,20 @@ class BGSystem (BGBaseSystem):
         for pgroup in self.pgroups_pending_boot:
             boot_block = self.get_compute_block(pgroup.subblock_parent)
             if boot_block.getStatus() == pybgsched.Block.Initialized:
-                boot_block.addUser(pgroup.subblock_parent, pgroup_user)
+                boot_block.addUser(pgroup.subblock_parent, pgroup.user)
                 self._start_process_group(pgroup)
                 booted_pgroups.append(pgroup)
             elif boot_block.getStatus() == pybgsched.Block.Free: #Something has gone very wrong here, abort. Should we try and boot again?
-                pgroup.exit_status = 255
-                self.logger.error("%s: Block for pending subblock job on %s free.  Assuming catastrophic failure and aborting.", pgroup.label, pgroup.location[0])
+                #may have had an inopportune free, go ahead and make this and try and reboot.
+                self.pgroups_wait_reboot.append(pgroup)
+                self.logger.warning("%s: Block for pending subblock job on %s free. Attempting reboot.", pgroup.label, pgroup.location[0])
+                #pgroup.exit_status = 255
+                #self.logger.error("%s: Block for pending subblock job on %s free.  Assuming catastrophic failure and aborting.", pgroup.label, pgroup.location[0])
                 booted_pgroups.append(pgroup)
 
         #clean up the ones we've stopped tracking
         for pgroup in booted_pgroups:
-            self.pgroups_penidng_boot.pop(pgroup)
+            self.pgroups_pending_boot.remove(pgroup)
 
     check_pgroups_pending_boot = automatic(check_pgroups_pending_boot, 10.0)
    
@@ -1605,6 +1655,7 @@ class BGSystem (BGBaseSystem):
         
         booted_blocks = []
         for block_loc in self.booting_blocks.keys():
+            pgroup = self.booting_blocks[block_loc]
             try:
                 block_location_filter = pybgsched.BlockFilter()
                 block_location_filter.setName(block_loc)
@@ -1617,15 +1668,26 @@ class BGSystem (BGBaseSystem):
             status_str = boot_block.getStatusString()
             if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
                 #we are in a state we really shouldn't be in.  Time to fail.
-                self.logger.warning("Error in block initialization. Aborting job startup.")
+                if status == pybgsched.Block.Free:
+                    self.logger.warning("%s: Block %s found in free state.  Attempting reboot.", pgroup.label, pgroup.location[0])
+                    self.pgroups_wait_reboot.append(pgroup)
+                else:
+                    self.logger.warning("Error in block initialization. Aborting job startup.")
+                    pgroup.exit_status = 255
+                    self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
+                    booted_blocks.append(block_loc) 
             elif status != pybgsched.Block.Initialized:
-                self.logger.debug("waiting for boot: %s", boot_block.getStatusString())
+                self.logger.debug("%s: Block: %s waiting for boot: %s",pgroup.label, pgroup.location[0],  boot_block.getStatusString())
                 continue
             else:
                 #we are good: start the job.
                 self.logger.info("Block %s successfully booted.  Initiating job", block_loc)
                 pgroup = self.booting_blocks[block_loc]
                 self._start_process_group(pgroup, block_loc)
+    
+        for block_loc in booted_blocks:
+            self.booting_blocks.pop(block_loc)
+
     check_boot_status = automatic(check_boot_status, 10.0)
     
     def _start_process_group(self, pgroup, block_loc=None):
@@ -1682,7 +1744,6 @@ class BGSystem (BGBaseSystem):
                 #    pgroup.exit_status = 255
         for block_id in booted_blocks:
             del self.booting_blocks[block_id]
-       
 
         return
 
