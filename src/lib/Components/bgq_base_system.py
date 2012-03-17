@@ -342,7 +342,8 @@ class Block (Data):
     parents -- super(containing)-blocks
     children -- sub-blockss
     size -- number of nodes in the block
-    
+    freeing -- is the block in the process of being freed, if so, then don't try to start on it.
+
     Properties:
     state -- "idle", "busy", or "blocked"
     """
@@ -375,6 +376,7 @@ class Block (Data):
         self.used_by = None
         self.cleanup_pending = False
 
+        self.freeing = False
         # this holds block names
         self._wiring_conflicts = set()
         self.backfill_time = None
