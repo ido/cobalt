@@ -1593,7 +1593,8 @@ class BGSystem (BGBaseSystem):
 
         progressing_pgroups = []
         for pgroup in self.pgroups_wait_reboot:
-            reboot_block = self.get_compute_block(pgroup.subblock_parent)
+            parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
+            reboot_block = self.get_compute_block(parent_block_name)
             if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
                 progressing_pgroups.append(pgroup) 
                 boot_location_block = self._blocks[pgroup.location[0]]
