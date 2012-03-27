@@ -152,6 +152,7 @@ class ClusterSystem (ClusterBaseSystem):
 
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
+            
         for pgroup in process_groups:
             self.logger.info("Job %s/%s: process group %s created to track script", 
                     pgroup.user, pgroup.jobid, pgroup.id)
@@ -159,8 +160,10 @@ class ClusterSystem (ClusterBaseSystem):
         #in cluster_base_system.
         for pg in process_groups:
             for location in pg.location:
-                del self.alloc_only_nodes[location]
-
+                try:
+                    del self.alloc_only_nodes[location]
+                except KeyError:
+                    logger.critical("%s already removed from alloc_only_nodes list", location)
         return process_groups
     add_process_groups = exposed(query(add_process_groups))
     
