@@ -1,0 +1,16 @@
+bin/
+etc/
+log/
+var/
+build/
+src/Cobalt
+*.output
+*.error
+*.cobaltlog
+*.log
+*~
+*.pyc
+.DS_Store
+*.swo
+*.swp
+

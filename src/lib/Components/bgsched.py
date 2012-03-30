@@ -933,6 +933,10 @@ class BGSched (Component):
         self.active = False
     disable = exposed(disable)
 
+    def sched_status(self):
+        return self.active
+    sched_status = exposed(sched_status)
+
     def set_res_id(self, id_num):
         """Set the reservation id number."""
         self.id_gen.set(id_num)

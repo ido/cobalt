@@ -114,7 +114,7 @@ resource_postscript_tag = "resource postscript"
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('cqm'):
-    print '''"cqm" section missing from cobalt config file'''
+    logger.alert('''"cqm" section missing from cobalt config file''')
     sys.exit(1)
 
 def get_cqm_config(option, default):
@@ -146,7 +146,7 @@ walltime_prediction_enabled = False
 if walltime_prediction  == "true":
     walltime_prediction_configured = True
     walltime_prediction_enabled = True
-#print "walltime_prediction_configured=", walltime_prediction_configured 
+logger.info("walltime_prediction_configured=", walltime_prediction_configured) 
     
 prediction_scheme = get_histm_config("prediction_scheme", "combined").lower()  # ["project", "user", "combined"]   # *AdjEst*
 
@@ -179,13 +179,13 @@ def cobalt_log_write(filename, msg):
     '''send the cobalt_log writer thread a filename, msg tuple.
     
     '''
-    coblt_log_writer.send((filename, msg))
+    cobalt_log_writer.send((filename, msg))
 
 def cobalt_log_terminate():
     '''Terminate the writer thread by sending it None.
 
     '''
-    coblat_log_writer.send(None)
+    cobalt_log_writer.send(None)
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -841,7 +841,6 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
-            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
@@ -860,6 +859,7 @@ class Job (StateMachine):
 
 
             else:
+                self._sm_log_warn("EXIT_STATUS = %s" % self.exit_status)
                 self._sm_log_warn("system component was unable to locate the task; exit status not obtained")
         except (ComponentLookupError, xmlrpclib.Fault), e:
             self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
@@ -1444,7 +1444,7 @@ class Job (StateMachine):
                     '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             #Forker wasn't there, we need to go to the retry-state.
-            print "failing lookup for forker"
+            logger.critical("failing lookup for forker")
             if self._sm_state != "Job_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
                         "component to launch job prologue.  Will retry", 
@@ -3513,8 +3513,6 @@ class QueueManager(Component):
         '''Set next jobid for new job'''
         logger.info("%s resetting jobid generator to %s", user_name, jobid)
         self.id_gen.set(jobid)
-        # print "self : ", self.id_gen.idnum
-        # print "module : ", cqm_id_gen.idnum
         return True
     set_jobid = exposed(set_jobid)
 
@@ -3583,7 +3581,7 @@ class QueueManager(Component):
                 walltime_prediction_enabled = True
             else:
                 walltime_prediction_enabled = False
-            print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
+            logger.info("test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled)
             
     test_history_manager = automatic(test_history_manager, 60)
        

@@ -21,6 +21,8 @@ if __name__ == '__main__':
             help="stop scheduling jobs")
     p.add_option("--start", action="store_true", dest="start", 
             help="resume scheduling jobs")
+    p.add_option("--status", action="store_true", dest="stat", 
+            help="query scheduling status")
     p.add_option("--reread-policy", action="store_true", dest="reread", 
             help="reread the utility function definition file")
     p.add_option("--savestate", dest="savestate", 
@@ -51,6 +53,12 @@ if __name__ == '__main__':
     elif opt.start:
         sched.enable(whoami)
         print "Job Scheduling: ENABLED"
+        sys.exit(0)
+    elif opt.stat:
+        if sched.sched_status():
+            print "Job Scheduling: ENABLED"
+        else:
+            print "Job Scheduling: DISABLED"
         sys.exit(0)
     elif opt.reread:
         print "Attempting to reread utility functions."

@@ -35,7 +35,8 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail', 'savestate'])
+                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail', 'savestate',
+                                      'boot_stop', 'boot_start', 'boot_status'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -132,6 +133,21 @@ if __name__ == '__main__':
         func = system.run_diags
         test_name = [arg for (opt, arg) in opts if opt == '--diag'][0]
         args = (parts, test_name, whoami)
+    elif '--boot_stop' in [opt for (opt, arg) in opts]:
+        func = system.halt_booting
+        args = (whoami,)
+        print "Halting booting: halting scheduling is advised"
+    elif '--boot_start' in [opt for (opt,arg) in opts]:
+        func = system.resume_booting
+        args = (whoami,)
+        print "Enabling booting"
+    elif '--boot_status' in [opt for (opt,arg) in opts]:
+        boot_status = system.booting_status()
+        if not boot_status:
+            print "Block Booting: ENABLED"
+        else:
+            print "Block Booting: SUSPENDED."
+        sys.exit(0)
     else:
         print helpmsg
         raise SystemExit, 1
@@ -192,6 +208,8 @@ if __name__ == '__main__':
         data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
                   part['state'], ','.join([])] for part in parts]
         Cobalt.Util.printTabular(data, centered=[3, 4])
+    elif '--boot_start' in sys.argv or '--boot_stop' in sys.argv:
+        pass
     else:
         print parts
             
