@@ -1,0 +1,6 @@
+/.svnignore
+/*.pyc
+/db2util
+/NOTES
+/RELEASE.TXT
+/VALIDATION-NOTES

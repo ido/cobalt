@@ -123,10 +123,10 @@ if __name__ == '__main__':
     # define headers, long_header is used to query the queue-manager
     default_header = ['JobID', 'User', 'WallTime', 'Nodes', 'State', 'Location']
     full_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
-                      'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
+                      'RunTime', 'TimeRemaining', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Preemptable', 'Queue', 'StartTime', 'Index']
     long_header    = ['JobID', 'JobName', 'User', 'WallTime', 'QueuedTime',
-                      'RunTime', 'Nodes', 'State', 'Location', 'Mode', 'Procs',
+                      'RunTime', 'TimeRemaining','Nodes', 'State', 'Location', 'Mode', 'Procs',
                       'Preemptable', 'User_Hold', 'Admin_Hold', 'Queue',
                       'StartTime', 'Index', 'SubmitTime', 'Path', 'OutputDir',
                       'ErrorPath', 'OutputPath',
@@ -134,7 +134,8 @@ if __name__ == '__main__':
                       'Project', 'Dependencies', 'short_state', 'Notify', 
                       'Score', 'Maxtasktime', 'attrs', 'dep_frac','user_list']
     header = None
-    query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime']}
+    query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime'], 
+            'TimeRemaining':['WallTime','StartTime']}
 
     try:
         cqm = ComponentProxy("queue-manager", defer=False)
@@ -212,6 +213,7 @@ if __name__ == '__main__':
         # calculate derived values
         for j in response:
             # walltime
+            walltime_secs = int(j['walltime']) * 60
             t = int(float(j['walltime']))
             h = int(math.floor(t/60))
             t -= (h * 60)
@@ -232,12 +234,26 @@ if __name__ == '__main__':
             if j.get('starttime') in ('-1', 'BUG', 'N/A', None):
                 j['runtime'] = 'N/A'
             else:
+                currtime = time.time()
                 j['runtime'] = get_elapsed_time( float(j['starttime']), time.time())
             # starttime
             if j.get('starttime') in ('-1', 'BUG', None):
                 j['starttime'] = 'N/A'
             else:
+                orig_starttime = float(j['starttime'])
                 j['starttime'] = sec_to_str(float(j['starttime']))
+            # timeremaining
+            if j.get('starttime') in ['-1', 'BUG', 'N/A' ,None]:
+                j['timeremaining'] = 'N/A'
+            else:
+                time_remaining = walltime_secs - (currtime - orig_starttime)
+                h = int(walltime_secs)/3600
+                m = int(time_remaining) / 60 - (h*60)
+                s = (int(time_remaining) % 60) + 1
+                if s == 60:
+                    s = 0
+                    m += 1
+                j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
             # jobname
             outputpath = j.get('outputpath')
             if outputpath:

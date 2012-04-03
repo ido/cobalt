@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 bin/
 etc/
 log/
@@ -14,3 +15,9 @@ src/Cobalt
 *.swo
 *.swp
 
+=======
+/.project
+/.pydevproject
+/.rsync-filter
+/*.pyc
+>>>>>>> public/master

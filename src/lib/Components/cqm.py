@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# $Id: cqm.py 2224 2011-09-16 20:43:46Z richp $
+# $Id$
 
 '''Cobalt Queue Manager'''
-__revision__ = '$Revision: 2224 $'
+__revision__ = '$Revision$'
 
 #
 # TODO:
@@ -97,11 +97,13 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError, DataStateTransitionError, StateMachineError,
     StateMachineIllegalEventError, StateMachineNonexistentEventError, ThreadPickledAliveException, JobProcessingError,
-    JobRunError, JobPreemptionError, JobDeleteError)
+    JobRunError, JobPreemptionError, JobDeleteError, IncrIDError)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 
-logger = logging.getLogger('cqm')
+CLOB_SIZE = 4096
+
+logger = logging.getLogger(__name__.split('.')[-1])
 
 cqm_id_gen = None
 run_id_gen = None #IncrID()
@@ -114,7 +116,7 @@ resource_postscript_tag = "resource postscript"
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('cqm'):
-    logger.alert('''"cqm" section missing from cobalt config file''')
+    print '''"cqm" section missing from cobalt config file'''
     sys.exit(1)
 
 def get_cqm_config(option, default):
@@ -146,7 +148,7 @@ walltime_prediction_enabled = False
 if walltime_prediction  == "true":
     walltime_prediction_configured = True
     walltime_prediction_enabled = True
-logger.info("walltime_prediction_configured=", walltime_prediction_configured) 
+#print "walltime_prediction_configured=", walltime_prediction_configured 
     
 prediction_scheme = get_histm_config("prediction_scheme", "combined").lower()  # ["project", "user", "combined"]   # *AdjEst*
 
@@ -158,7 +160,7 @@ accounting_logger.addHandler(
 
 dbwriter = Cobalt.Logging.dbwriter(logging)
 use_db_logging = get_cqm_config('use_db_logging','false')
-if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
+if use_db_logging.lower() in Cobalt.Util.config_true_values:
     dbwriter.enabled = True
     overflow_filename = get_cqm_config('overflow_file', None)
     max_queued = int(get_cqm_config('max_queued_msgs', '-1'))
@@ -179,13 +181,13 @@ def cobalt_log_write(filename, msg):
     '''send the cobalt_log writer thread a filename, msg tuple.
     
     '''
-    cobalt_log_writer.send((filename, msg))
+    coblt_log_writer.send((filename, msg))
 
 def cobalt_log_terminate():
     '''Terminate the writer thread by sending it None.
 
     '''
-    cobalt_log_writer.send(None)
+    coblat_log_writer.send(None)
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -824,6 +826,7 @@ class Job (StateMachine):
                 'kerneloptions':self.kerneloptions,
                 'starttime':self.starttime,
                 'walltime':walltime,
+                'killtime':self.force_kill_delay + 1,
                 'resid': self.resid,
                 'runid': self.runid
             }])
@@ -841,6 +844,7 @@ class Job (StateMachine):
             self._sm_log_warn("failed to execute the task (%s); retry pending" % (e,))
             return Job.__rc_retry
         except:
+            #print traceback.format_exec()
             self._sm_raise_exception("unexpected error returned from the system component when attempting to add task",
                 cobalt_log = True)
             return Job.__rc_unknown
@@ -859,7 +863,6 @@ class Job (StateMachine):
 
 
             else:
-                self._sm_log_warn("EXIT_STATUS = %s" % self.exit_status)
                 self._sm_log_warn("system component was unable to locate the task; exit status not obtained")
         except (ComponentLookupError, xmlrpclib.Fault), e:
             self._sm_log_warn("failed to communicate with the system component (%s); retry pending" % (e,))
@@ -1444,7 +1447,7 @@ class Job (StateMachine):
                     '%s_%s'%(self.jobid, self._sm_state))
         except ComponentLookupError:
             #Forker wasn't there, we need to go to the retry-state.
-            logger.critical("failing lookup for forker")
+            print "failing lookup for forker"
             if self._sm_state != "Job_Prologue_Retry":
                 logger.warning("Job %s/%s: Unable to connect to forker "
                         "component to launch job prologue.  Will retry", 
@@ -1914,7 +1917,6 @@ class Job (StateMachine):
 
 
     def _start_run_from_prologue(self):
-
         # attempt to run task
         rc = self.__task_run()
         if rc == Job.__rc_success:
@@ -1936,12 +1938,19 @@ class Job (StateMachine):
 
         
     def log_script_failure(self, job_dict, script_type):
-        logger.error("Job %s/%s: %s %s failed with an exit status of %d. Output follows:", 
-            self.jobid, self.user, script_type, job_dict['cmd'], job_dict['exit_status'])
-        logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, 
-                job_dict['args'])
-        if job_dict['stderr'] != None:
-            logger.error("stderr: %s", "\n".join(job_dict['stderr']))
+        try:
+            cmd = job_dict['args'][0]
+        except:
+            cmd = "(unknown)"
+        try:
+            args = job_dict['args'][1:]
+        except:
+            args = "(unknown)"
+        logger.error("Job %s/%s: %s %s failed with an exit status of %s. Output follows:", 
+            self.jobid, self.user, script_type, cmd, job_dict['exit_status'])
+        logger.error("Job %s/%s: Arguments: %s", self.jobid, self.user, args)
+        if job_dict.has_key('stderr') and job_dict['stderr'] != None:
+            logger.error("stderr:\n%s", "\n".join(job_dict['stderr']))
         else:
             logger.error("Job %s/%s: No stderr for failed script.",
                     self.jobid, self.user)
@@ -1952,51 +1961,36 @@ class Job (StateMachine):
         all child processes have completed and are cleaned up.
 
         '''
-        complete_scripts = 0
-        retvals = []
-        proxy_error = False
-        
-        for script_id in script_ids:
-            try:
-                retval = ComponentProxy("system_script_forker").child_completed(script_id)
-                if retval != None:
-                    complete_scripts += 1
-                retvals.append(retval)
-            except ComponentLookupError:
-                logger.error("Job %s/%s: Could not communicate with "
+        try:
+            children = ComponentProxy("system_script_forker").get_children(None, script_ids)
+        except ComponentLookupError:
+            logger.error("Job %s/%s: Could not communicate with "
                         "forker component.", self.user, self.jobid)
-                proxy_error = True
-                break
-        if proxy_error:
             return None
-                
-        if len(script_ids) == complete_scripts:
-            #all jobs have completed. Pass results up, what to do with them
-            #is implementation specific
-            script_output = []
-            for script_id in script_ids:
-                try:
-                    script_output.append(
-                        ComponentProxy("system_script_forker").get_child_data(script_id))
-                except ComponentLookupError:
-                    logger.error("Job %s/%s: Could not communicate with "
-                        "forker component.", self.user, self.jobid)
-                    proxy_error = True
-                    break
-            if proxy_error:
-                #we have to do this again, couldn't capture output
+        
+        # check if all of the scripts have completed
+        lost_children = []
+        for child in children:
+            if not child['complete']:
                 return None
-            try:
-                ComponentProxy("system_script_forker").child_cleanup(script_ids)
-            except ComponentLookupError:        
-                logger.error("Job %s/%s: Could not communicate with "
-                    "forker component.", self.user, self.jobid)
-                proxy_error = True
-            if proxy_error:
-                #died on the cleanup itself.  Force this to go again.
-                return None
-            return script_output #Yay! Success!
-        return None
+            if child['lost_child']:
+                lost_children.append(child['id'])
+
+        # all scripts have completed. we have all of the information and output, so tell the forker that it can release any
+        # resources still used by the scripts
+        try:
+            ComponentProxy("system_script_forker").cleanup_children(script_ids)
+        except ComponentLookupError:        
+            logger.error("Job %s/%s: Could not communicate with "
+                "forker component.", self.user, self.jobid)
+            # cleanup faled.  reattempt in a little while...
+            return None
+
+        if len(lost_children) > 0:
+            logger.warning("Job %s/%s: one or more scripts were lost: %s", self.user, self.jobid, child['id'],
+                " ".join([str(id) for id in lost_children]))
+
+        return children #Yay! Success!
 
     def _sm_release_resources_retry__progress(self, args):
         self._sm_log_info("retrying release of resources")
@@ -2702,7 +2696,8 @@ class Job (StateMachine):
         if self._sm_state == 'Running':
             remaining_time = walltime - int(self.__timers['user'].elapsed_time) / 60
             if remaining_time > 0:
-                ComponentProxy("system").reserve_resources_until(self.location, time.time() + remaining_time * 60, self.jobid)
+                ComponentProxy("system").reserve_resources_until(self.location, time.time() + remaining_time * 60 +
+                    (self.force_kill_delay + 1) * 60, self.jobid)
         self.__walltime = int(float(walltime))
         try:
             self.__max_job_timer.max_time = walltime * 60
@@ -2888,6 +2883,14 @@ class Job (StateMachine):
             except Exception, mmsg:
                 logger.error("timer: %s wasn't started: %s" % (name, mmsg))
         return result
+
+    def __get_hold_time(self):
+        try:
+            return self.__timers['hold'].elapsed_time
+        except KeyError:
+            return 0.0
+
+    hold_time = property(__get_hold_time)
 
     def __write_cobalt_log(self, message):
 
@@ -3378,19 +3381,20 @@ class QueueDict(DataDict):
 class QueueManager(Component):
     '''Cobalt Queue Manager'''
 
-    implementation = 'cqm'
     name = 'queue-manager'
+    implementation = __name__.split('.')[-1]
 
     logger = logger
 
     __statefields__ = ['Queues']
     
     def __init__(self, *args, **kwargs):
-        self.Queues = QueueDict()
         Component.__init__(self, *args, **kwargs)
+        self.Queues = QueueDict()
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
-        self.id_gen = IncrID()
+        use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
+        self.id_gen = IncrID(use_database = use_db_jobid_generator)
         self.run_id_gen = IncrID()
         global cqm_id_gen
         cqm_id_gen = self.id_gen
@@ -3411,17 +3415,31 @@ class QueueManager(Component):
         else:
             logger.info("Logging to cdbwriter disabled.")
            
+        if use_db_jobid_generator:
+            logger.info("Using DB to generate job IDs.")
+        else:
+            logger.info("Using internal job ID generator.")
+           
 
     def __getstate__(self):
-        
-        return {'Queues':self.Queues, 'next_job_id':self.id_gen.idnum+1, 'version':3,
-                'msg_queue':dbwriter.msg_queue, 'next_run_id':self.run_id_gen.idnum+1,
-                'overflow': dbwriter.overflow}
-                
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                'cqm_version':3,
+                'Queues':self.Queues,
+                'next_job_id':self.id_gen.idnum+1,
+                'next_run_id':self.run_id_gen.idnum+1,
+                'msg_queue':dbwriter.msg_queue,
+                'overflow': dbwriter.overflow})
+        return state
+
     def __setstate__(self, state):
+        Component.__setstate__(self, state)
+
         self.Queues = state['Queues']
-        self.id_gen = IncrID()
-        self.id_gen.set(state['next_job_id'])
+        use_db_jobid_generator = get_cqm_config("use_db_jobid_generator", "False").lower() in Cobalt.Util.config_true_values
+        self.id_gen = IncrID(use_database = use_db_jobid_generator)
+        self.id_gen.set(state['next_job_id'], override = True)
         global cqm_id_gen
         cqm_id_gen = self.id_gen
 
@@ -3435,8 +3453,6 @@ class QueueManager(Component):
         
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
-        self.lock = Lock()
-        self.statistics = Statistics()
         
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
@@ -3450,6 +3466,11 @@ class QueueManager(Component):
             logger.info("Logging to database enabled.")
         else:
             logger.info("Logging to database disabled.")
+
+        if use_db_jobid_generator:
+            logger.info("Using DB to generate job IDs.")
+        else:
+            logger.info("Using internal job ID generator.")
 
         if state.has_key("msg_queue"):
             logger.info("loading pending messages.")
@@ -3493,7 +3514,8 @@ class QueueManager(Component):
             logger.error("Failed to communicate with the system component when"
                 " attempting to acquire a list of active process groups")
             return
-        self.lock.acquire()
+
+        self.component_lock_acquire()
         try:
             live = [item['id'] for item in pgroups]
             for job in [j for queue in self.Queues.itervalues() for j in queue.jobs]:
@@ -3501,10 +3523,8 @@ class QueueManager(Component):
                     logger.info("Job %s/%s: process group no longer executing" % (job.jobid, job.user))
                     job.task_end()
         finally:
-            pass
-            self.lock.release()
-    
-    __poll_process_groups = locking(automatic(__poll_process_groups, 10))#float(get_cqm_config('poll_process_groups_interval', 1.0))))
+            self.component_lock_release()
+    __poll_process_groups = locking(automatic(__poll_process_groups, float(get_cqm_config('poll_process_groups_interval', 10))))
 
     #
     # job operations
@@ -3513,6 +3533,8 @@ class QueueManager(Component):
         '''Set next jobid for new job'''
         logger.info("%s resetting jobid generator to %s", user_name, jobid)
         self.id_gen.set(jobid)
+        # print "self : ", self.id_gen.idnum
+        # print "module : ", cqm_id_gen.idnum
         return True
     set_jobid = exposed(set_jobid)
 
@@ -3581,7 +3603,7 @@ class QueueManager(Component):
                 walltime_prediction_enabled = True
             else:
                 walltime_prediction_enabled = False
-            logger.info("test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled)
+            print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
             
     test_history_manager = automatic(test_history_manager, 60)
        
@@ -3868,7 +3890,12 @@ class QueueManager(Component):
             exec code in globals, locals
         except:
             self.logger.error("Problem executing utility function definitions.", exc_info=True)
-            
+
+        # functions, classes and attributes defined in the utility file are put in locals.  in order for those definitions to be
+        # accessible to the utility function during execution, they must be added to globals which is automatically attached to
+        # the function as <func_obj>.func_globals.
+        globals.update(locals)
+
         for thing in locals.values():
             if type(thing) is types.FunctionType:
                 if thing.func_name in self.builtin_utility_functions:
@@ -3927,6 +3954,7 @@ class QueueManager(Component):
             args = {'queued_time':current_time - float(job.submittime), 
                     'wall_time': 60*float(job.walltime),
                     'wall_time_p': 60*float(job.walltime_p), 
+                    'hold_time' : job.hold_time,
                     'size': float(job.nodes),
                     'user_name': job.user,
                     'project': job.project,
@@ -4034,7 +4062,7 @@ class JobProgMsg(object):
 
         if job.state == "starting":
             self.envs = job.envs
-            self.priority_core_hours = 20.0 #job.priority_core_hours
+            self.priority_core_hours = job.priority_core_hours
             self.location = job.location
             self.resid = job.resid
             #self.nodects = job._Job__resource_nodects
@@ -4073,7 +4101,9 @@ class JobDataMsg(object):
                      'attrs', 'satisfied_dependencies', 'preemptable', 
                      'user_list', 'dep_frac', 'resid', 'cwd'
                      ]
-        
+        small_clob_list = ['command', 'inputfile', 'kernel', 'outputpath',
+                           'outputdir', 'errorpath','path','cwd']
+
         for attr in attr_list:
             
             if attr == 'job_type':
@@ -4082,7 +4112,10 @@ class JobDataMsg(object):
                 self.job_user = job.user
             elif attr == 'user_list':
                 self.job_user_list = job.user_list
-
+            elif attr in small_clob_list:
+                clob_str = job.__getattribute__(attr)
+                if clob_str != None:
+                    self.__setattr__(attr, clob_str[:CLOB_SIZE])
             else:
                 self.__setattr__(attr, job.__getattribute__(attr))
 

@@ -29,6 +29,16 @@ if __name__ == '__main__':
         print >> sys.stderr, "failed to connect to system component"
         sys.exit(1)
 
+    #make sure we're on a cluster-system
+    try:
+        impl = system.get_implementation()
+    except: 
+        print >> sys.stderr, "lost connection to system component"
+        sys.exit(1)
+
+    if "cluster_system" != impl:
+        print >> sys.stderr, "nodelist is only supported on cluster systems.  Try partlist instead."
+        sys.exit(0)
     if opt.down and opt.up:
         print >> sys.stderr, "--down and --up cannot be used together"
         sys.exit(1)

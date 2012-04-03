@@ -55,6 +55,32 @@ def check_env(env_name):
         print >> sys.stderr, "Environment variable %s expected, but not found! Aborting." % env_name
         sys.exit(1)
 
+def open_output(filename, desc):
+    #filename always being set for these operations, no need for a scratch, if we can't write,
+    #then we're already writing to default for script.  Seems to be a safe failover.
+    out_file = None
+    try:
+        try:
+            out_file = open(filename, 'a')
+        except (IOError, OSError, TypeError), e:
+            _logger.error("%s: error opening %s file %s: %s: Refusing to redirect", self.label, desc, filename, e)
+    except Exception, e:
+        _logger.error("%s: an unexpected error occurred while opening output file %s: %s", self.label, filename, e)
+    return out_file
+
+
+def open_input(filename, desc):
+    in_file = None
+    try:
+        try:
+            in_file = open(filename, 'r')
+        except (IOError, OSError, TypeError), e:
+            _logger.error("%s: error opening %s file %s; Refusing to redirect: %s", self.label, desc, filename, e)
+    except Exception, e:
+        _logger.error("%s: an unexpected error occurred while opening input file %s: %s", self.label, filename, e)
+    return in_file
+
+
 
 if __name__ == '__main__':
 
@@ -93,6 +119,7 @@ if __name__ == '__main__':
     if run_cmd == None:
         print >> sys.stderr, "FATAL: cobalt.conf entry for mpirun not found.  Aborting run."
         sys.exit(1)
+    run_cmd = os.path.expandvars(run_cmd)
 
     for expected_env in expected_envs:
         #if this check fails, the program will abort
@@ -159,29 +186,12 @@ if __name__ == '__main__':
 
     # Add cobalt jobid environment variable to script job, but again, not to be used
     # along with mpirun -free
-    env_str = ''
-    cobalt_env_str = ''
-
-    if '-env' in arglist:
-        env_str = arglist[arglist.index("-env") + 1]
-        arglist.remove(env_str)
-        arglist.remove('-env')
-
     if "-free" not in arglist:
-        cobalt_env_str = "COBALT_JOBID=%s" % os.getenv("COBALT_JOBID")
-    
-    if os.environ.has_key("COBALT_RESID"):
-        cobalt_env_str = cobalt_env_str + ":COBALT_RESID=%s" % os.environ["COBALT_RESID"]
-    if os.environ.has_key("COBALT_JOB_ENVS"):
-        cobalt_env_str = cobalt_env_str + ":" + os.environ("COBALT_JOB_ENVS")
-
-    env_str = env_str + cobalt_env_str
-
-    #if "-free" not in arglist:
-    #    arglist = ['-env', 'COBALT_JOBID='+os.environ["COBALT_JOBID"]] + arglist
-    
-    if ((env_str != '') and ("-free" not in arglist)):
-        arglist = ['-env', env_str] + arglist
+        if os.environ.has_key("COBALT_JOB_ENVS"):
+            arglist = ['-env', os.environ["COBALT_JOB_ENVS"]] + arglist
+        if os.environ.has_key("COBALT_RESID"):
+            arglist = ['-env', "COBALT_RESID=" + os.environ["COBALT_RESID"]] + arglist
+        arglist = ['-env', "COBALT_JOBID=" + os.environ["COBALT_JOBID"]] + arglist
 
     if "-np" in sys.argv:
         idx = sys.argv.index("-np")
@@ -199,15 +209,36 @@ if __name__ == '__main__':
             raise SystemExit, 1
         
     for key in io_redirect:
+        #redirect only if user specified.
         if io_redirect[key]:
-            jobspec.update({key: io_redirect[key]})
+            if key in ['stdin']:
+                fd = open_input(io_redirect[key], key)
+            elif key in ['stdout','stderr']:
+                fd = open_output(io_redirect[key], key)
+            else:
+                #unknown key, but we're not redirecting IO at this point.
+                logger.error("Error: Tried to redirect something other than stdout, stderr or stdin.")
+                continue
+            try:
+                if fd != None:
+                    if key == 'stdout':
+                        os.dup2(fd.fileno(), sys.__stdout__.fileno())
+                    elif key == 'stderr':
+                        os.dup2(fd.fileno(), sys.__stderr__.fileno())
+                    elif key == 'stdin':
+                        os.dup2(fd.fileno(), sys.__stdin__.fileno())
+            except Exception:
+                logger.error("%s/%s: an error occurred while redirecting %s to %s.  This output stream will not be redirected.")
+            finally:
+                fd.close()
+            
 
     #don't fork, just exec. Keep the PID the same for user scripts (?)
     arglist.insert(0, run_cmd)
     try:
         os.execvpe(run_cmd, arglist, os.environ)
     except Exception, e:
-        print >> sys.stderr, "error executing %s" % opt.executable
+        print >> sys.stderr, "error executing %s" % (run_cmd,)
         print >> sys.stderr, e
         sys.exit(1)
 

@@ -15,6 +15,16 @@ if __name__ == '__main__':
         print >> sys.stderr, "failed to connect to system component"
         sys.exit(1)
 
+    try:
+        impl = system.get_implementation()
+    except: 
+        print >> sys.stderr, "lost connection to system component"
+        sys.exit(1)
+
+    if "cluster_system" != impl:
+        print >> sys.stderr, "nodelist is only supported on cluster systems.  Try partlist instead."
+        sys.exit(0)
+
     status = system.get_node_status()
     queue_data = system.get_queue_assignments()
 

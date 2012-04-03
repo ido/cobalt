@@ -11,6 +11,7 @@ import grp
 import logging
 import sys
 import os
+import errno
 import signal
 import tempfile
 import time
@@ -37,7 +38,7 @@ __all__ = [
     "Simulator",
 ]
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__.split('.')[-1])
 Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
 
@@ -64,33 +65,23 @@ class BGSystem (BGBaseSystem):
     
     Methods:
     configure -- load partitions from the bridge API
-    add_process_groups -- add (start) an mpirun process on the system (exposed, ~query)
-    get_process_groups -- retrieve mpirun processes (exposed, query)
-    wait_process_groups -- get process groups that have exited, and remove them from the system (exposed, query)
-    signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- update partition state from the bridge API (runs as a thread)
     """
     
     name = "system"
-    implementation = "bgsystem"
+    implementation = __name__.split('.')[-1]
     
     logger = logger
 
-    
+    bgsystem_config = BGBaseSystem.bgsystem_config
     _configfields = ['diag_script_location', 'diag_log_file', 'kernel']
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if not _config._sections.has_key('bgsystem'):
-        print '''"bgsystem" section missing from cobalt config file'''
-        sys.exit(1)
-    config = _config._sections['bgsystem']
-    mfields = [field for field in _configfields if not config.has_key(field)]
+    mfields = [field for field in _configfields if not bgsystem_config.has_key(field)]
     if mfields:
         print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
         sys.exit(1)
-    if config.get('kernel') == "true":
+    if bgsystem_config.get('kernel') == "true":
         _kernel_configfields = ['bootprofiles', 'partitionboot']
-        mfields = [field for field in _kernel_configfields if not config.has_key(field)]
+        mfields = [field for field in _kernel_configfields if not bgsystem_config.has_key(field)]
         if mfields:
             print "Missing option(s) in cobalt config file [bgsystem] section: %s" % (" ".join(mfields))
             sys.exit(1)
@@ -101,63 +92,30 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = BGProcessGroup
         self.diag_pids = dict()
         self.configure()
+                
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_partition_state, tuple())
     
     def __getstate__(self):
-        flags = {}
-        for part in self._partitions.values():
-            sched = None
-            func = None
-            queue = None
-            if hasattr(part, 'scheduled'):
-                sched = part.scheduled
-            if hasattr(part, 'functional'):
-                func = part.functional
-            if hasattr(part, 'queue'):
-                queue = part.queue
-            flags[part.name] =  (sched, func, queue)
-        return {'managed_partitions':self._managed_partitions, 'version':2,
-                'partition_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1}
-    
-    def __setstate__(self, state):
-        sys.setrecursionlimit(5000)
-        Cobalt.Util.fix_set(state)
-        self._managed_partitions = state['managed_partitions']
-        self._partitions = PartitionDict()
-        self.process_groups = BGProcessGroupDict()
-        self.process_groups.item_cls = BGProcessGroup
-        if state.has_key("next_pg_id"):
-            self.process_groups.id_gen.set(state['next_pg_id'])
-        self.node_card_cache = dict()
-        self._partitions_lock = thread.allocate_lock()
-        self.pending_diags = dict()
-        self.failed_diags = list()
-        self.diag_pids = dict()
-        self.pending_script_waits = set()
-        self.bridge_in_error = False
-        self.cached_partitions = None
-        self.offline_partitions = []
+        state = {}
+        state.update(BGBaseSystem.__getstate__(self))
+        state.update({
+                'bgsystem_version':3})
+        return state
 
+    def __setstate__(self, state):
+        BGBaseSystem.__setstate__(self, state)
+        self.process_groups.item_cls = BGProcessGroup
         self.configure()
-        if 'partition_flags' in state:
-            for pname, flags in state['partition_flags'].items():
-                if pname in self._partitions:
-                    self._partitions[pname].scheduled = flags[0]
-                    self._partitions[pname].functional = flags[1]
-                    self._partitions[pname].queue = flags[2]
-                else:
-                    logger.info("Partition %s is no longer defined" % pname)
-        
         self.update_relatives()
+        self._restore_partition_state(state)
+
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_partition_state, tuple())
-        self.lock = threading.Lock()
-        self.statistics = Statistics()
 
     def save_me(self):
         Component.save(self)
-    save_me = automatic(save_me)
+    save_me = automatic(save_me, float(bgsystem_config.get('save_me_interval', 10)))
 
     def _get_node_card(self, name, state):
         if not self.node_card_cache.has_key(name):
@@ -166,8 +124,11 @@ class BGSystem (BGBaseSystem):
         return self.node_card_cache[name]
 
     def _new_partition_dict(self, partition_def, bp_cache={}):
-        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
-        NODES_PER_NODECARD = 32
+        # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API -- replaced for now by config file check.
+        #NODES_PER_NODECARD = 32
+        #we're going to get this from the bridge.  I think we can get the 
+        #size of the target partition and eliminate this.
+        
 
         node_list = []
 
@@ -190,7 +151,7 @@ class BGSystem (BGBaseSystem):
         d = dict(
             name = partition_def.id,
             queue = "default",
-            size = NODES_PER_NODECARD * len(node_list),
+            size = partition_def.partition_size, #self.NODES_PER_NODECARD * len(node_list),
             node_cards = node_list,
             switches = [ s.id for s in partition_def.switches ],
             state = _get_state(partition_def),
@@ -205,7 +166,7 @@ class BGSystem (BGBaseSystem):
             if s1.intersection(s2):
                 p._wiring_conflicts.add(partition.name)
                 partition._wiring_conflicts.add(p.name)
-                self.logger.debug("%s and %s havening problems" % (partition.name, p.name))
+                self.logger.debug("%s and %s havening problems (wiring conflict)" % (partition.name, p.name))
 
         s1 = set(partition.switches)
 
@@ -225,8 +186,6 @@ class BGSystem (BGBaseSystem):
         
         """Read partition data from the bridge."""
         
-   
-           
         self.logger.info("configure()")
         try:
             system_def = Cobalt.bridge.PartitionList.by_filter()
@@ -266,14 +225,44 @@ class BGSystem (BGBaseSystem):
             if p.state != "busy":
                 for nc in p.node_cards:
                     if nc.used_by:
-                        p.state = "blocked (%s)" % nc.used_by
-                        break
+                        if self.partition_really_busy(p, nc):
+                            p.state = "blocked (%s)" % nc.used_by
+                            break
                 for dep_name in p._wiring_conflicts:
                     if self._partitions[dep_name].state == "busy":
                         p.state = "blocked-wiring (%s)" % dep_name
                         break
         
-   
+    def partition_really_busy(self, part, nc):
+        '''Check to see if a 16-node partiton is really busy, or it just
+        it's neighbor is using the nodecard.
+
+        True if really busy, else False
+        '''
+        if part.size != 16: #Everything else is a full nodecard
+            return True
+        really_busy = False
+        for nc in part.node_cards:
+            #break out information and see if this is in-use by a sibling.
+            #get the size of the nc.used_by partition, if it's used by something 32 or larger then we really are busy
+            if self._partitions[nc.used_by].size > 16:
+                really_busy = True
+                break
+            if nc.used_by:
+                try:
+                    rack, midplane, nodecard = Cobalt.Components.bg_base_system.parse_nodecard_location(nc.used_by)
+                except RuntimeError:
+                    #This isn't in use by a nodecard-level partition, so yeah, this is busy.
+                    really_busy = True
+                    break
+                if (int(rack) != nc.rack 
+                        or int(midplane) != nc.midplane 
+                        or int(nodecard) != nc.nodecard):
+                    really_busy = True
+                    break
+        return really_busy
+
+  
     def update_partition_state(self):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
         
@@ -344,6 +333,7 @@ class BGSystem (BGBaseSystem):
                         p.state = _get_state(partition)
                         p._update_node_cards()
                         if p.reserved_until and now > p.reserved_until:
+                            self.logger.info("partition %s: reservation has expired; clearing reservation.", p.name)
                             p.reserved_until = False
                             p.reserved_by = None
                     else:
@@ -388,8 +378,20 @@ class BGSystem (BGBaseSystem):
                             parts = list(p._all_children)
                             parts.append(p)
                             for part in parts:
-                                if bridge_partition_cache[part.name].state != "RM_PARTITION_FREE":
-                                    busy.append(part.name)
+                                bpart = bridge_partition_cache[part.name]
+                                try:
+                                    if bpart.state != "RM_PARTITION_FREE":
+                                        self.logger.debug(
+                                            "partition %s: sub-partition %s is still busy; attempting another destroy",
+                                            p.name, part.name)
+                                        busy.append(part.name)
+                                        bpart.destroy()
+                                except Cobalt.bridge.IncompatibleState:
+                                    pass
+                                except:
+                                    self.logger.info(
+                                        "partition %s: an exception occurred while attempting to destroy partition %s",
+                                        p.name, part.name, exc_info=1)
                             if len(busy) > 0:
                                 _set_partition_cleanup_state(p)
                                 self.logger.info("partition %s: still cleaning; busy partition(s): %s", p.name, ", ".join(busy))
@@ -425,7 +427,8 @@ class BGSystem (BGBaseSystem):
                                 p.state = "blocked by pending diags"
                         for nc in p.node_cards:
                             if nc.used_by:
-                                p.state = "blocked (%s)" % nc.used_by
+                                if self.partition_really_busy(p, nc):
+                                    p.state = "blocked (%s)" % nc.used_by
                             if nc.state != "RM_NODECARD_UP":
                                 p.state = "hardware offline: nodecard %s" % nc.id
                                 self.offline_partitions.append(p.name)
@@ -465,7 +468,7 @@ class BGSystem (BGBaseSystem):
                     except Cobalt.bridge.IncompatibleState:
                         pass
                     except:
-                        self.logger.info("partition %s: an exception occurred while attempting to destroy the partition",
+                        self.logger.info("partition %s: an exception occurred while attempting to destroy partition %s",
                             p.name, part.name, exc_info=1)
                 if len(pnames_destroyed) > 0:
                     self.logger.info("partition %s: partition destruction initiated for %s", p.name, ", ".join(pnames_destroyed))
@@ -504,45 +507,64 @@ class BGSystem (BGBaseSystem):
         self._partitions_lock.release()
 
     def _validate_kernel(self, kernel):
-        if self.config.get('kernel') != 'true':
+        if self.bgsystem_config.get('kernel') != 'true':
             return True
-        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        kernel_dir = "%s/%s" % (os.path.expandvars(self.bgsystem_config.get('bootprofiles')), kernel)
         return os.path.exists(kernel_dir)
 
     def _set_kernel(self, partition, kernel):
         '''Set the kernel to be used by jobs run on the specified partition'''
-        if self.config.get('kernel') != 'true':
+        if self.bgsystem_config.get('kernel') != 'true':
             if kernel != "default":
                 raise Exception("custom kernel capabilities disabled")
             return
-        partition_link = "%s/%s" % (os.path.expandvars(self.config.get('partitionboot')), partition)
-        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        partition_link = "%s/%s" % (os.path.expandvars(self.bgsystem_config.get('partitionboot')), partition)
+        kernel_dir = "%s/%s" % (os.path.expandvars(self.bgsystem_config.get('bootprofiles')), kernel)
         try:
             current = os.readlink(partition_link)
-        except OSError:
-            self.logger.error("partition %s: failed to read partitionboot location %s" % (partition, partition_link))
-            raise Exception("failed to read partitionboot location %s" % (partition_link,))
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                self.logger.warning("partition %s: partitionboot location %s does not exist; creating link",
+                    partition, partition_link)
+                current = None
+            elif e.errno == errno.EINVAL:
+                self.logger.warning("partition %s: partitionboot location %s is not a symlink; removing and resetting",
+                    partition, partition_link)
+                current = None
+            else:
+                self.logger.warning("partition %s: failed to read partitionboot location %s: %s",
+                    partition, partition_link, e.strerror)
+                raise
         if current != kernel_dir:
             if not self._validate_kernel(kernel):
-                self.logger.error("partition %s: kernel directory \"%s\" does not exist" % (partition, kernel_dir))
+                self.logger.error("partition %s: kernel directory \"%s\" does not exist", partition, kernel_dir)
                 raise Exception("kernel directory \"%s\" does not exist" % (kernel_dir,))
-            self.logger.info("partition %s: updating boot image; currently set to \"%s\"" % (partition, current.split('/')[-1]))
+            if current:
+                self.logger.info("partition %s: updating boot image; currently set to \"%s\"", partition, current.split('/')[-1])
             try:
-                os.unlink(partition_link)
-                os.symlink(kernel_dir, partition_link)
+                try:
+                    os.unlink(partition_link)
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        self.logger.error("partition %s: unable to unlink \"%s\": %s", partition, partition_link, e.strerror)
+                        raise
+                try:
+                    os.symlink(kernel_dir, partition_link)
+                except OSError, e:
+                    self.logger.error("partition %s: failed to reset boot location \"%s\" to \"%s\": %s" %
+                        (partition, partition_link, kernel_dir, e.strerror))
+                    raise
             except OSError:
-                self.logger.error("partition %s: failed to reset boot location" % (partition,))
-                raise Exception("failed to reset boot location for partition" % (partition,))
-            self.logger.info("partition %s: boot image updated; now set to \"%s\"" % (partition, kernel))
+                raise Exception("failed to reset boot location for partition", partition)
+            self.logger.info("partition %s: boot image updated; now set to \"%s\"", partition, kernel)
 
     def _clear_kernel(self, partition):
         '''Set the kernel to be used by a partition to the default value'''
-        if self.config.get('kernel') == 'true':
+        if self.bgsystem_config.get('kernel') == 'true':
             try:
                 self._set_kernel(partition, "default")
             except:
-                logger.error("partition %s: failed to reset boot location" % (partition,))
-
+                logger.error("partition %s: failed to reset boot location", partition)
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
         ret = "<BG>\n"
@@ -564,160 +586,9 @@ class BGSystem (BGBaseSystem):
         return ret
     generate_xml = exposed(generate_xml)
     
-    def add_process_groups (self, specs):
-        
-        """Create a process group.
-        
-        Arguments:
-        spec -- dictionary hash specifying a process group to start
-        """
-        
-        self.logger.info("add_process_groups(%r)" % (specs))
-
-        # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
-        # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
-        # error message should also be attached to the process group so that cqm can report the problem to the user.
-        process_groups = self.process_groups.q_add(specs)
-        for pgroup in process_groups:
-            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
-            pgroup.nodect = self._partitions[pgroup.location[0]].size
-            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
-            try:
-                self._set_kernel(pgroup.location[0], pgroup.kernel)
-            except Exception, e:
-                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
-                pgroup.exit_status = 255
-            else:
-                if pgroup.kernel != "default":
-                    self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
-                if pgroup.mode == "script":
-                    pgroup.forker = 'user_script_forker'
-                else:
-                    pgroup.forker = 'bg_mpirun_forker'
-                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime),
-                        pgroup.jobid):
-                    try:
-                        pgroup.start()
-                        if pgroup.head_pid == None:
-                            self.logger.error("%s: process group failed to start using the %s component; releasing resources",
-                                pgroup.label, pgroup.forker)
-                            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                            pgroup.exit_status = 255
-                    except (ComponentLookupError, xmlrpclib.Fault), e:
-                        self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        del self.process_groups[pgroup.id]
-                        raise
-                    except (ComponentLookupError, xmlrpclib.Fault), e:
-                        self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
-                            "component", pgroup.label, pgroup.forker)
-                        # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
-                        # until the job has exhausted its maximum alloted time
-                        del self.process_groups[process_group.id]
-                        raise
-                    except:
-                        self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
-                            "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
-                        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-                        pgroup.exit_status = 255
-                else:
-                    self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
-                        pgroup.location)
-                    pgroup.exit_status = 255
-        return process_groups
-    
-    add_process_groups = exposed(query(add_process_groups))
-    
-    def get_process_groups (self, specs):
-        self._get_exit_status()
-        return self.process_groups.q_get(specs)
-    get_process_groups = exposed(query(get_process_groups))
-    
-    def _get_exit_status (self):
-        running = []
-        active_forker_components = []
-        for forker_component in ['bg_mpirun_forker', 'user_script_forker']:
-            try:
-                running.extend(ComponentProxy(forker_component).active_list("process group"))
-                active_forker_components.append(forker_component)
-            except:
-                self.logger.error("failed to contact %s component for list of running jobs", forker_component)
-
-        for each in self.process_groups.itervalues():
-            if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
-                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
-                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
-                # maybe the second choice is better
-                try:
-                    if each.head_pid != None:
-                        dead_dict = ComponentProxy(each.forker).get_status(each.head_pid)
-                    else:
-                        dead_dict = None
-                except:
-                    self.logger.error("%s: RPC to get_status method in %s component failed", each.label, each.forker)
-                    return
-                
-                if dead_dict is None:
-                    self.logger.info("%s: job exited with unknown status", each.label)
-                    # FIXME: should we use a negative number instead to indicate internal errors? --brt
-                    each.exit_status = 1234567
-                else:
-                    each.exit_status = dead_dict["exit_status"]
-                    if dead_dict["signum"] == 0:
-                        self.logger.info("%s: job exited with status %i", each.label, each.exit_status)
-                    else:
-                        if dead_dict["core_dump"]:
-                            core_dump_str = ", core dumped"
-                        else:
-                            core_dump_str = ""
-                        self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
-                self.reserve_resources_until(each.location, None, each.jobid)
-
-                
-    _get_exit_status = automatic(_get_exit_status)
-    
-    def wait_process_groups (self, specs):
-        """Get the exit status of any completed process groups.  If completed,
-        initiate the partition cleaning process, and remove the process group 
-        from system's list of active processes.
-
-        """
-        self._get_exit_status()
-        process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
-        for process_group in process_groups:
-            self._mark_partition_for_cleaning(process_group.location[0], process_group.jobid)
-            del self.process_groups[process_group.id]
-        return process_groups
-    wait_process_groups = exposed(query(wait_process_groups))
-    
-    def signal_process_groups (self, specs, signame="SIGINT"):
-        """Send a signal to a currently running process group as specified by signame.
-
-        if no signame, then SIGINT is the default.
-
-        """
-
-        my_process_groups = self.process_groups.q_get(specs)
-        for pg in my_process_groups:
-            if pg.exit_status is None:
-                try:
-                    if pg.head_pid != None:
-                        self.logger.warning("%s: sending signal %s via %s", pg.label, signame, pg.forker)
-                        ComponentProxy(pg.forker).signal(pg.head_pid, signame)
-                    else:
-                        self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
-                except:
-                    self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
-
-                if signame == "SIGKILL":
-                    self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
-
-        return my_process_groups
-    signal_process_groups = exposed(query(signal_process_groups))
-
     def validate_job(self, spec):
-        """validate a job for submission
+        """
+        validate a job for submission
 
         Arguments:
         spec -- job specification dictionary
@@ -729,7 +600,7 @@ class BGSystem (BGBaseSystem):
     validate_job = exposed(validate_job)
 
     def launch_diags(self, partition, test_name):
-        diag_exe = os.path.join(os.path.expandvars(self.config.get("diag_script_location")), test_name) 
+        diag_exe = os.path.join(os.path.expandvars(self.bgsystem_config.get("diag_script_location")), test_name) 
         try:
             sdata = os.stat(diag_exe)
         except:
@@ -740,14 +611,14 @@ class BGSystem (BGBaseSystem):
             self.diag_pids[pid] = (partition, test_name)
         else:
             try:
-                stdout = open(os.path.expandvars(self.config.get("diag_log_file")) or "/dev/null", 'a')
+                stdout = open(os.path.expandvars(self.bgsystem_config.get("diag_log_file")) or "/dev/null", 'a')
                 stdout.write("[%s] starting %s on partition %s\n" % (time.ctime(), test_name, partition))
                 stdout.flush()
                 os.dup2(stdout.fileno(), sys.__stdout__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stdout will be lost)" % e)
             try:
-                stderr = open(os.path.expandvars(self.config.get("diag_log_file")) or "/dev/null", 'a')
+                stderr = open(os.path.expandvars(self.bgsystem_config.get("diag_log_file")) or "/dev/null", 'a')
                 os.dup2(stderr.fileno(), sys.__stderr__.fileno())
             except (IOError, OSError), e:
                 logger.error("error opening diag_log_file file: %s (stderr will be lost)" % e)

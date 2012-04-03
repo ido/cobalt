@@ -144,12 +144,17 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def __getstate__(self):
-        return {"queue_assignments": self.queue_assignments, "version": 1, 
-                "down_nodes": self.down_nodes }
-
+        state = {}
+        state.update(Component.__getstate__(self))
+        state.update({
+                "cluster_base_version": 1, 
+                "queue_assignments": self.queue_assignments,
+                "down_nodes": self.down_nodes })
+        return state
 
     def __setstate__(self, state):
-        Cobalt.Util.fix_set(state)
+        Component.__setstate__(self, state)
+
         self.queue_assignments = state["queue_assignments"]
         self.down_nodes = state["down_nodes"]
 
@@ -161,8 +166,6 @@ class ClusterBaseSystem (Component):
             self.configure(cluster_hostfile)
         except:
             self.logger.error("unable to load hostfile")
-        self.lock = threading.Lock()
-        self.statistics = Statistics()
         self.alloc_only_nodes = {} # nodename:starttime
         if not state.has_key("cleaning_processes"):
             self.cleaning_processes = []
@@ -172,7 +175,7 @@ class ClusterBaseSystem (Component):
 
         self.alloc_timeout = int(get_cluster_system_config("allocation_timeout", 300))
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
-    
+
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
@@ -665,7 +668,7 @@ class ClusterBaseSystem (Component):
         else:
             cmd = ["/usr/bin/ssh", host, script, 
                     str(jobid), user, group_name]
-            return ComponentProxy("forker").fork(cmd, "system epilogue", 
+            return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
                     "Job %s/%s" % (jobid, user))
 
         
@@ -683,7 +686,7 @@ class ClusterBaseSystem (Component):
     #    else:
     #        cmd = ["/usr/bin/ssh", host, epilogue_script, 
     #                str(jobid), user, group_name]
-    #        return ComponentProxy("forker").fork(cmd, "system epilogue", 
+    #        return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
     #                "Job %s/%s" % (jobid, user))
 
     
@@ -742,9 +745,9 @@ class ClusterBaseSystem (Component):
             user = cleaning_process['user']
 
             try:
-                exit_status = ComponentProxy("forker").child_completed(
+                exit_status = ComponentProxy("system_script_forker").child_completed(
                         cleaning_process['cleaning_id'])
-                ComponentProxy("forker").child_cleanup(
+                ComponentProxy("system_script_forker").child_cleanup(
                         [cleaning_process['cleaning_id']])
 
             except ComponentLookupError:
@@ -764,7 +767,7 @@ class ClusterBaseSystem (Component):
                         float(get_cluster_system_config("epilogue_timeout", 60.0))): 
                     cleaning_process["completed"] = True
                     try:
-                        forker = ComponentProxy("forker").signal(
+                        forker = ComponentProxy("system_script_forker").signal(
                                 cleaning_process['cleaning_id'], "SIGINT")
                         child_output = forker.get_child_data(
                             cleaning_process['cleaning_id'])

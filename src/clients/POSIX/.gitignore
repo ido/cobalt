@@ -1,0 +1,12 @@
+/*.pyc
+/*.output
+/*.error
+/*.cobaltlog
+/qrls
+/qdel
+/qmove
+/qalter
+/qstat
+/qselect
+/qhold
+/qsub
