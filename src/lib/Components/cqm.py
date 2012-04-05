@@ -2913,7 +2913,7 @@ class Job (StateMachine):
                 logger.warning("Cobaltlog writer thread had fallen over.  Has restarted successfully.")
         
             try:
-                cobalt_log_writer.send((self.cobalt_log_file, message))
+                cobalt_log_writer.send((self.cobalt_log_file, message, self.user))
             except Exception:
                 logger.error("Job %s/%s: Error sending message to "\
                         "cobalt_log_file thread.  Aborting write! Traceback "\
