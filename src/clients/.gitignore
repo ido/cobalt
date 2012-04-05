@@ -1,4 +1,3 @@
-/*.pyc
 /wrapper
 /brun
 /cobalt-admin
@@ -19,6 +18,3 @@
 /showres
 /userres
 /Mslpstat
-/*.output
-/*.error
-/*.cobaltlog
