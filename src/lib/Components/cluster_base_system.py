@@ -18,6 +18,7 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
 from Cobalt.Statistics import Statistics
 from Cobalt.Data import DataDict
 from Cobalt.Proxy import ComponentProxy
+from Cobalt.Components.base import Component
 
 __all__ = [
     "ClusterBaseSystem",
@@ -289,7 +290,11 @@ class ClusterBaseSystem (Component):
             return {jobid: [available_nodes.pop() for i in range(nodes)]}
         else:
             return None
+    
 
+
+
+   
 
     def _get_available_nodes(self, args):
         queue = args['queue']
@@ -744,17 +749,41 @@ class ClusterBaseSystem (Component):
             jobid = cleaning_process['jobid']
             user = cleaning_process['user']
 
-            try:
-                exit_status = ComponentProxy("system_script_forker").child_completed(
-                        cleaning_process['cleaning_id'])
-                ComponentProxy("system_script_forker").child_cleanup(
-                        [cleaning_process['cleaning_id']])
 
+            try:
+                children = ComponentProxy("system_script_forker").get_children(None, [cleaning_process['cleaning_id']])
             except ComponentLookupError:
-                self.logger.error("Job %s/%s: Error contacting forker "
-                        "component. Running child processes are "
-                        "unrecoverable." % (jobid, user))
-                return
+                logger.error("Job %s/%s: Could not communicate with "
+                            "forker component.", user, jobid)
+                return None
+            
+            # check if all of the scripts have completed
+            lost_children = []
+            for child in children:
+                if not child['complete']:
+                    return None
+                if child['lost_child']:
+                    lost_children.append(child['id'])
+    
+            # all scripts have completed. we have all of the information and output, so tell the forker that it can release any
+            # resources still used by the scripts
+            try:
+                ComponentProxy("system_script_forker").cleanup_children(script_ids)
+            except ComponentLookupError:        
+                logger.error("Job %s/%s: Could not communicate with "
+                    "forker component.", self.user, self.jobid)
+                # cleanup faled.  reattempt in a little while...
+                return None
+    
+            if len(lost_children) > 0:
+                logger.warning("Job %s/%s: one or more scripts were lost: %s", self.user, self.jobid, child['id'],
+                    " ".join([str(id) for id in lost_children]))
+    
+             
+            exit_status = [c['exit_status'] for c in children if c['complete'] ]
+            if exit_status == []:
+                exit_status = None
+
 
             if exit_status != None:
                 #we're done, this node is now free to be scheduled again.
