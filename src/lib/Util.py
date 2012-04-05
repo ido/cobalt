@@ -23,6 +23,9 @@ import inspect
 import re
 import select
 import errno
+import pwd
+import grp
+import stat
 
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
@@ -872,7 +875,7 @@ class disk_writer_thread(Thread):
                     break
                 
             
-                active_file_msgs.append(file_message(item[0],item[1]+"\n"))
+                active_file_msgs.append(file_message(item[0],item[1]+"\n",item[2]))
             
             if active_file_msgs == []:
                 #We have no pending messages
@@ -898,13 +901,13 @@ class disk_writer_thread(Thread):
                     user_groups = [g.gr_name for g in grp.getgrall() if file_msg.user in g.gr_mem]
 
                     if not ( other_writable or \
-                         (owner_writable and pwd.getpwuid(stat.st_uid).pw_name == file_msg.user) or \
-                         (group_writable and grp.getgrgid(stat.st_gid.gr_name) in user_groups)):
+                         (owner_writable and pwd.getpwuid(stat_result.st_uid).pw_name == file_msg.user) or \
+                         (group_writable and grp.getgrgid(stat_result.st_gid).gr_name in user_groups)):
 
                          #we can't write to the file, drop this message.
                          logger.debug("dropping message, improper permissions to file %s.", file_msg.filename)
                          messages_to_remove.append(file_msg)
-                         
+                         continue
                         
                 except IOError as (num, strerror):
                     errcode = errno.errorcode[num]
@@ -912,7 +915,16 @@ class disk_writer_thread(Thread):
                         logger.info("Unable to write to %s: no file or directory.", file_msg.filename)
                     else:
                         logger.info("Stat of %s failed with errcode: %s", file_msg.filename, errcode)
-                        mesages_to_remove.append(file_msg)
+                    messages_to_remove.append(file_msg)
+                    continue
+                except OSError as (num, strerror):
+                    errcode = errno.errorcode[num]
+                    if num == errno.ENOENT:
+                        logger.info("Unable to write to %s: no file or directory.", file_msg.filename)
+                    else:
+                        logger.info("Stat of %s failed with errcode: %s", file_msg.filename, errcode)
+                    messages_to_remove.append(file_msg)
+                    continue
 
                 try:
                     #Intention: only append to the file.  File is open for writing.  Do not block
