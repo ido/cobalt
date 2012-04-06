@@ -237,7 +237,18 @@ class BaseChild (object):
             _logger.error("%s: setting the process group and session id failed: %s", self.label, e)
             raise
 
+        if self.umask != None:
+            try:
+                _logger.debug("%s: setting umask to %s", self.label, self.umask)
+                os.umask(self.umask)
+            except:
+                _logger.error("%s: failed to set umask to %s", self.label, self.umask)
+                self._umask_failed = True
+
     def preexec_last(self):
+        if hasattr(self, '_umask_failed'):
+            self.print_clf_error("failed to set umask to %s", self.umask)
+
         if self.cwd:
             try:
                 _logger.debug("%s: setting current working directory to %s", self.label, self.cwd)
@@ -246,14 +257,6 @@ class BaseChild (object):
                 _logger.error("%s: unable to change to the current working directory to \"%s\"", self.label, self.cwd)
                 self.print_clf_error("unable to change to the current working directory to \"%s\"; terminating job", self.cwd)
                 raise
-
-        if self.umask != None:
-            try:
-                _logger.debug("%s: setting umask to %s", self.label, self.umask)
-                os.umask(self.umask)
-            except:
-                _logger.error("%s: failed to set umask to %s", self.label, self.umask)
-                self.print_clf_error("failed to set umask to %s", self.umask)
 
         if self.stdin_file:
             _logger.debug("%s: redirecting stdin", self.label)
