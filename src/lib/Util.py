@@ -23,6 +23,9 @@ import inspect
 import re
 import select
 import errno
+import pwd
+import grp
+import stat
 
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
@@ -820,10 +823,11 @@ def sec_to_str(t):
 
 class file_message(object):
     
-    def __init__(self, filename, msg):
+    def __init__(self, filename, msg, user):
         self.filename = filename
         self.msg = msg
         self.msg_len = len(msg)
+        self.user = user
         self.written = 0
 
 
@@ -869,8 +873,9 @@ class disk_writer_thread(Thread):
                 item = self.msg_queue.get()
                 if item == None:
                     break
+                
             
-                active_file_msgs.append(file_message(item[0],item[1]+"\n"))
+                active_file_msgs.append(file_message(item[0],item[1]+"\n",item[2]))
             
             if active_file_msgs == []:
                 #We have no pending messages
@@ -880,9 +885,51 @@ class disk_writer_thread(Thread):
 
             messages_to_remove = []
             for file_msg in active_file_msgs:
-                
+               
                 try:
-                    fd = os.open(file_msg.filename, os.O_WRONLY|os.O_CREAT|os.O_APPEND|os.O_NONBLOCK)
+                    #Make sure the file actually exists to write to.  If the cobaltlog doesn't
+                    #exist, or the user can't write to it, then we just drop the message.
+                    #probalby will loog that there was an issue here.
+                    stat_result = os.stat(file_msg.filename)
+                    #allow if we have to the file:
+                        #world write (WHAT!?)
+                        #I am the user AND I have write permission
+                        #I am in the appropriate group and I have write permission
+                    owner_writable = bool(stat_result.st_mode & stat.S_IWUSR)
+                    group_writable = bool(stat_result.st_mode & stat.S_IWGRP)
+                    other_writable = bool(stat_result.st_mode & stat.S_IWOTH)
+                    user_groups = [g.gr_name for g in grp.getgrall() if file_msg.user in g.gr_mem]
+
+                    if not ( other_writable or \
+                         (owner_writable and pwd.getpwuid(stat_result.st_uid).pw_name == file_msg.user) or \
+                         (group_writable and grp.getgrgid(stat_result.st_gid).gr_name in user_groups)):
+
+                         #we can't write to the file, drop this message.
+                         logger.debug("dropping message, improper permissions to file %s.", file_msg.filename)
+                         messages_to_remove.append(file_msg)
+                         continue
+                        
+                except IOError as (num, strerror):
+                    errcode = errno.errorcode[num]
+                    if num == errno.ENOENT:
+                        logger.info("Unable to write to %s: no file or directory.", file_msg.filename)
+                    else:
+                        logger.info("Stat of %s failed with errcode: %s", file_msg.filename, errcode)
+                    messages_to_remove.append(file_msg)
+                    continue
+                except OSError as (num, strerror):
+                    errcode = errno.errorcode[num]
+                    if num == errno.ENOENT:
+                        logger.info("Unable to write to %s: no file or directory.", file_msg.filename)
+                    else:
+                        logger.info("Stat of %s failed with errcode: %s", file_msg.filename, errcode)
+                    messages_to_remove.append(file_msg)
+                    continue
+
+                try:
+                    #Intention: only append to the file.  File is open for writing.  Do not block
+                    #on open, even though I believe the linux kernel gets this wrong.
+                    fd = os.open(file_msg.filename, os.O_WRONLY|os.O_APPEND|os.O_NONBLOCK)
                 except IOError as (num, strerror):
                     
                     errcode = errno.errorcode[num]

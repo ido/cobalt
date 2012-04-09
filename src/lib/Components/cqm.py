@@ -528,7 +528,7 @@ class Job (StateMachine):
         "reservation", "host", "port", "url", "stageid", "envs", "inputfile", 
         "kernel", "kerneloptions", "admin_hold",
         "user_hold", "dependencies", "notify", "adminemail", "outputpath",
-        "errorpath", "path", "preemptable", "preempts",
+        "errorpath", "cobalt_log_file", "path", "preemptable", "preempts",
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
         "is_runnable", "is_active",
         "has_completed", "sm_state", "score", "attrs", "has_resources", 
@@ -2913,7 +2913,7 @@ class Job (StateMachine):
                 logger.warning("Cobaltlog writer thread had fallen over.  Has restarted successfully.")
         
             try:
-                cobalt_log_writer.send((self.cobalt_log_file, message))
+                cobalt_log_writer.send((self.cobalt_log_file, message, self.user))
             except Exception:
                 logger.error("Job %s/%s: Error sending message to "\
                         "cobalt_log_file thread.  Aborting write! Traceback "\

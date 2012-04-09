@@ -1,4 +1,8 @@
-<<<<<<< HEAD
+/cobalt-*.tar.gz
+/.project
+/.pydevproject
+/.rsync-filter
+
 bin/
 etc/
 log/
@@ -14,10 +18,3 @@ src/Cobalt
 .DS_Store
 *.swo
 *.swp
-
-=======
-/.project
-/.pydevproject
-/.rsync-filter
-/*.pyc
->>>>>>> public/master

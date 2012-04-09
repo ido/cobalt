@@ -172,8 +172,10 @@ class BaseChild (object):
         d['core_dump'] = self.core_dump
         return d
 
-    def _open_clf(self, uid=None, gid=None):
+    def _open_clf(self):
         if not self._cobalt_log_file and self.cobalt_log_filename and not self._cobalt_log_failed:
+            if os.geteuid() == 0:
+                return
             try:
                 _logger.debug("%s: opening the cobaltlog file: %s", self.label, self.cobalt_log_filename)
                 self._cobalt_log_file = open(self.cobalt_log_filename, "a", 1)
@@ -189,39 +191,6 @@ class BaseChild (object):
             except:
                 _logger.error("%s: unable to open the cobaltlog file %s", self.label, self.cobalt_log_filename, exc_info=True)
                 self._cobalt_log_failed = True
-
-        if uid and gid:
-            try:
-                _logger.debug("%s: determining if uid and gid of the cobaltlog file need to be reset", self.label)
-                clf_uid = -1
-                clf_gid = -1
-                proc_uid = os.geteuid()
-                proc_gid = os.getegid()
-                # if the specified user is different than the effective user of the current process, then set the file's user to
-                # the one specified
-                if uid != proc_uid:
-                    clf_uid = uid
-                # if specified group is different than the effective group of the current process and the directory containing
-                # the cobaltlog file is not setgid, then set the file's group to the one specified
-                if gid != proc_gid:
-                    try:
-                        cld_info = os.stat(os.path.dirname(self.cobalt_log_filename) or os.path.curdir)
-                        if not cld_info.st_mode & 02000:
-                            clf_gid = gid
-                    except OSError:
-                        _logger.warning("%s: failed to get info on the directory containing the cobaltlog file %s: %s",
-                            self.label, os.path.dirname(self.cobalt_log_filename) or os.path.curdir, e)
-                        pass
-                if clf_uid > 0 or clf_gid > 0:
-                    _logger.warning("%s: setting ownership of the cobaltlog file %s: uid=%s, gid=%s",
-                        self.label, self.cobalt_log_filename, clf_uid, clf_gid)
-                    os.fchown(self._cobalt_log_file.fileno(), clf_uid, clf_gid)
-            except OSError, e:
-                _logger.error("%s: failed to set ownership of the cobaltlog file %s: %s", self.label, self.cobalt_log_filename, e)
-            except:
-                _logger.error("%s: failed to set ownership of the cobaltlog file %s", self.label, self.cobalt_log_filename,
-                    exc_info=True)
-            
 
     def print_clf_info(self, fmt, *args):
         self.print_clf("Info: " + fmt, *args)
@@ -268,7 +237,18 @@ class BaseChild (object):
             _logger.error("%s: setting the process group and session id failed: %s", self.label, e)
             raise
 
+        if self.umask != None:
+            try:
+                _logger.debug("%s: setting umask to %s", self.label, self.umask)
+                os.umask(self.umask)
+            except:
+                _logger.error("%s: failed to set umask to %s", self.label, self.umask)
+                self._umask_failed = True
+
     def preexec_last(self):
+        if hasattr(self, '_umask_failed'):
+            self.print_clf_error("failed to set umask to %s", self.umask)
+
         if self.cwd:
             try:
                 _logger.debug("%s: setting current working directory to %s", self.label, self.cwd)
@@ -277,14 +257,6 @@ class BaseChild (object):
                 _logger.error("%s: unable to change to the current working directory to \"%s\"", self.label, self.cwd)
                 self.print_clf_error("unable to change to the current working directory to \"%s\"; terminating job", self.cwd)
                 raise
-
-        if self.umask != None:
-            try:
-                _logger.debug("%s: setting umask to %s", self.label, self.umask)
-                os.umask(self.umask)
-            except:
-                _logger.error("%s: failed to set umask to %s", self.label, self.umask)
-                self.print_clf_error("failed to set umask to %s", self.umask)
 
         if self.stdin_file:
             _logger.debug("%s: redirecting stdin", self.label)

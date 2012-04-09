@@ -131,9 +131,6 @@ class PGChild (BaseChild):
         except KeyError:
             _logger.error("%s: failed to get uid/gid for user %s", self.label, username)
             raise
-
-        self._open_clf(uid=uid, gid=gid)
-
         try:
             os.setgid(gid)
         except OSError:
