@@ -30,7 +30,7 @@ if test -z "$version" ; then
     usage "Version number not supplied."
 fi
 
-tmpdir=`mktemp -d`
+tmpdir=`mktemp -d 'cobalt-export-XXXXXXXXXXXXXXXX'`
 if test $? -ne 0 ; then
     error "Unable to create temporary directory."
 fi
