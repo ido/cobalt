@@ -753,7 +753,7 @@ class ClusterBaseSystem (Component):
             try:
                 children = ComponentProxy("system_script_forker").get_children(None, [cleaning_process['cleaning_id']])
             except ComponentLookupError:
-                logger.error("Job %s/%s: Could not communicate with "
+                self.logger.error("Job %s/%s: Could not communicate with "
                             "forker component.", user, jobid)
                 return None
             
@@ -768,15 +768,15 @@ class ClusterBaseSystem (Component):
             # all scripts have completed. we have all of the information and output, so tell the forker that it can release any
             # resources still used by the scripts
             try:
-                ComponentProxy("system_script_forker").cleanup_children(script_ids)
+                ComponentProxy("system_script_forker").cleanup_children([cleaning_process['cleaning_id']])
             except ComponentLookupError:        
-                logger.error("Job %s/%s: Could not communicate with "
+                self.logger.error("Job %s/%s: Could not communicate with "
                     "forker component.", self.user, self.jobid)
                 # cleanup faled.  reattempt in a little while...
                 return None
     
             if len(lost_children) > 0:
-                logger.warning("Job %s/%s: one or more scripts were lost: %s", self.user, self.jobid, child['id'],
+                self.logger.warning("Job %s/%s: one or more scripts were lost: %s", user, jobid,
                     " ".join([str(id) for id in lost_children]))
     
              
