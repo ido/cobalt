@@ -110,7 +110,6 @@ class BaseChild (object):
         self.exit_status = None
         self.signum = 0
         self.core_dump = False
-        self.termination_timer = None
 
         if kwargs.has_key('log_filename'):
             self.cobalt_log_filename = kwargs['log_filename']
