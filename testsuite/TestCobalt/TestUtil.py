@@ -59,7 +59,7 @@ class TestDiskWriter(object):
         new_file = os.open('base_cobaltlog', os.O_WRONLY|os.O_CREAT, 0640)
         os.close(new_file)
 
-        new_file = os.open('cobaltlog_bad_perms', os.O_WRONLY|os.O_CREAT, 440)
+        new_file = os.open('cobaltlog_bad_perms', os.O_RDONLY|os.O_CREAT, 0440)
         os.close(new_file)
 
     
@@ -123,7 +123,7 @@ class TestDiskWriter(object):
                 success_found = True
         assert success_found, 'SUCCESS not written to file, found %s instead' % (success_line)
         
-        assert (count != 1), 'Improper number of lines in file'
+        assert count == 1, 'Improper number of lines in file'
         f.close()
         new_file = os.open('./base_cobaltlog', os.O_WRONLY|os.O_TRUNC)
         os.close(new_file)
@@ -156,6 +156,6 @@ class TestDiskWriter(object):
         f = open('./cobaltlog_bad_perms')
         lines = f.readlines()
         f.close()
-        assert (len(lines) != 0), 'Lines were written to file with wrong permission.'
+        assert (len(lines) == 0), 'Lines were written to file with wrong permission.'
         return
 
