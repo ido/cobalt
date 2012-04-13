@@ -62,11 +62,11 @@ cobalt_log_writer.daemon = True
 cobalt_log_writer.start()
 logger.info("cobalt log writer thread enabled.")
 
-def cobalt_log_write(filename, msg):
+def cobalt_log_write(filename, msg, user=None):
     '''send the cobalt_log writer thread a filename, msg tuple.
     
     '''
-    cobalt_log_writer.send((filename, msg))
+    cobalt_log_writer.send((filename, msg, user))
 
 def cobalt_log_terminate():
     '''Terminate the writer thread by sending it None.
@@ -159,6 +159,9 @@ class BGSystem (BGBaseSystem):
 
 
     def __getstate__(self):
+       
+        state = {}
+        state.update(Component.__getstate__(self))
         flags = {}
         for part in self._blocks.values():
             sched = None
@@ -171,11 +174,15 @@ class BGSystem (BGBaseSystem):
             if hasattr(part, 'queue'):
                 queue = part.queue
             flags[part.name] =  (sched, func, queue)
-        return {'managed_blocks':self._managed_blocks, 'version':1,
+        state.update({'managed_blocks':self._managed_blocks, 'version':1,
                 'block_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1,
-                'suspend_booting':self.suspend_booting}
+                'suspend_booting':self.suspend_booting})
+        return state
+
     
     def __setstate__(self, state):
+        
+        Component.__setstate__(self, state) 
         sys.setrecursionlimit(5000)
         Cobalt.Util.fix_set(state)
         self._managed_blocks = state['managed_blocks']
@@ -1022,7 +1029,7 @@ class BGSystem (BGBaseSystem):
                 for bname in missing_blocks:
                     if self._blocks[bname].size < 128 and self._blocks[bname].subblock_parent not in missing_blocks:
                         continue
-                    self.logger.info("missing partition removed: %s", bname)
+                    self.logger.info("missing block removed: %s", bname)
                     b = self._blocks[bname]
                     for dep_name in b._wiring_conflicts:
                         self.logger.debug("removing wiring dependency from: %s", dep_name)
@@ -1051,7 +1058,13 @@ class BGSystem (BGBaseSystem):
                 # if partitions were added or removed, then update the relationships between partitions
                 if len(missing_blocks) > 0 or len(new_blocks) > 0:
                     self.update_relatives()
-                
+               
+                if self.suspend_booting:
+                    for b in self._blocks.values():
+                        b.state = "Booting Halted"
+                    Cobalt.Util.sleep(10)
+                    continue
+
                 for b in self._blocks.values():
                     if b.block_type == "pseudoblock":
                         b.state = 'idle'
@@ -1732,7 +1745,8 @@ class BGSystem (BGBaseSystem):
         if not self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
             self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                                         pgroup.location))
-            pgroup.exit_status = 255
+            #pgroup.exit_status = 255
+            return
         try:
             self.logger.info("%s: Forking task on %s.",pgroup.label, pgroup.location[0])
             pgroup.start()
@@ -1743,28 +1757,30 @@ class BGSystem (BGBaseSystem):
                         pgroup.label, pgroup.forker)
                 self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
                 pgroup.exit_status = 255
-        except (ComponentLookupError, xmlrpclib.Fault), e:
+        except (ComponentLookupError), e:
             self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
             # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
             # until the job has exhausted its maximum alloted time
             #del self.process_groups[pgroup.id]
             return #do we need to start the whole thing again (retry state from cqm?)
-        except (ComponentLookupError, xmlrpclib.Fault), e:
+        except (xmlrpclib.Fault), e:
             self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
                     "component", pgroup.label, pgroup.forker)
             # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
             # until the job has exhausted its maximum alloted time
             #del self.process_groups[process_group.id]
             #raise
+            pgroup.exit_status = 255
+            booted_blocks.append(block_loc)
             return
         except:
             self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
                     "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
             pgroup.exit_status = 255
-        
-        for block_id in booted_blocks:
-            del self.booting_blocks[block_id]
+        finally:
+            for block_id in booted_blocks:
+                del self.booting_blocks[block_id]
 
         return
 
@@ -1776,59 +1792,88 @@ class BGSystem (BGBaseSystem):
     get_process_groups = exposed(query(get_process_groups))
     
     def _get_exit_status (self):
-        running = []
-        active_forker_components = []
-        for forker_component in ['bg_runjob_forker', 'user_script_forker']:
+        '''Get the exit status of a process group that has completed.
+
+        Args:
+        None
+
+        Side Effects: Lots!
+            If a forked processes' return code is detected, then the it is set
+            in the process group and the job's resources are marked for cleaning.
+            It will also set information about signals.  Once the child is 
+            detected as having ended, the resource reservation is released, and
+            the block is marked for cleanup.
+
+            The forker is then prodded to cull it's cache of the ended process.
+
+            If this component cannot determine the exit staus of the now 
+            defunct or otherwise nonexistent forked process, then it sets the 
+            exit status to a sentinel (1234567).  
+
+        '''
+
+        children = {}
+        cleanup = {}
+        for forker in ['bg_runjob_forker', 'user_script_forker']:
             try:
-                running.extend(ComponentProxy(forker_component).active_list("process group"))
-                active_forker_components.append(forker_component)
+                for child in ComponentProxy(forker).get_children("process group", None):
+                    children[(forker, child['id'])] = child
+                    child['pg'] = None
+                cleanup[forker] = []
+            except ComponentLookupError, e:
+                self.logger.error("failed to contact the %s component to obtain a list of children", forker)
             except:
-                self.logger.error("failed to contact %s component for list of running jobs", forker_component)
-
-
-        for each in self.process_groups.itervalues():
-
-            #skip if we're still booting
-            found = False
-            for pg in self.booting_blocks.values():
-                if each.id == pg.id:
-                    found = True
-                    break
-            if found:
-                continue
-            
-            if each.head_pid not in running and each.exit_status is None and each.forker in active_forker_components:
-                # FIXME: i bet we should consider a retry thing here -- if we fail enough times, just
-                # assume the process is dead?  or maybe just say there's no exit code the first time it happens?
-                # maybe the second choice is better
-                try:
-                    if each.head_pid != None:
-                        dead_dict = ComponentProxy(each.forker).get_status(each.head_pid)
-                    else:
-                        dead_dict = None
-                except:
-                    self.logger.error("%s: RPC to get_status method in %s component failed", each.label, each.forker)
-                    return
-                 
-                if dead_dict is None:
-                    self.logger.info("%s: job exited with unknown status", each.label)
-                    # FIXME: should we use a negative number instead to indicate internal errors? --brt
-                    each.exit_status = 1234567
+                self.logger.error("unexpected exception while getting a list of children from the %s component",
+                    forker, exc_info=True)
+        for pg in self.process_groups.itervalues():
+            if pg.forker in cleanup:
+                clean_block = False
+                if (pg.forker, pg.head_pid) in children:
+                    child = children[(pg.forker, pg.head_pid)]
+                    child['pg'] = pg
+                    if child['complete']:
+                        if pg.exit_status is None:
+                            pg.exit_status = child["exit_status"]
+                            if child["signum"] == 0:
+                                self.logger.info("%s: job exited with status %s", pg.label, pg.exit_status)
+                            else:
+                                if child["core_dump"]:
+                                    core_dump_str = ", core dumped"
+                                else:
+                                    core_dump_str = ""
+                                self.logger.info("%s: terminated with signal %s%s", pg.label, child["signum"], core_dump_str)
+                        cleanup[pg.forker].append(child['id'])
+                        clean_block = True
                 else:
-                    each.exit_status = dead_dict["exit_status"]
-                    if dead_dict["signum"] == 0:
-                        self.logger.info("%s: job exited with status %i", each.label, each.exit_status)
-                    else:
-                        if dead_dict["core_dump"]:
-                            core_dump_str = ", core dumped"
-                        else:
-                            core_dump_str = ""
-                        self.logger.info("%s: terminated with signal %s%s", each.label, dead_dict["signum"], core_dump_str)
-                self.reserve_resources_until(each.location, None, each.jobid)
+                    if pg.exit_status is None:
+                        # the forker has lost the child for our process group
+                        self.logger.info("%s: job exited with unknown status", pg.label)
+                        # FIXME: should we use a negative number instead to indicate internal errors? --brt
+                        pg.exit_status = 1234567
+                        clean_block = True
+                if clean_block:
+                    self.reserve_resources_until(pg.location, None, pg.jobid)
+                    self._mark_block_for_cleaning(pg.location[0], pg.jobid)
 
+        # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
+        # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
+        for forker, child_id in children.keys():
+            if children[(forker, child_id)]['pg'] is None:
+                cleanup[forker].append(child['id'])
                 
-    _get_exit_status = automatic(_get_exit_status)
-    
+        # cleanup any children that have completed and been processed
+        for forker in cleanup.keys():
+            if len(cleanup[forker]) > 0:
+                try:
+                    ComponentProxy(forker).cleanup_children(cleanup[forker])
+                except ComponentLookupError, e:
+                    self.logger.error("failed to contact the %s component to cleanup children", forker)
+                except:
+                    self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
+                        forker, exc_info=True)
+    _get_exit_status = automatic(_get_exit_status, float(get_config_option('bgsystem', 'get_exit_status_interval', 10.0)))
+
+
     def wait_process_groups (self, specs):
         """Get the exit status of any completed process groups.  If completed,
         initiate the partition cleaning process, and remove the process group 

@@ -1238,11 +1238,17 @@ class BGBaseSystem (Component):
         pg = self.process_groups.find_by_jobid(jobid)
         try:
             self._blocks_lock.acquire()
+            block = self.blocks[block_name]
             used_by = self.blocks[block_name].used_by
             if new_time:
+                if used_by == None:
+                    part.used_by = jobid
+                    used_by = jobid
                 if used_by == jobid:
-                    self.blocks[block_name].reserved_until = new_time
-                    self.blocks[block_name].reserved_by = jobid
+                    block.reserved_until = new_time
+                    block.reserved_by = jobid
+                    if block.state == 'idle':
+                        block.state = 'allocated'
                     self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
                         time.asctime(time.gmtime(new_time)))
                     rc = True
@@ -1250,7 +1256,7 @@ class BGBaseSystem (Component):
                     self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
                         jobid, block_name, used_by)
             else:
-                if used_by == jobid or used_by == None:
+                if used_by == jobid:
                     self.blocks[block_name].reserved_until = False
                     self.blocks[block_name].reserved_by = None
                     self.logger.info("reservation on block '%s' has been removed", block_name)
