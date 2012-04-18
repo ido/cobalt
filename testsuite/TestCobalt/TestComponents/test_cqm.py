@@ -1,4 +1,4 @@
-DEBUG_OUTPUT = False
+DEBUG_OUTPUT = True
 CHECK_ALL_SCRIPTS = False
 WHITEBOX_TESTING = False
 POLL_INTERVAL = 0.1
@@ -541,6 +541,10 @@ class Child (Data):
         self.exit_status = None
         self.signum = 0
         self.core_dump = False
+        self.return_output = False
+        self.lost_child = False
+
+
 
 class ChildDict (DataDict):
     item_cls = Child
@@ -554,7 +558,7 @@ class ChildDict (DataDict):
         for spec in specs:
             if spec.get("id", "*") != "*":
                 raise DataCreationError("cannot specify an id")
-            spec[key] = self.id_gen.next()
+            spec['id'] = self.id_gen.next()
         children = DataDict.q_add(self, specs)
         self.runids.update(dict([(child.runid, child) for child in children if child.runid is not None]))
         return children
@@ -568,21 +572,57 @@ class ChildDict (DataDict):
                 pass
 
 class SimulatedForker (Component):
+    
+    name = 'system_script_forker'
+    implementation = 'system_script_forker'
+
+    _logger = setup_file_logging("%s %s" % (implementation, name), LOG_FILE, "DEBUG")
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.children = ChildDict()
+        self.requested_exception = None
+        self.requested_exception_set = False
+        self.requested_return_value = None
+        self.requested_return_value_set = False
+
+    def set_requested_exception(self, exception):
+        self.requested_exception = exception
+        self.requested_exception_set = True
+
+    def set_requested_return_value(self, reutrn_value):
+        self.requested_return_value_set = True
+        self.requested_return_value = return_value
+    
+    def clear_requested_effect(self):
+        if self.requested_exception_set:
+            self.requested_exception = False
+            exception_to_rase = self.requested_exception
+            self.requested_exception = None
+            raise exception_to_raise
+        if self.requested_return_value_set:
+            self.requested_return_value_set = False
+            req_return_value = self.requested_return_value
+            self.requested_return_value = None
+            return (True, req_return_value)
+        return (False, None)
+    
 
     def fork(self, args, tag=None, label=None, env=None, preexec_data=None, runid=None):
-        child = self.children.q_add({'id':'*', 'args':args, 'env':env, 'tag':tag, 'runid':runid, 'label':label})
+        
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
 
+        child = self.children.q_add([{'id':'*', 'args':args, 'env':env, 'tag':tag, 'runid':runid, 'label':label, 'exit_status':0, 'complete':True}])
+
+        return child[0].id
     fork = exposed(fork)
 
-    def signal(self, child_id, signame):
-        pass
-
-    signal = exposed(signal)
-
     def get_children(self, tag=None, child_ids=None):
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        
         if child_ids is None:
             return [child for child in self.children.itervalues() if tag is None or child.tag == tag]
         else:
@@ -597,12 +637,68 @@ class SimulatedForker (Component):
                     child.tag = tag
                     child.complete = True
                 if tag is None or child.tag == tag:
-                    ret.append(child)
+                    ret.append(child.to_rx())
             return ret
 
     get_children = exposed(get_children)
 
+    def update_childeren(self):
+        #childeren = self.get_childeren({'id':'*'})
+        for child in self.children:
+            self._logger.debug("found child %s" % self.children[child])
+            self.children[child].complete = True
+            self.children[child].exit_status = 0
+
+        return
+    update_childeren = automatic(update_childeren,1.0)
+
+
+    def signal(self, child_id, signame):
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        if not self.children.has_key(child_id):
+            self._logger.error("Child %s: child not found; unable to signal", child_id)
+            return
+
+        try:
+            signum = getattr(signal, signame)
+        except AttributeError:
+            self.logger_logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
+            raise
+
+        child[child_id].exit_status = 1
+        child[child_id].completed = True
+        #don't actually send a signal since we never actually forked anything
+
+    signal = exposed(signal)
+    
+    def active_list(self):
+        '''Only useful for pg_forker runs
+
+        '''
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        raise NotImplementedError 
+    active_list = exposed(active_list)
+    
+    def get_status(self):
+        '''Only useful for pg_forker runs
+
+        '''
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        raise NotImplementedError 
+    get_status = exposed(get_status)
+
     def cleanup_children(self, child_ids):
+        
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        
         self.children.q_del([{'id':id} for id in child_ids])
 
     cleanup_children = exposed(cleanup_children)
@@ -641,6 +737,7 @@ def check_output_files(fn_bases, exist = True, fail_msg = None):
         delete_output_files(fn_bases)
 
 def wait_output_files(fn_bases):
+    return
     try:
         for fn_base in fn_bases:
             out_fn = "%s.out" % (fn_base,)
@@ -741,9 +838,18 @@ class CQMIntegrationTestBase (TestCQMComponent):
     taskman = None
 
     def setup(self):
+        debug_print("setting up CQMIntegrationTestBase")
         TestCQMComponent.setup(self)
         self.slp = TimingServiceLocator()
+        self.system_script_forker = SimulatedForker()
+        self.system_script_forker_thr = ComponentProgressThread(self.system_script_forker)
+        self.system_script_forker_thr.start()
 
+        self.taskman = SimulatedSystem()
+        self.taskman_thr = ComponentProgressThread(self.taskman)
+        self.taskman_thr.start()
+    
+    
     def setup_cqm(self):
         self.qm = QueueManager()
         self.qm_thr = ComponentProgressThread(self.qm)
@@ -758,9 +864,13 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     def teardown(self):
         self.qm_thr.stop()
+        self.system_script_forker_thr.stop()
+        self.taskman_thr.stop()
         del self.qm_thr
         del self.qm
         del self.slp
+        del self.system_script_forker
+        #del self.taskman
         TestCQMComponent.teardown(self)
 
     def get_job_query_spec(self, spec = {}):
@@ -898,6 +1008,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         assert self.job['admin_hold'] == new_hold
 
     def job_run(self, location):
+        debug_print("Initiating job run at %s" % location)
         jobs = self.cqm.run_jobs([self.get_job_query_spec()], location)
         assert len(jobs) < 2, "More than one job was returned"
         assert len(jobs) == 1, "Job %s not found in queue" % (self.jobid,)
@@ -1058,7 +1169,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
                 if hasattr(self, 'job_prescripts'):
                     debug_print("JOB_EXEC: job_prescripts")
-                    wait_output_files(self.job_prescripts)
+                    #wait_output_files(self.job_prescripts)
                     self.job_get_state(assert_spec = {'state':"starting"})
                     if job_pretask != None:
                         debug_print("JOB_EXEC: job_pretask")
@@ -3330,6 +3441,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_preempted_wait()
             self.assert_next_task_op('wait')
             check_output_files(resource_postscripts)
+        self.system_thr.start()
             check_output_files(job_postscripts, False)
             self.job_run(["R01"])
             self.job_running_wait()
