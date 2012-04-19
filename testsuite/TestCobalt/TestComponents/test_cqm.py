@@ -1,4 +1,4 @@
-DEBUG_OUTPUT = False
+DEBUG_OUTPUT = True
 CHECK_ALL_SCRIPTS = False
 WHITEBOX_TESTING = False
 POLL_INTERVAL = 0.1
@@ -77,11 +77,6 @@ else:
 import TestCobalt.Utilities.WhiteBox
 from TestCobalt.Utilities.WhiteBox import whitebox
 TestCobalt.Utilities.WhiteBox.WHITEBOX_TESTING = WHITEBOX_TESTING
-
-#Bring in our forker mock-up for pre/postscript testing
-from Cobalt.Components.system_script_forker import SystemScriptForker
-from Cobalt.Components.user_script_forker import UserScriptForker
-from Cobalt.Components.bg_mpirun_forker import BGMpirunForker
 
 # get name of user running the tests
 try:
@@ -480,14 +475,13 @@ class SimulatedTaskManager (Component):
 
 class SystemTask (Task):
     required_fields = Task.required_fields + ['size']
-    fields = Task.fields + ["stdin", "stdout", "stderr", "true_mpi_args", ]
+    fields = Task.fields + ["stdin", "stdout", "stderr", ]
 
     def __init__(self, spec):
         Task.__init__(self, spec)
         self.stdin = spec.get('stdin')
         self.stdout = spec.get('stdout')
         self.stderr = spec.get('stderr')
-        self.true_mpi_args = spec.get('true_mpi_args')
 
 class SimulatedSystem (SimulatedTaskManager):
     """
@@ -527,50 +521,189 @@ class SimulatedSystem (SimulatedTaskManager):
 
     reserve_resources_until = exposed(reserve_resources_until)
 
-class ScriptTask (Task):
-    fields = Task.fields + ["name", "inputfile", "outputfile", "errorfile", "path", ]
+class Child (Data):
+    fields = Data.fields + ['id', 'args', 'env', 'tag', 'runid', 'label', 'stdout', 'stderr', 'complete', 'lost_child', 
+        'exit_status', 'signum', 'core_dump']
+    required = Data.required + ['id']
 
     def __init__(self, spec):
-        Task.__init__(self, spec)
-        self.tag = spec.get("tag", "process-group")
-        self.name = spec.get("name", None)
-        self.inputfile = spec.pop("inputfile", None)
-        self.outputfile = spec.pop("outputfile", None)
-        self.errorfile = spec.pop("errorfile", None)
-        self.path = spec.pop("path", None)
-        
-class SimulatedScriptManager (SimulatedTaskManager):
-    """
-    A simulated script manager component that provides the ability to control the state and actions of the script task for the
-    purposes of testing other components.
-    """
-    name = "script-manager"
-    implementation = "SimScript"
-    logger = setup_file_logging("%s %s" % (implementation, name), LOG_FILE, "DEBUG")
+        Data.__init__(self, spec)
+        self.id = spec.get('id')
+        self.args = spec.get('args', [])
+        self.env = spec.get('env', {})
+        self.tag = spec.get('tag', None)
+        self.runid = spec.get('runid', None)
+        self.label = spec.get('label', "")
+        self.stdout = []
+        self.stderr = []
+        self.complete = False
+        self.lock_child = False
+        self.exit_status = None
+        self.signum = 0
+        self.core_dump = False
+        self.return_output = False
+        self.lost_child = False
+
+
+
+class ChildDict (DataDict):
+    item_cls = Child
+    key = 'id'
+
+    def __init__(self):
+        self.id_gen = IncrID()
+        self.runids = {}
+
+    def q_add (self, specs, callback=None, cargs={}):
+        for spec in specs:
+            if spec.get("id", "*") != "*":
+                raise DataCreationError("cannot specify an id")
+            spec['id'] = self.id_gen.next()
+        children = DataDict.q_add(self, specs)
+        self.runids.update(dict([(child.runid, child) for child in children if child.runid is not None]))
+        return children
+
+    def q_del(self, specs, callback=None, cargs={}):
+        children = DataDict.q_del(self, specs, callback, cargs)
+        for child in children:
+            try:
+                del self.runids[child.runid]
+            except KeyError:
+                pass
+
+class SimulatedForker (Component):
     
+    name = 'system_script_forker'
+    implementation = 'system_script_forker'
+
+    _logger = setup_file_logging("%s %s" % (implementation, name), LOG_FILE, "DEBUG")
     def __init__(self, *args, **kwargs):
-        SimulatedTaskManager.__init__(self, *args, **kwargs)
-        self.tasks.item_cls = ScriptTask
+        Component.__init__(self, *args, **kwargs)
+        self.children = ChildDict()
+        self.requested_exception = None
+        self.requested_exception_set = False
+        self.requested_return_value = None
+        self.requested_return_value_set = False
+
+    def set_requested_exception(self, exception):
+        self.requested_exception = exception
+        self.requested_exception_set = True
+
+    def set_requested_return_value(self, reutrn_value):
+        self.requested_return_value_set = True
+        self.requested_return_value = return_value
+    
+    def clear_requested_effect(self):
+        if self.requested_exception_set:
+            self.requested_exception = False
+            exception_to_rase = self.requested_exception
+            self.requested_exception = None
+            raise exception_to_raise
+        if self.requested_return_value_set:
+            self.requested_return_value_set = False
+            req_return_value = self.requested_return_value
+            self.requested_return_value = None
+            return (True, req_return_value)
+        return (False, None)
+    
+
+    def fork(self, args, tag=None, label=None, env=None, preexec_data=None, runid=None):
         
-    def add_jobs(self, specs):
-        return self.add_tasks(specs)
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+
+        child = self.children.q_add([{'id':'*', 'args':args, 'env':env, 'tag':tag, 'runid':runid, 'label':label, 'exit_status':0, 'complete':True}])
+
+        return child[0].id
+    fork = exposed(fork)
+
+    def get_children(self, tag=None, child_ids=None):
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        
+        if child_ids is None:
+            return [child for child in self.children.itervalues() if tag is None or child.tag == tag]
+        else:
+            ret = []
+            for child_id in child_ids:
+                try:
+                    child = self.children[child_id]
+                except KeyError:
+                    # the requested child no longer exists so make up a dummy child and mark it as lost
+                    child = self.item_cls({'id':child_id})
+                    child.lost_child = True
+                    child.tag = tag
+                    child.complete = True
+                if tag is None or child.tag == tag:
+                    ret.append(child.to_rx())
+            return ret
+
+    get_children = exposed(get_children)
+
+    def update_childeren(self):
+        #childeren = self.get_childeren({'id':'*'})
+        for child in self.children:
+            self._logger.debug("found child %s" % self.children[child])
+            self.children[child].complete = True
+            self.children[child].exit_status = 0
+
+        return
+    update_childeren = automatic(update_childeren,1.0)
+
+
+    def signal(self, child_id, signame):
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        if not self.children.has_key(child_id):
+            self._logger.error("Child %s: child not found; unable to signal", child_id)
+            return
+
+        try:
+            signum = getattr(signal, signame)
+        except AttributeError:
+            self.logger_logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
+            raise
+
+        child[child_id].exit_status = 1
+        child[child_id].completed = True
+        #don't actually send a signal since we never actually forked anything
+
+    signal = exposed(signal)
     
-    add_jobs = exposed(query(add_jobs))
+    def active_list(self):
+        '''Only useful for pg_forker runs
+
+        '''
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        raise NotImplementedError 
+    active_list = exposed(active_list)
     
-    def get_jobs(self, specs):
-        return self.get_tasks(specs)
+    def get_status(self):
+        '''Only useful for pg_forker runs
 
-    get_jobs = exposed(query(get_jobs))
+        '''
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        raise NotImplementedError 
+    get_status = exposed(get_status)
 
-    def wait_jobs(self, specs):
-        return self.wait_tasks(specs)
+    def cleanup_children(self, child_ids):
+        
+        is_preset_return, preset_return = self.clear_requested_effect()
+        if is_preset_return:
+            return preset_return
+        
+        self.children.q_del([{'id':id} for id in child_ids])
 
-    wait_jobs = exposed(query(wait_jobs))
-    
-    def signal_jobs(self, specs, signame="SIGINT"):
-        return self.signal_tasks(specs, signame)
+    cleanup_children = exposed(cleanup_children)
 
-    signal_jobs = exposed(query(signal_jobs))
+
 
 class BogusException1 (Exception):
     fault_code = Cobalt.Exceptions.fault_code_counter.next()
@@ -604,6 +737,7 @@ def check_output_files(fn_bases, exist = True, fail_msg = None):
         delete_output_files(fn_bases)
 
 def wait_output_files(fn_bases):
+    return
     try:
         for fn_base in fn_bases:
             out_fn = "%s.out" % (fn_base,)
@@ -702,14 +836,20 @@ def get_script_filenames(fn_bases):
 
 class CQMIntegrationTestBase (TestCQMComponent):
     taskman = None
-    system_script_forker = None
-    bg_mpirun_forker = None
-    user_script_forker = None
 
     def setup(self):
+        debug_print("setting up CQMIntegrationTestBase")
         TestCQMComponent.setup(self)
         self.slp = TimingServiceLocator()
+        self.system_script_forker = SimulatedForker()
+        self.system_script_forker_thr = ComponentProgressThread(self.system_script_forker)
+        self.system_script_forker_thr.start()
 
+        self.taskman = SimulatedSystem()
+        self.taskman_thr = ComponentProgressThread(self.taskman)
+        self.taskman_thr.start()
+    
+    
     def setup_cqm(self):
         self.qm = QueueManager()
         self.qm_thr = ComponentProgressThread(self.qm)
@@ -724,9 +864,13 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
     def teardown(self):
         self.qm_thr.stop()
+        self.system_script_forker_thr.stop()
+        self.taskman_thr.stop()
         del self.qm_thr
         del self.qm
         del self.slp
+        del self.system_script_forker
+        #del self.taskman
         TestCQMComponent.teardown(self)
 
     def get_job_query_spec(self, spec = {}):
@@ -864,6 +1008,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         assert self.job['admin_hold'] == new_hold
 
     def job_run(self, location):
+        debug_print("Initiating job run at %s" % location)
         jobs = self.cqm.run_jobs([self.get_job_query_spec()], location)
         assert len(jobs) < 2, "More than one job was returned"
         assert len(jobs) == 1, "Job %s not found in queue" % (self.jobid,)
@@ -1024,7 +1169,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
 
                 if hasattr(self, 'job_prescripts'):
                     debug_print("JOB_EXEC: job_prescripts")
-                    wait_output_files(self.job_prescripts)
+                    #wait_output_files(self.job_prescripts)
                     self.job_get_state(assert_spec = {'state':"starting"})
                     if job_pretask != None:
                         debug_print("JOB_EXEC: job_pretask")
@@ -1687,7 +1832,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_next_task_op('wait')
         self.job_exec_driver(task_complete = _task_complete)
 
-    @timeout(70)
+    @timeout(120)
     def test_nonpreempt_running__job_timeout(self):
         def _task_active():
             op = self.assert_next_task_op('signal')
@@ -2093,7 +2238,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
                 assert e.faultCode == JobPreemptionError.fault_code
         self.job_exec_driver(task_active = _task_active)
 
-    @timeout(70)
+    @timeout(120)
     def test_nonpreempt_killing__timeout(self):
         def _task_active():
             self.job_kill()
@@ -3296,6 +3441,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_preempted_wait()
             self.assert_next_task_op('wait')
             check_output_files(resource_postscripts)
+        self.system_thr.start()
             check_output_files(job_postscripts, False)
             self.job_run(["R01"])
             self.job_running_wait()
@@ -3362,45 +3508,8 @@ class TestCQMIntegration (CQMIntegrationTestBase):
     def setup(self):
         CQMIntegrationTestBase.setup(self)
         self.taskman = SimulatedSystem()
-        self.system_script_forker = SystemScriptForker()
-        self.user_script_forker = UserScriptForker()
-        self.bg_mpirun_forker = BGMpirunForker()
         self.setup_cqm()
 
     def teardown(self):
         del self.taskman
-        del self.system_script_forker
-        del self.user_script_forker
-        del self.bg_mpirun_forker
         CQMIntegrationTestBase.teardown(self)
-
-
-# class TestCQMSystemIntegration (CQMIntegrationTestBase):
-#     logger = setup_file_logging("TestCQMSystemIntegration", LOG_FILE, "DEBUG")
-#     default_job_spec = {'mode':"vn", 'command':"/bin/ls", 'walltime':1, 'nodes':1024, 'procs':4096}
-# 
-#     def setup(self):
-#         CQMIntegrationTestBase.setup(self)
-#         self.taskman = SimulatedSystem()
-#         self.scriptm = SimulatedScriptManager()
-#         self.setup_cqm()
-# 
-#     def teardown(self):
-#         del self.taskman
-#         del self.scriptm
-#         CQMIntegrationTestBase.teardown(self)
-
-# class TestCQMScriptIntegration (CQMIntegrationTestBase):
-#     logger = setup_file_logging("TestCQMScriptIntegration", LOG_FILE, "DEBUG")
-#     default_job_spec = {'mode':"script", 'command':"/bin/ls", 'walltime':1, 'nodes':1024, 'procs':4096}
-# 
-#     def setup(self):
-#         CQMIntegrationTestBase.setup(self)
-#         self.taskman = SimulatedScriptManager()
-#         self.system = SimulatedSystem()
-#         self.setup_cqm()
-#         
-#     def teardown(self):
-#         del self.taskman
-#         del self.system
-#         CQMIntegrationTestBase.teardown(self)
