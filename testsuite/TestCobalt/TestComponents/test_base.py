@@ -51,14 +51,6 @@ class TestComponent (object):
             runs = dict(method1=0, method2=0, method3=0)
             m4data = []
             
-            def method1 (self):
-                self.runs['method1'] += 1
-            method1 = automatic(method1)
-            
-            def method2 (self):
-                self.runs['method2'] += 1
-            method2 = automatic(method2, 0)
-            
             def method3 (self):
                 self.runs['method3'] += 1
 
@@ -68,16 +60,11 @@ class TestComponent (object):
                 
         component = TestComponent()
         component.do_tasks()
-        assert component.runs['method1'] == 1
-        assert component.runs['method2'] == 1
-        assert component.runs['method3'] == 0
-        component.do_tasks()
-        assert component.runs['method1'] == 1
-        assert component.runs['method2'] == 2
         assert component.runs['method3'] == 0
         for i in range(15):
             time.sleep(random.randrange(0, 6))
             component.do_tasks()
+        assert len(component.m4data) > 1, "Failed to run any automatic method."
         while len(component.m4data) > 1:
             assert component.m4data[1] - component.m4data[0] > 4
             component.m4data = component.m4data[1:]
