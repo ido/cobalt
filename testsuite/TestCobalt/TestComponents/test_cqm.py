@@ -1832,7 +1832,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.assert_next_task_op('wait')
         self.job_exec_driver(task_complete = _task_complete)
 
-    @timeout(70)
+    @timeout(120)
     def test_nonpreempt_running__job_timeout(self):
         def _task_active():
             op = self.assert_next_task_op('signal')
@@ -2238,7 +2238,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
                 assert e.faultCode == JobPreemptionError.fault_code
         self.job_exec_driver(task_active = _task_active)
 
-    @timeout(70)
+    @timeout(120)
     def test_nonpreempt_killing__timeout(self):
         def _task_active():
             self.job_kill()
