@@ -68,7 +68,7 @@ class UserScriptChild (PGChild):
         if os.environ.has_key('COBALT_RUNTIME_DIR'):
             self.env['COBALT_RUNTIME_DIR'] = os.environ['COBALT_RUNTIME_DIR']
 
-        if pg.subblock == True:
+        if self.pg.subblock == True:
             self.env["COBALT_SUBBLOCK"] = str(self.pg.subblock)
             self.env["COBALT_PARTNAME"] = self.pg.subblock_parent
             self.env["COBALT_CORNER"] = self.pg.corner
