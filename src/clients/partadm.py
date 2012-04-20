@@ -4,9 +4,11 @@
 __revision__ = '$Revision: 1981 $'
 __version__ = '$Version$'
 
-import sys, getopt, xmlrpclib
+import sys
+import xmlrpclib
 import os
-import getpass
+import optparse
+import pwd
 
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
@@ -25,31 +27,92 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
-Must supply one of -a or -d or -l or -start or -stop or --queue'''
+
+Must supply one of -a or -d or -l or -start or -stop or --queue
+Adding "-r" or "--recursive" will add the children of the blocks passed in.
+
+'''
+
+opt_parser = optparse.OptionParser(usage=helpmsg, version=("Cobalt Version: %s" % __version__))
+
+opt_parser.add_option("-a", action="store_true", dest="add")
+opt_parser.add_option("-d", action="store_true", dest="delete")
+opt_parser.add_option("-l", action="store_true", dest="list_blocks")
+opt_parser.add_option("-r", "--recursive", action="store_true", dest="recursive")
+opt_parser.add_option("--queue", action="store", type="string", dest="queue")
+opt_parser.add_option("--activate", action="store_true", dest="activate")
+opt_parser.add_option("--deactivate", action="store_true", dest="deactivate")
+opt_parser.add_option("--enable", action="store_true", dest="enable")
+opt_parser.add_option("--disable", action="store_true", dest="disable")
+opt_parser.add_option("--fail", action="store_true", dest="fail")
+opt_parser.add_option("--unfail", action="store_true", dest="unfail")
+opt_parser.add_option("--dump", action="store_true", dest="dump")
+opt_parser.add_option("--xml", action="store_true", dest="xml")
+opt_parser.add_option("--savestate", action="store", type="string", dest="savestate")
+opt_parser.add_option("--boot_stop", action="store_true", dest="boot_stop")
+opt_parser.add_option("--boot_start", action="store_true", dest="boot_start")
+opt_parser.add_option("--boot_status", action="store_true", dest="boot_status")
+opt_parser.add_option("-b", "--blockinfo", action="store_true", dest="blockinfo")
+
+
+
+conflicting_args = {'add':['delete','fail','unfail','boot_stop','boot_start'],
+                    'delete':['add','fail','unfail','boot_stop','boot_start'],
+                    'list_blocks':['blockinfo'],
+                    }
+
+def component_call(func, args):
+    try:
+        parts = apply(func, args)
+    except xmlrpclib.Fault, fault:
+        print "Command failure", fault
+    except:
+        print "strange failure"
+    return parts
+
+
+def print_block(block_dicts):
+
+    for block in block_dicts:
+        #print block['name']
+    
+        #print ' '.join([nodecard['name'] for nodecard in block['node_cards']])
+        header_list = []
+        value_list = []
+
+        for key,value in block.iteritems():
+
+            if key in ['node_cards','nodes']:
+                if block['size'] > 32 and key == 'nodes':
+                    continue
+                else:
+                    header_list.append(key)
+                    value_list.append(' '.join([v['name'] for v in value]))
+            else:
+                header_list.append(key)
+                value_list.append(value)
+
+        Cobalt.Util.print_vertical([header_list,value_list])
 
 if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "partadm %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
+   
+    
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:',
-                                     ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail', 'savestate',
-                                      'boot_stop', 'boot_start', 'boot_status'])
-    except getopt.GetoptError, msg:
+        opts, args  = opt_parser.parse_args() 
+    except optparse.OptParseError, msg:
         print msg
         print helpmsg
         raise SystemExit, 1
+   
     try:
         system = ComponentProxy("system", defer=False)
     except ComponentLookupError:
         print "Failed to connect to system component"
         raise SystemExit, 1
 
-    whoami = getpass.getuser()
-    
-    if '-r' in sys.argv:
+    whoami = pwd.getpwuid(os.getuid())[0]
+
+    if opts.recursive:
         partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children':'*'} for name in args])
         parts = args
         
@@ -59,53 +122,54 @@ if __name__ == '__main__':
                     parts.append(child)
     else:
         parts = args
-    if '-a' in sys.argv:
-        func = system.add_partitions
+
+    if opts.add:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
                   'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], whoami)
-    elif '-d' in sys.argv:
-        func = system.del_partitions
+        parts = component_call(system.add_partitions, args)
+    elif opts.delete:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
-    elif '--enable' in sys.argv:
-        func = system.set_partitions
+        parts = component_call(system.del_partitions, args)
+    elif opts.enable:
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'scheduled':True}, whoami)
-    elif '--disable' in sys.argv:
-        func = system.set_partitions
+        parts = component_call(system.set_partitions, args)
+    elif opts.disable:
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'scheduled':False}, whoami)
-    elif '--activate' in sys.argv:
-        func = system.set_partitions
+        parts = component_call(system.set_partitions, args)
+    elif opts.activate:
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'functional':True}, whoami)
-    elif '--deactivate' in sys.argv:
-        func = system.set_partitions
+        parts = component_call(system.set_partitions, args)
+    elif opts.deactivate:
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'functional':False}, whoami)
-    elif '--fail' in sys.argv:
-        func = system.fail_partitions
+        parts = component_call(system.set_partitions, args)
+    elif opts.fail:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
-    elif '--unfail' in sys.argv:
-        func = system.unfail_partitions
+        parts = component_call(system.fail_partitions, args)
+    elif opts.unfail:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
-    elif '--xml' in sys.argv:
-        func = system.generate_xml
+        parts = component_call(system.unfail_partitions, args)
+    elif opts.xml:
         args = tuple()
-    elif '--savestate' in sys.argv:
-        if not args:
-            print "please specify a filename"
-            sys.exit(1)
-        directory = os.path.dirname(args[0])
+        parts = component_call(system.generate_xml, args)
+    elif opts.savestate:
+        directory = os.path.dirname(savestate)
         if not os.path.exists(directory):
             print "directory %s does not exist" % directory
             sys.exit(1)
         func = system.save
-        args = (args[0],)
-    elif '-l' in sys.argv:
+        args = (savestate,)
+        parts = component_call(system.save, args)
+
+    elif opts.list_blocks:
         func = system.get_partitions
         args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
                   'queue':'*', 'relatives':'*'}], )
-    elif '--queue' in [opt for (opt, arg)  in opts]:
+        parts = component_call(system.get_partitions, args)
+    elif opts.queue:
         try:
             cqm = ComponentProxy("queue-manager", defer=False)
             existing_queues = [q.get('name') for q in cqm.get_queues([ \
@@ -113,53 +177,49 @@ if __name__ == '__main__':
         except:
             print "Error getting queues from queue_manager"
             raise SystemExit, 1
-        queue = [arg for (opt, arg) in opts if opt == '--queue'][0]
         error_messages = []
-        for q in queue.split(':'):
+        for q in opts.queue.split(':'):
             if not q in existing_queues:
                 error_messages.append('\'' + q + '\' is not an existing queue')
         if error_messages:
             for e in error_messages:
                 print e
             raise SystemExit, 1
-        func = system.set_partitions
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'queue':queue}, whoami)
-    elif '--dump' in [opt for (opt, arg) in opts]:
-        func = system.get_partitions
+                {'queue':opts.queue}, whoami)
+        parts = component_call(system.set_partitions, args)
+    elif opts.dump:
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
-    elif '--diag' in [opt for (opt, arg)  in opts]:
-        func = system.run_diags
-        test_name = [arg for (opt, arg) in opts if opt == '--diag'][0]
-        args = (parts, test_name, whoami)
-    elif '--boot_stop' in [opt for (opt, arg) in opts]:
-        func = system.halt_booting
+        parts = component_call(system.get_partitions, args)
+    elif opts.boot_stop:
         args = (whoami,)
+        parts = component_call(halt_booting, args)
         print "Halting booting: halting scheduling is advised"
-    elif '--boot_start' in [opt for (opt,arg) in opts]:
-        func = system.resume_booting
+    elif opts.boot_start:
         args = (whoami,)
+        parts = component_call(resume_booting, args)
         print "Enabling booting"
-    elif '--boot_status' in [opt for (opt,arg) in opts]:
+    elif opts.boot_status:
         boot_status = system.booting_status()
         if not boot_status:
             print "Block Booting: ENABLED"
         else:
             print "Block Booting: SUSPENDED."
         sys.exit(0)
-    else:
-        print helpmsg
-        raise SystemExit, 1
 
-    try:
-        parts = apply(func, args)
-    except xmlrpclib.Fault, fault:
-        print "Command failure", fault
-    except:
-        print "strange failure"
 
-    if '-l' in sys.argv:
+    if opts.blockinfo:
+        for part in parts:
+            print_block(system.get_blocks([{'name':part,'node_cards':'*',
+                'subblock_parent':'*','nodes':'*', 'scheduled':'*', 'funcitonal':'*',
+                'queue':'*','parents':'*','children':'*','reserved_until':'*',
+                'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
+                'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
+                'size':'*','draining':'*','backfill_time':'*'}]))
+        sys.exit(0)
+ 
+    if opts.list_blocks:
         # need to cascade up busy and non-functional flags
 #        print "buildRackTopology sees : " + repr(parts)
 #
@@ -208,7 +268,8 @@ if __name__ == '__main__':
         data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
                   part['state'], ','.join([])] for part in parts]
         Cobalt.Util.printTabular(data, centered=[3, 4])
-    elif '--boot_start' in sys.argv or '--boot_stop' in sys.argv:
+
+    elif opts.boot_start or opts.boot_stop: 
         pass
     else:
         print parts

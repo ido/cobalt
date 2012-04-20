@@ -351,7 +351,10 @@ class Block (Data):
     fields = Data.fields + [
         "tag", "scheduled", "name", "functional",
         "queue", "size", "parents", "children", "state", 
-        "backfill_time",
+        "backfill_time", "node_cards", "nodes", "switches", "io_links",
+        "reserved_until", "reserved_by", "used_by", "cleanup_pending",
+        "freeing", "backfill_time", "draining", "subblock_parent",
+        "block_type", "corner_node", "extents"
     ]
     
     def __init__ (self, spec):
