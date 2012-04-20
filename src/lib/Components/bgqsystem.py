@@ -66,6 +66,8 @@ def cobalt_log_write(filename, msg, user=None):
     '''send the cobalt_log writer thread a filename, msg tuple.
     
     '''
+    if user == None:
+        user = pwd.getpwuid(os.getuid())[0] #set as who I'm running as.
     cobalt_log_writer.send((filename, msg, user))
 
 def cobalt_log_terminate():
@@ -1576,7 +1578,7 @@ class BGSystem (BGBaseSystem):
         if success_string == None:
             success_string = "%s: Block %s for location %s successfully booted.  Starting task for job %s." % (pgroup.label, location, pgroup.location[0], pgroup.jobid)
         self.logger.info(success_string)
-        cobalt_log_write(pgroup.cobalt_log_file, success_string)
+        cobalt_log_write(pgroup.cobalt_log_file, success_string, pgroup.user)
 
 
 
@@ -1596,7 +1598,7 @@ class BGSystem (BGBaseSystem):
 
         self.logger.warning(failure_string)
         #COBALTLOG
-        cobalt_log_write(pgroup.cobalt_log_file, failure_string)
+        cobalt_log_write(pgroup.cobalt_log_file, failure_string, pgroup.user)
         pgroup.exit_status = 255
         #strip pgroup out of appropriate places?
         self._mark_block_for_cleaning(location, pgroup.jobid)
