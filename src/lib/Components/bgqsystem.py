@@ -76,7 +76,7 @@ def cobalt_log_terminate():
     '''
     cobalt_log_writer.send(None)
 
-
+automatic_method_default_interval = get_config_option('system','automatic_method_default_interval',10.0)
 
 sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
                        'B': pybgsched.Dimension(pybgsched.Dimension.B),
@@ -1610,8 +1610,12 @@ class BGSystem (BGBaseSystem):
         '''Sometimes we have to wait until we can reboot the block. 
         This is what allows us to do so.
 
+        A block can move from this to starting the job, checking an ongoing boot, it can also initiate a boot if the block is seen as free.
 
         '''
+        #TODO: check to see if the block is healthy enough to boot,  if we have a sudden case of dead-link,
+        #bad-hardware, et al. we should totally bail out.
+
         if self.suspend_booting:
             #booting isn't happening right now, just exit.
             return
@@ -1658,7 +1662,7 @@ class BGSystem (BGBaseSystem):
         for pgroup in progressing_pgroups:
             self.pgroups_wait_reboot.remove(pgroup)
 
-    check_pgroups_wait_reboot = automatic(check_pgroups_wait_reboot, 10.0)
+    check_pgroups_wait_reboot = automatic(check_pgroups_wait_reboot, automatic_method_default_interval)
 
     def check_pgroups_pending_boot(self):
         '''check up on groups that are waiting to start up.
@@ -1694,7 +1698,7 @@ class BGSystem (BGBaseSystem):
         for pgroup in booted_pgroups:
             self.pgroups_pending_boot.remove(pgroup)
 
-    check_pgroups_pending_boot = automatic(check_pgroups_pending_boot, 10.0)
+    check_pgroups_pending_boot = automatic(check_pgroups_pending_boot, automatic_method_default_interval)
    
     def check_boot_status(self):
         
@@ -1733,7 +1737,7 @@ class BGSystem (BGBaseSystem):
         for block_loc in booted_blocks:
             self.booting_blocks.pop(block_loc)
 
-    check_boot_status = automatic(check_boot_status, 10.0)
+    check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
     
     def _start_process_group(self, pgroup, block_loc=None):
         '''Start a process group at a specified location.
@@ -1786,7 +1790,7 @@ class BGSystem (BGBaseSystem):
 
         return
 
-    check_boot_status = automatic(check_boot_status, 10.0)
+    check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
     
     def get_process_groups (self, specs):
         self._get_exit_status()
@@ -1847,6 +1851,15 @@ class BGSystem (BGBaseSystem):
                         cleanup[pg.forker].append(child['id'])
                         clean_block = True
                 else:
+                    #if we are still booting we need to ignore the process group.  Only you can prevent 1234567's --PMR
+                    found = False
+                    for boot_pg in self.booting_blocks.values():
+                        if boot_pg.id == pg.id:
+                            found = True
+                            break
+                    if found:
+                        continue
+
                     if pg.exit_status is None:
                         # the forker has lost the child for our process group
                         self.logger.info("%s: job exited with unknown status", pg.label)
@@ -1873,7 +1886,7 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status, float(get_config_option('bgsystem', 'get_exit_status_interval', 10.0)))
+    _get_exit_status = automatic(_get_exit_status, float(get_config_option('bgsystem', 'get_exit_status_interval', automatic_method_default_interval)))
 
 
     def wait_process_groups (self, specs):
@@ -1945,5 +1958,3 @@ class BGSystem (BGBaseSystem):
     def booting_status(self):
         return self.suspend_booting
 
-
-    #Diags are now gone.

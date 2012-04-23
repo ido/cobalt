@@ -2,12 +2,14 @@ import logging
 import os
 import pwd
 import tempfile
+import signal
 
 import Cobalt
 import Cobalt.Components.pg_forker
 PGChild = Cobalt.Components.pg_forker.PGChild
 PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
+exposed = Cobalt.Components.base.exposed
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
 _logger = logging.getLogger(__name__.split('.')[-1])
@@ -98,6 +100,7 @@ class UserScriptChild (PGChild):
         PGChild.preexec_last(self)
 
 
+
 class UserScriptForker (PGForker):
     """Component for starting script jobs"""
 
@@ -120,3 +123,28 @@ class UserScriptForker (PGForker):
 
     def __setstate__(self, state):
         PGForker.__setstate__(self, state)
+
+    def signal(self, child_id, signame):
+        """
+        Signal a child process.
+        
+        Arguments:
+        child_id -- id of the child to signal
+        signame -- signal name
+        """
+
+        _logger.debug("Using overridden signal method.")
+
+        if not self.children.has_key(child_id):
+            _logger.error("Child %s: child not found; unable to signal", child_id)
+            return
+
+        try:
+            signum = getattr(signal, signame)
+        except AttributeError:
+            _logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
+            raise
+
+        super(UserScriptChild, self.children[child_id]).signal(signum, pg=True)
+
+    signal = exposed(signal) 
