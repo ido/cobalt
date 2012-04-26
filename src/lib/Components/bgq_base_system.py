@@ -1245,7 +1245,7 @@ class BGBaseSystem (Component):
             used_by = self.blocks[block_name].used_by
             if new_time:
                 if used_by == None:
-                    part.used_by = jobid
+                    block.used_by = jobid
                     used_by = jobid
                 if used_by == jobid:
                     block.reserved_until = new_time

@@ -55,24 +55,33 @@ opt_parser.add_option("--boot_status", action="store_true", dest="boot_status")
 opt_parser.add_option("-b", "--blockinfo", action="store_true", dest="blockinfo")
 
 
-
+#detect arguemnts that conflict, use this in a verification callback.
 conflicting_args = {'add':['delete','fail','unfail','boot_stop','boot_start'],
                     'delete':['add','fail','unfail','boot_stop','boot_start'],
                     'list_blocks':['blockinfo'],
                     }
 
 def component_call(func, args):
+    '''Actually call a function on another component and handle XML RPC faults
+    gracefully, and other faults with something other than a traceback.
+
+    '''
+
     try:
         parts = apply(func, args)
     except xmlrpclib.Fault, fault:
         print "Command failure", fault
     except:
-        print "strange failure"
+        print "Non-RPC Fault failure"
     return parts
 
 
 def print_block(block_dicts):
+    '''Formatted printing of a list of blocks.  This expects a list of 
+    dictionaries of block data, such as the output from the system component's
+    get_blocks call.
 
+    '''
     for block in block_dicts:
         #print block['name']
     
@@ -93,6 +102,8 @@ def print_block(block_dicts):
                 value_list.append(value)
 
         Cobalt.Util.print_vertical([header_list,value_list])
+    return
+
 
 if __name__ == '__main__':
    
