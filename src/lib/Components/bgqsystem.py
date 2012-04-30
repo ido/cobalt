@@ -819,6 +819,7 @@ class BGSystem (BGBaseSystem):
         
         def _start_block_cleanup(block):
             self.logger.info("partition %s: marking partition for cleaning", block.name)
+            self.logger.debug("(start_block_cleanup): Marking block %s for cleaning from:", block.name ,exc_info=True)
             block.cleanup_pending = True
             blocks_cleanup.append(block)
             _set_block_cleanup_state(block)
@@ -861,7 +862,7 @@ class BGSystem (BGBaseSystem):
 
         def _children_still_allocated(block):
             for b in block._children:
-                    if b.reserved_by:
+                    if b.used_by:
                         return True
             return False
 
@@ -885,19 +886,10 @@ class BGSystem (BGBaseSystem):
                 #    pb = self._blocks[b.subblock_parent]
                 if not still_reserved_children:
                     self.logger.info("All subblock jobs done, freeing block %s", pb.name)
-                    #_initiate_block_free(pb)
-                    #pb.state = 'cleanup'
-                    #block.cleanup_pending = False
-                    #pb.cleanup_pending = True
-                    #pb.used_by = True
                     if pb.state not in ["cleanup", "cleanup-initiate"]:
                         _start_block_cleanup(pb)
                         self.logger.info("block %s: block marked for cleanup", pb.name)
-                    #pb.state = "cleanup"
                     pb.freeing = True
-                    #for child in pb._children:
-                    #    child.state = "blocked cleaning (%s)" % pb.name
-                    #and we keep going.
                 else:
                     local_job_found = False
                     for job in block_jobs:
@@ -906,8 +898,6 @@ class BGSystem (BGBaseSystem):
                             nuke_job(job.getID(), b.subblock_parent)
                     if local_job_found:
                         b.state = "cleanup"
-                            #make sure the backend job is dead.
-                            
                 
 
             #NOTE: at this point new jobs cannot start on this block if we're not a pseudoblock
@@ -917,10 +907,6 @@ class BGSystem (BGBaseSystem):
             #from here on, we should be able to see if the block has returned to the free state, if, so
             #and nothing else is blocking, we can safely set to idle.
             
-            #if b.subblock_parent != b.name:
-                #don't kill everything.
-            #    return
-
             if b.block_type == 'pseudoblock':
                 if len(self.killing_jobs) == 0:
                     self.cleanup_pending = False
@@ -971,14 +957,15 @@ class BGSystem (BGBaseSystem):
                 self.logger.critical("Cannot connect to system_script forker.")
                 return
             complete_jobs = []
-            for bg_jobid, script_id in self.killing_jobs.iteritems():
-               ret = system_script_forker.child_completed(script_id)
-               if ret != None:
-                   complete_jobs.append(bg_jobid)
-
-            if complete_jobs != []:
-                for job in complete_jobs:
-                    del self.killing_jobs[job]
+            rev_killing_jobs = dict([(v,k) for (k,v) in self.killing_jobs.iteritems()])
+            removed_jobs = []
+            current_killing_jobs = system_script_forker.get_children(None, self.killing_jobs.values())
+                   
+            for job in current_killing_jobs:
+                if job['completed']:
+                    del self.killing_jobs[rev_killing_jobs[int(job['id'])]]
+                    removed_jobs.append(job['id'])
+            system_script_forker.cleanup_children(removed_jobs)
             return
 
 
@@ -1098,6 +1085,11 @@ class BGSystem (BGBaseSystem):
                             # performed
                             self.logger.debug("USED BY SET TO: %s", b.used_by)
                             _start_block_cleanup(b)
+                            if b.state not in ['cleanup', 'cleanup-initiate']:
+                                b.cleanup_pending = False
+                                b.freeing = False
+                                self.logger.info("partition %s: cleaning complete", b.name)
+
                         else:
                             # if the cleanup has already been initiated, then see how it's going
                             busy = []
@@ -1108,12 +1100,13 @@ class BGSystem (BGBaseSystem):
                                     busy.append(part.name)
                                 elif part.block_type == 'pseudoblock' and bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free:
                                     busy.append(part.name)
-                                    part.freeing = True
                             if len(busy) > 0:
                                 _set_block_cleanup_state(b)
+                            if b.state in ['cleanup', 'cleanup-initiate']:
                                 self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
                             else:
                                 b.cleanup_pending = False
+                                b.freeing = False
                                 self.logger.info("partition %s: cleaning complete", b.name)
                     
                      
@@ -1307,9 +1300,6 @@ class BGSystem (BGBaseSystem):
         if b.reserved_until:
             b.state = "allocated"
             allocated = True
-            #for block in b._parents:
-            #    if block.state == "idle":
-            #        block.state = "blocked (%s)" % (b.name,)
             for block in b._relatives:
                 if block.state == "idle":
                     block.state = "blocked (%s)" % (b.name,)
@@ -1392,6 +1382,9 @@ class BGSystem (BGBaseSystem):
            or must be placed in an error state pending admin intervention.
 
         '''
+        
+        self.logger.debug("Marking block %s for cleaning from:", block_name ,exc_info=True)
+
 
         self._blocks_lock.acquire()
         try:
