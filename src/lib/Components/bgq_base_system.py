@@ -1133,6 +1133,7 @@ class BGBaseSystem (Component):
                 
             for jobid, block_list in best_block_dict.iteritems():
                 part = self.blocks[block_list[0]]
+                self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
                 part.state = "allocated"  

@@ -818,14 +818,12 @@ class BGSystem (BGBaseSystem):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
         
         def _start_block_cleanup(block):
-            self.logger.info("partition %s: marking partition for cleaning", block.name)
-            self.logger.debug("(start_block_cleanup): Marking block %s for cleaning from:", block.name ,exc_info=True)
+            self.logger.info("Block %s: starting cleanup.", block.name)
             block.cleanup_pending = True
-            blocks_cleanup.append(block)
-            _set_block_cleanup_state(block)
             block.reserved_until = False
             block.reserved_by = None
             block.used_by = None
+            _set_block_cleanup_state(block)
 
         def _initiate_block_free(block):
 
@@ -872,7 +870,7 @@ class BGSystem (BGBaseSystem):
             #only if we aren't a subblock job!
             if b.block_type != 'pseudoblock':
                 #not a subblock, proceed to clean up normally.
-                self.logger.info("initiaitng normal block cleanup for block %s", b.name)
+                self.logger.info("Continuing control-system block cleanup for block %s", b.name)
                 _initiate_block_free(b)
                 b.state = 'cleanup-initiate'
             else:
@@ -882,8 +880,7 @@ class BGSystem (BGBaseSystem):
                 pb = self._blocks[b.subblock_parent]
                 still_reserved_children = _children_still_allocated(pb)
                 block_jobs = _get_jobs_on_block(b.subblock_parent)
-                #if len(block_jobs) < 1:
-                #    pb = self._blocks[b.subblock_parent]
+                
                 if not still_reserved_children:
                     self.logger.info("All subblock jobs done, freeing block %s", pb.name)
                     if pb.state not in ["cleanup", "cleanup-initiate"]:
@@ -908,12 +905,11 @@ class BGSystem (BGBaseSystem):
             #and nothing else is blocking, we can safely set to idle.
             
             if b.block_type == 'pseudoblock':
-                if len(self.killing_jobs) == 0:
-                    self.cleanup_pending = False
-                else:
-                    self.state = 'cleanup'
+                if len(self.killing_jobs) > 0:
+                    b.state = 'cleanup'
                 return
             
+            #Non-pseudoblock jobs only from here on.
             block_jobs = _get_jobs_on_block(b.subblock_parent)
             #At this point new for the Q.  Blow everything away!
             if len(block_jobs) != 0:
@@ -925,13 +921,9 @@ class BGSystem (BGBaseSystem):
 
 
             #don't track jobs whose kills have already completed.
-            check_killing_jobs() #do we need this?
-            #from here on, we should be able to see if the block has returned to the free state, if, so
-            #and nothing else is blocking, we can safely set to idle.
-            
-            
-            #block.state = "blocked (%s)" % (p.name,)
-        
+            check_killing_jobs() #reap any ongoing kills
+       
+
         def nuke_job(bg_job, block_name):
             #As soon as I get an API this is going to change.  Assume all on SN.
             #for now make a call to kill_job Job should die after 60 sec, if not earlier.
@@ -1004,7 +996,6 @@ class BGSystem (BGBaseSystem):
                 nc.used_by = ''
             self._blocks_lock.acquire()
             now = time.time()
-            blocks_cleanup = []
             bridge_partition_cache = {}
             self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
@@ -1271,13 +1262,6 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("error in update_block_state", exc_info=True)
 
             self._blocks_lock.release()
-            
-            #now continue with the cleanup
-
-            # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
-            pnames_cleaned = []
-            for p in blocks_cleanup:
-                self.logger.info("block %s: starting block cleanup", p.name)
                 
             Cobalt.Util.sleep(10)
         #End while(true)
@@ -1383,8 +1367,6 @@ class BGSystem (BGBaseSystem):
 
         '''
         
-        self.logger.debug("Marking block %s for cleaning from:", block_name ,exc_info=True)
-
 
         self._blocks_lock.acquire()
         try:
@@ -1394,26 +1376,6 @@ class BGSystem (BGBaseSystem):
                 self.logger.info("block %s: block marked for cleanup", block_name)
                 block.state = "cleanup"
                 block.freeing = True
-
-#                if block.block_type == 'pseudoblock':
-#                    #we have to do some extra work if we're a pseudoblock
-#                    #since we're checking block states do this while holding the lock
-#                    subblock_parent = self._blocks[block.subblock_parent]
-#                    found = False
-#                    for child in subblock_parent._children:
-#                        if child.state != 'idle' and child.name != block.name:
-#                            found = True
-#                            break
-#                    
-#                    if not found:
-#                        subblock_parent.cleanup_pending = True
-#                        self.logger.info("block %s: block marked for cleanup", subblock_parent.name)
-#                        subblock_parent.state = "cleanup"            
-#                
-#                block.reserved_until = False
-#                block.reserved_by = None
-#                block.used_by = None
-#
 
             elif block.used_by != None:
                 #may have to relax this for psedoblock case.
@@ -1826,7 +1788,6 @@ class BGSystem (BGBaseSystem):
     check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
     
     def get_process_groups (self, specs):
-        self._get_exit_status()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
     
@@ -1937,10 +1898,8 @@ class BGSystem (BGBaseSystem):
 
         """
         
-        self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            self._mark_block_for_cleaning(process_group.location[0], process_group.jobid)
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
