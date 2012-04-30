@@ -887,14 +887,16 @@ class BGSystem (BGBaseSystem):
                     self.logger.info("All subblock jobs done, freeing block %s", pb.name)
                     #_initiate_block_free(pb)
                     #pb.state = 'cleanup'
-                    block.cleanup_pending = False
-                    pb.cleanup_pending = True
+                    #block.cleanup_pending = False
+                    #pb.cleanup_pending = True
                     #pb.used_by = True
-                    self.logger.info("block %s: block marked for cleanup", pb.name)
-                    pb.state = "cleanup"
+                    if pb.state not in ["cleanup", "cleanup-initiate"]:
+                        _start_block_cleanup(pb)
+                        self.logger.info("block %s: block marked for cleanup", pb.name)
+                    #pb.state = "cleanup"
                     pb.freeing = True
-                    for child in pb._children:
-                        child.state = "blocked cleaning (%s)" % pb.name
+                    #for child in pb._children:
+                    #    child.state = "blocked cleaning (%s)" % pb.name
                     #and we keep going.
                 else:
                     local_job_found = False
@@ -902,7 +904,8 @@ class BGSystem (BGBaseSystem):
                         if job.getCorner() == b.corner_node and job.getShape().getNodeCount() == b.size and job.getID() not in self.killing_jobs.keys():
                             local_job_found =  True
                             nuke_job(job.getID(), b.subblock_parent)
-                    b.state = "cleanup"
+                    if local_job_found:
+                        b.state = "cleanup"
                             #make sure the backend job is dead.
                             
                 
@@ -919,6 +922,10 @@ class BGSystem (BGBaseSystem):
             #    return
 
             if b.block_type == 'pseudoblock':
+                if len(self.killing_jobs) == 0:
+                    self.cleanup_pending = False
+                else:
+                    self.state = 'cleanup'
                 return
             
             block_jobs = _get_jobs_on_block(b.subblock_parent)
@@ -1084,7 +1091,32 @@ class BGSystem (BGBaseSystem):
                         b.state = 'idle'
                 
                 for b in self._blocks.values():
+                   
+                    if b.cleanup_pending:
+                        if b.used_by:
+                            # if the partition has a pending cleanup request, then set the state so that cleanup will be
+                            # performed
+                            self.logger.debug("USED BY SET TO: %s", b.used_by)
+                            _start_block_cleanup(b)
+                        else:
+                            # if the cleanup has already been initiated, then see how it's going
+                            busy = []
+                            parts = list(b._children)
+                            parts.append(b)
+                            for part in parts:
+                                if part.block_type != 'pseudoblock' and bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
+                                    busy.append(part.name)
+                                elif part.block_type == 'pseudoblock' and bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free:
+                                    busy.append(part.name)
+                                    part.freeing = True
+                            if len(busy) > 0:
+                                _set_block_cleanup_state(b)
+                                self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
+                            else:
+                                b.cleanup_pending = False
+                                self.logger.info("partition %s: cleaning complete", b.name)
                     
+                     
                     if b.block_type == "pseudoblock":
                         #we don't get this from the control system here.
                         #b.state = 'idle'
@@ -1142,29 +1174,6 @@ class BGSystem (BGBaseSystem):
                          # I think we can fall into cleanup code here?
 
 
-                    if b.cleanup_pending:
-                        if b.used_by:
-                            # if the partition has a pending cleanup request, then set the state so that cleanup will be
-                            # performed
-                            self.logger.debug("USED BY SET TO: %s", b.used_by)
-                            _start_block_cleanup(b)
-                        else:
-                            # if the cleanup has already been initiated, then see how it's going
-                            busy = []
-                            parts = list(b._children)
-                            parts.append(b)
-                            for part in parts:
-                                if part.block_type != 'pseudoblock' and bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
-                                    busy.append(part.name)
-                                elif part.block_type == 'pseudoblock' and bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free:
-                                    busy.append(part.name)
-                                    part.freeing = True
-                            if len(busy) > 0:
-                                _set_block_cleanup_state(self._blocks[b.subblock_parent])
-                                self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
-                            else:
-                                b.cleanup_pending = False
-                                self.logger.info("partition %s: cleaning complete", b.name)
                     #check the state of the block's IOLinks.  If not all are connected, put the block into an error state.
                     bad_links = pybgsched.StringVector()
                     if not pybgsched.Block.isIOConnected(b.subblock_parent, bad_links):
