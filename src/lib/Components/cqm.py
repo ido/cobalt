@@ -1987,7 +1987,7 @@ class Job (StateMachine):
             return None
 
         if len(lost_children) > 0:
-            logger.warning("Job %s/%s: one or more scripts were lost: %s", self.user, self.jobid, child['id'],
+            logger.warning("Job %s/%s: one or more scripts were lost: %s", self.jobid, self.user,
                 " ".join([str(id) for id in lost_children]))
 
         return children #Yay! Success!

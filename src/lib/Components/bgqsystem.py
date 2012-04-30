@@ -861,7 +861,7 @@ class BGSystem (BGBaseSystem):
 
         def _children_still_allocated(block):
             for b in block._children:
-                    if b.reserved_until:
+                    if b.reserved_by:
                         return True
             return False
 
@@ -885,7 +885,16 @@ class BGSystem (BGBaseSystem):
                 #    pb = self._blocks[b.subblock_parent]
                 if not still_reserved_children:
                     self.logger.info("All subblock jobs done, freeing block %s", pb.name)
-                    _initiate_block_free(pb)
+                    #_initiate_block_free(pb)
+                    #pb.state = 'cleanup'
+                    block.cleanup_pending = False
+                    pb.cleanup_pending = True
+                    #pb.used_by = True
+                    self.logger.info("block %s: block marked for cleanup", pb.name)
+                    pb.state = "cleanup"
+                    pb.freeing = True
+                    for child in pb._children:
+                        child.state = "blocked cleaning (%s)" % pb.name
                     #and we keep going.
                 else:
                     local_job_found = False
@@ -893,7 +902,7 @@ class BGSystem (BGBaseSystem):
                         if job.getCorner() == b.corner_node and job.getShape().getNodeCount() == b.size and job.getID() not in self.killing_jobs.keys():
                             local_job_found =  True
                             nuke_job(job.getID(), b.subblock_parent)
-                            b.state = "cleanup"
+                    b.state = "cleanup"
                             #make sure the backend job is dead.
                             
                 
@@ -909,7 +918,7 @@ class BGSystem (BGBaseSystem):
                 #don't kill everything.
             #    return
 
-            if b.state == "cleanup":
+            if b.block_type == 'pseudoblock':
                 return
             
             block_jobs = _get_jobs_on_block(b.subblock_parent)
@@ -1124,7 +1133,6 @@ class BGSystem (BGBaseSystem):
                                    if not nc.used_by in freeing_error_blocks:
                                        try:
                                            pybgsched.Block.initiateFree(nc.used_by)
-                                           self.freeing = True
                                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
                                        except RuntimeError:
                                            pass
@@ -1138,6 +1146,7 @@ class BGSystem (BGBaseSystem):
                         if b.used_by:
                             # if the partition has a pending cleanup request, then set the state so that cleanup will be
                             # performed
+                            self.logger.debug("USED BY SET TO: %s", b.used_by)
                             _start_block_cleanup(b)
                         else:
                             # if the cleanup has already been initiated, then see how it's going
@@ -1154,7 +1163,6 @@ class BGSystem (BGBaseSystem):
                                 _set_block_cleanup_state(self._blocks[b.subblock_parent])
                                 self.logger.info("partition %s: still cleaning; busy partition(s): %s", b.name, ", ".join(busy))
                             else:
-                                b.state = "idle"
                                 b.cleanup_pending = False
                                 self.logger.info("partition %s: cleaning complete", b.name)
                     #check the state of the block's IOLinks.  If not all are connected, put the block into an error state.
@@ -1375,18 +1383,35 @@ class BGSystem (BGBaseSystem):
            or must be placed in an error state pending admin intervention.
 
         '''
+
         self._blocks_lock.acquire()
         try:
             block = self._blocks[block_name]
             if block.used_by == jobid:
                 block.cleanup_pending = True
                 self.logger.info("block %s: block marked for cleanup", block_name)
-                self.freeing = True
-                #block.state = "cleanup"            
-                #block.reserved_until = False
-                #block.reserved_by = None
-                #block.used_by = None
+                block.state = "cleanup"
+                block.freeing = True
 
+#                if block.block_type == 'pseudoblock':
+#                    #we have to do some extra work if we're a pseudoblock
+#                    #since we're checking block states do this while holding the lock
+#                    subblock_parent = self._blocks[block.subblock_parent]
+#                    found = False
+#                    for child in subblock_parent._children:
+#                        if child.state != 'idle' and child.name != block.name:
+#                            found = True
+#                            break
+#                    
+#                    if not found:
+#                        subblock_parent.cleanup_pending = True
+#                        self.logger.info("block %s: block marked for cleanup", subblock_parent.name)
+#                        subblock_parent.state = "cleanup"            
+#                
+#                block.reserved_until = False
+#                block.reserved_by = None
+#                block.used_by = None
+#
 
             elif block.used_by != None:
                 #may have to relax this for psedoblock case.
@@ -1510,9 +1535,9 @@ class BGSystem (BGBaseSystem):
                             continue
                         elif boot_block.getStatus() == pybgsched.Block.Initialized:
                             #already booted, we can start right away.
-                            self._blocks_lock.acquire()
-                            if not self._blocks[boot_location].state in ['cleanup','cleanup-initiate']: #well almost.  the block appears to be freeing.
-                                self._log_successful_boot(pgroup, boot_location, "%s: Block %s for location %s successfully booted.  Starting task for job %s. (APG)" % (pgroup.label, boot_location, pgroup.location[0], pgroup.jobid))
+                            #self._blocks_lock.acquire()
+                            if not (self._blocks[boot_location].state in ['cleanup','cleanup-initiate']) or self._blocks[boot_location].freeing: #well almost.  the block appears to be freeing.
+                                self._log_successful_boot(pgroup, boot_location, "%s: Block %s for location %s already booted.  Starting task for job %s. (APG)" % (pgroup.label, boot_location, pgroup.location[0], pgroup.jobid))
                                 boot_block.addUser(boot_location, pgroup.user)
                                 self._start_process_group(pgroup)
                                 continue
@@ -1521,7 +1546,7 @@ class BGSystem (BGBaseSystem):
                                 self.pgroups_wait_reboot.append(pgroup)
                                 continue
                         #otherwise we should proceed through normal block booting proceedures.
-                            self._blocks_lock.release()
+                            #self._blocks_lock.release()
                     try: #Initiate boot here, I guess?  Need to make this not block.
                         #if we're already booted, (subblock), we can immediately move to start.
                         boot_block = self.get_compute_block(boot_location)
@@ -1627,10 +1652,6 @@ class BGSystem (BGBaseSystem):
                 progressing_pgroups.append(pgroup)
                 continue
             
-            if self.subblock_parent_cleaning(pgroup.location[0]):
-                #do not progress the boot.
-                continue
-
             parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
             reboot_block = self.get_compute_block(parent_block_name)
             if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
@@ -1682,11 +1703,6 @@ class BGSystem (BGBaseSystem):
                                                                         pgroup.location))
                 booted_pgroups.append(pgroup)
                 continue
-            
-            if self.subblock_parent_cleaning(pgroup.location[0]):
-                #do not progress the boot.
-                continue
-
             boot_block = self.get_compute_block(pgroup.subblock_parent)
 
             if boot_block.getStatus() == pybgsched.Block.Initialized:
@@ -1714,9 +1730,6 @@ class BGSystem (BGBaseSystem):
         for block_loc in self.booting_blocks.keys():
             pgroup = self.booting_blocks[block_loc]
 
-            if self.subblock_parent_cleaning(pgroup.location[0]):
-                #do not progress the boot.
-                continue
 
             try:
                 block_location_filter = pybgsched.BlockFilter()
