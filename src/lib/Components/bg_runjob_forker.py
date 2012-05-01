@@ -57,13 +57,14 @@ class BGRunjobChild (PGChild):
         # FIXME: we really shouldn't be copying all of root's environment, should we?
         self.env = copy.deepcopy(os.environ)
 
-        # export subset of MPIRUN_* variables to mpirun's environment
+        # export subset of RUNJOB_* variables to mpirun's environment
         # we explicitly state the ones we want since some are "dangerous"
-        exportenv = [ 'MPIRUN_CONNECTION', 'MPIRUN_KERNEL_OPTIONS',
-                      'MPIRUN_MAPFILE', 'MPIRUN_START_GDBSERVER',
-                      'MPIRUN_LABEL', 'MPIRUN_NW', 'MPIRUN_VERBOSE',
-                      'MPIRUN_ENABLE_TTY_REPORTING', 'MPIRUN_STRACE']
-
+        exportenv = ['RUNJOB_ENV_ALL', 'RUNJOB_TIMEOUT', 'RUNJOB_MAPPING',
+                     'RUNJOB_LABEL', 'RUNJOB_STRACE', 'RUNJOB_START_TOOL',
+                     'RUNJOB_TOOL_ARGS', 'RUNJOB_TOOL_SUBSET', 
+                     'RUNJOB_STDINRANK', 'RUNJOB_RAISE', 'RUNJOB_VERBOSE',
+                     'MPIRUN_LABEL', 'MPIRUN_VERBOSE'
+                    ]
         app_envs = []
         set_label = False
         set_verbose = None
@@ -71,9 +72,11 @@ class BGRunjobChild (PGChild):
             if key in exportenv:
     	        if key == 'MPIRUN_LABEL':
     	            set_label = True
-    	        elif key == 'MPIRUN_VERBOSE':
+    	        elif key in ['MPIRUN_VERBOSE', 'RUNJOB_VERBOSE']:
     	            set_verbose = int(value)
-                    postfork_env[key] = value
+                    self.env['RUNJOB_VERBOSE'] = value
+                else:
+                   self.env[key] == value 
             else:
                 app_envs.append((key, value))
 
