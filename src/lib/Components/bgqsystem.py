@@ -954,7 +954,7 @@ class BGSystem (BGBaseSystem):
             current_killing_jobs = system_script_forker.get_children(None, self.killing_jobs.values())
                    
             for job in current_killing_jobs:
-                if job['completed']:
+                if job['complete']:
                     del self.killing_jobs[rev_killing_jobs[int(job['id'])]]
                     removed_jobs.append(job['id'])
             system_script_forker.cleanup_children(removed_jobs)
