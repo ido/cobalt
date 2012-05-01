@@ -76,7 +76,7 @@ class BGRunjobChild (PGChild):
     	            set_verbose = int(value)
                     self.env['RUNJOB_VERBOSE'] = value
                 else:
-                   self.env[key] == value 
+                   self.env[key] = value 
             else:
                 app_envs.append((key, value))
 
