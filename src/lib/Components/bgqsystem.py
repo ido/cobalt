@@ -335,7 +335,7 @@ class BGSystem (BGBaseSystem):
         #error out.
         
         def init_fail_exit():
-            self.logger.alert("System Component Exiting!")
+            self.logger.critical("System Component Exiting!")
             sys.exit(1)
 
         try:
@@ -1057,19 +1057,14 @@ class BGSystem (BGBaseSystem):
                 if len(missing_blocks) > 0 or len(new_blocks) > 0:
                     self.update_relatives()
                
-                if self.suspend_booting:
-                    for b in self._blocks.values():
-                        b.state = "Booting Halted"
-                    Cobalt.Util.sleep(10)
-                    continue
-
                 for b in self._blocks.values():
                     #start off all pseudoblocks as idle, we can make them not idle soon.
                     if b.block_type == "pseudoblock":
                         b.state = 'idle'
                 
                 for b in self._blocks.values():
-                   
+                  
+
                     if b.cleanup_pending:
                         if b.used_by:
                             # if the partition has a pending cleanup request, then set the state so that cleanup will be
@@ -1371,11 +1366,14 @@ class BGSystem (BGBaseSystem):
         self._blocks_lock.acquire()
         try:
             block = self._blocks[block_name]
-            if block.used_by == jobid:
+            if block.used_by == jobid or jobid == None:
                 block.cleanup_pending = True
                 self.logger.info("block %s: block marked for cleanup", block_name)
                 block.state = "cleanup"
                 block.freeing = True
+                #if this block is going to cleanup, the by definition, 
+                #the reservation (aka "the Party") is over.
+                #self.reserve_resources_until(block_name, None, jobid)
 
             elif block.used_by != None:
                 #may have to relax this for psedoblock case.
@@ -1444,16 +1442,17 @@ class BGSystem (BGBaseSystem):
         spec -- dictionary hash specifying a process group to start
         """
         
+        if self.suspend_booting:
+            #booting isn't happening right now, just exit.
+            self.logger.critical("Booting suspended.  Unable to add process group right now.")
+            raise RuntimeError, "Booting is halted!"
+        
         self.logger.info("add_process_groups(%r)" % (specs))
 
         # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
         # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
         # error message should also be attached to the process group so that cqm can report the problem to the user.
         
-        if self.suspend_booting:
-            #booting isn't happening right now, just exit.
-            self.logger.critical("Booting suspended.  Unable to add process group right now.")
-            raise RuntimeError, "Booting is halted!"
 
 
         start_apg_timer = time.time()
@@ -1481,9 +1480,6 @@ class BGSystem (BGBaseSystem):
                         compute_block = self.get_compute_block(boot_location)
                     except RuntimeError:
                         self._fail_boot(pgroup, boot_location, "%s: Unable to retrieve control system data for block %s. Aborting job." % (pgroup.label, boot_location))
-                        #self.logger.warning("Unable to retrieve block data for %s.  Aborting Job.", boot_location)
-                        #pgroup.exit_status = 255
-                        #self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
 
                     if boot_location_block.block_type == 'pseudoblock':
                         #we have to boot a subblock job.  This block may already be booted.
@@ -1499,7 +1495,6 @@ class BGSystem (BGBaseSystem):
                             continue
                         elif boot_block.getStatus() == pybgsched.Block.Initialized:
                             #already booted, we can start right away.
-                            #self._blocks_lock.acquire()
                             if not (self._blocks[boot_location].state in ['cleanup','cleanup-initiate']) or self._blocks[boot_location].freeing: #well almost.  the block appears to be freeing.
                                 self._log_successful_boot(pgroup, boot_location, "%s: Block %s for location %s already booted.  Starting task for job %s. (APG)" % (pgroup.label, boot_location, pgroup.location[0], pgroup.jobid))
                                 boot_block.addUser(boot_location, pgroup.user)
@@ -1510,7 +1505,6 @@ class BGSystem (BGBaseSystem):
                                 self.pgroups_wait_reboot.append(pgroup)
                                 continue
                         #otherwise we should proceed through normal block booting proceedures.
-                            #self._blocks_lock.release()
                     try: #Initiate boot here, I guess?  Need to make this not block.
                         #if we're already booted, (subblock), we can immediately move to start.
                         boot_block = self.get_compute_block(boot_location)
@@ -1519,17 +1513,11 @@ class BGSystem (BGBaseSystem):
                         self._log_successful_boot(pgroup, boot_location, "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
                     except RuntimeError:
                         self._fail_boot(pgroup, boot_location, "%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (pgroup.label, boot_location))
-                        #self.logger.warning("%s: Unable to boot block %s.  Aborting job startup.", pgroup.label, boot_location)
-                        #pgroup.exit_status = 255 #do we want to encode this somehow? --PMR
-                        #self._mark_block_for_cleaning(pgroup.location[0], pgroup.jobid)
                     else:
                         self.booting_blocks[boot_location] = pgroup
                 else:
                     self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                     pgroup.location))
-                    #self.logger.error("%s: the internal reservation on %s expired; job has been terminated", pgroup.label,
-                    #    pgroup.location)
-                    #pgroup.exit_status = 255
         
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
@@ -1678,8 +1666,6 @@ class BGSystem (BGBaseSystem):
                 #may have had an inopportune free, go ahead and make this and try and reboot.
                 self.pgroups_wait_reboot.append(pgroup)
                 self.logger.warning("%s: Block for pending subblock job on %s free. Attempting reboot.", pgroup.label, pgroup.location[0])
-                #pgroup.exit_status = 255
-                #self.logger.error("%s: Block for pending subblock job on %s free.  Assuming catastrophic failure and aborting.", pgroup.label, pgroup.location[0])
                 booted_pgroups.append(pgroup)
 
         #clean up the ones we've stopped tracking
@@ -1757,6 +1743,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("%s: process group failed to start using the %s component; releasing resources",
                         pgroup.label, pgroup.forker)
                 self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+                self._mark_block_for_cleaning(block_loc, pgroup.jobid)
                 pgroup.exit_status = 255
         except (ComponentLookupError), e:
             self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
@@ -1772,12 +1759,15 @@ class BGSystem (BGBaseSystem):
             #del self.process_groups[process_group.id]
             #raise
             pgroup.exit_status = 255
+            self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+            self._mark_block_for_cleaning(block_loc, pgroup.jobid)
             booted_blocks.append(block_loc)
             return
         except:
             self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
                     "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+            self._mark_block_for_cleaning(block_loc, pgroup.jobid)
             pgroup.exit_status = 255
         finally:
             for block_id in booted_blocks:
@@ -1923,9 +1913,6 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
 
-                if signame == "SIGKILL":
-                    self._mark_block_for_cleaning(pg.location[0], pg.jobid)
-
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
@@ -1958,3 +1945,9 @@ class BGSystem (BGBaseSystem):
     def booting_status(self):
         return self.suspend_booting
 
+    @exposed
+    def set_cleaning(self, block, jobid, whoami):
+        self.logger.warning("User %s force-cleaning block %s.", whoami, block)
+        self._mark_block_for_cleaning(block, jobid)
+        #self.reserve_resources_until(pgroup.location, None, jobid)
+        return

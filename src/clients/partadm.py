@@ -35,25 +35,26 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
 
 opt_parser = optparse.OptionParser(usage=helpmsg, version=("Cobalt Version: %s" % __version__))
 
-opt_parser.add_option("-a", action="store_true", dest="add")
-opt_parser.add_option("-d", action="store_true", dest="delete")
-opt_parser.add_option("-l", action="store_true", dest="list_blocks")
-opt_parser.add_option("-r", "--recursive", action="store_true", dest="recursive")
-opt_parser.add_option("--queue", action="store", type="string", dest="queue")
-opt_parser.add_option("--activate", action="store_true", dest="activate")
-opt_parser.add_option("--deactivate", action="store_true", dest="deactivate")
-opt_parser.add_option("--enable", action="store_true", dest="enable")
-opt_parser.add_option("--disable", action="store_true", dest="disable")
-opt_parser.add_option("--fail", action="store_true", dest="fail")
-opt_parser.add_option("--unfail", action="store_true", dest="unfail")
-opt_parser.add_option("--dump", action="store_true", dest="dump")
-opt_parser.add_option("--xml", action="store_true", dest="xml")
-opt_parser.add_option("--savestate", action="store", type="string", dest="savestate")
-opt_parser.add_option("--boot_stop", action="store_true", dest="boot_stop")
-opt_parser.add_option("--boot_start", action="store_true", dest="boot_start")
-opt_parser.add_option("--boot_status", action="store_true", dest="boot_status")
-opt_parser.add_option("-b", "--blockinfo", action="store_true", dest="blockinfo")
-
+opt_parser.add_option("-a", action="store_true", dest="add", help="add the block to the list of managed blocks")
+opt_parser.add_option("-d", action="store_true", dest="delete", help="remove the block from the list of managed blocks")
+opt_parser.add_option("-l", action="store_true", dest="list_blocks", help="list all blocks and their status")
+opt_parser.add_option("-r", "--recursive", action="store_true", dest="recursive", help="recursively add all child blocks of the specified blocks in the positional arguments")
+opt_parser.add_option("--queue", action="store", type="string", dest="queue", help="set the queues associated with the target blocks to this list of queues")
+opt_parser.add_option("--activate", action="store_true", dest="activate", help="activate the block for scheduling")
+opt_parser.add_option("--deactivate", action="store_true", dest="deactivate", help="deactivate the block for schedulign")
+opt_parser.add_option("--enable", action="store_true", dest="enable", help="enable the running of jobs on the target blocks")
+opt_parser.add_option("--disable", action="store_true", dest="disable", help="disable the running of jobs on the target blocks")
+opt_parser.add_option("--fail", action="store_true", dest="fail", help="mark the block as though it failed diagnostics (deprecated)")
+opt_parser.add_option("--unfail", action="store_true", dest="unfail", help="clear failed diagnostics on a block (deprecated)")
+opt_parser.add_option("--dump", action="store_true", dest="dump", help="dump a representation of the system's block state")
+opt_parser.add_option("--xml", action="store_true", dest="xml", help="dump a xml representation of the system's blocks for simulator usage")
+opt_parser.add_option("--savestate", action="store", type="string", dest="savestate", help="force the system component to write it's statefile")
+opt_parser.add_option("--boot-stop", action="store_true", dest="boot_stop", help="disable booting of any jobs")
+opt_parser.add_option("--boot-start", action="store_true", dest="boot_start", help="enable booting of any jobs")
+opt_parser.add_option("--boot-status", action="store_true", dest="boot_status", help="show whether or not booting is enabled")
+opt_parser.add_option("-b", "--blockinfo", action="store_true", dest="blockinfo", help="print the detailed state and information for all requested blocks.")
+opt_parser.add_option("--pg_list", action="store_true", dest="pg_list", help="not implemented yet")
+opt_parser.add_option("-c", "--clean_block", action="store_true", dest="clean_block", help="force the block to cleanup and clear all internal reservations on that resource")
 
 #detect arguemnts that conflict, use this in a verification callback.
 conflicting_args = {'add':['delete','fail','unfail','boot_stop','boot_start'],
@@ -104,6 +105,9 @@ def print_block(block_dicts):
         Cobalt.Util.print_vertical([header_list,value_list])
     return
 
+def print_pg_info(pg_list):
+    raise NotImplementedError("Coming Soon!")
+    return
 
 if __name__ == '__main__':
    
@@ -133,6 +137,7 @@ if __name__ == '__main__':
                     parts.append(child)
     else:
         parts = args
+
 
     if opts.add:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
@@ -204,13 +209,13 @@ if __name__ == '__main__':
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
         parts = component_call(system.get_partitions, args)
     elif opts.boot_stop:
-        args = (whoami,)
-        parts = component_call(halt_booting, args)
+        system.halt_booting(whoami)
         print "Halting booting: halting scheduling is advised"
+        sys.exit(0)
     elif opts.boot_start:
-        args = (whoami,)
-        parts = component_call(resume_booting, args)
+        system.resume_booting(whoami)
         print "Enabling booting"
+        sys.exit(0)
     elif opts.boot_status:
         boot_status = system.booting_status()
         if not boot_status:
@@ -219,6 +224,9 @@ if __name__ == '__main__':
             print "Block Booting: SUSPENDED."
         sys.exit(0)
 
+    if opts.pg_list:
+        print_pg_info(None)
+        sys.exit(0)
 
     if opts.blockinfo:
         for part in parts:
@@ -229,7 +237,19 @@ if __name__ == '__main__':
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*'}]))
         sys.exit(0)
- 
+
+    if opts.clean_block:
+        sched_enabled = ComponentProxy('scheduler',defer=False).sched_status()
+        boot_disabled = system.booting_status()
+        #if sched_enabled or not boot_disabled:
+        #    print "scheduling and booting must be disabled prior to force-cleaning blocks."
+        #    print "No blocks were marked for cleaning."
+        #    sys.exit(1)
+        for part in parts:
+            system.set_cleaning(part, None, whoami)
+            print "Initiating cleanup on block %s" % part
+        sys.exit(0)
+
     if opts.list_blocks:
         # need to cascade up busy and non-functional flags
 #        print "buildRackTopology sees : " + repr(parts)

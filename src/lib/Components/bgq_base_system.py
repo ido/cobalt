@@ -1260,7 +1260,9 @@ class BGBaseSystem (Component):
                     self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
                         jobid, block_name, used_by)
             else:
-                if used_by == jobid:
+                #new_time must be none, we're unsetting this
+                if used_by == jobid or jobid == None:
+                    #yes, jobid == None is a hard override
                     self.blocks[block_name].reserved_until = False
                     self.blocks[block_name].reserved_by = None
                     self.logger.info("reservation on block '%s' has been removed", block_name)
@@ -1275,5 +1277,30 @@ class BGBaseSystem (Component):
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
 
-
+    
+#    @exposed
+#    def get_process_group_info(self, pg_list=[]):
+#    
+#        fetch_list = []
+#
+#        if pg_list != []:
+#            raise NotImplementedError("process group name list fetch not yet implemeted.")
+#        else:
+#            fetch_list = ['*']
+#        
+#        pg_list = []
+#
+#        for pg_id in fetch_list:
+#
+#            pg_list.extend(self.process_groups.q_get([{"id":pg_name,
+#                "args":'*', "cobalt_log_file":'*', "cwd":'*', "env":'*',
+#                "executable":'*', "exit_status":'*', "head_pid":'*',
+#                "jobid":'*', "kernel":'*', "kerneloptions":'*', "location":'*',
+#                "mode":'*', "nodefile":'*', "size":'*', "state":'*', "stderr":'*',
+#                "stdin":'*', "stdout":'*', "umask":'*', "user":'*', "starttime":'*',
+#                "walltime":'*', "resid":'*', "runid":'*', "forker":'*',
+#                "subblock":'*', "subblock_parent":'*', "corner":'*', "extents":'*'
+#                }]))
+#
+#        return pg_list
 
