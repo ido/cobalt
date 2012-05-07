@@ -9,7 +9,7 @@ URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python >= 2.6,  python2.6-m2crypto, python2.6-xml 
+Requires: python >= 2.6, m2crypto, libxml2 
 
 %package -n cobalt-clients
 Version: %{version}
@@ -42,13 +42,15 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/user_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/bg_mpirun_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bg_runjob_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/system_script_forker.py ${RPM_BUILD_ROOT}%{_sbindir}
-%{__mv} ${RPM_BUILD_ROOT}/usr/bin/brooklyn.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/gravina.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/partadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/setres.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/releaseres.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cqadm.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
+%{__mv} ${RPM_BUILD_ROOT}/usr/bin/bgqsystem.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/schedctl.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_system.py ${RPM_BUILD_ROOT}%{_sbindir}
 %{__mv} ${RPM_BUILD_ROOT}/usr/bin/cluster_simulator.py ${RPM_BUILD_ROOT}%{_sbindir}
@@ -62,7 +64,7 @@ install -m 755 src/clients/cobalt-admin ${RPM_BUILD_ROOT}/usr/bin
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/pmrun.py
 %{__rm} -f ${RPM_BUILD_ROOT}/usr/bin/cdump.py
 mkdir -p ${RPM_BUILD_ROOT}%{_initrddir}
-install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
+#install -m 644 misc/cobalt ${RPM_BUILD_ROOT}/etc/init.d
 #mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}
 install -m 644 misc/cobalt.conf ${RPM_BUILD_ROOT}/etc
 cd ${RPM_BUILD_ROOT}%{_sbindir}
@@ -73,7 +75,7 @@ find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 g
 cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done 
 
 %clean
-#rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
 
 %pre
 if ! /usr/bin/getent group cobalt &>/dev/null
@@ -95,7 +97,7 @@ fi
 %files -n cobalt
 /usr/sbin/*
 %config (noreplace) %attr(640,root,cobalt) /etc/cobalt.conf
-%config(noreplace) /etc/init.d/cobalt
+#%config(noreplace) /etc/init.d/cobalt
 /usr/share/man/man5/*
 /usr/share/man/man8/*.8*
 
