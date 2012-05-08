@@ -474,6 +474,11 @@ class ClusterBaseSystem (Component):
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
     
     def reserve_resources_until(self, location, time, jobid):
+        '''WARNING: THIS IS VERY DIFFERENT FROM BLUE GENES!
+
+        THIS WILL FORCIBLY CLEAR THE NODE!
+
+        '''
         if time is None:
             for host in location:
                 self.running_nodes.discard(host)

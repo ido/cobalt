@@ -215,7 +215,7 @@ class ClusterSystem (ClusterBaseSystem):
                         clean_partition = True
                 if clean_partition:
                     pass
-                    self.reserve_resources_until(pg.location, None, pg.jobid)
+                    #self.reserve_resources_until(pg.location, None, pg.jobid)
                     #self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
 
         # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
