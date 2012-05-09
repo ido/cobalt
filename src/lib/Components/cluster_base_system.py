@@ -151,13 +151,17 @@ class ClusterBaseSystem (Component):
                 "cluster_base_version": 1, 
                 "queue_assignments": self.queue_assignments,
                 "down_nodes": self.down_nodes })
+        self.logger.debug("state: %s", state)
         return state
 
     def __setstate__(self, state):
+        self.logger.debug("initial state: %s", state)
         Component.__setstate__(self, state)
 
-        self.queue_assignments = state["queue_assignments"]
-        self.down_nodes = state["down_nodes"]
+        self.queue_assignments = state.get('queue_assignments', {})
+        if self.queue_assignments == {}:
+            self.queue_assignments["default"] = set(self.all_nodes)
+        self.down_nodes = state.get('down_nodes', {})
 
         self.process_groups = ProcessGroupDict()
         self.all_nodes = set()
@@ -178,6 +182,7 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def save_me(self):
+        self.logger.debug('saving state....')
         Component.save(self)
     save_me = automatic(save_me)
 
@@ -474,11 +479,14 @@ class ClusterBaseSystem (Component):
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
     
     def reserve_resources_until(self, location, time, jobid):
-        '''WARNING: THIS IS VERY DIFFERENT FROM BLUE GENES!
-
-        THIS WILL FORCIBLY CLEAR THE NODE!
+        '''hold onto resources until a timeout has passed, and then clear the 
+        nodes for another job.
 
         '''
+        
+        #WARNING: THIS IS VERY DIFFERENT FROM BLUE GENES!
+        #THIS WILL FORCIBLY CLEAR THE NODE!
+
         if time is None:
             for host in location:
                 self.running_nodes.discard(host)

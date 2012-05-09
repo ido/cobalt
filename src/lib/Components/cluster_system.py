@@ -135,7 +135,7 @@ class ClusterSystem (ClusterBaseSystem):
         
     def __getstate__(self):
         state = {}
-        state.update(Component.__getstate__(self))
+        state.update(ClusterBaseSystem.__getstate__(self))
         # state.update({
         #         "cluster_system_version": 1 }) 
         return state
