@@ -270,7 +270,12 @@ class rm_partition_t (Structure):
 
 pm_partition_id_t = c_char_p
 rm_partition_state_t = c_int
-rm_partition_state_values = ("RM_PARTITION_FREE", "RM_PARTITION_CONFIGURING", "RM_PARTITION_READY", "RM_PARTITION_BUSY", "RM_PARTITION_DEALLOCATING", "RM_PARTITION_ERROR", "RM_PARTITION_NAV")
+if systype == 'BGL':
+    rm_partition_state_values = ("RM_PARTITION_FREE", "RM_PARTITION_CONFIGURING", "RM_PARTITION_READY", "RM_PARTITION_BUSY", 
+                                 "RM_PARTITION_DEALLOCATING", "RM_PARTITION_ERROR", "RM_PARTITION_NAV")
+else:
+    rm_partition_state_values = ("RM_PARTITION_FREE", "RM_PARTITION_CONFIGURING", "RM_PARTITION_REBOOTING", "RM_PARTITION_READY", 
+                                 "RM_PARTITION_DEALLOCATING", "RM_PARTITION_ERROR", "RM_PARTITION_NAV")
 rm_connection_type_t = c_int
 rm_connection_type_values = ("RM_MESH", "RM_TORUS", "RM_NAV")
 rm_partition_mode_t = c_int

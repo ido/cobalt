@@ -87,6 +87,9 @@ class UserScriptChild (PGChild):
     def preexec_last(self):
         PGChild.preexec_last(self)
 
+    def signal(self, signum, pg=True):
+        PGChild.signal(self, signum, pg)
+
 
 class UserScriptForker (PGForker):
     """Component for starting script jobs"""
