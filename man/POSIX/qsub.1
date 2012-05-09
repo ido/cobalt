@@ -10,68 +10,65 @@ qsub \- submit jobs to the queue manager for execution
 submits a job to the queue manager for execution. 
 .SH "OPTIONS"
 .TP
-.B \-d
-Turn on communication debugging.
-.TP
-.B \-\-version
-Print out version string
-.TP
-.B \-I
-Run an interactive command. During job execution, the current tty will
-be connected with the running job. (Not available on Blue Gene systems.)
-.TP 
-.B \-q [queue]
-Submit the job to the specified queue.
-.TP
-.B \-\-env [<var1=value1>:<var=value2>]
-Set environment variables that will be passed into the job's environment at 
-runtime.
-.TP
-.B \-h 
-Submit job and immediately place it in the user hold state
-.TP
-.B \-n [nodecount]
-Specifies the node count for a job
-.TP
-.B \-\-proccount [process count]
-Specify the number of processes to start.
-.TP
 .B \-A [project]
 Associate the job with the allocation for project project. This is
 used to properly account for machine usage. 
 .TP
-.B \-t [wallclock time] 
-Specify the runtime for a job. If the job runs over this limit, it will be 
-killed. The time may be specified as eitehr an integer number of minutes or a 
-colon-delimited value of the format: HH:MM:SS.
+.B \-\-attrs [<attr1=val1>:<attr2=val2>:...]
+Set a list of attributes for a job that must be fulfilled for a job to run.  
+For instance, --attrs location=[blocklocation] will force a job to run on a 
+specific block.
 .TP
 .B \--cwd [directory]
 Tell the job to use the specified directory as the default current working directory
 while running the job.
 .TP 
-.B \-O [output prefix]
-Use the specified prefix for both .output and .error files. This implies the 
-\-o and \-e flags.
+.B \-d
+Turn on communication debugging.
 .TP
-.B \-M [email address]
-Send an email notification at the start and stop of the job to the
-specified email address.
+.B \-\-debuglog [path to file]
+Send debugging information from cobalt to file specified.
+.TP
+.B \-\-dependencies [<jobid1>:<jobid2>:...]
+Set the dependencies for the job being submitted.  This job won't run until 
+all jobs in the dependency list have finished and exited with a status of 0.
 .TP
 .B \-e [path to file]
 Send job stderr to file specified.
 .TP
-.B \-o [path to file]
-Send job stdout to file specified.
+.B \-\-env [<var1=value1>:<var=value2>]
+Set environment variables that will be passed into the job's environment at 
+runtime.
 .TP
-.B \-\-debuglog [cobaltlog file path]
-Send debugging information from cobalt to file specified.
+.B \-h
+Submit job and immediately place it in the user hold state
 .TP
 .B \-i [path to file]
 Send file to job's stdin.
 .TP
-.B \-\-dependencies [<jobid1>:<jobid2>:...]
-Set the dependencies for the job being submitted.  This job won't run until 
-all jobs in the dependency list have finished and exited with a status of 0..
+.B \-I
+Run an interactive command. During job execution, the current tty will
+be connected with the running job. (Not available on Blue Gene systems.)
+.TP 
+.B \-M [email address]
+Send an email notification at the start and stop of the job to the
+specified email address.
+.TP
+.B \-n [nodecount]
+Specifies the node count for a job
+.TP
+.B \-o [path to file]
+Send job stdout to file specified.
+.TP
+.B \-O [output prefix]
+Use the specified prefix for both .output and .error files. This implies the 
+\-o and \-e flags.
+.TP
+.B \-\-proccount [process count]
+Specify the number of processes to start.
+.TP
+.B \-q [queue] 
+Submit the job to the specified queue.
 .TP
 .B \-\-run_users [<user1>:<user2>:...]
 Sets a colon-separated list of users for the job being submitted.  All users
@@ -82,11 +79,15 @@ submitting user is always able to run commands on a submitted job.
 Appends the list of users in a project to the list of users authorized to run
 commands on the submitted job. 
 .TP
-.B \-\-attrs [<attr1=val1>:<attr2=val2>:...]
-Set a list of attributes for a job that must be fulfilled for a job to run.  
-For instance, --attrs location=[blocklocation] will force a job to run on a 
-specific block.
+.B \-t [wallclock time] 
+Specify the runtime for a job. If the job runs over this limit, it will be 
+killed. The time may be specified as eitehr an integer number of minutes or a 
+colon-delimited value of the format: HH:MM:SS.
 .TP
+.B \-\-version
+Print out version string
+.TP
+
 
 .SH "BLUEGENE OPTIONS"
 .TP 
