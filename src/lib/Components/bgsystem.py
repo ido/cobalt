@@ -309,6 +309,7 @@ class BGSystem (BGBaseSystem):
             p.used_by = None
 
         while True:
+            self.logger.log(1, "update_partition_log: getting partition list")
             try:
                 system_def = Cobalt.bridge.PartitionList.info_by_filter()
             except BridgeException:
@@ -321,6 +322,7 @@ class BGSystem (BGBaseSystem):
                 Cobalt.Util.sleep(5) # wait a little bit...
                 continue
     
+            self.logger.log(1, "update_partition_log: getting node card status")
             try:
                 bg_object = Cobalt.bridge.BlueGene.by_serial()
                 for bp in bg_object.base_partitions:
@@ -345,6 +347,7 @@ class BGSystem (BGBaseSystem):
 
             try:
                 # update the state of each partition
+                self.logger.log(1, "update_partition_log: waiting for partition mutex")
                 self._partitions_lock.acquire()
                 self.bridge_in_error = False
                 now = time.time()
@@ -356,6 +359,7 @@ class BGSystem (BGBaseSystem):
                 new_partitions = []
                 self.offline_partitions = []
 
+                self.logger.log(1, "update_partition_log: scanning partitions")
                 for partition in system_def:
                     bridge_partition_cache[partition.id] = partition
                     missing_partitions.discard(partition.id)
@@ -377,6 +381,8 @@ class BGSystem (BGBaseSystem):
                         new_partitions.append(partition)
 
                 # remove the missing partitions and their wiring relations
+                if missing_partitions:
+                    self.logger.log(1, "update_partition_log: removing deleted partitions")
                 for pname in missing_partitions:
                     self.logger.info("missing partition removed: %s", pname)
                     p = self._partitions[pname]
@@ -391,6 +397,8 @@ class BGSystem (BGBaseSystem):
                 wiring_cache = {}
                 # throttle the adding of new partitions so updating of
                 # machine state doesn't get bogged down
+                if new_partitions:
+                    self.logger.log(1, "update_partition_log: adding new partitions")
                 for partition in new_partitions[:8]:
                     self.logger.info("new partition found: %s", partition.id)
                     try:
@@ -407,9 +415,11 @@ class BGSystem (BGBaseSystem):
 
                 # if partitions were added or removed, then update the relationships between partitions
                 if len(missing_partitions) > 0 or len(new_partitions) > 0:
+                    self.logger.log(1, "update_partition_log: updating relatives")
                     self.update_relatives()
 
                 # if any partitions are being cleaned up, then check on the progress
+                self.logger.log(1, "update_partition_log: checking cleanup progress")
                 for p in self._partitions.values():
                     if p.cleanup_pending:
                         busy = []
@@ -443,6 +453,7 @@ class BGSystem (BGBaseSystem):
                             self.logger.info("partition %s: cleaning complete", p.name)
 
                 # determine and set the state for each of the partitions
+                self.logger.log(1, "update_partition_log: setting partition state")
                 for p in self._partitions.values():
                     if p.state != 'idle':
                         continue
@@ -524,6 +535,8 @@ class BGSystem (BGBaseSystem):
             self._partitions_lock.release()
 
             # cleanup partitions and set their kernels back to the default (while _not_ holding the lock)
+            if partitions_reset_kernel:
+                self.logger.log(1, "update_partition_log: clearing kernel settings")
             for p in partitions_reset_kernel:
                 try:
                     self._clear_kernel(p.name)
@@ -533,6 +546,8 @@ class BGSystem (BGBaseSystem):
 
             try:
                 pnames_cleaned = []
+                if partitions_destroy:
+                    self.logger.log(1, "update_partition_log: starting partition destruction")
                 for p in partitions_destroy:
                     pnames_destroyed = []
                     parts = list(p._all_children)
@@ -553,26 +568,30 @@ class BGSystem (BGBaseSystem):
                     if len(pnames_destroyed) > 0:
                         self.logger.info("partition %s: partition destruction initiated for %s",
                             p.name, ", ".join(pnames_destroyed))
-                try:
-                    job_filter = Cobalt.bridge.JobFilter()
-                    job_filter.job_type = Cobalt.bridge.JOB_TYPE_ALL_FLAG
-                    jobs = Cobalt.bridge.JobList.by_filter(job_filter)
-                except BridgeException:
-                    self.logger.error("Error communicating with the bridge to obtain job information.")
-                else:
-                    for job in jobs:
-                        if job.partition_id in pnames_cleaned:
-                            try:
-                                job.cancel()
-                                self.logger.info("partition %s: task %d canceled", job.partition_id, job.db_id)
-                            except (Cobalt.bridge.IncompatibleState, Cobalt.bridge.JobNotFound):
-                                pass
-                            except:
-                                self.logger.error("partition %s: unexpected exception while canceling task %d",
-                                    job.partition_id, job.db_id, exc_info=True)
+                if pnames_cleaned:
+                    self.logger.log(1, "update_partition_log: starting job cancellation")
+                    try:
+                        job_filter = Cobalt.bridge.JobFilter()
+                        job_filter.job_type = Cobalt.bridge.JOB_TYPE_ALL_FLAG
+                        jobs = Cobalt.bridge.JobList.by_filter(job_filter)
+                    except BridgeException:
+                        self.logger.error("Error communicating with the bridge to obtain job information.")
+                    else:
+                        for job in jobs:
+                            if job.partition_id in pnames_cleaned:
+                                try:
+                                    if jop.state in ["RM_JOB_IDLE", "RM_JOB_LOADED", "RM_JOB_RUNNING", "RM_JOB_ERROR"]:
+                                        job.cancel()
+                                        self.logger.info("partition %s: task %d canceled", job.partition_id, job.db_id)
+                                except (Cobalt.bridge.IncompatibleState, Cobalt.bridge.JobNotFound):
+                                    pass
+                                except:
+                                    self.logger.error("partition %s: unexpected exception while canceling task %d",
+                                        job.partition_id, job.db_id, exc_info=True)
             except:
                 self.logger.error("error in update_partition_state", exc_info=True)
 
+            self.logger.log(1, "update_partition_log: sleeping")
             Cobalt.Util.sleep(10)
 
     def _mark_partition_for_cleaning(self, pname, jobid):

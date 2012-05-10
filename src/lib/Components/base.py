@@ -123,8 +123,8 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         try:
             component = cPickle.load(open(state_file_name))
         except:
-            component.logger.error("unable to load state from %s", state_file_name, exc_info=True)
             component = component_cls(**cls_kwargs)
+            component.logger.error("UNABLE TO LOAD STATE FROM %s.  STARTING WITH A BLANK SLATE.", state_file_name, exc_info=True)
         component.statefile = state_file_name
     else:
         component = component_cls(**cls_kwargs)
