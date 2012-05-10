@@ -300,7 +300,7 @@ class BGSystem (BGBaseSystem):
         cleanup_timeout = get_config_option('bgsystem', 'cleanup_timeout', 30)
 
         def _start_partition_cleanup(p):
-            self.logger.info("partition %s: marking partition for cleaning", p.name)
+            self.logger.info("partition %s: starting partition cleanup", p.name)
             p.cleanup_pending = True
             p.cleanup_timer = None
             partitions_reset_kernel.append(p)
@@ -580,9 +580,10 @@ class BGSystem (BGBaseSystem):
                         for job in jobs:
                             if job.partition_id in pnames_cleaned:
                                 try:
-                                    if jop.state in ["RM_JOB_IDLE", "RM_JOB_LOADED", "RM_JOB_RUNNING", "RM_JOB_ERROR"]:
+                                    if job.state in ["RM_JOB_IDLE", "RM_JOB_LOADED", "RM_JOB_RUNNING", "RM_JOB_ERROR"]:
+                                        self.logger.info("partition %s: canceling task %d; state=%s",
+                                            job.partition_id, job.db_id, job.state)
                                         job.cancel()
-                                        self.logger.info("partition %s: task %d canceled", job.partition_id, job.db_id)
                                 except (Cobalt.bridge.IncompatibleState, Cobalt.bridge.JobNotFound):
                                     pass
                                 except:
