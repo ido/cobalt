@@ -153,7 +153,7 @@ class Partition (Data):
 
     def get_state(self):
         state = {}
-        for attr in ('scheduled', 'functional', 'queue', 'reserved_by', 'reserved_util', 'used_by'):
+        for attr in ('scheduled', 'functional', 'queue', 'reserved_by', 'reserved_until', 'used_by'):
             if hasattr(self, attr):
                 state[attr] = getattr(self, attr)
         return state
@@ -294,7 +294,7 @@ class BGBaseSystem (Component):
                 if pname in self._partitions:
                     self._partitions[pname].restore_state(pstate)
         elif 'partition_flags' in state:
-            attrs = ['scheduled', 'functional', 'queue', 'reserved_by', 'reserved_util', 'used_by', 'cleanup_pending']
+            attrs = ['scheduled', 'functional', 'queue', 'reserved_by', 'reserved_until', 'used_by', 'cleanup_pending']
             for pname, flags in state['partition_flags'].iteritems():
                 if pname in self._partitions:
                     pstate = {}

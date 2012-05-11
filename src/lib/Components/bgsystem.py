@@ -498,20 +498,26 @@ class BGSystem (BGBaseSystem):
                         continue
 
                     for dep_name in p._wiring_conflicts:
-                        if self._partitions[dep_name].state == "busy" or p.used_by or p.cleanup_pending:
-                            p.state = "blocked-wiring (%s)" % dep_name
-                            break
+                        try:
+                            part = self._partitions[dep_name]
+                        except KeyError:
+                            self.logger.warning("partition %s: wiring conflict %s does not exist in partition table",
+                                p.name, dep_name)
+                        else:
+                            if part.state == "busy" or part.used_by or part.cleanup_pending:
+                                p.state = "blocked-wiring (%s)" % dep_name
+                                break
                     if p.state != 'idle':
                         continue
 
-                    if p.reserved_until:
+                    if p.used_by:
                         p.state = "allocated"
                         continue
 
                     allocated = None
                     cleaning = None
                     for part in p._parents.union(p._children):
-                        if part.reserved_until:
+                        if part.used_by:
                             allocated = part
                         if part.cleanup_pending:
                             cleaning = part
