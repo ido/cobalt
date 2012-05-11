@@ -367,16 +367,17 @@ class BGSystem (BGBaseSystem):
                         p = self._partitions[partition.id]
                         p.state = _get_state(partition)
                         p._update_node_cards()
-                        if p.cleanup_pending and p.used_by:
-                            # if the partition has a pending cleanup request, then set the state so that cleanup will be
-                            # performed
-                            _start_partition_cleanup(p)
-                        elif p.reserved_until and now > p.reserved_until:
-                            # if the job assigned to the partition has completed, then set the state so that cleanup will be
-                            # performed
-                            self.logger.info("partition %s: reservation for job %s has expired; clearing reservation.",
-                                p.name, p.used_by)
-                            _start_partition_cleanup(p)
+                        if p.used_by:
+                            if p.cleanup_pending:
+                                # if the partition has a pending cleanup request, then set the state so that cleanup will be
+                                # performed
+                                _start_partition_cleanup(p)
+                            elif not p.reserved_until or now > p.reserved_until:
+                                # if the job assigned to the partition has completed, then set the state so that cleanup will be
+                                # performed
+                                self.logger.info("partition %s: reservation for job %s has expired; clearing reservation.",
+                                    p.name, p.used_by)
+                                _start_partition_cleanup(p)
                     else:
                         new_partitions.append(partition)
 
