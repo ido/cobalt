@@ -151,11 +151,9 @@ class ClusterBaseSystem (Component):
                 "cluster_base_version": 1, 
                 "queue_assignments": self.queue_assignments,
                 "down_nodes": self.down_nodes })
-        self.logger.debug("state: %s", state)
         return state
 
     def __setstate__(self, state):
-        self.logger.debug("initial state: %s", state)
         Component.__setstate__(self, state)
 
         self.queue_assignments = state.get('queue_assignments', {})
@@ -182,7 +180,6 @@ class ClusterBaseSystem (Component):
         self.logger.info("allocation timeout set to %d seconds." % self.alloc_timeout)
 
     def save_me(self):
-        self.logger.debug('saving state....')
         Component.save(self)
     save_me = automatic(save_me)
 
@@ -295,11 +292,6 @@ class ClusterBaseSystem (Component):
             return {jobid: [available_nodes.pop() for i in range(nodes)]}
         else:
             return None
-    
-
-
-
-   
 
     def _get_available_nodes(self, args):
         queue = args['queue']
@@ -689,25 +681,7 @@ class ClusterBaseSystem (Component):
             return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
                     "Job %s/%s" % (jobid, user))
 
-        
 
-    #def launch_cleaning_process(self, host, jobid, user, group_name):
-    #    '''Ping the forker to launch the cleaning process.
-    #
-    #    '''
-    #    epilogue_script = get_cluster_system_config("epilogue", None)
-    #    if epilogue_script == None:
-    #        self.logger.error("Job %s/%s: epilogue not defined in the "\
-    #                "cluster_system section of the cobalt config file!",
-    #                user, jobid)
-    #        return None
-    #    else:
-    #        cmd = ["/usr/bin/ssh", host, epilogue_script, 
-    #                str(jobid), user, group_name]
-    #        return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
-    #                "Job %s/%s" % (jobid, user))
-
-    
     def retry_cleaning_scripts(self):
         '''Continue retrying scripts in the event that we have lost contact 
         with the forker component.  Reset start-time to when script starts.
@@ -794,9 +768,9 @@ class ClusterBaseSystem (Component):
     
              
             exit_status = [c['exit_status'] for c in children if c['complete'] ]
+            #self.logger.debug("DEBUG: exit_status = %s", exit_status)
             if exit_status == []:
                 exit_status = None
-
 
             if exit_status != None:
                 #we're done, this node is now free to be scheduled again.
@@ -817,7 +791,7 @@ class ClusterBaseSystem (Component):
                             
                         #mark as dirty and arrange to mark down.
                         self.down_nodes.add(cleaning_process['host'])
-                        self.running_nodes.discard(cleaning_process['host'].host) # <---????check this!
+                        self.running_nodes.discard(cleaning_process['host'].host) # No longer running, down == not allocatable
                         self.logger.error("Job %s/%s: epilogue timed out on host %s, marking hosts down", 
                             user, jobid, cleaning_process['host'])
                         self.logger.error("Job %s/%s: stderr from epilogue on host %s: [%s]",
