@@ -18,7 +18,6 @@ Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
-Usage: partadm.py --diag=diag_name partition
 Usage: partadm.py --fail part1 part2
 Usage: partadm.py --unfail part1 part2
 Usage: partadm.py --dump
@@ -35,7 +34,7 @@ if __name__ == '__main__':
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
-                                      'queue=', 'deps=', 'xml', 'diag=', 'fail', 'unfail', 'savestate'])
+                                      'queue=', 'deps=', 'xml', 'fail', 'unfail', 'savestate'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -128,10 +127,6 @@ if __name__ == '__main__':
         func = system.get_partitions
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
-    elif '--diag' in [opt for (opt, arg)  in opts]:
-        func = system.run_diags
-        test_name = [arg for (opt, arg) in opts if opt == '--diag'][0]
-        args = (parts, test_name, whoami)
     else:
         print helpmsg
         raise SystemExit, 1

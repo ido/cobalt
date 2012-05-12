@@ -16,7 +16,6 @@ import thread
 import threading
 import xmlrpclib
 from datetime import datetime
-from ConfigParser import ConfigParser
 
 try:
     from elementtree import ElementTree
@@ -26,6 +25,7 @@ except ImportError:
 import Cobalt
 import Cobalt.Data
 import Cobalt.Util
+get_config_option = Cobalt.Util.get_config_option
 from Cobalt.Components import bg_base_system
 from Cobalt.Data import Data, DataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query
@@ -72,12 +72,11 @@ class Simulator (BGBaseSystem):
     
     logger = logger
 
-    bgsystem_config = BGBaseSystem.bgsystem_config
-
     def __init__ (self, *args, **kwargs):
         BGBaseSystem.__init__(self, *args, **kwargs)
         sys.setrecursionlimit(5000) #why this magic number?
         self.process_groups.item_cls = BGSimProcessGroup
+        self.node_card_cache = dict()
         self.config_file = kwargs.get("config_file", None)
         self.failed_components = set()
         if self.config_file is not None:
@@ -95,6 +94,8 @@ class Simulator (BGBaseSystem):
         BGBaseSystem.__setstate__(self, state)
         self.config_file = state['config_file']
         self.process_groups.item_cls = BGSimProcessGroup
+        self.node_card_cache = dict()
+        self.failed_components = set()
         if self.config_file is not None:
             self.configure(self.config_file)
         self.update_relatives()
@@ -102,7 +103,7 @@ class Simulator (BGBaseSystem):
         
     def save_me(self):
         Component.save(self)
-    save_me = automatic(save_me, float(bgsystem_config.get('save_me_interval', 10)))
+    save_me = automatic(save_me, float(get_config_option('bgsystem', 'save_me_interval', 10)))
 
 
     def configure (self, config_file):
@@ -285,7 +286,9 @@ class Simulator (BGBaseSystem):
         try:
             for p in self._partitions.values():
                 p._update_node_cards()
-                
+
+            self.offline_partitions = []
+
             now = time.time()
             
             # since we don't have the bridge, a partition which isn't busy
@@ -311,23 +314,28 @@ class Simulator (BGBaseSystem):
                         for part in p._children:
                             if part.state == "idle":
                                 part.state = "blocked (%s)" % (p.name,)
-                    for diag_part in self.pending_diags:
-                        if p.name == diag_part.name or p.name in diag_part.parents or p.name in diag_part.children:
-                            p.state = "blocked by pending diags"
                     for nc in p.node_cards:
-                        if nc.used_by:
+                        if nc.id in self.failed_components:
+                            p.state = "hardware offline: nodecard %s" % nc.id
+                            self.offline_partitions.append(p.name)
+                            break
+                        elif nc.used_by:
                             p.state = "blocked (%s)" % nc.used_by
                             break
                     for dep_name in p._wiring_conflicts:
-                        if self._partitions[dep_name].state in ["allocated", "busy"]:
+                        if self._partitions[dep_name].state == "busy" or p.used_by:
                             p.state = "blocked-wiring (%s)" % dep_name
                             break
-                    for part_name in self.failed_diags:
-                        part = self._partitions[part_name]
-                        if p.name == part.name:
-                            p.state = "failed diags"
-                        elif p.name in part.parents or p.name in part.children:
-                            p.state = "blocked by failed diags"
+                    for part_name in self.failed_partitions:
+                        try:
+                            part = self._partitions[part_name]
+                        except KeyError:
+                            pass
+                        else:
+                            if p == part:
+                                p.state = "failed diags"
+                            elif p in part._parents or p in part._children:
+                                p.state = "blocked (%s)" % (part.name)
         except:
             self.logger.error("error in update_partition_state", exc_info=True)
         
@@ -364,14 +372,3 @@ class Simulator (BGBaseSystem):
     def list_failed_components(self, component_names):
         return list(self.failed_components)
     list_failed_components = exposed(list_failed_components)
-    
-    def launch_diags(self, partition, test_name):
-        exit_value = 0
-        for nc in partition.node_cards:
-            if nc.id in self.failed_components:
-                exit_value = 1
-        for switch in partition.switches:
-            if switch in self.failed_components:
-                exit_value = 2
-
-        self.finish_diags(partition, test_name, exit_value)

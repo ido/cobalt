@@ -8,7 +8,6 @@ import inspect
 import os
 import os.path
 import cPickle
-import ConfigParser
 import pydoc
 import sys
 import getopt
@@ -24,6 +23,21 @@ from Cobalt.Server import BaseXMLRPCServer, XMLRPCServer, find_intended_location
 from Cobalt.Data import get_spec_fields
 from Cobalt.Exceptions import NoExposedMethod
 from Cobalt.Statistics import Statistics
+import Cobalt.Util
+init_cobalt_config = Cobalt.Util.init_cobalt_config
+get_config_option = Cobalt.Util.get_config_option
+ParsingError = Cobalt.Util.ParsingError
+
+
+try:
+    print >>sys.stderr, "INFO: initializing configuration system"
+    _config_files_read = init_cobalt_config()
+    _missing_config_files = list(set(Cobalt.CONFIG_FILES).difference(set(_config_files_read)))
+    if _missing_config_files:
+        print >>sys.stderr, "Warning: one or more config files were not found: %s" % (str(_missing_config_files)[1:-1],)
+except Error:
+    print >>sys.stderr, "ERROR: unable to parse config file:\n\t%s" % (e.message,)
+    sys.exit(1)
 
 
 def state_file_location():
@@ -33,15 +47,7 @@ def state_file_location():
     default: /var/spool/cobalt
 
     '''
-
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if _config._sections.has_key("statefiles"):
-        state_dir = os.path.expandvars(_config._sections['statefiles'].get("location", "/var/spool/cobalt"))
-    else:
-        state_dir = "/var/spool/cobalt"
-
-    return state_dir
+    return os.path.expandvars(get_config_option('statefiles', "location", "/var/spool/cobalt"))
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
                    cls_kwargs={}, extra_getopt='', time_out=10,
@@ -118,18 +124,16 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             component = cPickle.load(open(state_file_name))
         except:
             component = component_cls(**cls_kwargs)
-            component.logger.error("unable to load state from %s", state_file_name, exc_info=True)
+            component.logger.error("UNABLE TO LOAD STATE FROM %s.  STARTING WITH A BLANK SLATE.", state_file_name, exc_info=True)
         component.statefile = state_file_name
     else:
         component = component_cls(**cls_kwargs)
         
     location = find_intended_location(component)
     try:
-        cp = ConfigParser.ConfigParser()
-        cp.read([Cobalt.CONFIG_FILES[0]])
-        keypath = os.path.expandvars(cp.get('communication', 'key'))
-        certpath = os.path.expandvars(cp.get('communication', 'cert'))
-        capath = os.path.expandvars(cp.get('communication', 'ca'))
+        keypath = os.path.expandvars(get_config_option('communication', 'key'))
+        certpath = os.path.expandvars(get_config_option('communication', 'cert'))
+        capath = os.path.expandvars(get_config_option('communication', 'ca'))
     except:
         keypath = '/etc/cobalt.key'
         certpath = None

@@ -17,11 +17,13 @@ import re
 import Cobalt
 from Cobalt.Data import Data, DataDict
 from Cobalt.Exceptions import JobValidationError, ComponentLookupError
+import Cobalt.Components.base
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
-import thread, ConfigParser
+import thread
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
-
+import Cobalt.Util
+get_config_option = Cobalt.Util.get_config_option
 
 __all__ = [
     "NodeCard",
@@ -30,28 +32,18 @@ __all__ = [
     "BGBaseSystem",
 ]
 
-CP = ConfigParser.ConfigParser()
-CP.read(Cobalt.CONFIG_FILES)
-
-try:
-    max_drain_hours = float(CP.get('bgsystem', 'max_drain_hours'))
-except:
-    max_drain_hours = float(sys.maxint)
+max_drain_hours = float(get_config_option('bgsystem', 'max_drain_hours', sys.maxint))
     
 # *AdjEst*
-config = ConfigParser.ConfigParser() 
-config.read(Cobalt.CONFIG_FILES)
-def get_histm_config(option, default):
-    try:
-        value = config.get('histm', option)
-    except ConfigParser.NoSectionError:
-        value = default
-    return value
-walltime_prediction = get_histm_config("walltime_prediction", "False").lower()
-if walltime_prediction  == "true":
+walltime_prediction = get_config_option('histm', "walltime_prediction", "False").lower()
+if walltime_prediction in Cobalt.Util.config_true_values:
     walltime_prediction_enabled = True
-else:
+elif walltime_prediction in Cobalt.Util.config_false_values:
     walltime_prediction_enabled = False
+else:
+    print >>sys.stderr, "Error: bad value for 'walltime_prediction' option in configuration section 'histm': %s" % \
+        (walltime_prediction,)
+    sys.exit(1)
 # *AdjEst*
 
 def parse_nodecard_location(name):
@@ -159,6 +151,19 @@ class Partition (Data):
 
         self._update_node_cards()
 
+    def get_state(self):
+        state = {}
+        for attr in ('scheduled', 'functional', 'queue', 'reserved_by', 'reserved_until', 'used_by'):
+            if hasattr(self, attr):
+                state[attr] = getattr(self, attr)
+        return state
+
+    def restore_state(self, state):
+        for attr, val in state.iteritems():
+            setattr(self, attr, val)
+        if self.reserved_until or self.reserved_by or self.used_by:
+            self.state = 'allocated'
+
     def _update_node_cards(self):
         if self.state == "busy":
             for nc in self.node_cards:
@@ -232,23 +237,16 @@ class BGBaseSystem (Component):
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     """
 
-    _config = ConfigParser.ConfigParser()
-    _config.read(Cobalt.CONFIG_FILES)
-    if _config._sections.has_key('bgsystem'):
-        bgsystem_config = _config._sections['bgsystem']
-    else:
-        bgsystem_config = {}
+    partition_dict_cls = PartitionDict
 
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self._managed_partitions = set()
-        self._partitions = PartitionDict()
+        self._partitions = self.partition_dict_cls()
         self._partitions_lock = thread.allocate_lock()
         self.process_groups = BGProcessGroupDict()
-        self.pending_diags = dict()
-        self.failed_diags = list()
+        self.failed_partitions = list()
         self.bridge_in_error = False
-        self.node_card_cache = dict()
         self.cached_partitions = None
         self.offline_partitions = []
 
@@ -256,39 +254,18 @@ class BGBaseSystem (Component):
         state = {}
         state.update(Component.__getstate__(self))
 
+        partition_states = {}
         self._partitions_lock.acquire()
         try:
-            flags = {}
-            for part in self._partitions.values():
-                sched = None
-                func = None
-                queue = None
-                reserved_until = None
-                reserved_by = None
-                used_by = None
-                cleanup_pending = False
-                if hasattr(part, 'scheduled'):
-                    sched = part.scheduled
-                if hasattr(part, 'functional'):
-                    func = part.functional
-                if hasattr(part, 'queue'):
-                    queue = part.queue
-                if hasattr(part, 'reserved_until'):
-                    reserved_until = part.reserved_until
-                if hasattr(part, 'reserved_by'):
-                    reserved_by = part.reserved_by
-                if hasattr(part, 'used_by'):
-                    used_by = part.used_by
-                if hasattr(part, 'cleanup_pending'):
-                    cleanup_pending = part.cleanup_pending
-                flags[part.name] =  (sched, func, queue, reserved_until, reserved_by, used_by, cleanup_pending)
+            for part in self._partitions.itervalues():
+                partition_states[part.name] = part.get_state()
         finally:
             self._partitions_lock.release()
 
         state.update({
-                'bg_base_system_version':2,
+                'bg_base_system_version':3,
                 'managed_partitions':self._managed_partitions,
-                'partition_flags': flags,
+                'partition_states': partition_states,
                 'process_groups':self.process_groups,
                 'next_pg_id':self.process_groups.id_gen.idnum+1})
         return state
@@ -298,7 +275,7 @@ class BGBaseSystem (Component):
 
         sys.setrecursionlimit(5000)
         self._managed_partitions = state['managed_partitions']
-        self._partitions = PartitionDict()
+        self._partitions = self.partition_dict_cls()
         self._partitions_lock = thread.allocate_lock()
         if state.has_key("process_groups"):
             self.process_groups = state['process_groups']
@@ -306,53 +283,34 @@ class BGBaseSystem (Component):
             self.process_groups = BGProcessGroupDict()
         if state.has_key("next_pg_id"):
             self.process_groups.id_gen.set(state['next_pg_id'])
-        self.pending_diags = dict()
-        self.failed_diags = list()
-        self.diag_pids = dict()
-        self.node_card_cache = dict()
+        self.failed_partitions = list()
         self.bridge_in_error = False
         self.cached_partitions = None
         self.offline_partitions = []
 
     def _restore_partition_state(self, state):
-        if 'partition_flags' in state:
-            for pname, flags in state['partition_flags'].items():
-                part = self._partitions[pname]
-                fl = len(flags)
+        if 'partition_states' in state:
+            for pname, pstate in state['partition_states'].iteritems():
                 if pname in self._partitions:
-                    if fl > 0:
-                        part.scheduled = flags[0]
-                    if fl > 1:
-                        part.functional = flags[1]
-                    if fl > 2:
-                        part.queue = flags[2]
-                    if fl > 3:
-                        part.reserved_until = flags[3]
-                    if fl > 4:
-                        part.reserved_by = flags[4]
-                    if fl > 5:
-                        part.used_by = flags[5]
-                    if fl > 6:
-                        part.cleanup_pending = flags[6]
+                    self._partitions[pname].restore_state(pstate)
+        elif 'partition_flags' in state:
+            attrs = ['scheduled', 'functional', 'queue', 'reserved_by', 'reserved_until', 'used_by', 'cleanup_pending']
+            for pname, flags in state['partition_flags'].iteritems():
+                if pname in self._partitions:
+                    pstate = {}
+                    for  i in range(len(flags)):
+                        pstate[attrs[i]] = flags[i]
+                    self._partitions[pname].restore_state(pstate)
                 else:
                     logger.info("Partition %s is no longer defined" % pname)
-
-            for part in self._partitions.values():
-                if part.state == 'idle':
-                    if part.reserved_until or part.reserved_by or part.used_by:
-                        part.state = 'allocated'
-                    elif part.cleanup_pending:
-                            part.state = 'cleanup'
-                if part.state != 'idle':
-                    for p in part._parents:
-                        if p.state == "idle":
-                            p.state = "blocked (%s)" % (part.name,)
-                    for p in part._children:
-                        if p.state == "idle":
-                            p.state = "blocked (%s)" % (part.name,)
+        for part in self._partitions.values():
+            if part.state != 'idle':
+                for p in part._parents.union(part._children):
+                    if p.state == 'idle':
+                        p.state = "blocked (%s)" % (part.name,)
 
     def _get_partitions (self):
-        return PartitionDict([
+        return self.partition_dict_cls([
             (partition.name, partition) for partition in self._partitions.itervalues()
             if partition.name in self._managed_partitions
         ])
@@ -509,7 +467,7 @@ class BGBaseSystem (Component):
         
         max_nodes = max([int(p.size) for p in self._partitions.values()])
         try:
-            sys_type = CP.get('bgsystem', 'bgtype')
+            sys_type = get_config_option('bgsystem', 'bgtype')
         except:
             sys_type = 'bgl'
         if sys_type == 'bgp':
@@ -700,7 +658,7 @@ class BGBaseSystem (Component):
                 except:
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status, float(bgsystem_config.get('get_exit_status_interval', 10)))
+    _get_exit_status = automatic(_get_exit_status, float(get_config_option('bgsystem', 'get_exit_status_interval', 10)))
     
     def wait_process_groups (self, specs):
         """
@@ -732,107 +690,48 @@ class BGBaseSystem (Component):
                         self.logger.warning("%s: attempted to send a signal to job that never started", pg.label)
                 except:
                     self.logger.error("%s: failed to communicate with %s when signaling job", pg.label, pg.forker)
-
-                if signame == "SIGKILL":
-                   self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
-    def run_diags(self, partition_list, test_name, user_name=None):
-        self.logger.info("%s running diags %s on partitions %s", user_name, test_name, partition_list)
-        def size_cmp(left, right):
-            return -cmp(left.size, right.size)
-        
-        def _find_covering(partition):
-            kids = [ self._partitions[c_name] for c_name in partition.children]
-            kids.sort(size_cmp)
-            n = len(kids)
-            part_node_cards = set(partition.node_cards)
-            # generate the power set, but try to use the big partitions first (hence the sort above)
-            for i in xrange(1, 2**n + 1):
-                test_cover = [ kids[j] for j in range(n) if i & 2**j ]
-                
-                test_node_cards = set()
-                for t in test_cover:
-                    test_node_cards.update(t.node_cards)
-                
-                if test_node_cards.issubset(part_node_cards) and test_node_cards.issuperset(part_node_cards):
-                    return test_cover
-                
-            return []
-
-        def _run_diags(partition):
-            covering = _find_covering(partition)
-            for child in covering:
-                self.pending_diags[child] = test_name
-            return [child.name for child in covering]
-
-        results = []
-        for partition_name in partition_list:
-            p = self._partitions[partition_name]
-            results.append(_run_diags(p))
-        
-        return results
-    run_diags = exposed(run_diags)
-    
-    def launch_diags(self, partition, test_name):
-        '''override this method in derived classes!'''
-        pass
-    
-    def finish_diags(self, partition, test_name, exit_value):
-        '''call this method somewhere in your derived class where you deal with the exit values of diags'''
-        if exit_value == 0:
-            for dead in self.failed_diags[:]:
-                if dead == partition.name or dead in partition.children:
-                    self.failed_diags.remove(dead)
-                    self.logger.info("removing %s from failed_diags list" % dead)
-        else:
-            if partition.children:
-                self.run_diags([partition.name], test_name)
-            else:
-                self.failed_diags.append(partition.name)
-                self.logger.info("adding %s to failed_diags list" % partition.name)
-    
-    def handle_pending_diags(self):
-        for p in self.pending_diags.keys():
-            if p.state in ["idle", "blocked by pending diags", "failed diags", "blocked by failed diags"]:
-                self.logger.info("launching diagnostics on %s" % p.name)
-                self.launch_diags(p, self.pending_diags[p])
-                del self.pending_diags[p]
-                
-    handle_pending_diags = automatic(handle_pending_diags)
-    
     def fail_partitions(self, specs, user_name=None):
         self.logger.info("%s failing partition %s", user_name, specs)
+
         parts = self.get_partitions(specs)
         if not parts:
-            ret = "no matching partitions found\n"
-        else:
-            ret = ""
-        for p in parts:
-            if self.failed_diags.count(p.name) == 0:
-                ret += "failing %s\n" % p.name
-                self.failed_diags.append(p.name)
-            else:
-                ret += "%s is already marked as failing\n" % p.name
+            return "no matching partitions found\n"
 
+        ret = ""
+        self._partitions_lock.acquire()
+        try:
+            for p in parts:
+                if self.failed_partitions.count(p.name) == 0:
+                    ret += "failing %s\n" % p.name
+                    self.failed_partitions.append(p.name)
+                else:
+                    ret += "%s is already marked as failing\n" % p.name
+        finally:
+            self._partitions_lock.release()
         return ret
     fail_partitions = exposed(fail_partitions)
     
     def unfail_partitions(self, specs, user_name=None):
         self.logger.info("%s unfailing partition %s", user_name, specs)
+
         parts = self.get_partitions(specs)
         if not parts:
-            ret = "no matching partitions found\n"
-        else:
-            ret = ""
-        for p in self.get_partitions(specs):
-            if self.failed_diags.count(p.name):
-                ret += "unfailing %s\n" % p.name
-                self.failed_diags.remove(p.name)
-            else:
-                ret += "%s is not currently failing\n" % p.name
-        
+            return "no matching partitions found\n"
+
+        ret = ""
+        self._partitions_lock.acquire()
+        try:
+            for p in parts:
+                if self.failed_partitions.count(p.name):
+                    ret += "unfailing %s\n" % p.name
+                    self.failed_partitions.remove(p.name)
+                else:
+                    ret += "%s is not currently failing\n" % p.name
+        finally:
+            self._partitions_lock.release()
         return ret
     unfail_partitions = exposed(unfail_partitions)
     
@@ -1071,8 +970,10 @@ class BGBaseSystem (Component):
         
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
-        
+        jobs = {}
+
         for job in arg_list:
+            jobs[job['jobid']] = job
             partition_name = self._find_job_location(job, drain_partitions)
             if partition_name:
                 best_partition_dict.update(partition_name)
@@ -1111,22 +1012,19 @@ class BGBaseSystem (Component):
                 # push the backfilling info from the local cache back to the real objects
                 p.draining = self.cached_partitions[p.name].draining
                 p.backfill_time = self.cached_partitions[p.name].backfill_time
-                
-            for jobid, partition_list in best_partition_dict.iteritems():
-                part = self.partitions[partition_list[0]]
-                # FIXME: use reserve_resources_until() here? --brt
-                part.used_by = int(jobid)
-                part.reserved_until = time.time() + 5*60
-                part.state = "allocated"
-                for p in part._parents:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-                for p in part._children:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._partitions_lock.release()
+
+        reserve_failed = []
+        for jobid, partition_list in best_partition_dict.iteritems():
+            walltime = float(jobs[jobid]['walltime']) * 60
+            if not self.reserve_resources_until([partition_list[0]], time.time() + walltime, int(jobid)):
+                reserve_failed.append(jobid)
+        for j in reserve_failed:
+            self.logger.error("Job %s: failed to reserve partition %s.  Removing resource assignment.",
+                j, best_partition_dict[j][0])
+            del best_partition_dict[j]
         
         return best_partition_dict
     find_job_location = locking(exposed(find_job_location))
@@ -1215,35 +1113,38 @@ class BGBaseSystem (Component):
         try:
             self._partitions_lock.acquire()
             part = self.partitions[partition_name]
-            used_by = part.used_by
             if new_time:
-                if used_by == None:
+                if part.used_by == None:
                     part.used_by = jobid
-                    used_by = jobid
-                if used_by == jobid:
+                if part.used_by == jobid:
                     part.reserved_until = new_time
                     part.reserved_by = jobid
                     if part.state == 'idle':
                         part.state = 'allocated'
-                    self.logger.info("job %s: partition '%s' now reserved until %s", jobid, partition_name,
+                        for p in part._parents.union(part._children):
+                            if p.state == "idle":
+                                p.state = "blocked (%s)" % (part.name,)
+                    self.logger.info("Job %s: partition '%s' now reserved until %s", jobid, partition_name,
                         time.asctime(time.gmtime(new_time)))
                     rc = True
                 else:
-                    self.logger.error("job %s wasn't allowed to update the reservation on partition %s (owner=%s)",
-                        jobid, partition_name, used_by)
+                    self.logger.error("Job %s: failed to update the reservation on partition %s; reservation owned by %s",
+                        jobid, partition_name, part.used_by)
             else:
-                if used_by == jobid:
+                if part.used_by == jobid:
                     part.reserved_until = False
                     part.reserved_by = None
-                    self.logger.info("reservation on partition '%s' has been removed", partition_name)
+                    self.logger.info("Job %s: reservation on partition '%s' has been removed", jobid, partition_name)
                     rc = True
                 else:
-                    self.logger.error("job %s wasn't allowed to clear the reservation on partition %s (owner=%s)",
-                        jobid, partition_name, used_by)
+                    self.logger.error("Job %s: failed to clear the reservation on partition %s; reservation owned by %s",
+                        jobid, partition_name, part.used_by)
+        except KeyError:
+            self.logger.warning("partition %s: partition is no longer being managed; reservation by job %s denied",
+                partition_name, jobid)
         except:
             self.logger.exception("an unexpected error occurred will adjusting the partition reservation time")
         finally:
             self._partitions_lock.release()
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
-

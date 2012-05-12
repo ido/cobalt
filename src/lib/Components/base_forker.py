@@ -330,7 +330,7 @@ class BaseChild (object):
         if self.pid != 0:
             return
 
-        _logger.debug("%s: child process created: pid=%s", self.label, os.getpid())
+        _logger.info("%s: child process %s created to run '%s'", self.label, os.getpid(), self.args[0])
 
         try:
             self.preexec_first()
@@ -477,7 +477,7 @@ class BaseForker (Component):
 
         """
 
-        _logger.info("fork called with args of %s", " ".join(args))
+        _logger.debug("fork called with args of %s", " ".join(args))
 
         try:
             #make sure that a job isn't retrying because the XML-RPC hung.

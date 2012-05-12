@@ -1051,10 +1051,10 @@ class Job (StateMachine):
                 JobProgMsg(self))
         scripts = get_cqm_config('resource_postscripts', "").split(':')
         if scripts == ['']:
+            self._sm_state = 'Resource_Epilogue'
             logger.debug("Job %s/%s: DEBUG: No scripts for Resource "
                     "Epilogue state.  Skipping to Job Epilogue.", self.jobid,
                     self.user)
-            self._sm_state = 'Resource_Epilogue'
             self._sm_start_job_epilogue_scripts()
             return
         
@@ -1123,9 +1123,9 @@ class Job (StateMachine):
                 JobProgMsg(self))
         scripts = get_cqm_config('job_postscripts', "").split(':') 
         if scripts == ['']:
-            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue " 
-                    "state.  Skipping to .", self.jobid, self.user)
             self._sm_state = 'Job_Epilogue'
+            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue " 
+                    "state.  Skipping to Terminal.", self.jobid, self.user)
 
             dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", 
                     JobProgMsg(self))
