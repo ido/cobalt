@@ -48,21 +48,23 @@ config_true_values = ['true', 'yes','1','on']
 config_false_values = ['false', 'no','0','off']
 
 config = None
+config_files_read = []
 
 def init_cobalt_config():
     global config
+    global config_files_read
     if config is None:
         config = ConfigParser.ConfigParser()
         try:
-            files_read = config.read(Cobalt.CONFIG_FILES)
+            config_files_read = config.read(Cobalt.CONFIG_FILES)
         except ParsingError, e:
             logger.error("%s: %s", inspect.currentframe().f_code.co_name, e.message)
             raise
-        files_not_found = list(set(Cobalt.CONFIG_FILES).difference(set(files_read)))
+        files_not_found = list(set(Cobalt.CONFIG_FILES).difference(set(config_files_read)))
         if len(files_not_found) > 0:
             logger.warning("%s: Missing Cobalt Config File(s): %s", 
                 inspect.currentframe().f_code.co_name, str(files_not_found)[1:-1])
-        return files_read
+    return config_files_read
 
 def check_required_options(secopt_list):
     """
