@@ -173,9 +173,11 @@ class TestDiskWriter(object):
 class TestConfig (object):
     def setup(self):
         Cobalt.CONFIG_FILES = []
+        Cobalt.Util.config = None
         self.file_objects = []
 
     def teardown(self):
+        Cobalt.CONFIG_FILES = []
         Cobalt.Util.config = None
         for fo in self.file_objects:
             fo.close()
