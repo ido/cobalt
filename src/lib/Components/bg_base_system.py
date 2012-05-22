@@ -302,7 +302,7 @@ class BGBaseSystem (Component):
                         pstate[attrs[i]] = flags[i]
                     self._partitions[pname].restore_state(pstate)
                 else:
-                    logger.info("Partition %s is no longer defined" % pname)
+                    self.logger.info("Partition %s is no longer defined" % pname)
         for part in self._partitions.values():
             if part.state != 'idle':
                 for p in part._parents.union(part._children):
@@ -574,7 +574,7 @@ class BGBaseSystem (Component):
                             "component", pgroup.label, pgroup.forker)
                         # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
                         # until the job has exhausted its maximum alloted time
-                        del self.process_groups[process_group.id]
+                        del self.process_groups[pgroup.id]
                         raise
                     except:
                         self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "

@@ -465,7 +465,7 @@ class dbwriter(object):
                 self.overflow_file.write(msg+'\n')
                 elements_written += 1
             except IOError:
-                logger.error('Could only partially empty queue, %d messages written' % 
+                self.logger.error('Could only partially empty queue, %d messages written' % \
                              elements_written)
                 self.msg_queue.insert(0, msg)
                 

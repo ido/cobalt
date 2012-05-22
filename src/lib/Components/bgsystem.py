@@ -353,7 +353,6 @@ class BGSystem (BGBaseSystem):
                 now = time.time()
                 partitions_reset_kernel = []
                 partitions_destroy = []
-                partitions_cleaning = []
                 bridge_partition_cache = {}
                 missing_partitions = set(self._partitions.keys())
                 new_partitions = []
@@ -404,7 +403,7 @@ class BGSystem (BGBaseSystem):
                     self.logger.info("new partition found: %s", partition.id)
                     try:
                         bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
-                    except PartitionNotFound:
+                    except Cobalt.bridge.PartitionNotFound:
                         self.logger.warning("partition %s: new partition no longer exists", partition.id)
                     except:
                         self.logger.error("partition %s: failed to acquire partition info from the bridge",

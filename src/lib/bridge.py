@@ -1245,7 +1245,7 @@ class Job (Resource):
     user_uid = property(_get_user_uid)
 
     def _get_user_gid(self):
-        uid = self._get_data(RM_JobUserGid, rm_job_user_gid_t)
+        gid = self._get_data(RM_JobUserGid, rm_job_user_gid_t)
         return gid.value
 
     user_gid = property(_get_user_gid)

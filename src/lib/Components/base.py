@@ -35,7 +35,7 @@ try:
     _missing_config_files = list(set(Cobalt.CONFIG_FILES).difference(set(_config_files_read)))
     if _missing_config_files:
         print >>sys.stderr, "Warning: one or more config files were not found: %s" % (str(_missing_config_files)[1:-1],)
-except Error:
+except Exception, e:
     print >>sys.stderr, "ERROR: unable to parse config file:\n\t%s" % (e.message,)
     sys.exit(1)
 

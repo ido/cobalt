@@ -181,13 +181,13 @@ def cobalt_log_write(filename, msg):
     '''send the cobalt_log writer thread a filename, msg tuple.
     
     '''
-    coblt_log_writer.send((filename, msg))
+    cobalt_log_writer.send((filename, msg))
 
 def cobalt_log_terminate():
     '''Terminate the writer thread by sending it None.
 
     '''
-    coblat_log_writer.send(None)
+    cobalt_log_writer.send(None)
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -1077,11 +1077,11 @@ class Job (StateMachine):
                     scripts, '%s_%s'%(self.jobid, self._sm_state)) 
         except ComponentLookupError:
             if self._sm_state != "Resource_Epilogue_Retry":
-                 logger.warning("Job %s/%s: Unable to connect to forker "
+                logger.warning("Job %s/%s: Unable to connect to forker "
                     "component to launch resource postscripts.  Will "
                     "retry", self.user, self.jobid)
-                 self._sm_state = "Resource_Prologue_Retry"
-                 return
+                self._sm_state = "Resource_Prologue_Retry"
+                return
         except Exception as e:
             logger.error("Job %s/%s: %s exception recieved. "
                     "Resource_Epilogue "
@@ -1192,13 +1192,13 @@ class Job (StateMachine):
             self._sm_state = new_state
             return Job.__rc_success
  
-    def _sm_scripts_are_finished(self, type):  #Script Forking ***
+    def _sm_scripts_are_finished(self, script_type):  #Script Forking ***
         #modify to check to see if a set of scripts for this job are finished.  
         #Tag will require job-information (jobid and script-type should be adequate)
         #Making this go away, TODO: Move these to appropriate epilogue functions
-        if type == 'resource postscript':
+        if script_type == 'resource postscript':
             dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog", JobProgMsg(self))
-        elif type == 'job postscript':
+        elif script_type == 'job postscript':
             dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", JobProgMsg(self))
         return True
 
@@ -1512,7 +1512,7 @@ class Job (StateMachine):
                 logger.error("%s: Error connecting to forker. Retrying",
                         label)
                 raise ComponentLookupError
-            except Fault:
+            except xmlrpclib.Fault:
                 logger.error("%s: Failure in exectuing script: %s",
                         label, script)
                 script_ids.append(None)
@@ -1554,22 +1554,22 @@ class Job (StateMachine):
         '''
         rc = self._sm_start_job_epilogue_scripts()
 
-    def _sm_job_prologue_retry__kill(self):
+    def _sm_job_prologue_retry__kill(self, args):
 
         '''Handle a user kill request while retrying job_prologue scripts.
 
         '''
-        self._sm_common_retry_kill(self._sm_start_job_epilogue_scripts)
+        self._sm_common_retry__kill(self._sm_start_job_epilogue_scripts, args)
         
 
-    def _sm_resource_prologue_retry__kill(self):
+    def _sm_resource_prologue_retry__kill(self, args):
         '''Handle a user kill request while retrying resource_prologue scripts.
 
         '''
-        self._sm_common_retry_kill(self._sm_start_resource_epilogue_scripts)
+        self._sm_common_retry__kill(self._sm_start_resource_epilogue_scripts, args)
 
 
-    def _sm_common_retry__kill(self, cleanup_state_start):
+    def _sm_common_retry__kill(self, cleanup_state_start, args):
         '''Killing something in the retry state is pretty uniform, 
         cleanup_state_start is a function to be called to initiate proper
         post-step cleanups.  This may be different from retry-state to 

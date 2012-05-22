@@ -611,8 +611,8 @@ def getattrname(clsname, attrname):
 
 class ClassInfoMetaclass (type):
     '''when a class is created, add private attributes to the class that contain a reference to the class and the class name'''
-    def __init__(cls, name, bases, dict):
-        type.__init__(cls, name, bases, dict)
+    def __init__(cls, name, bases, cdict):
+        type.__init__(cls, name, bases, cdict)
         setattr(cls, getattrname(name, "__cls"), cls)
         setattr(cls, getattrname(name, "__clsname"), name)
 
@@ -937,13 +937,12 @@ class disk_writer_thread(Thread):
                     user_groups = [g.gr_name for g in grp.getgrall() if file_msg.user in g.gr_mem]
 
                     if not ( other_writable or \
-                         (owner_writable and pwd.getpwuid(stat_result.st_uid).pw_name == file_msg.user) or \
-                         (group_writable and grp.getgrgid(stat_result.st_gid).gr_name in user_groups)):
-
-                         #we can't write to the file, drop this message.
-                         logger.debug("dropping message, improper permissions to file %s.", file_msg.filename)
-                         messages_to_remove.append(file_msg)
-                         continue
+                            (owner_writable and pwd.getpwuid(stat_result.st_uid).pw_name == file_msg.user) or \
+                            (group_writable and grp.getgrgid(stat_result.st_gid).gr_name in user_groups)):
+                        #we can't write to the file, drop this message.
+                        logger.debug("dropping message, improper permissions to file %s.", file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                        continue
                         
                 except IOError as (num, strerror):
                     errcode = errno.errorcode[num]
@@ -1008,8 +1007,7 @@ class disk_writer_thread(Thread):
                         continue
                 except Exception:
                     logger.critical("Unknown error recieved when writing to cobaltlog %s. "\
-                            "Traceback follows:" % file_msg.filename)
-                    logger.critical(traceback.format_exc())
+                            "Traceback follows:" % file_msg.filename, exc_info=1)
                     logger.critical("This message has been discarded.")
                     messages_to_remove.append(file_msg)
 
