@@ -7,33 +7,30 @@ ClusterBaseSystem -- base system component
 import time
 import sys
 import Cobalt
-import threading
 import pwd
 import grp
 import ConfigParser
 import Cobalt.Util
 from Cobalt.Exceptions import  JobValidationError, NotSupportedError, ComponentLookupError
-from Cobalt.Components.base import Component, exposed, automatic
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
-from Cobalt.Statistics import Statistics
 from Cobalt.Data import DataDict
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.Components.base import Component
+from Cobalt.Components.base import Component, exposed, automatic
 
 __all__ = [
     "ClusterBaseSystem",
 ]
 
-config = ConfigParser.ConfigParser()
-config.read(Cobalt.CONFIG_FILES)
+__config = ConfigParser.ConfigParser()
+__config.read(Cobalt.CONFIG_FILES)
 
-if not config.has_section('cluster_system'):
+if not __config.has_section('cluster_system'):
     print '''"ERROR: cluster_system" section missing from cobalt config file'''
     sys.exit(1)
 
 def get_cluster_system_config(option, default):
     try:
-        value = config.get('cluster_system', option)
+        value = __config.get('cluster_system', option)
     except ConfigParser.NoOptionError:
         value = default
     return value
@@ -60,13 +57,13 @@ class ClusterNode(object):
         self.alloc_start = None
         self.assigned_user = None
 
-    def allocate(self, jobid, user, t=None):
+    def allocate(self, jobid, user, time=None):
 
         self.alloc_timeout = 300
-        if t == None:
+        if time == None:
             self.alloc_start = time.time()
         else:
-            self.alloc_start = t
+            self.alloc_start = time
         self.allocated = True
         self.assigned_user = user
         self.assigned_jobid = jobid
@@ -104,7 +101,7 @@ class ClusterNodeDict(DataDict):
     item_cls = ClusterNode
     key = "name"
 
-
+#pylint: disable=R0921
 class ClusterBaseSystem (Component):
     """base system class.
     
@@ -193,15 +190,9 @@ class ClusterBaseSystem (Component):
         # spec has {nodes, walltime*, procs, mode, kernel}
         
         max_nodes = len(self.all_nodes)
-        # FIXME: is bgtype really needed for clusters?
-        try:
-            sys_type = CP.get('bgsystem', 'bgtype')
-        except:
-            sys_type = 'bgl'
-        if sys_type == 'bgp':
-            job_types = ['smp', 'dual', 'vn', 'script']
-        else:
-            job_types = ['co', 'vn', 'script']
+        sys_type = 'cluster'
+        job_types = ['co','vn','smp','dual','script']
+        spec['mode'] = 'script'
         try:
             spec['nodecount'] = int(spec['nodecount'])
         except:
@@ -210,25 +201,10 @@ class ClusterBaseSystem (Component):
             raise JobValidationError("Node count out of realistic range")
         if float(spec['time']) < 5:
             raise JobValidationError("Walltime less than minimum")
-        if not spec['mode']:
-            if sys_type == 'bgp':
-                spec['mode'] = 'smp'
-            else:
-                spec['mode'] = 'co'
         if spec['mode'] not in job_types:
-            raise JobValidationError("Invalid mode")
+            raise JobValidationError("%s is an invalid mode" % spec['mode'])
         if not spec['proccount']:
-            if spec.get('mode', 'co') == 'vn':
-                if sys_type == 'bgl':
-                    spec['proccount'] = str(2 * int(spec['nodecount']))
-                elif sys_type == 'bgp':
-                    spec['proccount'] = str(4 * int(spec['nodecount']))
-                else:
-                    self.logger.error("Unknown bgtype %s" % (sys_type))
-            elif spec.get('mode', 'co') == 'dual':
-                spec['proccount'] = 2 * int(spec['nodecount'])
-            else:
-                spec['proccount'] = spec['nodecount']
+            spec['proccount'] = spec['nodecount']
         else:
             try:
                 spec['proccount'] = int(spec['proccount'])
@@ -238,10 +214,6 @@ class ClusterBaseSystem (Component):
                 raise JobValidationError("negative proccount")
             if spec['proccount'] > spec['nodecount']:
                 if spec['mode'] not in ['vn', 'dual']:
-                    raise JobValidationError("proccount too large")
-                if sys_type == 'bgl' and (spec['proccount'] > (2 * spec['nodecount'])):
-                    raise JobValidationError("proccount too large")
-                elif sys_type == ' bgp'and (spec['proccount'] > (4 * spec['nodecount'])):
                     raise JobValidationError("proccount too large")
         # need to handle kernel
         return spec
@@ -626,12 +598,13 @@ class ClusterBaseSystem (Component):
             group_name = grp.getgrgid(groupid)[0]
         except KeyError:
             group_name = ""
-            self.logger.error("Job %s/%s: unable to determine group name for epilogue" % (user, jobid))
+            self.logger.error("Job %s/%s: unable to determine group name for "\
+                    "epilogue" % (user, jobid))
      
         self.cleaning_host_count[jobid] = 0
         for host in locations:
             h = host.split(":")[0]
-            cleaning_process_info ={
+            cleaning_process_info = {
                     "host": h, 
                     "cleaning_id": None, 
                     "user": user,
@@ -646,7 +619,7 @@ class ClusterBaseSystem (Component):
                         group_name)
                 if cleaning_id == None:
                     #there was no script to run.
-                    self.running_nodes.discard(cleaning_processes["host"]) 
+                    self.running_nodes.discard(cleaning_process_info["host"]) 
                     return 
                 self.cleaning_host_count[jobid] += 1
                 cleaning_process_info["cleaning_id"] = cleaning_id
@@ -665,6 +638,7 @@ class ClusterBaseSystem (Component):
     
 
 
+
     def launch_script(self, config_option, host, jobid, user, group_name):
         '''Start our script processes used for node prep and cleanup.
 
@@ -676,10 +650,9 @@ class ClusterBaseSystem (Component):
                     user, jobid, config_option)
             return None
         else:
-            cmd = ["/usr/bin/ssh", host, script, 
-                    str(jobid), user, group_name]
-            return ComponentProxy("system_script_forker").fork(cmd, "system epilogue", 
-                    "Job %s/%s" % (jobid, user))
+            cmd = ["/usr/bin/ssh", host, script, str(jobid), user, group_name]
+            return ComponentProxy("system_script_forker").fork(cmd, 
+                    "system epilogue", "Job %s/%s" % (jobid, user))
 
 
     def retry_cleaning_scripts(self):
@@ -701,14 +674,17 @@ class ClusterBaseSystem (Component):
                     cleaning_process["retry"] = False
                 except ComponentLookupError:
                     self.logger.warning("Job %s/%s: Error contacting forker "
-                        "component." % (pg.jobid, pg.user))
+                        "component." % (cleaning_process['jobid'], 
+                            cleaning_process['user']))
                 except:
                     self.logger.error("Job %s/%s: Failed to run epilogue on "
-                            "host %s, marking node down", pg.jobid, pg.user, h,
+                            "host %s, marking node down", 
+                            cleaning_process['jobid'], cleaning_process['user'], 
+                            cleaning_process['host'],
                             exc_info=True)
-                    self.cleaning_host_count[jobid] -= 1
-                    self.down_nodes.add(h)
-                    self.running_nodes.discard(h)
+                    self.cleaning_host_count[cleaning_process['jobid']] -= 1
+                    self.down_nodes.add(cleaning_process['host'])
+                    self.running_nodes.discard(cleaning_process['host'])
 
     retry_cleaning_scripts = automatic(retry_cleaning_scripts,
             get_cluster_system_config("automatic_method_interval", 10.0))
@@ -724,9 +700,34 @@ class ClusterBaseSystem (Component):
         if self.cleaning_processes == []:
             #don't worry if we have nothing to cleanup
             return
-        
-        for cleaning_process in self.cleaning_processes: 
+            
+        children = []
+        current_time = time.time()
+        try:
+            children = ComponentProxy("system_script_forker").get_children(None,
+                    [cleaning_process['cleaning_id'] 
+                        for cleaning_process in self.cleaning_processes])
+        except ComponentLookupError:
+            self.logger.error("Could not communicate with "
+                            "forker component during cleanup")
+            return None
 
+        #reap completed children from the component
+        try:
+            ComponentProxy("system_script_forker").cleanup_children(
+                    [child['id'] for child in children if child['complete']])
+        except ComponentLookupError:        
+            self.logger.error("Could not communicate with "
+                "forker component during cleanup")
+                # cleanup faled.  reattempt in a little while...
+            return None
+
+               
+        child_dict = {}
+        for child in children:
+            child_dict[child['id']] = child
+     
+        for cleaning_process in self.cleaning_processes: 
             #if we can't reach the forker, we've lost all the cleanup scripts.
             #don't try and recover, just assume all nodes that were being 
             #cleaned are down. --PMR
@@ -735,74 +736,55 @@ class ClusterBaseSystem (Component):
             
             jobid = cleaning_process['jobid']
             user = cleaning_process['user']
-
-
-            try:
-                children = ComponentProxy("system_script_forker").get_children(None, [cleaning_process['cleaning_id']])
-            except ComponentLookupError:
-                self.logger.error("Job %s/%s: Could not communicate with "
-                            "forker component.", user, jobid)
-                return None
-            
+            child = child_dict[cleaning_process['cleaning_id']]
+            exit_status = child['exit_status']
+           
             # check if all of the scripts have completed
-            lost_children = []
-            for child in children:
-                if not child['complete']:
-                    return None
-                if child['lost_child']:
-                    lost_children.append(child['id'])
-    
-            # all scripts have completed. we have all of the information and output, so tell the forker that it can release any
-            # resources still used by the scripts
-            try:
-                ComponentProxy("system_script_forker").cleanup_children([cleaning_process['cleaning_id']])
-            except ComponentLookupError:        
-                self.logger.error("Job %s/%s: Could not communicate with "
-                    "forker component.", self.user, self.jobid)
-                # cleanup faled.  reattempt in a little while...
-                return None
-    
-            if len(lost_children) > 0:
-                self.logger.warning("Job %s/%s: one or more scripts were lost: %s", user, jobid,
-                    " ".join([str(id) for id in lost_children]))
-    
-             
-            exit_status = [c['exit_status'] for c in children if c['complete'] ]
-            #self.logger.debug("DEBUG: exit_status = %s", exit_status)
-            if exit_status == []:
-                exit_status = None
+            if (exit_status == None) and (current_time - cleaning_process["start_time"] <= 
+                    float(get_cluster_system_config("epilogue_timeout", 60.0))):   
+                continue
 
-            if exit_status != None:
+            if child['lost_child']:
+                self.logger.warning("Job %s/%s: a script was lost: %s", 
+                        user, jobid, child['id'])
+                self.__mark_failed_cleaning(cleaning_process)
+            elif exit_status == 0:
                 #we're done, this node is now free to be scheduled again.
+                self.logger.info("Job %s/%s: cleanup completed for host: %s", 
+                        user, jobid, cleaning_process['host'])
                 self.running_nodes.discard(cleaning_process["host"])
                 cleaning_process["completed"] = True
                 self.cleaning_host_count[jobid] -= 1
-            else:
-                #timeout exceeded
-                if (time.time() - cleaning_process["start_time"] > 
-                        float(get_cluster_system_config("epilogue_timeout", 60.0))): 
+            elif (exit_status != 0) and (exit_status != None):
+                #assume a nonzero status is a script-failure.
+                self.__mark_failed_cleaning(cleaning_process)
+                self.logger.debug("Job %s/%s: stderr from epilogue on host %s: [%s]",
+                        user, jobid, cleaning_process['host'], 
+                        "\n".join(child['stderr']))
+            else: 
+                #timeout exceeded otherwise wait until next cycle
+                self.logger.debug('cleaning_time: %s' %(current_time -cleaning_process['start_time']))
+                if (current_time - cleaning_process["start_time"] > 
+                        float(get_cluster_system_config("epilogue_timeout", 60.0))):
                     cleaning_process["completed"] = True
+                    
                     try:
-                        forker = ComponentProxy("system_script_forker").signal(
-                                cleaning_process['cleaning_id'], "SIGINT")
-                        child_output = forker.get_child_data(
-                            cleaning_process['cleaning_id'])
-                        forker.child_cleanup([cleaning_process['cleaning_id']])
-                            
-                        #mark as dirty and arrange to mark down.
-                        self.down_nodes.add(cleaning_process['host'])
-                        self.running_nodes.discard(cleaning_process['host'].host) # No longer running, down == not allocatable
-                        self.logger.error("Job %s/%s: epilogue timed out on host %s, marking hosts down", 
-                            user, jobid, cleaning_process['host'])
-                        self.logger.error("Job %s/%s: stderr from epilogue on host %s: [%s]",
-                            user, jobid,
-                            cleaning_process['host'], 
-                            child_output['stderr'].strip())
-                        self.cleaning_host_count[jobid] -= 1
+                        #attempt to clean up the child.
+                        forker = ComponentProxy("system_script_forker", 
+                                defer=False)
+                        forker.signal(cleaning_process['cleaning_id'], 
+                                "SIGINT")
+                        child_output = forker.get_children(None,
+                            [cleaning_process['cleaning_id']])[0]
+                        forker.cleanup_children([child_output['id']])   
                     except ComponentLookupError:
                         self.logger.error("Job %s/%s: Error contacting forker "
                             "component. Running child processes are "
                             "unrecoverable." % (jobid, user))
+                    finally:
+                        self.__mark_failed_cleaning(cleaning_process, 
+                            "Job %s/%s: epilogue timed out on host %s, marking "
+                            "host down" % (user, jobid, cleaning_process['host']))
 
             if self.cleaning_host_count[jobid] == 0:
                 self.del_process_groups(jobid)
@@ -813,14 +795,35 @@ class ClusterBaseSystem (Component):
                 del self.jobid_to_user[jobid]
         
         self.cleaning_processes = [cleaning_process for cleaning_process in self.cleaning_processes 
-                                    if cleaning_process["completed"] == False]
+                                    if not cleaning_process["completed"]]
             
     check_done_cleaning = automatic(check_done_cleaning, 
             get_cluster_system_config("automatic_method_interval", 10.0))
 
 
+    def __mark_failed_cleaning(self, cleaning_process, msg=None):
+        '''Mark that a node has failed cleanup and take the node out of service.
+
+        '''
+        user = cleaning_process['user']
+        jobid = cleaning_process['jobid']
+        host = cleaning_process['host']
+
+        if msg == None:
+            msg = "Job %s/%s: Cleanup failed on host %s, marking node down." % \
+                    (user, jobid, host)
+
+        self.down_nodes.add(host)
+        self.running_nodes.discard(host)
+        self.cleaning_host_count[jobid] -= 1
+        cleaning_process['completed'] = True
+        self.logger.error(msg)
+        return
 
     def del_process_groups(self, jobid):
+        '''Set actions to take when deleting process groups.  This must be 
+        overridden in the implementation.
 
+        '''
         raise NotImplementedError("Must be overridden in child class")
 
