@@ -71,14 +71,14 @@ if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
 
 
 class Reservation (Data):
-    
+
     """Cobalt scheduler reservation."""
-    
+
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
         "active", "queue", "res_id", "cycle_id", 'project' 
     ]
-    
+
     required = ["name", "start", "duration"]
 
     global bgsched_id_gen
@@ -104,12 +104,12 @@ class Reservation (Data):
 
         self.running = False
         self.project = spec.get("project", None)
-        
+
     def _get_active(self):
         return self.is_active()
-    
+
     active = property(_get_active)
-    
+
     def update (self, spec):
         if spec.has_key("users"):
             qm = ComponentProxy("queue-manager")
@@ -145,7 +145,7 @@ class Reservation (Data):
             #take care of the new data object creation.
             dbwriter.log_to_db(user_name, "modifying", "reservation", self)
 
-    
+
     def overlaps(self, start, duration):
         '''check job overlap with reservations'''
         if start + duration < self.start:
@@ -166,7 +166,7 @@ class Reservation (Data):
             return True
         if not self.cycle:
             return False
-        
+
         # 3 cases, front, back and complete coverage of a cycle
         cstart = (start - self.start) % self.cycle
         cend = (start + duration - self.start) % self.cycle
@@ -176,13 +176,13 @@ class Reservation (Data):
             return True
         if cstart > cend:
             return True
-        
+
         return False
 
     def job_within_reservation(self, job):
         if not self.is_active():
             return False
-        
+
         if job.queue == self.queue:
             job_end = time.time() + 60 * float(job.walltime) + SLOP_TIME
             if not self.cycle:
@@ -194,7 +194,7 @@ class Reservation (Data):
             else:
                 if 60 * float(job.walltime) + SLOP_TIME > self.duration:
                     return False
-                
+
                 relative_start = (time.time() - self.start) % self.cycle
                 relative_end = relative_start + 60 * float(job.walltime) + SLOP_TIME
                 if relative_end < self.duration:
@@ -204,16 +204,16 @@ class Reservation (Data):
         else:
             return False
 
-    
+
     def is_active(self, stime=False):
         '''Determine if the reservation is active.  A reservation is active if we are
             between it's start time and its start time + duration.
 
         '''
-        
+
         if not stime:
             stime = time.time()
-            
+
         if stime < self.start:
             if self.running:
                 self.running = False
@@ -233,7 +233,7 @@ class Reservation (Data):
                         self.res_id, self.cycle_id, self.name)
                     dbwriter.log_to_db(None, "deactivating", "reservation", self)
             return False
-        
+
         if self.cycle:
             now = (stime - self.start) % self.cycle
         else:
@@ -268,8 +268,8 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
-            return False        
-        
+            return False
+
         if (self.start + self.duration) <= stime:
             if self.running == True:
                 #The active reservation is no longer considered active
@@ -282,11 +282,11 @@ class Reservation (Data):
             return True
         else:
             return False
-    
+
     def set_start_to_next_cycle(self):
 
         if self.cycle:
-            
+
             new_start = self.start
             now = time.time()
             periods = int(math.floor((now - self.start) / float(self.cycle)))
@@ -298,15 +298,15 @@ class Reservation (Data):
                 new_start += self.cycle
             else: #this is not going to start during a reservation, so we only have to go periods + 1.
                 new_start += (periods + 1) * self.cycle
-            
+
             self.start = new_start
-        
+
 
 class ReservationDict (DataDict):
-    
+
     item_cls = Reservation
     key = "name"
-    
+
     global bgsched_id_gen
 
     def q_add (self, *args, **kwargs):
@@ -316,7 +316,7 @@ class ReservationDict (DataDict):
         except ComponentLookupError:
             logger.error("unable to contact queue manager when adding reservation")
             raise
-        
+
         try:
             specs = args[0]
             for spec in specs:
@@ -326,7 +326,7 @@ class ReservationDict (DataDict):
 
         except KeyError, e:
             raise ReservationError("Error: a reservation named %s already exists" % e)
-                
+
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:
@@ -347,9 +347,9 @@ class ReservationDict (DataDict):
                              (reservation.queue, e))
             else:
                 logger.info("updated reservation queue %s" % reservation.queue)
-    
+
         return reservations
-        
+
     def q_del (self, *args, **kwargs):
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
         qm = ComponentProxy('queue-manager')
@@ -368,17 +368,18 @@ class ReservationDict (DataDict):
         return reservations
 
 
-                
-
 class Job (ForeignData):
-    
-    """A cobalt job."""
-    
+
+    """A field for the job metadata cache from cqm.  Used for finding a job 
+    location.
+
+    """
+
     fields = ForeignData.fields + [
         "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user", "submittime", 
         "starttime", "project", 'is_runnable', 'is_active', 'has_resources', "score", 'attrs', 'walltime_p'
     ]
-    
+
     def __init__ (self, spec):
         ForeignData.__init__(self, spec)
         spec = spec.copy()
@@ -401,10 +402,13 @@ class Job (ForeignData):
         self.has_resources = spec.pop("has_resources", None)
         self.score = spec.pop("score", 0.0)
         self.attrs = spec.pop("attrs", {})
-        
+
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
 class JobDict(ForeignDataDict):
+    """Dictionary of job metadata from cqm for job location purposes.
+
+    """
     item_cls = Job
     key = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (job)")
@@ -414,6 +418,10 @@ class JobDict(ForeignDataDict):
                   'is_runnable', 'is_active', 'has_resources', 'score', 'attrs', 'walltime_p',]
 
 class Queue(ForeignData):
+    """Cache of queue data for scheduling decisions and reservation 
+    association.
+
+    """
     fields = ForeignData.fields + [
         "name", "state", "policy", "priority"
     ]
@@ -425,8 +433,6 @@ class Queue(ForeignData):
         self.state = spec.pop("state", None)
         self.policy = spec.pop("policy", None)
         self.priority = spec.pop("priority", 0)
-        
-        
 
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
@@ -439,21 +445,19 @@ class Queue(ForeignData):
 
 
 class QueueDict(ForeignDataDict):
+    """Dictionary for the queue metadata cache.
+
+    """
     item_cls = Queue
     key = 'name'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (queue)")
     __function__ = ComponentProxy("queue-manager").get_queues
     __fields__ = ['name', 'state', 'policy', 'priority']
 
-#    def Sync(self):
-#        qp = [(q.name, q.policy) for q in self.itervalues()]
-#        Cobalt.Data.ForeignDataDict.Sync(self)
-#        [q.LoadPolicy() for q in self.itervalues() \
-#         if (q.name, q.policy) not in qp]
-
-
 class BGSched (Component):
-    
+    """The scheduler component interface and driver functions.
+
+    """
     implementation = "bgsched"
     name = "scheduler"
     logger = logging.getLogger("Cobalt.Components.scheduler")
@@ -474,7 +478,7 @@ class BGSched (Component):
     if config.get("default_reservation_policy"):
         global DEFAULT_RESERVATION_POLICY
         DEFAULT_RESERVATION_POLICY = config.get("default_reservation_policy")
-    
+
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.reservations = ReservationDict()
@@ -483,12 +487,12 @@ class BGSched (Component):
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.active = True
-    
+
         self.get_current_time = time.time
         self.id_gen = IncrID()
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
-        
+
         self.cycle_id_gen = IncrID()
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
@@ -505,7 +509,7 @@ class BGSched (Component):
                 'msg_queue': dbwriter.msg_queue, 
                 'overflow': dbwriter.overflow})
         return state
-    
+
     def __setstate__(self, state):
         Component.__setstate__(self, state)
 
@@ -514,12 +518,12 @@ class BGSched (Component):
             self.active = state['active']
         else:
             self.active = True
-        
+
         self.id_gen = IncrID()
         self.id_gen.set(state['next_res_id'])
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
-        
+
         self.cycle_id_gen = IncrID()
         self.cycle_id_gen.set(state['next_cycle_id'])
         global bgsched_cycle_id_gen
@@ -529,7 +533,7 @@ class BGSched (Component):
         self.jobs = JobDict()
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
-        
+
         self.get_current_time = time.time
 
         if state.has_key('msg_queue'):
@@ -540,26 +544,26 @@ class BGSched (Component):
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
         return -cmp(job1.score, job2.score)
-    
+
     def prioritycmp(self, job1, job2):
         """Compare 2 jobs first using queue priority and then first-in, first-out."""
-        
+
         val = cmp(self.queues[job1.queue].priority, self.queues[job2.queue].priority)
         if val == 0:
             return self.fifocmp(job1, job2)
         else:
             # we want the higher priority first
             return -val
-        
+
     def fifocmp (self, job1, job2):
         """Compare 2 jobs for first-in, first-out."""
-        
+
         def fifo_value (job):
             if job.index is not None:
                 return int(job.index)
             else:
                 return job.jobid
-            
+
         # Implement some simple variations on FIFO scheduling
         # within a particular queue, based on queue policy
         fifoval = cmp(fifo_value(job1), fifo_value(job2))
@@ -597,7 +601,7 @@ class BGSched (Component):
                               user_name, specs))
             dbwriter.log_to_db(user_name, "creating", "reservation", added_reservation)
         return added_reservations
-    
+
     add_reservations = exposed(query(add_reservations))
 
     def del_reservations (self, specs, user_name):
@@ -631,7 +635,7 @@ class BGSched (Component):
                               mod_reservation.cycle_id,
                               user_name, specs))
         return mod_reservations
-        
+
     set_reservations = exposed(query(set_reservations))
 
 
@@ -698,17 +702,17 @@ class BGSched (Component):
             queue = cur_res.queue
             if not (self.queues.has_key(queue) and self.queues[queue].state == 'running'):
                 continue
-            
+
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue}])
             active_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid) and cur_res.job_within_reservation(j):
                     active_jobs.append(j)
-    
+
             if not active_jobs:
                 continue
             active_jobs.sort(self.utilitycmp)
-            
+
             job_location_args = []
             for job in active_jobs:
                 job_location_args.append( 
@@ -728,7 +732,7 @@ class BGSched (Component):
             except:
                 self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
-    
+
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
                 self._start_job(job, best_partition_dict[jobid], {str(job.jobid):cur_res.res_id})
@@ -737,7 +741,7 @@ class BGSched (Component):
         """Get the queue manager to start a job."""
 
         cqm = ComponentProxy("queue-manager")
-        
+
         try:
             self.logger.info("trying to start job %d on partition %r" % (job.jobid, partition_list))
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list, None, resid)
@@ -756,16 +760,16 @@ class BGSched (Component):
 
         if not self.active:
             return
-        
+
         self.sync_data()
-        
+
         # if we're missing information, don't bother trying to schedule jobs
         if not (self.queues.__oserror__.status and 
                 self.jobs.__oserror__.status):
             self.sync_state.Fail()
             return
         self.sync_state.Pass()
-        
+
         self.component_lock_acquire()
         try:
             # cleanup any reservations which have expired
@@ -787,7 +791,7 @@ class BGSched (Component):
             # just to make sure we don't keep the lock forever
             self.logger.error("error in schedule_jobs", exc_info=True)
         self.component_lock_release()
-        
+
         # clean up the started_jobs cached data
         # TODO: Make this tunable.
         now = self.get_current_time()
@@ -809,7 +813,7 @@ class BGSched (Component):
                     spruce_queues.append(queue)
                 else:
                     active_queues.append(queue)
-        
+
         # handle the reservation jobs that might be ready to go
         self._run_reservation_jobs(reservations_cache)
 
@@ -823,7 +827,7 @@ class BGSched (Component):
         except:
             self.logger.error("failed to connect to system component")
             return
-        
+
         for eq_class in equiv:
             # recall that is_runnable is True for certain types of holds
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in active_queues \
@@ -832,14 +836,14 @@ class BGSched (Component):
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
                     active_jobs.append(j)
-    
+
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in spruce_queues \
                 if queue.name in eq_class['queues']])
             spruce_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
                     spruce_jobs.append(j)
-    
+
             # if there are any pending jobs in high_prio queues, those are the only ones that can start
             if spruce_jobs:
                 active_jobs = spruce_jobs
