@@ -780,7 +780,10 @@ class BGBaseSystem (Component):
                 spec['proccount'] = str(spec['nodecount'])
 
         else:
-            ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
+            if spec['mode'] == 'script':
+                ranks_per_node = int(spec['nodecount']) #proccount doesn't matter for script
+            else:
+                ranks_per_node = int(rpn_re.match(spec['mode']).groups()[0])
             try:
                 spec['proccount'] = int(spec['proccount'])
             except:
