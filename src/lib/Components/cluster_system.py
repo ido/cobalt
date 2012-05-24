@@ -48,15 +48,15 @@ def get_cluster_system_config(option, default):
 
 
 class ClusterProcessGroup(ProcessGroup):
-    
+
     def __init__(self, spec):
         spec['forker'] = "user_script_forker"
         ProcessGroup.__init__(self, spec)
         self.nodefile = ""
         self.label = "%s/%s/%s" %(self.jobid, self.user, self.id)
         self.start()
-        
-    
+
+
     def prefork (self):
         ret = {}
         ret = ProcessGroup.prefork(self)
@@ -67,7 +67,7 @@ class ClusterProcessGroup(ProcessGroup):
             self.nodefile = os.path.join(nodefile_dir, "cobalt.%s" % self.jobid)
         else:
             self.nodefile = "fake"
-        
+
         try:
             #This is the head node, return this to the user.
             rank0 = self.location[0].split(":")[0]
@@ -79,7 +79,7 @@ class ClusterProcessGroup(ProcessGroup):
                     '--jobid', str(self.jobid),
                     '--cwd', str(self.cwd),
                     '--exe', str(self.executable))
-        
+
         cmd_exe = None
         if sim_mode: 
             logger.debug("We are setting up with simulation mode.")
@@ -90,7 +90,7 @@ class ClusterProcessGroup(ProcessGroup):
         else:
             #FIXME: Need to put launcher location into config
             cmd_exe = '/usr/bin/cobalt-launcher.py' 
-        
+
         #run the user script off the login node, and on the compute node
         if (get_cluster_system_config("run_remote", 'true').lower() in config_true_values and
                 not sim_mode):
@@ -107,13 +107,13 @@ class ClusterProcessGroup(ProcessGroup):
 
         return ret
 
-    
+
 
 
 class ClusterSystem (ClusterBaseSystem):
-    
+
     """cluster system component.
-    
+
     Methods:
     configure -- load partitions from the bridge API
     add_process_groups -- add (start) an mpirun process on the system (exposed, ~query)
@@ -122,17 +122,17 @@ class ClusterSystem (ClusterBaseSystem):
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- update partition state from the bridge API (runs as a thread)
     """
-    
+
     name = "system"
     implementation = "cluster_system"
-    
+
     logger = logger
 
-    
+
     def __init__ (self, *args, **kwargs):
         ClusterBaseSystem.__init__(self, *args, **kwargs)
         self.process_groups.item_cls = ClusterProcessGroup
-        
+
     def __getstate__(self):
         state = {}
         state.update(ClusterBaseSystem.__getstate__(self))
@@ -143,17 +143,17 @@ class ClusterSystem (ClusterBaseSystem):
     def __setstate__(self, state):
         ClusterBaseSystem.__setstate__(self, state)
         self.process_groups.item_cls = ClusterProcessGroup
-    
+
     def add_process_groups (self, specs):
         """Create a process group.
-        
+
         Arguments:
         spec -- dictionary hash specifying a process group to start
         """
 
         self.logger.info("add_process_groups(%r)", specs)
         process_groups = self.process_groups.q_add(specs)
-            
+
         for pgroup in process_groups:
             self.logger.info("Job %s/%s: process group %s created to track script", 
                     pgroup.user, pgroup.jobid, pgroup.id)
@@ -167,12 +167,12 @@ class ClusterSystem (ClusterBaseSystem):
                     logger.critical("%s already removed from alloc_only_nodes list", location)
         return process_groups
     add_process_groups = exposed(query(add_process_groups))
-    
+
     def get_process_groups (self, specs):
         self._get_exit_status()
         return self.process_groups.q_get(specs)
     get_process_groups = exposed(query(get_process_groups))
-    
+
     def _get_exit_status (self):
         children = {}
         cleanup = {}
@@ -218,32 +218,35 @@ class ClusterSystem (ClusterBaseSystem):
                     #self.reserve_resources_until(pg.location, None, pg.jobid)
                     #self._mark_partition_for_cleaning(pg.location[0], pg.jobid)
 
-        # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
-        # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
+        # check for children that no longer have a process group associated 
+        # with them and add them to the cleanup list.  This might have 
+        # happpened if a previous cleanup attempt failed and the process group
+        # has already been waited upon
         for forker, child_id in children.keys():
             if children[(forker, child_id)]['pg'] is None:
                 cleanup[forker].append(child['id'])
-                
+
         # cleanup any children that have completed and been processed
         for forker in cleanup.keys():
             if len(cleanup[forker]) > 0:
                 try:
                     ComponentProxy(forker).cleanup_children(cleanup[forker])
-                except ComponentLookupError, e:
+                except ComponentLookupError:
                     self.logger.error("failed to contact the %s component to cleanup children", forker)
                 except:
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status, float(get_cluster_system_config('get_exit_status_interval', 10)))  
+    _get_exit_status = automatic(_get_exit_status, 
+            float(get_cluster_system_config('get_exit_status_interval', 10)))
 
     def wait_process_groups (self, specs):
         self._get_exit_status()
         process_groups = [pg for pg in self.process_groups.q_get(specs) if pg.exit_status is not None]
         for process_group in process_groups:
-            self.clean_nodes(pg.location, pg.user, pg.jobid) #FIXME: This call is a good place to look for problems
+            self.clean_nodes(process_group.location, process_group.user, process_group.jobid) 
         return process_groups
     wait_process_groups = locking(exposed(query(wait_process_groups)))
-    
+
     def signal_process_groups (self, specs, signame="SIGINT"):
         my_process_groups = self.process_groups.q_get(specs)
         for pg in my_process_groups:
@@ -262,12 +265,9 @@ class ClusterSystem (ClusterBaseSystem):
            jobid -- jobid associated with the process group we are removing
 
         '''
-
         del_items = self.process_groups.q_del([{'jobid':jobid}])
-        
-
         if del_items == []:
             self.logger.warning("Job %s: Process group not found for this jobid.", jobid)
         else:
             self.logger.info("Job %s: Process group deleted.", jobid)
-
+            return
