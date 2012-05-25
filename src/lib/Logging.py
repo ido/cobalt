@@ -338,7 +338,7 @@ class dbwriter(object):
         
         
         
-    def log_to_db(self, user, event, msg_type, obj):
+    def log_to_db(self, user, event, msg_type, obj, timestamp=None):
         if not self.enabled:
             return
 
@@ -356,7 +356,7 @@ class dbwriter(object):
 
                 try:
                     message = Cobalt.JSONEncoders.ReportObject(user, event,
-                                                               msg_type, obj).encode()
+                                                               msg_type, obj, timestamp).encode()
                 except Exception as e:
                     self.logger.error("Error encoding message to send to cdbwriter.")
                     self.logger.error(traceback.format_exc())
@@ -371,7 +371,7 @@ class dbwriter(object):
 
         try:
             message = Cobalt.JSONEncoders.ReportObject(user, event, 
-                                                           msg_type, obj).encode()
+                                                           msg_type, obj, timestamp).encode()
         except Exception as e:
             self.logger.error("Error encoding message to send to cdbwriter.")
             self.logger.debug(traceback.format_exc())
