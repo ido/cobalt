@@ -290,7 +290,7 @@ class Simulator (BGBaseSystem):
             self.offline_partitions = []
 
             now = time.time()
-            
+
             # since we don't have the bridge, a partition which isn't busy
             # should be set to idle and then blocked states can be derived
             for p in self._partitions.values():
@@ -299,12 +299,15 @@ class Simulator (BGBaseSystem):
                 if p.reserved_until and now > p.reserved_until:
                     p.reserved_until = None
                     p.reserved_by = None
-                    
+                    p.used_by
+
             for p in self._partitions.values():
                 if p.state == "busy":
                     # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
                     if not p.reserved_by:
                         p.reserved_until = False
+                        p.reserved_by = None
+                        p.used_by = None
                 else:
                     if p.reserved_until:
                         p.state = "allocated"
@@ -314,6 +317,10 @@ class Simulator (BGBaseSystem):
                         for part in p._children:
                             if part.state == "idle":
                                 part.state = "blocked (%s)" % (p.name,)
+                    else: #unset this so we can actually schedule the partition agian
+                          #may be compensating for a bug in resource location
+                        p.reserved_by = None
+                        p.used_by = None
                     for nc in p.node_cards:
                         if nc.id in self.failed_components:
                             p.state = "hardware offline: nodecard %s" % nc.id
@@ -338,7 +345,7 @@ class Simulator (BGBaseSystem):
                                 p.state = "blocked (%s)" % (part.name)
         except:
             self.logger.error("error in update_partition_state", exc_info=True)
-        
+
         self._partitions_lock.release()
     update_partition_state = automatic(update_partition_state)
 
@@ -356,7 +363,7 @@ class Simulator (BGBaseSystem):
                         break
         return success
     add_failed_component = exposed(add_failed_components)
-    
+
     def del_failed_components(self, component_names):
         success = []
         for name in component_names:
@@ -365,10 +372,10 @@ class Simulator (BGBaseSystem):
                 success.append(name)
             except KeyError:
                 pass
-            
+
         return success
     del_failed_components = exposed(del_failed_components)
-    
+
     def list_failed_components(self, component_names):
         return list(self.failed_components)
     list_failed_components = exposed(list_failed_components)

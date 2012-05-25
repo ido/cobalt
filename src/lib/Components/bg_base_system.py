@@ -168,40 +168,40 @@ class Partition (Data):
         if self.state == "busy":
             for nc in self.node_cards:
                 nc.used_by = self.name
-    
+
     def _get_parents (self):
         return [parent.name for parent in self._parents]
-    
+
     parents = property(_get_parents)
-    
+
     def _get_children (self):
         return [child.name for child in self._children]
-    
+
     children = property(_get_children)
-    
+
     def _get_all_children (self):
         return [child.name for child in self._all_children]
-    
+
     all_children = property(_get_all_children)
-    
+
     def _get_node_card_names (self):
         return [nc.id for nc in self.node_cards]
-    
+
     node_card_names = property(_get_node_card_names)
-    
+
     def __str__ (self):
         return self.name
-    
+
     def __repr__ (self):
         return "<%s name=%r>" % (self.__class__.__name__, self.name)
 
 
 class PartitionDict (DataDict):
     """Default container for partitions.
-    
+
     Keyed by partition name.
     """
-    
+
     item_cls = Partition
     key = "name"
 
@@ -224,7 +224,7 @@ class BGProcessGroupDict(ProcessGroupDict):
 
 class BGBaseSystem (Component):
     """base system class.
-    
+
     Methods:
     add_partitions -- tell the system to manage partitions (exposed, query)
     get_partitions -- retrieve partitions in the simulator (exposed, query)
@@ -314,13 +314,13 @@ class BGBaseSystem (Component):
             (partition.name, partition) for partition in self._partitions.itervalues()
             if partition.name in self._managed_partitions
         ])
-    
+
     partitions = property(_get_partitions)
 
     def add_partitions (self, specs, user_name=None):
         self.logger.info("%s called add_partitions(%r)", user_name, specs)
         specs = [{'name':spec.get("name")} for spec in specs]
-        
+
         self._partitions_lock.acquire()
         try:
             partitions = [
@@ -331,7 +331,7 @@ class BGBaseSystem (Component):
             partitions = []
             self.logger.error("error in add_partitions", exc_info=True)
         self._partitions_lock.release()
-        
+
         self._managed_partitions.update([
             partition.name for partition in partitions
         ])
@@ -348,10 +348,10 @@ class BGBaseSystem (Component):
             partitions = []
             self.logger.error("error in get_partitions", exc_info=True)
         self._partitions_lock.release()
-        
+
         return partitions
     get_partitions = exposed(query(get_partitions))
-    
+
     def verify_locations(self, location_list):
         """Providing a system agnostic interface for making sure a 'location string' is valid"""
         parts = self.get_partitions([{'name':l} for l in location_list])
@@ -361,7 +361,7 @@ class BGBaseSystem (Component):
     def del_partitions (self, specs, user_name=None):
         """Remove partitions from the list of managed partitions"""
         self.logger.info("%s called del_partitions(%r)", user_name, specs)
-        
+
         self._partitions_lock.acquire()
         try:
             partitions = [
@@ -372,7 +372,7 @@ class BGBaseSystem (Component):
             partitions = []
             self.logger.error("error in del_partitions", exc_info=True)
         self._partitions_lock.release()
-        
+
         self._managed_partitions -= set( [partition.name for partition in partitions] )
         self.update_relatives()
         return partitions
@@ -383,7 +383,7 @@ class BGBaseSystem (Component):
         def _set_partitions(part, newattr):
             self.logger.info("%s updating partition %s: %r", user_name, part.name, newattr)
             part.update(newattr)
-            
+
         self._partitions_lock.acquire()
         try:
             partitions = self._partitions.q_get(specs, _set_partitions, updates)
@@ -405,21 +405,21 @@ class BGBaseSystem (Component):
 
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
-            
+
 
             # toss the wiring dependencies in with the parents
             for dep_name in p._wiring_conflicts:
                 if dep_name in self._managed_partitions:
                     p._parents.add(self._partitions[dep_name])
-            
+
             for other in self._partitions.itervalues():
                 if p.name == other.name:
                     continue
 
                 p_set = set(p.node_cards)
                 other_set = set(other.node_cards)
-                
-               
+
+
                 if p.size == 16 and other.size == 16 and len(p_set ^ other_set) == 0:
                     continue
 
@@ -456,7 +456,7 @@ class BGBaseSystem (Component):
                     if ((par.name != p_name) and
                         (par.name in self._managed_partitions)):
                         p._parents.add(self._partitions[par.name])
-                    
+
     def validate_job(self, spec):
         """validate a job for submission
 
@@ -464,7 +464,7 @@ class BGBaseSystem (Component):
         spec -- job specification dictionary
         """
         # spec has {nodes, walltime*, procs, mode, kernel}
-        
+
         max_nodes = max([int(p.size) for p in self._partitions.values()])
         try:
             sys_type = get_config_option('bgsystem', 'bgtype')
@@ -522,15 +522,15 @@ class BGBaseSystem (Component):
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
-        
+
     def add_process_groups (self, specs):
         """
         Create a process group.
-        
+
         Arguments:
         specs -- list of dictionary hashes, each specifying a process group to start
         """
-        
+
         self.logger.info("add_process_groups(%r)" % (specs))
 
         # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
@@ -647,7 +647,7 @@ class BGBaseSystem (Component):
         for forker, child_id in children.keys():
             if children[(forker, child_id)]['pg'] is None:
                 cleanup[pg.forker].append(child['id'])
-                
+
         # cleanup any children that have completed and been processed
         for forker in cleanup.keys():
             if len(cleanup[forker]) > 0:
@@ -659,7 +659,7 @@ class BGBaseSystem (Component):
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
     _get_exit_status = automatic(_get_exit_status, float(get_config_option('bgsystem', 'get_exit_status_interval', 10)))
-    
+
     def wait_process_groups (self, specs):
         """
         Get the exit status of any completed process groups.  If completed,
@@ -672,7 +672,7 @@ class BGBaseSystem (Component):
             del self.process_groups[process_group.id]
         return process_groups
     wait_process_groups = exposed(query(wait_process_groups))
-    
+
     def signal_process_groups (self, specs, signame="SIGINT"):
         """
         Send a signal to a currently running process group as specified by signame.
@@ -713,7 +713,7 @@ class BGBaseSystem (Component):
             self._partitions_lock.release()
         return ret
     fail_partitions = exposed(fail_partitions)
-    
+
     def unfail_partitions(self, specs, user_name=None):
         self.logger.info("%s unfailing partition %s", user_name, specs)
 
@@ -734,7 +734,7 @@ class BGBaseSystem (Component):
             self._partitions_lock.release()
         return ret
     unfail_partitions = exposed(unfail_partitions)
-    
+
     def _find_job_location(self, args, drain_partitions=set(), backfilling=False):
         jobid = args['jobid']
         nodes = args['nodes']
@@ -744,21 +744,21 @@ class BGBaseSystem (Component):
         walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
         forbidden = args.get("forbidden", [])
         required = args.get("required", [])
-        
+
         if walltime_prediction_enabled:  # *Adj_Est*
             runtime_estimate = float(walltime_p)  
         else:
             runtime_estimate = float(walltime)
-        
+
         best_score = sys.maxint
         best_partition = None
-        
+
         available_partitions = set()
-        
+
         requested_location = None
         if args['attrs'].has_key("location"):
             requested_location = args['attrs']['location']
-                
+
         if required:
             # whittle down the list of required partitions to the ones of the proper size
             # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
@@ -769,16 +769,16 @@ class BGBaseSystem (Component):
                 available_partitions.update(self.cached_partitions[p_name]._children)
 
             possible = set()
-            for p in available_partitions:            
+            for p in available_partitions:
                 possible.add(p.size)
-                
+
             desired_size = 0
             job_nodes = int(nodes)
             for psize in sorted(possible):
                 if psize >= job_nodes:
                     desired_size = psize
                     break
-            
+
             for p in available_partitions.copy():
                 if p.size != desired_size:
                     available_partitions.remove(p)
@@ -796,35 +796,35 @@ class BGBaseSystem (Component):
                 if not skip:
                     if (not requested_location) or (p.name == requested_location):
                         available_partitions.add(p)
-        
+
         available_partitions -= drain_partitions
         now = time.time()
-        
+
         for partition in available_partitions:
             # if the job needs more time than the partition currently has available, look elsewhere    
             if backfilling: 
-                               
+
                 if partition.reserved_by:
                     #if the partition is reserved, we don't use predicted walltime to backfill
                     runtime_estimate = float(walltime)
-                
+
                 if 60 * runtime_estimate > (partition.backfill_time - now):      # *Adj_Est*
                     continue
-                
+
                 if 60*float(walltime) > (partition.backfill_time - now):
                     continue
-                
+
             if partition.state == "idle":
                 # let's check the impact on partitions that would become blocked
                 score = 0
                 for p in partition.parents:
                     if self.cached_partitions[p].state == "idle" and self.cached_partitions[p].scheduled:
                         score += 1
-                
+
                 # the lower the score, the fewer new partitions will be blocked by this selection
                 if score < best_score:
                     best_score = score
-                    best_partition = partition        
+                    best_partition = partition
 
         if best_partition:
             return {jobid: [best_partition.name]}
@@ -835,17 +835,17 @@ class BGBaseSystem (Component):
         if job['attrs'].has_key("location"):
             target_name = job['attrs']['location']
             return self.cached_partitions.get(target_name, None)
-        
+
         drain_partition = None
         locations = self.possible_locations(job['nodes'], job['queue'])
-        
+
         for p in locations:
             if not drain_partition:
                 drain_partition = p
             else:
                 if p.backfill_time < drain_partition.backfill_time:
                     drain_partition = p
-        
+
         if drain_partition:
             # don't try to drain for an entire weekend 
             hours = (drain_partition.backfill_time - time.time()) / 3600.0
@@ -907,17 +907,17 @@ class BGBaseSystem (Component):
                     if not per_queue[queue_name].has_key(target_partition.size):
                         per_queue[queue_name][target_partition.size] = []
                     per_queue[queue_name][target_partition.size].append(target_partition)
-        
+
         for q_name in defined_sizes:
             defined_sizes[q_name] = sorted(defined_sizes[q_name])
-        
+
         self._defined_sizes = defined_sizes
         self._locations_cache = per_queue
         self._not_functional_set = not_functional_set
-    
+
     def find_job_location(self, arg_list, end_times):
         best_partition_dict = {}
-        
+
         self._partitions_lock.acquire()
         try:
             try:
@@ -934,12 +934,12 @@ class BGBaseSystem (Component):
         # build the cached_partitions structure first
         self._build_locations_cache()
 
-            
+
         # first, figure out backfilling cutoffs per partition (which we'll also use for picking which partition to drain)
         job_end_times = {}
         for item in end_times:
             job_end_times[item[0][0]] = item[1]
-            
+
         now = time.time()
         for p in self.cached_partitions.itervalues():
             if p.state == "idle":
@@ -947,27 +947,27 @@ class BGBaseSystem (Component):
             else:
                 p.backfill_time = now + 5*60
             p.draining = False
-        
+
         for p in self.cached_partitions.itervalues():    
             if p.name in job_end_times:
                 if job_end_times[p.name] > p.backfill_time:
                     p.backfill_time = job_end_times[p.name]
-                
+
                 for parent_name in p.parents:
                     parent_partition = self.cached_partitions[parent_name]
                     if p.backfill_time > parent_partition.backfill_time:
                         parent_partition.backfill_time = p.backfill_time
-        
+
         for p in self.cached_partitions.itervalues():
             if p.backfill_time == now:
                 continue
-            
+
             for child_name in p.children:
                 child_partition = self.cached_partitions[child_name]
                 if child_partition.backfill_time == now or child_partition.backfill_time > p.backfill_time:
                     child_partition.backfill_time = p.backfill_time
 
-        
+
         # first time through, try for starting jobs based on utility scores
         drain_partitions = set()
         jobs = {}
@@ -978,7 +978,7 @@ class BGBaseSystem (Component):
             if partition_name:
                 best_partition_dict.update(partition_name)
                 break
-            
+
             location = self._find_drain_partition(job)
             if location is not None:
                 for p_name in location.parents:
@@ -989,10 +989,10 @@ class BGBaseSystem (Component):
                 drain_partitions.add(location)
                 #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
                 location.draining = True
-        
+
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
-            
+
             # arg_list.sort(self._walltimecmp)
 
             for args in arg_list:
@@ -1025,10 +1025,10 @@ class BGBaseSystem (Component):
             self.logger.error("Job %s: failed to reserve partition %s.  Removing resource assignment.",
                 j, best_partition_dict[j][0])
             del best_partition_dict[j]
-        
+
         return best_partition_dict
     find_job_location = locking(exposed(find_job_location))
-    
+
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
@@ -1046,7 +1046,7 @@ class BGBaseSystem (Component):
                 # queues using this partition
                 if not part_active_queues:
                     continue
-                
+
                 found_a_match = False
                 for e in equiv:
                     if e['data'].intersection(part.node_card_names):
@@ -1056,7 +1056,7 @@ class BGBaseSystem (Component):
                         break
                 if not found_a_match:
                     equiv.append( { 'queues': set(part_active_queues), 'data': set(part.node_card_names), 'reservations': set() } ) 
-        
+
         real_equiv = []
         for eq_class in equiv:
             found_a_match = False
@@ -1070,7 +1070,7 @@ class BGBaseSystem (Component):
                 real_equiv.append(eq_class)
 
         equiv = real_equiv
-                
+
         for eq_class in equiv:
             for res_name in reservation_dict:
                 skip = True
@@ -1087,11 +1087,11 @@ class BGBaseSystem (Component):
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
-        
+
         return equiv
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
-    
-    
+
+
     def can_run(self, target_partition, node_count, partition_dict):
         if target_partition.state != "idle":
             return False
