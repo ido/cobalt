@@ -10,27 +10,21 @@ import optparse
 
 class AnyOptionParser(optparse.OptionParser):
 
-       def _process_args(self, largs, rargs, values):
-           while rargs:
-               try:
-                   optparse.OptionParser._process_args(self,largs,rargs,values)
-               except (optparse.BadOptionError,optparse.AmbiguousOptionError), e:
-                   largs.append(e.opt_str)
-                                                                                       
-
-parser = AnyOptionParser()
-
-parser.add_option("--fail", dest="exit_status", action="store", type="int")
-parser.add_option("--timeout", "-t", dest="timeout", action="store", type="int")
+    def _process_args(self, largs, rargs, values):
+        while rargs:
+            try:
+                optparse.OptionParser._process_args(self,largs,rargs,values)
+            except (optparse.BadOptionError,optparse.AmbiguousOptionError), e:
+                largs.append(e.opt_str)
 
 def parse_options():
 
+    parser = AnyOptionParser()
 
-    #opts, args = getopt.gnu_getopt(argv, "", ["fail=", "timeout="])
+    parser.add_option("--fail", dest="exit_status", action="store", type="int")
+    parser.add_option("--timeout", "-t", dest="timeout", action="store", type="int")
 
-    #print opts
-    print argv[1:] 
-    
+
     opts, args = parser.parse_args(argv)
 
     return opts, args
@@ -39,7 +33,7 @@ if __name__ == '__main__':
 
 
     opts,args = parse_options()
-    
+
     timeout = None
     if opts.timeout != None:
         timeout = opts.timeout
@@ -48,11 +42,9 @@ if __name__ == '__main__':
     exit_status = 0 #so we can make flags for non-zero statuses later.
     if opts.exit_status != None:
         exit_status = opts.exit_status
-    
+
     print "exit_status =", exit_status
 
-    #timeout = None
-    
     print >> stdout, "Stdout: CHECK!"
     print >> stderr, '#' * 80
     print >> stderr, "Args:\n", "\n".join(argv)
@@ -67,7 +59,7 @@ if __name__ == '__main__':
     print "Starting simulator_run for %s seconds." % run_time
     sleep(run_time)
     print "run completed successfully!"
-    
+
     if exit_status == 0:
         print >> stderr, "Exiting with status 0."
         exit(0)
