@@ -299,7 +299,7 @@ class Simulator (BGBaseSystem):
                 if p.reserved_until and now > p.reserved_until:
                     p.reserved_until = None
                     p.reserved_by = None
-                    p.used_by
+                    p.used_by = None
 
             for p in self._partitions.values():
                 if p.state == "busy":
