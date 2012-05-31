@@ -1356,9 +1356,8 @@ class Job (StateMachine):
                 {'ncpus':self.procs, 'nodect':self.nodes,
                 'walltime':str_elapsed_time(self.walltime * 60)},
                 "unknown", **optional))
-            dbwriter.log_to_db(None, "pbs_start", 
-                "job_prog", JobProgMsg(self), self.start)
-
+            dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self),
+                    self.start)
             # notify the user that the job is starting; a separate thread is used to send the email so that cqm does not block
             # waiting for the smtp server to respond
             if self.notify:
@@ -1403,7 +1402,6 @@ class Job (StateMachine):
 
             # start job and resource prologue scripts
 
-            dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
             self._sm_start_job_prologue_scripts()
         except Exception:
             logger.error("Job %s/%s: Exception in starting job.  Job going to terminal state." %(self.jobid, self.user))
@@ -2320,7 +2318,7 @@ class Job (StateMachine):
             self._sm_log_info("pending user delete; initiating job cleanup and removal", cobalt_log = True)
             self._sm_start_job_epilogue_scripts()
             return
-            
+
         # stop the execution timer, clear the location where the job is being run, and output accounting log entry
         self.__timers['user'].stop()
         self.__max_job_timer.stop()
@@ -2351,7 +2349,7 @@ class Job (StateMachine):
 
         # reset the job's score to 0 after preempting it
         self.score = 0.0
-        
+
         # if a pending hold exists, then change to the preempted hold state; otherwise change to the preempted state
         if self.admin_hold or self.user_hold:
             if not self.__timers.has_key('hold'):
@@ -2419,15 +2417,14 @@ class Job (StateMachine):
             {'ncpus':self.procs, 'nodect':self.nodes,
              'walltime':str_elapsed_time(self.walltime * 60)},
             "unknown", **optional))
-        dbwriter.log_to_db(None, "pbs_start", 
-            "job_prog", JobProgMsg(self), self.start)
+        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self),
+                self.start)
 
         # start resource prologue scripts #Script forking ***
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
         self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
 
         self._sm_state = 'Prologue'
-        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
 
     def _sm_preempted__hold(self, args):
         '''place a hold on a job in the preempted state'''
@@ -2645,7 +2642,7 @@ class Job (StateMachine):
              'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
             **optional))
 
-        dbwriter.log_to_db(None, "pbs_end", 
+        dbwriter.log_to_db(None, "terminal_action_start",
             "job_prog", JobProgMsg(self), self.end)
 
         logger.info("Job %s/%s on %s nodes done. %s" % (self.jobid, self.user, self.nodes, stats))
@@ -3047,7 +3044,7 @@ class Job (StateMachine):
                          'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
                         **optional))
 
-                    dbwriter.log_to_db(None, "pbs_end", 
+                    dbwriter.log_to_db(None, "terminal_action_start",
                         "job_prog", JobProgMsg(self), self.end)
 
                     logger.info("Job %s/%s on %s nodes forcibly terminated by "
