@@ -1494,15 +1494,10 @@ class Job (StateMachine):
         label = "Job %s/%s" % (self.jobid, self.user)
         script_ids = []
 
-        passed_env = self.envs
-
-        if error:
-            passed_env['COBALT_SCRIPT_ERROR'] = 'True'
-
         for script in scripts:
             try:
                retval = ComponentProxy("system_script_forker").fork(
-                   script, tag, label, passed_env)
+                   script, tag, label, None)
                if retval != None:
                    script_ids.append(retval)
                else:
