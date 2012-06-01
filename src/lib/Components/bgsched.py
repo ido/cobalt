@@ -225,7 +225,7 @@ class Reservation (Data):
                     logger.info("Res %s/%s: Active reservation %s deactivating: Deferred and cycling.",
                         self.res_id, self.cycle_id, self.name)
                     dbwriter.log_to_db(None, "deactivating", "reservation", self)
-
+                    dbwriter.log_to_db(None, "instance_end","reservation", self)
                     self.res_id = bgsched_id_gen.get()
                     logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
@@ -264,6 +264,7 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling",
                     self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "deactivating", "reservation", self)
+                dbwriter.log_to_db(None, "instance_end", "reservation", self)
                 self.set_start_to_next_cycle()
                 self.running = False
                 self.res_id = bgsched_id_gen.get()
