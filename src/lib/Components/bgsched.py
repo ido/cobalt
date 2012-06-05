@@ -248,6 +248,8 @@ class Reservation (Data):
                         self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "activating", "reservation", self)
             return True
+        else:
+            return False
 
     def is_over(self):
         '''Determine if a reservation is over and initiate cleanup.
@@ -404,6 +406,8 @@ class ReservationDict (DataDict):
                 #if we are active, then drop a deactivating message.
                 dbwriter.log_to_db(None, "deactivating", "reservation",
                         reservation)
+                if self.cycle:
+                    dbwriter.log_to_db(None, "instance_end","reservation", self)
             dbwriter.log_to_db(None, "terminated", "reservation", reservation)
         return reservations
 
