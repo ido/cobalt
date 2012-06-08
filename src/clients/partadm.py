@@ -26,13 +26,44 @@ Usage: partadm.py --version
 Usage: partadm.py --savestate filename
 Must supply one of -a or -d or -l or -start or -stop or --queue'''
 
+
+def print_block(block_dicts):
+    '''Formatted printing of a list of blocks.  This expects a list of 
+    dictionaries of block data, such as the output from the system component's
+    get_blocks call.
+
+    '''
+    for block in block_dicts:
+        #print block['name']
+
+        #print ' '.join([nodecard['name'] for nodecard in block['node_cards']])
+        header_list = []
+        value_list = []
+
+        for key,value in block.iteritems():
+
+            if key in ['node_cards','nodes']:
+                if block['size'] > 32 and key == 'nodes':
+                    continue
+                else:
+                    header_list.append(key)
+                    value_list.append(' '.join([v['id'] for v in value]))
+            else:
+                header_list.append(key)
+                value_list.append(value)
+
+        Cobalt.Util.print_vertical([header_list,value_list])
+    return
+
+
+
 if __name__ == '__main__':
     if '--version' in sys.argv:
         print "partadm %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'adlrs:',
+        (opts, args) = getopt.getopt(sys.argv[1:], 'abdlrs:',
                                      ['dump', 'free', 'load=', 'enable', 'disable', 'activate', 'deactivate',
                                       'queue=', 'deps=', 'xml', 'fail', 'unfail', 'savestate'])
     except getopt.GetoptError, msg:
@@ -46,17 +77,29 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     whoami = getpass.getuser()
-    
+
     if '-r' in sys.argv:
         partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children':'*'} for name in args])
         parts = args
-        
+
         for part in partdata:
             for child in part['children']:
                 if child not in parts:
                     parts.append(child)
     else:
         parts = args
+
+    if '-b' in sys.argv:
+        for part in parts:
+            print_block(system.get_partitions([{'name':part,'node_cards':'*',
+                'scheduled':'*', 'funcitonal':'*',
+                'queue':'*','parents':'*','children':'*','reserved_until':'*',
+                'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
+                'cleanup_pending':'*', 'state':'*',
+                'size':'*','draining':'*','backfill_time':'*'}]))
+        sys.exit(0)
+
+
     if '-a' in sys.argv:
         func = system.add_partitions
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
