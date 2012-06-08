@@ -406,7 +406,6 @@ class BGBaseSystem (Component):
         for p_name in self._managed_partitions:
             p = self._partitions[p_name]
 
-
             # toss the wiring dependencies in with the parents
             for dep_name in p._wiring_conflicts:
                 if dep_name in self._managed_partitions:
@@ -418,7 +417,6 @@ class BGBaseSystem (Component):
 
                 p_set = set(p.node_cards)
                 other_set = set(other.node_cards)
-
 
                 if p.size == 16 and other.size == 16 and len(p_set ^ other_set) == 0:
                     continue
@@ -445,7 +443,6 @@ class BGBaseSystem (Component):
         #Let's get the wiring conflicts for direct childeren as well, 
         #we shouldn't be able to run on these either. --PMR
         for p_name in self._managed_partitions:
-
             p = self._partitions[p_name]
             for child in p._children:
                 for dep_name in child._wiring_conflicts:
@@ -454,8 +451,18 @@ class BGBaseSystem (Component):
                 #we shouldn't be scheduling on the parents of our children either
                 for par in child._parents:
                     if ((par.name != p_name) and
-                        (par.name in self._managed_partitions)):
+                            (par.name in self._managed_partitions) and
+                            (set(p.node_cards).intersection(set(par.node_cards)))):
                         p._parents.add(self._partitions[par.name])
+
+        for p_name in self._managed_partitions:
+            p = self._partitions[p_name]
+            for par in p._parents:
+                if not set(p.node_cards).intersection(set(par.node_cards)) and par.name not in p._wiring_conflicts:
+                    self.logger.error("partition %s: contains parent partition \"%s\" that shares no resources", p_name, par.name)
+
+            self.logger.debug("partition %s: parents=%s", p_name, ", ".join([part.name for part in p._parents]))
+            self.logger.debug("partition %s: children=%s", p_name, ", ".join([part.name for part in p._children]))
 
     def validate_job(self, spec):
         """validate a job for submission
