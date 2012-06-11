@@ -1,9 +1,9 @@
-from ctypes import CDLL, cast, byref, c_void_p, c_int, c_char_p, POINTER, pointer, Structure
+from ctypes import CDLL, cast, byref, c_void_p, c_int, c_int64, c_char_p, POINTER, pointer, Structure
 
 __all__ = [
     "set_serial", "get_serial",
     "BlueGene", "BasePartition", "NodeCard", "NodeCardList", "Switch",
-    "Wire", "Port", "PartitionList", "Partition", "JobList", "Job",
+    "Wire", "Port", "Connection", "PartitionList", "Partition", "JobList", "Job",
 ]
 
 try:
@@ -44,6 +44,7 @@ def check_status (status, **kwargs):
 
 rm_element_t = c_void_p
 rm_component_id_t = c_char_p
+rm_sequence_id_t = c_int64
 
 bridge.rm_get_data.argtypes = [rm_element_t, c_int, c_void_p]
 bridge.rm_get_data.restype = check_status
@@ -726,7 +727,8 @@ class Switch (Resource):
     
     def __init__ (self, element_pointer, **kwargs):
         Resource.__init__(self, element_pointer, **kwargs)
-    
+        self._connections = None
+
     def __del__ (self):
         if self._free:
             bridge.rm_free_switch(self)
@@ -755,13 +757,24 @@ class Switch (Resource):
     
     dimension = property(_get_dimension)
 
+    def _get_connections(self):
+        if self._connections is None:
+            self._connections = list(
+                ElementGenerator(self, Connection, RM_SwitchConnNum, RM_SwitchFirstConnection, RM_SwitchNextConnection))
+        return self._connections
+
+    connections = property(_get_connections)
+
+    def __repr__ (self):
+        return "<%s %s>" % (self.__class__.__name__, self.id)
+
 
 class rm_wire_t (Structure):
     _fields_ = []
 
 rm_wire_id_t = rm_component_id_t
 rm_wire_state_t = c_int
-rm_wire_state_values = ("UP", "DOWN")
+rm_wire_state_values = ("RM_WIRE_UP" ,"RM_WIRE_DOWN", "RM_WIRE_MISSING", "RM_WIRE_ERROR", "RM_WIRE_NAV")
 
 if systype == 'BGL':
     RM_WireID = 31
@@ -818,11 +831,15 @@ class Wire (Resource):
     
     partition_state = property(_get_partition_state)
 
+    def __repr__ (self):
+        return "<%s %s (%s --> %s)>" % (self.__class__.__name__, self.id, self.from_port, self.to_port)
+
 
 class rm_port_t (Structure):
     _fields_ = []
 
 rm_port_id_t = c_int
+rm_port_id_desc = ("PLUS_X", "MINUS_X", "PLUS_Y", "MINUS_Y", "PLUS_Z", "MINUS_Z", "S0", "S1", "S2", "S3", "S4", "S5")
 
 if systype == 'BGL':
     RM_PortComponentID = 37
@@ -836,7 +853,7 @@ class Port (Resource):
     _ctype = POINTER(rm_port_t)
     
     def __repr__ (self):
-        return "<%s %i>" % (self.__class__.__name__, self.id)
+        return "<%s %s:%s>" % (self.__class__.__name__, self.component_id, self.desc)
     
     def _get_component_id (self):
         id = self._get_data(RM_PortComponentID, rm_component_id_t)
@@ -849,6 +866,33 @@ class Port (Resource):
         return id.value
     
     id = property(_get_id)
+
+    desc = property(lambda self: rm_port_id_desc[self.id])
+
+class rm_connection_t (Structure):
+    _fields_ = [('port1', rm_port_id_t), ('port2', rm_port_id_t), ('part_id', pm_partition_id_t),
+        ('part_state', rm_partition_state_t), ('part_state_seq_id', rm_sequence_id_t)]
+
+class Connection (object):
+    _ctype = rm_connection_t
+
+    def __init__ (self, element_pointer, **kwargs):
+        self._port1_id = element_pointer.port1
+        self._port2_id = element_pointer.port2
+        self._part_id = element_pointer.part_id
+        self._part_state = rm_partition_state_values[element_pointer.part_state]
+        self._part_state_seq_id = element_pointer.part_state_seq_id
+
+    port1_id = property(lambda self: self._port1_id)
+    port2_id = property(lambda self: self._port2_id)
+    port1_desc = property(lambda self: rm_port_id_desc[self._port1_id])
+    port2_desc = property(lambda self: rm_port_id_desc[self._port2_id])
+    part_id = property(lambda self: self._part_id)
+    part_state = property(lambda self: self._part_state)
+    part_state_seq_id = property(lambda self: self._part_state_seq_id)
+
+    def __repr__ (self):
+        return "<%s %s %s>" % (self.__class__.__name__, self.port1_desc, self.port2_desc)
 
 
 class rm_partition_list_t (Structure):

@@ -27,6 +27,7 @@ get_config_option = Cobalt.Util.get_config_option
 
 __all__ = [
     "NodeCard",
+    "Wire",
     "Partition",
     "PartitionDict",
     "BGBaseSystem",
@@ -93,7 +94,24 @@ class NodeCard (object):
         self.midplane = int(midplane)
         self.nodecard = int(nodecard)
         return
-    
+
+
+class Wire (object):
+    """
+    Wires are used to connect base paritions and switches.
+
+    Attributes:
+    id - Name of the wire
+    port1 - base partition or switch port to which the wire is connected
+    port2 - base partition of switch port to which the wire is connected
+    state - state of the wire (RM_WIRE_UP, RM_WIRE_DOWN, RM_WIRE_MISSING, RM_WIRE_ERROR)
+    """
+    def __init__(self, name, port1, port2, state="RM_WIRE_UP"):
+        self.id = name
+        self.port1 = port1
+        self.port2 = port2
+        self.state = state
+
 
 class Partition (Data):
     
@@ -137,8 +155,9 @@ class Partition (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.bridge_partition = None
-        self.node_cards = spec.get("node_cards", [])
-        self.switches = spec.get("switches", [])
+        self.node_cards = set(spec.get("node_cards", []))
+        self.switches = set(spec.get("switches", []))
+        self.wires = set(spec.get("wires", []))
         self.reserved_until = False
         self.reserved_by = None
         self.used_by = None
@@ -309,6 +328,14 @@ class BGBaseSystem (Component):
                     if p.state == 'idle':
                         p.state = "blocked (%s)" % (part.name,)
 
+    def _detect_wiring_deps(self, partition):
+        for p in self._partitions.values():
+            if partition.wires.intersection(p.wires) and not partition.node_cards.intersection(p.node_cards) and \
+                    p.name not in partition._wiring_conflicts:
+                p._wiring_conflicts.add(partition.name)
+                partition._wiring_conflicts.add(p.name)
+                self.logger.debug("%s and %s have a wiring conflict" % (partition.name, p.name))
+
     def _get_partitions (self):
         return self.partition_dict_cls([
             (partition.name, partition) for partition in self._partitions.itervalues()
@@ -415,51 +442,31 @@ class BGBaseSystem (Component):
                 if p.name == other.name:
                     continue
 
-                p_set = set(p.node_cards)
-                other_set = set(other.node_cards)
-
-                if p.size == 16 and other.size == 16 and len(p_set ^ other_set) == 0:
+                if p.size == 16 and other.size == 16 and len(p.node_cards ^ other.node_cards) == 0:
                     continue
 
                 if other.name in self._managed_partitions:
                     # if p is a subset of other, then p is a child; add other to p's list of managed parent partitions, and p to
                     # other's list of managed child partitions
-                    if p_set.intersection(other_set)==p_set:
+                    if p.node_cards.intersection(other.node_cards) == p.node_cards:
                         if p.size < other.size:
                             p._parents.add(other)
                             other._children.add(p)
                     # if p contains other, then p is a parent; add other to p's list of managed child partitions and p to other's
                     # list of managed parent partitions
-                    elif p_set.union(other_set)==p_set:
+                    elif p.node_cards.union(other.node_cards) == p.node_cards:
                         if p.size > other.size:
                             p._children.add(other)
                             other._parents.add(p)
+                    # if p shares nodes with other but is not a parent or child, then p is relative; add other to p's parent list
+                    # (which at this point has become a list of relatives that are not p's children)
+                    elif p.node_cards.intersection(other.node_cards):
+                        p._parents.add(other)
 
                 # if p contains other, then p is a parent; add other to p's list of all child partitions
-                if p_set.union(other_set)==p_set:
+                if p.node_cards.union(other.node_cards) == p.node_cards:
                     if p.size > other.size:
                         p._all_children.add(other)
-
-        #Let's get the wiring conflicts for direct childeren as well, 
-        #we shouldn't be able to run on these either. --PMR
-        for p_name in self._managed_partitions:
-            p = self._partitions[p_name]
-            for child in p._children:
-                for dep_name in child._wiring_conflicts:
-                    if dep_name in self._managed_partitions:
-                        p._parents.add(self._partitions[dep_name])
-                #we shouldn't be scheduling on the parents of our children either
-                for par in child._parents:
-                    if ((par.name != p_name) and
-                            (par.name in self._managed_partitions) and
-                            (set(p.node_cards).intersection(set(par.node_cards)))):
-                        p._parents.add(self._partitions[par.name])
-
-        for p_name in self._managed_partitions:
-            p = self._partitions[p_name]
-            for par in p._parents:
-                if not set(p.node_cards).intersection(set(par.node_cards)) and par.name not in p._wiring_conflicts:
-                    self.logger.error("partition %s: contains parent partition \"%s\" that shares no resources", p_name, par.name)
 
             self.logger.debug("partition %s: parents=%s", p_name, ", ".join([part.name for part in p._parents]))
             self.logger.debug("partition %s: children=%s", p_name, ", ".join([part.name for part in p._children]))
