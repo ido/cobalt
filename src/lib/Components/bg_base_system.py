@@ -446,7 +446,7 @@ class BGBaseSystem (Component):
             p = self._partitions[p_name]
             for child in p._children:
                 for dep_name in child._wiring_conflicts:
-                    if dep_name in self._managed_partitions:        
+                    if dep_name in self._managed_partitions:
                         p._parents.add(self._partitions[dep_name])
                 #we shouldn't be scheduling on the parents of our children either
                 for par in child._parents:
@@ -1041,7 +1041,24 @@ class BGBaseSystem (Component):
 
 
     def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
+        '''Take a dictionary of reservation information and a list of active
+        queues return a list of dictionaries containing queues, partition
+        associations and reservation data.
+
+        Input:
+        reservation_dict: A dict of reservations and associated partitions
+        active_queue_names: A list of queues that you can schedule jobs from
+
+        Output:
+        A dictionary of queues and associated reservations that have resources
+        in common with esachother
+
+        '''
         equiv = []
+        # iterate over the partitions and get the queues that are in an active
+        # state from the system component information.
+        # if a partition has no active queues, then  do nothing, otherwise do
+        # an initial population of the equivalence class data. --PMR
         for part in self.partitions.itervalues():
             if part.functional and part.scheduled:
                 part_active_queues = []
@@ -1056,14 +1073,33 @@ class BGBaseSystem (Component):
 
                 found_a_match = False
                 for e in equiv:
+                    # If this partition has node cards already in the
+                    # equivalence dicts, then add all of this partition's
+                    # node cards to the equivalence dict as well as all
+                    # active queues.  Do not check other equivalence dicts
+                    # in this pass.
+                    # Otherwise, just add the active queues and associated
+                    # hardware.
+                    # In the end you end up with a list of dicts containing
+                    # queues and possibly disjoint sets of hardware
+                    # This pass will not necessarially catch a partial overlap 
+                    # case. --PMR
                     if e['data'].intersection(part.node_card_names):
                         e['queues'].update(part_active_queues)
                         e['data'].update(part.node_card_names)
                         found_a_match = True
                         break
                 if not found_a_match:
-                    equiv.append( { 'queues': set(part_active_queues), 'data': set(part.node_card_names), 'reservations': set() } ) 
+                    equiv.append( { 'queues': set(part_active_queues),
+                                    'data': set(part.node_card_names),
+                                    'reservations': set() } )
 
+        # Go through our first-pass equivalence dicts and see if the same
+        # queues show up in multiple equivalence dicts.  If a match is found
+        # then merge the two sets together
+        # Otherwise, just copy the entry over.
+        # I think this is meant to handle queues with partially overlapping
+        # hardware. --PMR
         real_equiv = []
         for eq_class in equiv:
             found_a_match = False
@@ -1078,9 +1114,18 @@ class BGBaseSystem (Component):
 
         equiv = real_equiv
 
+        # Now check the reservation data, and augment what we already know
+        # about queues.
         for eq_class in equiv:
             for res_name in reservation_dict:
-                skip = True
+                skip = True #apparently this isn't used. Why?
+                # For every partition that is in the reservation:
+                # if it's node cards are already in an equivalence class, go
+                # ahead and add the reservation name to that class.
+                # Then go through the wiring conflicts for that partiition, if
+                # If the dependency is in one of our managed partitions, and
+                # the node cards of the conflicting partition are in our 
+                # equivalence class, then add the reservation to our class.
                 for p_name in reservation_dict[res_name].split(":"):
                     p = self.partitions[p_name]
                     if eq_class['data'].intersection(p.node_card_names):
@@ -1091,6 +1136,8 @@ class BGBaseSystem (Component):
                                 eq_class['reservations'].add(res_name)
                                 break
 
+            # convert set data into lists for transmission.  XML-RPC doesn't 
+            # marshall sets.
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
