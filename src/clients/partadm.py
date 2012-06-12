@@ -91,8 +91,8 @@ if __name__ == '__main__':
 
     if '-b' in sys.argv:
         for part in parts:
-            print_block(system.get_partitions([{'name':part,'node_cards':'*',
-                'scheduled':'*', 'funcitonal':'*',
+            print_block(system.get_partitions([{'name':part,'node_card_list':'*',
+                'wire_list':'*','switch_list':'*','scheduled':'*', 'funcitonal':'*',
                 'queue':'*','parents':'*','children':'*','reserved_until':'*',
                 'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
                 'cleanup_pending':'*', 'state':'*',

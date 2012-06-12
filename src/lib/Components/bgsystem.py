@@ -167,6 +167,11 @@ class BGSystem (BGBaseSystem):
     save_me = automatic(save_me, float(get_config_option('bgsystem', 'save_me_interval', 10)))
 
     def _recompute_partition_state(self):
+        """
+        update state of partitions based on current hardware and usage state
+
+        NOTE: partition lock is required after component initialization
+        """
         self.offline_partitions = []
 
         for p in self._partitions.values():
@@ -479,6 +484,7 @@ class BGSystem (BGBaseSystem):
                 # machine state doesn't get bogged down
                 if new_partitions:
                     self.logger.log(1, "update_partition_state: adding new partitions")
+                # FIXME: make the "8" configurable
                 for partition in new_partitions[:8]:
                     self.logger.info("new partition found: %s", partition.id)
                     try:

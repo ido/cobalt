@@ -203,6 +203,10 @@ class Partition (Data):
 
     all_children = property(_get_all_children)
 
+    node_card_list = property(lambda self: [nc.id for nc in self.node_cards])
+    switch_list = property(lambda self: list(self.switches))
+    wire_list = property(lambda self: list(self.wires))
+
     def _get_node_card_names (self):
         return [nc.id for nc in self.node_cards]
 
