@@ -237,6 +237,7 @@ class Simulator (BGBaseSystem):
 
         # this is going to hold partition objects from the bridge (not our own Partition)
         self.logger.log(1, "configure: acquiring machine information and creating partition objects")
+        self._partitions.clear()
         for partition_def in system_def.getiterator("Partition"):
             node_list = []
             switch_list = []
@@ -250,10 +251,10 @@ class Simulator (BGBaseSystem):
             for s in partition_def.getiterator("Switch"):
                 switch_list.append(s.get("id"))
 
-            for w in partition_def.getiterator("Wires"):
-                wires_list.append(s.get("id"))
+            for w in partition_def.getiterator("Wire"):
+                wire_list.append(w.get("id"))
 
-            tmp_list.append( dict(
+            self._partitions.q_add([dict(
                 name = partition_def.get("name"),
                 queue = partition_def.get("queue", "default"),
                 size = NODES_PER_NODECARD * nc_count,
@@ -261,14 +262,8 @@ class Simulator (BGBaseSystem):
                 switches = switch_list,
                 wires = wire_list,
                 state = "idle",
-            ))
+            )])
         
-        partitions.q_add(tmp_list)
-        
-        # update object state
-        self._partitions.clear()
-        self._partitions.update(partitions)
-
         # find the wiring deps
         self.logger.log(1, "configure: looking for wiring dependencies")
         for p in self._partitions.values():
