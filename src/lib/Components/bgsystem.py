@@ -688,12 +688,10 @@ class BGSystem (BGBaseSystem):
             except:
                 logger.error("partition %s: failed to reset boot location", partition)
     def generate_xml(self):
-        """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
+        """This method produces an XML file describing the partitions, suitable for use with the simulator."""
         ret = "<BG>\n"
         ret += "<PartitionList>\n"
-        for p_name in self._managed_partitions:
-            p = self._partitions[p_name]
-
+        for p in self._partitions.itervalues():
             ret += "   <Partition name='%s'>\n" % p.name
             for nc in p.node_cards:
                 ret += "      <NodeCard id='%s' />\n" % nc.id
