@@ -221,7 +221,7 @@ class BGSystem (BGBaseSystem):
                     self._blocks[bname].queue = flags[2]
                 else:
                     self.logger.info("Block %s is no longer defined" % bname)
-       
+
         self.update_relatives()
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
@@ -232,7 +232,7 @@ class BGSystem (BGBaseSystem):
 
         self.pgroups_pending_boot = []
         self.pgroups_wait_reboot = []
-    
+
     def save_me(self):
         Component.save(self)
     save_me = automatic(save_me)
@@ -240,7 +240,7 @@ class BGSystem (BGBaseSystem):
     def _get_node_card(self, name, state="idle"):
         if not self.node_card_cache.has_key(name):
             self.node_card_cache[name] = NodeCard(name, state)
-            
+
         return self.node_card_cache[name]
 
     def _get_midplane_from_location(self, loc_name):
@@ -686,13 +686,13 @@ class BGSystem (BGBaseSystem):
 
     def _new_block_dict(self, block_def):
         #pull block info into a dict so that we can create internal blocks to track.
-        
+
         #block_def must be a block from pybgsched
 
-        switch_list=[]
-        midplane_list=[]
-        nodecard_list=[]
-        io_link_list=[]
+        switch_list = []
+        midplane_list = []
+        nodecard_list = []
+        io_link_list = []
         midplane_ids = block_def.getMidplanes()
         midplane_nodecards = []
         for midplane_id in midplane_ids:
@@ -709,7 +709,7 @@ class BGSystem (BGBaseSystem):
             #except RuntimeError:
             #    self.logger.critical ("Error communicating with the bridge during NodeBoard acquisition")
             #    init_fail_exit()
-            
+
             block_nodecards = SWIG_vector_to_list(block_def.getNodeBoards())
             if block_nodecards == []:
                 block_nodecards = midplane_nodecards
@@ -735,20 +735,20 @@ class BGSystem (BGBaseSystem):
 
 
     def _configure_from_file (self, bridgeless=True, config_file=None):
-        
+
         """Read partition data from the bridge, ultimately.  Until then we're working from an XML file.
-        
+
         """
-           
+
         if config_file == None and bridgeless:
             raise RuntimeError("config file for bridgeless operation not specified.")
-        
+
         def _get_node(name):
             if not self.node_cache.has_key(name):
                 self.node_cache[name] = NodeCard(name)
-                
+
             return self.node_cache[name]
-            
+
         self.logger.info("configure()")
         try:
             system_doc = ElementTree.parse(config_file)
@@ -761,30 +761,30 @@ class BGSystem (BGBaseSystem):
             self.logger.error("problem loading data from file: %r" % config_file)
             self.logger.error("exiting...")
             sys.exit(1)
-            
+
         system_def = system_doc.getroot()
         if system_def.tag != "BG":
             self.logger.error("unexpected root element in %r: %r" % (config_file, system_def.tag))
             self.logger.error("exiting...")
             sys.exit(1)
-        
-                
+
+
         # initialize a new partition dict with all partitions
         #
         blocks = BlockDict()
-        
+
         tmp_list = []
 
         # this is going to hold partition objects from the bridge (not our own Partition)
         #wiring_cache = {}
-        
+
         for block_def in system_def.getiterator("Block"):
             node_list = [] #this is now really Nodes
             node_card_list = [] #node_cards are no longer aliased as nodes.
             #ion_list = []
             #ion_blocks = []
             switch_list = []
-            
+
             for nc in block_def.getiterator("NodeCard"):
                 node_card_list.append(self._get_node_card(nc.get("id")))
             nc_count = len(node_card_list)
@@ -797,7 +797,7 @@ class BGSystem (BGBaseSystem):
 
             #for s in partition_def.getiterator("Switch"):
             #    switch_list.append(s.get("id"))
-            
+
             tmp_list.append( dict(
                 name = block_def.get("name"),
                 queue = block_def.get("queue", "default"),
@@ -807,16 +807,20 @@ class BGSystem (BGBaseSystem):
                 state = "idle",
             ))
         blocks.q_add(tmp_list)
-        
-            
+
+
         # update object state
         self._blocks.clear()
         self._blocks.update(blocks)
         return
-   
+
     def update_block_state(self):
-        """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
-        
+        """This is the main "state" update loop.  Error states, busy detection
+        and cleanup all happen here.  This is to be broken up, similar to what has 
+        been done for the BG/P side.
+
+        """
+
         def _start_block_cleanup(block):
             self.logger.info("Block %s: starting cleanup.", block.name)
             block.cleanup_pending = True
@@ -830,7 +834,7 @@ class BGSystem (BGBaseSystem):
             try:
                 self.logger.debug("CLEANUP: Block %s reporting state as %s", block.name, block.state)
                 if block.state not in ["idle", "cleanup-initiate", "cleanup"]:
-                    
+
                     compute_block = self.get_compute_block(block.name)
                     if compute_block.getStatus() == pybgsched.Block.Initialized:
                         pybgsched.Block.initiateFree(block.name)
@@ -844,7 +848,7 @@ class BGSystem (BGBaseSystem):
             except:
                 #ummm, I think the control system went away!
                 self.logger.critical("Unable to initiate block free from bridge!")
-                raise                   
+                raise
             return
 
         def _get_jobs_on_block(block_name):
@@ -880,7 +884,7 @@ class BGSystem (BGBaseSystem):
                 pb = self._blocks[b.subblock_parent]
                 still_reserved_children = _children_still_allocated(pb)
                 block_jobs = _get_jobs_on_block(b.subblock_parent)
-                
+
                 if not still_reserved_children:
                     self.logger.info("All subblock jobs done, freeing block %s", pb.name)
                     if pb.state not in ["cleanup", "cleanup-initiate"]:
@@ -895,7 +899,7 @@ class BGSystem (BGBaseSystem):
                             nuke_job(job.getID(), b.subblock_parent)
                     if local_job_found:
                         b.state = "cleanup"
-                
+
 
             #NOTE: at this point new jobs cannot start on this block if we're not a pseudoblock
 
@@ -903,12 +907,12 @@ class BGSystem (BGBaseSystem):
             check_killing_jobs()
             #from here on, we should be able to see if the block has returned to the free state, if, so
             #and nothing else is blocking, we can safely set to idle.
-            
+
             if b.block_type == 'pseudoblock':
                 if len(self.killing_jobs) > 0:
                     b.state = 'cleanup'
                 return
-            
+
             #Non-pseudoblock jobs only from here on.
             block_jobs = _get_jobs_on_block(b.subblock_parent)
             #At this point new for the Q.  Blow everything away!
@@ -922,7 +926,7 @@ class BGSystem (BGBaseSystem):
 
             #don't track jobs whose kills have already completed.
             check_killing_jobs() #reap any ongoing kills
-       
+
 
         def nuke_job(bg_job, block_name):
             #As soon as I get an API this is going to change.  Assume all on SN.
@@ -952,7 +956,7 @@ class BGSystem (BGBaseSystem):
             rev_killing_jobs = dict([(v,k) for (k,v) in self.killing_jobs.iteritems()])
             removed_jobs = []
             current_killing_jobs = system_script_forker.get_children(None, self.killing_jobs.values())
-                   
+
             for job in current_killing_jobs:
                 if job['complete']:
                     del self.killing_jobs[rev_killing_jobs[int(job['id'])]]
@@ -962,8 +966,7 @@ class BGSystem (BGBaseSystem):
 
 
         while True:
-            #self.logger.debug("Acquiring block update lock.")
-            
+
             #acquire states: this is going to be the biggest pull from the control system.
             self.bridge_in_error = False
             try:
@@ -1431,49 +1434,55 @@ class BGSystem (BGBaseSystem):
             
         return ret
     generate_xml = exposed(generate_xml)
-   
+
     @exposed
     @query
     def add_process_groups (self, specs):
-        
+
         """Create a process group.
-        
+
         Arguments:
         spec -- dictionary hash specifying a process group to start
         """
-        
+
         if self.suspend_booting:
             #booting isn't happening right now, just exit.
             self.logger.critical("Booting suspended.  Unable to add process group right now.")
             raise RuntimeError, "Booting is halted!"
-        
+
         self.logger.info("add_process_groups(%r)" % (specs))
 
-        # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
-        # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
-        # error message should also be attached to the process group so that cqm can report the problem to the user.
-        
-
+        # FIXME: setting exit_status to signal the job has failed isn't really
+        # the right thing to do.  another flag should be added to the process
+        # group that wait_process_group uses to determine when a process group
+        # is no longer active.  An  error message should also be attached to
+        # the process group so that cqm can report the problem to the user.
 
         start_apg_timer = time.time()
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
-            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
+            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid,
+                    pgroup.user, pgroup.id)
             pgroup.nodect = self._blocks[pgroup.location[0]].size
-            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
+            self.logger.info("%s: process group %s created to track job status",
+                    pgroup.label, pgroup.id)
             try:
                 self._set_kernel(pgroup.location[0], pgroup.kernel)
             except Exception, e:
-                self.logger.error("%s: failed to set the kernel; %s", pgroup.label, e)
+                self.logger.error("%s: failed to set the kernel; %s", 
+                        pgroup.label, e)
                 pgroup.exit_status = 255
             else:
                 if pgroup.kernel != "default":
-                    self.logger.info("%s: now using kernel %s", pgroup.label, pgroup.kernel)
+                    self.logger.info("%s: now using kernel %s", 
+                            pgroup.label, pgroup.kernel)
                 if pgroup.mode == "script":
                     pgroup.forker = 'user_script_forker'
                 else:
                     pgroup.forker = 'bg_runjob_forker'
-                if self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
+                if self.reserve_resources_until(pgroup.location,
+                        float(pgroup.starttime) + 60*float(pgroup.walltime),
+                        pgroup.jobid):
                     boot_location_block = self._blocks[pgroup.location[0]]
                     boot_location = boot_location_block.subblock_parent
                     try:
@@ -1518,11 +1527,11 @@ class BGSystem (BGBaseSystem):
                 else:
                     self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                     pgroup.location))
-        
+
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
-   
+
     def get_compute_block(self, block, extended_info=False):
         '''We do this a lot, this is just to make the information call more readable.
 
@@ -1555,13 +1564,14 @@ class BGSystem (BGBaseSystem):
 
         '''Code to cleanup and log the failure of a boot.
         Also, ensure entries to appropriate log files and .cobaltlogs happen.
+        This will release the resource reservation immediately as well.
 
         pgroup -- the pgroup affected by the failed boot attempt
         location -- the block location where the failure occurred
         failure_string -- an optional string. If not set, default boot failure logging message is used.
 
         '''
-        
+
         if failure_string == None:
             failure_string = "%s: Job %s terminated due to boot failure. No task was started." % (pgroup.label, pgroup.jobid)
 
@@ -1571,9 +1581,10 @@ class BGSystem (BGBaseSystem):
         pgroup.exit_status = 255
         #strip pgroup out of appropriate places?
         self._mark_block_for_cleaning(location, pgroup.jobid)
+        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
 
         return
-    
+
     def subblock_parent_cleaning(self, block_name):
         self._blocks_lock.acquire()
         retval = (self._blocks[self._blocks[block_name].subblock_parent].state in ['cleanup', 'cleanup-initiate'])
@@ -1597,14 +1608,14 @@ class BGSystem (BGBaseSystem):
 
         progressing_pgroups = []
         for pgroup in self.pgroups_wait_reboot:
-            
+
             if not self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
                 self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                                         pgroup.location))
                 progressing_pgroups.append(pgroup)
                 continue
-            
             parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
+
             reboot_block = self.get_compute_block(parent_block_name)
             if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
                 progressing_pgroups.append(pgroup) 
