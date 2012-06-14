@@ -1452,8 +1452,6 @@ class BGSystem (BGBaseSystem):
         # FIXME: setting exit_status to signal the job has failed isn't really the right thing to do.  another flag should be
         # added to the process group that wait_process_group uses to determine when a process group is no longer active.  an
         # error message should also be attached to the process group so that cqm can report the problem to the user.
-        
-
 
         start_apg_timer = time.time()
         process_groups = self.process_groups.q_add(specs)
@@ -1478,6 +1476,7 @@ class BGSystem (BGBaseSystem):
                     boot_location = boot_location_block.subblock_parent
                     try:
                         compute_block = self.get_compute_block(boot_location)
+                        pybgsched.Block.addUser(boot_location, pgroup.user)
                     except RuntimeError:
                         self._fail_boot(pgroup, boot_location, "%s: Unable to retrieve control system data for block %s. Aborting job." % (pgroup.label, boot_location))
 
@@ -1487,17 +1486,16 @@ class BGSystem (BGBaseSystem):
                         pgroup.subblock_parent = boot_location
                         pgroup.corner = boot_location_block.corner_node
                         pgroup.extents = boot_location_block.extents
-                        boot_block = self.get_compute_block(boot_location)
-                        if boot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]:
+                        if compute_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]:
                             #we are in the middle of starting another on the same subblock. We need to wait until this 
                             #block has completed booting.
                             self.pgroups_pending_boot.append(pgroup)
                             continue
-                        elif boot_block.getStatus() == pybgsched.Block.Initialized:
+                        elif compute_block.getStatus() == pybgsched.Block.Initialized:
                             #already booted, we can start right away.
                             if not (self._blocks[boot_location].state in ['cleanup','cleanup-initiate']) or self._blocks[boot_location].freeing: #well almost.  the block appears to be freeing.
                                 self._log_successful_boot(pgroup, boot_location, "%s: Block %s for location %s already booted.  Starting task for job %s. (APG)" % (pgroup.label, boot_location, pgroup.location[0], pgroup.jobid))
-                                boot_block.addUser(boot_location, pgroup.user)
+                                compute_block.addUser(boot_location, pgroup.user)
                                 self._start_process_group(pgroup)
                                 continue
                             else: #we're going to have to wait for this block to free and reboot the block.
@@ -1505,17 +1503,8 @@ class BGSystem (BGBaseSystem):
                                 self.pgroups_wait_reboot.append(pgroup)
                                 continue
                         #otherwise we should proceed through normal block booting proceedures.
-                    try: #Initiate boot here, I guess?  Need to make this not block.
-                        #if we're already booted, (subblock), we can immediately move to start.
-                        boot_block = self.get_compute_block(boot_location)
-                        boot_block.addUser(boot_location, pgroup.user)
-                        boot_block.initiateBoot(boot_location)
-                        self._log_successful_boot(pgroup, boot_location, "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
-                    except RuntimeError:
-                        self._fail_boot(pgroup, boot_location, "%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (pgroup.label, boot_location))
-                    else:
-                        self.booting_blocks[boot_location] = pgroup
-                else:
+                    boot_completed = self.initiate_boot(boot_location)    
+               else:
                     self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                     pgroup.location))
         
@@ -1536,6 +1525,23 @@ class BGSystem (BGBaseSystem):
         if extended_info:
             block_location_filter.setExtendedInfo(True)
         return pybgsched.getBlocks(block_location_filter)[0]
+
+    def initiate_boot(self, boot_location):
+        '''Initiate the boot on a block, return True if the boot started successfully, otherwise return false.
+
+        '''
+
+        try: #start the nonblocking boot.
+            boot_block.initiateBoot(boot_location)
+            self._log_successful_boot(pgroup, boot_location, "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
+        except RuntimeError:
+            self._fail_boot(pgroup, boot_location, "%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (pgroup.label, boot_location))
+        else:
+            self.booting_blocks[boot_location] = pgroup
+            return True
+        return False
+        
+
 
     def _log_successful_boot(self, pgroup, location, success_string=None):
         '''Code to stamp in the cobatlog and syslog that a boot completed successfully.
@@ -1951,3 +1957,16 @@ class BGSystem (BGBaseSystem):
         self._mark_block_for_cleaning(block, jobid)
         #self.reserve_resources_until(pgroup.location, None, jobid)
         return
+
+    @exposed
+    def initiate_proxy_boot(self, location, user=None, jobid=None):
+        return self.initiate_boot(location)
+
+    @exposed is_block_initialized(self, location):
+        b = self.get_compute_block(location)
+        return if b.getStatus() == pybgsched.Block.Initialized 
+        
+    @exposed
+    def initiate_proxy_free(self, location, user=None, jobid=None):
+        raise NotImplementedError, "Proxy freeing is not supported for this configuration."
+

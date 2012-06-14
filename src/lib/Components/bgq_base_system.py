@@ -1307,3 +1307,11 @@ class BGBaseSystem (Component):
 #
 #        return pg_list
 
+    @exposed
+    def initiate_proxy_boot(self, location, user=None, jobid=None):
+        raise NotImplementedError, "Proxy booting is not supported for this configuration."
+
+    @exposed
+    def initiate_proxy_free(self, location, user=None, jobid=None):
+        raise NotImplementedError, "Proxy freeing is not supported for this configuration."
+
