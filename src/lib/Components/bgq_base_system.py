@@ -520,23 +520,23 @@ class Block (Data):
 
         if self.name == block.name:
             return False
-        
+
         b1_nc_names = set(self.node_card_names)
         b2_nc_names = set(block.node_card_names)
-        
+
         if not (b1_nc_names >= b2_nc_names):
             return False
-        #if len(b1_nc_names ^ b2_nc_names) == 0:
-        #    b1_node_names = set(self.node_names)
-        #    b2_node_names = set(block.node_names)
+        if len(b1_nc_names ^ b2_nc_names) == 0:
+            b1_node_names = set(self.node_names)
+            b2_node_names = set(block.node_names)
 
-        #    if not (b1_node_names >= b2_node_names): 
-        #        return False
+            if not (b1_node_names >= b2_node_names): 
+                return False
 
         return True
-    
+
     def is_subblock(self, block):
-        
+
         if self.name == block.name:
             return False
         return not self.is_superblock(block)
