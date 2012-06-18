@@ -191,7 +191,7 @@ class Simulator (BGBaseSystem):
 
             for part in p._parents.union(p._children):
                 if part.used_by:
-                    p.state = "blocked (%s)" % (allocated.name,)
+                    p.state = "blocked (%s)" % (part.name,)
                     break
 
     def configure (self, config_file):
@@ -273,13 +273,6 @@ class Simulator (BGBaseSystem):
         self.logger.log(1, "configure: updating partition relationship lists")
         self.update_relatives()
 
-    def _mark_partition_for_cleaning(self, pname, jobid):
-        pass
-
-    def _set_kernel(self, partition, kernel):
-        # TODO: allow the kernel set step to work in the simulator.  For now this doesn't fly.
-        pass
-
     def update_partition_state(self):
         # first, set all of the nodecards to not busy
         for nc in self.node_card_cache.values():
@@ -301,8 +294,8 @@ class Simulator (BGBaseSystem):
                         p.reserved_until = None
                         p.reserved_by = None
                         p.used_by = None
-                    # for now, assume cleanup happens instantaneously
-                    p.state = 'idle'
+                        # for now, assume cleanup happens instantaneously
+                        p.state = 'idle'
 
                 p._update_node_cards()
 
@@ -313,6 +306,13 @@ class Simulator (BGBaseSystem):
 
         self._partitions_lock.release()
     update_partition_state = automatic(update_partition_state)
+
+    def _mark_partition_for_cleaning(self, pname, jobid):
+        pass
+
+    def _set_kernel(self, partition, kernel):
+        # TODO: allow the kernel set step to work in the simulator.  For now this doesn't fly.
+        pass
 
     def reserve_partition (self, name, size=None):
         """Reserve a partition and block all related partitions.
@@ -335,6 +335,7 @@ class Simulator (BGBaseSystem):
                 return False
             if not partition.functional:
                 self.logger.error("reserve_partition(%r, %r) [not functional]" % (name, size))
+                return false
             if size is not None and size > partition.size:
                 self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
                 return False
