@@ -119,3 +119,11 @@ class StateMachineNonexistentEventError (Exception):
 class ThreadPickledAliveException (Exception):
     log = True
     fault_code = fault_code_counter.next()
+
+class ResourceReservationFailure (Exception):
+    '''Denote that we failed to reserve a resource with
+    reserve_resources_until.  No job was run.
+
+    '''
+    log = True
+    fault_code = fault_code_counter.next()

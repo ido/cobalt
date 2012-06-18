@@ -97,7 +97,7 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError, DataStateTransitionError, StateMachineError,
     StateMachineIllegalEventError, StateMachineNonexistentEventError, ThreadPickledAliveException, JobProcessingError,
-    JobRunError, JobPreemptionError, JobDeleteError, IncrIDError)
+    JobRunError, JobPreemptionError, JobDeleteError, IncrIDError, ResourceReservationFailure)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 
@@ -3747,15 +3747,30 @@ class QueueManager(Component):
 
 
     def run_jobs(self, specs, nodelist, user_name=None, resid=None):
-        """Run jobs.  Get a possible user_name if this is a forced-run, or 
-        a dict that contains resid's keyed by jobid.  Resid is for the reservation
-        the job actually ran in, not the one, if any, it was queued in.
+        """Run jobs.  Get a possible user_name if this is a forced-run, or
+        a dict that contains resid's keyed by jobid.  Resid is for the
+        reservation the job actually ran in, not the one, if any, it was queued
+        in.
+
+        This also sets a resource reservation for a job if one is not set
+        already in the system component.
 
         """
         if user_name:
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
 
         def _run_jobs(job, nodes):
+            try:
+                res_success = ComponentProxy("system").reserve_resources_until(
+                    nodelist, time.time() + (float(job.walltime) * 60.0),
+                    job.jobid)
+            except xmlrpclib.Fault, flt:
+                raise
+            if not res_success:
+                raise ResourceReservationFailure("%s/%s: Unable to reserve "\
+                    "resource at runtime. Does another job have the resrouce?"\
+                    % (job.jobid, job.user))
+
             if resid != None:
                 if str(job.jobid) in resid.keys():
                     job.resid = resid[str(job.jobid)]

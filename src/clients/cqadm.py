@@ -146,9 +146,7 @@ if __name__ == '__main__':
             raise SystemExit, 1
         try:
             response = cqm.run_jobs(spec, location.split(':'), whoami)
-            for job in response:
-                ComponentProxy("system").reserve_resources_until(job['location'],
-                        time.time() + (float(job['walltime']) * 60.0) ,job['jobid'])
+
         except xmlrpclib.Fault, flt:
             if flt.faultCode == JobRunError.fault_code:
                 args = eval(flt.faultString)
