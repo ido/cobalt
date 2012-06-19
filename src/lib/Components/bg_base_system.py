@@ -1186,9 +1186,7 @@ class BGBaseSystem (Component):
                     part.reserved_by = jobid
                     if part.state == 'idle':
                         part.state = 'allocated'
-                        for p in part._parents.union(part._children):
-                            if p.state == "idle":
-                                p.state = "blocked (%s)" % (part.name,)
+                        self._recompute_partition_state()
                     self.logger.info("Job %s: partition '%s' now reserved until %s", jobid, partition_name,
                         time.asctime(time.gmtime(new_time)))
                     rc = True
