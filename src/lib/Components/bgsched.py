@@ -406,7 +406,7 @@ class ReservationDict (DataDict):
                 #if we are active, then drop a deactivating message.
                 dbwriter.log_to_db(None, "deactivating", "reservation",
                         reservation)
-                if self.cycle:
+                if reservation.cycle:
                     dbwriter.log_to_db(None, "instance_end","reservation", self)
             dbwriter.log_to_db(None, "terminated", "reservation", reservation)
         return reservations
