@@ -3762,7 +3762,7 @@ class QueueManager(Component):
         def _run_jobs(job, nodes):
             try:
                 res_success = ComponentProxy("system").reserve_resources_until(
-                    nodelist, time.time() + (float(job.walltime) * 60.0),
+                    nodelist, time.time() + ((float(job.walltime) + float(job.force_kill_delay) + 1.0) * 60.0),
                     job.jobid)
             except xmlrpclib.Fault, flt:
                 raise
