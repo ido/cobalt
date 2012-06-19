@@ -356,7 +356,7 @@ class Block (Data):
         "freeing", "backfill_time", "draining", "subblock_parent",
         "block_type", "corner_node", "extents"
     ]
-    
+
     def __init__ (self, spec):
         """Initialize a new block."""
         Data.__init__(self, spec)
@@ -388,11 +388,11 @@ class Block (Data):
         self._relatives = [] #list of blocks that have overlapping resources with this one
         self._parents = [] #relatives that are a superset of me
         self._childeren = [] #relatives that are proper subsets of me
-         
+
         self.admin_failed = False #set this to true if a partadm --fail is issued
 
         self._update_node_cards()
-        
+
         self.subblock_parent = self.name #parent block to boot for subblocks.  If not a subblock, will be self.
 
         self.block_type = spec.get('block_type', None)
@@ -423,7 +423,7 @@ class Block (Data):
                     self.nodes.extend(nc.nodes)
             else:
                 #parse name to get corner node
-                
+
                 node_pos = int(node_position_exp.search(self.corner_node).groups()[0])
                 nodecard_pos = int(nodecard_exp.search(self.corner_node).groups()[0])
                 #sanity check extents
@@ -440,7 +440,7 @@ class Block (Data):
         if self.state == "busy":
             for nc in self.node_cards:
                 nc.used_by = self.name
-   
+
     def _update_nodes(self):
         if self.state == "busy":
             for node in self.nodes:
@@ -1268,6 +1268,8 @@ class BGBaseSystem (Component):
                     #yes, jobid == None is a hard override
                     self.blocks[block_name].reserved_until = False
                     self.blocks[block_name].reserved_by = None
+                    if self.blocks[block_name].block_type == 'pseudoblock':
+                        self.blocks[block_name].used_by = None
                     self.logger.info("reservation on block '%s' has been removed", block_name)
                     rc = True
                 else:
@@ -1279,31 +1281,4 @@ class BGBaseSystem (Component):
             self._blocks_lock.release()
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
-
-    
-#    @exposed
-#    def get_process_group_info(self, pg_list=[]):
-#    
-#        fetch_list = []
-#
-#        if pg_list != []:
-#            raise NotImplementedError("process group name list fetch not yet implemeted.")
-#        else:
-#            fetch_list = ['*']
-#        
-#        pg_list = []
-#
-#        for pg_id in fetch_list:
-#
-#            pg_list.extend(self.process_groups.q_get([{"id":pg_name,
-#                "args":'*', "cobalt_log_file":'*', "cwd":'*', "env":'*',
-#                "executable":'*', "exit_status":'*', "head_pid":'*',
-#                "jobid":'*', "kernel":'*', "kerneloptions":'*', "location":'*',
-#                "mode":'*', "nodefile":'*', "size":'*', "state":'*', "stderr":'*',
-#                "stdin":'*', "stdout":'*', "umask":'*', "user":'*', "starttime":'*',
-#                "walltime":'*', "resid":'*', "runid":'*', "forker":'*',
-#                "subblock":'*', "subblock_parent":'*', "corner":'*', "extents":'*'
-#                }]))
-#
-#        return pg_list
 

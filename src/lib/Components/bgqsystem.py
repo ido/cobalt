@@ -863,8 +863,8 @@ class BGSystem (BGBaseSystem):
 
 
         def _children_still_allocated(block):
-            for b in block._children:
-                    if b.used_by:
+            for child_block in block._children:
+                if child_block.used_by:
                         return True
             return False
 
@@ -1364,7 +1364,6 @@ class BGSystem (BGBaseSystem):
            or must be placed in an error state pending admin intervention.
 
         '''
-        
 
         self._blocks_lock.acquire()
         try:
@@ -1397,17 +1396,17 @@ class BGSystem (BGBaseSystem):
 
     def _set_kernel(self, partition, kernel):
         '''Set the kernel to be used by jobs run on the specified partition
-        
+
         This has to be redone.
         '''
         pass
 
     def _clear_kernel(self, partition):
         '''Set the kernel to be used by a partition to the default value
-        
+
         No real change needed here
         '''
-        
+
         if self.config.get('kernel') == 'true':
             try:
                 self._set_kernel(partition, "default")
@@ -1427,11 +1426,11 @@ class BGSystem (BGBaseSystem):
             #for s in p.switches:
             #    ret += "      <Switch id='%s' />\n" % s
             ret += "   </Block>\n"
-        
+
         ret += "</BlockList>\n"
 
         ret += "</BG>\n"
-            
+
         return ret
     generate_xml = exposed(generate_xml)
 
@@ -1580,8 +1579,8 @@ class BGSystem (BGBaseSystem):
         cobalt_log_write(pgroup.cobalt_log_file, failure_string, pgroup.user)
         pgroup.exit_status = 255
         #strip pgroup out of appropriate places?
-        self._mark_block_for_cleaning(location, pgroup.jobid)
         self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
+        self._mark_block_for_cleaning(location, pgroup.jobid)
 
         return
 
@@ -1629,7 +1628,7 @@ class BGSystem (BGBaseSystem):
                     self._log_successful_boot(pgroup, boot_location, 
                         "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
                 except RuntimeError:
-                    self._fail_boot(pgroup, boot_location, 
+                    self._fail_boot(pgroup, boot_location,
                         "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
                     progressing_pgroups.append(pgroup)
                 else:
