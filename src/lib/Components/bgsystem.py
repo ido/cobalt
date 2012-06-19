@@ -124,9 +124,9 @@ class BGSystem (BGBaseSystem):
         self.wire_cache = dict()
         self.busted_switches = set()
         self.busted_wires = set()
-        self.logger.log(1, "init: loading machine configuration")
+        self.logger.debug("init: loading machine configuration")
         self.configure()
-        self.logger.log(1, "init: recomputing partition state")
+        self.logger.debug("init: recomputing partition state")
         self._recompute_partition_state()
                 
         # initiate the process before starting any threads
@@ -148,11 +148,11 @@ class BGSystem (BGBaseSystem):
             self.wire_cache = dict()
             self.busted_switches = set()
             self.busted_wires = set()
-            self.logger.log(1, "restart: loading machine configuration")
+            self.logger.debug("restart: loading machine configuration")
             self.configure()
-            self.logger.log(1, "restart: restoring partition state")
+            self.logger.debug("restart: restoring partition state")
             self._restore_partition_state(state)
-            self.logger.log(1, "restart: recomputing partition state")
+            self.logger.debug("restart: recomputing partition state")
             self._recompute_partition_state()
         except:
             self.logger.error("A fatal error occurred while restarting the system component", exc_info=True)
@@ -246,7 +246,7 @@ class BGSystem (BGBaseSystem):
                 if part.cleanup_pending:
                     cleaning = part
             if cleaning:
-                if bridge_partition_cache[part.name].state == "RM_PARTITION_FREE":
+                if self.bridge_partition_cache[part.name].state == "RM_PARTITION_FREE":
                     p.state = "blocked (%s)" % (cleaning.name,)
                 else:
                     p.state = 'cleanup'
@@ -294,10 +294,10 @@ class BGSystem (BGBaseSystem):
         Read partition data from the bridge.
         """
         try:
-            self.logger.log(1, "configure: acquiring machine information")
+            self.logger.debug("configure: acquiring machine information")
             bg_object = Cobalt.bridge.BlueGene.by_serial()
 
-            self.logger.log(1, "configure: creating nodecard objects")
+            self.logger.debug("configure: creating nodecard objects")
             for bp in bg_object.base_partitions:
                 tmp_list = []
                 for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
@@ -306,33 +306,35 @@ class BGSystem (BGBaseSystem):
                     tmp_list.append(nco)
                 self.bp_cache[bp.id] = tmp_list
 
-            self.logger.log(1, "configure: creating wire objects")
+            self.logger.debug("configure: creating wire objects")
             self.busted_wires = set()
             for w in bg_object.wires:
                 self.wire_cache[w.id] = Wire(w.id, w.from_port, w.to_port)
                 if w.state != "RM_WIRE_UP":
                     self.busted_wires.append(w.id)
                 
-            self.logger.log(1, "configure: acquiring switch state")
+            self.logger.debug("configure: acquiring switch state")
             self.busted_swiches = set()
             for s in bg_object.switches:
                 if s.state != "RM_SWITCH_UP":
                     self.busted_switches.append(w.id)
 
-            self.logger.log(1, "configure: acquiring partition information")
+            self.logger.debug("configure: acquiring partition information")
             system_def = Cobalt.bridge.PartitionList.by_filter()
 
             # initialize a new partition dict with all defined partitions
-            self.logger.log(1, "configure: creating partition objects")
+            self.logger.debug("configure: creating partition objects")
+            self.bridge_partition_cache = {}
             self._partitions.clear()
             for partition_def in system_def:
+                self.bridge_partition_cache[partition_def.id] = partition_def
                 self._partitions.q_add([self._new_partition_dict(partition_def)])
         except BridgeException:
             print "Error communicating with the bridge during initial config.  Terminating."
             sys.exit(1)
 
         # find the wiring deps
-        self.logger.log(1, "configure: looking for wiring dependencies")
+        self.logger.debug("configure: looking for wiring dependencies")
         start = time.time()
         for p in self._partitions.values():
             self._detect_wiring_deps(p)
@@ -340,11 +342,11 @@ class BGSystem (BGBaseSystem):
         self.logger.info("took %f seconds to find wiring deps" % (end - start))
 
         # update partition relationship lists
-        self.logger.log(1, "configure: updating partition relationship lists")
+        self.logger.debug("configure: updating partition relationship lists")
         self.update_relatives()
 
         # update node card usage based on partition state
-        self.logger.log(1, "configure: updating node card usage")
+        self.logger.debug("configure: updating node card usage")
         for p in self._partitions.values():
             p._update_node_cards()
 
@@ -441,13 +443,13 @@ class BGSystem (BGBaseSystem):
                 now = time.time()
                 partitions_reset_kernel = []
                 partitions_destroy = []
-                bridge_partition_cache = {}
+                self.bridge_partition_cache = {}
                 missing_partitions = set(self._partitions.keys())
                 new_partitions = []
 
                 self.logger.log(1, "update_partition_state: scanning partitions")
                 for partition in system_def:
-                    bridge_partition_cache[partition.id] = partition
+                    self.bridge_partition_cache[partition.id] = partition
                     missing_partitions.discard(partition.id)
                     if self._partitions.has_key(partition.id):
                         p = self._partitions[partition.id]
@@ -512,7 +514,7 @@ class BGSystem (BGBaseSystem):
                         parts = list(p._all_children)
                         parts.append(p)
                         for part in parts:
-                            bpart = bridge_partition_cache[part.name]
+                            bpart = self.bridge_partition_cache[part.name]
                             try:
                                 if bpart.state != "RM_PARTITION_FREE":
                                     busy.append(part.name)
@@ -573,7 +575,7 @@ class BGSystem (BGBaseSystem):
                     parts.append(p)
                     for part in parts:
                         pnames_cleaned.append(part.name)
-                        bpart = bridge_partition_cache[part.name]
+                        bpart = self.bridge_partition_cache[part.name]
                         try:
                             if bpart.state in ["RM_PARTITION_READY", "RM_PARTITION_ERROR"]:
                                 self.logger.debug("partition %s: state=%s; issuing partition destroy", part.name, bpart.state)
