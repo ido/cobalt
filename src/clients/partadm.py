@@ -95,7 +95,7 @@ if __name__ == '__main__':
                 'wire_list':'*','switch_list':'*','scheduled':'*', 'funcitonal':'*',
                 'queue':'*','parents':'*','children':'*','reserved_until':'*',
                 'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
-                'cleanup_pending':'*', 'state':'*',
+                'cleanup_pending':'*', 'state':'*', 'wiring_conflicts':'*',
                 'size':'*','draining':'*','backfill_time':'*'}]))
         sys.exit(0)
 
