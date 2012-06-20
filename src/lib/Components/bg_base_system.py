@@ -16,7 +16,7 @@ import copy
 import re
 import Cobalt
 from Cobalt.Data import Data, DataDict
-from Cobalt.Exceptions import JobValidationError, ComponentLookupError
+from Cobalt.Exceptions import JobValidationError, ComponentLookupError, ResourceReservationFailure
 import Cobalt.Components.base
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 import thread
@@ -1180,6 +1180,12 @@ class BGBaseSystem (Component):
             self._partitions_lock.acquire()
             part = self.partitions[partition_name]
             if new_time:
+                for p in part._parents.union(part._children):
+                    if p.used_by:
+                        self.logger.error(
+                            "Job %s: failed to reserve partition %s; related partition %s already reserved by job %s",
+                            jobid, partition_name, p.name, p.used_by)
+                        raise ResourceReservationFailure("related partition already reserved")
                 if part.used_by == None:
                     part.used_by = jobid
                 if part.used_by == jobid:
@@ -1206,6 +1212,8 @@ class BGBaseSystem (Component):
         except KeyError:
             self.logger.warning("partition %s: partition is no longer being managed; reservation by job %s denied",
                 partition_name, jobid)
+        except ResourceReservationFailure:
+            pass
         except:
             self.logger.exception("an unexpected error occurred will adjusting the partition reservation time")
         finally:
