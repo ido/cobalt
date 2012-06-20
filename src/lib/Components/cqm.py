@@ -3932,7 +3932,7 @@ class QueueManager(Component):
             else:
                 job.score += delta
             results.append(job.jobid)
-        dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
+            dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
 
         return results
     adjust_job_scores = exposed(adjust_job_scores)
