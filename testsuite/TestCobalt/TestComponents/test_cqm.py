@@ -446,7 +446,7 @@ class SimulatedTaskManager (Component):
 
     def reserve_resources_until(self, location, duration, jobid):
         self.__raise_pending_exc('reserve')
-        self.__op_add(['reserve', None])
+        #self.__op_add(['reserve', None])
         return True #FIXME: Make this respond to a settable option, so we can fail as well.
 
     def op_wait(self):
@@ -1619,7 +1619,7 @@ class CQMIntegrationTestBase (TestCQMComponent):
         # (task_finished is not called by the template).  this will result in the the test hanging in job_finished_wait() until
         # the timeout is reached.
         def _task_run(preempt):
-            self.assert_next_op('reserve')
+            pass
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
         self.job_exec_driver(resource_pretask = _pretask, task_run = _task_run)
 
@@ -1633,7 +1633,6 @@ class CQMIntegrationTestBase (TestCQMComponent):
         def _task_run(preempt):
             self.assert_next_op('reserve', BogusException1)
             self.assert_next_op('reserve', BogusException2)
-            self.assert_next_op('reserve')
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
         self.job_exec_driver(resource_pretask = _pretask, task_run = _task_run)
 
@@ -1653,7 +1652,6 @@ class CQMIntegrationTestBase (TestCQMComponent):
             self.job_get_state(assert_spec = {'state':"exiting", 'sm_state':"Release_Resources_Retry"})
             self.qm_thr.resume()
             self.assert_next_op('reserve', BogusException2)
-            self.assert_next_op('reserve')
         self.job_exec_driver(job_pretask = _pretask, task_run = _task_run)
         self.job_exec_driver(resource_pretask = _pretask, task_run = _task_run)
 
@@ -1847,7 +1845,6 @@ class CQMIntegrationTestBase (TestCQMComponent):
         def _task_active():
             self.job_update({}, {'walltime':new_walltime})
             assert self.job['walltime'] == new_walltime
-            self.assert_next_op('reserve')
             op = self.assert_next_task_op('signal')
             self.job_get_state(assert_spec = {'state':"killing", 'sm_state':"Killing"})
             assert op[3] == Signal_Map.terminate
