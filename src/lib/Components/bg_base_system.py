@@ -453,16 +453,14 @@ class BGBaseSystem (Component):
                 if other.name in self._managed_partitions:
                     # if p is a subset of other, then p is a child; add other to p's list of managed parent partitions, and p to
                     # other's list of managed child partitions
-                    if p.node_cards.intersection(other.node_cards) == p.node_cards:
-                        if p.size < other.size:
-                            p._parents.add(other)
-                            other._children.add(p)
+                    if p.node_cards.intersection(other.node_cards) == p.node_cards and p.size < other.size:
+                        p._parents.add(other)
+                        other._children.add(p)
                     # if p contains other, then p is a parent; add other to p's list of managed child partitions and p to other's
                     # list of managed parent partitions
-                    elif p.node_cards.union(other.node_cards) == p.node_cards:
-                        if p.size > other.size:
-                            p._children.add(other)
-                            other._parents.add(p)
+                    elif p.node_cards.union(other.node_cards) == p.node_cards and p.size > other.size:
+                        p._children.add(other)
+                        other._parents.add(p)
                     # if p shares nodes with other but is not a parent or child, then p is relative; add other to p's parent list
                     # (which at this point has become a list of relatives that are not p's children)
                     elif p.node_cards.intersection(other.node_cards):
