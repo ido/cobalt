@@ -769,10 +769,13 @@ class BGSched (Component):
     #sync_data = automatic(sync_data)
 
     def _run_reservation_jobs (self, reservations_cache):
+        #FIXME: Get some logging in here so we know what job is being picked.
         # handle each reservation separately, as they shouldn't be competing for resources
         for cur_res in reservations_cache.itervalues():
             #print "trying to run res jobs in", cur_res.name, self.started_jobs
             queue = cur_res.queue
+            #FIXME: this should probably check reservation active rather than just queue
+            # running.
             if not (self.queues.has_key(queue) and self.queues[queue].state == 'running'):
                 continue
 
@@ -787,6 +790,7 @@ class BGSched (Component):
             active_jobs.sort(self.utilitycmp)
 
             job_location_args = []
+            #FIXME: make sure job_location_args is ordered.
             for job in active_jobs:
                 job_location_args.append( 
                     { 'jobid': str(job.jobid), 
@@ -799,7 +803,9 @@ class BGSched (Component):
                       'user': job.user,
                     } )
 
-            # there's no backfilling in reservations
+            # there's no backfilling in reservations. Run whatever we get in
+            # best_partition_dict.  There is no draining, backfill windows are
+            # meaningless within reservations.
             try:
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
             except:
@@ -827,7 +833,11 @@ class BGSched (Component):
 
 
     def schedule_jobs (self):
-        '''look at the queued jobs, and decide which ones to start'''
+        '''look at the queued jobs, and decide which ones to start
+        This entire method completes prior to the job's timer starting
+        in cqm.
+
+        '''
 
         started_scheduling = self.get_current_time()
 
@@ -867,6 +877,8 @@ class BGSched (Component):
 
         # clean up the started_jobs cached data
         # TODO: Make this tunable.
+        # started_jobs are jobs that bgsched has prompted cqm to start
+        # but may not have had job.run has been completed.
         now = self.get_current_time()
         for job_name in self.started_jobs.keys():
             if (now - self.started_jobs[job_name]) > 60:
