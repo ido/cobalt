@@ -328,21 +328,24 @@ block_states = ['idle', #block is idle and can be used in scheduling decisions
 
 
 class Block (Data):
-    
+
     """An atomic set of nodes.
-    
+
     Blocks can be reserved to run process groups on.
-    
+
     Attributes:
     tag -- block or pseudoblock
-    scheduled -- ? (default False)
+    scheduled -- if true, the block is available for scheduling
     name -- canonical name
-    functional -- the block is available for scheduling
-    queue -- ?
+    functional -- if false, the block and all relatives of that block are
+                  unavailable for scheduling
+    queue -- string containing a colon-separated list of queues associated with
+             the block
     parents -- super(containing)-blocks
     children -- sub-blockss
     size -- number of nodes in the block
-    freeing -- is the block in the process of being freed, if so, then don't try to start on it.
+    freeing -- is the block in the process of being freed, if so, then don't
+               try to start on it.
 
     Properties:
     state -- "idle", "busy", or "blocked"
@@ -448,30 +451,30 @@ class Block (Data):
 
     def _get_relatives (self):
         return [r.name for r in self._relatives]
-    
+
     relatives = property(_get_relatives)
-    
+
     def _get_node_card_names (self):
         return [nc.name for nc in self.node_cards]
-    
+
     node_card_names = property(_get_node_card_names)
-    
+
     def _get_parents(self):
         return [block.name for block in self._relatives if block.is_superblock(self)]
     parents = property(_get_parents)
-    
+
     def _get_childeren(self):
         return [block.name for block in self._relatives if block.is_subblock(self)]
     children = property(_get_childeren)
 
     def _get_node_names (self):
         return [n.name for n in self.nodes]
-    
+
     node_names = property(_get_node_names)
 
     def __str__ (self):
         return self.name
-    
+
     def __repr__ (self):
         return "<%s name=%r>" % (self.__class__.__name__, self.name)
 
@@ -483,19 +486,19 @@ class Block (Data):
 
         if self.name == block.name:
             return False #don't overlap with yourself.
-        
+
         b1_nc_names = set(self.node_card_names)
         b2_nc_names = set(block.node_card_names)
-         
+
         if not (b1_nc_names & b2_nc_names):
             return False
-        
+
         b1_node_names = set(self.node_names)
         b2_node_names = set(block.node_names)
 
         if not (b1_node_names & b2_node_names):
             return False
-        
+
         return True
 
     def mark_if_overlap(self, block):
@@ -570,30 +573,30 @@ class BGProcessGroupDict(ProcessGroupDict):
 
 class BGBaseSystem (Component):
     """base system class. 
-    
+
     Methods:
     add_blocks -- tell the system to manage blocks (exposed, query)
     get_blocks -- retrieve blocks in the simulator (exposed, query)
     del_blocks -- tell the system not to manage blocks (exposed, query)
     set_blocks -- change random attributes of blocks (exposed, query)
     update_relatives -- should be called when blocks are added and removed from the managed list
-    
+
     *_partitions are also exposed so that external components don't have to be rewritten.
 
     Note: This class uses Python's threading module.
 
     """
-    
+
     def __init__ (self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self._blocks = BlockDict()
         self._managed_blocks = set()
         self.process_groups = BGProcessGroupDict()
         self._blocks_lock = thread.allocate_lock()
-        
+
         #bridge interaction
         self.bridge_in_error = False
-        
+
         self.cached_blocks = None
         self.offline_blocks = []
 
@@ -602,7 +605,7 @@ class BGBaseSystem (Component):
             (block.name, block) for block in self._blocks.itervalues()
             if block.name in self._managed_blocks
         ])
-    
+
     blocks = property(_get_blocks)
 
     def add_blocks (self, specs, user_name=None):
@@ -622,7 +625,7 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in add_blocks", exc_info=True)
         self._blocks_lock.release()
-        
+
         self._managed_blocks.update([
             block.name for block in blocks
         ])
@@ -633,7 +636,7 @@ class BGBaseSystem (Component):
 
     def get_blocks (self, specs):
         """Query blocks on simulator.
-        
+
         """
         self._blocks_lock.acquire()
         try:
@@ -642,14 +645,14 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in get_blocks", exc_info=True)
         self._blocks_lock.release()
-        
+
         return blocks
     get_blocks = exposed(query(get_blocks))
     get_partitions = exposed(query(get_blocks))
-    
+
     def verify_locations(self, location_list):
         """Providing a system agnostic interface for making sure a 'location string' is valid
-        
+
         """
         parts = self.get_blocks([{'name':l} for l in location_list])
         return [ p.name for p in parts ]
@@ -657,10 +660,10 @@ class BGBaseSystem (Component):
 
     def del_blocks (self, specs, user_name=None):
         """Remove blocks from the list of managed blocks
-        
+
         """
         self.logger.info("%s called del_blocks(%r)", user_name, specs)
-        
+
         self._blocks_lock.acquire()
         try:
             blocks = [
@@ -671,10 +674,10 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in del_blocks", exc_info=True)
         self._blocks_lock.release()
-        
+
         self._managed_blocks -= set( [block.name for block in blocks] )
         import copy
-        
+
         self.update_relatives()
         return blocks
     del_blocks = exposed(query(del_blocks))
@@ -682,12 +685,12 @@ class BGBaseSystem (Component):
 
     def set_blocks (self, specs, updates, user_name=None):
         """Update random attributes on matching blocks
-        
+
         """
         def _set_blocks(block, newattr):
             self.logger.info("%s updating block %s: %r", user_name, block.name, newattr)
             block.update(newattr)
-            
+
         self._blocks_lock.acquire()
         try:
             blocks = self._blocks.q_get(specs, _set_blocks, updates)
@@ -727,7 +730,7 @@ class BGBaseSystem (Component):
                     self.logger.warning("Block %s not managed, removed from relatives.", other_name)
                 else:
                     b.mark_if_overlap(self._blocks[other_name])
-            
+
             b._parents = [block for block in b._relatives if block.is_superblock(b)]
             b._children = [block for block in b._relatives if block.is_subblock(b)]
             #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
@@ -741,7 +744,7 @@ class BGBaseSystem (Component):
         spec -- job specification dictionary
         """
         # spec has {nodes, walltime*, procs, mode, kernel}
-        
+
         max_nodes = max([int(p.size) for p in self._blocks.values()])
         try:
             sys_type = CP.get('bgsystem', 'bgtype')
@@ -768,7 +771,7 @@ class BGBaseSystem (Component):
             p_name = spec['attrs']['location']
             if not self.blocks.has_key(p_name):
                 raise JobValidationError("Partition %s not found" % p_name)
-        
+
         #validate proccount.
         #spec['proccount'] = spec['nodecount']
         rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
@@ -792,7 +795,7 @@ class BGBaseSystem (Component):
                 raise JobValidationError("negative proccount")
             if spec['proccount'] > (int(spec['nodecount']) * ranks_per_node):
                 raise JobValidationError("proccount too large")
-        
+
         # have to set ranks per node based on mode:
 
         if spec['mode'] == 'script':
@@ -1241,6 +1244,7 @@ class BGBaseSystem (Component):
 
     def reserve_resources_until(self, location, new_time, jobid):
         rc = False
+        clear_resources = False
         block_name = location[0]
         pg = self.process_groups.find_by_jobid(jobid)
         try:
@@ -1268,9 +1272,8 @@ class BGBaseSystem (Component):
                     #yes, jobid == None is a hard override
                     self.blocks[block_name].reserved_until = False
                     self.blocks[block_name].reserved_by = None
-                    if self.blocks[block_name].block_type == 'pseudoblock':
-                        self.blocks[block_name].used_by = None
                     self.logger.info("reservation on block '%s' has been removed", block_name)
+                    clear_resources = True
                     rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to clear the reservation on block %s (owner=%s)",
@@ -1279,6 +1282,9 @@ class BGBaseSystem (Component):
             self.logger.exception("an unexpected error occurred will adjusting the block reservation time")
         finally:
             self._blocks_lock.release()
+        if clear_resources:
+            #do this outside the locks, unless you like deadlocking
+            self._mark_block_for_cleaning(block_name, jobid)
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
 
