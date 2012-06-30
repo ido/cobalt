@@ -93,7 +93,7 @@ def print_block(block_dicts):
         for key,value in block.iteritems():
 
             if key in ['node_cards','nodes']:
-                if block['size'] > 32 and key == 'nodes':
+                if block['size'] >= 128 and key == 'nodes':
                     continue
                 else:
                     header_list.append(key)
@@ -229,13 +229,12 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if opts.blockinfo:
-        for part in parts:
-            print_block(system.get_blocks([{'name':part,'node_cards':'*',
-                'subblock_parent':'*','nodes':'*', 'scheduled':'*', 'funcitonal':'*',
-                'queue':'*','parents':'*','children':'*','reserved_until':'*',
-                'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
-                'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
-                'size':'*','draining':'*','backfill_time':'*'}]))
+        print_block(system.get_blocks([{'name':part,'node_cards':'*',
+            'subblock_parent':'*','nodes':'*', 'scheduled':'*', 'funcitonal':'*',
+            'queue':'*','parents':'*','children':'*','reserved_until':'*',
+            'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
+            'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
+            'size':'*','draining':'*','backfill_time':'*'} for part in parts]))
         sys.exit(0)
 
     if opts.clean_block:
