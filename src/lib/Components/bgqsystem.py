@@ -1027,7 +1027,6 @@ class BGSystem (BGBaseSystem):
                         if b.reserved_until and now > b.reserved_until:
                             b.reserved_until = False
                             b.reserved_by = None
-                            self._mark_block_for_cleaning(b.name,b.used_by)
                     else:
                         new_blocks.append(block)
 
@@ -1261,7 +1260,6 @@ class BGSystem (BGBaseSystem):
 
             except:
                 self.logger.error("error in update_block_state", exc_info=True)
-
             self._blocks_lock.release()
 
             Cobalt.Util.sleep(10)
@@ -1367,7 +1365,6 @@ class BGSystem (BGBaseSystem):
            or must be placed in an error state pending admin intervention.
 
         '''
-
         self._blocks_lock.acquire()
         self.logger.info("block %s: prepping for cleanup, used by=%s, jobid=%s", block_name, 
                 self._blocks[block_name].used_by, jobid)
