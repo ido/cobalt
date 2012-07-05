@@ -272,7 +272,7 @@ class BGSystem (BGBaseSystem):
                     node_list += self.bp_cache[bp.id]
                 part_sw_bp_set = set([bp.id for bp in partition_def.base_partitions] + [sw.id for sw in partition_def.switches])
                 for wire in self.wire_cache.itervalues():
-                    if wire.port1.component_id in part_sw_bp_set and wire.port2.component_id in part_sw_bp_set:
+                    if wire.port1 in part_sw_bp_set and wire.port2 in part_sw_bp_set:
                         wire_list.append(wire.id)
         except BridgeException:
             self.logger.error("Error communicating with the bridge while obtaining partition information")
@@ -309,7 +309,7 @@ class BGSystem (BGBaseSystem):
             self.logger.debug("configure: creating wire objects")
             self.busted_wires = set()
             for w in bg_object.wires:
-                self.wire_cache[w.id] = Wire(w.id, w.from_port, w.to_port)
+                self.wire_cache[w.id] = Wire(w.id, w.from_port.component_id, w.to_port.component_id)
                 if w.state != "RM_WIRE_UP":
                     self.busted_wires.append(w.id)
                 
