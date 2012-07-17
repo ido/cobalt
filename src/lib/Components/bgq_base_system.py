@@ -118,7 +118,7 @@ subrun_only_size = 128
 node_position_exp  = re.compile(r'-J(?P<pos>[0-9][0-9])')
 nodecard_exp = re.compile(r'-N(?P<pos>[0-9][0-9])')
 midplane_exp = re.compile(r'-M(?P<pos>[0-9])')
-rack_exp = re.compile(r'R(?P<pos>[0-9][0-9])')
+rack_exp = re.compile(r'R(?P<pos>[0-9]([0-9]|[A-F]))')
 
 
 def get_transformed_loc(nodeboard_pos, coords):

@@ -246,12 +246,12 @@ class BGSystem (BGBaseSystem):
     def _get_midplane_from_location(self, loc_name):
         '''get the midplane associated with a hardware location, like a switch, or a nodecard.'''
 
-        rack_pos = int(rack_exp.search(loc_name).groups()[0])
+        rack_pos = int(rack_exp.search(loc_name).groups()[0], 16)
         midplane_pos = int(midplane_exp.search(loc_name).groups()[0])
 
         if self.compute_hardware_vec == None:
             raise RuntimeError("attempting to obtain nodecard state without initializing compute_hardware_vec.")
-        mp = self.compute_hardware_vec.getMidplane("R%02d-M%d" % (rack_pos, midplane_pos))
+        mp = self.compute_hardware_vec.getMidplane("R%02X-M%d" % (rack_pos, midplane_pos))
         return mp
 
     def get_nodecard_state(self, loc_name):
@@ -526,8 +526,8 @@ class BGSystem (BGBaseSystem):
                             curr_size)
 
                     nodecard_list = []
-                    block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)),
-                                       "R%02d-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)+1)]
+                    block_nodecards = ["R%02X-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)),
+                                       "R%02X-M%d-N%02d" % (rack_pos, midplane_pos, nodecard_pos+(2*i)+1)]
                     for j in range(0,2):
                         nc = midplane.getNodeBoard(nodecard_pos+(2*i)+j)
                         if nc.getLocation() in block_nodecards:
@@ -622,7 +622,7 @@ class BGSystem (BGBaseSystem):
                                 curr_size)
                     
                         nodecard_list = [] 
-                        block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, curr_nb_pos)]
+                        block_nodecards = ["R%02X-M%d-N%02d" % (rack_pos, midplane_pos, curr_nb_pos)]
                     
                         nc = midplane.getNodeBoard(curr_nb_pos)
                         if nc.getLocation() in block_nodecards:
