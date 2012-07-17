@@ -2914,7 +2914,7 @@ class Job (StateMachine):
                         "cobalt_log_file thread.  Aborting write! Traceback "\
                         "follows:" %(self.jobid, self.user))
                 logger.error(traceback.format_exc())
-            
+
 
     def progress(self):
         '''Run next job step'''
@@ -2924,8 +2924,13 @@ class Job (StateMachine):
             self._sm_log_exception(None, "an exception occurred during a progress event")
 
     def run(self, nodelist, user = None):
+        '''casue the job to go from queued to starting.
+
+        '''
+        start_successful = False
         try:
             self.trigger_event("Run", {'nodelist' : nodelist})
+            start_successful = True
         except StateMachineIllegalEventError:
             raise JobRunError("Jobs in the '%s' state may not be started." % (self.state,), self.jobid,
                 self.state, self._sm_state)
@@ -2933,10 +2938,23 @@ class Job (StateMachine):
             self._sm_log_exception(None, "an unexpected exception occurred while attempting to start the task")
             raise JobRunError("An unexpected exception occurred while attempting to start the job.  See log for details.", 
                 self.jobid, self.state, self._sm_state)
+        finally:
+            if not start_successful:
+                #free the resource allocation the run from our end will not start.
+                try:
+                    #if the system component is unreachable, then cleanup is no 
+                    #longer an issue...
+                    ComponentProxy("system").reserve_resources_until(nodelist, None, self.jobid)
+                    logger.critical("Job %s/%s: releasing resources from failed run attempt.",
+                            self.jobid, self.user)
+                except Exception:
+                    logger.critical("Job %s/%s: unable to release resources from failed run attempt.",
+                            self.jobid, self.user)
+                    logger.critical(traceback.format_exc())
 
     def match (self, spec):
         """True if every field in spec == the same field on the entity.
-        
+
         Arguments:
         spec -- Dictionary specifying fields and values to match against.
         """
