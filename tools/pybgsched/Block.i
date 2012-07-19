@@ -7,6 +7,7 @@
 
 %warnfilter(325) bgsched::Block::Connectivity;
 
+
 %exception bgsched::Block{
     try{
         $action;
@@ -59,8 +60,16 @@ struct Connectivity{
     enum Value {
         Torus,
         Mesh
-    }; 
-}; 
+    };
+};
+
+struct Action{
+  enum Value {
+    None = 0,
+    Boot,
+    Free
+  };
+};
 
 %{
 #include <bgsched/Block.h>
@@ -69,6 +78,7 @@ struct Connectivity{
 
 %{
 typedef bgsched::Block::Connectivity Connectivity;
+typedef bgsched::Block::Action Action;
 %}
 
 %extend bgsched::Block{
@@ -76,7 +86,7 @@ typedef bgsched::Block::Connectivity Connectivity;
     int getStatusValue(){
         return ($self->getStatus()).toValue();
     }
-   
+
     std::string getStatusString(){
         bgsched::Block::Status v = ($self->getStatus()).toValue();
         switch(v){
@@ -87,9 +97,9 @@ typedef bgsched::Block::Connectivity Connectivity;
             PYBGSCHED_CASE_ENUM_TO_STRING(bgsched::Block, Terminating)
             default:
                 return std::string("UnknownState");
-        }       
+        }
         return std::string("UnknownState");
-    }    
+    }
 }
 
 %pythoncode{
