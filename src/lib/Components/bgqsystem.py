@@ -28,19 +28,19 @@ import Cobalt.Data
 import Cobalt.Util
 from Cobalt.Util import get_config_option, disk_writer_thread 
 from Cobalt.Components.base import Component, exposed, automatic, query
-#This is definitely going away. import Cobalt.bridge
-#from Cobalt.bridge import BridgeException
 from Cobalt.Exceptions import ProcessGroupCreationError, ComponentLookupError
-from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem, JobValidationError
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
+
 from pybgsched import SWIG_vector_to_list
 
-from bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp
-from bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK, NODECARD_D_DIM_MASK, NODECARD_E_DIM_MASK
-from bgq_base_system import A_DIM, B_DIM, C_DIM, D_DIM, E_DIM
-from bgq_base_system import get_extents_from_size
+from Cobalt.Components.bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp, wire_exp
+from Cobalt.Components.bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK, NODECARD_D_DIM_MASK, NODECARD_E_DIM_MASK
+from Cobalt.Components.bgq_base_system import A_DIM, B_DIM, C_DIM, D_DIM, E_DIM
+from Cobalt.Components.bgq_base_system import get_extents_from_size
+from Cobalt.Components.bgq_base_system import Wire
+from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem, JobValidationError
 
 try:
     from elementtree import ElementTree
@@ -149,6 +149,7 @@ class BGSystem (BGBaseSystem):
         
         run_config = kwargs.pop('run_config',True)
         if run_config:
+            logger.debug('init config()')
             self.configure(config_file=sim_xml_file)
 
         # initiate the process before starting any threads
@@ -211,6 +212,7 @@ class BGSystem (BGBaseSystem):
         except ConfigParser.NoSectionError:
             sim_xml_file = None
 
+        logger.debug('__setstate__ config()')
         self.configure(config_file=sim_xml_file)
         
         if 'block_flags' in state:
@@ -265,52 +267,93 @@ class BGSystem (BGBaseSystem):
         '''Get the node card state as described by the control system.'''
         nodecard_pos = int(nodecard_exp.search(loc_name).groups()[0])
 
-        mp = self._get_midplane_from_location(loc_name)
+        #mp = self._get_midplane_from_location(loc_name)
         return mp.getNodeBoard(nodecard_pos).getStateString()
-    
+
 
     def get_switch_state(self, sw_name):
-        
+
         #first character in the switch name is the direction of the switch:
         # A,B,C, or D format: L_RXX-MY
         sw_id = sw_name.split("_")[0]
         mp = self._get_midplane_from_location(sw_name)
         return mp.getSwitch(sw_char_to_dim_dict[sw_id]).getState()  
 
-    def _detect_wiring_deps(self, block, wiring_cache={}):
+    def _detect_wiring_deps(self, block):
         """
-        into a general resource intersection check.
+        wiring conflicts: Two blocks are in a wiring conflict iff
+            - they have no nodeboards in common
+            - they have wires in common on dimensions where their
+                length > 1 in midplanes
+            - if b1 conflict b2 then b2 conflict b1 (?)
 
         """
-        def _kernel():
-            s2 = set(p.switches)
+        def _can_dim_conflict(dim, dim_size):
+            curr_dim_size = self.compute_hardware_vec.getMachineSize(pybgsched.Dimension(dim))
+            return (not (dim_size == 1 or
+                         dim_size == curr_dim_size or
+                         dim_size == curr_dim_size - 1))
 
-            if s1.intersection(s2):
-                p._wiring_conflicts.add(block.name)
-                block._wiring_conflicts.add(p.name)
-                self.logger.debug("%s and %s have a wiring conflict" % (block.name, p.name))
-        
-        if int(block.size) <= 512:
-            #anything midplane or smaller cannot have wiring conflicts.
-            #Also, I think we will have to look closer at switch states to determine if a block is actually
-            #caught in a conflict.  Two midplanes in the same rack should never have a wiring conflict (maybe?)
-            #TODO: Check this assumption --PMR
+        def _gen_block_dims(bg_block):
+            dim_dict = {}
+            conflict = False
+            for dim in range(0, 4):
+                dim_dict[dim] = bg_block.getDimensionSize(pybgsched.Dimension(dim))
+                curr_dim_size = self.compute_hardware_vec.getMachineSize(pybgsched.Dimension(dim))
+                if not (dim_dict[dim] == 1 or
+                        dim_dict[dim] == curr_dim_size or
+                        dim_dict[dim] == curr_dim_size - 1):
+                    conflict = True
+            return dim_dict, conflict
+
+        if len(block.wires) == 0:
             return
 
-        s1 = set(block.switches)
+        bg_block = self.get_compute_block(block.name, True)
+        #if bg_block.isSmall():
+            #small blocks can't have wiring conflicts
+        #    return
+        bg_block_dims, can_conflict = _gen_block_dims(bg_block)
+        if not can_conflict:
 
+            self.logger.debug("%s cannot have a conflict, skipping %s",
+                            block.name, bg_block_dims)
+            return
 
-        if wiring_cache.has_key(block.size):
-            for p in wiring_cache[block.size]:
-                if block.name!=p.name:
-                    _kernel()
-        else:
-            wiring_cache[block.size] = [block]
-            for p in self._blocks.values():
-                if p.size==block.size and block.name!=p.name:
-                    wiring_cache[block.size].append(p)
-                    _kernel()
-        return 
+        for other in self._blocks.values():
+            if block.name == other.name:
+                continue
+
+            if len(block.wires) == 0:
+                continue
+
+            block_nodeset = set(block.node_card_names)
+            other_nodeset = set(other.node_card_names)
+
+            if block_nodeset.isdisjoint(other_nodeset):
+                #we have no node-level hardware in common now check for wiring conflicts
+                bg_other = self.get_compute_block(other.name, True)
+                #if bg_other.isSmall():
+                #    continue
+                bg_other_dims, can_conflict = _gen_block_dims(bg_other)
+                if not can_conflict:
+                    continue
+                #Check wire pairs along dimension sizes that can conflict:
+                for dim, block_dim_size in bg_block_dims.iteritems():
+                    other_dim_size = bg_other_dims[dim]
+                    if (_can_dim_conflict(dim, block_dim_size) and
+                        _can_dim_conflict(dim, other_dim_size)):
+                        block_wires_in_dim = set([wire for wire in block.wires
+                                              if wire.dim == dim])
+                        other_wires_in_dim = set([wire for wire in other.wires
+                                              if wire.dim == dim])
+                        if not block_wires_in_dim.isdisjoint(other_wires_in_dim):
+                            block._wiring_conflicts.add(other.name)
+                            other._wiring_conflicts.add(block.name)
+                            self.logger.debug("%s and %s have a wiring conflict",
+                            block.name, other.name)
+
+        return
 
     def configure (self, bridgeless=True, config_file=None):
 
@@ -325,16 +368,15 @@ class BGSystem (BGBaseSystem):
     def _configure_from_bridge(self):
 
         """Read partition data from the bridge."""
-        
+
         self.logger.info("configure()")
-        
         start = time.time()
         #This initialization must occur successfully prior to anything else being done
         #with the scheduler API, or else you'll segfault out.  Absolute paths should be
         #used for init.  While init can take a relative path, the refreshConfig function will
         #error out.
-        
-        def init_fail_exit():
+
+        def __init_fail_exit():
             self.logger.critical("System Component Exiting!")
             sys.exit(1)
 
@@ -342,10 +384,10 @@ class BGSystem (BGBaseSystem):
             pybgsched.init(get_config_option("bgsystem","bg_properties","/bgsys/local/etc/bg.properties"))
         except IOError:
             self.logger.critical("IOError initializing bridge.  Check bg.properties file and database connection.")
-            init_fail_exit()
+            __init_fail_exit()
         except RuntimeError:
             self.logger.critical("Abnormal RuntimeError from the bridge during initialization.")
-            init_fail_exit()
+            __init_fail_exit()
         try:
             #grab the hardware state:
             hw_start = time.time()
@@ -354,7 +396,7 @@ class BGSystem (BGBaseSystem):
             self.logger.debug("Acquiring hardware state: took %s sec", hw_end - hw_start)
         except RuntimeError:
             self.logger.critical ("Error communicating with the bridge while acquiring hardware information.")
-            init_fail_exit()
+            __init_fail_exit()
         try:
             #get all blocks on the system
             blk_start = time.time()
@@ -365,19 +407,52 @@ class BGSystem (BGBaseSystem):
             self.logger.debug("Acquiring block states: took %s sec", blk_end - blk_start)
         except RuntimeError:
             self.logger.critical ("Error communicating with the bridge during Block Initialization.")
-            init_fail_exit()
-                
+            __init_fail_exit()
+
+        #Extract and cache the midplane wiring data.  I am assuming that adding
+        #more bluegene requires a restart
+        midplane_wiring_cache_start = time.time()
+        self._midplane_wiring_cache = {}
+        midplane_locs = []
+        machine_size = {}
+        for dim in range(0,pybgsched.Dimension.D+1):
+            machine_size[dim] = self.compute_hardware_vec.getMachineSize(
+                    pybgsched.Dimension(dim))
+        for A in range(0, machine_size[pybgsched.Dimension.A]):
+            for B in range(0, machine_size[pybgsched.Dimension.B]):
+                for C in range(0, machine_size[pybgsched.Dimension.C]):
+                    for D in range(0, machine_size[pybgsched.Dimension.D]):
+                        midplane_locs.append(self.compute_hardware_vec.getMidplane(
+                            pybgsched.Coordinates(A,B,C,D)).getLocation())
+        for mp in midplane_locs:
+            self._midplane_wiring_cache[mp] = []
+            for dim in range(0, pybgsched.Dimension.D+1):
+                outbound_sw = self.compute_hardware_vec.getMidplane(mp).getSwitch(pybgsched.Dimension(dim))
+                dimension, rack, midplane =  self.__parse_wire(outbound_sw.getCable().getDestinationLocation())
+                inbound_sw = self.compute_hardware_vec.getMidplane("R%02X-M%d"%(rack,midplane)).getSwitch(pybgsched.Dimension(dim))
+
+                self._midplane_wiring_cache[mp].append(
+                        Wire(outbound_sw.getCable().getLocation(),
+                             outbound_sw.getCable().getDestinationLocation(),
+                             dim))
+                self._midplane_wiring_cache[mp].append(
+                        Wire(inbound_sw.getCable().getLocation(),
+                             inbound_sw.getCable().getDestinationLocation(),
+                             dim))
+
+        midplane_wiring_cache_end = time.time()
+        self.logger.debug("Building midplane wiring cache: took %s sec", 
+                midplane_wiring_cache_end - midplane_wiring_cache_start)
         # initialize a new partition dict with all partitions
-        
+
+
         blocks = BlockDict()
-        
+
         tmp_list = []
 
-        wiring_cache = {}
-        
         for block_def in system_def:
             tmp_list.append(self._new_block_dict(block_def))
-        
+
         blocks.q_add(tmp_list)
 
         # update object state
@@ -387,10 +462,10 @@ class BGSystem (BGBaseSystem):
         # find the wiring deps
         wd_start = time.time()
         for block in self._blocks.values():
-            self._detect_wiring_deps(block, wiring_cache)
+            self._detect_wiring_deps(block)
         wd_end = time.time()
         self.logger.debug("Detecting Wiring Deps: took %s sec", wd_end - wd_start)
- 
+
         # update state information
         for block in self._blocks.values():
             if block.state != "busy":
@@ -402,7 +477,7 @@ class BGSystem (BGBaseSystem):
                     if self._blocks[dep_name].state == "busy":
                         block.state = "blocked-wiring (%s)" % dep_name
                         break
- 
+
         end = time.time()
         self.logger.info("block configuration took %f sec" % (end - start))
         start = time.time()
@@ -422,9 +497,9 @@ class BGSystem (BGBaseSystem):
         self._blocks.update(subblockDict)
         end = time.time()
         self.logger.info("subblock configuration took %f sec" % (end - start))
-            
+
         return
-    
+
     ## BGSystem.parse_subblock_config
     #  Inputs: string of subblock configuration information
     #  Output: dictionary: key: block names, values: minimum size to slice to
@@ -444,6 +519,9 @@ class BGSystem (BGBaseSystem):
         #self.logger.debug('Setting new dict to: %s' % retdict)
         return retdict
 
+    def __parse_wire(self, wire):
+        wire_dict = wire_exp.search(wire).groupdict()
+        return wire_dict['dim'], int(wire_dict['rack'], 16), int(wire_dict['midplane'])
 
     def gen_subblocks(self, parent_name, min_size, ignore_sizes=[]):
 
@@ -482,9 +560,9 @@ class BGSystem (BGBaseSystem):
         for nb in bgpb_nodeboards:
           nb_pos = int(nodecard_exp.search(nb).groups()[0])
           nodecard_pos = min(nodecard_pos, nb_pos)
-        
+
         midplane_hw_loc = SWIG_vector_to_list(bg_parent_block.getMidplanes())[0]
-       
+
         midplane_pos = int(midplane_exp.search(midplane_hw_loc).groups()[0])
         rack_pos = int(rack_exp.search(midplane_hw_loc).groups()[0])
         #get parent midplane information.  we only need this once:
@@ -492,7 +570,7 @@ class BGSystem (BGBaseSystem):
         midplane_logical_coords = pybgsched.getMidplaneCoordinates(midplane_hw_loc)
 
         subblock_prefix = get_config_option("bgsystem", "subblock_prefix", "COBALT")
-    
+
         ret_blocks = []
         while (curr_size >= min_size):
             if curr_size in ignore_sizes:
@@ -504,17 +582,14 @@ class BGSystem (BGBaseSystem):
                 continue
             if curr_size == 64:
                 extents = get_extents_from_size(curr_size)
-                #corner_node_j_loc_list = get_corner_nodes_for_size(rack_pos, midplane_pos, nodecard_pos, curr_size)
+
                 for i in range(0,2):
-                    #curr_name = "%sR%02d-M%d-N%02d-64" % (rack_pos, midplane_pos, nodecard_pos+(2*i))
-                    #nodecard_list = []
                     curr_nb_pos = nodecard_pos + (2*i)
                     a_corner = midplane_logical_coords[A_DIM]*4 + int(bool(NODECARD_A_DIM_MASK & curr_nb_pos))*2
                     b_corner = midplane_logical_coords[B_DIM]*4 + int(bool(NODECARD_B_DIM_MASK & curr_nb_pos))*2
                     c_corner = midplane_logical_coords[C_DIM]*4 + int(bool(NODECARD_C_DIM_MASK & curr_nb_pos))*2
                     d_corner = midplane_logical_coords[D_DIM]*4 + int(bool(NODECARD_D_DIM_MASK & curr_nb_pos))*2
                     e_corner = 0
-
 
                     curr_name = '%s-%d%d%d%d%d-%d%d%d%d%d-%d' % (subblock_prefix,
                             a_corner, b_corner, c_corner, d_corner, e_corner,
@@ -535,9 +610,8 @@ class BGSystem (BGBaseSystem):
                             if pybgsched.hardware_in_error_state(nc):
                                 state = "error"
                             nodecard_list.append(self._get_node_card(nc.getLocation(), state))
-                    
+
                     corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
-                    
                     self.logger.debug("Creating subblock name: %s, corner: %s, extents %s.", curr_name, corner_node, extents)
 
                     ret_blocks.append((dict(
@@ -551,9 +625,9 @@ class BGSystem (BGBaseSystem):
                         state = 'idle',
                         block_type = 'pseudoblock'
                         )))
-    
+
             elif curr_size == 32:
-                 
+
                 extents = get_extents_from_size(curr_size)
                 for i in range(0,4):
                     curr_nb_pos = nodecard_pos + i
@@ -571,21 +645,20 @@ class BGSystem (BGBaseSystem):
                             d_corner + extents[D_DIM] - 1,
                             e_corner + extents[E_DIM] - 1,
                             curr_size)
-                    
+
                     nodecard_list = [] 
                     block_nodecards = ["R%02d-M%d-N%02d" % (rack_pos, midplane_pos, curr_nb_pos)]
-                    
+
                     nc = midplane.getNodeBoard(curr_nb_pos)
                     if nc.getLocation() in block_nodecards:
                         state = "idle"
                         if pybgsched.hardware_in_error_state(nc):
                             state = "error"
                         nodecard_list.append(self._get_node_card(nc.getLocation(), state))
-                   
-                    corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
 
+                    corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
                     self.logger.debug("Creating subblock name: %s, corner: %s, extents %s, nodecards: %s", curr_name, corner_node, extents, nodecard_list)
-                    
+
                     ret_blocks.append((dict(
                         name = curr_name, 
                         queue = "default",
@@ -597,14 +670,14 @@ class BGSystem (BGBaseSystem):
                         state = 'idle',
                         block_type = 'pseudoblock'
                         )))
-    
+
             else:
                 extents = get_extents_from_size(curr_size)
-                
+
                 #yes, do these for each nodecard.
                 for curr_nb_pos in range(nodecard_pos, nodecard_pos + 4):
                     for i in range(0, (32/curr_size)):
-                    
+
                         #Yes these bitmasks are important.
                         a_corner = midplane_logical_coords[A_DIM]*4 + int(bool(NODECARD_A_DIM_MASK & curr_nb_pos))*2 + (int(bool(i & 1)))
                         b_corner = midplane_logical_coords[B_DIM]*4 + int(bool(NODECARD_B_DIM_MASK & curr_nb_pos))*2 + (int(bool(i & 2)))
@@ -620,21 +693,20 @@ class BGSystem (BGBaseSystem):
                                 d_corner + extents[D_DIM] - 1,
                                 e_corner + extents[E_DIM] - 1,
                                 curr_size)
-                    
+
                         nodecard_list = [] 
+
                         block_nodecards = ["R%02X-M%d-N%02d" % (rack_pos, midplane_pos, curr_nb_pos)]
-                    
                         nc = midplane.getNodeBoard(curr_nb_pos)
                         if nc.getLocation() in block_nodecards:
                             state = "idle"
                             if pybgsched.hardware_in_error_state(nc):
                                 state = "error"
                             nodecard_list.append(self._get_node_card(nc.getLocation(), state))
-                   
-                        corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
 
+                        corner_node = self._get_compute_node_from_global_coords([a_corner, b_corner, c_corner, d_corner, e_corner])
                         self.logger.debug("Creating subblock name: %s, corner: %s, extents %s, nodecards: %s", curr_name, corner_node, extents, nodecard_list)
-                    
+
                         ret_blocks.append((dict(
                             name = curr_name, 
                             queue = "default",
@@ -650,7 +722,6 @@ class BGSystem (BGBaseSystem):
                 # for curr_nb_pos
 
             curr_size = curr_size / 2
-        
         return ret_blocks
 
     def _get_compute_node_from_global_coords(self, global_coords):
@@ -658,7 +729,6 @@ class BGSystem (BGBaseSystem):
 
         '''
         #Once again proving that Integer division is the right default.
-        
         midplane_coords = [c/4 for c in global_coords]
         midplane_torus_coords = [c%4 for c in global_coords]
         nodeboard_loc = [c/2 for c in midplane_torus_coords] #if a 2 or a 3 reversed dim
@@ -669,7 +739,7 @@ class BGSystem (BGBaseSystem):
                         nodeboard_loc[C_DIM] * 1 + \
                         nodeboard_loc[D_DIM] * 2
         node_pos = Cobalt.Components.bgq_base_system.get_transformed_loc(nodeboard_pos, node_coords)
-        
+
         #TODO: make less machine specific, more configurable.  For T&D and Mira this should work, though.
 
         rack_pos = 0
@@ -693,13 +763,14 @@ class BGSystem (BGBaseSystem):
         midplane_list = []
         nodecard_list = []
         io_link_list = []
+        wire_set = set()
         midplane_ids = block_def.getMidplanes()
         midplane_nodecards = []
         for midplane_id in midplane_ids:
             #grab the switch data from all associated midplanes
             midplane = self.compute_hardware_vec.getMidplane(midplane_id)
             midplane_list.append(midplane)
-            for i in range(0, 4):
+            for i in range(0, D_DIM+1):
                 switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
                 midplane_nodecards.extend([nb.getLocation() 
                     for nb in SWIG_vector_to_list(pybgsched.getNodeBoards(midplane.getLocation()))])
@@ -720,6 +791,16 @@ class BGSystem (BGBaseSystem):
                     if pybgsched.hardware_in_error_state(nc):
                         state = "error"
                     nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+        # Wiring
+        mp_and_passthru_mp_list = set(midplane_ids)
+        mp_and_passthru_mp_list |= set(SWIG_vector_to_list(block_def.getPassthroughMidplanes()))
+        #add wires for a dimension, make sure to get passthru midplanes as well.
+        #FIXME:wiring's wrong
+        for mp in mp_and_passthru_mp_list:
+            for wire in self._midplane_wiring_cache[mp]:
+                if (wire.port1_mp in mp_and_passthru_mp_list and
+                        wire.port2_mp in mp_and_passthru_mp_list):
+                    wire_set.add(wire)
 
         d = dict(
             name = block_def.getName(), 
@@ -729,7 +810,8 @@ class BGSystem (BGBaseSystem):
             node_cards = nodecard_list,
             switches = switch_list,
             state = block_def.getStatus(),
-            block_type = 'normal'
+            block_type = 'normal',
+            wires = wire_set
         )
         return d
 
@@ -775,8 +857,6 @@ class BGSystem (BGBaseSystem):
 
         tmp_list = []
 
-        # this is going to hold partition objects from the bridge (not our own Partition)
-        #wiring_cache = {}
 
         for block_def in system_def.getiterator("Block"):
             node_list = [] #this is now really Nodes
@@ -790,13 +870,6 @@ class BGSystem (BGBaseSystem):
             nc_count = len(node_card_list)
             if nc_count <= 0:
                 raise RuntimeError("BOOM: Block %s defined without nodecards!", block_def.get('name'))
-
-            #if not wiring_cache.has_key(nc_count):
-            #    wiring_cache[nc_count] = []
-            #wiring_cache[nc_count].append(partition_def.get("name"))
-
-            #for s in partition_def.getiterator("Switch"):
-            #    switch_list.append(s.get("id"))
 
             tmp_list.append( dict(
                 name = block_def.get("name"),
@@ -820,7 +893,6 @@ class BGSystem (BGBaseSystem):
         been done for the BG/P side.
 
         """
-
         def _start_block_cleanup(block):
             self.logger.info("Block %s: starting cleanup.", block.name)
             block.cleanup_pending = True
@@ -1044,7 +1116,6 @@ class BGSystem (BGBaseSystem):
                     del self._blocks[b.name]
 
                 bp_cache = {}
-                wiring_cache = {}
 
                 # throttle the adding of new partitions so updating of
                 # machine state doesn't get bogged down
@@ -1058,7 +1129,7 @@ class BGSystem (BGBaseSystem):
                     #bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._blocks.q_add([self._new_block_dict(new_block_info[0])])
                     b = self._blocks[block.getName()]
-                    self._detect_wiring_deps(b, wiring_cache)
+                    self._detect_wiring_deps(b)
 
                 # if partitions were added or removed, then update the relationships between partitions
                 if len(missing_blocks) > 0 or len(new_blocks) > 0:

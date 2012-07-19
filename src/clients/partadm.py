@@ -98,6 +98,9 @@ def print_block(block_dicts):
                 else:
                     header_list.append(key)
                     value_list.append(' '.join([v['name'] for v in value]))
+            elif key == 'wire_list':
+                header_list.append(key)
+                value_list.append(' '.join([v['id'] for v in value]))
             else:
                 header_list.append(key)
                 value_list.append(value)
@@ -128,7 +131,7 @@ if __name__ == '__main__':
     whoami = pwd.getpwuid(os.getuid())[0]
 
     if opts.recursive:
-        partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children':'*'} for name in args])
+        partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children_list':'*'} for name in args])
         parts = args
         
         for part in partdata:
@@ -141,8 +144,8 @@ if __name__ == '__main__':
 
     if opts.add:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
-                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], whoami)
-        parts = component_call(system.add_partitions, args)
+            'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts])
+        parts = system.add_partitions(args, whoami)
     elif opts.delete:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
         parts = component_call(system.del_partitions, args)
@@ -234,7 +237,7 @@ if __name__ == '__main__':
             'queue':'*','parents':'*','children':'*','reserved_until':'*',
             'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
             'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
-            'size':'*','draining':'*','backfill_time':'*'} for part in parts]))
+            'size':'*','draining':'*','backfill_time':'*','wire_list':'*', 'wiring_conflict_list':'*', 'relatives':'*'} for part in parts]))
         sys.exit(0)
 
     if opts.clean_block:

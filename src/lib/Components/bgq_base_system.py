@@ -119,7 +119,7 @@ node_position_exp  = re.compile(r'-J(?P<pos>[0-9][0-9])')
 nodecard_exp = re.compile(r'-N(?P<pos>[0-9][0-9])')
 midplane_exp = re.compile(r'-M(?P<pos>[0-9])')
 rack_exp = re.compile(r'R(?P<pos>[0-9]([0-9]|[A-F]))')
-
+wire_exp = re.compile(r'(?P<dim>[A-D])_R(?P<rack>[0-9]([0-9]|[A-F]))-M(?P<midplane>0|1)')
 
 def get_transformed_loc(nodeboard_pos, coords):
     ''' Return an node postion based on coordiantes and nodecard position
@@ -176,7 +176,7 @@ def get_extents_from_size(size):
         dim_order = [2,3,0,1,-1] #nodecard in midplane order #c,d,a,b
             #E dimension doens't figure in, should cause an error
         left /= 32
-    
+
     #for the subnodeboard shape 32 or less
     elif size <= 32:
         #order is now supposed to be a,b,c,d,e
@@ -191,6 +191,30 @@ def get_extents_from_size(size):
 
     return ret_extents
 
+class Wire (object):
+    '''Encapsulate information about a wire in easily swallowable form.
+
+    '''
+    def __init__(self, port1, port2, dim):
+        self.id = "".join([str(port1),'-',str(port2)])
+        self.port1 = str(port1)
+        self.port2 = str(port2)
+        self.dim = dim #integer rep of dimension number
+        #Cable objects (aka wires, have no state)
+
+    def __repr__(self):
+        return self.id
+
+    def __str__(self):
+        return self.id
+
+    @property
+    def port1_mp(self):
+        return self.port1.split('_')[1]
+
+    @property
+    def port2_mp(self):
+        return self.port2.split('_')[1]
 
 class Node (object):
 
@@ -350,14 +374,14 @@ class Block (Data):
     Properties:
     state -- "idle", "busy", or "blocked"
     """
-    
+
     fields = Data.fields + [
         "tag", "scheduled", "name", "functional",
         "queue", "size", "parents", "children", "state", 
         "backfill_time", "node_cards", "nodes", "switches", "io_links",
         "reserved_until", "reserved_by", "used_by", "cleanup_pending",
         "freeing", "backfill_time", "draining", "subblock_parent",
-        "block_type", "corner_node", "extents"
+        "block_type", "corner_node", "extents", 'wire_list',
     ]
 
     def __init__ (self, spec):
@@ -388,10 +412,11 @@ class Block (Data):
         self.backfill_time = None
         self.draining = False
 
-        self._relatives = [] #list of blocks that have overlapping resources with this one
-        self._parents = [] #relatives that are a superset of me
-        self._childeren = [] #relatives that are proper subsets of me
+        self._relatives = set() #list of blocks that have overlapping resources with this one
+        self._parents = set() #relatives that are a superset of me
+        self._childeren = set() #relatives that are proper subsets of me
 
+        self.wires = spec.pop('wires',set()) #list of (src, dst) tuples for cables linking midplanes
         self.admin_failed = False #set this to true if a partadm --fail is issued
 
         self._update_node_cards()
@@ -438,7 +463,6 @@ class Block (Data):
                 nc = self.node_cards[0] #only one node_card is in use in this case.
                 self.nodes.extend(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
 
-
     def _update_node_cards(self):
         if self.state == "busy":
             for nc in self.node_cards:
@@ -454,19 +478,22 @@ class Block (Data):
 
     relatives = property(_get_relatives)
 
+
     def _get_node_card_names (self):
         return [nc.name for nc in self.node_cards]
 
     node_card_names = property(_get_node_card_names)
 
     def _get_parents(self):
-        return [block.name for block in self._relatives if block.is_superblock(self)]
+        return [block.name for block in self._relatives if self.is_parent(block)]
     parents = property(_get_parents)
 
     def _get_childeren(self):
-        return [block.name for block in self._relatives if block.is_subblock(self)]
+        return [block.name for block in self._relatives if self.is_child(block)]
     children = property(_get_childeren)
 
+    wire_list = property(lambda self: list(self.wires))
+    wiring_conflict_list = property(lambda self: list(self._wiring_conflicts))
     def _get_node_names (self):
         return [n.name for n in self.nodes]
 
@@ -509,8 +536,8 @@ class Block (Data):
         '''
         if self.does_block_overlap(block):
             if self not in block._relatives:
-                self._relatives.append(block)
-                block._relatives.append(self)
+                self._relatives.add(block)
+                block._relatives.add(self)
             return True
         else:
             if self in block._relatives:
@@ -543,6 +570,32 @@ class Block (Data):
         if self.name == block.name:
             return False
         return not self.is_superblock(block)
+
+    def is_parent(self, block):
+
+        if self.name == block.name:
+            return False
+        return not self.is_child(block)
+
+    def is_child(self, block):
+
+        if self.name == block.name:
+            return False
+
+        b1_nc_names = set(self.node_card_names)
+        b2_nc_names = set(block.node_card_names)
+        if (b1_nc_names.isdisjoint(b2_nc_names)):
+            return False
+
+        if (b1_nc_names & b2_nc_names == b2_nc_names):
+            return True
+        if len(b1_nc_names ^ b2_nc_names) == 0:
+            b1_node_names = set(self.node_names)
+            b2_node_names = set(block.node_names)
+            if (b1_node_names & b2_node_names == b2_node_names):
+                return True
+        return False
+
 
 
 class BlockDict (DataDict):
@@ -716,23 +769,28 @@ class BGBaseSystem (Component):
         #partial overlaps are being tracked, not sure what to do about paternity.
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
+            b._parents = set()
+            b._relatives = set()
+            b._children = set()
 
-            # toss the wiring dependencies in with the parents
-            for dep_name in b._wiring_conflicts:
-                #no wiring dependencies to determine yet
-                pass
+        for b_name in self._managed_blocks:
+            b = self._blocks[b_name]
 
             for other_name in self._managed_blocks:
                 if b.name == other_name:
                     continue
-                if other_name not in self._blocks.keys():
+                if other_name not in self._managed_blocks:
                     b._relatives.pop(other_name, None)
                     self.logger.warning("Block %s not managed, removed from relatives.", other_name)
+                elif other_name in b._wiring_conflicts:
+                    b._relatives.add(self._blocks[other_name])
+                    self._blocks[other_name]._relatives.add(b)
                 else:
                     b.mark_if_overlap(self._blocks[other_name])
 
-            b._parents = [block for block in b._relatives if block.is_superblock(b)]
-            b._children = [block for block in b._relatives if block.is_subblock(b)]
+            # only a child if the node-level resources are a proper subset of it's parent block.
+            b._parents.update([block for block in b._relatives if block.is_parent(b)])
+            b._children.update([block for block in b._relatives if block.is_child(b)])
             #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
 
 
