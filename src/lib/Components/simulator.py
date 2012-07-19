@@ -36,7 +36,7 @@ from Cobalt.Statistics import Statistics
 from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 
 __all__ = [
-    "BGSimProcessGroup", 
+    "BGSimProcessGroup",
     "Simulator",
 ]
 
@@ -48,11 +48,11 @@ class BGSimProcessGroup(ProcessGroup):
 
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec)
-        self.nodect = spec.get("nodect",None)
+        self.nodect = spec.get("nodect", None)
 
 
 class Simulator (BGBaseSystem):
-    
+
     """Generic system simulator.
     
     Methods:
@@ -65,10 +65,10 @@ class Simulator (BGBaseSystem):
     signal_process_groups -- send a signal to the head process of the specified process groups (exposed, query)
     update_partition_state -- simulates updating partition state from the bridge API (automatic)
     """
-    
+
     name = "system"
     implementation = "simulator"
-    
+
     logger = logger
 
     def __init__ (self, *args, **kwargs):
@@ -83,7 +83,7 @@ class Simulator (BGBaseSystem):
             self.configure(self.config_file)
             self.logger.log(1, "init: recomputing partition state")
             self._recompute_partition_state()
-    
+
     def __getstate__(self):
         state = {}
         state.update(BGBaseSystem.__getstate__(self))
@@ -92,7 +92,7 @@ class Simulator (BGBaseSystem):
                 'config_file':self.config_file,
                 'failed_components': self.failed_components})
         return state
-    
+
     def __setstate__(self, state):
         try:
             self.logger.log(1, "restart: initializing base system class")
@@ -106,7 +106,7 @@ class Simulator (BGBaseSystem):
             try:
                 self.config_file = state['config_file']
             except KeyError:
-                self.config_file = os.expandvars(get_config_option('system', 'def_file', ""))
+                self.config_file = os.path.expandvars(get_config_option('system', 'def_file', ""))
             if self.config_file:
                 self.logger.log(1, "restart: loading machine configuration")
                 self.configure(self.config_file)
@@ -201,14 +201,14 @@ class Simulator (BGBaseSystem):
         Arguments:
         config_file -- xml configuration file
         """
-        
+
         self.logger.log(1, "configure: opening machine configuration file")
         def _get_node_card(name):
             if not self.node_card_cache.has_key(name):
                 self.node_card_cache[name] = NodeCard(name)
-                
+
             return self.node_card_cache[name]
-            
+
         try:
             system_doc = ElementTree.parse(config_file)
         except IOError:
@@ -219,20 +219,20 @@ class Simulator (BGBaseSystem):
             self.logger.error("problem loading data from file: %r" % config_file)
             self.logger.error("exiting...")
             sys.exit(1)
-            
+
         system_def = system_doc.getroot()
         if system_def.tag != "BG":
             self.logger.error("unexpected root element in %r: %r" % (config_file, system_def.tag))
             self.logger.error("exiting...")
             sys.exit(1)
-        
+
         # that 32 is not really constant -- it needs to either be read from cobalt.conf or from the bridge API
         NODES_PER_NODECARD = 32
-                
+
         # initialize a new partition dict with all partitions
         #
         partitions = PartitionDict()
-        
+
         tmp_list = []
 
         # this is going to hold partition objects from the bridge (not our own Partition)
@@ -242,12 +242,12 @@ class Simulator (BGBaseSystem):
             node_list = []
             switch_list = []
             wire_list = []
-            
-            for nc in partition_def.getiterator("NodeCard"): 
+
+            for nc in partition_def.getiterator("NodeCard"):
                 node_list.append(_get_node_card(nc.get("id")))
 
             nc_count = len(node_list)
-            
+
             for s in partition_def.getiterator("Switch"):
                 switch_list.append(s.get("id"))
 
@@ -255,20 +255,20 @@ class Simulator (BGBaseSystem):
                 wire_list.append(w.get("id"))
 
             self._partitions.q_add([dict(
-                name = partition_def.get("name"),
-                queue = partition_def.get("queue", "default"),
-                size = NODES_PER_NODECARD * nc_count,
-                node_cards = node_list,
-                switches = switch_list,
-                wires = wire_list,
-                state = "idle",
+                name=partition_def.get("name"),
+                queue=partition_def.get("queue", "default"),
+                size=NODES_PER_NODECARD * nc_count,
+                node_cards=node_list,
+                switches=switch_list,
+                wires=wire_list,
+                state="idle",
             )])
-        
+
         # find the wiring deps
         self.logger.log(1, "configure: looking for wiring dependencies")
         for p in self._partitions.values():
             self._detect_wiring_deps(p)
-            
+
         # update partition relationship lists
         self.logger.log(1, "configure: updating partition relationship lists")
         self.update_relatives()
@@ -321,7 +321,7 @@ class Simulator (BGBaseSystem):
         name -- name of the partition to reserve
         size -- size of the process group reserving the partition (optional)
         """
-        
+
         try:
             self._partitions_lock.acquire()
 
@@ -335,7 +335,7 @@ class Simulator (BGBaseSystem):
                 return False
             if not partition.functional:
                 self.logger.error("reserve_partition(%r, %r) [not functional]" % (name, size))
-                return false
+                return False
             if size is not None and size > partition.size:
                 self.logger.error("reserve_partition(%r, %r) [size mismatch]" % (name, size))
                 return False
@@ -347,11 +347,11 @@ class Simulator (BGBaseSystem):
 
         # explicitly call this, since the above "busy" is instantaneously available
         self.update_partition_state()
-        
+
         self.logger.info("reserve_partition(%r, %r)" % (name, size))
         return True
     reserve_partition = exposed(reserve_partition)
-    
+
     def release_partition (self, name):
         """Release a reserved partition.
         
@@ -369,7 +369,7 @@ class Simulator (BGBaseSystem):
             if not partition.state == "busy":
                 self.logger.info("release_partition(%r) [not busy]" % (name))
                 return False
-                
+
             if partition.used_by is not None:
                 partition.state = "allocated"
             else:
@@ -383,7 +383,7 @@ class Simulator (BGBaseSystem):
         self.logger.info("release_partition(%r)" % (name))
         return True
     release_partition = exposed(release_partition)
-    
+
     def add_failed_components(self, component_names):
         success = []
         for name in component_names:
