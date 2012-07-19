@@ -202,10 +202,6 @@ class BGSystem (BGBaseSystem):
                     p.state = "hardware offline: nodecard %s" % nc.id
                     self.offline_partitions.append(p.name)
                     break
-                elif nc.used_by:
-                    if self.partition_really_busy(p, nc):
-                        p.state = "blocked (%s)" % nc.used_by
-                        break
             if p.state != 'idle':
                 continue
 
@@ -219,6 +215,14 @@ class BGSystem (BGBaseSystem):
             if p_busted_wires:
                 p.state = "hardware offline: wire %s" % (p_busted_wires.pop(),)
                 self.offline_partitions.append(p.name)
+                continue
+
+            for nc in p.node_cards:
+                if nc.used_by:
+                    if self.partition_really_busy(p, nc):
+                        p.state = "blocked (%s)" % nc.used_by
+                        break
+            if p.state != 'idle':
                 continue
 
             for dep_name in p._wiring_conflicts:
