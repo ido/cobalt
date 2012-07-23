@@ -14,6 +14,7 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
+Cobalt.Util.init_cobalt_config()
 get_config_option = Cobalt.Util.get_config_option
 
 sys_type = get_config_option('bgsystem', 'bgtype')
