@@ -11,6 +11,9 @@ import sys
 import time
 import datetime
 import ConfigParser
+ParsingError = ConfigParser.ParsingError
+NoSectionError = ConfigParser.NoSectionError
+NoOptionError = ConfigParser.NoOptionError
 import os.path
 import subprocess
 from datetime import date, datetime
@@ -26,6 +29,7 @@ import errno
 import pwd
 import grp
 import stat
+import inspect
 
 import Cobalt
 from Cobalt.Proxy import ComponentProxy
@@ -39,48 +43,80 @@ except ImportError:
 
 logger = logging.getLogger('Util')
 
+
 config_true_values = ['true', 'yes','1','on']
 config_false_values = ['false', 'no','0','off']
 
-config = ConfigParser.ConfigParser()
+config = None
+config_files_read = []
 
 def init_cobalt_config():
-    try:
-        config.read(Cobalt.CONFIG_FILES)
-    except:
-        logger.critical("init_cobalt_config: Error Opening Cobalt Config File")
-        raise
+    global config
+    global config_files_read
+    if config is None:
+        config = ConfigParser.ConfigParser()
+        try:
+            config_files_read = config.read(Cobalt.CONFIG_FILES)
+        except ParsingError, e:
+            logger.error("%s: %s", inspect.currentframe().f_code.co_name, e.message)
+            raise
+        files_not_found = list(set(Cobalt.CONFIG_FILES).difference(set(config_files_read)))
+        if len(files_not_found) > 0:
+            logger.warning("%s: Missing Cobalt Config File(s): %s", 
+                inspect.currentframe().f_code.co_name, str(files_not_found)[1:-1])
+    return config_files_read
 
+def check_required_options(secopt_list):
+    """
+    Verify that required options are present in one of hte config files.
 
-def get_config_option(section, option, default=None):
+    The function expects a single list of (section, option) tuples representing
+    the options whose presence is to be verified.  Missing options are returned
+    as a list (section, option) tuples.
+    """
+    global config
+    missing = []
+    for sec, opt in secopt_list:
+        if not config.has_section(sec) or not config.has_option(sec, opt):
+            missing.append((sec, opt))
+    return missing
+
+def get_config_option(section, option, *args):
     '''Get an option from the cobalt config file.  Must be called after
-       Cobalt.Util.init_cobalt_cofig.
+       Cobalt.Util.init_cobalt_config.
        
-       If the option is not found and a default is specified, then the default
-       will be returned.  If the default is None, then an exception will be 
-       raised, appropriate to whether or not the section is found and a message
-       will be written to the log.  
-
-       If a non-None default is specified, then the default value will be used
-       no message is logged.
-        
-
+       A default value may be specified as the third argument.  If the option
+       is not found and a default is specified, then the default will be
+       returned.  If a default value is not specified, then a message will be
+       written to the log and a NoOptionError or NoSectionError exception will
+       be raised as appropriate.
     '''
+    global config
+    if config is None:
+        raise Exception("%s: init_cobalt_config() was not called" % (inspect.currentframe().f_code.co_name,))
+
+    if len(args) == 0:
+        have_default = False
+    elif len(args) == 1:
+        have_default = True
+        default = args[0]
+    else:
+        raise TypeError("%s takes at most 3 arguments (%d given)" % (inspect.currentframe().f_code.co_name, len(args) + 2))
+
     try:
         value = config.get(section, option)
-    except ConfigParser.NoOptionError:
-        if default == None:
-            logger.error("get_config_option: Option %s not found in section [%s]", 
-                option, section)
-            raise
-        else:
+    except NoOptionError:
+        if have_default:
             value = default
-    except ConfigParser.NoSectionError:
-        if default == None:
-            logger.error("get_config_option: Section [%s] not found", section)
-            raise
         else:
+            logger.error("%s: Option %s not found in section [%s]", inspect.currentframe().f_code.co_name, option, section)
+            raise
+    except NoSectionError:
+        if have_default:
             value = default
+        else:
+            logger.error("%s: Section [%s] not found", inspect.currentframe().f_code.co_name, section)
+            raise
 
     return value
 
@@ -575,8 +611,8 @@ def getattrname(clsname, attrname):
 
 class ClassInfoMetaclass (type):
     '''when a class is created, add private attributes to the class that contain a reference to the class and the class name'''
-    def __init__(cls, name, bases, dict):
-        type.__init__(cls, name, bases, dict)
+    def __init__(cls, name, bases, cdict):
+        type.__init__(cls, name, bases, cdict)
         setattr(cls, getattrname(name, "__cls"), cls)
         setattr(cls, getattrname(name, "__clsname"), name)
 
@@ -901,13 +937,12 @@ class disk_writer_thread(Thread):
                     user_groups = [g.gr_name for g in grp.getgrall() if file_msg.user in g.gr_mem]
 
                     if not ( other_writable or \
-                         (owner_writable and pwd.getpwuid(stat_result.st_uid).pw_name == file_msg.user) or \
-                         (group_writable and grp.getgrgid(stat_result.st_gid).gr_name in user_groups)):
-
-                         #we can't write to the file, drop this message.
-                         logger.debug("dropping message, improper permissions to file %s.", file_msg.filename)
-                         messages_to_remove.append(file_msg)
-                         continue
+                            (owner_writable and pwd.getpwuid(stat_result.st_uid).pw_name == file_msg.user) or \
+                            (group_writable and grp.getgrgid(stat_result.st_gid).gr_name in user_groups)):
+                        #we can't write to the file, drop this message.
+                        logger.debug("dropping message, improper permissions to file %s.", file_msg.filename)
+                        messages_to_remove.append(file_msg)
+                        continue
                         
                 except IOError as (num, strerror):
                     errcode = errno.errorcode[num]
@@ -972,8 +1007,7 @@ class disk_writer_thread(Thread):
                         continue
                 except Exception:
                     logger.critical("Unknown error recieved when writing to cobaltlog %s. "\
-                            "Traceback follows:" % file_msg.filename)
-                    logger.critical(traceback.format_exc())
+                            "Traceback follows:" % file_msg.filename, exc_info=1)
                     logger.critical("This message has been discarded.")
                     messages_to_remove.append(file_msg)
 

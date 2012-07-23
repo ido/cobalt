@@ -97,7 +97,7 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import (QueueError, ComponentLookupError, DataStateError, DataStateTransitionError, StateMachineError,
     StateMachineIllegalEventError, StateMachineNonexistentEventError, ThreadPickledAliveException, JobProcessingError,
-    JobRunError, JobPreemptionError, JobDeleteError, IncrIDError)
+    JobRunError, JobPreemptionError, JobDeleteError, IncrIDError, ResourceReservationFailure)
 from Cobalt import accounting
 from Cobalt.Statistics import Statistics
 
@@ -149,7 +149,7 @@ if walltime_prediction  == "true":
     walltime_prediction_configured = True
     walltime_prediction_enabled = True
 #print "walltime_prediction_configured=", walltime_prediction_configured 
-    
+
 prediction_scheme = get_histm_config("prediction_scheme", "combined").lower()  # ["project", "user", "combined"]   # *AdjEst*
 
 accounting_logdir = os.path.expandvars(get_cqm_config("log_dir", Cobalt.DEFAULT_LOG_DIRECTORY))
@@ -179,15 +179,15 @@ cobalt_log_writer.start()
 
 def cobalt_log_write(filename, msg):
     '''send the cobalt_log writer thread a filename, msg tuple.
-    
+
     '''
-    coblt_log_writer.send((filename, msg))
+    cobalt_log_writer.send((filename, msg))
 
 def cobalt_log_terminate():
     '''Terminate the writer thread by sending it None.
 
     '''
-    coblat_log_writer.send(None)
+    cobalt_log_writer.send(None)
 
 def str_elapsed_time(elapsed_time):
     return "%d:%02d:%02d" % (elapsed_time / 3600, elapsed_time / 60 % 60, elapsed_time % 60)
@@ -301,7 +301,7 @@ def get_job_sm_states():
 
 def get_job_sm_transitions():
 
-    return [       
+    return [
         ('Ready', 'Hold'),                                  # user/admin hold
         ('Ready', 'Job_Prologue'),                          # run; start prologue scripts
         ('Ready', 'Job_Prologue_Retry'),                    # run; error contacting forker component; scripts not running, yet
@@ -509,9 +509,9 @@ class Job (StateMachine):
     The job tracks a job, driving it at a high-level.  Actual operations on the job, such as execution or termination, are
     the responsibility of the system component
     """
-    
+
     acctlog = Cobalt.Util.AccountingLog('qm')
-    
+
     # properties for easier accounting logging
     ctime = property(lambda self: self.__timers['queue'].start_times[0])
     qtime = property(lambda self:
@@ -519,7 +519,7 @@ class Job (StateMachine):
     start = property(lambda self: self.__timers['user'].start_times[-1])
     exec_host = property(lambda self: ":".join(self.__locations[-1]))
     end = property(lambda self: self.__timers['user'].stop_times[-1])
-    
+
     fields = Data.fields + [
         "jobid", "jobname", "state", "attribute", "location", "starttime", 
         "submittime", "endtime", "queue", "type", "user",
@@ -536,9 +536,9 @@ class Job (StateMachine):
     ]
 
     _states = get_job_sm_states() + StateMachine._states
-    
+
     _transitions = get_job_sm_transitions()
-         
+
     _initial_state = get_job_sm_initial_state()
     _events = get_job_sm_events() + StateMachine._events
 
@@ -556,7 +556,7 @@ class Job (StateMachine):
 
         # StateMachine.__init__(self, spec, seas = seas, terminal_actions = [(self._sm_terminal, {})])
         StateMachine.__init__(self, spec, seas = seas)
-        
+
         self.jobid = spec.get("jobid")
         self.umask = spec.get("umask")
         self.jobname = spec.get("jobname", "N/A")
@@ -632,7 +632,7 @@ class Job (StateMachine):
 
         self.__admin_hold = False
         self.__user_hold = False
-        
+
         self.score = float(spec.get("score", 0.0))
 
         self.__resource_nodects = []
@@ -657,7 +657,7 @@ class Job (StateMachine):
             self.admin_hold = True
         if spec.get("user_hold", False):
             self.user_hold = True
-            
+
         self.total_etime = 0.0
         self.priority_core_hours = None
         self.dep_fail = False
@@ -701,7 +701,7 @@ class Job (StateMachine):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        
+
         #reset the statemachine's states
         self.update_seas(get_job_sm_seas(self))
 
@@ -717,15 +717,15 @@ class Job (StateMachine):
         if not state.has_key("total_etime"):
             logger.info("old job missing total_etime")
             self.total_etime = 0.0
-    
+
         if not state.has_key("priority_core_hours"):
             logger.info("old job missing priority_core_hours")
             self.priority_core_hours = None
-    
+
         if not state.has_key("dep_fail"):
             logger.info("old job missing dep_fail")
             self.dep_fail = False
-            
+
         if not state.has_key("prev_dep_hold"):
             logger.info("old job missing prev_dep_hold") 
             self.prev_dep_hold = False
@@ -741,7 +741,7 @@ class Job (StateMachine):
         if not state.has_key("user_list"):
             logger.info("old job missing user_list")
             self.user_list = [self.user]
-            
+
         if not state.has_key("walltime_p"):
             logger.info("old job missing walltime_p")
             self.walltime_p = self.walltime
@@ -800,7 +800,7 @@ class Job (StateMachine):
         walltime = self.walltime
         if self.runid == None: #allow us to unset this for preemption
             self.runid = run_id_gen.next() #Don't try and run this twice.
-            
+
         if self.preemptable and self.maxtasktime < walltime:
             walltime = self.maxtasktime
         try:
@@ -1051,13 +1051,13 @@ class Job (StateMachine):
                 JobProgMsg(self))
         scripts = get_cqm_config('resource_postscripts', "").split(':')
         if scripts == ['']:
+            self._sm_state = 'Resource_Epilogue'
             logger.debug("Job %s/%s: DEBUG: No scripts for Resource "
                     "Epilogue state.  Skipping to Job Epilogue.", self.jobid,
                     self.user)
-            self._sm_state = 'Resource_Epilogue'
             self._sm_start_job_epilogue_scripts()
             return
-        
+
         params = []
         for attr in self.fields:
             if not hasattr(self, attr):
@@ -1077,11 +1077,11 @@ class Job (StateMachine):
                     scripts, '%s_%s'%(self.jobid, self._sm_state)) 
         except ComponentLookupError:
             if self._sm_state != "Resource_Epilogue_Retry":
-                 logger.warning("Job %s/%s: Unable to connect to forker "
+                logger.warning("Job %s/%s: Unable to connect to forker "
                     "component to launch resource postscripts.  Will "
                     "retry", self.user, self.jobid)
-                 self._sm_state = "Resource_Prologue_Retry"
-                 return
+                self._sm_state = "Resource_Prologue_Retry"
+                return
         except Exception as e:
             logger.error("Job %s/%s: %s exception recieved. "
                     "Resource_Epilogue "
@@ -1118,14 +1118,14 @@ class Job (StateMachine):
         '''Start the job epilogue scripts.
 
         '''
-        
+
         dbwriter.log_to_db(None, "job_epilogue_start", "job_prog", 
                 JobProgMsg(self))
         scripts = get_cqm_config('job_postscripts', "").split(':') 
         if scripts == ['']:
-            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue " 
-                    "state.  Skipping to .", self.jobid, self.user)
             self._sm_state = 'Job_Epilogue'
+            logger.debug("Job %s/%s: DEBUG: No scripts for Job Epilogue " 
+                    "state.  Skipping to Terminal.", self.jobid, self.user)
 
             dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", 
                     JobProgMsg(self))
@@ -1178,7 +1178,7 @@ class Job (StateMachine):
                         self.jobid, self.user, script[count])
                     break
                 count += 1
-            
+
             self._sm_state = 'Job_Epilogue'
             dbwriter.log_to_db(None, "job_epilogue_failed", 
                     "job_prog", JobProgMsg(self))
@@ -1191,14 +1191,14 @@ class Job (StateMachine):
                     self.jobid, self.user)
             self._sm_state = new_state
             return Job.__rc_success
- 
-    def _sm_scripts_are_finished(self, type):  #Script Forking ***
+
+    def _sm_scripts_are_finished(self, script_type):  #Script Forking ***
         #modify to check to see if a set of scripts for this job are finished.  
         #Tag will require job-information (jobid and script-type should be adequate)
         #Making this go away, TODO: Move these to appropriate epilogue functions
-        if type == 'resource postscript':
+        if script_type == 'resource postscript':
             dbwriter.log_to_db(None, "resource_epilogue_finished", "job_prog", JobProgMsg(self))
-        elif type == 'job postscript':
+        elif script_type == 'job postscript':
             dbwriter.log_to_db(None, "job_epilogue_finished", "job_prog", JobProgMsg(self))
         return True
 
@@ -1228,8 +1228,6 @@ class Job (StateMachine):
         self._sm_log_info("%s hold placed on job" % (args['type'],), 
                 cobalt_log = True)
         self._sm_state = hold_state
-        
-        
 
     def _sm_common_queued__release(self, args):
         '''handle attempt to erroneously release a job in the queued state'''
@@ -1288,7 +1286,7 @@ class Job (StateMachine):
                 dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(self))
         else:
             self._sm_log_info("%s hold not present; ignoring release request" % (args['type'],), cobalt_log = True)
-            
+
         if not self.__admin_hold and not self.__user_hold:
             self._sm_log_info("no holds remain; releasing job", cobalt_log = True)
             self.__timers['hold'].stop()
@@ -1297,11 +1295,11 @@ class Job (StateMachine):
 
     def _sm_ready__run(self, args):
         '''prepare a job for execution
-        
+
         '''
-        
+
         self._sm_log_info("preparing job for execution") 
-        
+
         try:
             # stop queue timers
             self.__timers['queue'].stop()
@@ -1327,7 +1325,7 @@ class Job (StateMachine):
 
             self.location = args['nodelist']
             self.__locations.append(self.location)
-            
+
             # write job start and project information to CQM and accounting logs
             if self.reservation:
                 logger.info('R;%s;%s;%s' % (self.jobid, self.queue, self.user))
@@ -1358,7 +1356,8 @@ class Job (StateMachine):
                 {'ncpus':self.procs, 'nodect':self.nodes,
                 'walltime':str_elapsed_time(self.walltime * 60)},
                 "unknown", **optional))
-
+            dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self),
+                    self.start)
             # notify the user that the job is starting; a separate thread is used to send the email so that cqm does not block
             # waiting for the smtp server to respond
             if self.notify:
@@ -1397,13 +1396,12 @@ class Job (StateMachine):
             self.envs['COBALT_JOBID'] = str(self.jobid)
             if self.resid != None:
                 self.envs['COBALT_RESID'] = str(self.resid)
-        
+
             #This is being done later in the system component as well
             #so that the mpirun library sees these.
 
             # start job and resource prologue scripts
 
-            dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
             self._sm_start_job_prologue_scripts()
         except Exception:
             logger.error("Job %s/%s: Exception in starting job.  Job going to terminal state." %(self.jobid, self.user))
@@ -1436,12 +1434,12 @@ class Job (StateMachine):
                     [Cobalt.Util.escape_string(str(v), ":") for v in value])))
             else:
                 params.append('%s=%s' % (attr, str(value)))
-        
+
         #give a set of strings corresponding to [cmd, arg1,...,argn-1]
         scripts = [[os.path.expandvars(script)] for script in scripts]
         for script in scripts:
             script.extend(params)
-    
+
         try:
             self.job_prescript_ids = self._start_common_scripts(scripts, 
                     '%s_%s'%(self.jobid, self._sm_state))
@@ -1489,7 +1487,7 @@ class Job (StateMachine):
         scripts -- list of scripts with their arguments to execute.
         error -- set to true if the scripts should be made aware that an 
                  error-state exists.
-        
+
         '''
         label = "Job %s/%s" % (self.jobid, self.user)
         script_ids = []
@@ -1507,15 +1505,11 @@ class Job (StateMachine):
                 logger.error("%s: Error connecting to forker. Retrying",
                         label)
                 raise ComponentLookupError
-            except Fault:
+            except xmlrpclib.Fault:
                 logger.error("%s: Failure in exectuing script: %s",
                         label, script)
                 script_ids.append(None)
-
         return script_ids
-
-            
-
 
     def _sm_job_prologue_retry__progress(self, args):
 
@@ -1532,8 +1526,7 @@ class Job (StateMachine):
 
         '''
         rc = self._sm_start_resource_prologue_scripts()
-    
-    
+
     def _sm_resource_epilogue_retry__progress(self, args):
 
         '''Try and run the resource epilogue scripts again.  Since these are 
@@ -1549,22 +1542,20 @@ class Job (StateMachine):
         '''
         rc = self._sm_start_job_epilogue_scripts()
 
-    def _sm_job_prologue_retry__kill(self):
+    def _sm_job_prologue_retry__kill(self, args):
 
         '''Handle a user kill request while retrying job_prologue scripts.
 
         '''
-        self._sm_common_retry_kill(self._sm_start_job_epilogue_scripts)
-        
+        self._sm_common_retry__kill(self._sm_start_job_epilogue_scripts, args)
 
-    def _sm_resource_prologue_retry__kill(self):
+    def _sm_resource_prologue_retry__kill(self, args):
         '''Handle a user kill request while retrying resource_prologue scripts.
 
         '''
-        self._sm_common_retry_kill(self._sm_start_resource_epilogue_scripts)
+        self._sm_common_retry__kill(self._sm_start_resource_epilogue_scripts, args)
 
-
-    def _sm_common_retry__kill(self, cleanup_state_start):
+    def _sm_common_retry__kill(self, cleanup_state_start, args):
         '''Killing something in the retry state is pretty uniform, 
         cleanup_state_start is a function to be called to initiate proper
         post-step cleanups.  This may be different from retry-state to 
@@ -1584,7 +1575,6 @@ class Job (StateMachine):
         cleanup_state_start()
         dbwriter.log_to_db(args['user'], "killing", "job_prog", 
                 JobProgMsg(self))
-
 
     def _sm_ready__hold(self, args):
         '''place a hold on a job in the queued state'''
@@ -1678,7 +1668,7 @@ class Job (StateMachine):
     def _sm_common__pending_kill(self, args):
         '''place a pending user delete request on a job whose current state 
         does not permit immediately signaling the job
-        
+
         '''
         if (has_private_attr(self, '__signaling_info') and 
                 self.__signaling_info.reason == Signal_Info.Reason.delete and 
@@ -1688,7 +1678,7 @@ class Job (StateMachine):
             return
         self._sm_signaling_info_set_user_delete(args['signal'], args['user'], 
                 pending = True)
-    
+
     def _sm_common__pending_preempt(self, args):
         '''place a pending preemption on a job whose current state does not
         permit immediately signaling the job
@@ -1736,7 +1726,7 @@ class Job (StateMachine):
         else:
             self._sm_log_info("preemption request now pending", 
                     cobalt_log = True)
-    
+
     def _sm_job_prologue__progress(self, args):
         '''wait for job prologue scripts to complete.  If successful completion
         of all scripts (exit code 0)
@@ -1748,7 +1738,7 @@ class Job (StateMachine):
 
         '''
         job_dicts = self._sm_common_script_progress(self.job_prescript_ids)
-        
+
         if job_dicts == None:
             #we're not done, keep in this state.
             return
@@ -1759,7 +1749,7 @@ class Job (StateMachine):
                     self.log_script_failure(job_dict, "Job Prologue")
                     script_failed = True
             if script_failed:
-                
+
                 dbwriter.log_to_db(None, "job_prologue_failed", 
                     "job_prog", JobProgMsg(self))
                 self._sm_start_job_epilogue_scripts(script_failed)
@@ -1784,7 +1774,7 @@ class Job (StateMachine):
                     else:
                         self._sm_state = 'Release_Resources_Retry'
                     return
-                
+
                 self._sm_start_resource_prologue_scripts()
 
 
@@ -1815,12 +1805,12 @@ class Job (StateMachine):
                     [Cobalt.Util.escape_string(str(v), ":") for v in value])))
             else:
                 params.append('%s=%s' % (attr, str(value)))
-        
+
         #give a set of strings corresponding to [cmd, arg1,...,argn-1]
         scripts = [[os.path.expandvars(script)] for script in scripts]
         for script in scripts:
             script.extend(params)
-    
+
         try:
             self.resource_prescript_ids = self._start_common_scripts(scripts,
                     '%s_%s'%(self.jobid, self._sm_state))
@@ -1840,7 +1830,7 @@ class Job (StateMachine):
                         "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts(error=True)
             return
-        
+
         if None in self.resource_prescript_ids:
             count = 0
             for local_id in self.resource_prescript_ids:
@@ -1859,7 +1849,6 @@ class Job (StateMachine):
             self._sm_state = "Resource_Prologue"
             return Job.__rc_success
 
-    
     def _sm_resource_prologue__progress(self, args):
         '''wait for resource prologue scripts to complete.  If all scripts
         have completed successfuly (exit codes of 0), proceed to running
@@ -1870,11 +1859,11 @@ class Job (StateMachine):
 
         job_dicts = self._sm_common_script_progress(
                 self.resource_prescript_ids)
-        
+
         if job_dicts == None:
             #we're not done, keep in this state.
             return
-        
+
         script_failed = False
         for job_dict in job_dicts:
             if job_dict['exit_status'] != 0:
@@ -1886,7 +1875,7 @@ class Job (StateMachine):
             self._sm_start_resource_epilogue_scripts(script_failed)
             return
         #and we're off and running.
-        
+
         logger.info("Job %s/%s: Resource Prologue scripts completed "
                 "successfuly.", self.jobid, self.user)
         #check for pending job-deletion.  If it is pending, don't run, just
@@ -1907,7 +1896,7 @@ class Job (StateMachine):
             else:
                 self._sm_state = 'Release_Resources_Retry'
             return
-        
+
         self._start_run_from_prologue()
 
 
@@ -1931,7 +1920,7 @@ class Job (StateMachine):
                     JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
 
-        
+
     def log_script_failure(self, job_dict, script_type):
         try:
             cmd = job_dict['args'][0]
@@ -1962,7 +1951,7 @@ class Job (StateMachine):
             logger.error("Job %s/%s: Could not communicate with "
                         "forker component.", self.user, self.jobid)
             return None
-        
+
         # check if all of the scripts have completed
         lost_children = []
         for child in children:
@@ -1997,7 +1986,7 @@ class Job (StateMachine):
 
     def _sm_run_retry__progress(self, args):
         '''previous attempt to execute the task failed; attempt to run it again
-        
+
         '''
         rc = self.__task_run()
         if rc == Job.__rc_success:
@@ -2011,11 +2000,11 @@ class Job (StateMachine):
                 "removal", cobalt_log = True)
             dbwriter.log_to_db(None, "failed", "job_prog", JobProgMsg(self))
             self._sm_start_resource_epilogue_scripts()
-            
+
 
     def _sm_run_retry__kill(self, args):
         '''user delete requested while job was waiting to retry executing task
-        
+
         '''
         self._sm_log_info("user delete with signal %s requested by user %s; "
             "initiating job cleanup and removal" % \
@@ -2035,7 +2024,7 @@ class Job (StateMachine):
         '''
         periodically verify that the job has not exceeded its maximum execution
         time and determine if the task needs to be preempted
-        
+
         '''
         sig_info = self._sm_check_job_timers()
         if sig_info != None:
@@ -2046,7 +2035,7 @@ class Job (StateMachine):
             if sig_info != None:
                 self.__signaling_info = sig_info
                 self._sm_preempt_task()
-                
+
 
     def _sm_running__kill(self, args):
         '''user delete requested while job is executing a task'''
@@ -2058,7 +2047,7 @@ class Job (StateMachine):
         # finalize the task and obtain the exit status
         self._sm_log_info("task completed normally; finalizing task and obtaining exit code")
         rc = self.__task_finalize()
-        
+
         if rc == Job.__rc_retry:
             self._sm_state = 'Finalize_Retry'
             return
@@ -2329,7 +2318,7 @@ class Job (StateMachine):
             self._sm_log_info("pending user delete; initiating job cleanup and removal", cobalt_log = True)
             self._sm_start_job_epilogue_scripts()
             return
-            
+
         # stop the execution timer, clear the location where the job is being run, and output accounting log entry
         self.__timers['user'].stop()
         self.__max_job_timer.stop()
@@ -2360,7 +2349,7 @@ class Job (StateMachine):
 
         # reset the job's score to 0 after preempting it
         self.score = 0.0
-        
+
         # if a pending hold exists, then change to the preempted hold state; otherwise change to the preempted state
         if self.admin_hold or self.user_hold:
             if not self.__timers.has_key('hold'):
@@ -2428,14 +2417,14 @@ class Job (StateMachine):
             {'ncpus':self.procs, 'nodect':self.nodes,
              'walltime':str_elapsed_time(self.walltime * 60)},
             "unknown", **optional))
+        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self),
+                self.start)
 
         # start resource prologue scripts #Script forking ***
         resource_scripts = get_cqm_config('resource_prescripts', "").split(':')
         self._sm_scripts_thread = RunScriptsThread(resource_scripts, self, self.fields)
-        self._sm_scripts_thread.start()
 
         self._sm_state = 'Prologue'
-        dbwriter.log_to_db(None, "starting", "job_prog", JobProgMsg(self))
 
     def _sm_preempted__hold(self, args):
         '''place a hold on a job in the preempted state'''
@@ -2525,12 +2514,12 @@ class Job (StateMachine):
     def _sm_resource_epilogue__progress(self, args):
         '''wait for resource epilogue scripts to complete.  once they have 
         completed, start the job epilogue scripts.
-        
+
         '''
         # wait for the resource epilogue scripts to complete, and report any 
         # errors
         job_dicts = self._sm_common_script_progress(self.resource_postscript_ids)
-        
+
         if job_dicts == None:
             #we're not done, keep in this state.
             return
@@ -2553,16 +2542,16 @@ class Job (StateMachine):
                     JobProgMsg(self))
             self._sm_start_job_epilogue_scripts(script_failed)
 
-    
+
     def _sm_job_epilogue__progress(self, args):
         '''wait for job epilogue scripts to complete.  once they have 
         completed, write out end-of-job accounting logs
-        
+
         '''
         # wait for the job epilogue scripts to complete, and report any errors
 
         job_dicts = self._sm_common_script_progress(self.job_postscript_ids)
-       
+
         if job_dicts == None:
             #we're not done, keep in this state.
             return
@@ -2591,8 +2580,10 @@ class Job (StateMachine):
 
 
     def _write_end_records(self):
+        '''Write the PBS end record to the accounting log for a job.
+        Also send mail to user and stamp the pbs_end record to the cobalt database.
 
-
+        '''
         # stop the execution timer and get the stats; 
         # NOTE: the execution timer may not be running if the job was preempted
         if self.__timers['user'].is_active:
@@ -2635,7 +2626,7 @@ class Job (StateMachine):
             exit_status = self.exit_status
         else:
             exit_status = "unknown"
-            
+
         optional['total_etime'] = self.total_etime
         optional['priority_core_hours'] = self.priority_core_hours
         # group and session are unknown
@@ -2650,7 +2641,10 @@ class Job (StateMachine):
              'nodect':",".join([str(n) for n in self.__resource_nodects]),
              'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
             **optional))
-        
+
+        dbwriter.log_to_db(None, "terminal_action_start",
+            "job_prog", JobProgMsg(self), self.end)
+
         logger.info("Job %s/%s on %s nodes done. %s" % (self.jobid, self.user, self.nodes, stats))
         self.acctlog.LogMessage("Job %s/%s on %s nodes done. %s exit:%s" % \
             (self.jobid, self.user, self.nodes, stats, str(self.exit_status)))
@@ -2774,8 +2768,12 @@ class Job (StateMachine):
         raise DataStateError, "unknown state: %s" % (self._sm_state,)
 
     state = property(__get_job_state)
-    
+
     def __get_short_job_state(self):
+        '''provide a single-character job state.  Used for abbreviated displays
+        of job information.
+
+        '''
         if self._sm_state in ('Ready', 'Preempted') and (self.has_dep_hold or 
                 self.max_running):
             return "H"
@@ -2830,7 +2828,7 @@ class Job (StateMachine):
 
     def __is_active(self):
         '''returns true if the job is not queued or held, and has not completed
-        
+
         '''
         return self._sm_state not in ('Ready', 'Hold', 'Preempted', 
                 'Preempted_Hold', 'Terminal')
@@ -2839,7 +2837,7 @@ class Job (StateMachine):
 
     def __has_completed(self):
         '''returns true if the job has completed, whether successfully or not
-        
+
         '''
         return self._sm_state == 'Terminal'
 
@@ -2856,14 +2854,16 @@ class Job (StateMachine):
             if dep in self.satisfied_dependencies:
                 ret += "*"
             ret += ", "
-        
-        ret = ret[:-2]    
+
+        ret = ret[:-2]
         return ret
 
     dependencies = property(__get_dependencies)
 
     def __get_preempts(self):
-        #FIXME:  Needs basic doc strings
+        '''Get the preempts attribute.
+
+        '''
         return self.__preempts
 
     preempts = property(__get_preempts)
@@ -2890,7 +2890,7 @@ class Job (StateMachine):
     def __write_cobalt_log(self, message):
 
         global cobalt_log_writer
-        
+
         #changed such that now, we can do this through a thread defined in Cobalt.Util
         if self.cobalt_log_file:
 
@@ -2906,7 +2906,7 @@ class Job (StateMachine):
                 for msg in remaining_msgs:
                     cobalt_log_writer.send(msg)
                 logger.warning("Cobaltlog writer thread had fallen over.  Has restarted successfully.")
-        
+
             try:
                 cobalt_log_writer.send((self.cobalt_log_file, message, self.user))
             except Exception:
@@ -2914,7 +2914,6 @@ class Job (StateMachine):
                         "cobalt_log_file thread.  Aborting write! Traceback "\
                         "follows:" %(self.jobid, self.user))
                 logger.error(traceback.format_exc())
-
 
     def progress(self):
         '''Run next job step'''
@@ -2957,6 +2956,7 @@ class Job (StateMachine):
 
         Arguments:
         spec -- Dictionary specifying fields and values to match against.
+
         """
         for field, value in spec.iteritems():
             if ((field == 'user') and (value in self.user_list)):
@@ -3002,7 +3002,6 @@ class Job (StateMachine):
                         JobProgMsg(self)) 
                 self.trigger_event('Kill', {'user' : user, 
                                             'signal' : signame})
-                
             except:
                 self._sm_log_exception(None, "an unexpected exception occurred" 
                     " while attempting to kill the task")
@@ -3035,7 +3034,7 @@ class Job (StateMachine):
                     if self.__timers['user'].is_active:
                         self.__timers['user'].stop()
                     stats = self.__get_stats()
-                    
+
                     # write end of job information to CQM and accounting logs
                     used_time = 0
                     for index in xrange(len(self.__locations)):
@@ -3045,7 +3044,7 @@ class Job (StateMachine):
                     self.acctlog.LogMessage('E;%s;%s;%s' % (self.jobid, 
                         self.user, str(used_time)))
                     self.endtime = str(time.time())
-                    
+
                     optional = {}
                     if self.project:
                         optional['account'] = self.project
@@ -3062,14 +3061,17 @@ class Job (StateMachine):
                          'nodect':",".join([str(n) for n in self.__resource_nodects]),
                          'walltime':",".join([str_elapsed_time(t) for t in self.__timers['user'].elapsed_times])},
                         **optional))
-                    
+
+                    dbwriter.log_to_db(None, "terminal_action_start",
+                        "job_prog", JobProgMsg(self), self.end)
+
                     logger.info("Job %s/%s on %s nodes forcibly terminated by "
                             "user %s. %s" % (self.jobid, self.user, self.nodes, 
                                 user, stats))
                     self.acctlog.LogMessage("Job %s/%s on %s nodes forcibly "
                             "terminated by user %s. %s" % (self.jobid, 
                                 self.user, self.nodes, user, stats))
-            
+
 
     def task_end(self):
         '''handle the completion of a task'''
@@ -3079,11 +3081,11 @@ class Job (StateMachine):
 
 class JobList(DataList):
     item_cls = Job
-    
+
     def __init__(self, q):
         self.queue = q
         self.id_gen = cqm_id_gen
-    
+
     def q_add (self, specs, callback = None, cargs = {}):
         for spec in specs:
             if "jobid" not in spec or spec['jobid'] == "*":
@@ -3093,14 +3095,14 @@ class JobList(DataList):
             user = spec.get('user', None)
             for job in jobs_added:
                 user = spec.get('user', None)
-                
+
         return jobs_added
-    
+
 
 class Restriction (Data):
-    
+
     '''Restriction object'''
-    
+
     fields = Data.fields + ["name", "type", "value"]
 
     __checks__ = {'maxtime':'maxwalltime', 'users':'usercheck',
@@ -3171,11 +3173,11 @@ class Restriction (Data):
     def maxnodehours(self, job, _=None):
         '''limits how many node hours a user can have in the queue at a time'''
         userjobs = [j for j in self.queue.jobs if j.user == job['user']]
-        
+
         total = 0.0
         for j in userjobs:
             total += float(j.walltime)/60.0 * int(j.nodes)
-            
+
         total += float(job['walltime'])/60.0 * int(job['nodes'])
 
         if total > float(self.value):
@@ -3251,7 +3253,7 @@ class Queue (Data):
     '''queue object, subs JobSet and Data, which gives us:
        self is a Queue object (with restrictions and stuff)
        self.data is a list of Job objects'''
-    
+
     fields = Data.fields + ["cron", "name", "state", "adminemail", "policy", "maxuserjobs",] + Restriction.__checks__.keys()
     explicit = Restriction.__checks__.keys()
 
@@ -3266,7 +3268,7 @@ class Queue (Data):
         self.priority = spec.get("priority", 0)
         self.jobs = JobList(self)
         self.restrictions = RestrictionDict()
-    
+
     def _get_smartstate (self):
         if self.cron:
             if cronmatch(self.cron):
@@ -3276,7 +3278,7 @@ class Queue (Data):
         else:
             return self.state
     smartstate = property(_get_smartstate)
-    
+
     def can_queue(self, spec):
         # check if queue is dead or draining
         if self.state in ['draining', 'dead']:
@@ -3296,7 +3298,7 @@ class Queue (Data):
     def update_max_running(self):
         '''In order to keep the max_running property of jobs up to date, this function needs
         to be called when a job starts running, or a new job appears in a queue.'''
-        
+
         if not self.restrictions.has_key("maxrunning"):
             # if it *was* there and was removed, we better clean up
             for job in self.jobs:
@@ -3307,7 +3309,7 @@ class Queue (Data):
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
                 job.max_running = False
-                
+
             return
         unum = dict()
         for job in self.jobs.q_get([{'has_resources':True}]):
@@ -3330,17 +3332,17 @@ class Queue (Data):
                     dbwriter.log_to_db(None, "maxrun_hold_release", "job_prog", JobProgMsg(job))
                     if job.no_holds_left():
                         dbwriter.log_to_db(None, "all_holds_clear", "job_prog", JobProgMsg(job))
-                
+
 class QueueDict(DataDict):
     item_cls = Queue
     key = "name"
-    
+
     def add_queues(self, specs, callback=None, cargs={}):
         return self.q_add(specs, callback, cargs)
 
     def get_queues(self, specs, callback=None, cargs={}):
         return self.q_get(specs, callback, cargs)
-    
+
     def can_queue(self, spec):
         '''Check that job meets criteria of the specified queue'''
         # if queue doesn't exist, don't check other restrictions
@@ -3353,10 +3355,10 @@ class QueueDict(DataDict):
 
     def del_queues(self, specs, callback=None, cargs={}):
         return self.q_del(specs, callback, cargs)
-    
+
     def add_jobs(self, specs, callback=None, cargs={}):
         queue_names = self.keys()
-        
+
         failed = False
         for spec in specs:
             if spec['queue'] not in queue_names:
@@ -3368,26 +3370,26 @@ class QueueDict(DataDict):
         results = []
         if failed:
             return results
-        
+
         # we know all of the queues exist, so add the jobs to the appropriate JobList
         for spec in specs:
             results += self[spec['queue']].jobs.q_add([spec], callback, cargs)
             self[spec['queue']].update_max_running()
-            
+
         return results
-    
+
     def get_jobs(self, specs, callback=None, cargs={}):
         results = []
         for q in self.itervalues():
             results += q.jobs.q_get(specs, callback, cargs)
 
         return results
-        
+
     def del_jobs(self, specs, callback=None, cargs={}):
         results = []
         for q in self.itervalues():
             results += q.jobs.q_del(specs, callback, cargs)
-            
+
         return results
 
 
@@ -3400,7 +3402,7 @@ class QueueManager(Component):
     logger = logger
 
     __statefields__ = ['Queues']
-    
+
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.Queues = QueueDict()
@@ -3414,7 +3416,6 @@ class QueueManager(Component):
         global run_id_gen
         run_id_gen = self.run_id_gen
 
-        
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
 
@@ -3422,17 +3423,17 @@ class QueueManager(Component):
         self.define_user_utility_functions()
 
         self.score_timestamp = None
-        
+
         if dbwriter.enabled:
             logger.info("Logging to cdbwriter enabled.")
         else:
             logger.info("Logging to cdbwriter disabled.")
-           
+
         if use_db_jobid_generator:
             logger.info("Using DB to generate job IDs.")
         else:
             logger.info("Using internal job ID generator.")
-           
+
 
     def __getstate__(self):
         state = {}
@@ -3460,13 +3461,13 @@ class QueueManager(Component):
         self.run_id_gen.set(state.get('next_run_id', 1))
         global run_id_gen
         run_id_gen = self.run_id_gen
-        
+
         for q in self.Queues.values():
             q.jobs.id_gen = self.id_gen
-        
+
         self.prevdate = time.strftime("%m-%d-%y", time.localtime())
         self.cqp = Cobalt.Cqparse.CobaltLogParser()
-        
+
         self.user_utility_functions = {}
         self.builtin_utility_functions = {}
 
@@ -3474,7 +3475,7 @@ class QueueManager(Component):
         self.define_user_utility_functions()
 
         self.score_timestamp = None
-        
+
         if dbwriter.enabled:
             logger.info("Logging to database enabled.")
         else:
@@ -3500,7 +3501,7 @@ class QueueManager(Component):
     def __flush_msg_queue(self):
         dbwriter.flush_queue()
     __flush_msg_queue = automatic(__flush_msg_queue, float(get_cqm_config('db_flush_interval', 10)))
-        
+
     def __progress(self):
         '''Process asynchronous job work'''
         [job.progress() for queue in self.Queues.itervalues() for job in queue.jobs]
@@ -3508,7 +3509,7 @@ class QueueManager(Component):
         # enforce the maxrunning queue attribute (HACK ALERT)
         for queue in self.Queues.itervalues():
             queue.update_max_running()
-                            
+
         for (name, q) in self.Queues.items():
             if q.state == 'dead' and q.name.startswith('R.') and not q.jobs:
                 del self.Queues[name]
@@ -3519,7 +3520,7 @@ class QueueManager(Component):
 
     def __poll_process_groups (self):
         '''Resynchronize with the system'''
-        
+
         try:
             pgroups = ComponentProxy("system").get_process_groups(
                     [{'id':'*', 'state':'running'}])
@@ -3563,7 +3564,7 @@ class QueueManager(Component):
             for waiting_job in self.Queues.get_jobs([{'state':"dep_hold"}]):
                 if str(job.jobid) in waiting_job.all_dependencies:
                     waiting_job.satisfied_dependencies.append(str(job.jobid))
-                    
+
                     if set(waiting_job.all_dependencies).issubset(
                             set(waiting_job.satisfied_dependencies)):
                         logger.info("Job %s/%s: dependencies satisfied",
@@ -3601,7 +3602,7 @@ class QueueManager(Component):
     def __add_job_terminal_action(self, job, args):
         '''add the terminal action handler to the each job added to the queue'''
         job.add_terminal_action(self._job_terminal_action, {'job':job})
-        
+
     def test_history_manager(self):
         '''test if history manager is alive. If not, inhibit walltime prediction''' 
         if walltime_prediction_configured:
@@ -3610,25 +3611,25 @@ class QueueManager(Component):
                 histm_alive = ComponentProxy("history-manager").is_alive()
             except:
                 self.logger.error("failed to connect to histm component, disable walltime prediction")
-            
+
             global walltime_prediction_enabled
             if histm_alive:
                 walltime_prediction_enabled = True
             else:
                 walltime_prediction_enabled = False
             print "test_history_manager: walltime_prediction_enabled=", walltime_prediction_enabled
-            
+
     test_history_manager = automatic(test_history_manager, 60)
-       
+
 
     def get_walltime_Ap(self, spec):  
         '''get walltime adjusting parameter from history manager component'''  #*AdjEst*
-        
+
         projectname = spec.get('project')
         username = spec.get('user')
-        
+
         Ap = 1
-                
+
         if prediction_scheme == "project":
             try:
                 Ap = ComponentProxy("history-manager").get_Ap('project', projectname)
@@ -3647,9 +3648,9 @@ class QueueManager(Component):
                 walltime_prediction_enabled = False
         else:
             Ap = 1
-        
+
         return Ap
-        
+
     def get_walltime_p(self, spec):
         '''get predicted walltime provided with user estimated walltime'''  #*AdjEst*
         ap = self.get_walltime_Ap(spec)
@@ -3660,7 +3661,7 @@ class QueueManager(Component):
         '''Add a job, throws in adminemail'''
 
         queue_names = self.Queues.keys()
-        
+
         failed = False
         for spec in specs:
             if spec['queue'] in self.Queues:
@@ -3676,7 +3677,7 @@ class QueueManager(Component):
                 failed = True
         if failed:
             raise QueueError, failure_msg
-        
+
         response = self.Queues.add_jobs(specs, self.__add_job_terminal_action)
         return response
     add_jobs = exposed(query(add_jobs))
@@ -3687,30 +3688,30 @@ class QueueManager(Component):
 
     def set_jobs(self, specs, updates, user_name=None):
         joblist = self.Queues.get_jobs(specs)
-        
+
         logger.info("%s calling set_jobs on %s with updates %s", user_name, specs, updates)
-        
+
         new_q_name = None
         if updates.has_key("queue"):
             new_q_name = updates["queue"]
             if new_q_name not in self.Queues:
                 logger.error("attempted to move a job to non-existent queue '%s'" % new_q_name)
                 raise QueueError, "Error: queue '%s' does not exist" % new_q_name
-        
+
             for job in joblist:
                 if job.is_active or job.has_completed:
                     raise QueueError, "job %d is running; it cannot be moved" % job.jobid   
 
-        
+
         for job in joblist:
-            
+
             old_q_name = job.queue
             test = job.to_rx()
             test.update(updates)
             #if we are requesting a change in hold:
             set_user_hold = updates.get('user_hold', None)
             set_admin_hold = updates.get('admin_hold', None)
-             
+
             if set_admin_hold and not job.admin_hold:
                 dbwriter.log_to_db(user_name, "admin_hold", "job_prog", JobProgMsg(job))
             elif set_admin_hold == False and job.admin_hold:
@@ -3719,7 +3720,7 @@ class QueueManager(Component):
                 dbwriter.log_to_db(user_name, "user_hold", "job_prog", JobProgMsg(job))
             elif set_user_hold == False and job.user_hold:
                 dbwriter.log_to_db(user_name, "user_hold_release", "job_prog", JobProgMsg(job))
-                
+
             #if we are updating the user list, make sure the submitter
             #is always on the list.
             elif 'user_list' in updates.keys():
@@ -3733,7 +3734,7 @@ class QueueManager(Component):
             #This is also the easiest place to get both the change in hold
             #state and the username at the same time.
             only_hold = False
-            if updates.keys() == ['user_hold']:            
+            if updates.keys() == ['user_hold']:
                 job.update(updates)
                 only_hold = True
             elif updates.keys() == ['admin_hold']:
@@ -3759,20 +3760,35 @@ class QueueManager(Component):
                 if not only_hold:
                     dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
 
-        return joblist    
+        return joblist
     set_jobs = exposed(query(set_jobs))
 
 
     def run_jobs(self, specs, nodelist, user_name=None, resid=None):
-        """Run jobs.  Get a possible user_name if this is a forced-run, or 
-        a dict that contains resid's keyed by jobid.  Resid is for the reservation
-        the job actually ran in, not the one, if any, it was queued in.
+        """Run jobs.  Get a possible user_name if this is a forced-run, or
+        a dict that contains resid's keyed by jobid.  Resid is for the
+        reservation the job actually ran in, not the one, if any, it was queued
+        in.
+
+        This also sets a resource reservation for a job if one is not set
+        already in the system component.
 
         """
         if user_name:
             logger.info("%s using cqadm to start %s on %s", user_name, specs, nodelist)
 
         def _run_jobs(job, nodes):
+            try:
+                res_success = ComponentProxy("system").reserve_resources_until(
+                    nodelist, time.time() + ((float(job.walltime) + float(job.force_kill_delay) + 1.0) * 60.0),
+                    job.jobid)
+            except xmlrpclib.Fault, flt:
+                raise
+            if not res_success:
+                raise ResourceReservationFailure("%s/%s: Unable to reserve "\
+                    "resource at runtime. Does another job have the resrouce?"\
+                    % (job.jobid, job.user))
+
             if resid != None:
                 if str(job.jobid) in resid.keys():
                     job.resid = resid[str(job.jobid)]
@@ -3807,7 +3823,7 @@ class QueueManager(Component):
             logger.info("%s adding queue %s", user_name, specs)
         return self.Queues.add_queues(specs)
     add_queues = exposed(query(add_queues))
-    
+
     def get_queues(self, specs):
         return self.Queues.get_queues(specs)
     get_queues = exposed(query(get_queues))
@@ -3845,7 +3861,7 @@ class QueueManager(Component):
 
         logger.info("%s requested delete of queue %s", user_name, specs)
         queues = self.Queues.get_queues(specs)
-        
+
         failed = []
         for queue in queues[:]:
             jobs = queue.jobs.q_get([{'tag':"job"}])
@@ -3888,15 +3904,15 @@ class QueueManager(Component):
         except:
             self.logger.error("Can't read utility function definitions from file %s" % get_bgsched_config("utility_file", ""))
             return
-        
+
         str = f.read()
-        
+
         try:
             code = compile(str, filename, 'exec')
         except:
             self.logger.error("Problem compiling utility function definitions.", exc_info=True)
             return
-        
+
         globals = {'math':math, 'time':time}
         locals = {}
         try:
@@ -3917,52 +3933,52 @@ class QueueManager(Component):
                 else:
                     self.user_utility_functions[thing.func_name] = thing
     define_user_utility_functions = exposed(define_user_utility_functions)
-    
+
     def adjust_job_scores(self, specs, score, user_name):
         self.logger.info("%s updating job scores: %s, %s", user_name, specs, score)
         if score[0] in ["-", "+"]:
             absolute = False
         else:
             absolute = True
-        
+
         delta = float(score)
-        
-        results = []    
+
+        results = []
         for job in self.Queues.get_jobs(specs):
             if absolute:
                 job.score = delta
             else:
                 job.score += delta
             results.append(job.jobid)
-        dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
-                                    
+            dbwriter.log_to_db(user_name, "modifying", "job_data", JobDataMsg(job))
+
         return results
     adjust_job_scores = exposed(adjust_job_scores)
-            
+
     def define_builtin_utility_functions(self):
         self.logger.info("building builtin utility functions")
         self.builtin_utility_functions.clear()
-        
+
         # I think this duplicates cobalt's old scheduling policy
         # higher queue priorities win, with jobid being the tie breaker
         def default():
             val = queue_priority + 0.1
             return val
-    
+
         def high_prio():
             val = 1.0
             return val
-    
+
         self.builtin_utility_functions["default"] = default
         self.builtin_utility_functions["high_prio"] = high_prio
-        
-        
+
+
     def compute_utility_scores (self):
         utility_scores = []
         current_time = time.time()
 
         queued_jobs = self.Queues.get_jobs([{'is_runnable':True}]) 
-        for job in queued_jobs:    
+        for job in queued_jobs:
             utility_name = self.Queues[job.queue].policy
             args = {'queued_time':current_time - float(job.submittime), 
                     'wall_time': 60*float(job.walltime),
@@ -3987,7 +4003,7 @@ class QueueManager(Component):
             except KeyError:
                 # do something sensible when the requested utility function doesn't exist
                 # probably go back to the "default" one
-                
+
                 # and if we get here, try to fix it and throw away this scheduling iteration
                 self.logger.error("cannot find utility function '%s' named by queue '%s'" % (utility_name, job.queue))
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
@@ -3996,14 +4012,14 @@ class QueueManager(Component):
             except:
                 # do something sensible when the requested utility function explodes
                 # probably go back to the "default" one
-                
+
                 # and if we get here, try to fix it and throw away this scheduling iteration
                 self.logger.error("error while executing utility function '%s' named by queue '%s'" % (utility_name, job.queue), \
                     exc_info=True)
                 self.user_utility_functions[utility_name] = self.builtin_utility_functions["default"]
                 self.logger.error("falling back to 'default' policy to replace '%s'" % utility_name)
                 return
-            
+
             try:
                 job.score += score
             except:
@@ -4021,13 +4037,13 @@ class QueueManager(Component):
                 if job.priority_core_hours is None:
                     job.priority_core_hours = core_hours
                 job.total_etime += dt
-                
+
                 core_hours += (4*int(job.nodes)*float(job.walltime)/60.0)
-            
+
         self.score_timestamp = current_time
 
     compute_utility_scores = automatic(compute_utility_scores, float(get_cqm_config('compute_utility_interval', 10)))
-    
+
     def check_dep_fail(self):
         queued_jobs = self.Queues.get_jobs([{'jobid': '*'}])
         already_failed = False
@@ -4041,7 +4057,7 @@ class QueueManager(Component):
                 except:
                     job.dep_fail = True
                     break
-            
+
                 if not self.Queues.get_jobs([{'jobid': jobid}]):
                     job.dep_fail = True
                     break
@@ -4052,7 +4068,7 @@ class QueueManager(Component):
                 dbwriter.log_to_db(None, "all_holds_clear", "job_prog", 
                                    JobProgMsg(job))
     check_dep_fail = automatic(check_dep_fail, period=60)
-    
+
     def get_next_id(self):
         '''get the next id, the generator will throw.  Useful for recovery.'''
         return self.id_gen.idnum + 1
@@ -4062,7 +4078,7 @@ class QueueManager(Component):
 class JobProgMsg(object):
 
     def __init__(self, job):
-        
+
         if not isinstance(job, Cobalt.Components.cqm.Job):
             #raise an exception for throwing in something that
             #isn't a job
@@ -4083,7 +4099,7 @@ class JobProgMsg(object):
 
 
 class JobProgDepFracMsg(JobProgMsg):
-    
+
     def __init__(self, job):
         super(JobProgDepFracMsg, self).__init__(job)
         self.dep_frac = job.dep_frac
@@ -4097,7 +4113,7 @@ class JobProgExitStatusMsg(JobProgMsg):
 
 
 class JobDataMsg(object):
-    
+
     def __init__(self, job):
         if not isinstance(job, Cobalt.Components.cqm.Job):
             #raise an exception for throwing in something that
@@ -4118,7 +4134,7 @@ class JobDataMsg(object):
                            'outputdir', 'errorpath','path','cwd']
 
         for attr in attr_list:
-            
+
             if attr == 'job_type':
                 self.job_type = job.type
             elif attr == 'job_user':

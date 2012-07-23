@@ -14,13 +14,15 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError
 
+get_config_option = Cobalt.Util.get_config_option
+
+sys_type = get_config_option('bgsystem', 'bgtype')
 
 helpmsg = '''Usage: partadm.py [-a] [-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
 Usage: partadm.py --queue=queue1:queue2 part1 part2
-Usage: partadm.py --diag=diag_name partition
 Usage: partadm.py --fail part1 part2
 Usage: partadm.py --unfail part1 part2
 Usage: partadm.py --dump
@@ -33,28 +35,49 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
 
 '''
 
-opt_parser = optparse.OptionParser(usage=helpmsg, version=("Cobalt Version: %s" % __version__))
+opt_parser = optparse.OptionParser(usage=helpmsg, 
+        version=("Cobalt Version: %s" % __version__))
 
-opt_parser.add_option("-a", action="store_true", dest="add", help="add the block to the list of managed blocks")
-opt_parser.add_option("-d", action="store_true", dest="delete", help="remove the block from the list of managed blocks")
-opt_parser.add_option("-l", action="store_true", dest="list_blocks", help="list all blocks and their status")
-opt_parser.add_option("-r", "--recursive", action="store_true", dest="recursive", help="recursively add all child blocks of the specified blocks in the positional arguments")
-opt_parser.add_option("--queue", action="store", type="string", dest="queue", help="set the queues associated with the target blocks to this list of queues")
-opt_parser.add_option("--activate", action="store_true", dest="activate", help="activate the block for scheduling")
-opt_parser.add_option("--deactivate", action="store_true", dest="deactivate", help="deactivate the block for schedulign")
-opt_parser.add_option("--enable", action="store_true", dest="enable", help="enable the running of jobs on the target blocks")
-opt_parser.add_option("--disable", action="store_true", dest="disable", help="disable the running of jobs on the target blocks")
-opt_parser.add_option("--fail", action="store_true", dest="fail", help="mark the block as though it failed diagnostics (deprecated)")
-opt_parser.add_option("--unfail", action="store_true", dest="unfail", help="clear failed diagnostics on a block (deprecated)")
-opt_parser.add_option("--dump", action="store_true", dest="dump", help="dump a representation of the system's block state")
-opt_parser.add_option("--xml", action="store_true", dest="xml", help="dump a xml representation of the system's blocks for simulator usage")
-opt_parser.add_option("--savestate", action="store", type="string", dest="savestate", help="force the system component to write it's statefile")
-opt_parser.add_option("--boot-stop", action="store_true", dest="boot_stop", help="disable booting of any jobs")
-opt_parser.add_option("--boot-start", action="store_true", dest="boot_start", help="enable booting of any jobs")
-opt_parser.add_option("--boot-status", action="store_true", dest="boot_status", help="show whether or not booting is enabled")
-opt_parser.add_option("-b", "--blockinfo", action="store_true", dest="blockinfo", help="print the detailed state and information for all requested blocks.")
-opt_parser.add_option("--pg_list", action="store_true", dest="pg_list", help="not implemented yet")
-opt_parser.add_option("-c", "--clean_block", action="store_true", dest="clean_block", help="force the block to cleanup and clear all internal reservations on that resource")
+opt_parser.add_option("-a", action="store_true", dest="add",
+        help="add the block to the list of managed blocks")
+opt_parser.add_option("-d", action="store_true", dest="delete",
+        help="remove the block from the list of managed blocks")
+opt_parser.add_option("-l", action="store_true", dest="list_blocks",
+        help="list all blocks and their status")
+opt_parser.add_option("-r", "--recursive", action="store_true", dest="recursive",
+        help="recursively add all child blocks of the specified blocks in the positional arguments")
+opt_parser.add_option("--queue", action="store", type="string", dest="queue",
+        help="set the queues associated with the target blocks to this list of queues")
+opt_parser.add_option("--activate", action="store_true", dest="activate",
+        help="activate the block for scheduling")
+opt_parser.add_option("--deactivate", action="store_true", dest="deactivate",
+        help="deactivate the block for schedulign")
+opt_parser.add_option("--enable", action="store_true", dest="enable",
+        help="enable the running of jobs on the target blocks")
+opt_parser.add_option("--disable", action="store_true", dest="disable",
+        help="disable the running of jobs on the target blocks")
+opt_parser.add_option("--fail", action="store_true", dest="fail",
+        help="mark the block as though it failed diagnostics (deprecated)")
+opt_parser.add_option("--unfail", action="store_true", dest="unfail",
+        help="clear failed diagnostics on a block (deprecated)")
+opt_parser.add_option("--dump", action="store_true", dest="dump",
+        help="dump a representation of the system's block state")
+opt_parser.add_option("--xml", action="store_true", dest="xml",
+        help="dump a xml representation of the system's blocks for simulator usage")
+opt_parser.add_option("--savestate", action="store", type="string", dest="savestate",
+        help="force the system component to write it's statefile")
+opt_parser.add_option("--boot-stop", action="store_true", dest="boot_stop",
+        help="disable booting of any jobs")
+opt_parser.add_option("--boot-start", action="store_true", dest="boot_start",
+        help="enable booting of any jobs")
+opt_parser.add_option("--boot-status", action="store_true", dest="boot_status",
+        help="show whether or not booting is enabled")
+opt_parser.add_option("-b", "--blockinfo", action="store_true", dest="blockinfo",
+        help="print the detailed state and information for all requested blocks.")
+opt_parser.add_option("--pg_list", action="store_true", dest="pg_list",
+        help="not implemented yet")
+opt_parser.add_option("-c", "--clean_block", action="store_true", dest="clean_block",
+        help="force the block to cleanup and clear all internal reservations on that resource")
 
 #detect arguemnts that conflict, use this in a verification callback.
 conflicting_args = {'add':['delete','fail','unfail','boot_stop','boot_start'],
@@ -77,16 +100,13 @@ def component_call(func, args):
     return parts
 
 
-def print_block(block_dicts):
+def print_block_bgq(block_dicts):
     '''Formatted printing of a list of blocks.  This expects a list of 
     dictionaries of block data, such as the output from the system component's
     get_blocks call.
 
     '''
     for block in block_dicts:
-        #print block['name']
-    
-        #print ' '.join([nodecard['name'] for nodecard in block['node_cards']])
         header_list = []
         value_list = []
 
@@ -112,16 +132,47 @@ def print_pg_info(pg_list):
     raise NotImplementedError("Coming Soon!")
     return
 
+
+def print_block_bgp(block_dicts):
+    '''Formatted printing of a list of blocks.  This expects a list of 
+    dictionaries of block data, such as the output from the system component's
+    get_blocks call.
+
+    '''
+    for block in block_dicts:
+        header_list = []
+        value_list = []
+
+        for key,value in block.iteritems():
+
+            if key in ['node_cards','nodes']:
+                if block['size'] > 32 and key == 'nodes':
+                    continue
+                else:
+                    header_list.append(key)
+                    value_list.append(' '.join([v['id'] for v in value]))
+            else:
+                header_list.append(key)
+                value_list.append(value)
+
+        Cobalt.Util.print_vertical([header_list,value_list])
+    return
+
+print_block = print_block_bgp
+
+if sys_type == 'bgq':
+    print_block = print_block_bgq
+
 if __name__ == '__main__':
-   
-    
+
+
     try:
         opts, args  = opt_parser.parse_args() 
     except optparse.OptParseError, msg:
         print msg
         print helpmsg
         raise SystemExit, 1
-   
+
     try:
         system = ComponentProxy("system", defer=False)
     except ComponentLookupError:
@@ -133,14 +184,13 @@ if __name__ == '__main__':
     if opts.recursive:
         partdata = system.get_partitions([{'tag':'partition', 'name':name, 'children_list':'*'} for name in args])
         parts = args
-        
+
         for part in partdata:
             for child in part['children']:
                 if child not in parts:
                     parts.append(child)
     else:
         parts = args
-
 
     if opts.add:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
@@ -175,12 +225,12 @@ if __name__ == '__main__':
         args = tuple()
         parts = component_call(system.generate_xml, args)
     elif opts.savestate:
-        directory = os.path.dirname(savestate)
+        directory = os.path.dirname(opts.savestate)
         if not os.path.exists(directory):
             print "directory %s does not exist" % directory
             sys.exit(1)
         func = system.save
-        args = (savestate,)
+        args = (opts.savestate,)
         parts = component_call(system.save, args)
 
     elif opts.list_blocks:
@@ -232,12 +282,23 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if opts.blockinfo:
-        print_block(system.get_blocks([{'name':part,'node_cards':'*',
-            'subblock_parent':'*','nodes':'*', 'scheduled':'*', 'funcitonal':'*',
-            'queue':'*','parents':'*','children':'*','reserved_until':'*',
-            'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
-            'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
-            'size':'*','draining':'*','backfill_time':'*','wire_list':'*', 'wiring_conflict_list':'*', 'relatives':'*'} for part in parts]))
+        if sys_type == 'bgq':
+            print_block(system.get_blocks([{'name':part,'node_cards':'*',
+                'subblock_parent':'*','nodes':'*', 'scheduled':'*', 'funcitonal':'*',
+                'queue':'*','parents':'*','children':'*','reserved_until':'*',
+                'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
+                'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
+                'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
+                'wiring_conflict_list':'*', 'relatives':'*'} 
+                for part in parts]))
+        elif sys_type == 'bgp':
+            print_block(system.get_partitions([{'name':part,'node_card_list':'*',
+                'wire_list':'*','switch_list':'*','scheduled':'*', 'funcitonal':'*',
+                'queue':'*','parents':'*','children':'*','reserved_until':'*',
+                'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
+                'cleanup_pending':'*', 'state':'*', 'wiring_conflicts':'*',
+                'size':'*','draining':'*','backfill_time':'*'}
+                for part in parts]))
         sys.exit(0)
 
     if opts.clean_block:
@@ -264,7 +325,7 @@ if __name__ == '__main__':
         except ComponentLookupError:
             print "Failed to connect to scheduler; no reservation data available"
             reservations = []
-    
+
         expanded_parts = {}
         for res in reservations:
             for res_part in res['partitions'].split(":"):
@@ -275,22 +336,21 @@ if __name__ == '__main__':
                         else:
                             expanded_parts[res['queue']] = set( p['relatives'] )
                         expanded_parts[res['queue']].add(p['name'])
-            
-        
+
         for res in reservations:
             for p in parts:
                 if p['name'] in expanded_parts[res['queue']]:
                     p['queue'] += ":%s" % res['queue']
-    
+
         def my_cmp(left, right):
             val = -cmp(int(left['size']), int(right['size']))
             if val == 0:
                 return cmp(left['name'], right['name'])
             else:
                 return val
-        
+
         parts.sort(my_cmp)
-    
+
         offline = [part['name'] for part in parts if not part['functional']]
         forced = [part for part in parts \
                   if [down for down in offline \
@@ -306,5 +366,5 @@ if __name__ == '__main__':
         pass
     else:
         print parts
-            
-        
+
+
