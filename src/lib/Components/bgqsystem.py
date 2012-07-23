@@ -262,12 +262,12 @@ class BGSystem (BGBaseSystem):
 
         mp = self._get_midplane_from_location(loc_name)
         return mp.getNodeBoard(nodecard_pos).getState()
-    
+
     def get_nodecard_state_str(self, loc_name):
         '''Get the node card state as described by the control system.'''
         nodecard_pos = int(nodecard_exp.search(loc_name).groups()[0])
 
-        #mp = self._get_midplane_from_location(loc_name)
+        mp = self._get_midplane_from_location(loc_name)
         return mp.getNodeBoard(nodecard_pos).getStateString()
 
 
@@ -297,6 +297,8 @@ class BGSystem (BGBaseSystem):
         def _gen_block_dims(bg_block):
             dim_dict = {}
             conflict = False
+            if bg_block.isSmall():
+                return dim_dict, conflict
             for dim in range(0, 4):
                 dim_dict[dim] = bg_block.getDimensionSize(pybgsched.Dimension(dim))
                 curr_dim_size = self.compute_hardware_vec.getMachineSize(pybgsched.Dimension(dim))
@@ -310,9 +312,11 @@ class BGSystem (BGBaseSystem):
             return
 
         bg_block = self.get_compute_block(block.name, True)
-        #if bg_block.isSmall():
+        if bg_block.isSmall():
             #small blocks can't have wiring conflicts
-        #    return
+            self.logger.debug("%s cannot have a conflict, skipping",
+                            block.name)
+            return
         bg_block_dims, can_conflict = _gen_block_dims(bg_block)
         if not can_conflict:
 
