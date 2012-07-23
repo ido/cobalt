@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''This script removes reservations'''
-__revision__ = '$Id$'
+__revision__ = '$Id: releaseres.py 2146 2011-04-29 16:19:22Z richp $'
 __version__ = '$Version$'
 
 import getopt, sys

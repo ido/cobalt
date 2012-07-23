@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt queue converter script'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 313 $'
 
 __helpmsg__ ="""This script converts scheduler data to the 0.97.0 format, and is
 intended to be run after installing 0.97. It takes no arguments, and

@@ -7,7 +7,7 @@ Functions:
 load_config -- read configuration files
 """
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2130 $'
 
 from xmlrpclib import ServerProxy, Fault, _Method
 from ConfigParser import SafeConfigParser, NoSectionError

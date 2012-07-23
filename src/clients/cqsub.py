@@ -2,7 +2,7 @@
 
 '''Cobalt qsub command'''
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1992 $'
 __version__ = '$Version$'
 
 import os

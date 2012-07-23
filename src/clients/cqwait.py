@@ -2,7 +2,7 @@
 
 '''Program that does not return until the job(s) specified is not
    present in the queue'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2030 $'
 __version__ = '$Version$'
 
 import sys, time

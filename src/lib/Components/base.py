@@ -1,6 +1,6 @@
 """Cobalt component base."""
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2130 $'
 
 __all__ = ["Component", "exposed", "automatic", "run_component"]
 

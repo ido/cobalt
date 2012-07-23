@@ -1,5 +1,5 @@
 '''This file defines scheduler policy modules'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1189 $'
 
 class SchedulerPolicy(object):
     '''Null policy implementation'''

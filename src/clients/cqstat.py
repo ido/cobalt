@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Cobalt Queue Status'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2102 $'
 __version__ = '$Version$'
 
 import math

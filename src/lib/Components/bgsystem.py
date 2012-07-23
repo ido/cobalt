@@ -202,10 +202,6 @@ class BGSystem (BGBaseSystem):
                     p.state = "hardware offline: nodecard %s" % nc.id
                     self.offline_partitions.append(p.name)
                     break
-                elif nc.used_by:
-                    if self.partition_really_busy(p, nc):
-                        p.state = "blocked (%s)" % nc.used_by
-                        break
             if p.state != 'idle':
                 continue
 
@@ -219,6 +215,14 @@ class BGSystem (BGBaseSystem):
             if p_busted_wires:
                 p.state = "hardware offline: wire %s" % (p_busted_wires.pop(),)
                 self.offline_partitions.append(p.name)
+                continue
+
+            for nc in p.node_cards:
+                if nc.used_by:
+                    if self.partition_really_busy(p, nc):
+                        p.state = "blocked (%s)" % nc.used_by
+                        break
+            if p.state != 'idle':
                 continue
 
             for dep_name in p._wiring_conflicts:
@@ -411,20 +415,6 @@ class BGSystem (BGBaseSystem):
             self.logger.log(1, "update_partition_state: getting node card status")
             try:
                 bg_object = Cobalt.bridge.BlueGene.by_serial()
-                for bp in bg_object.base_partitions:
-                    for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
-                        self.node_card_cache[bp.id + "-" + nc.id].state = nc.state
-                # set all of the nodecards to not busy
-                for nc in self.node_card_cache.itervalues():
-                    nc.used_by = ''
-                self.busted_switches = set()
-                for s in bg_object.switches:
-                    if s.state != "RM_SWITCH_UP":
-                        self.busted_switches.add(s.id)
-                self.busted_wires = set()
-                for w in bg_object.wires:
-                    if w.state != "RM_WIRE_UP":
-                        self.busted_wires.add(w.id)
             except BridgeException:
                 self.logger.error("Error communicating with the bridge to update nodecard state information.")
                 self.bridge_in_error = True
@@ -446,6 +436,26 @@ class BGSystem (BGBaseSystem):
                 self.bridge_partition_cache = {}
                 missing_partitions = set(self._partitions.keys())
                 new_partitions = []
+
+                self.logger.log(1, "update_partition_state: updating node card state")
+                for bp in bg_object.base_partitions:
+                    for nc in Cobalt.bridge.NodeCardList.by_base_partition(bp):
+                        self.node_card_cache[bp.id + "-" + nc.id].state = nc.state
+                # set all of the nodecards to not busy
+                for nc in self.node_card_cache.itervalues():
+                    nc.used_by = ''
+
+                self.logger.log(1, "update_partition_state: scanning for busted switches")
+                self.busted_switches = set()
+                for s in bg_object.switches:
+                    if s.state != "RM_SWITCH_UP":
+                        self.busted_switches.add(s.id)
+
+                self.logger.log(1, "update_partition_state: scanning for busted wires")
+                self.busted_wires = set()
+                for w in bg_object.wires:
+                    if w.state != "RM_WIRE_UP":
+                        self.busted_wires.add(w.id)
 
                 self.logger.log(1, "update_partition_state: scanning partitions")
                 for partition in system_def:

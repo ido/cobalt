@@ -40,8 +40,8 @@
 	</author>
     </authorgroup>
     <date>April 5, 2006</date>
-    <releaseinfo>$Revision$</releaseinfo>
-    <pubdate role="cvs">$Date$</pubdate>
+    <releaseinfo>$Revision: 529 $</releaseinfo>
+    <pubdate role="cvs">$Date: 2007-06-19 15:04:29 -0500 (Tue, 19 Jun 2007) $</pubdate>
     <copyright>
       <year>2005-2007</year>
       <holder>Argonne National Laboratory</holder>
@@ -66,8 +66,8 @@
     <revhistory>
       <revision>
 	<revnumber>0.97</revnumber>
-	<date>$Date$</date>
-	<revremark>$Id$</revremark>
+	<date>$Date: 2007-06-19 15:04:29 -0500 (Tue, 19 Jun 2007) $</date>
+	<revremark>$Id: manual.xml 529 2007-06-19 20:04:29Z voran $</revremark>
       </revision>
     </revhistory>
   </bookinfo>

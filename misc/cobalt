@@ -69,25 +69,25 @@ stop_component () {
 
 case "$1" in
   start)
-    for component in slp cqm bgsched bgforker bgsystem cdbwriter scriptm; do
+    for component in slp cqm bgsched bgforker gravina user_script_forker system_script_forker bg_mpirun_forker; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   start-debug)
-    for component in slp brooklyn cqm bgsched bgforker bgsystem cdbwriter scriptm; do
+    for component in slp cqm bgsched bgforker gravina user_script_forker system_script_forker bg_mpirun_forker; do
 	start_component $component
     done
     touch /var/lock/subsys/cobalt
     ;;
   stop)
-    for component in slp cqm bgsched bgforker bgsystem cdbwriter scriptm; do
+    for component in slp cqm bgsched bgforker gravina user_script_forker system_script_forker bg_mpirun_forker; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt
     ;;
   stop-debug) 
-    for component in slp brooklyn cqm bgsched bgforker bgsystem cdbwriter scriptm; do
+    for component in slp cqm bgsched bgforker gravina user_script_forker system_script_forker bg_mpirun_forker; do
 	stop_component $component
     done
     rm -f /var/lock/subsys/cobalt

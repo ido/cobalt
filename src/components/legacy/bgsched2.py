@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Scheduler for BG/L'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1064 $'
 
 import copy
 import logging

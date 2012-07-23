@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''query the slp daemon for component location information'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1221 $'
 __version__ = '$Version$'
 
 from Cobalt.Util import print_tabular

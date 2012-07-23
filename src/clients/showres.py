@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''Display reservations'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2154 $'
 __version__ = '$Version$'
 
 import sys, time

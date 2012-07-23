@@ -2,12 +2,14 @@ import logging
 import os
 import pwd
 import tempfile
+import signal
 
 import Cobalt
 import Cobalt.Components.pg_forker
 PGChild = Cobalt.Components.pg_forker.PGChild
 PGForker = Cobalt.Components.pg_forker.PGForker
 import Cobalt.Util
+exposed = Cobalt.Components.base.exposed
 convert_argv_to_quoted_command_string = Cobalt.Util.convert_argv_to_quoted_command_string
 
 _logger = logging.getLogger(__name__.split('.')[-1])
@@ -68,6 +70,16 @@ class UserScriptChild (PGChild):
         if os.environ.has_key('COBALT_RUNTIME_DIR'):
             self.env['COBALT_RUNTIME_DIR'] = os.environ['COBALT_RUNTIME_DIR']
 
+        if self.pg.subblock == True:
+            self.env["COBALT_SUBBLOCK"] = str(self.pg.subblock)
+            self.env["COBALT_PARTNAME"] = self.pg.subblock_parent
+            self.env["COBALT_CORNER"] = self.pg.corner
+            self.env["COBALT_SHAPE"] = "x".join([str(ext) for ext in self.pg.extents])
+
+            #TODO: Have to add better env variables to describe what you're getting shape-wise
+            # This is a must-do for Mira
+
+
         # create a nodefile in /tmp
         try:
             tf = tempfile.NamedTemporaryFile()
@@ -89,6 +101,7 @@ class UserScriptChild (PGChild):
 
     def signal(self, signum, pg=True):
         PGChild.signal(self, signum, pg)
+
 
 
 class UserScriptForker (PGForker):
@@ -113,3 +126,28 @@ class UserScriptForker (PGForker):
 
     def __setstate__(self, state):
         PGForker.__setstate__(self, state)
+
+    def signal(self, child_id, signame):
+        """
+        Signal a child process.
+        
+        Arguments:
+        child_id -- id of the child to signal
+        signame -- signal name
+        """
+
+        _logger.debug("Using overridden signal method.")
+
+        if not self.children.has_key(child_id):
+            _logger.error("Child %s: child not found; unable to signal", child_id)
+            return
+
+        try:
+            signum = getattr(signal, signame)
+        except AttributeError:
+            _logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
+            raise
+
+        super(UserScriptChild, self.children[child_id]).signal(signum, pg=True)
+
+    signal = exposed(signal) 

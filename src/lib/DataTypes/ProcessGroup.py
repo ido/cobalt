@@ -43,7 +43,8 @@ class ProcessGroup(Data):
                             "jobid", "kernel", "kerneloptions", "location",
                             "mode", "nodefile", "size", "state", "stderr",
                             "stdin", "stdout", "umask", "user", "starttime",
-                            "walltime", "resid", "runid", "forker"]
+                            "walltime", "resid", "runid", "forker",
+                            "subblock", "subblock_parent", "corner", "extents"]
 
     required = Data.required + ["args", "cwd", "executable", "jobid",
                                 "location", "size", "user"]
@@ -78,8 +79,13 @@ class ProcessGroup(Data):
         self.resid = spec.get("resid", None)
         self.runid = spec.get("runid", None)
         self.forker = spec.get("forker", None)
-
+        self.ranks_per_node = spec.get("ranks_per_node", None)
         # self.logger = logger
+        self.subblock = spec.get("subblock", False)
+        self.subblock_parent = spec.get("subblock_parent",None)
+        self.corner = spec.get("corner", None)
+        self.extents = spec.get("extents", None)
+
 
     def __getstate__(self):
         data = {}

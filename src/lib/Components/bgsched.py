@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''Super-Simple Scheduler for BG/L'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2156 $'
 
 import logging
 import sys
@@ -1019,6 +1019,10 @@ class BGSched (Component):
         self.logger.info("%s disabling scheduling", user_name)
         self.active = False
     disable = exposed(disable)
+
+    def sched_status(self):
+        return self.active
+    sched_status = exposed(sched_status)
 
     def set_res_id(self, id_num):
         """Set the reservation id number."""
