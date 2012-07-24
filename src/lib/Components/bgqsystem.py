@@ -146,7 +146,7 @@ class BGSystem (BGBaseSystem):
             sim_xml_file = None
         except ConfigParser.NoSectionError:
             sim_xml_file = None
-        
+
         run_config = kwargs.pop('run_config',True)
         if run_config:
             logger.debug('init config()')
@@ -162,7 +162,7 @@ class BGSystem (BGBaseSystem):
 
 
     def __getstate__(self):
-       
+
         state = {}
         state.update(Component.__getstate__(self))
         flags = {}
@@ -182,9 +182,9 @@ class BGSystem (BGBaseSystem):
                 'suspend_booting':self.suspend_booting})
         return state
 
-    
+
     def __setstate__(self, state):
-        
+
         Component.__setstate__(self, state) 
         sys.setrecursionlimit(5000)
         Cobalt.Util.fix_set(state)
@@ -214,7 +214,7 @@ class BGSystem (BGBaseSystem):
 
         logger.debug('__setstate__ config()')
         self.configure(config_file=sim_xml_file)
-        
+
         if 'block_flags' in state:
             for bname, flags in state['block_flags'].items():
                 if bname in self._blocks:
@@ -246,7 +246,9 @@ class BGSystem (BGBaseSystem):
         return self.node_card_cache[name]
 
     def _get_midplane_from_location(self, loc_name):
-        '''get the midplane associated with a hardware location, like a switch, or a nodecard.'''
+        '''get the midplane associated with a hardware location, like a switch, or a nodecard.
+        The midplane data is pulled out of the compute hardware cache.
+        '''
 
         rack_pos = int(rack_exp.search(loc_name).groups()[0], 16)
         midplane_pos = int(midplane_exp.search(loc_name).groups()[0])
@@ -277,7 +279,7 @@ class BGSystem (BGBaseSystem):
         # A,B,C, or D format: L_RXX-MY
         sw_id = sw_name.split("_")[0]
         mp = self._get_midplane_from_location(sw_name)
-        return mp.getSwitch(sw_char_to_dim_dict[sw_id]).getState()  
+        return mp.getSwitch(sw_char_to_dim_dict[sw_id]).getState()
 
     def _detect_wiring_deps(self, block):
         """
@@ -327,15 +329,13 @@ class BGSystem (BGBaseSystem):
         for other in self._blocks.values():
             if block.name == other.name:
                 continue
-
             if len(block.wires) == 0:
                 continue
-
             block_nodeset = set(block.node_card_names)
             other_nodeset = set(other.node_card_names)
-
             if block_nodeset.isdisjoint(other_nodeset):
-                #we have no node-level hardware in common now check for wiring conflicts
+                # we have no node-level hardware in common now check for
+                # wiring conflicts
                 bg_other = self.get_compute_block(other.name, True)
                 #if bg_other.isSmall():
                 #    continue
@@ -773,7 +773,7 @@ class BGSystem (BGBaseSystem):
         for midplane_id in midplane_ids:
             #grab the switch data from all associated midplanes
             midplane = self.compute_hardware_vec.getMidplane(midplane_id)
-            midplane_list.append(midplane)
+            midplane_list.append(midplane.getLocation())
             for i in range(0, D_DIM+1):
                 switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
                 midplane_nodecards.extend([nb.getLocation() 
@@ -890,6 +890,25 @@ class BGSystem (BGBaseSystem):
         self._blocks.clear()
         self._blocks.update(blocks)
         return
+
+    def _recompute_block_state(self):
+
+        for b in self._block.values():
+            if b.state != idle:
+                continue
+
+            if b.cleanup_pending:
+                b.state = 'cleanup'
+                continue
+        #failed diags/marked failed not in here.
+        #nodeboard status
+        #switch status
+        #wires no longer have seprate status from switches
+        #IOlink status
+        #nodeboards in-use
+        #wire-blockage
+        #mark blocked in parent/child partition is allocated/cleaning
+
 
     def update_block_state(self):
         """This is the main "state" update loop.  Error states, busy detection
@@ -1051,6 +1070,7 @@ class BGSystem (BGBaseSystem):
         while True:
 
             #acquire states: this is going to be the biggest pull from the control system.
+            bf_start = time.time()
             self.bridge_in_error = False
             try:
                 #grab hardware state
@@ -1074,6 +1094,33 @@ class BGSystem (BGBaseSystem):
                 self.logger.critical("Cannot contact bridge, update suspended.")
                 #try again until we can acquire a link to the control system
                 continue
+
+            # build an IOLinks status cache, a midplane only goes in here if
+            # it will not boot due to failed links
+            failed_io_midplane_cache = set()
+            io_link_to_mp_dict = {}
+            for mp_a in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['A'])):
+                for mp_b in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['B'])):
+                    for mp_c in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['C'])):
+                        for mp_d in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['D'])):
+                            mp = self.compute_hardware_vec.getMidplane(pybgsched.Coordinates(mp_a, mp_b, mp_c, mp_d)).getLocation()
+                            try:
+                                iolv = pybgsched.getIOLinks(mp)
+                            except RuntimeError, e:
+                                # if for one reason or another we can't get links, this mp is a non-starter.
+                                if str(e) == "Data record(s) not found.":
+                                    #if we have no links, then this midplane is definitely dead:
+                                    self.logger.warning("No IO links found for midplane: %s". mp)
+                                else:
+                                    self.logger.warning("Unknown RunntimeError encountered!")
+                                failed_io_midplane_cache.add(mp)
+                                io_link_to_mp_dict[mp] = []
+                                continue
+
+                            io_links = SWIG_vector_to_list(iolv)
+                            if len(io_links) < 4: #FIXME: Make this a threshold
+                                failed_io_midplane_cache.add(mp)
+                            io_link_to_mp_dict[mp] = io_links
 
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
@@ -1139,12 +1186,19 @@ class BGSystem (BGBaseSystem):
                 if len(missing_blocks) > 0 or len(new_blocks) > 0:
                     self.update_relatives()
 
+                bf_end = time.time()
+                self.logger.log(1,'update loop init: %f sec',bf_end - bf_start)
+
                 for b in self._blocks.values():
                     #start off all pseudoblocks as idle, we can make them not idle soon.
                     if b.block_type == "pseudoblock":
                         b.state = 'idle'
 
+                block_update_start = time.time()
                 for b in self._blocks.values():
+
+                    #if b not in self._managed_blocks:
+                    #    continue
 
                     if b.cleanup_pending:
                         if b.used_by:
@@ -1234,40 +1288,18 @@ class BGSystem (BGBaseSystem):
 
 
                     #check the state of the block's IOLinks.  If not all are connected, put the block into an error state.
-                    bad_links = pybgsched.StringVector()
-                    if not pybgsched.Block.isIOConnected(b.subblock_parent, bad_links):
-                        b.state = "IO Link Unconnected: %s" % bad_links[0]
-                    #don't even bother if we failed the last test, this one checks do we have enough links/midplane to start?
-                    #Assume losing 50% of links is fatal for now.  Will need to ultimately make this configurable.
-                    #Even better if I can get IONs that are mapped to blocks, but that will have to come in on Rev2 --PMR
-                    else:
-                        try:
-                            current_system_block = pybgsched.BlockFilter()
-                            current_system_block.setName(b.subblock_parent)
-                            current_system_block.setExtendedInfo(True)
-                            sys_block = pybgsched.getBlocks(current_system_block)[0] 
-                            midplanes = sys_block.getMidplanes()
-                        except:
-                            self.logger.critical('Error fetching block data in update blocks. Marking %s down due to control system error.', b.name)
-                            b.state = "Control System Error"
-                            continue
-                        for mp in midplanes:
-                            try:
-                                iolv = pybgsched.getIOLinks(mp)
-                            except RuntimeError, e:
-                                if str(e) == "Data record(s) not found.":
-                                    b.state = "Insufficient IO Links: %s" % mp
-                                else:
-                                    self.logger.warning("Unknown RunntimeError encountered!")
-                                    raise
-                                break
-                            io_links = SWIG_vector_to_list(iolv)
-                            if len(io_links) < 4:#FIXME: Make this a threshold
-                                b.state = "Insufficient IO Links: %s" % mp
-                                break
-                            for link in io_links:
-                                if link.getState() != pybgsched.IOLink.Available:
-                                    b.state = "hardware offline (%s) IOLink %s:" %(link.getStateString(), link.getDestinationLocation())
+                    #if this block has a midplane in the insuficient link list, then we know it's bad.
+                    if b.midplanes.intersection(failed_io_midplane_cache):
+                        b.state = "Insufficient IO Links"
+                        continue
+                    link_offline = False
+                    for mp in b.midplanes:
+                        for link in io_link_to_mp_dict[mp]:
+                            if link.getState() != pybgsched.IOLink.Available:
+                                b.state = "hardware offline (%s) IOLink %s:" %(link.getStateString(), link.getDestinationLocation())
+                                link_offline = True
+                    if link_offline:
+                        continue
 
                     # We have a prayer of booting now: so why shouldn't we boot this block?
                     # The answer is below:
@@ -1328,6 +1360,7 @@ class BGSystem (BGBaseSystem):
                             if self.get_switch_state(sw) != pybgsched.Hardware.Available:
                                 b.state = "hardware offline: switch %s" % sw 
                                 self.offline_blocks.append(b.name)
+                        #wiring conflicts are caught by parent/child
                         for dep_name in b._wiring_conflicts:
                             if self._blocks[dep_name].state in ["busy", "allocated", "cleanup"]:
                                 b.state = "blocked-wiring (%s)" % dep_name
@@ -1335,6 +1368,8 @@ class BGSystem (BGBaseSystem):
 
             except:
                 self.logger.error("error in update_block_state", exc_info=True)
+            block_update_end = time.time()
+            self.logger.log(1,'block_update %f', block_update_end - block_update_start)
             self._blocks_lock.release()
 
             Cobalt.Util.sleep(10)

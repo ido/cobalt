@@ -222,6 +222,7 @@ class Node (object):
         #can be invoked with a spec string from the bridge API
         self.nodeboard = spec.get("nodeboard")
         self.name = spec.get("name") # RXX-MY-NZZ-JAA
+        self.id = self.name
         self.nodecard_pos = spec.get("nodecard_pos") #NZZ
         self.node_pos = spec.get("position") # JAA
         self.status = spec.get("status", "A")
@@ -276,6 +277,7 @@ class NodeCard (object):
        they are also something we can fake-control without the control system.
     """
     def __init__(self, name, state="idle"):
+        self.id = name
         self.name = name
         self.nodecard =  int(nodecard_exp.search(name).groups()[0])#NXX
         self.rack = 0 #get from control system, for EAS this is fine
@@ -397,8 +399,9 @@ class Block (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.bridge_block = None
-        self.node_cards = spec.get("node_cards", [])
-        self.nodes = spec.get("nodes", []) 
+        self.midplanes = set(spec.get("midplanes", []))
+        self.node_cards = set(spec.get("node_cards", []))
+        self.nodes = set(spec.get("nodes", []))
         self.switches = spec.get("switches", [])
         self.io_links = spec.get("io_links", [])
         self.reserved_until = False
@@ -435,7 +438,7 @@ class Block (Data):
         if self.block_type == "normal":
             self.subblock_parent = self.name
             for nc in self.node_cards:
-                self.nodes.extend(nc.nodes)
+                self.nodes.update(nc.nodes)
         elif self.block_type == "pseudoblock":
             #these are not being tracked by the control system, and are not allocated by it
             #these are just subrun targets.
@@ -448,7 +451,7 @@ class Block (Data):
                 raise KeyError('corner_node not found.  Subblock not properly generated!')    
             if self.size >= nodes_per_nodecard:
                 for nc in self.node_cards:
-                    self.nodes.extend(nc.nodes)
+                    self.nodes.update(nc.nodes)
             else:
                 #parse name to get corner node
 
@@ -461,7 +464,8 @@ class Block (Data):
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
                 nc = self.node_cards[0] #only one node_card is in use in this case.
-                self.nodes.extend(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
+                self.nodes.update(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
+
 
     def _update_node_cards(self):
         if self.state == "busy":
@@ -491,12 +495,14 @@ class Block (Data):
     def _get_childeren(self):
         return [block.name for block in self._relatives if self.is_child(block)]
     children = property(_get_childeren)
-
+    node_list = property(lambda self: list(self.nodes))
+    node_card_list = property(lambda self: list(self.node_cards))
+    midplane_list = property(lambda self: list(self.midplanes))
     wire_list = property(lambda self: list(self.wires))
     wiring_conflict_list = property(lambda self: list(self._wiring_conflicts))
+
     def _get_node_names (self):
         return [n.name for n in self.nodes]
-
     node_names = property(_get_node_names)
 
     def __str__ (self):
@@ -510,22 +516,18 @@ class Block (Data):
         it does. Just a test.
 
         '''
-
         if self.name == block.name:
             return False #don't overlap with yourself.
-
-        b1_nc_names = set(self.node_card_names)
-        b2_nc_names = set(block.node_card_names)
-
-        if not (b1_nc_names & b2_nc_names):
+        b1_nc = self.node_cards
+        b2_nc = block.node_cards
+        if not (b1_nc & b2_nc):
             return False
-
-        b1_node_names = set(self.node_names)
-        b2_node_names = set(block.node_names)
-
-        if not (b1_node_names & b2_node_names):
-            return False
-
+        if (len(b1_nc) == 1 and
+            len(b2_nc) == 1):
+            b1_nodes = self.nodes
+            b2_nodes = block.nodes
+            if not (b1_nodes & b2_nodes):
+                return False
         return True
 
     def mark_if_overlap(self, block):
@@ -550,19 +552,15 @@ class Block (Data):
 
         if self.name == block.name:
             return False
-
-        b1_nc_names = set(self.node_card_names)
-        b2_nc_names = set(block.node_card_names)
-
-        if not (b1_nc_names >= b2_nc_names):
+        b1_nc = self.node_cards
+        b2_nc = block.node_cards
+        if not (b1_nc >= b2_nc):
             return False
-        if len(b1_nc_names ^ b2_nc_names) == 0:
-            b1_node_names = set(self.node_names)
-            b2_node_names = set(block.node_names)
-
-            if not (b1_node_names >= b2_node_names): 
+        if len(b1_nc ^ b2_nc) == 0:
+            b1_nodes = self.nodes
+            b2_nodes = block.nodes
+            if not (b1_nodes >= b2_nodes):
                 return False
-
         return True
 
     def is_subblock(self, block):
@@ -582,17 +580,17 @@ class Block (Data):
         if self.name == block.name:
             return False
 
-        b1_nc_names = set(self.node_card_names)
-        b2_nc_names = set(block.node_card_names)
-        if (b1_nc_names.isdisjoint(b2_nc_names)):
+        b1_nc = set(self.node_cards)
+        b2_nc = set(block.node_cards)
+        if (b1_nc.isdisjoint(b2_nc)):
             return False
 
-        if (b1_nc_names & b2_nc_names == b2_nc_names):
+        if (b1_nc & b2_nc == b2_nc):
             return True
-        if len(b1_nc_names ^ b2_nc_names) == 0:
-            b1_node_names = set(self.node_names)
-            b2_node_names = set(block.node_names)
-            if (b1_node_names & b2_node_names == b2_node_names):
+        if len(b1_nc ^ b2_nc) == 0:
+            b1_nodes = set(self.nodes)
+            b2_nodes = set(block.nodes)
+            if (b1_nodes & b2_nodes == b2_nodes):
                 return True
         return False
 
@@ -666,9 +664,10 @@ class BGBaseSystem (Component):
 
         """
         self.logger.info("%s called add_blocks(%r)", user_name, specs)
-        self.logger.info("%s", self._managed_blocks)
+        self.logger.info("managed_blocks: %s", self._managed_blocks)
         specs = [{'name':spec.get("name")} for spec in specs]
         self._blocks_lock.acquire()
+        self.logger.debug('add_blocks lock acquired')
         try:
             blocks = [
                 block for block in self._blocks.q_get(specs)
@@ -678,6 +677,7 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in add_blocks", exc_info=True)
         self._blocks_lock.release()
+        self.logger.debug('add_blocks lock released')
 
         self._managed_blocks.update([
             block.name for block in blocks
