@@ -1,5 +1,12 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.6
+
+* Performance improvements over 0.99.5 in update_block_state and wiring 
+  conflict detection.  This makes the partadm commands far more responsive.
+* Corrected an error in a block's children that affected cold (non-statefile)
+  startup.
+
 Changes to 0.99.0pre36
 
 * Fixed bug in resource reservation that would leave a reserved partition in
