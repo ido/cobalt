@@ -417,7 +417,7 @@ class Block (Data):
 
         self._relatives = set() #list of blocks that have overlapping resources with this one
         self._parents = set() #relatives that are a superset of me
-        self._childeren = set() #relatives that are proper subsets of me
+        self._children = set() #relatives that are proper subsets of me
 
         self.wires = spec.pop('wires',set()) #list of (src, dst) tuples for cables linking midplanes
         self.admin_failed = False #set this to true if a partadm --fail is issued
