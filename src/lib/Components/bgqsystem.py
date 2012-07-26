@@ -1311,10 +1311,20 @@ class BGSystem (BGBaseSystem):
                         continue
                     link_offline = False
                     for mp in b.midplanes:
+                        dead_ion_links = 0
                         for link in io_link_to_mp_dict[mp]:
                             if link.getState() != pybgsched.IOLink.Available:
-                                b.state = "hardware offline (%s) IOLink %s:" %(link.getStateString(), link.getDestinationLocation())
+                                b.state = "hardware offline (%s) IOLink %s" %(link.getStateString(), link.getDestinationLocation())
                                 link_offline = True
+                                break
+                            if link.getIONodeState() != pybgsched.Hardware.Available:
+                                dead_ion_links += 1
+                                if dead_ion_links > 4: #FIXME: make this configurable
+                                    b.state = "hardware offline (%s) IO Node %s" % (link.getIONodeStateString(),link.getDestinationLocation())
+                                    link_offline = True
+                                    break
+                        if link_offline:
+                            break
                     if link_offline:
                         continue
 
