@@ -248,11 +248,10 @@ class BGSystem (BGBaseSystem):
     def _get_midplane_from_location(self, loc_name):
         '''get the midplane associated with a hardware location, like a switch, or a nodecard.
         The midplane data is pulled out of the compute hardware cache.
-        '''
 
+        '''
         rack_pos = int(rack_exp.search(loc_name).groups()[0], 16)
         midplane_pos = int(midplane_exp.search(loc_name).groups()[0])
-
         if self.compute_hardware_vec == None:
             raise RuntimeError("attempting to obtain nodecard state without initializing compute_hardware_vec.")
         mp = self.compute_hardware_vec.getMidplane("R%02X-M%d" % (rack_pos, midplane_pos))
@@ -280,6 +279,16 @@ class BGSystem (BGBaseSystem):
         sw_id = sw_name.split("_")[0]
         mp = self._get_midplane_from_location(sw_name)
         return mp.getSwitch(sw_char_to_dim_dict[sw_id]).getState()
+
+    def get_wire_state(self, wire):
+        '''This is grabs the state of a cable from the outbound port (port1)
+        The control system tracks this from the outbound port of a switch
+
+        This corresponds to a Cable object in the control system.
+
+        '''
+        mp = self._get_midplane_from_location(wire.port1)
+        return mp.getSwitch(pybgsched.Dimension(wire.dim)).getCable().getState()
 
     def _detect_wiring_deps(self, block):
         """
@@ -769,6 +778,7 @@ class BGSystem (BGBaseSystem):
         io_link_list = []
         wire_set = set()
         midplane_ids = block_def.getMidplanes()
+        passthrough_ids = block_def.getPassthroughMidplanes()
         midplane_nodecards = []
         for midplane_id in midplane_ids:
             #grab the switch data from all associated midplanes
@@ -795,6 +805,13 @@ class BGSystem (BGBaseSystem):
                     if pybgsched.hardware_in_error_state(nc):
                         state = "error"
                     nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+
+        # Add in passthrough switches
+        for midplane_id in passthrough_ids:
+            midplane = self.compute_hardware_vec.getMidplane(midplane_id)
+            for i in range(0,D_DIM+1):
+                switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
+
         # Wiring
         mp_and_passthru_mp_list = set(midplane_ids)
         mp_and_passthru_mp_list |= set(SWIG_vector_to_list(block_def.getPassthroughMidplanes()))
@@ -1360,6 +1377,14 @@ class BGSystem (BGBaseSystem):
                             if self.get_switch_state(sw) != pybgsched.Hardware.Available:
                                 b.state = "hardware offline: switch %s" % sw 
                                 self.offline_blocks.append(b.name)
+                                break
+
+                        for wire in b.wires:
+                            if self.get_wire_state(wire) != pybgsched.Hardware.Available:
+                                b.state = "hardware offline: wire %s" % wire
+                                self.offline_blocks.append(b.name)
+                                break
+
                         #wiring conflicts are caught by parent/child
                         for dep_name in b._wiring_conflicts:
                             if self._blocks[dep_name].state in ["busy", "allocated", "cleanup"]:
@@ -1383,12 +1408,11 @@ class BGSystem (BGBaseSystem):
 
     def check_allocated(self, b):
         '''Check to see if this block is allocated by cobalt to a job.
-           
+
            If so, then mark all of this block's parents and children as
            blocked, by the allocated partition.
 
         '''
-        
         allocated = False
         if b.used_by:
             b.state = "allocated"
