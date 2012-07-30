@@ -1,5 +1,10 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.8
+
+* Fixed an issue where dimensions without cables (like the A,B, and C
+  dimensions on a 2 midplane system) would cause the system component to fail
+  on boot.
 
 Changes to 0.99.7
 
