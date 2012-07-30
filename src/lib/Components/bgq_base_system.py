@@ -454,7 +454,6 @@ class Block (Data):
                     self.nodes.update(nc.nodes)
             else:
                 #parse name to get corner node
-
                 node_pos = int(node_position_exp.search(self.corner_node).groups()[0])
                 nodecard_pos = int(nodecard_exp.search(self.corner_node).groups()[0])
                 #sanity check extents
@@ -463,7 +462,7 @@ class Block (Data):
                 if not stat:
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
-                nc = self.node_cards[0] #only one node_card is in use in this case.
+                nc = list(self.node_cards)[0] #only one node_card is in use in this case.
                 self.nodes.update(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
 
 
