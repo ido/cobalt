@@ -1,5 +1,13 @@
 Changes from previous Cobalt Versions
 
+
+Changes to 0.99.7
+
+* Cable errors are now properly detected
+* IO Node errors in available links are detected
+* Due to changes, libpybgsched v 0.1.1 is required.  This also
+  means the V1R1M1 driver changes can also be enabled.
+
 Changes to 0.99.6
 
 * Performance improvements over 0.99.5 in update_block_state and wiring 
