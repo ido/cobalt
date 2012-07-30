@@ -441,7 +441,10 @@ class BGSystem (BGBaseSystem):
             self._midplane_wiring_cache[mp] = []
             for dim in range(0, pybgsched.Dimension.D+1):
                 outbound_sw = self.compute_hardware_vec.getMidplane(mp).getSwitch(pybgsched.Dimension(dim))
-                dimension, rack, midplane =  self.__parse_wire(outbound_sw.getCable().getDestinationLocation())
+                #small systems may not have cables for all switches (anything with a size 1mp dim)
+                if outbound_sw.getCable() == None:
+                    continue
+                dimension, rack, midplane = self.__parse_wire(outbound_sw.getCable().getDestinationLocation())
                 inbound_sw = self.compute_hardware_vec.getMidplane("R%02X-M%d"%(rack,midplane)).getSwitch(pybgsched.Dimension(dim))
 
                 self._midplane_wiring_cache[mp].append(
