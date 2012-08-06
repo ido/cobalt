@@ -408,6 +408,12 @@ class Block (Data):
         self.reserved_by = None
         self.used_by = None
         self.cleanup_pending = False
+        self.midplane_geometry = spec.get("midplane_geometry",[-1,-1,-1,-1])
+        self.node_geometry = spec.get("node_geometry",
+                [i*4 for i in self.midplane_geometry])
+        if len(self.node_geometry) == 4:
+            self.node_geometry.extend([2])
+
 
         self.freeing = False
         # this holds block names
@@ -440,6 +446,8 @@ class Block (Data):
             for nc in self.node_cards:
                 self.nodes.update(nc.nodes)
         elif self.block_type == "pseudoblock":
+            self.midplane_geometry = [0,0,0,0]
+            self.node_geometry = get_extents_from_size(self.size)
             #these are not being tracked by the control system, and are not allocated by it
             #these are just subrun targets.
             self.subblock_parent = spec.get("subblock_parent")
@@ -448,7 +456,7 @@ class Block (Data):
                 raise KeyError('extents not found.  Subblock not properly generated!')
             self.corner_node = spec.pop("corner_node", None)
             if self.corner_node == None:
-                raise KeyError('corner_node not found.  Subblock not properly generated!')    
+                raise KeyError('corner_node not found.  Subblock not properly generated!')
             if self.size >= nodes_per_nodecard:
                 for nc in self.node_cards:
                     self.nodes.update(nc.nodes)
@@ -464,7 +472,6 @@ class Block (Data):
                 #pull in all nodenames by coords from nodecard.
                 nc = list(self.node_cards)[0] #only one node_card is in use in this case.
                 self.nodes.update(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
-
 
     def _update_node_cards(self):
         if self.state == "busy":

@@ -783,6 +783,17 @@ class BGSystem (BGBaseSystem):
         midplane_ids = block_def.getMidplanes()
         passthrough_ids = block_def.getPassthroughMidplanes()
         midplane_nodecards = []
+        midplane_geometry = []
+        node_geometry = []
+
+        if block_def.isLarge():
+            for i in range(0, D_DIM+1):
+                midplane_geometry.append(block_def.getDimensionSize(pybgsched.Dimension(i)))
+                node_geometry.append(block_def.getDimensionSize(pybgsched.Dimension(i)) * 4)
+        else:
+            midplane_geometry = [0,0,0,0]
+            node_geometry = Cobalt.Components.bgq_base_system.get_extents_from_size(block_def.getComputeNodeCount())
+
         for midplane_id in midplane_ids:
             #grab the switch data from all associated midplanes
             midplane = self.compute_hardware_vec.getMidplane(midplane_id)
@@ -830,6 +841,8 @@ class BGSystem (BGBaseSystem):
             name = block_def.getName(), 
             queue = "default",
             size = block_def.getComputeNodeCount(),
+            midplane_geometry = midplane_geometry,
+            node_geometry = node_geometry,
             midplanes = midplane_list,
             node_cards = nodecard_list,
             switches = switch_list,

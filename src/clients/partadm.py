@@ -291,7 +291,7 @@ if __name__ == '__main__':
                 'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
-                'wiring_conflict_list':'*'} 
+                'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*'}
                 for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions([{'name':part,'node_card_list':'*',
