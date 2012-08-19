@@ -2136,7 +2136,7 @@ class BGQsim(Simulator):
         
         self.show_resource()
          
-        print "number of waiting jobs: ", self.num_waiting
+#        print "number of waiting jobs: ", self.num_waiting
 
         
 #        max_wait, avg_wait = self.get_current_max_avg_queue_time()
