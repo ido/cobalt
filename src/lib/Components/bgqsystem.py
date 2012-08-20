@@ -54,7 +54,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 Cobalt.Util.init_cobalt_config()
-#Cobalt.bridge.set_serial(Cobalt.bridge.systype)
 
 #writer so that cobalt log writes don't hang up scheduling.
 cobalt_log_writer = disk_writer_thread()
@@ -64,7 +63,7 @@ logger.info("cobalt log writer thread enabled.")
 
 def cobalt_log_write(filename, msg, user=None):
     '''send the cobalt_log writer thread a filename, msg tuple.
-    
+
     '''
     if user == None:
         user = pwd.getpwuid(os.getuid())[0] #set as who I'm running as.
@@ -97,7 +96,7 @@ class BGProcessGroup(ProcessGroup):
         self.subblock_parent = None
         self.corner = None
         self.extents = None
-    
+
 # convenience function used several times below
 def _get_state(bridge_partition):
     '''Convenience function to get at the block state.
@@ -256,6 +255,11 @@ class BGSystem (BGBaseSystem):
             raise RuntimeError("attempting to obtain nodecard state without initializing compute_hardware_vec.")
         mp = self.compute_hardware_vec.getMidplane("R%02X-M%d" % (rack_pos, midplane_pos))
         return mp
+
+    def get_nodecard_isMetaState(self, loc_name):
+        nodecard_pos = int(nodecard_exp.search(loc_name).groups()[0])
+        mp = self._get_midplane_from_location(loc_name)
+        return mp.getNodeBoard(nodecard_pos).isMetaState()
 
     def get_nodecard_state(self, loc_name):
         '''Get the node card state as described by the control system.'''
@@ -778,11 +782,13 @@ class BGSystem (BGBaseSystem):
         switch_list = []
         midplane_list = []
         nodecard_list = []
+        pt_nodecard_list = []
         io_link_list = []
         wire_set = set()
         midplane_ids = block_def.getMidplanes()
         passthrough_ids = block_def.getPassthroughMidplanes()
         midplane_nodecards = []
+        midplane_pt_nodecards = []
         midplane_geometry = []
         node_geometry = []
 
@@ -828,23 +834,38 @@ class BGSystem (BGBaseSystem):
 
         # Wiring
         mp_and_passthru_mp_list = set(midplane_ids)
-        mp_and_passthru_mp_list |= set(SWIG_vector_to_list(block_def.getPassthroughMidplanes()))
+        passthrough_mp_list = set(SWIG_vector_to_list(block_def.getPassthroughMidplanes()))
+        mp_and_passthru_mp_list |= passthrough_mp_list
         #add wires for a dimension, make sure to get passthru midplanes as well.
         #FIXME:wiring's wrong
+        #no passthrough for sub-midplane blocks
         for mp in mp_and_passthru_mp_list:
             for wire in self._midplane_wiring_cache[mp]:
                 if (wire.port1_mp in mp_and_passthru_mp_list and
                         wire.port2_mp in mp_and_passthru_mp_list):
                     wire_set.add(wire)
+        #add to passthrough nodecards
+        for mp in passthrough_mp_list:
+            midplane_pt_nodecards = [nb.getLocation()
+                for nb in SWIG_vector_to_list(pybgsched.getNodeBoards(mp))]
+            for i in range(0, midplane.MaxNodeBoards):
+                nc = self.compute_hardware_vec.getMidplane(mp).getNodeBoard(i)
+                if nc.getLocation() in midplane_pt_nodecards:
+                    state = "idle"
+                    if pybgsched.hardware_in_error_state(nc) and not nc.isMetaState():
+                        state = "error"
+                    pt_nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+
 
         d = dict(
-            name = block_def.getName(), 
+            name = block_def.getName(),
             queue = "default",
             size = block_def.getComputeNodeCount(),
             midplane_geometry = midplane_geometry,
             node_geometry = node_geometry,
             midplanes = midplane_list,
             node_cards = nodecard_list,
+            passthrough_node_cards = pt_nodecard_list,
             switches = switch_list,
             state = block_def.getStatus(),
             block_type = 'normal',
@@ -1380,13 +1401,13 @@ class BGSystem (BGBaseSystem):
                             if nc.used_by:
                                 #block if other stuff is running on our node cards.  
                                 #remember subblock jobs can violate this 
-                                #TODO: test with subblock
                                 b.state = "blocked (%s)" % nc.used_by
 
                             if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
                                 #if control system reports down, then we're really down.
-                                b.state = "hardware offline (%s): nodecard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
+                                b.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
                                 self.offline_blocks.append(b.name)
+                                #FIXME: need to make this check isMetaState and check node states
                                 if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
                                     #we are in a soft error and should attempt to free
                                     if not nc.used_by in freeing_error_blocks:
@@ -1398,6 +1419,15 @@ class BGSystem (BGBaseSystem):
                                         except:
                                             self.logger.debug("error initiating free for soft error block.")
                                         freeing_error_blocks.append(nc.used_by)
+                                break
+
+                        for nc in b.passthrough_node_cards:
+                            if (self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available and
+                                    (not self.get_nodecard_isMetaState(nc.name))):
+                                #the nodeboard itself is in error, nothing getting through.
+                                b.state = "hardware offline: passthrough nodeboard %s" % nc.name
+                                self.offline_blocks.append(b.name)
+                                break
 
                         for sw in b.switches:
                             if self.get_switch_state(sw) != pybgsched.Hardware.Available:

@@ -307,9 +307,9 @@ class NodeCard (object):
         return self.id == other.id
 
     #def _update_nodes(self):
-        
+
     #TODO: make sure to check my nodes to see if they have failed, if they've tanked, I've tanked.
-       
+
     def extract_nodes_by_extent(self, corner, extents):
         '''Get a list of nodes that are included by a corner and extent on this board.
 
@@ -321,7 +321,7 @@ class NodeCard (object):
         '''
 
         ret_nodes = []
-        
+
         #Note that nodes can be anywhere on the nodeboard in a block.  I think we have to scan each time.
         for node in self.nodes:
             for i in range(0,5):
@@ -401,6 +401,7 @@ class Block (Data):
         self.bridge_block = None
         self.midplanes = set(spec.get("midplanes", []))
         self.node_cards = set(spec.get("node_cards", []))
+        self.passthrough_node_cards = set(spec.get("passthrough_node_cards", []))
         self.nodes = set(spec.get("nodes", []))
         self.switches = spec.get("switches", [])
         self.io_links = spec.get("io_links", [])
@@ -506,6 +507,8 @@ class Block (Data):
     midplane_list = property(lambda self: list(self.midplanes))
     wire_list = property(lambda self: list(self.wires))
     wiring_conflict_list = property(lambda self: list(self._wiring_conflicts))
+    passthrough_node_card_list = property(lambda self: list(self.passthrough_node_cards))
+    #passthrough_midplane_list = property(lambda self: list(self.passthrough_midplanes))
 
     def _get_node_names (self):
         return [n.name for n in self.nodes]
@@ -1205,7 +1208,7 @@ class BGBaseSystem (Component):
                 self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
-                part.state = "allocated"  
+                part.state = "allocated"
                 for p in part._parents:
                     if p.state == "idle":
                         p.state = "blocked (%s)" % (part.name,)
@@ -1325,6 +1328,12 @@ class BGBaseSystem (Component):
                         block.state = 'allocated'
                     self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
                         time.asctime(time.gmtime(new_time)))
+                    for p in block._parents:
+                        if p.state == "idle":
+                            p.state = "blocked (%s)" % (part.name,)
+                    for p in block._children:
+                        if p.state == "idle":
+                            p.state = "blocked (%s)" % (part.name,)
                     rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",

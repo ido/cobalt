@@ -113,7 +113,7 @@ def print_block_bgq(block_dicts):
 
         for key,value in block.iteritems():
 
-            if key in ['node_card_list','node_list']:
+            if key in ['passthrough_node_card_list', 'node_card_list','node_list']:
                 if block['size'] >= 512 and key == 'node_card_list':
                     continue
                 if block['size'] >= 128 and key == 'node_list':
@@ -291,7 +291,8 @@ if __name__ == '__main__':
                 'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
-                'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*'}
+                'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*', 
+                'passthrough_node_card_list':'*'}
                 for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions([{'name':part,'node_card_list':'*',
