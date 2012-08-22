@@ -850,7 +850,7 @@ class BGSystem (BGBaseSystem):
         for mp in midplane_list:
             for wire in self._midplane_wiring_cache[mp]:
                 if (wire.port1_mp in midplane_list and
-                        wire.port_2 in midplane_list):
+                        wire.port2_mp in midplane_list):
                     wire_set.add(wire)
                 elif (wire.port1_mp in midplane_list and
                         wire.port2 in passthrough_mp_list):
