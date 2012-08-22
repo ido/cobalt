@@ -849,7 +849,12 @@ class BGSystem (BGBaseSystem):
         # one end in passthrough.
         for mp in midplane_list:
             for wire in self._midplane_wiring_cache[mp]:
-                wire_set.add(wire)
+                if (wire.port1_mp in midplane_list and
+                        wire.port2_mp in midplane_list):
+                    wire_set.add(wire)
+                elif (wire.port1_mp in passthrough_mp_list or
+                        wire.port2_mp in passthrough_mp_list):
+                    wire_set.add(wire)
 
         if len(passthrough_mp_list):
             # Get passthrough wiring
@@ -874,7 +879,7 @@ class BGSystem (BGBaseSystem):
                     if not found_next_pt_mp:
                         pt_mp = None
 
-            wire_set.update(pt_wire_set)
+            wire_set |= pt_wire_set
 
 
         #add to passthrough nodecards

@@ -216,6 +216,12 @@ class Wire (object):
     def port2_mp(self):
         return self.port2.split('_')[1]
 
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
 class Node (object):
 
     def __init__(self, spec):
