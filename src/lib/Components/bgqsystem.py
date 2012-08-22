@@ -837,13 +837,54 @@ class BGSystem (BGBaseSystem):
         passthrough_mp_list = set(SWIG_vector_to_list(block_def.getPassthroughMidplanes()))
         mp_and_passthru_mp_list |= passthrough_mp_list
         #add wires for a dimension, make sure to get passthru midplanes as well.
-        #FIXME:wiring's wrong
         #no passthrough for sub-midplane blocks
-        for mp in mp_and_passthru_mp_list:
+        #for mp in mp_and_passthru_mp_list:
+            #for wire in self._midplane_wiring_cache[mp]:
+                #if (wire.port1_mp in mp_and_passthru_mp_list and
+                        #wire.port2_mp in mp_and_passthru_mp_list):
+                    #wire_set.add(wire)
+
+        # Get wiring for included midplanes:
+        # Include wires whose ends are both in this list or have 
+        # one end in passthrough.
+        for mp in midplane_list:
             for wire in self._midplane_wiring_cache[mp]:
-                if (wire.port1_mp in mp_and_passthru_mp_list and
-                        wire.port2_mp in mp_and_passthru_mp_list):
+                if (wire.port1_mp in midplane_list and
+                        wire.port_2 in midplane_list):
                     wire_set.add(wire)
+                elif (wire.port1_mp in midplane_list and
+                        wire.port2 in passthrough_mp_list):
+                    wire_set.add(wire)
+                elif (wire.port1_mp in passthrough_mp_list and
+                        wire.port2 in midplane_list):
+                    wire_set.add(wire)
+
+        if len(passthrough_mp_list):
+            # Get passthrough wiring
+            pt_wire_set = set()
+            for wire in wire_set:
+                pt_mp = None
+                if wire in pt_wire_set: #don't bother if we already got this wire
+                    continue
+                if wire.port1_mp in passthrough_mp_list:
+                    pt_mp = wire.port1_mp
+                while pt_mp != None:
+                    dim = wire.dim
+                    pt_mp_wires = self._mp_wiring_cache[pt_mp]
+                    pt_mp == None
+                    for pt_wire in pt_mp_wires:
+                        found_next_pt_mp = False
+                        if pt_wire.dim == dim:
+                            pt_wire_set.add(pt_wire)
+                        if pt_wire.port1_mp == pt_mp and pt_wire.port2_mp in midplane_list:
+                            pt_mp = pt_wire.port2_mp
+                            found_next_pt_mp = True
+                    if not found_next_pt_mp:
+                        pt_mp = None
+
+            wire_set.update(pt_wire_set)
+
+
         #add to passthrough nodecards
         for mp in passthrough_mp_list:
             midplane_pt_nodecards = [nb.getLocation()
