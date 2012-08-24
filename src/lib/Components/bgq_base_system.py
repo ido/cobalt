@@ -478,7 +478,6 @@ class Block (Data):
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
                 nc = list(self.node_cards)[0] #only one node_card is in use in this case.
-                self.nodes.update(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
 
     def _update_node_cards(self):
         if self.state == "busy":
@@ -508,6 +507,7 @@ class Block (Data):
     def _get_childeren(self):
         return [block.name for block in self._relatives if self.is_child(block)]
     children = property(_get_childeren)
+
     node_list = property(lambda self: list(self.nodes))
     node_card_list = property(lambda self: list(self.node_cards))
     midplane_list = property(lambda self: list(self.midplanes))
@@ -613,10 +613,10 @@ class Block (Data):
 
 class BlockDict (DataDict):
     """Default container for blocks.
-    
+
     Keyed by block name.
     """
-    
+
     item_cls = Block
     key = "name"
 
@@ -804,8 +804,8 @@ class BGBaseSystem (Component):
                     b.mark_if_overlap(self._blocks[other_name])
 
             # only a child if the node-level resources are a proper subset of it's parent block.
-            b._parents.update([block for block in b._relatives if block.is_parent(b)])
-            b._children.update([block for block in b._relatives if block.is_child(b)])
+            b._parents.update(set([block for block in b._relatives if b.is_parent(block)]))
+            b._children.update([block for block in b._relatives if b.is_child(block)])
             #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
 
 
@@ -943,6 +943,7 @@ class BGBaseSystem (Component):
         #else:
         #    runtime_estimate = float(walltime)
 
+        #scores are apparently floats...?
         best_score = sys.maxint
         best_block = None
 
@@ -951,7 +952,6 @@ class BGBaseSystem (Component):
         requested_location = None
         if args['attrs'].has_key("location"):
             requested_location = args['attrs']['location']
-
         if required:
             # whittle down the list of required blocks to the ones of the proper size
             # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
@@ -962,9 +962,8 @@ class BGBaseSystem (Component):
                 available_blocks.update(self.cached_blocks[p_name]._children)
 
             possible = set()
-            for p in available_blocks:
-                possible.add(p.size)
-
+            for block in available_blocks:
+                possible.add(block.size)
 
             desired_size = 0
             job_nodes = int(nodes)
@@ -1032,7 +1031,7 @@ class BGBaseSystem (Component):
             return self.cached_blocks.get(target_name, None)
 
         drain_block = None
-        locations = set(self.possible_locations(job['nodes'], job['queue']))
+        locations = self.possible_locations(job['nodes'], job['queue'])
 
         for p in locations:
             if not drain_block:
@@ -1176,7 +1175,8 @@ class BGBaseSystem (Component):
 
             location = self._find_drain_block(job)
             if location is not None:
-                if (location.name not in job['forbidden']) and location._parents.isdisjoint(set(job['forbidden'])):
+                if ((location.name not in job['forbidden']) and
+                        location._parents.isdisjoint(set(job['forbidden']))):
                     for p_name in location.parents:
                         drain_blocks.add(self.cached_blocks[p_name])
                     for p_name in location.children:
@@ -1250,7 +1250,7 @@ class BGBaseSystem (Component):
                 # queues using this block
                 if not part_active_queues:
                     continue
-                
+
                 found_a_match = False
                 for e in equiv:
                     if e['data'].intersection(part.node_card_names):
@@ -1260,7 +1260,7 @@ class BGBaseSystem (Component):
                         break
                 if not found_a_match:
                     equiv.append( { 'queues': set(part_active_queues), 'data': set(part.node_card_names), 'reservations': set() } ) 
-        
+
         real_equiv = []
         for eq_class in equiv:
             found_a_match = False
@@ -1274,7 +1274,7 @@ class BGBaseSystem (Component):
                 real_equiv.append(eq_class)
 
         equiv = real_equiv
-                
+
         for eq_class in equiv:
             for res_name in reservation_dict:
                 skip = True
@@ -1291,11 +1291,11 @@ class BGBaseSystem (Component):
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
-        
+
         return equiv
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
-    
-    
+
+
     def can_run(self, target_block, node_count, block_dict):
         '''Determine if a block is in a runable state.
 
@@ -1334,12 +1334,12 @@ class BGBaseSystem (Component):
                         block.state = 'allocated'
                     self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
                         time.asctime(time.gmtime(new_time)))
-                    for p in block._parents:
-                        if p.state == "idle":
-                            p.state = "blocked (%s)" % (part.name,)
-                    for p in block._children:
-                        if p.state == "idle":
-                            p.state = "blocked (%s)" % (part.name,)
+                    for b in block._parents:
+                        if b.state == "idle":
+                            b.state = "blocked (%s)" % (block.name,)
+                    for b in block._children:
+                        if b.state == "idle":
+                            b.state = "blocked (%s)" % (block.name,)
                     rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
