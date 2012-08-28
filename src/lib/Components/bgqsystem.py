@@ -108,8 +108,6 @@ def _get_state(bridge_partition):
     else:
         return "busy"
 
-blocked_re = re.compile("blocked")
-
 class BGSystem (BGBaseSystem):
 
     """Blue Gene system component.
@@ -491,7 +489,7 @@ class BGSystem (BGBaseSystem):
             if block.state != "busy":
                 for nc in block.node_cards:
                     if nc.used_by:
-                        block.state = "blocked (%s)" % nc.used_by 
+                        block.state = "blocked (%s)" % nc.used_by
                         break
                 for dep_name in block._wiring_conflicts:
                     if self._blocks[dep_name].state == "busy":
@@ -984,23 +982,194 @@ class BGSystem (BGBaseSystem):
         return
 
     def _recompute_block_state(self):
+        '''Recompute the hardware and cleaning/allocated blockage for all
+        managed blocks.
 
-        for b in self._block.values():
-            if b.state != idle:
+        '''
+
+        self.offline_blocks = []
+        for b in self._blocks.values():
+
+            if b.name not in self._managed_blocks:
+                continue
+
+            if b.state == 'busy':
+                if not b.reserved_by:
+                    b.reserved_until = False
+
+            if b.state != 'idle':
                 continue
 
             if b.cleanup_pending:
                 b.state = 'cleanup'
                 continue
-        #failed diags/marked failed not in here.
-        #nodeboard status
-        #switch status
-        #wires no longer have seprate status from switches
-        #IOlink status
-        #nodeboards in-use
-        #wire-blockage
-        #mark blocked in parent/child partition is allocated/cleaning
+            #failed diags/marked failed not in here
 
+            self.check_block_hardware(b)
+            if b.state != 'idle':
+                continue
+
+            if b.used_by:
+                b.state = "allocated"
+                if b.block_type != "pseudoblock":
+                    continue
+
+            #pseudoblock handling, busy isn't handled by the control system.
+            if b.block_type == "pseudoblock":
+
+                if b.used_by:
+                    #mark busy if there is a related job
+                    block_jobs = self._get_jobs_on_block(b.subblock_parent)
+                    for job in block_jobs:
+                        if (job.getCorner() in [node.name for node in b.nodes] and
+                                job.getComputeNodesUsed() == b.size):
+                            #If I have a backend job on my nodes, then I'm busy.
+                            b.state = "busy"
+                            break
+
+                if b.state != 'idle':
+                    continue
+
+                is_blocked = self.check_subblock_blocked(b)
+                if is_blocked:
+                    continue
+
+                # check the subblock parent to see if block is bootable,
+                # if the parent can't be booted, the pseudoblock is not
+                # going to be able to run anything
+
+                subblock_parent_block = self._blocks[b.subblock_parent]
+                for nc in subblock_parent_block.node_cards:
+                    if nc.used_by:
+                        if (b.subblock_parent != nc.used_by or
+                                b.subblock_parent == b.name):
+                            b.state = "blocked (%s)" % nc.used_by
+                            break
+                if b.state != 'idle':
+                    continue
+
+                self.check_block_hardware(subblock_parent_block, subblock_parent=True)
+                if subblock_parent_block.state != 'idle':
+                    b.state = subblock_parent_block.state
+                    continue
+
+            #mark blocked in parent/child partition is allocated/cleaning
+            allocated = None
+            cleaning = None
+            for rel_block in b._relatives:
+                if rel_block.used_by:
+                    allocated = rel_block
+                    break
+                if rel_block.cleanup_pending:
+                    cleaning = rel_block
+                    break
+            if cleaning:
+                b.state = 'blocked (%s)' % (cleaning.name,)
+            elif allocated:
+                b.state = "blocked (%s)" % (allocated.name,)
+
+    def check_block_hardware(self, block, subblock_parent=False):
+        '''Check the cached hardware state and see if the block would
+        be blocked by failed hardware.
+
+        subblock_parent notes that this is a check for a pseudoblock's parent,
+        and, therefore, should ignore the blocked-busy detection, that must be
+        handled by the pseudoblock itself.
+
+        '''
+        #Nodeboards in error
+        freeing_error_blocks = []
+        for nc in block.node_cards:
+            if subblock_parent and nc.used_by:
+                #block if other stuff is running on our node cards.
+                #remember subblock jobs can violate this
+                block.state = "blocked (%s)" % nc.used_by
+
+            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
+                #if control system reports down, then we're really down.
+                block.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
+                self.offline_blocks.append(block.name)
+                if (self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and
+                        nc.used_by != ''):
+                    #we are in a soft error and should attempt to free
+                    if not nc.used_by in freeing_error_blocks:
+                        try:
+                            pybgsched.Block.initiateFree(nc.used_by)
+                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
+                        except RuntimeError:
+                            pass
+                        except:
+                            self.logger.debug("error initiating free for soft error block.")
+                        freeing_error_blocks.append(nc.used_by)
+                return
+
+        #IOlink status
+        if block.midplanes.intersection(self.failed_io_midplane_cache):
+            block.state = "Insufficient IO Links"
+            return
+
+        link_offline = False
+        for mp in block.midplanes:
+            dead_ion_links = 0
+            for link in self.io_link_to_mp_dict[mp]:
+                if link.getState() != pybgsched.IOLink.Available:
+                    block.state = "hardware offline (%s) IOLink %s" %(link.getStateString(), link.getDestinationLocation())
+                    link_offline = True
+                    return
+                if link.getIONodeState() != pybgsched.Hardware.Available:
+                    dead_ion_links += 1
+                    if dead_ion_links > 4: #FIXME: make this configurable
+                        block.state = "hardware offline (%s) IO Node %s" % (link.getIONodeStateString(),link.getDestinationLocation())
+                        link_offline = True
+                        return
+
+        #Block for passthrough
+        for nc in block.passthrough_node_cards:
+            if (self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available and
+                    (not self.get_nodecard_isMetaState(nc.name))):
+                #the nodeboard itself is in error, nothing getting through.
+                block.state = "hardware offline: passthrough nodeboard %s" % nc.name
+                self.offline_blocks.append(block.name)
+                return
+
+        #Block for dead switch
+        for sw in block.switches:
+            if self.get_switch_state(sw) != pybgsched.Hardware.Available:
+                block.state = "hardware offline: switch %s" % sw 
+                self.offline_blocks.append(block.name)
+                return
+
+        #Block for dead cables
+        for wire in block.wires:
+            if self.get_wire_state(wire) != pybgsched.Hardware.Available:
+                block.state = "hardware offline: wire %s" % wire
+                self.offline_blocks.append(block.name)
+                return
+
+        #wiring conflicts are caught by parent/child
+        for dep_name in block._wiring_conflicts:
+            try:
+                dep_block = self._blocks[dep_name]
+            except KeyError:
+                self.logger.warning("block %s: wiring conflict %s does not exist in partition table",
+                    block.name, dep_name)
+            if (dep_block.used_by or
+                    dep_block.cleanup_pending or
+                    dep_block.state == 'busy'):
+                block.state = "blocked-wiring (%s)" % dep_name
+                return
+        return
+
+
+    def _get_jobs_on_block(self, block_name):
+        try:
+            job_block_filter = pybgsched.JobFilter()
+            job_block_filter.setComputeBlockName(block_name)
+            jobs = SWIG_vector_to_list(pybgsched.getJobs(job_block_filter))
+        except:
+            self.logger.critical("Unable to obtain list of jobs for block %s from bridge!", block_name)
+            raise
+        return jobs
 
     def update_block_state(self):
         """This is the main "state" update loop.  Error states, busy detection
@@ -1038,15 +1207,6 @@ class BGSystem (BGBaseSystem):
                 raise
             return
 
-        def _get_jobs_on_block(block_name):
-            try: 
-                job_block_filter = pybgsched.JobFilter()
-                job_block_filter.setComputeBlockName(block_name)
-                jobs = SWIG_vector_to_list(pybgsched.getJobs(job_block_filter))
-            except:
-                self.logger.critical("Unable to obtain list of jobs for block %s from bridge!", block_name)
-                raise
-            return jobs
 
 
         def _children_still_allocated(block):
@@ -1070,7 +1230,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.info("initiaitng normal block cleanup for subblockblock %s, parent: %s", b.name, b.subblock_parent)
                 pb = self._blocks[b.subblock_parent]
                 still_reserved_children = _children_still_allocated(pb)
-                block_jobs = _get_jobs_on_block(b.subblock_parent)
+                block_jobs = self._get_jobs_on_block(b.subblock_parent)
 
                 if not still_reserved_children:
                     self.logger.info("All subblock jobs done, freeing block %s", pb.name)
@@ -1105,14 +1265,14 @@ class BGSystem (BGBaseSystem):
                 return
 
             #Non-pseudoblock jobs only from here on.
-            block_jobs = _get_jobs_on_block(b.subblock_parent)
+            block_jobs = self._get_jobs_on_block(b.subblock_parent)
             #At this point new for the Q.  Blow everything away!
             if len(block_jobs) != 0:
                 for job in block_jobs:
                     if job.getId() in self.killing_jobs.keys():
                         pass
-                    nuke_job(job, b.name)  
-            b.state = "cleanup"
+                    nuke_job(job, b.name)
+            b.state = 'cleanup'
 
             #don't track jobs whose kills have already completed.
             check_killing_jobs() #reap any ongoing kills
@@ -1163,12 +1323,20 @@ class BGSystem (BGBaseSystem):
 
             #acquire states: this is going to be the biggest pull from the control system.
             bf_start = time.time()
+            hardware_fetch_time = Cobalt.Util.Timer()
+            io_cache_time = Cobalt.Util.Timer()
+            block_cache_time = Cobalt.Util.Timer()
+            block_modification_time = Cobalt.Util.Timer()
+
             self.bridge_in_error = False
             try:
                 #grab hardware state
                 #self.logger.debug("acquiring hardware state")
                 # Should this be locked?
+                hardware_fetch_time.start()
                 self.compute_hardware_vec = pybgsched.getComputeHardware()
+                hardware_fetch_time.stop()
+                self.logger.log(1, "hardware_fetch time: %f", hardware_fetch_time.elapsed_time)
             except:
                 self.logger.error("Error communicating with the bridge to update partition state information.")
                 self.bridge_in_error = True
@@ -1176,8 +1344,11 @@ class BGSystem (BGBaseSystem):
             try:
                 #self.logger.debug("acquiring block states")
                 #grab block states
+                block_cache_time.start()
                 bf = pybgsched.BlockFilter()
                 bg_cached_blocks = SWIG_vector_to_list(pybgsched.getBlocks(bf))
+                block_cache_time.stop()
+                self.logger.log(1, "block_cache time: %f", block_cache_time.elapsed_time)
             except:
                 self.logger.error("Error communicating with the bridge to update block information.")
                 self.bridge_in_error = True
@@ -1189,8 +1360,9 @@ class BGSystem (BGBaseSystem):
 
             # build an IOLinks status cache, a midplane only goes in here if
             # it will not boot due to failed links
-            failed_io_midplane_cache = set()
-            io_link_to_mp_dict = {}
+            io_cache_time.start()
+            self.failed_io_midplane_cache = set()
+            self.io_link_to_mp_dict = {}
             for mp_a in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['A'])):
                 for mp_b in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['B'])):
                     for mp_c in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['C'])):
@@ -1205,39 +1377,40 @@ class BGSystem (BGBaseSystem):
                                     self.logger.warning("No IO links found for midplane: %s". mp)
                                 else:
                                     self.logger.warning("Unknown RunntimeError encountered!")
-                                failed_io_midplane_cache.add(mp)
-                                io_link_to_mp_dict[mp] = []
+                                self.failed_io_midplane_cache.add(mp)
+                                self.io_link_to_mp_dict[mp] = []
                                 continue
 
                             io_links = SWIG_vector_to_list(iolv)
                             if len(io_links) < 4: #FIXME: Make this a threshold
-                                failed_io_midplane_cache.add(mp)
-                            io_link_to_mp_dict[mp] = io_links
+                                self.failed_io_midplane_cache.add(mp)
+                            self.io_link_to_mp_dict[mp] = io_links
+            io_cache_time.stop()
+            self.logger.log(1, "io_cache time: %f", io_cache_time.elapsed_time)
 
             # first, set all of the nodecards to not busy
             for nc in self.node_card_cache.values():
                 nc.used_by = ''
             self._blocks_lock.acquire()
             now = time.time()
-            bridge_partition_cache = {}
+            self.bridge_partition_cache = {}
             self.offline_blocks = []
             missing_blocks = set(self._blocks.keys())
             new_blocks = []
 
+            block_modification_time.start()
             try:
                 for block in bg_cached_blocks:
                     #find and update idle based on whether control system reads block as
                     #free or not.
 
-                    bridge_partition_cache[block.getName()] = block
+                    self.bridge_partition_cache[block.getName()] = block
                     missing_blocks.discard(block.getName())
                     if self._blocks.has_key(block.getName()):
                         b = self._blocks[block.getName()]
                         b.state = _get_state(block)
                         if b.state == 'idle' and b.freeing == True:
                             b.freeing = False
-                            for child in b._children:
-                                b.freeing = False
                         b._update_node_cards()
                         if b.reserved_until and now > b.reserved_until:
                             b.reserved_until = False
@@ -1246,8 +1419,10 @@ class BGSystem (BGBaseSystem):
                         new_blocks.append(block)
 
                 # remove the missing partitions and their wiring relations
+                really_subblocks = []
                 for bname in missing_blocks:
                     if self._blocks[bname].size < 128 and self._blocks[bname].subblock_parent not in missing_blocks:
+                        really_subblocks.append(bname)
                         continue
                     self.logger.info("missing block removed: %s", bname)
                     b = self._blocks[bname]
@@ -1257,6 +1432,9 @@ class BGSystem (BGBaseSystem):
                     if b.name in self._managed_blocks:
                         self._managed_blocks.discard(b.name)
                     del self._blocks[b.name]
+
+                for bname in really_subblocks:
+                    missing_blocks.remove(bname)
 
                 bp_cache = {}
 
@@ -1276,8 +1454,10 @@ class BGSystem (BGBaseSystem):
 
                 # if partitions were added or removed, then update the relationships between partitions
                 if len(missing_blocks) > 0 or len(new_blocks) > 0:
+                    self.logger.debug("update_block_state updating relatives for new blocks.")
                     self.update_relatives()
-
+                block_modification_time.stop()
+                self.logger.log(1, "block_modification time: %f", block_modification_time.elapsed_time)
                 bf_end = time.time()
                 self.logger.log(1,'update loop init: %f sec',bf_end - bf_start)
 
@@ -1287,31 +1467,30 @@ class BGSystem (BGBaseSystem):
                         b.state = 'idle'
 
                 block_update_start = time.time()
+                cleanup_time = Cobalt.Util.Timer()
+                recompute_block_state_time = Cobalt.Util.Timer()
                 for b in self._blocks.values():
-
-                    #if b not in self._managed_blocks:
-                    #    continue
-
+                    cleanup_time.start()
                     if b.cleanup_pending:
                         if b.used_by:
-                            # if the partition has a pending cleanup request, then set the state so that cleanup will be
-                            # performed
-                            self.logger.debug("USED BY SET TO: %s", b.used_by)
+                            # start a requested job cleanup
                             _start_block_cleanup(b)
                             if b.state not in ['cleanup', 'cleanup-initiate']:
                                 b.cleanup_pending = False
                                 b.freeing = False
-                                self.logger.info("partition %s: cleaning complete", b.name)
-
+                                self.logger.info("partition %s: cleaning complete",
+                                        b.name)
                         else:
-                            # if the cleanup has already been initiated, then see how it's going
+                            # check ongoing cleanup
                             busy = []
                             parts = list(b._children)
                             parts.append(b)
                             for part in parts:
-                                if part.block_type != 'pseudoblock' and bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free:
+                                if (part.block_type != 'pseudoblock' and
+                                        self.bridge_partition_cache[part.name].getStatus() != pybgsched.Block.Free):
                                     busy.append(part.name)
-                                elif part.block_type == 'pseudoblock' and bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free:
+                                elif (part.block_type == 'pseudoblock' and
+                                        self.bridge_partition_cache[part.subblock_parent].getStatus() != pybgsched.Block.Free):
                                     busy.append(part.name)
                             if len(busy) > 0:
                                 _set_block_cleanup_state(b)
@@ -1322,212 +1501,46 @@ class BGSystem (BGBaseSystem):
                                 b.freeing = False
                                 self.logger.info("partition %s: cleaning complete", b.name)
 
-                    if b.block_type == "pseudoblock":
-                        #we don't get this from the control system here.
-                        #b.state = 'idle'
-                        if b.state != 'idle':
-                            continue #already sorted this guy out.
-
-                        is_allocated = self.check_allocated(b)
-                        if is_allocated: #we aren't going to be busy if we're not allocated (for much longer)
-                            #but we might be busy
-                            block_jobs = _get_jobs_on_block(b.subblock_parent)
-                            for job in block_jobs:
-                                if job.getCorner() in [node.name for node in b.nodes] and job.getComputeNodesUsed() == b.size: 
-                                    #If I have a backend job on my nodes, then I'm busy.
-                                    b.state = "busy"
-                                    #we're really busy and need to mark relatives.
-                                    for block in b._relatives:
-                                        if block.state == "idle":
-                                            block.state = "blocked (%s)" % (b.name)
-                                    break
-
-                        if b.state == ['busy', 'allocated']:
-                            continue #yeah we're done with this block
-
-                        is_blocked = self.check_subblock_blocked(b)
-                        if is_blocked:
-                            continue #we are state blocked.
-
-                        #Remember: bad hardware takes out all child pseudoblocks as well, since you
-                        #can't boot the parent.
-                        #bad hardware hoits!
-                        subblock_parent_block = self._blocks[b.subblock_parent]
-                        for nc in subblock_parent_block.node_cards:
-                           if nc.used_by:
-                               #block if other stuff is running on our node cards.  
-                               #remember subblock jobs can violate this 
-                               #TODO: test with subblock
-                               if b.subblock_parent != nc.used_by or b.subblock_parent == b.name: 
-                                   b.state = "blocked (%s)" % nc.used_by
-
-                           if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
-                               #if control system reports down, then we're really down.
-                               b.state = "hardware offline (%s): nodecard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
-                               self.offline_blocks.append(b.name)
-                               if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
-                                   #we are in a soft error and should attempt to free
-                                   if not nc.used_by in freeing_error_blocks:
-                                       try:
-                                           pybgsched.Block.initiateFree(nc.used_by)
-                                           self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
-                                       except RuntimeError:
-                                           pass
-                                       except:
-                                           self.logger.debug("error initiating free for soft error block.")
-                                       freeing_error_blocks.append(nc.used_by)
-                         # I think we can fall into cleanup code here?
-
-
-                    #check the state of the block's IOLinks.  If not all are connected, put the block into an error state.
-                    #if this block has a midplane in the insuficient link list, then we know it's bad.
-                    if b.midplanes.intersection(failed_io_midplane_cache):
-                        b.state = "Insufficient IO Links"
-                        continue
-                    link_offline = False
-                    for mp in b.midplanes:
-                        dead_ion_links = 0
-                        for link in io_link_to_mp_dict[mp]:
-                            if link.getState() != pybgsched.IOLink.Available:
-                                b.state = "hardware offline (%s) IOLink %s" %(link.getStateString(), link.getDestinationLocation())
-                                link_offline = True
-                                break
-                            if link.getIONodeState() != pybgsched.Hardware.Available:
-                                dead_ion_links += 1
-                                if dead_ion_links > 4: #FIXME: make this configurable
-                                    b.state = "hardware offline (%s) IO Node %s" % (link.getIONodeStateString(),link.getDestinationLocation())
-                                    link_offline = True
-                                    break
-                        if link_offline:
-                            break
-                    if link_offline:
-                        continue
-
-                    # We have a prayer of booting now: so why shouldn't we boot this block?
-                    # The answer is below:
-
-                    if b.state == "busy":
-                        # FIXME: this should not be necessary any longer since all jobs reserve the resources. --brt
-                        # when the partition becomes busy, if a script job isn't reserving it, then release the reservation
-                        if not b.reserved_by:
-                            b.reserved_until = False
-                        # We may not actually be busy, if not then fall back to idle and take a pass below.
-                        block_jobs = _get_jobs_on_block(b.subblock_parent) 
-                        if b.block_type != "pseudoblock" and len(block_jobs) == 1 and block_jobs[0].getComputeNodesUsed() == b.size:
-                            #no, we really are busy.  Make sure our pseudoblock children are marked as such.
-                            for block in b._children:
-                                if block.state == "idle":
-                                    block.state = "blocked (%s)" % b.name
-                        elif b.size > 128: #FIXME: make this settable in the cobalt.conf
-                            pass #Yep, busy.  Probably a script job
-
-                    elif b.state not in ["cleanup","cleanup-initiate"] and b.block_type != 'pseudoblock':
-                        #block out childeren involved in the cleaning partitons
-                        is_allocated = self.check_allocated(b)
-                        if (not is_allocated) and (b.block_type != 'pseudoblock') and (bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free) and (b.used_by):
-                            # FIXME: should we check the partition state or use reserved by == NULL instead?  now that all jobs
-                            # reserve resources, a partition without a reservation that is also in use should probably be cleaned
-                            # up regardless of partition state.  --brt
-
-                            # if the job assigned to the partition has completed, then set the state so that cleanup will be
-                            # performed
+                    if b.state not in ["cleanup","cleanup-initiate"] and b.block_type != 'pseudoblock':
+                        # Cleanup blocks that have had their jobs terminate early.
+                        (b.block_type != 'pseudoblock') and (self.bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free) and (b.used_by)
+                        if (not b.reserved_by and
+                                b.block_type != 'pseudoblock' and
+                                self.bridge_partition_cache[b.name].getStatus() == pybgsched.Block.Free and
+                                b.used_by):
+                            #FIXME: as noted by Brian, we should make this anything without a reservation.
+                            # more likely set a flag to note blocks running outside of Cobalt.
                             _start_block_cleanup(b)
                             continue
+                    cleanup_time.stop()
 
-                        freeing_error_blocks = []
-                        for nc in b.node_cards:
-                            if nc.used_by:
-                                #block if other stuff is running on our node cards.  
-                                #remember subblock jobs can violate this 
-                                b.state = "blocked (%s)" % nc.used_by
+                self.logger.log(1, 'cleanup_time: %f', cleanup_time.elapsed_time)
 
-                            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
-                                #if control system reports down, then we're really down.
-                                b.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
-                                self.offline_blocks.append(b.name)
-                                #FIXME: need to make this check isMetaState and check node states
-                                if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
-                                    #we are in a soft error and should attempt to free
-                                    if not nc.used_by in freeing_error_blocks:
-                                        try:
-                                            pybgsched.Block.initiateFree(nc.used_by)
-                                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
-                                        except RuntimeError:
-                                            pass
-                                        except:
-                                            self.logger.debug("error initiating free for soft error block.")
-                                        freeing_error_blocks.append(nc.used_by)
-                                break
+                recompute_block_state_time.start()
+                self._recompute_block_state()
+                recompute_block_state_time.stop()
+                self.logger.log(1,'recompute_block_state: %f', recompute_block_state_time.elapsed_time)
 
-                        for nc in b.passthrough_node_cards:
-                            if (self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available and
-                                    (not self.get_nodecard_isMetaState(nc.name))):
-                                #the nodeboard itself is in error, nothing getting through.
-                                b.state = "hardware offline: passthrough nodeboard %s" % nc.name
-                                self.offline_blocks.append(b.name)
-                                break
-
-                        for sw in b.switches:
-                            if self.get_switch_state(sw) != pybgsched.Hardware.Available:
-                                b.state = "hardware offline: switch %s" % sw 
-                                self.offline_blocks.append(b.name)
-                                break
-
-                        for wire in b.wires:
-                            if self.get_wire_state(wire) != pybgsched.Hardware.Available:
-                                b.state = "hardware offline: wire %s" % wire
-                                self.offline_blocks.append(b.name)
-                                break
-
-                        #wiring conflicts are caught by parent/child
-                        for dep_name in b._wiring_conflicts:
-                            if self._blocks[dep_name].state in ["busy", "allocated", "cleanup"]:
-                                b.state = "blocked-wiring (%s)" % dep_name
-                                break
-
+                block_update_end = time.time()
+                self.logger.log(1,'block_update overall: %f', block_update_end - block_update_start)
             except:
                 self.logger.error("error in update_block_state", exc_info=True)
-            block_update_end = time.time()
-            self.logger.log(1,'block_update %f', block_update_end - block_update_start)
             self._blocks_lock.release()
 
             Cobalt.Util.sleep(10)
         #End while(true)
 
-    def check_IO_connected(self, block, hardware):
-        pass
 
-    def check_sufficient_IO(self, block, hardware):
-        pass
-
-    def check_allocated(self, b):
-        '''Check to see if this block is allocated by cobalt to a job.
-
-           If so, then mark all of this block's parents and children as
-           blocked, by the allocated partition.
-
-        '''
-        allocated = False
-        if b.used_by:
-            b.state = "allocated"
-            allocated = True
-            for block in b._relatives:
-                if block.state == "idle":
-                    block.state = "blocked (%s)" % (b.name,)
-        return allocated
-
-    def initiate_cleanup(self, block):
-        pass
 
     def check_subblock_blocked(self, block):
         '''mark a subblock as blocked based on relative's activities.
            return true if we are blocked (don't really have to update status beyond that.
-         
+
         '''
-        
+
         retval = False
         for rel in block._relatives:
-            if rel.state in ['busy', 'allocated', 'cleanup', 'cleanup-initiate']:
+            if rel.state in ['busy', 'allocated', 'cleanup', 'cleanup-initiate', 'foo']:
                 if rel.name != block.subblock_parent:
                     retval = True
                     block.state = 'blocked (%s)' % rel.name
@@ -1549,42 +1562,9 @@ class BGSystem (BGBaseSystem):
                         retval = True
                         block.state = 'blocked (%s)' % rel.name
                         break
-                    
+
         return retval
 
-    def check_nodeboard_offline(self, block, freeing_error_blocks):
-     
-        for nc in b.node_cards:
-            if nc.used_by:
-                #block if other stuff is running on our node cards.  
-                #remember subblock jobs can violate this 
-                #TODO: test with subblock
-                b.state = "blocked (%s)" % nc.used_by
-            
-            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
-                #if control system reports down, then we're really down.
-                b.state = "hardware offline (%s): nodecard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
-                self.offline_blocks.append(b.name)
-                if self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and nc.used_by != '':
-                    #we are in a soft error and should attempt to free
-                    if not nc.used_by in freeing_error_blocks:
-                        try:
-                            #_start_block_cleanup(b)
-                            pybgsched.Block.initiateFree(nc.used_by)
-                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
-                        except RuntimeError:
-                            pass
-                        except:
-                            self.logger.debug("error initiating free for soft error block.")
-                        freeing_error_blocks.append(nc.used_by)
-
-        return
-
-    def check_switch_offline(self, block):
-        pass
-
-    def check_wiring_conflict(self, block):
-        pass
 
 
     def _mark_block_for_cleaning(self, block_name, jobid):
