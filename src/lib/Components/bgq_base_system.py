@@ -1214,13 +1214,9 @@ class BGBaseSystem (Component):
                 self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
-                part.state = "allocated"
-                for p in part._parents:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-                for p in part._children:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
+                if part.state == "idle":
+                    part.state = "allocated"
+                    self._recompute_block_state()
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._blocks_lock.release()
@@ -1334,12 +1330,7 @@ class BGBaseSystem (Component):
                         block.state = 'allocated'
                     self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
                         time.asctime(time.gmtime(new_time)))
-                    for b in block._parents:
-                        if b.state == "idle":
-                            b.state = "blocked (%s)" % (block.name,)
-                    for b in block._children:
-                        if b.state == "idle":
-                            b.state = "blocked (%s)" % (block.name,)
+                    self._recompute_block_state()
                     rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
