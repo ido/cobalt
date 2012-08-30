@@ -16,6 +16,7 @@ import copy
 import Cobalt
 import re
 import Cobalt.Util
+from Cobalt.Util import get_config_option
 from Cobalt.Data import Data, DataDict
 from Cobalt.Exceptions import JobValidationError, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
@@ -440,6 +441,14 @@ class Block (Data):
         self.subblock_parent = self.name #parent block to boot for subblocks.  If not a subblock, will be self.
 
         self.block_type = spec.get('block_type', None)
+
+        #rebooting-related variables
+        self.current_reboots = 0
+        self.max_reboots = get_config_option("bgsystem","max_reboots", "unlimited")
+        if self.max_reboots.lower() == 'unlimited':
+            self.max_reboots = None
+        else:
+            self.max_reboots = int(self.max_reboots)
 
         if self.block_type == None:
             if self.size < subrun_only_size:
