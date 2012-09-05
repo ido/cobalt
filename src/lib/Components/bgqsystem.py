@@ -1583,6 +1583,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.info("block %s: block marked for cleanup", block_name)
                 block.state = "cleanup"
                 block.freeing = True
+                block.current_reboots = 0
                 #if this block is going to cleanup, the by definition, 
                 #the reservation (aka "the Party") is over.
                 #self.reserve_resources_until(block_name, None, jobid)
@@ -1822,14 +1823,16 @@ class BGSystem (BGBaseSystem):
 
     def check_pgroups_wait_reboot (self):
 
-        '''Sometimes we have to wait until we can reboot the block. 
+        '''Sometimes we have to wait until we can reboot the block.
         This is what allows us to do so.
 
-        A block can move from this to starting the job, checking an ongoing boot, it can also initiate a boot if the block is seen as free.
+        A block can move from this to starting the job, checking an ongoing
+        boot, it can also initiate a boot if the block is seen as free.
 
         '''
         #TODO: check to see if the block is healthy enough to boot,  if we have a sudden case of dead-link,
         #bad-hardware, et al. we should totally bail out.
+
 
         if self.suspend_booting:
             #booting isn't happening right now, just exit.
@@ -1837,11 +1840,18 @@ class BGSystem (BGBaseSystem):
 
         progressing_pgroups = []
         for pgroup in self.pgroups_wait_reboot:
+
             if not self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
                 self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                                         pgroup.location))
                 continue
             parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
+            cobalt_block = self._blocks[pgroup.location[0]]
+            if cobalt_block.max_reboots and cobalt_block.current_reboots >= cobalt_block.max_reboots:
+                self._fail_boot(pgroup, pgroup.location[0],
+                        "%s: job killed: too many boot attempts.")
+                continue
+            cobalt_block.current_reboots += 1
 
             reboot_block = self.get_compute_block(parent_block_name)
             if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
@@ -1970,11 +1980,14 @@ class BGSystem (BGBaseSystem):
         booted_blocks = []
         #check the reservation, if we still have the block, then proceed to start, otherwise die here.
 
-        if not self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
-            self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
-                                                                        pgroup.location))
-            #pgroup.exit_status = 255
+        if not self.reserve_resources_until(pgroup.location, 
+                float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
+            self._fail_boot(pgroup, pgroup.location[0], 
+                    "%s: the internal reservation on %s expired; job has been terminated" % (pgroup.label,
+                        pgroup.location))
             return
+        cobalt_block = self._blocks[pgroup.location[0]]
+        cobalt_block.current_reboots = 0
         try:
             self.logger.info("%s: Forking task on %s.",pgroup.label, pgroup.location[0])
             pgroup.start()
@@ -2157,6 +2170,7 @@ class BGSystem (BGBaseSystem):
         return my_process_groups
     signal_process_groups = exposed(query(signal_process_groups))
 
+    @exposed
     def validate_job(self, spec):
         #can we do this earlier, it really sucks to figure out that your job can't run
         #when you're being queued and in the cqm "Running" state.
@@ -2168,20 +2182,19 @@ class BGSystem (BGBaseSystem):
         spec = BGBaseSystem.validate_job(self, spec)
         #No kernel stuff.  That will go here.
         return spec
-    validate_job = exposed(validate_job)
 
     @exposed
     def halt_booting(self, user):
         self.logger.critical("Booting halted by: %s", user)
         self.suspend_booting = True
         return
-    
+
     @exposed
     def resume_booting(self, user):
         self.logger.critical("Booting resumed by: %s", user)
         self.suspend_booting = False
         return
-    
+
     @exposed
     def booting_status(self):
         return self.suspend_booting
