@@ -1,5 +1,33 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.9
+
+* Fixed an issue where a job could choose a block for draining that is blocked
+by a pending reservation.  This would cause the backfill time to collapse to zero.
+* Added code to take blocks offline if passthrough nodeboards reported their state
+as in error.  It does not offline them if it is only a compute node down, it must
+be the nodeboard itself in error as would be set by a BOARD_IN_ERROR control action.
+
+Changes to 0.99.8
+
+* Fixed an issue where dimensions without cables (like the A,B, and C
+  dimensions on a 2 midplane system) would cause the system component to fail
+  on boot.
+
+Changes to 0.99.7
+
+* Cable errors are now properly detected
+* IO Node errors in available links are detected
+* Due to changes, libpybgsched v 0.1.1 is required.  This also
+  means the V1R1M1 driver changes can also be enabled.
+
+Changes to 0.99.6
+
+* Performance improvements over 0.99.5 in update_block_state and wiring 
+  conflict detection.  This makes the partadm commands far more responsive.
+* Corrected an error in a block's children that affected cold (non-statefile)
+  startup.
+
 Changes to 0.99.0pre36
 
 * Fixed bug in resource reservation that would leave a reserved partition in

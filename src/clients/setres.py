@@ -146,15 +146,13 @@ if __name__ == '__main__':
         dsec = 60 * minutes
     if start:
         try:
-            (day, rtime) = start.split('-')
-            (syear, smonth, sday) = [int(field) for field in day.split('_')]
-            (shour, smin) = [int(field) for field in rtime.split(':')]
-            starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
+            starttime = Cobalt.Util.parse_datetime(start)
             print "Got starttime %s" % (sec_to_str(starttime))
         except ValueError:
-            print "Error: start time '%s' is invalid" % start
-            print "start time is expected to be in the format: YYYY_MM_DD-HH:MM"
+            print >> sys.stderr, "Error: start time '%s' is invalid" % start
+            print >> sys.stdrrr, "start time is expected to be in the format: YYYY_MM_DD-HH:MM"
             raise SystemExit, 1
+            starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
     if '-u' in sys.argv[1:]:
         user = [opt[1] for opt in opts if opt[0] == '-u'][0]
         for usr in user.split(':'):

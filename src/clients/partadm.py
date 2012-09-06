@@ -31,7 +31,7 @@ Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
 
-Must supply one of -a or -d or -l or -start or -stop or --queue
+Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
 
 '''
@@ -113,12 +113,13 @@ def print_block_bgq(block_dicts):
 
         for key,value in block.iteritems():
 
-            if key in ['node_cards','nodes']:
-                if block['size'] >= 128 and key == 'nodes':
+            if key in ['passthrough_node_card_list', 'node_card_list','node_list']:
+                if block['size'] >= 512 and key == 'node_card_list':
                     continue
-                else:
-                    header_list.append(key)
-                    value_list.append(' '.join([v['name'] for v in value]))
+                if block['size'] >= 128 and key == 'node_list':
+                    continue
+                header_list.append(key)
+                value_list.append(' '.join([v['name'] for v in value]))
             elif key == 'wire_list':
                 header_list.append(key)
                 value_list.append(' '.join([v['id'] for v in value]))
@@ -284,13 +285,14 @@ if __name__ == '__main__':
 
     if opts.blockinfo:
         if sys_type == 'bgq':
-            print_block(system.get_blocks([{'name':part,'node_cards':'*',
-                'subblock_parent':'*','nodes':'*', 'scheduled':'*', 'funcitonal':'*',
+            print_block(system.get_blocks([{'name':part,'node_card_list':'*',
+                'subblock_parent':'*','midplane_list':'*','node_list':'*', 'scheduled':'*', 'funcitonal':'*',
                 'queue':'*','parents':'*','children':'*','reserved_until':'*',
                 'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
-                'wiring_conflict_list':'*', 'relatives':'*'} 
+                'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*', 
+                'passthrough_node_card_list':'*'}
                 for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions([{'name':part,'node_card_list':'*',

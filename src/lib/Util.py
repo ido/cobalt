@@ -121,6 +121,28 @@ def get_config_option(section, option, *args):
     return value
 
 
+def parse_datetime(datetime_str):
+    '''Try a variety of formats, if one gives a valid datetime object, return that.
+
+    '''
+    dt = None
+    fmts = []
+    fmts.append("%Y_%m_%d-%H:%M") #historical setres-format
+    fmts.append("%Y-%m-%d-%H:%M")
+    fmts.append("%Y-%m-%d-%H.%M") #db2-style
+    fmts.append("%Y-%m-%d-%H.%M.%S")
+    fmts.append("%Y-%m-%d-%H.%M.%S.%f")
+    for fmt in fmts:
+        try:
+            dt = time.mktime(time.strptime(datetime_str, fmt))
+            break
+        except ValueError:
+            #ignore value errors for now
+            pass
+    if dt == None:
+        raise ValueError("Bad datetime format string.")
+    return dt
+
 def sleep(t):
     
     """The python sleep uses a select() to handle sleep to allow for
@@ -819,18 +841,16 @@ def sec_to_str(t):
     offset = None
     tzname = None
 
-    
-
     if no_pytz:
         timestamp = time.strftime("%c", time.localtime(t))
-        
+
         tzh = 0
         tzm = 0
 
         if time.strftime("%Z", time.localtime(t)).find('DT') != -1:
             tzh = (time.timezone / 3600) - 1
             tzm = time.timezone / 60 % 60
-        
+
         else:
             tzh = time.timezone / 3600
             tzm = time.timezone / 60 % 60
@@ -846,7 +866,7 @@ def sec_to_str(t):
             tz = timezone('UTC')
 
         dt = datetime.fromtimestamp(t, tz)
-        
+
         timestamp = dt.strftime("%c")
         offset = dt.strftime("%z")
         tzname = dt.strftime("(%Z)")

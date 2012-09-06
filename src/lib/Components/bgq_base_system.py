@@ -16,6 +16,7 @@ import copy
 import Cobalt
 import re
 import Cobalt.Util
+from Cobalt.Util import get_config_option
 from Cobalt.Data import Data, DataDict
 from Cobalt.Exceptions import JobValidationError, ComponentLookupError
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
@@ -216,12 +217,19 @@ class Wire (object):
     def port2_mp(self):
         return self.port2.split('_')[1]
 
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
 class Node (object):
 
     def __init__(self, spec):
         #can be invoked with a spec string from the bridge API
         self.nodeboard = spec.get("nodeboard")
         self.name = spec.get("name") # RXX-MY-NZZ-JAA
+        self.id = self.name
         self.nodecard_pos = spec.get("nodecard_pos") #NZZ
         self.node_pos = spec.get("position") # JAA
         self.status = spec.get("status", "A")
@@ -276,6 +284,7 @@ class NodeCard (object):
        they are also something we can fake-control without the control system.
     """
     def __init__(self, name, state="idle"):
+        self.id = name
         self.name = name
         self.nodecard =  int(nodecard_exp.search(name).groups()[0])#NXX
         self.rack = 0 #get from control system, for EAS this is fine
@@ -305,9 +314,9 @@ class NodeCard (object):
         return self.id == other.id
 
     #def _update_nodes(self):
-        
+
     #TODO: make sure to check my nodes to see if they have failed, if they've tanked, I've tanked.
-       
+
     def extract_nodes_by_extent(self, corner, extents):
         '''Get a list of nodes that are included by a corner and extent on this board.
 
@@ -319,7 +328,7 @@ class NodeCard (object):
         '''
 
         ret_nodes = []
-        
+
         #Note that nodes can be anywhere on the nodeboard in a block.  I think we have to scan each time.
         for node in self.nodes:
             for i in range(0,5):
@@ -397,14 +406,22 @@ class Block (Data):
         self.state = spec.pop("state", "idle")
         self.tag = spec.get("tag", "partition")
         self.bridge_block = None
-        self.node_cards = spec.get("node_cards", [])
-        self.nodes = spec.get("nodes", []) 
+        self.midplanes = set(spec.get("midplanes", []))
+        self.node_cards = set(spec.get("node_cards", []))
+        self.passthrough_node_cards = set(spec.get("passthrough_node_cards", []))
+        self.nodes = set(spec.get("nodes", []))
         self.switches = spec.get("switches", [])
         self.io_links = spec.get("io_links", [])
         self.reserved_until = False
         self.reserved_by = None
         self.used_by = None
         self.cleanup_pending = False
+        self.midplane_geometry = spec.get("midplane_geometry",[-1,-1,-1,-1])
+        self.node_geometry = spec.get("node_geometry",
+                [i*4 for i in self.midplane_geometry])
+        if len(self.node_geometry) == 4:
+            self.node_geometry.extend([2])
+
 
         self.freeing = False
         # this holds block names
@@ -414,7 +431,7 @@ class Block (Data):
 
         self._relatives = set() #list of blocks that have overlapping resources with this one
         self._parents = set() #relatives that are a superset of me
-        self._childeren = set() #relatives that are proper subsets of me
+        self._children = set() #relatives that are proper subsets of me
 
         self.wires = spec.pop('wires',set()) #list of (src, dst) tuples for cables linking midplanes
         self.admin_failed = False #set this to true if a partadm --fail is issued
@@ -424,6 +441,14 @@ class Block (Data):
         self.subblock_parent = self.name #parent block to boot for subblocks.  If not a subblock, will be self.
 
         self.block_type = spec.get('block_type', None)
+
+        #rebooting-related variables
+        self.current_reboots = 0
+        self.max_reboots = get_config_option("bgsystem","max_reboots", "unlimited")
+        if self.max_reboots.lower() == 'unlimited':
+            self.max_reboots = None
+        else:
+            self.max_reboots = int(self.max_reboots)
 
         if self.block_type == None:
             if self.size < subrun_only_size:
@@ -435,8 +460,10 @@ class Block (Data):
         if self.block_type == "normal":
             self.subblock_parent = self.name
             for nc in self.node_cards:
-                self.nodes.extend(nc.nodes)
+                self.nodes.update(nc.nodes)
         elif self.block_type == "pseudoblock":
+            self.midplane_geometry = [0,0,0,0]
+            self.node_geometry = get_extents_from_size(self.size)
             #these are not being tracked by the control system, and are not allocated by it
             #these are just subrun targets.
             self.subblock_parent = spec.get("subblock_parent")
@@ -445,13 +472,12 @@ class Block (Data):
                 raise KeyError('extents not found.  Subblock not properly generated!')
             self.corner_node = spec.pop("corner_node", None)
             if self.corner_node == None:
-                raise KeyError('corner_node not found.  Subblock not properly generated!')    
+                raise KeyError('corner_node not found.  Subblock not properly generated!')
             if self.size >= nodes_per_nodecard:
                 for nc in self.node_cards:
-                    self.nodes.extend(nc.nodes)
+                    self.nodes.update(nc.nodes)
             else:
                 #parse name to get corner node
-
                 node_pos = int(node_position_exp.search(self.corner_node).groups()[0])
                 nodecard_pos = int(nodecard_exp.search(self.corner_node).groups()[0])
                 #sanity check extents
@@ -460,8 +486,7 @@ class Block (Data):
                 if not stat:
                     raise RuntimeError("Invalid corner node for chosen block size.")
                 #pull in all nodenames by coords from nodecard.
-                nc = self.node_cards[0] #only one node_card is in use in this case.
-                self.nodes.extend(nc.extract_nodes_by_extent(corner_coords, get_extents_from_size(self.size)))
+                nc = list(self.node_cards)[0] #only one node_card is in use in this case.
 
     def _update_node_cards(self):
         if self.state == "busy":
@@ -492,11 +517,16 @@ class Block (Data):
         return [block.name for block in self._relatives if self.is_child(block)]
     children = property(_get_childeren)
 
+    node_list = property(lambda self: list(self.nodes))
+    node_card_list = property(lambda self: list(self.node_cards))
+    midplane_list = property(lambda self: list(self.midplanes))
     wire_list = property(lambda self: list(self.wires))
     wiring_conflict_list = property(lambda self: list(self._wiring_conflicts))
+    passthrough_node_card_list = property(lambda self: list(self.passthrough_node_cards))
+    #passthrough_midplane_list = property(lambda self: list(self.passthrough_midplanes))
+
     def _get_node_names (self):
         return [n.name for n in self.nodes]
-
     node_names = property(_get_node_names)
 
     def __str__ (self):
@@ -510,22 +540,18 @@ class Block (Data):
         it does. Just a test.
 
         '''
-
         if self.name == block.name:
             return False #don't overlap with yourself.
-
-        b1_nc_names = set(self.node_card_names)
-        b2_nc_names = set(block.node_card_names)
-
-        if not (b1_nc_names & b2_nc_names):
+        b1_nc = self.node_cards
+        b2_nc = block.node_cards
+        if not (b1_nc & b2_nc):
             return False
-
-        b1_node_names = set(self.node_names)
-        b2_node_names = set(block.node_names)
-
-        if not (b1_node_names & b2_node_names):
-            return False
-
+        if (len(b1_nc) == 1 and
+            len(b2_nc) == 1):
+            b1_nodes = self.nodes
+            b2_nodes = block.nodes
+            if not (b1_nodes & b2_nodes):
+                return False
         return True
 
     def mark_if_overlap(self, block):
@@ -550,19 +576,15 @@ class Block (Data):
 
         if self.name == block.name:
             return False
-
-        b1_nc_names = set(self.node_card_names)
-        b2_nc_names = set(block.node_card_names)
-
-        if not (b1_nc_names >= b2_nc_names):
+        b1_nc = self.node_cards
+        b2_nc = block.node_cards
+        if not (b1_nc >= b2_nc):
             return False
-        if len(b1_nc_names ^ b2_nc_names) == 0:
-            b1_node_names = set(self.node_names)
-            b2_node_names = set(block.node_names)
-
-            if not (b1_node_names >= b2_node_names): 
+        if len(b1_nc ^ b2_nc) == 0:
+            b1_nodes = self.nodes
+            b2_nodes = block.nodes
+            if not (b1_nodes >= b2_nodes):
                 return False
-
         return True
 
     def is_subblock(self, block):
@@ -582,17 +604,17 @@ class Block (Data):
         if self.name == block.name:
             return False
 
-        b1_nc_names = set(self.node_card_names)
-        b2_nc_names = set(block.node_card_names)
-        if (b1_nc_names.isdisjoint(b2_nc_names)):
+        b1_nc = set(self.node_cards)
+        b2_nc = set(block.node_cards)
+        if (b1_nc.isdisjoint(b2_nc)):
             return False
 
-        if (b1_nc_names & b2_nc_names == b2_nc_names):
+        if (b1_nc & b2_nc == b2_nc):
             return True
-        if len(b1_nc_names ^ b2_nc_names) == 0:
-            b1_node_names = set(self.node_names)
-            b2_node_names = set(block.node_names)
-            if (b1_node_names & b2_node_names == b2_node_names):
+        if len(b1_nc ^ b2_nc) == 0:
+            b1_nodes = set(self.nodes)
+            b2_nodes = set(block.nodes)
+            if (b1_nodes & b2_nodes == b2_nodes):
                 return True
         return False
 
@@ -600,10 +622,10 @@ class Block (Data):
 
 class BlockDict (DataDict):
     """Default container for blocks.
-    
+
     Keyed by block name.
     """
-    
+
     item_cls = Block
     key = "name"
 
@@ -666,9 +688,10 @@ class BGBaseSystem (Component):
 
         """
         self.logger.info("%s called add_blocks(%r)", user_name, specs)
-        self.logger.info("%s", self._managed_blocks)
+        self.logger.info("managed_blocks: %s", self._managed_blocks)
         specs = [{'name':spec.get("name")} for spec in specs]
         self._blocks_lock.acquire()
+        self.logger.debug('add_blocks lock acquired')
         try:
             blocks = [
                 block for block in self._blocks.q_get(specs)
@@ -678,6 +701,7 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in add_blocks", exc_info=True)
         self._blocks_lock.release()
+        self.logger.debug('add_blocks lock released')
 
         self._managed_blocks.update([
             block.name for block in blocks
@@ -789,8 +813,8 @@ class BGBaseSystem (Component):
                     b.mark_if_overlap(self._blocks[other_name])
 
             # only a child if the node-level resources are a proper subset of it's parent block.
-            b._parents.update([block for block in b._relatives if block.is_parent(b)])
-            b._children.update([block for block in b._relatives if block.is_child(b)])
+            b._parents.update(set([block for block in b._relatives if b.is_parent(block)]))
+            b._children.update([block for block in b._relatives if b.is_child(block)])
             #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
 
 
@@ -870,7 +894,7 @@ class BGBaseSystem (Component):
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
-        
+
 
     def fail_blocks(self, specs, user_name=None):
         '''Manually put a block into a failed state by admin-action
@@ -892,7 +916,7 @@ class BGBaseSystem (Component):
 
         return ret
     fail_blocks = exposed(fail_blocks)
-    
+
     def unfail_blocks(self, specs, user_name=None):
         '''Bring a block out of a failed state that was entered by an admin action.
 
@@ -910,10 +934,10 @@ class BGBaseSystem (Component):
                 b.admin_failed = False
             else:
                 ret += "%s is not currently failing\n" % p.name
-        
+
         return ret
     unfail_blocks = exposed(unfail_blocks)
-    
+
     def _find_job_location(self, args, drain_blocks=set(), backfilling=False):
         jobid = args['jobid']
         nodes = args['nodes']
@@ -921,23 +945,22 @@ class BGBaseSystem (Component):
         utility_score = args['utility_score']
         walltime = args['walltime']
         #walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
-        forbidden = args.get("forbidden", [])
+        forbidden = set(args.get("forbidden", []))
         required = args.get("required", [])
-       
         #if walltime_prediction_enabled:  # *Adj_Est*
-        #    runtime_estimate = float(walltime_p)  
+        #    runtime_estimate = float(walltime_p)
         #else:
         #    runtime_estimate = float(walltime)
-        
+
+        #scores are apparently floats...?
         best_score = sys.maxint
         best_block = None
-        
+
         available_blocks = set()
-        
+
         requested_location = None
         if args['attrs'].has_key("location"):
             requested_location = args['attrs']['location']
-                
         if required:
             # whittle down the list of required blocks to the ones of the proper size
             # this is a lot like the stuff in _build_locations_cache, but unfortunately, 
@@ -948,10 +971,9 @@ class BGBaseSystem (Component):
                 available_blocks.update(self.cached_blocks[p_name]._children)
 
             possible = set()
-            for p in available_blocks:            
-                possible.add(p.size)
-                
-                
+            for block in available_blocks:
+                possible.add(block.size)
+
             desired_size = 0
             job_nodes = int(nodes)
             for psize in sorted(possible):
@@ -965,7 +987,7 @@ class BGBaseSystem (Component):
                     available_blocks.remove(p)
                 elif requested_location and p.name != requested_location:
                     available_blocks.remove(p)
-            
+
         else:
             for p in self.possible_locations(nodes, queue):
                 skip = False
@@ -976,35 +998,36 @@ class BGBaseSystem (Component):
                 if not skip:
                     if (not requested_location) or (p.name == requested_location):
                         available_blocks.add(p)
-        
+
         available_blocks -= drain_blocks
         now = time.time()
-        
+
         for block in available_blocks:
-            # if the job needs more time than the block currently has available, look elsewhere    
-            if backfilling: 
-                               
+            # if the job needs more time than the block currently has available, look elsewhere
+            if backfilling:
+
                 if block.reserved_by:
                     #if the block is reserved, we don't use predicted walltime to backfill
                     runtime_estimate = float(walltime)
-                
+
          #       if 60 * runtime_estimate > (block.backfill_time - now):      # *Adj_Est*
          #           continue
-                
+
                 if 60*float(walltime) > (block.backfill_time - now):
                     continue
-                
+
             if block.state == "idle":
                 # let's check the impact on blocks that would become blocked
+                #TODO: Hook in here for block weighting function
                 score = 0
                 for p in block.parents:
                     if self.cached_blocks[p].state == "idle" and self.cached_blocks[p].scheduled:
                         score += 1
-                
+
                 # the lower the score, the fewer new blocks will be blocked by this selection
                 if score < best_score:
                     best_score = score
-                    best_block = block        
+                    best_block = block
 
         if best_block:
             return {jobid: [best_block.name]}
@@ -1015,17 +1038,17 @@ class BGBaseSystem (Component):
         if job['attrs'].has_key("location"):
             target_name = job['attrs']['location']
             return self.cached_blocks.get(target_name, None)
-        
+
         drain_block = None
         locations = self.possible_locations(job['nodes'], job['queue'])
-        
+
         for p in locations:
             if not drain_block:
                 drain_block = p
             else:
                 if p.backfill_time < drain_block.backfill_time:
                     drain_block = p
-        
+
         if drain_block:
             # don't try to drain for an entire weekend 
             hours = (drain_block.backfill_time - time.time()) / 3600.0
@@ -1087,25 +1110,25 @@ class BGBaseSystem (Component):
                     if not per_queue[queue_name].has_key(target_block.size):
                         per_queue[queue_name][target_block.size] = []
                     per_queue[queue_name][target_block.size].append(target_block)
-        
+
         for q_name in defined_sizes:
             defined_sizes[q_name] = sorted(defined_sizes[q_name])
-        
+
         self._defined_sizes = defined_sizes
         self._locations_cache = per_queue
         self._not_functional_set = not_functional_set
-    
+
     def find_job_location(self, arg_list, end_times):
         ''' get the best location for a job.
 
         '''
-        
+
         best_block_dict = {}
-        
+
         if self.bridge_in_error:
             #TODO: Make a bridge so that it can be in error.
             return {}
-        
+
         self._blocks_lock.acquire()
         try:
             self.cached_blocks = copy.deepcopy(self.blocks)
@@ -1118,12 +1141,11 @@ class BGBaseSystem (Component):
         # build the cached_blocks structure first
         self._build_locations_cache()
 
-            
         # first, figure out backfilling cutoffs per block (which we'll also use for picking which block to drain)
         job_end_times = {}
         for item in end_times:
             job_end_times[item[0][0]] = item[1]
-            
+
         now = time.time()
         for p in self.cached_blocks.itervalues():
             if p.state == "idle":
@@ -1131,50 +1153,51 @@ class BGBaseSystem (Component):
             else:
                 p.backfill_time = now + 5*60
             p.draining = False
-        
-        for p in self.cached_blocks.itervalues():    
+
+        for p in self.cached_blocks.itervalues():
             if p.name in job_end_times:
                 if job_end_times[p.name] > p.backfill_time:
                     p.backfill_time = job_end_times[p.name]
-                
+
                 for parent_name in p.parents:
                     parent_block = self.cached_blocks[parent_name]
                     if p.backfill_time > parent_block.backfill_time:
                         parent_block.backfill_time = p.backfill_time
-        
+
         for p in self.cached_blocks.itervalues():
             if p.backfill_time == now:
                 continue
-            
             for child_name in p.children:
                 child_block = self.cached_blocks[child_name]
                 if child_block.backfill_time == now or child_block.backfill_time > p.backfill_time:
                     child_block.backfill_time = p.backfill_time
 
-        
+
         # first time through, try for starting jobs based on utility scores
         drain_blocks = set()
-        
+
         for job in arg_list:
             block_name = self._find_job_location(job, drain_blocks)
             if block_name:
                 best_block_dict.update(block_name)
                 break
-            
+
             location = self._find_drain_block(job)
             if location is not None:
-                for p_name in location.parents:
-                    drain_blocks.add(self.cached_blocks[p_name])
-                for p_name in location.children:
-                    drain_blocks.add(self.cached_blocks[p_name])
-                    self.cached_blocks[p_name].draining = True
-                drain_blocks.add(location)
-                #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
-                location.draining = True
-        
+                if ((location.name not in job['forbidden']) and
+                        location._parents.isdisjoint(set(job['forbidden']))):
+                    for p_name in location.parents:
+                        drain_blocks.add(self.cached_blocks[p_name])
+                    for p_name in location.children:
+                        drain_blocks.add(self.cached_blocks[p_name])
+                        self.cached_blocks[p_name].draining = True
+                    drain_blocks.add(location)
+                    #self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    location.draining = True
+
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_block_dict:
-            
+
             # arg_list.sort(self._walltimecmp)
 
             for args in arg_list:
@@ -1194,26 +1217,22 @@ class BGBaseSystem (Component):
                 # push the backfilling info from the local cache back to the real objects
                 p.draining = self.cached_blocks[p.name].draining
                 p.backfill_time = self.cached_blocks[p.name].backfill_time
-                
+
             for jobid, block_list in best_block_dict.iteritems():
                 part = self.blocks[block_list[0]]
                 self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
                 part.used_by = int(jobid)
                 part.reserved_until = time.time() + 5*60
-                part.state = "allocated"  
-                for p in part._parents:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
-                for p in part._children:
-                    if p.state == "idle":
-                        p.state = "blocked (%s)" % (part.name,)
+                if part.state == "idle":
+                    part.state = "allocated"
+                    self._recompute_block_state()
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._blocks_lock.release()
-        
+
         return best_block_dict
     find_job_location = locking(exposed(find_job_location))
-    
+
     def _walltimecmp(self, dict1, dict2):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
@@ -1236,7 +1255,7 @@ class BGBaseSystem (Component):
                 # queues using this block
                 if not part_active_queues:
                     continue
-                
+
                 found_a_match = False
                 for e in equiv:
                     if e['data'].intersection(part.node_card_names):
@@ -1246,7 +1265,7 @@ class BGBaseSystem (Component):
                         break
                 if not found_a_match:
                     equiv.append( { 'queues': set(part_active_queues), 'data': set(part.node_card_names), 'reservations': set() } ) 
-        
+
         real_equiv = []
         for eq_class in equiv:
             found_a_match = False
@@ -1260,7 +1279,7 @@ class BGBaseSystem (Component):
                 real_equiv.append(eq_class)
 
         equiv = real_equiv
-                
+
         for eq_class in equiv:
             for res_name in reservation_dict:
                 skip = True
@@ -1277,11 +1296,11 @@ class BGBaseSystem (Component):
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
             del eq_class['data']
-        
+
         return equiv
     find_queue_equivalence_classes = exposed(find_queue_equivalence_classes)
-    
-    
+
+
     def can_run(self, target_block, node_count, block_dict):
         '''Determine if a block is in a runable state.
 
@@ -1320,6 +1339,7 @@ class BGBaseSystem (Component):
                         block.state = 'allocated'
                     self.logger.info("job %s: block '%s' now reserved until %s", jobid, block_name,
                         time.asctime(time.gmtime(new_time)))
+                    self._recompute_block_state()
                     rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to update the reservation on block %s (owner=%s)",
