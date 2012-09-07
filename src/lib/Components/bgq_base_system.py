@@ -280,7 +280,7 @@ class Node (object):
 
 class NodeCard (object):
     """node boards make up midplanes
-   
+
        they are also something we can fake-control without the control system.
     """
     def __init__(self, name, state="idle"):
@@ -308,7 +308,6 @@ class NodeCard (object):
 
     def __repr__(self):
         return "<%s id=%r>" % (self.__class__.__name__, self.name)
-
 
     def __eq__(self, other):
         return self.id == other.id
@@ -528,6 +527,9 @@ class Block (Data):
     def _get_node_names (self):
         return [n.name for n in self.nodes]
     node_names = property(_get_node_names)
+
+    def __eq__(self, other):
+        return self.name == other.name
 
     def __str__ (self):
         return self.name
@@ -1182,17 +1184,22 @@ class BGBaseSystem (Component):
                 best_block_dict.update(block_name)
                 break
 
+            #Keep pending reservations from collapsing the backfill window
             location = self._find_drain_block(job)
+            forbidden_location_blocks = set()
+            for loc in job['forbidden']:
+                for forbidden_loc in self._blocks[loc]._relatives:
+                    forbidden_location_blocks.add(forbidden_loc.name)
+
             if location is not None:
-                if ((location.name not in job['forbidden']) and
-                        location._parents.isdisjoint(set(job['forbidden']))):
+                if ((location.name not in forbidden_location_blocks)):
                     for p_name in location.parents:
                         drain_blocks.add(self.cached_blocks[p_name])
                     for p_name in location.children:
                         drain_blocks.add(self.cached_blocks[p_name])
                         self.cached_blocks[p_name].draining = True
                     drain_blocks.add(location)
-                    #self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
                     location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
