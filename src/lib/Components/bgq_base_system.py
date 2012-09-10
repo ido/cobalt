@@ -1186,7 +1186,7 @@ class BGBaseSystem (Component):
 
             #Keep pending reservations from collapsing the backfill window
             location = self._find_drain_block(job)
-            forbidden_location_blocks = set()
+            forbidden_location_blocks = set(job['forbidden'])
             for loc in job['forbidden']:
                 for forbidden_loc in self._blocks[loc]._relatives:
                     forbidden_location_blocks.add(forbidden_loc.name)
