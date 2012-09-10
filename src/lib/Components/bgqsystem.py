@@ -1567,13 +1567,14 @@ class BGSystem (BGBaseSystem):
 
 
 
-    def _mark_block_for_cleaning(self, block_name, jobid):
+    def _mark_block_for_cleaning(self, block_name, jobid, locking=True):
         '''Mark a partition as needing to have cleanup code run on it.
            Once marked, the block must eventually become usable by another job, 
            or must be placed in an error state pending admin intervention.
 
         '''
-        self._blocks_lock.acquire()
+        if locking:
+            self._blocks_lock.acquire()
         self.logger.info("block %s: prepping for cleanup, used by=%s, jobid=%s", block_name, 
                 self._blocks[block_name].used_by, jobid)
         try:
@@ -1594,7 +1595,8 @@ class BGSystem (BGBaseSystem):
                     "for cleanup", block, jobid, block.used_by)
         except:
             self.logger.exception("block %s: unexpected exception while marking the block for cleanup", block_name)
-        self._blocks_lock.release()
+        if locking:
+            self._blocks_lock.release()
 
     def _validate_kernel(self, kernel):
         '''Keeping around for when we actually get kernel support added in for this system.
@@ -2114,7 +2116,7 @@ class BGSystem (BGBaseSystem):
                         clean_block = True
                 if clean_block:
                     self.reserve_resources_until(pg.location, None, pg.jobid)
-                    self._mark_block_for_cleaning(pg.location[0], pg.jobid)
+                    #self._mark_block_for_cleaning(pg.location[0], pg.jobid)
 
         # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
         # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon

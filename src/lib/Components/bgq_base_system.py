@@ -1096,7 +1096,7 @@ class BGBaseSystem (Component):
                 for part in self.cached_blocks.itervalues():
                     if not part.functional:
                         not_functional_set.add(part.name)
-                        if target_block.name in part.children or target_block.name in part.parents:
+                        if target_block in part._children or target_block in part._parents:
                             usable = False
                             not_functional_set.add(target_block.name)
                             break
@@ -1169,8 +1169,8 @@ class BGBaseSystem (Component):
         for p in self.cached_blocks.itervalues():
             if p.backfill_time == now:
                 continue
-            for child_name in p.children:
-                child_block = self.cached_blocks[child_name]
+            for child in p._children:
+                child_block = child
                 if child_block.backfill_time == now or child_block.backfill_time > p.backfill_time:
                     child_block.backfill_time = p.backfill_time
 
@@ -1328,7 +1328,6 @@ class BGBaseSystem (Component):
 
     def reserve_resources_until(self, location, new_time, jobid):
         rc = False
-        clear_resources = False
         block_name = location[0]
         pg = self.process_groups.find_by_jobid(jobid)
         try:
@@ -1358,7 +1357,7 @@ class BGBaseSystem (Component):
                     self.blocks[block_name].reserved_until = False
                     self.blocks[block_name].reserved_by = None
                     self.logger.info("reservation on block '%s' has been removed", block_name)
-                    clear_resources = True
+                    self._mark_block_for_cleaning(block_name, jobid, locking=False)
                     rc = True
                 else:
                     self.logger.error("job %s wasn't allowed to clear the reservation on block %s (owner=%s)",
@@ -1367,9 +1366,6 @@ class BGBaseSystem (Component):
             self.logger.exception("an unexpected error occurred will adjusting the block reservation time")
         finally:
             self._blocks_lock.release()
-        if clear_resources:
-            #do this outside the locks, unless you like deadlocking
-            self._mark_block_for_cleaning(block_name, jobid)
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
 
