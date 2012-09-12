@@ -897,9 +897,22 @@ class BGBaseSystem (Component):
     # self._not_functional_set contains names of partitions which are not functional (either themselves, or
     #     a parent or child) 
     def _build_locations_cache(self):
-        per_queue = {}
-        defined_sizes = {}
-        not_functional_set = set()
+        '''Build up the cache of valid locations for running jobs.
+
+        Side Effects:
+        self._defined_sizes gets set to a dict keyed by queue name of an
+            ordered list of valid block sizes for that queue
+        self._locations_cache gets set to a dict keyed by queue name, of dicts
+            keyed by size of lists of partition names of the given size.
+        self._not_functional_set gets set to a set of disabled partitions
+            either due to the bridge identifying the partition as being in a
+            non-functional state, or the partition having it's functional flag
+            set to False.
+
+        '''
+        new_locations_cache = {}
+        new_defined_sizes = {}
+        new_not_functional_set = set()
         for target_partition in self.cached_partitions.itervalues():
             usable = True
             if target_partition.name in self.cached_offline_partitions:
@@ -907,30 +920,38 @@ class BGBaseSystem (Component):
             else:
                 for part in self.cached_partitions.itervalues():
                     if not part.functional:
-                        not_functional_set.add(part.name)
-                        if target_partition.name in part.children or target_partition.name in part.parents:
+                        new_not_functional_set.add(part.name)
+                        if (target_partition.name in part.children or
+                            target_partition.name in part.parents):
                             usable = False
-                            not_functional_set.add(target_partition.name)
+                            new_not_functional_set.add(target_partition.name)
                             break
 
+            #scheduled == if false, do not consider as a valid job location
+            #functional == if false, do not consider block, parents or children
+            # a valid location.
             for queue_name in target_partition.queue.split(":"):
-                if not per_queue.has_key(queue_name):
-                    per_queue[queue_name] = {}
-                if not defined_sizes.has_key(queue_name):
-                    defined_sizes[queue_name] = set()
+                if not new_locations_cache.has_key(queue_name):
+                    new_locations_cache[queue_name] = {}
+                if not new_defined_sizes.has_key(queue_name):
+                    new_defined_sizes[queue_name] = set()
                 if target_partition.scheduled:
-                    defined_sizes[queue_name].add(target_partition.size)
-                if target_partition.scheduled and target_partition.functional and usable:
-                    if not per_queue[queue_name].has_key(target_partition.size):
-                        per_queue[queue_name][target_partition.size] = []
-                    per_queue[queue_name][target_partition.size].append(target_partition)
+                    new_defined_sizes[queue_name].add(target_partition.size)
+                if (target_partition.scheduled and
+                    target_partition.functional and
+                    usable):
+                    if not new_locations_cache[queue_name].has_key(target_partition.size):
+                        new_locations_cache[queue_name][target_partition.size] = []
+                    new_locations_cache[queue_name][target_partition.size].append(target_partition)
 
-        for q_name in defined_sizes:
-            defined_sizes[q_name] = sorted(defined_sizes[q_name])
+        for q_name in new_defined_sizes.keys():
+            #get a sorted list from set.  Default behavior is smallest first.
+            new_defined_sizes[q_name] = sorted(new_defined_sizes[q_name])
 
-        self._defined_sizes = defined_sizes
-        self._locations_cache = per_queue
-        self._not_functional_set = not_functional_set
+
+        self._defined_sizes = new_defined_sizes
+        self._locations_cache = new_locations_cache
+        self._not_functional_set = new_not_functional_set
 
     def find_job_location(self, arg_list, end_times):
         best_partition_dict = {}
@@ -965,6 +986,8 @@ class BGBaseSystem (Component):
                 p.backfill_time = now + 5*60
             p.draining = False
 
+        #Will be a do nothing loop if job end times is empty
+        #FIXME: if job_end_times:
         for p in self.cached_partitions.itervalues():    
             if p.name in job_end_times:
                 if job_end_times[p.name] > p.backfill_time:
@@ -991,21 +1014,30 @@ class BGBaseSystem (Component):
 
         for job in arg_list:
             jobs[job['jobid']] = job
-            partition_name = self._find_job_location(job, drain_partitions)
-            if partition_name:
-                best_partition_dict.update(partition_name)
+            partition_name_dict = self._find_job_location(job, drain_partitions)
+            if partition_name_dict:
+                best_partition_dict.update(partition_name_dict)
                 break
+
+            #Prevent draining on blocks with pending reservations
+            forbidden_location_blocks = set(job['forbidden'])
+            for loc in job['forbidden']:
+                for forbidden_loc in self._partitions[loc]._parents:
+                    forbidden_location_blocks.add(forbidden_loc.name)
+                for forbidden_loc in self._partitions[loc]._children:
+                    forbidden_location_blocks.add(forbidden_loc.name)
 
             location = self._find_drain_partition(job)
             if location is not None:
-                for p_name in location.parents:
-                    drain_partitions.add(self.cached_partitions[p_name])
-                for p_name in location.children:
-                    drain_partitions.add(self.cached_partitions[p_name])
-                    self.cached_partitions[p_name].draining = True
-                drain_partitions.add(location)
-                #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
-                location.draining = True
+                if location.name not in forbidden_location_blocks:
+                    for p_name in location.parents:
+                        drain_partitions.add(self.cached_partitions[p_name])
+                    for p_name in location.children:
+                        drain_partitions.add(self.cached_partitions[p_name])
+                        self.cached_partitions[p_name].draining = True
+                    drain_partitions.add(location)
+                    #self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
@@ -1013,10 +1045,10 @@ class BGBaseSystem (Component):
             # arg_list.sort(self._walltimecmp)
 
             for args in arg_list:
-                partition_name = self._find_job_location(args, backfilling=True)
-                if partition_name:
+                partition_name_dict = self._find_job_location(args, backfilling=True)
+                if partition_name_dict:
                     self.logger.info("backfilling job %s" % args['jobid'])
-                    best_partition_dict.update(partition_name)
+                    best_partition_dict.update(partition_name_dict)
                     break
 
         # reserve the stuff in the best_partition_dict, as those partitions are allegedly going to 
