@@ -1019,16 +1019,25 @@ class BGBaseSystem (Component):
                 best_partition_dict.update(partition_name_dict)
                 break
 
+            #Prevent draining on blocks with pending reservations
+            forbidden_location_blocks = set(job['forbidden'])
+            for loc in job['forbidden']:
+                for forbidden_loc in self._partitions[loc]._parents:
+                    forbidden_location_blocks.add(forbidden_loc.name)
+                for forbidden_loc in self._partitions[loc]._children:
+                    forbidden_location_blocks.add(forbidden_loc.name)
+
             location = self._find_drain_partition(job)
             if location is not None:
-                for p_name in location.parents:
-                    drain_partitions.add(self.cached_partitions[p_name])
-                for p_name in location.children:
-                    drain_partitions.add(self.cached_partitions[p_name])
-                    self.cached_partitions[p_name].draining = True
-                drain_partitions.add(location)
-                #self.logger.info("job %s is draining %s" % (winning_job['jobid'], location.name))
-                location.draining = True
+                if location.name not in forbidden_location_blocks:
+                    for p_name in location.parents:
+                        drain_partitions.add(self.cached_partitions[p_name])
+                    for p_name in location.children:
+                        drain_partitions.add(self.cached_partitions[p_name])
+                        self.cached_partitions[p_name].draining = True
+                    drain_partitions.add(location)
+                    #self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
         if not best_partition_dict:
