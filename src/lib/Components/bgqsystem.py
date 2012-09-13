@@ -1362,7 +1362,8 @@ class BGSystem (BGBaseSystem):
             # it will not boot due to failed links
             io_cache_time.start()
             self.failed_io_midplane_cache = set()
-            self.io_link_to_mp_dict = {}
+            #self.io_link_to_mp_dict = {}
+            new_io_link_to_mp_dict = {}
             for mp_a in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['A'])):
                 for mp_b in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['B'])):
                     for mp_c in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['C'])):
@@ -1378,13 +1379,15 @@ class BGSystem (BGBaseSystem):
                                 else:
                                     self.logger.warning("Unknown RunntimeError encountered!")
                                 self.failed_io_midplane_cache.add(mp)
-                                self.io_link_to_mp_dict[mp] = []
+                                new_io_link_to_mp_dict[mp] = []
                                 continue
 
                             io_links = SWIG_vector_to_list(iolv)
                             if len(io_links) < 4: #FIXME: Make this a threshold
                                 self.failed_io_midplane_cache.add(mp)
-                            self.io_link_to_mp_dict[mp] = io_links
+                            new_io_link_to_mp_dict[mp] = io_links
+
+            self.io_link_to_mp_dict = new_io_link_to_mp_dict
             io_cache_time.stop()
             self.logger.log(1, "io_cache time: %f", io_cache_time.elapsed_time)
 
@@ -1511,6 +1514,7 @@ class BGSystem (BGBaseSystem):
                             #FIXME: as noted by Brian, we should make this anything without a reservation.
                             # more likely set a flag to note blocks running outside of Cobalt.
                             _start_block_cleanup(b)
+                            cleanup_time.stop()
                             continue
                     cleanup_time.stop()
 
@@ -1567,13 +1571,14 @@ class BGSystem (BGBaseSystem):
 
 
 
-    def _mark_block_for_cleaning(self, block_name, jobid):
+    def _mark_block_for_cleaning(self, block_name, jobid, locking=True):
         '''Mark a partition as needing to have cleanup code run on it.
            Once marked, the block must eventually become usable by another job, 
            or must be placed in an error state pending admin intervention.
 
         '''
-        self._blocks_lock.acquire()
+        if locking:
+            self._blocks_lock.acquire()
         self.logger.info("block %s: prepping for cleanup, used by=%s, jobid=%s", block_name, 
                 self._blocks[block_name].used_by, jobid)
         try:
@@ -1594,7 +1599,8 @@ class BGSystem (BGBaseSystem):
                     "for cleanup", block, jobid, block.used_by)
         except:
             self.logger.exception("block %s: unexpected exception while marking the block for cleanup", block_name)
-        self._blocks_lock.release()
+        if locking:
+            self._blocks_lock.release()
 
     def _validate_kernel(self, kernel):
         '''Keeping around for when we actually get kernel support added in for this system.
@@ -2114,7 +2120,7 @@ class BGSystem (BGBaseSystem):
                         clean_block = True
                 if clean_block:
                     self.reserve_resources_until(pg.location, None, pg.jobid)
-                    self._mark_block_for_cleaning(pg.location[0], pg.jobid)
+                    #self._mark_block_for_cleaning(pg.location[0], pg.jobid)
 
         # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
         # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
