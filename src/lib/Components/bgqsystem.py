@@ -1362,7 +1362,8 @@ class BGSystem (BGBaseSystem):
             # it will not boot due to failed links
             io_cache_time.start()
             self.failed_io_midplane_cache = set()
-            self.io_link_to_mp_dict = {}
+            #self.io_link_to_mp_dict = {}
+            new_io_link_to_mp_dict = {}
             for mp_a in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['A'])):
                 for mp_b in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['B'])):
                     for mp_c in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['C'])):
@@ -1378,13 +1379,15 @@ class BGSystem (BGBaseSystem):
                                 else:
                                     self.logger.warning("Unknown RunntimeError encountered!")
                                 self.failed_io_midplane_cache.add(mp)
-                                self.io_link_to_mp_dict[mp] = []
+                                new_io_link_to_mp_dict[mp] = []
                                 continue
 
                             io_links = SWIG_vector_to_list(iolv)
                             if len(io_links) < 4: #FIXME: Make this a threshold
                                 self.failed_io_midplane_cache.add(mp)
-                            self.io_link_to_mp_dict[mp] = io_links
+                            new_io_link_to_mp_dict[mp] = io_links
+
+            self.io_link_to_mp_dict = new_io_link_to_mp_dict
             io_cache_time.stop()
             self.logger.log(1, "io_cache time: %f", io_cache_time.elapsed_time)
 
@@ -1511,6 +1514,7 @@ class BGSystem (BGBaseSystem):
                             #FIXME: as noted by Brian, we should make this anything without a reservation.
                             # more likely set a flag to note blocks running outside of Cobalt.
                             _start_block_cleanup(b)
+                            cleanup_time.stop()
                             continue
                     cleanup_time.stop()
 
