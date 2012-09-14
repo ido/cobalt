@@ -156,7 +156,7 @@ class BGSystem (BGBaseSystem):
         self.pgroups_pending_boot = []
         self.pgroups_wait_reboot = []
         self.suspend_booting = False
-
+        self.failed_io_block_names = set()
 
     def __getstate__(self):
 
@@ -231,6 +231,8 @@ class BGSystem (BGBaseSystem):
 
         self.pgroups_pending_boot = []
         self.pgroups_wait_reboot = []
+
+        self.fail_io_block_names = set()
 
     def save_me(self):
         Component.save(self)
@@ -1104,6 +1106,11 @@ class BGSystem (BGBaseSystem):
                 return
 
         #IOlink status
+
+        if block.name in self.failed_io_block_names:
+            block.state = "Insufficient IO Links"
+            return
+
         if block.midplanes.intersection(self.failed_io_midplane_cache):
             block.state = "Insufficient IO Links"
             return
@@ -1362,8 +1369,33 @@ class BGSystem (BGBaseSystem):
             # it will not boot due to failed links
             io_cache_time.start()
             self.failed_io_midplane_cache = set()
+            new_failed_io_block_names = set()
             #self.io_link_to_mp_dict = {}
             new_io_link_to_mp_dict = {}
+            failed_mp = pybgsched.StringVector()
+            unconnected_io = pybgsched.StringVector()
+            io_comm_bridge_in_error = False
+
+            for block_name in self._managed_blocks:
+                if self._blocks[block_name].block_type == 'pseudoblock':
+                    continue
+                failed_mp.clear()
+                unconnected_io.clear()
+                try:
+                    pybgsched.Block.checkIO(block_name, unconnected_io, failed_mp)
+                except:
+                    self.logger.error("Error communicating with the bridge to update block information.")
+                    self.bridge_in_error = True
+                    Cobalt.Util.sleep(5) # wait a little bit...
+                    break
+
+                if failed_mp.size() > 0:
+                    new_failed_io_block_names.add(block_name)
+
+            if self.bridge_in_error == True:
+                continue
+            self.failed_io_block_names = new_failed_io_block_names
+
             for mp_a in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['A'])):
                 for mp_b in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['B'])):
                     for mp_c in range(0, self.compute_hardware_vec.getMachineSize(sw_char_to_dim_dict['C'])):
