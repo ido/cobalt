@@ -101,6 +101,7 @@ class Reservation (Data):
 
         self.running = False
         self.project = spec.get("project", None)
+        self.block_passthrough = spec.get("block_passthrough", False)
 
     def _get_active(self):
         return self.is_active()
