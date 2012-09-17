@@ -1885,9 +1885,9 @@ class BGSystem (BGBaseSystem):
                 continue
             parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
             cobalt_block = self._blocks[pgroup.location[0]]
-            if cobalt_block.max_reboots and cobalt_block.current_reboots >= cobalt_block.max_reboots:
+            if cobalt_block.max_reboots != None and cobalt_block.current_reboots >= cobalt_block.max_reboots:
                 self._fail_boot(pgroup, pgroup.location[0],
-                        "%s: job killed: too many boot attempts.")
+                        "%s: job killed: too many boot attempts." % pgroup.jobid)
                 continue
             cobalt_block.current_reboots += 1
 
