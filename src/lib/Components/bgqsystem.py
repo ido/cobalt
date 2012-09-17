@@ -1906,6 +1906,10 @@ class BGSystem (BGBaseSystem):
                 except RuntimeError:
                     self._fail_boot(pgroup, boot_location,
                         "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
+                except:
+                    self.logger.critical()
+                    self._fail_boot(pgroup, boot_location,
+                            "%s: unexpected exception while booting %s. Aborting job startup." % (pgroup.label, boot_location))
                 else:
                     self.booting_blocks[boot_location] = pgroup   
             elif reboot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]: # block rebooting, check pending boot
@@ -1968,7 +1972,6 @@ class BGSystem (BGBaseSystem):
         booted_blocks = []
         for block_loc in self.booting_blocks.keys():
             pgroup = self.booting_blocks[block_loc]
-
 
             try:
                 block_location_filter = pybgsched.BlockFilter()
