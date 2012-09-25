@@ -80,11 +80,6 @@ class BGRunjobChild (PGChild):
             else:
                 app_envs.append((key, value))
 
-        #we want this set to at least 32 MB.  Don't reset if the user has set it.  
-        if 'BG_SHAREDMEMSIZE' not in self.pg.env.keys():
-            _logger.debug("adding BG_SHAREDMEMSIZE=32.")
-            app_envs.append(('BG_SHAREDMEMSIZE','32'))
-        
         self.args = [_Config.bgpm['runjob'],
                '--np', str(int(self.pg.size)), #* int(rpn_re.match(pg.mode).groups()[0])),
                #'--block', pg.partition, #corner and shape derived from this.

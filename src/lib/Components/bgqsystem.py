@@ -1885,9 +1885,9 @@ class BGSystem (BGBaseSystem):
                 continue
             parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
             cobalt_block = self._blocks[pgroup.location[0]]
-            if cobalt_block.max_reboots and cobalt_block.current_reboots >= cobalt_block.max_reboots:
+            if cobalt_block.max_reboots != None and cobalt_block.current_reboots >= cobalt_block.max_reboots:
                 self._fail_boot(pgroup, pgroup.location[0],
-                        "%s: job killed: too many boot attempts.")
+                        "%s: job killed: too many boot attempts." % pgroup.jobid)
                 continue
             cobalt_block.current_reboots += 1
 
@@ -1906,6 +1906,10 @@ class BGSystem (BGBaseSystem):
                 except RuntimeError:
                     self._fail_boot(pgroup, boot_location,
                         "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
+                except:
+                    self.logger.critical()
+                    self._fail_boot(pgroup, boot_location,
+                            "%s: unexpected exception while booting %s. Aborting job startup." % (pgroup.label, boot_location))
                 else:
                     self.booting_blocks[boot_location] = pgroup   
             elif reboot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]: # block rebooting, check pending boot
@@ -1968,7 +1972,6 @@ class BGSystem (BGBaseSystem):
         booted_blocks = []
         for block_loc in self.booting_blocks.keys():
             pgroup = self.booting_blocks[block_loc]
-
 
             try:
                 block_location_filter = pybgsched.BlockFilter()

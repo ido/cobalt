@@ -502,12 +502,13 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, BaseXMLRPCServer):
     register = property(_get_register, _set_register)
     
     def _slp_thread (self, frequency=120):
-        try:
-            while self.register:
+        while self.register:
+            try:
                 self.register_with_slp()
+            except:
+                self.logger.error("slp_thread failed, reattempting", exc_info=1)
+            finally:
                 Cobalt.Util.sleep(frequency)
-        except:
-            self.logger.error("slp_thread failed", exc_info=1)
 
     def _tasks_thread (self):
         try:

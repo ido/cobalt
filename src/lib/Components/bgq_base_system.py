@@ -1177,8 +1177,10 @@ class BGBaseSystem (Component):
 
         # first time through, try for starting jobs based on utility scores
         drain_blocks = set()
+        jobs = {}
 
         for job in arg_list:
+            jobs[job['jobid']] = job
             block_name = self._find_job_location(job, drain_blocks)
             if block_name:
                 best_block_dict.update(block_name)
@@ -1228,18 +1230,31 @@ class BGBaseSystem (Component):
                 # push the backfilling info from the local cache back to the real objects
                 p.draining = self.cached_blocks[p.name].draining
                 p.backfill_time = self.cached_blocks[p.name].backfill_time
-
-            for jobid, block_list in best_block_dict.iteritems():
-                part = self.blocks[block_list[0]]
-                self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
-                part.used_by = int(jobid)
-                part.reserved_until = time.time() + 5*60
-                if part.state == "idle":
-                    part.state = "allocated"
-                    self._recompute_block_state()
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._blocks_lock.release()
+
+#            for jobid, block_list in best_block_dict.iteritems():
+                #part = self.blocks[block_list[0]]
+                #self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
+                #part.used_by = int(jobid)
+                #part.reserved_until = time.time() + 5*60
+                #if part.state == "idle":
+                    #part.state = "allocated"
+                    #self._recompute_block_state()
+        #except:
+            #self.logger.error("error in find_job_location", exc_info=True)
+#        self._blocks_lock.release()
+
+        reserve_failed = []
+        for jobid, block_list in best_block_dict.iteritems():
+            walltime = float(jobs[jobid]['walltime']) * 60
+            if not self.reserve_resources_until([block_list[0]], time.time() + walltime, int(jobid)):
+                reserve_failed.append(jobid)
+        for j in reserve_failed:
+            self.logger.error("Job %s: failed to reserve block %s.  Removing resource assignment.",
+                    j, best_block_dict[j][0])
+            del best_block_dict[j]
 
         return best_block_dict
     find_job_location = locking(exposed(find_job_location))
