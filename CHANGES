@@ -1,5 +1,13 @@
 Changes from previous Cobalt Versions
 
+
+Changes to 0.99.12
+* As a note, this is a release of fixes and backported features from BG/Q
+* Fixed issues that could cause a bad hardware state to be overridden as 
+"blocked" allowing the block to be drained
+* Fix for a situation where a partition that is inelligible to run due to a
+pending reservation is selected for draining.
+
 Changes to 0.99.11
 * Fix for an additional circumstance that can cause a small reservation to
 collapse a backfill window to zero.

@@ -1019,9 +1019,13 @@ class BGBaseSystem (Component):
                 best_partition_dict.update(partition_name_dict)
                 break
 
+            forbidden_locs = []
+            if job.has_key('forbidden'):
+                forbidden_locs = job['forbidden']
+
             #Prevent draining on blocks with pending reservations
-            forbidden_location_blocks = set(job['forbidden'])
-            for loc in job['forbidden']:
+            forbidden_location_blocks = set(forbidden_locs)
+            for loc in forbidden_locs:
                 for forbidden_loc in self._partitions[loc]._parents:
                     forbidden_location_blocks.add(forbidden_loc.name)
                 for forbidden_loc in self._partitions[loc]._children:
