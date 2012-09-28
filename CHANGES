@@ -1,5 +1,8 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.15
+* Fix for an issue that was causing partadm to malfunction when reservations
+were set on the system.
 
 Changes to 0.99.12
 * As a note, this is a release of fixes and backported features from BG/Q
