@@ -905,11 +905,16 @@ class BGSched (Component):
 
         # figure out stuff about queue equivalence classes
         res_info = {}
+        pt_blocking_res = []
         for cur_res in reservations_cache.values():
             res_info[cur_res.name] = cur_res.partitions
+            if cur_res.block_passthrough:
+                pt_blocksing_res.append(curr_res.name)
+
         try:
             equiv = ComponentProxy("system").find_queue_equivalence_classes(
-                    res_info, [q.name for q in active_queues + spruce_queues])
+                    res_info, [q.name for q in active_queues + spruce_queues],
+                    passthrough_blocking_res_list=pt_blocking_res)
         except:
             self.logger.error("failed to connect to system component")
             return

@@ -244,7 +244,7 @@ if __name__ == '__main__':
             updates['cycle'] = cycle_time
         if partitions:
             updates['partitions'] = ":".join(partitions)
-        if block_passthrough:
+        if '--block_passthrough' in opt_dict.keys():
             updates['block_pasthrough'] = True
 
         scheduler.set_reservations([{'name':rname}], updates, pwd.getpwuid(os.getuid())[0])

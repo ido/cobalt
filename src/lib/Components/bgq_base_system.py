@@ -431,6 +431,7 @@ class Block (Data):
         self._relatives = set() #list of blocks that have overlapping resources with this one
         self._parents = set() #relatives that are a superset of me
         self._children = set() #relatives that are proper subsets of me
+        self._passthrough_blocks = set() #blocks that contain this block's midplanes in their passthrough lists
 
         self.wires = spec.pop('wires',set()) #list of (src, dst) tuples for cables linking midplanes
         self.admin_failed = False #set this to true if a partadm --fail is issued
@@ -522,7 +523,11 @@ class Block (Data):
     wire_list = property(lambda self: list(self.wires))
     wiring_conflict_list = property(lambda self: list(self._wiring_conflicts))
     passthrough_node_card_list = property(lambda self: list(self.passthrough_node_cards))
-    #passthrough_midplane_list = property(lambda self: list(self.passthrough_midplanes))
+    passthrough_block_list = property(lambda self: list(self._passthrough_blocks))
+
+    @property
+    def passthrough_node_card_names(self):
+        return [nc.name for nc in self.passthrough_node_cards]
 
     def _get_node_names (self):
         return [n.name for n in self.nodes]
@@ -620,7 +625,17 @@ class Block (Data):
                 return True
         return False
 
+    def mark_if_passthrough(self, other):
+        """Take a second block and determine if any of our midplanes are in
+        the other block's passthrough list.
 
+        Return: void
+
+        """
+        if self.node_cards.intersection(other.passthrough_node_cards):
+            self._passthrough_blocks.add(other)
+
+        return
 
 class BlockDict (DataDict):
     """Default container for blocks.
@@ -798,6 +813,7 @@ class BGBaseSystem (Component):
             b._parents = set()
             b._relatives = set()
             b._children = set()
+            b._passthrough_blocks = set()
 
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
@@ -813,9 +829,10 @@ class BGBaseSystem (Component):
                     self._blocks[other_name]._relatives.add(b)
                 else:
                     b.mark_if_overlap(self._blocks[other_name])
+                    b.mark_if_passthrough(self._blocks[other_name])
 
             # only a child if the node-level resources are a proper subset of it's parent block.
-            b._parents.update(set([block for block in b._relatives if b.is_parent(block)]))
+            b._parents.update([block for block in b._relatives if b.is_parent(block)])
             b._children.update([block for block in b._relatives if b.is_child(block)])
             #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
 
@@ -1263,7 +1280,8 @@ class BGBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
+    def find_queue_equivalence_classes(self, reservation_dict, 
+            active_queue_names, passthrough_blocking_res_list):
         '''Make reservations equivalent to their queues, and set a block such 
         that jobs outside the reservation aren't scheduled on reserved resources.
 
@@ -1308,7 +1326,6 @@ class BGBaseSystem (Component):
 
         for eq_class in equiv:
             for res_name in reservation_dict:
-                skip = True
                 for b_name in reservation_dict[res_name].split(":"):
                     b = self.blocks[b_name]
                     if eq_class['data'].intersection(b.node_card_names):
@@ -1318,6 +1335,11 @@ class BGBaseSystem (Component):
                             if eq_class['data'].intersection(self.blocks[dep_name].node_card_names):
                                 eq_class['reservations'].add(res_name)
                                 break
+                    #Handle passthrough-blocking
+                    if res_name in passthrough_blocking_res_list:
+                        if eq_class['data'].intersection(set(b.passthrough_node_card_names)):
+                            eq_class['reservations'].add(res_name)
+                            break
 
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
