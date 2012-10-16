@@ -503,6 +503,10 @@ class Block (Data):
 
     relatives = property(_get_relatives)
 
+    def _get_passthrough_blocks (self):
+        return [b.name for b in self._passthrough_blocks]
+
+    passthrough_blocks = property(_get_passthrough_blocks)
 
     def _get_node_card_names (self):
         return [nc.name for nc in self.node_cards]

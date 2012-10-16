@@ -122,7 +122,13 @@ def print_block_bgq(block_dicts):
                 value_list.append(' '.join([v['name'] for v in value]))
             elif key == 'wire_list':
                 header_list.append(key)
+                value.sort()
                 value_list.append(' '.join([v['id'] for v in value]))
+            elif key in ['midplane_list','parents', 'children', 
+                    'passthrough_blocks', 'wiring_conflict_list']:
+                header_list.append(key)
+                value.sort()
+                value_list.append(', '.join(value))
             else:
                 header_list.append(key)
                 value_list.append(value)
@@ -292,7 +298,7 @@ if __name__ == '__main__':
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
                 'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*', 
-                'passthrough_node_card_list':'*'}
+                'passthrough_blocks':'*'}
                 for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions([{'name':part,'node_card_list':'*',
