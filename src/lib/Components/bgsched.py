@@ -810,7 +810,7 @@ class BGSched (Component):
             try:
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
             except:
-                self.logger.error("failed to connect to system component")
+                self.logger.error("failed to connect to system component", exc_info=True)
                 best_partition_dict = {}
 
             for jobid in best_partition_dict:
@@ -914,9 +914,9 @@ class BGSched (Component):
         try:
             equiv = ComponentProxy("system").find_queue_equivalence_classes(
                     res_info, [q.name for q in active_queues + spruce_queues],
-                    passthrough_blocking_res_list=pt_blocking_res)
+                    pt_blocking_res)
         except:
-            self.logger.error("failed to connect to system component")
+            self.logger.error("failed to connect to system component", exc_info=True)
             return
 
         for eq_class in equiv:

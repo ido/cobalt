@@ -638,6 +638,7 @@ class Block (Data):
         """
         if self.node_cards.intersection(other.passthrough_node_cards):
             self._passthrough_blocks.add(other)
+            other._passthrough_blocks.add(self)
 
         return
 
@@ -832,8 +833,9 @@ class BGBaseSystem (Component):
                     b._relatives.add(self._blocks[other_name])
                     self._blocks[other_name]._relatives.add(b)
                 else:
-                    b.mark_if_overlap(self._blocks[other_name])
-                    b.mark_if_passthrough(self._blocks[other_name])
+                    overlap = b.mark_if_overlap(self._blocks[other_name])
+                    if not overlap:
+                        b.mark_if_passthrough(self._blocks[other_name])
 
             # only a child if the node-level resources are a proper subset of it's parent block.
             b._parents.update([block for block in b._relatives if b.is_parent(block)])
@@ -1284,8 +1286,8 @@ class BGBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict, 
-            active_queue_names, passthrough_blocking_res_list):
+    def find_queue_equivalence_classes(self, reservation_dict,
+            active_queue_names, passthrough_blocking_res_list=[]):
         '''Make reservations equivalent to their queues, and set a block such 
         that jobs outside the reservation aren't scheduled on reserved resources.
 
