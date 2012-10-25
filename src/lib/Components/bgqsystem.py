@@ -1996,7 +1996,7 @@ class BGSystem (BGBaseSystem):
                         self.pgroups_wait_reboot.append(pgroup)
                         booted_blocks.append(block_loc)
                 else:
-                    self._fail_boot(pgroup, pgroup.location[0], "%s: Unable to boot block %s. Aborting job startup. Block stautus was %s" % (pgroup.label, pgroup.location[0], status_str))
+                    self._fail_boot(pgroup, pgroup.location[0], "%s: Unable to boot block %s. Aborting job startup. Block status was %s" % (pgroup.label, pgroup.location[0], status_str))
             elif status != pybgsched.Block.Initialized:
                 self.logger.debug("%s: Block: %s waiting for boot: %s",pgroup.label, pgroup.location[0],  boot_block.getStatusString())
                 continue
