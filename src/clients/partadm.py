@@ -166,6 +166,7 @@ def print_block_bgp(block_dicts):
         Cobalt.Util.print_vertical([header_list,value_list])
     return
 
+
 print_block = print_block_bgp
 
 if sys_type == 'bgq':
@@ -245,7 +246,7 @@ if __name__ == '__main__':
         func = system.get_partitions
         if sys_type == 'bgq':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
-                'queue':'*', 'relatives':'*'}], )
+                'queue':'*', 'relatives':'*', 'passthrough_blocks':'*'}], )
         if sys_type == 'bgp':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
                 'queue':'*', 'parents':'*', 'children':'*'}], )
@@ -364,12 +365,16 @@ if __name__ == '__main__':
                         if expanded_parts.has_key(res['queue']):
                             if sys_type == 'bgq':
                                 expanded_parts[res['queue']].update(p['relatives'])
+                                if res['block_passthrough']:
+                                    expanded_parts[res['queue']].update(p['passthrough_blocks'])
                             elif sys_type == 'bgp':
                                 expanded_parts[res['queue']].update(p['parents'])
                                 expanded_parts[res['queue']].update(p['children'])
                         else:
                             if sys_type == 'bgq':
                                 expanded_parts[res['queue']] = set( p['relatives'] )
+                                if res['block_passthrough']:
+                                    expanded_parts[res['queue']].update(p['passthrough_blocks'])
                             elif sys_type == 'bgp':
                                 expanded_parts[res['queue']] = set( p['parents'] )
                                 expanded_parts[res['queue']].update(p['children'])
