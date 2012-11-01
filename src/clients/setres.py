@@ -39,7 +39,8 @@ if __name__ == '__main__':
         raise SystemExit, 1
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], 'A:c:s:d:mn:p:q:u:axD', 
-                ['res_id=', 'cycle_id=', 'force_id', 'block_passthrough'])
+                ['res_id=', 'cycle_id=', 'force_id', 'block_passthrough',
+                    'allow_passthrough'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -190,6 +191,12 @@ if __name__ == '__main__':
             sys.exit(1)
         cycle_time = 60 * minutes
 
+    block_passthrough = False
+    if '--allow_passthrough' in opt_dict.keys():
+        block_passthrough = False
+    if '--block_passthrough' in opt_dict.keys():
+        block_passthrough = True
+
     # modify the existing reservation instead of creating a new one
     if '-m' in sys.argv[1:]:
         if '-n' not in sys.argv[1:]:
@@ -245,13 +252,18 @@ if __name__ == '__main__':
         if partitions:
             updates['partitions'] = ":".join(partitions)
         if '--block_passthrough' in opt_dict.keys():
-            updates['block_pasthrough'] = True
+            updates['block_passthrough'] = True
+        if '--allow_passthrough' in opt_dict.keys():
+            updates['block_passthrough'] = False
 
         scheduler.set_reservations([{'name':rname}], updates, pwd.getpwuid(os.getuid())[0])
         print scheduler.check_reservations()
 
         raise SystemExit, 0
-    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time, 'project': project }
+    spec = { 'partitions': ":".join(partitions), 'name': nameinfo,
+            'users': user, 'start': starttime, 'duration': dsec,
+            'cycle': cycle_time, 'project': project,
+            'block_passthrough':block_passthrough }
     if '-q' in sys.argv:
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:

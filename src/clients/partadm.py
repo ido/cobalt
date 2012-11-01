@@ -298,7 +298,7 @@ if __name__ == '__main__':
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
                 'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*', 
-                'passthrough_blocks':'*'}
+                'passthrough_blocks':'*', 'passthrough_midplane_list':'*'}
                 for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions([{'name':part,'node_card_list':'*',
@@ -330,7 +330,12 @@ if __name__ == '__main__':
 
         try:
             scheduler = ComponentProxy("scheduler", defer=False)
-            reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
+            if sys_type == 'bgq':
+                reservations = scheduler.get_reservations([{'queue':"*",
+                    'partitions':"*", 'active':True, 'block_passthrough':'*'}])
+            elif sys_type == 'bgp':
+                reservations = scheduler.get_reservations([{'queue':"*",
+                    'partitions':"*", 'active':True}])
         except ComponentLookupError:
             print "Failed to connect to scheduler; no reservation data available"
             reservations = []

@@ -278,6 +278,10 @@ class Node (object):
     def __eq__(self, other):
         return self.name == other.name
 
+    def __hash__(self):
+        return hash(self.name)
+
+
 class NodeCard (object):
     """node boards make up midplanes
 
@@ -533,6 +537,13 @@ class Block (Data):
     def passthrough_node_card_names(self):
         return [nc.name for nc in self.passthrough_node_cards]
 
+    @property
+    def passthrough_midplane_list(self):
+        mp = set()
+        for nc in self.passthrough_node_cards:
+            mp.add('-'.join(nc.name.split('-')[:2]))
+        return list(mp)
+
     def _get_node_names (self):
         return [n.name for n in self.nodes]
     node_names = property(_get_node_names)
@@ -636,7 +647,8 @@ class Block (Data):
         Return: void
 
         """
-        if self.node_cards.intersection(other.passthrough_node_cards):
+        if (self.node_cards.intersection(other.passthrough_node_cards) or
+                self.passthrough_node_cards.intersection(other.node_cards)):
             self._passthrough_blocks.add(other)
             other._passthrough_blocks.add(self)
 
@@ -971,6 +983,7 @@ class BGBaseSystem (Component):
         walltime = args['walltime']
         #walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
         forbidden = set(args.get("forbidden", []))
+        pt_forbidden = set(args.get("pt_forbidden", []))
         required = args.get("required", [])
         #if walltime_prediction_enabled:  # *Adj_Est*
         #    runtime_estimate = float(walltime_p)
@@ -1018,6 +1031,10 @@ class BGBaseSystem (Component):
                 skip = False
                 for bad_name in forbidden:
                     if p.name==bad_name or bad_name in p.relatives:
+                        skip = True
+                        break
+                for bad_name in pt_forbidden:
+                    if p.name == bad_name or bad_name in p.passthrough_blocks:
                         skip = True
                         break
                 if not skip:
@@ -1143,7 +1160,7 @@ class BGBaseSystem (Component):
         self._locations_cache = per_queue
         self._not_functional_set = not_functional_set
 
-    def find_job_location(self, arg_list, end_times):
+    def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
         ''' get the best location for a job.
 
         '''
@@ -1215,9 +1232,18 @@ class BGBaseSystem (Component):
             if job.has_key('forbidden'):
                 forbidden_locs = job['forbidden']
 
+            pt_forbidden_locs = []
+            if job.has_key('pt_forbidden'):
+                pt_forbidden_locs = job['pt_forbidden']
+
             forbidden_location_blocks = set(forbidden_locs)
             for loc in forbidden_locs:
                 for forbidden_loc in self._blocks[loc]._relatives:
+                    forbidden_location_blocks.add(forbidden_loc.name)
+
+            #Check to see if this is blocked for passthrough by a reservation
+            for loc in pt_forbidden_locs:
+                for forbidden_loc in self._blocks[loc]._passthrough_blocks:
                     forbidden_location_blocks.add(forbidden_loc.name)
 
             if location is not None:
@@ -1228,7 +1254,7 @@ class BGBaseSystem (Component):
                         drain_blocks.add(self.cached_blocks[p_name])
                         self.cached_blocks[p_name].draining = True
                     drain_blocks.add(location)
-                    self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    #self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
                     location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
@@ -1332,6 +1358,7 @@ class BGBaseSystem (Component):
 
         for eq_class in equiv:
             for res_name in reservation_dict:
+                passthrough_blocking = res_name in passthrough_blocking_res_list
                 for b_name in reservation_dict[res_name].split(":"):
                     b = self.blocks[b_name]
                     if eq_class['data'].intersection(b.node_card_names):
@@ -1341,11 +1368,6 @@ class BGBaseSystem (Component):
                             if eq_class['data'].intersection(self.blocks[dep_name].node_card_names):
                                 eq_class['reservations'].add(res_name)
                                 break
-                    #Handle passthrough-blocking
-                    if res_name in passthrough_blocking_res_list:
-                        if eq_class['data'].intersection(set(b.passthrough_node_card_names)):
-                            eq_class['reservations'].add(res_name)
-                            break
 
             for key in eq_class:
                 eq_class[key] = list(eq_class[key])
