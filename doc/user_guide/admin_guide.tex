@@ -17,7 +17,11 @@ Cobalt is a highly modular, scalable batch scheduling system.
 \section{Simulation Mode}
 \section{System Deployment}
 \section{System Initialization}
+Cobalt can be initialized by its init script: \textit{/etc/init.d/cobalt start}
+Inidvidual components can be restarted via \textit{/etc/init.d cobalt start-component} \textless\textit{component name}\textgreater
 \section{System Shutdown}
+Cobalt may be shutdown via the same init script: \textit{/etc/init.d/cobalt stop}
+Individual components may be halted by 
 
 \chapter{Components}
 \section{Service Locator}
@@ -45,6 +49,7 @@ Many features of Cobalt that are site or system specific can be set via the Coba
 \chapter {Building the RPM}
 \chapter{BlueGene/P Extensions}
 \chapter{BlueGene/Q Extensions}
+\section{BlueGene/Q Component Names}
 \section{Auxillary libraries}
 \chapter{Cluster System Extensions}
 

@@ -243,8 +243,12 @@ if __name__ == '__main__':
 
     elif opts.list_blocks:
         func = system.get_partitions
-        args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
-                  'queue':'*', 'relatives':'*'}], )
+        if sys_type == 'bgq':
+            args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
+                'queue':'*', 'relatives':'*'}], )
+        if sys_type == 'bgp':
+            args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
+                'queue':'*', 'parents':'*', 'children':'*'}], )
         parts = component_call(system.get_partitions, args)
     elif opts.queue:
         try:
@@ -270,14 +274,23 @@ if __name__ == '__main__':
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
         parts = component_call(system.get_partitions, args)
     elif opts.boot_stop:
+        if sys_type == 'bgp':
+            print "Boot control not available for BG/P systems"
+            sys.exit(0)
         system.halt_booting(whoami)
         print "Halting booting: halting scheduling is advised"
         sys.exit(0)
     elif opts.boot_start:
+        if sys_type == 'bgp':
+            print "Boot control not available for BG/P systems"
+            sys.exit(0)
         system.resume_booting(whoami)
         print "Enabling booting"
         sys.exit(0)
     elif opts.boot_status:
+        if sys_type == 'bgp':
+            print "Boot control not available for BG/P systems"
+            sys.exit(0)
         boot_status = system.booting_status()
         if not boot_status:
             print "Block Booting: ENABLED"
@@ -311,6 +324,9 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if opts.clean_block:
+        if sys_type == 'bgp':
+            print "Force clenaing not available for BG/P systems"
+            sys.exit(0)
         sched_enabled = ComponentProxy('scheduler',defer=False).sched_status()
         boot_disabled = system.booting_status()
         #if sched_enabled or not boot_disabled:
@@ -346,9 +362,17 @@ if __name__ == '__main__':
                 for p in parts:
                     if p['name'] == res_part:
                         if expanded_parts.has_key(res['queue']):
-                            expanded_parts[res['queue']].update(p['relatives'])
+                            if sys_type == 'bgq':
+                                expanded_parts[res['queue']].update(p['relatives'])
+                            elif sys_type == 'bgp':
+                                expanded_parts[res['queue']].update(p['parents'])
+                                expanded_parts[res['queue']].update(p['children'])
                         else:
-                            expanded_parts[res['queue']] = set( p['relatives'] )
+                            if sys_type == 'bgq':
+                                expanded_parts[res['queue']] = set( p['relatives'] )
+                            elif sys_type == 'bgp':
+                                expanded_parts[res['queue']] = set( p['parents'] )
+                                expanded_parts[res['queue']].update(p['children'])
                         expanded_parts[res['queue']].add(p['name'])
 
         for res in reservations:
@@ -366,9 +390,14 @@ if __name__ == '__main__':
         parts.sort(my_cmp)
 
         offline = [part['name'] for part in parts if not part['functional']]
-        forced = [part for part in parts \
+        if sys_type == 'bgq':
+            forced = [part for part in parts \
                   if [down for down in offline \
                       if down in part['relatives']]]
+        elif sys_type == 'bgp':
+            forced = [part for part in parts \
+                  if [down for down in offline \
+                      if (down in part['parents'] or down in part['children']) ]]
         [part.__setitem__('functional', '-') for part in forced]
         data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
         # FIXME find something useful to output in the 'deps' column, since the deps have vanished

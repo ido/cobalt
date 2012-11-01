@@ -86,22 +86,22 @@ def _get_state(bridge_partition):
         return "idle"
     else:
         return "busy"
- 
+
 
 class BGSystem (BGBaseSystem):
-    
+
     """Blue Gene system component.
-    
+
     Methods:
     configure -- load partitions from the bridge API
     update_partition_state -- update partition state from the bridge API (runs as a thread)
     """
-    
+
     name = "system"
     implementation = __name__.split('.')[-1]
 
     logger = logger
-    
+
     _configfields = ['kernel']
     mfields = check_required_options([('bgsystem', 'kernel')])
     if mfields:
@@ -128,10 +128,10 @@ class BGSystem (BGBaseSystem):
         self.configure()
         self.logger.debug("init: recomputing partition state")
         self._recompute_partition_state()
-                
+
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_partition_state, tuple())
-    
+
     def __getstate__(self):
         state = {}
         state.update(BGBaseSystem.__getstate__(self))
@@ -315,13 +315,13 @@ class BGSystem (BGBaseSystem):
             for w in bg_object.wires:
                 self.wire_cache[w.id] = Wire(w.id, w.from_port.component_id, w.to_port.component_id)
                 if w.state != "RM_WIRE_UP":
-                    self.busted_wires.append(w.id)
-                
+                    self.busted_wires.add(w.id)
+
             self.logger.debug("configure: acquiring switch state")
             self.busted_swiches = set()
             for s in bg_object.switches:
                 if s.state != "RM_SWITCH_UP":
-                    self.busted_switches.append(w.id)
+                    self.busted_switches.add(w.id)
 
             self.logger.debug("configure: acquiring partition information")
             system_def = Cobalt.bridge.PartitionList.by_filter()
@@ -383,7 +383,7 @@ class BGSystem (BGBaseSystem):
                     break
         return really_busy
 
-  
+
     def update_partition_state(self):
         """Use the quicker bridge method that doesn't return nodecard information to update the states of the partitions"""
 
@@ -411,7 +411,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.error("Unexpected exception", exc_info=True)
                 Cobalt.Util.sleep(5) # wait a little bit...
                 continue
-    
+
             self.logger.log(1, "update_partition_state: getting node card status")
             try:
                 bg_object = Cobalt.bridge.BlueGene.by_serial()
@@ -712,14 +712,14 @@ class BGSystem (BGBaseSystem):
             for w in p.wires:
                 ret += "      <Wire id='%s' />\n" % w
             ret += "   </Partition>\n"
-        
+
         ret += "</PartitionList>\n"
 
         ret += "</BG>\n"
-            
+
         return ret
     generate_xml = exposed(generate_xml)
-    
+
     def validate_job(self, spec):
         """
         validate a job for submission

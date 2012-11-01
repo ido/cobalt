@@ -41,7 +41,7 @@ except Exception, e:
 
 
 def state_file_location():
-    
+
     '''Grab the location of the Cobalt statefiles.  
 
     default: /var/spool/cobalt
@@ -64,7 +64,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     extra_getopt
     time_out
     single_threaded
-    
+
     This will run until a the component is terminated.
 
     '''
@@ -78,7 +78,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         print >> sys.stderr, "Usage:"
         print >> sys.stderr, "%s [-d] [-D pidfile] [--config-files file1:file2]" % (os.path.basename(argv[0]))
         sys.exit(1)
-    
+
     # default settings
     daemon = False
     pidfile = ""
@@ -90,7 +90,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             pidfile_name = item[1]
         elif item[0] == '-d':
             level = logging.DEBUG
-    
+
     logging.getLogger().setLevel(level)
     Cobalt.Logging.log_to_stderr(logging.getLogger(), timestamp=True)
     Cobalt.Logging.setup_logging(component_cls.implementation, console_timestamp=True)
@@ -99,21 +99,21 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         child_pid = os.fork()
         if child_pid != 0:
             return
-        
+
         os.setsid()
-        
+
         child_pid = os.fork()
         if child_pid != 0:
             os._exit(0)
-        
+
         redirect_file = open("/dev/null", "w+")
         os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
         os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
         os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
-        
+
         os.chdir(os.sep)
         os.umask(0)
-        
+
         pidfile = open(pidfile_name or "/dev/null", "w")
         print >> pidfile, os.getpid()
         pidfile.close()
@@ -128,7 +128,7 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         component.statefile = state_file_name
     else:
         component = component_cls(**cls_kwargs)
-        
+
     location = find_intended_location(component)
     try:
         keypath = os.path.expandvars(get_config_option('communication', 'key'))
@@ -145,8 +145,15 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
     else:
         server = XMLRPCServer(location, keyfile=keypath, certfile=certpath,
                           cafile=capath, register=register, timeout=time_out)
+
+    #Two components of the same type cannot be allowed to run at the same time.
+    if component.name != 'service-location':
+        address = Cobalt.Proxy.ComponentProxy('service-location').locate(component.name)
+        if address:
+            component.logger.critical("CRITICAL: Instance of component %s already registerd.  Startup of this instance aborted.", component.name)
+            sys.exit(1)
     server.register_instance(component)
-    
+
     try:
         server.serve_forever()
     finally:
@@ -154,13 +161,13 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
 
 def exposed (func):
     """Mark a method to be exposed publically.
-    
+
     Examples:
     class MyComponent (Component):
         @expose
         def my_method (self, param1, param2):
             do_stuff()
-    
+
     class MyComponent (Component):
         def my_method (self, param1, param2):
             do_stuff()
@@ -205,30 +212,30 @@ def marshal_query_result (items, specs=None):
     return [item.to_rx(fields) for item in items]
 
 class Component (object):
-    
+
     """Base component.
-    
+
     Intended to be served as an instance by Cobalt.Component.XMLRPCServer
     >>> server = Cobalt.Component.XMLRPCServer(location, keyfile)
     >>> component = Cobalt.Component.Component()
     >>> server.serve_instance(component)
-    
+
     Class attributes:
     name -- logical component name (e.g., "queue-manager", "process-manager")
     implementation -- implementation identifier (e.g., "BlueGene/L", "BlueGene/P")
-    
+
     Methods:
     save -- pickle the component to a file
     do_tasks -- perform automatic tasks for the component
 
     """
-    
+
     name = "component"
     implementation = "generic"
-    
+
     def __init__ (self, **kwargs):
         """Initialize a new component.
-        
+
         Keyword arguments:
         statefile -- file in which to save state automatically
         """
@@ -266,15 +273,15 @@ class Component (object):
         self._component_lock.acquire()
         self._component_lock_acquired_time = time.time()
         self.statistics.add_value('component_lock_wait', self._component_lock_acquired_time - entry_time)
-        
+
     def component_lock_release(self):
         self.statistics.add_value('component_lock_held', time.time() - self._component_lock_acquired_time)
         self._component_lock_acquired_time = None
         self._component_lock.release()
-        
+
     def save (self, statefile=None):
         """Pickle the component.
-        
+
         Arguments:
         statefile -- use this file, rather than component.statefile
         """
@@ -293,10 +300,10 @@ class Component (object):
                 os.rename(temp_statefile, statefile)
                 return "state saved to file: %s" % statefile
     save = exposed(save)
-    
+
     def do_tasks (self):
         """Perform automatic tasks for the component.
-        
+
         Automatic tasks are member callables with an attribute
         automatic == True.
         """
@@ -322,7 +329,7 @@ class Component (object):
 
     def _resolve_exposed_method (self, method_name):
         """Resolve an exposed method.
-        
+
         Arguments:
         method_name -- name of the method to resolve
         """
@@ -336,7 +343,7 @@ class Component (object):
 
     def _dispatch (self, method, args, dispatch_dict):
         """Custom XML-RPC dispatcher for components.
-        
+
         method -- XML-RPC method name
         args -- tuple of paramaters to method
         """
@@ -349,7 +356,7 @@ class Component (object):
                 if getattr(e, "log", True):
                     self.logger.error(e, exc_info=True)
                 raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
-        
+
         need_to_lock = not getattr(method_func, 'locking', False)
         if need_to_lock:
             self.component_lock_acquire()
@@ -385,7 +392,7 @@ class Component (object):
     @exposed
     def methodHelp (self, method_name):
         """Custom XML-RPC introspective method help.
-        
+
         Arguments:
         method_name -- name of method to get help on
         """
@@ -394,12 +401,12 @@ class Component (object):
         except NoExposedMethod:
             return ""
         return pydoc.getdoc(func)
-    
+
     def get_name (self):
         """The name of the component."""
         return self.name
     get_name = exposed(get_name)
-    
+
     def get_implementation (self):
         """The implementation of the component."""
         return self.implementation
@@ -410,4 +417,4 @@ class Component (object):
         return self.statistics.display()
     get_statistics = exposed(get_statistics)
 
- 
+
