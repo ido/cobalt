@@ -50,27 +50,32 @@ if __name__ == '__main__':
         print "Failed to connect to system component"
         raise SystemExit, 1
 
-    reservations = scheduler.get_reservations([{'name':'*', 'users':'*', 
-        'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*', 
-        'queue': '*', 'res_id': '*', 'cycle_id': '*', 
-        'project':'*'}])
+    reservations = scheduler.get_reservations([{'name':'*', 'users':'*',
+        'start':'*', 'duration':'*', 'partitions':'*', 'cycle': '*',
+        'queue': '*', 'res_id': '*', 'cycle_id': '*',
+        'project':'*', 'block_passthrough':'*'}])
     output = []
- 
+
     verbose = False
     really_verbose = False
-    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-        'Partitions')]
-    
+    header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
+        'Passthrough', 'Partitions')]
+
     if '-l' in sys.argv:
         verbose = True
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-            'End Time', 'Cycle Time', 'Partitions')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
+            'End Time', 'Cycle Time', 'Passthrough', 'Partitions',)]
     if '-x' in sys.argv:
         really_verbose = True
-        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration', 
-            'End Time', 'Cycle Time', 'Partitions', 'Project', 'ResID', 'CycleID')]
+        header = [('Reservation', 'Queue', 'User', 'Start', 'Duration',
+            'End Time', 'Cycle Time','Passthrough','Partitions', 'Project', 'ResID', 'CycleID')]
 
     for res in reservations:
+
+        passthrough = "Allowed"
+        if res['block_passthrough']:
+            passthrough = "Blocked"
+
         start = float(res['start'])
         duration = float(res['duration'])
         # do some crazy stuff to make reservations which cycle display the 
@@ -104,7 +109,7 @@ if __name__ == '__main__':
         dmin = (duration/60)%60
         dhour = duration/3600
 
-       
+
         time_fmt = "%c"
         starttime = time.strftime(time_fmt, time.localtime(start))
         endtime = time.strftime(time_fmt, time.localtime(start + duration)) 
@@ -113,28 +118,26 @@ if __name__ == '__main__':
             #time_fmt += " %z (%Z)"
             starttime = sec_to_str(start)
             endtime = sec_to_str(start + duration)
-    
 
         if really_verbose:
             output.append((res['name'], res['queue'], res['users'], 
                 starttime,
                 "%02d:%02d" % (dhour, dmin),
-                endtime, cycle, 
+                endtime, cycle, passthrough,
                 mergelist(res['partitions'], cluster), res['project'],
                 res['res_id'], res['cycle_id']))
         elif verbose:
             output.append((res['name'], res['queue'], res['users'], 
                 starttime,
                 "%02d:%02d" % (dhour, dmin),
-                endtime, cycle, 
+                endtime, cycle, passthrough,
                 mergelist(res['partitions'], cluster)))
         else:
             output.append((res['name'], res['queue'], res['users'], 
                 starttime,
-                "%02d:%02d" % (dhour, dmin), 
+                "%02d:%02d" % (dhour, dmin), passthrough,
                 mergelist(res['partitions'], cluster)))
 
     output.sort( (lambda x,y: cmp( time.mktime(time.strptime(x[3].split('+')[0].split('-')[0].strip(), time_fmt)), 
         time.mktime(time.strptime(y[3].split('+')[0].split('-')[0].strip(), time_fmt))) ) )
     Cobalt.Util.print_tabular(header + output)
-                     
