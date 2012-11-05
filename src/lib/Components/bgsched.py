@@ -422,7 +422,8 @@ class Job (ForeignData):
     fields = ForeignData.fields + [
         "nodes", "location", "jobid", "state", "index", "walltime", "queue",
         "user", "submittime", "starttime", "project", 'is_runnable', 
-        'is_active', 'has_resources', "score", 'attrs', 'walltime_p'
+        'is_active', 'has_resources', "score", 'attrs', 'walltime_p',
+        'geometry'
     ]
 
     def __init__ (self, spec):
@@ -446,6 +447,7 @@ class Job (ForeignData):
         self.has_resources = spec.pop("has_resources", None)
         self.score = spec.pop("score", 0.0)
         self.attrs = spec.pop("attrs", {})
+        self.geometry = spec.pop("geometry", None)
 
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -460,7 +462,7 @@ class JobDict(ForeignDataDict):
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user', 'submittime', 'starttime',
                   'project', 'is_runnable', 'is_active', 'has_resources',
-                  'score', 'attrs', 'walltime_p',]
+                  'score', 'attrs', 'walltime_p','geometry']
 
 class Queue(ForeignData):
     """Cache of queue data for scheduling decisions and reservation 
@@ -802,6 +804,7 @@ class BGSched (Component):
                       'walltime': job.walltime,
                       'attrs': job.attrs,
                       'user': job.user,
+                      'geometry':job.geometry
                     } )
 
             # there's no backfilling in reservations. Run whatever we get in
@@ -1004,6 +1007,7 @@ class BGSched (Component):
                       'walltime_p': job.walltime_p, #*AdjEst*
                       'attrs': job.attrs,
                       'user': job.user,
+                      'geometry':job.geometry
                     } )
 
             try:

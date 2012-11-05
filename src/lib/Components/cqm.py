@@ -532,7 +532,8 @@ class Job (StateMachine):
         "mintasktime", "maxtasktime", "maxcptime", "force_kill_delay", 
         "is_runnable", "is_active",
         "has_completed", "sm_state", "score", "attrs", "has_resources", 
-        "exit_status", "dep_frac", "walltime_p", "user_list", "runid"
+        "exit_status", "dep_frac", "walltime_p", "user_list", "runid",
+        "geometry"
     ]
 
     _states = get_job_sm_states() + StateMachine._states
@@ -624,6 +625,8 @@ class Job (StateMachine):
             self.mintasktime = int(float(spec.get("mintasktime", 0)))
             self.maxtasktime = int(float(spec.get("maxtasktime", 0)))
             self.maxcptime = int(float(spec.get("maxcptime", 0)))
+
+        self.geometry = spec.get("geometry", None)
 
         self.taskid = None
         self.task_running = False
@@ -758,6 +761,8 @@ class Job (StateMachine):
             self.resource_prologue_ids = None
         if not state.has_key("resource_epilogue_ids"):
             self.resource_epilogue_ids = None
+        if not state.has_key("geometry"):
+            self.geometry = None
         self.runid = state.get("runid", None)
 
         self.initializing = False

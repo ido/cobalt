@@ -32,14 +32,41 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              --users <user1>:<user2> --run_project
 """
 
+
+def parse_geometry_string(geometry_str):
+
+    geometry_list = None
+    geo_regexes = []
+    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)x(\d*)'))
+    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)'))
+
+    found = False
+    for regex in geo_regexes:
+        match = regex.match(geometry_str)
+        if match != None:
+            found = True
+            geometry_list = [int(i) for i in match.groups()]
+            break
+    if not found:
+        raise ValueError, "%s is an invalid geometry specification." % geometry_str
+
+    #E dimension must be 2 if not otherwise specified.
+    if len(geometry_list) == 4:
+        geometry_list.append(2)
+    return geometry_list
+
+
+
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable', 'run_project':'run_project'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
+            'preemptable':'preemptable', 'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list'}
+                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list',
+                'geometry':'geometry'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -57,7 +84,7 @@ if __name__ == '__main__':
 
     CP = ConfigParser.ConfigParser()
     CP.read(Cobalt.CONFIG_FILES)
-    
+
     failed = False
     needed = ['time', 'nodecount'] #, 'project']
     if [field for (field, value) in opts.iteritems() if not value and field in needed] or not command:
@@ -171,6 +198,11 @@ if __name__ == '__main__':
     if user not in jobspec['user_list']:
         jobspec['user_list'].insert(0, user)
 
+
+    if opts['geometry']:
+        jobspec['geometry'] = parse_geometry_string(opts['geometry'])
+
+
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
                     'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
                     'kernel':opts['kernel'], 'queue':opts['queue'],
@@ -264,7 +296,7 @@ if __name__ == '__main__':
     # log jobid to stdout
     if job:
         print job[0]['jobid']
-                
+
         if jobspec.has_key('cobalt_log_file'):
             filename = jobspec['cobalt_log_file']
             t = string.Template(filename)

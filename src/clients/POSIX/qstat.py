@@ -40,7 +40,7 @@ def human_format(x):
             return "%5.1f%s" % (max(stuff, 0.1), units[-1])
 
         stuff = stuff / dividend
-        
+
 def get_elapsed_time(starttime, endtime):
     """
     returns hh:mm:ss elapsed time string from start and end timestamps
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         custom_header = CP.get('cqm', 'cqstat_header').split(':')
     except:
         pass
-        
+
     try:
         custom_header_full = CP.get('cqm', 'cqstat_header_full').split(':')
     except:
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     except ComponentLookupError:
         print >> sys.stderr, "Failed to connect to queue manager"
         sys.exit(2)
-    
+
     try:
         queues = cqm.get_queues([{'name':"*", 'state':"*"}])
     except:
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     if opts['version']:
         print "qstat %s" % __revision__
         sys.exit(0)
-        
+
     Cobalt.Logging.setup_logging('qstat', to_syslog=False, level=level)
 
     jobid = None
@@ -132,7 +132,8 @@ if __name__ == '__main__':
                       'ErrorPath', 'OutputPath',
                       'Envs', 'Command', 'Args', 'Kernel', 'KernelOptions',
                       'Project', 'Dependencies', 'short_state', 'Notify', 
-                      'Score', 'Maxtasktime', 'attrs', 'dep_frac','user_list']
+                      'Score', 'Maxtasktime', 'attrs', 'dep_frac','user_list',
+                      'Geometry']
     header = None
     query_dependencies = {'QueuedTime':['SubmitTime', 'StartTime'], 'RunTime':['StartTime'], 
             'TimeRemaining':['WallTime','StartTime']}
@@ -195,7 +196,7 @@ if __name__ == '__main__':
                             q.update({x.lower():'*'})
             q["user"] = user_name
         response = cqm.get_jobs(query)
-        
+
     if len(args) and not response:
         sys.exit(1)
 
@@ -267,14 +268,18 @@ if __name__ == '__main__':
                 j['envs'] = ' '.join([str(x) + '=' + str(y) for x, y in j['envs'].iteritems()])
             # args
             j['args'] = ' '.join(j['args'])
-            
+
             # make the SubmitTime readable by humans
             j['submittime'] = sec_to_str(float(j['submittime']))
-            
+
             j['outputpath'] = outputpath
             j['errorpath'] = j.get('errorpath')
             j['user_list'] = ':'.join(j['user_list'])
 
+            if j['geometry'] != None:
+                j['geometry'] = "x".join([str(i) for i in j['geometry']])
+            else:
+                j['geometry'] = 'Any'
         # any header that was not present in the query response has value set to '-'
         output = [[j.get(x, '-') for x in [y.lower() for y in header]]
                   for j in response]
@@ -302,24 +307,23 @@ if __name__ == '__main__':
                 continue
             else:
                 return val
-    
+
         return 0
-    
+
     output.sort(_my_cmp)
-    
+
     if opts['reverse']:
         output.reverse()
-    
+
     if "short_state" in lower_case_header:
         idx = lower_case_header.index("short_state")
         header[idx] = "S"
-    
+
     if "score" in lower_case_header:
         idx = lower_case_header.index("score")
         for line in output:
             line[idx] = human_format(float(line[idx]))
-        
-    
+
     if opts['long']:
         Cobalt.Util.print_vertical([tuple(x) for x in [header] + output])
     else:

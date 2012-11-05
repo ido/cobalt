@@ -985,6 +985,7 @@ class BGBaseSystem (Component):
         forbidden = set(args.get("forbidden", []))
         pt_forbidden = set(args.get("pt_forbidden", []))
         required = args.get("required", [])
+        geometry = args.get("geometry", None)
         #if walltime_prediction_enabled:  # *Adj_Est*
         #    runtime_estimate = float(walltime_p)
         #else:
@@ -1029,14 +1030,18 @@ class BGBaseSystem (Component):
         else:
             for p in self.possible_locations(nodes, queue):
                 skip = False
-                for bad_name in forbidden:
-                    if p.name==bad_name or bad_name in p.relatives:
-                        skip = True
-                        break
-                for bad_name in pt_forbidden:
-                    if p.name == bad_name or bad_name in p.passthrough_blocks:
-                        skip = True
-                        break
+                if geometry != None and geometry != p.node_geometry:
+                    skip = True
+                if not skip:
+                    for bad_name in forbidden:
+                        if p.name==bad_name or bad_name in p.relatives:
+                            skip = True
+                            break
+                if not skip:
+                    for bad_name in pt_forbidden:
+                        if p.name == bad_name or bad_name in p.passthrough_blocks:
+                            skip = True
+                            break
                 if not skip:
                     if (not requested_location) or (p.name == requested_location):
                         available_blocks.add(p)
@@ -1076,6 +1081,7 @@ class BGBaseSystem (Component):
 
 
     def _find_drain_block(self, job):
+        geometry = job.get('geometry', None)
         # if the user requested a particular block, we only try to drain that one
         if job['attrs'].has_key("location"):
             target_name = job['attrs']['location']
@@ -1085,6 +1091,8 @@ class BGBaseSystem (Component):
         locations = self.possible_locations(job['nodes'], job['queue'])
 
         for p in locations:
+            if geometry != None and geometry != p.node_geometry:
+                continue
             if not drain_block:
                 drain_block = p
             else:
@@ -1254,7 +1262,7 @@ class BGBaseSystem (Component):
                         drain_blocks.add(self.cached_blocks[p_name])
                         self.cached_blocks[p_name].draining = True
                     drain_blocks.add(location)
-                    #self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
                     location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
