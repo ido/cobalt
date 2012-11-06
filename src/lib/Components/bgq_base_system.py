@@ -928,6 +928,29 @@ class BGBaseSystem (Component):
         #bring this back to a string, as this is what it comes in as (or should...)
         spec['proccount'] = str(spec['proccount'])
 
+        # Check the geometry
+        # Node counts per dimension must be multiples of 4 for A-D and 2 for E 
+        # maxima are on a per-system basis
+        # Should put a way to note that the geometry and nodecounts disagree
+        if spec['geometry'] != None:
+            geometry_list = [int(x) for x in spec['geometry'].split('x')]
+            max_nodes_per_dim = []
+            max_nodes_per_dim.append(int(get_config_option('system', 'max_A_nodes', sys.maxint)))
+            max_nodes_per_dim.append(int(get_config_option('system', 'max_B_nodes', sys.maxint)))
+            max_nodes_per_dim.append(int(get_config_option('system', 'max_C_nodes', sys.maxint)))
+            max_nodes_per_dim.append(int(get_config_option('system', 'max_D_nodes', sys.maxint)))
+            max_nodes_per_dim.append(int(get_config_option('system', 'max_E_nodes', sys.maxint)))
+            self.logger.debug("%s",geometry_list)
+            for i in range(0,5):
+                if i <= 3:
+                    if int(spec['nodecount']) >= 512 and (geometry_list[i] % 4) != 0:
+                        raise JobValidationError("Geometry specification %s is invalid." % spec['geometry'])
+                self.logger.debug("%s %s",max_nodes_per_dim[i], geometry_list[i])
+                if max_nodes_per_dim[i] < geometry_list[i]:
+                    raise JobValidationError("Geometry specification %s exceeds maximum nodes per dimension." % spec['geometry'])
+                if geometry_list[i] <= 0:
+                    raise JobValidationError("Geometry dimensions must be greater than zero.")
+
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
