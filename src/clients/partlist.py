@@ -33,8 +33,9 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
 
-    spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*', 'size':'*',
-             'functional':'*', 'scheduled':'*', 'children':'*', 'backfill_time':"*", 'draining':"*"}]
+    spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*',
+        'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
+        'backfill_time':"*", 'draining':"*",'node_geometry':"*"}]
     try:
         parts = system.get_partitions(spec)
     except xmlrpclib.Fault, flt:
@@ -44,8 +45,8 @@ if __name__ == '__main__':
         else:
             raise
 
-    reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
-
+    reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*",
+        'active':True}])
     expanded_parts = {}
     for res in reservations:
         for res_part in res['partitions'].split(":"):
@@ -56,8 +57,6 @@ if __name__ == '__main__':
                     else:
                         expanded_parts[res['queue']] = set( p['children'] )
                     expanded_parts[res['queue']].add(p['name'])
-        
-    
     for res in reservations:
         for p in parts:
             if p['name'] in expanded_parts.get(res['queue'], []):
@@ -71,7 +70,6 @@ if __name__ == '__main__':
             return val
 
     parts.sort(my_cmp)
-    
     now = time.time()
     for part in parts:
         if part['draining'] and part['state'] == "idle":
@@ -87,7 +85,11 @@ if __name__ == '__main__':
 
 
 
-    header = [['Name', 'Queue', 'State', 'Backfill']]
+    header = [['Name', 'Queue', 'State', 'Backfill', 'node_geometry']]
     #build output list, adding
     output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
+    #Hack to make the display cleaner.
+    header[0][4] = 'Geometry'
+    for o in output:
+        o[4] = 'x'.join([str(i) for i in o[4]])
     Cobalt.Util.printTabular(header + output)

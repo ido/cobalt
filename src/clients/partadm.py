@@ -246,7 +246,7 @@ if __name__ == '__main__':
         func = system.get_partitions
         if sys_type == 'bgq':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
-                'queue':'*', 'relatives':'*', 'passthrough_blocks':'*'}], )
+                'queue':'*', 'relatives':'*', 'passthrough_blocks':'*', 'node_geometry':'*'}], )
         if sys_type == 'bgp':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
                 'queue':'*', 'parents':'*', 'children':'*'}], )
@@ -404,11 +404,13 @@ if __name__ == '__main__':
                   if [down for down in offline \
                       if (down in part['parents'] or down in part['children']) ]]
         [part.__setitem__('functional', '-') for part in forced]
-        data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+        data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
         # FIXME find something useful to output in the 'deps' column, since the deps have vanished
-        data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
+        data += [[part['name'], part['queue'], part['size'],
+            "x".join([str(i) for i in part['node_geometry']])
+            ,part['functional'], part['scheduled'],
                   part['state'], ','.join([])] for part in parts]
-        Cobalt.Util.printTabular(data, centered=[3, 4])
+        Cobalt.Util.printTabular(data, centered=[4, 5])
 
     elif opts.boot_start or opts.boot_stop: 
         pass
