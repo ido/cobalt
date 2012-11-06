@@ -19,7 +19,7 @@ import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import QueueError, ComponentLookupError
-
+from Cobalt.Util import parse_geometry_string
 
 helpmsg = """
 Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
@@ -31,29 +31,6 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              --mode <mode> --debuglog <cobaltlog file path> <command> <args>
              --users <user1>:<user2> --run_project
 """
-
-
-def parse_geometry_string(geometry_str):
-
-    geometry_list = None
-    geo_regexes = []
-    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)x(\d*)'))
-    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)'))
-
-    found = False
-    for regex in geo_regexes:
-        match = regex.match(geometry_str)
-        if match != None:
-            found = True
-            geometry_list = [int(i) for i in match.groups()]
-            break
-    if not found:
-        raise ValueError, "%s is an invalid geometry specification." % geometry_str
-
-    #E dimension must be 2 if not otherwise specified.
-    if len(geometry_list) == 4:
-        geometry_list.append(2)
-    return geometry_list
 
 
 
@@ -198,10 +175,8 @@ if __name__ == '__main__':
     if user not in jobspec['user_list']:
         jobspec['user_list'].insert(0, user)
 
-
     if opts['geometry']:
         jobspec['geometry'] = parse_geometry_string(opts['geometry'])
-
 
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
                     'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),

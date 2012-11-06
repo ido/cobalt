@@ -19,6 +19,7 @@ import subprocess
 from datetime import date, datetime
 from getopt import getopt, GetoptError
 from Cobalt.Exceptions import TimeFormatError, TimerException, ThreadPickledAliveException
+from Cobalt.Exceptions import JobValidationError
 import logging
 from threading import Thread
 from Queue import Queue
@@ -1090,3 +1091,57 @@ class disk_writer_thread(Thread):
 
         logger.warn("Non-blocking File IO thread terminated.")
 
+
+
+def parse_geometry_string(geometry_str):
+
+    geometry_list = None
+    geo_regexes = []
+    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)x(\d*)'))
+    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)'))
+
+    found = False
+    for regex in geo_regexes:
+        match = regex.match(geometry_str)
+        if match != None:
+            found = True
+            geometry_list = [int(i) for i in match.groups()]
+            break
+    if not found:
+        raise ValueError, "%s is an invalid geometry specification." % geometry_str
+
+    #E dimension must be 2 if not otherwise specified.
+    if len(geometry_list) == 4:
+        geometry_list.append(2)
+    return geometry_list
+
+def validate_geometry(geometry_str, nodecount):
+    '''Determine if we have a valid geometry.  Used by qalter and
+    bgq_base_system'
+
+    '''
+    if get_config_option('bgsystem', 'bgtype') not in ['bgq']:
+        raise ValueError("Alternate location geometries not supported on %s"
+            " systems." % (get_config_option('system', 'type')))
+    if geometry_str != None:
+        geometry_list = [int(x) for x in geometry_str.split('x')]
+        max_nodes_per_dim = []
+        max_nodes_per_dim.append(int(get_config_option('system', 'max_A_nodes', sys.maxint)))
+        max_nodes_per_dim.append(int(get_config_option('system', 'max_B_nodes', sys.maxint)))
+        max_nodes_per_dim.append(int(get_config_option('system', 'max_C_nodes', sys.maxint)))
+        max_nodes_per_dim.append(int(get_config_option('system', 'max_D_nodes', sys.maxint)))
+        max_nodes_per_dim.append(int(get_config_option('system', 'max_E_nodes', sys.maxint)))
+        max_geo_nodes = 1
+        for i in range(0,5):
+            if i <= 3:
+                if nodecount >= 512 and (geometry_list[i] % 4) != 0:
+                    raise JobValidationError("Geometry specification %s is invalid." % geometry_str)
+            if max_nodes_per_dim[i] < geometry_list[i]:
+                raise JobValidationError("Geometry specification %s exceeds maximum nodes per dimension." % geometry_str)
+            if geometry_list[i] <= 0:
+                raise JobValidationError("Geometry dimensions must be greater than zero.")
+            max_geo_nodes *= geometry_list[i]
+        if max_geo_nodes > nodecount:
+            raise JobValidationError("Geometry requires more nodes than specified for job.")
+
+    return True

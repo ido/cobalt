@@ -17,22 +17,28 @@ import math
 import Cobalt
 import Cobalt.Logging, Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
+from Cobalt.Exceptions import ComponentLookupError, JobValidationError
+from Cobalt.Util import parse_geometry_string
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+Cobalt.Util.init_cobalt_config()
 
 helpmsg = """
-Usage: qalter [-d] [-v] -A <project name> -t <time in minutes> 
-              -e <error file path> -o <output file path> 
-              --dependencies <jobid1>:<jobid2>
-              -n <number of nodes> -h --proccount <processor count> 
-              -M <email address> --mode <mode co/vn> 
+Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
+              -e <error file path> -o <output file path>
+              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
+              -n <number of nodes> -h --proccount <processor count>
+              -M <email address> --mode <mode co/vn>
               --run_users <user1>:<user2> --run_project <jobid1> <jobid2>"""
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
                'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
-                'proccount':'proccount', 'dependencies':'dependencies', 
-                'M':'notify', 'e':'error', 'o':'output', 
+                'proccount':'proccount', 'dependencies':'dependencies',
+                'M':'notify', 'e':'error', 'o':'output', 'geometry':'geometry',
                 'run_users':'user_list'}
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
@@ -45,7 +51,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print helpmsg
         sys.exit(1)
- 
+
     # setup logging
     level = 30
     if '-d' in sys.argv:
@@ -83,8 +89,8 @@ if __name__ == '__main__':
         if not 0 < nc <= sys_size:
             logger.error("node count out of realistic range")
             sys.exit(1)
-        updates['nodes'] = nc 
-       
+        updates['nodes'] = nc
+
     # ensure time is actually in minutes
     if opts['time']:
         if opts['time'][0] in [ '+', '-']:
@@ -111,7 +117,7 @@ if __name__ == '__main__':
                     print >> sys.stderr, "invalid wall time: ", new_time
                 else:
                     updates['walltime'] = str(float(jobdata[0]['walltime']) - minutes)
-            elif opts['time'][0] == '+': 
+            elif opts['time'][0] == '+':
                 updates['walltime'] = str(float(jobdata[0]['walltime']) + minutes)
         else:
             try:
@@ -119,7 +125,7 @@ if __name__ == '__main__':
             except Cobalt.Exceptions.TimeFormatError, e:
                 print "invalid time specification: %s" % e.args[0]
                 sys.exit(1)
-            
+
             updates['walltime'] = str(minutes)
 
 
@@ -131,7 +137,7 @@ if __name__ == '__main__':
         job_types = ['smp', 'co', 'dual', 'vn', 'script']
     else:
         job_types = ['co', 'vn', 'script']
-        
+
     if opts['mode']:
         if opts['mode'] not in job_types:
             logger.error("Specifed mode '%s' not valid, valid modes are\n%s" % \
@@ -185,12 +191,29 @@ if __name__ == '__main__':
                     raise
             if user not in updates['user_list']:
                 updates['user_list'].insert(0, user)
-    
-            
+
+
     if opts['run_project'] == True:
         if not opts['user_list']:
             updates['user_list'] = [user]
         updates['run_project'] = True
+
+    if opts['geometry']:
+        jobdata = None
+        try:
+            cqm = ComponentProxy("queue-manager", defer=False)
+            jobdata = cqm.get_jobs(spec)
+        except ComponentLookupError:
+            print >> sys.stderr, "Failed to connect to queue manager"
+            sys.exit(1)
+        for job in jobdata:
+            try:
+                Cobalt.Util.validate_geometry(opts['geometry'], int(job['nodes']))
+            except JobValidationError as err:
+                print >> sys.stderr, err.message
+                print >> sys.stderr, "Jobs not altered."
+                sys.exit(1)
+        updates.update({'geometry': parse_geometry_string(opts['geometry'])})
 
     if opts['error']:
         updates.update({'errorpath': opts['error']})
@@ -231,7 +254,7 @@ if __name__ == '__main__':
     for job in jobdata:
         if job['is_active']:
             job_running = True
-            
+
     if job_running and (updates.keys() != ['user_list']):
         if updates.has_key('procs'):
             print >> sys.stderr, "cannot change processor count of a running job"
@@ -245,8 +268,10 @@ if __name__ == '__main__':
             print >> sys.stderr, "cannot change the error path of a running job"
         if updates.has_key('outputpath'):
             print >> sys.stderr, "cannot change the output path of a running job"
+        if updates.has_key('geometry'):
+            print >> sys.stderr, "cannot change the node geometry of a running job"
         sys.exit(1)
-        
+
     response = False
     for jobinfo in jobdata:
         del jobinfo['is_active']
