@@ -11,15 +11,20 @@ import Cobalt.Util
 import xmlrpclib
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ComponentLookupError, NotSupportedError
+import Cobalt.Util
 
 helpmsg = '''Usage: partlist [--version]'''
+
+Cobalt.Util.init_cobalt_config()
+get_config_option = Cobalt.Util.get_config_option
+
+sys_type = get_config_option('bgsystem', 'bgtype')
 
 if __name__ == '__main__':
     if '--version' in sys.argv:
         print "partlist %s" % __revision__
         print "cobalt %s" % __version__
         raise SystemExit, 0
-
 
     try:
         system = ComponentProxy("system", defer=False)
@@ -32,10 +37,14 @@ if __name__ == '__main__':
     except ComponentLookupError:
         print "Failed to connect to scheduler"
         raise SystemExit, 1
-
-    spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*',
-        'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
-        'backfill_time':"*", 'draining':"*",'node_geometry':"*"}]
+    if sys_type == 'bgq':
+        spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*',
+            'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
+            'backfill_time':"*", 'draining':"*",'node_geometry':"*"}]
+    else:
+        spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*',
+            'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
+            'backfill_time':"*", 'draining':"*"}]
     try:
         parts = system.get_partitions(spec)
     except xmlrpclib.Fault, flt:
@@ -84,12 +93,16 @@ if __name__ == '__main__':
 
 
 
-
-    header = [['Name', 'Queue', 'State', 'Backfill', 'node_geometry']]
-    #build output list, adding
-    output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
-    #Hack to make the display cleaner.
-    header[0][4] = 'Geometry'
-    for o in output:
-        o[4] = 'x'.join([str(i) for i in o[4]])
+    if sys_type == 'bgq':
+        header = [['Name', 'Queue', 'State', 'Backfill', 'node_geometry']]
+        #build output list, adding
+        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
+        #Hack to make the display cleaner.
+        header[0][4] = 'Geometry'
+        for o in output:
+            o[4] = 'x'.join([str(i) for i in o[4]])
+    else:
+        header = [['Name', 'Queue', 'State', 'Backfill']]
+        #build output list, adding
+        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
     Cobalt.Util.printTabular(header + output)
