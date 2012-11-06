@@ -199,21 +199,24 @@ if __name__ == '__main__':
         updates['run_project'] = True
 
     if opts['geometry']:
-        jobdata = None
-        try:
-            cqm = ComponentProxy("queue-manager", defer=False)
-            jobdata = cqm.get_jobs(spec)
-        except ComponentLookupError:
-            print >> sys.stderr, "Failed to connect to queue manager"
-            sys.exit(1)
-        for job in jobdata:
+        if opts['geometry'] == 'None':
+            updates.update({'geometry':None})
+        else:
+            jobdata = None
             try:
-                Cobalt.Util.validate_geometry(opts['geometry'], int(job['nodes']))
-            except JobValidationError as err:
-                print >> sys.stderr, err.message
-                print >> sys.stderr, "Jobs not altered."
+                cqm = ComponentProxy("queue-manager", defer=False)
+                jobdata = cqm.get_jobs(spec)
+            except ComponentLookupError:
+                print >> sys.stderr, "Failed to connect to queue manager"
                 sys.exit(1)
-        updates.update({'geometry': parse_geometry_string(opts['geometry'])})
+            for job in jobdata:
+                try:
+                    Cobalt.Util.validate_geometry(opts['geometry'], int(job['nodes']))
+                except JobValidationError as err:
+                    print >> sys.stderr, err.message
+                    print >> sys.stderr, "Jobs not altered."
+                    sys.exit(1)
+            updates.update({'geometry': parse_geometry_string(opts['geometry'])})
 
     if opts['error']:
         updates.update({'errorpath': opts['error']})
