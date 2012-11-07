@@ -12,6 +12,10 @@ typedef unsigned long uint64_t;
 %include "std_set.i"
 %include "boost_shared_ptr.i"
 %include "exception.i"
+%include "cpointer.i"
+
+%pointer_functions(uint32_t, uint32_tp)
+%pointer_functions(uint64_t, uint64_tp)
 
 /*interface includes */
 %include "pybgsched_swig_macros.i"
@@ -52,6 +56,7 @@ typedef unsigned long uint64_t;
 %include "Node.i"
 %include "Shape.i"
 %include "Cable.i"
+%include "IOLink.i"
 %include "SwitchSettings.i"
 %include "Switch.i"
 %include "NodeBoard.i"
@@ -60,7 +65,6 @@ typedef unsigned long uint64_t;
 %include "ComputeHardware.i"
 %include "DatabaseException.i"
 %include "BlockSort.i"
-%include "IOLink.i"
 %include "Exception.i"
 %include "Block.i"
 %include "BlockFilter.i"
@@ -78,6 +82,7 @@ typedef unsigned long uint64_t;
 %include "Allocator.i"
 %include "bgsched.i"
 %include "core.i"
+%include "kill.i"
 
 /*Python convenience functions*/
 %pythoncode %{
@@ -88,7 +93,7 @@ def SWIG_vector_to_list(vec):
     return ret_list
 
 def hardware_in_error_state(hw):
-     
+
     hw_error_list = [Hardware.Error,
                      Hardware.Missing,
                      Hardware.Service,

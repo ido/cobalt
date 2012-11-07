@@ -4,11 +4,9 @@
 __revision__ = '$Revision: 2156 $'
 
 import logging
-import os.path
 import sys
 import time
 import ConfigParser
-import threading
 import xmlrpclib
 import math
 
@@ -17,7 +15,6 @@ from Cobalt.Data import Data, DataDict, ForeignData, ForeignDataDict, IncrID
 from Cobalt.Components.base import Component, exposed, automatic, query, locking
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import ReservationError, DataCreationError, ComponentLookupError
-from Cobalt.Statistics import Statistics
 
 import Cobalt.SchedulerPolicies
 
@@ -25,7 +22,7 @@ logger = logging.getLogger("Cobalt.Components.scheduler")
 config = ConfigParser.ConfigParser()
 config.read(Cobalt.CONFIG_FILES)
 if not config.has_section('bgsched'):
-    print '''"bgsched" section missing from cobalt config file'''
+    logger.critical('''"bgsched" section missing from cobalt config file''')
     sys.exit(1)
 
 SLOP_TIME = 180
@@ -57,28 +54,28 @@ else:
 dbwriter = Cobalt.Logging.dbwriter(logger)
 use_db_logging = get_bgsched_config('use_db_logging', 'false')
 if use_db_logging.lower() in ['true', '1', 'yes', 'on']:
-   dbwriter.enabled = True
-   overflow_filename = get_bgsched_config('overflow_file', None)
-   max_queued = int(get_bgsched_config('max_queued_msgs', '-1'))
-   if max_queued <= 0:
-       max_queued = None
-   if (overflow_filename == None) and (max_queued != None):
-       logger.warning('No filename set for database logging messages, max_queued_msgs set to unlimited')
-   if max_queued != None:
-       dbwriter.overflow_filename = overflow_filename
-       dbwriter.max_queued = max_queued
+    dbwriter.enabled = True
+    overflow_filename = get_bgsched_config('overflow_file', None)
+    max_queued = int(get_bgsched_config('max_queued_msgs', '-1'))
+    if max_queued <= 0:
+        max_queued = None
+    if (overflow_filename == None) and (max_queued != None):
+        logger.warning('No filename set for database logging messages, max_queued_msgs set to unlimited')
+    if max_queued != None:
+        dbwriter.overflow_filename = overflow_filename
+        dbwriter.max_queued = max_queued
 
 
 
 class Reservation (Data):
-    
+#pylint: disable=R0902
     """Cobalt scheduler reservation."""
-    
+
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
-        "active", "queue", "res_id", "cycle_id", 'project' 
+        "active", "queue", "res_id", "cycle_id", 'project', "block_passthrough"
     ]
-    
+
     required = ["name", "start", "duration"]
 
     global bgsched_id_gen
@@ -98,18 +95,19 @@ class Reservation (Data):
         self.res_id = spec.get("res_id")
         self.cycle_id_gen = bgsched_cycle_id_gen
         if self.cycle:
-            self.cycle_id = spec.get("cycle_id",self.cycle_id_gen.get())
+            self.cycle_id = spec.get("cycle_id", self.cycle_id_gen.get())
         else:
             self.cycle_id = None
 
         self.running = False
         self.project = spec.get("project", None)
-        
+        self.block_passthrough = spec.get("block_passthrough", False)
+
     def _get_active(self):
         return self.is_active()
-    
+
     active = property(_get_active)
-    
+
     def update (self, spec):
         if spec.has_key("users"):
             qm = ComponentProxy("queue-manager")
@@ -118,9 +116,10 @@ class Reservation (Data):
             except ComponentLookupError:
                 logger.error("unable to contact queue manager when updating reservation users")
                 raise
-        # try the above first -- if we can't contact the queue-manager, don't update the users
+        # try the above first -- if we can't contact the queue-manager,
+        # don't update the users
         if spec.has_key('cycle') and not self.cycle:
-            #we have just turned this into a cyclic reservation and need a cycle_id.
+            #just turned this into a cyclic reservation and need a cycle_id
             spec['cycle_id'] = self.cycle_id_gen.get()
         #get the user name of whoever issued the command
         user_name = None
@@ -128,8 +127,8 @@ class Reservation (Data):
             user_name = spec['__cmd_user']
             del spec['__cmd_user']
 
-        #if we're defering, pull out the 'defer' entry and send a cobalt db message.
-        #there really isn't a corresponding field to update
+        #if we're defering, pull out the 'defer' entry and send a cobalt db
+        #message.  There really isn't a corresponding field to update
         deferred = False
         if spec.has_key('defer'):
             logger.info("Res %s/%s: Deferring cyclic reservation: %s",
@@ -141,11 +140,11 @@ class Reservation (Data):
         Data.update(self, spec)
 
         if not deferred or not self.running:
-            #we only want this if we aren't defering.  If we are, the cycle will 
+            #we only want this if we aren't defering.  If we are, the cycle will
             #take care of the new data object creation.
             dbwriter.log_to_db(user_name, "modifying", "reservation", self)
 
-    
+
     def overlaps(self, start, duration):
         '''check job overlap with reservations'''
         if start + duration < self.start:
@@ -166,7 +165,7 @@ class Reservation (Data):
             return True
         if not self.cycle:
             return False
-        
+
         # 3 cases, front, back and complete coverage of a cycle
         cstart = (start - self.start) % self.cycle
         cend = (start + duration - self.start) % self.cycle
@@ -176,13 +175,17 @@ class Reservation (Data):
             return True
         if cstart > cend:
             return True
-        
+
         return False
 
     def job_within_reservation(self, job):
+        '''Return true if the job fits within this reservation, otherwise,
+        return false.
+
+        '''
         if not self.is_active():
             return False
-        
+
         if job.queue == self.queue:
             job_end = time.time() + 60 * float(job.walltime) + SLOP_TIME
             if not self.cycle:
@@ -194,7 +197,7 @@ class Reservation (Data):
             else:
                 if 60 * float(job.walltime) + SLOP_TIME > self.duration:
                     return False
-                
+
                 relative_start = (time.time() - self.start) % self.cycle
                 relative_end = relative_start + 60 * float(job.walltime) + SLOP_TIME
                 if relative_end < self.duration:
@@ -204,16 +207,16 @@ class Reservation (Data):
         else:
             return False
 
-    
+
     def is_active(self, stime=False):
-        '''Determine if the reservation is active.  A reservation is active if we are
-            between it's start time and its start time + duration.
+        '''Determine if the reservation is active.  A reservation is active
+        if we are between it's start time and its start time + duration.
 
         '''
-        
+
         if not stime:
             stime = time.time()
-            
+
         if stime < self.start:
             if self.running:
                 self.running = False
@@ -223,7 +226,7 @@ class Reservation (Data):
                     logger.info("Res %s/%s: Active reservation %s deactivating: Deferred and cycling.",
                         self.res_id, self.cycle_id, self.name)
                     dbwriter.log_to_db(None, "deactivating", "reservation", self)
-
+                    dbwriter.log_to_db(None, "instance_end","reservation", self)
                     self.res_id = bgsched_id_gen.get()
                     logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
@@ -233,7 +236,7 @@ class Reservation (Data):
                         self.res_id, self.cycle_id, self.name)
                     dbwriter.log_to_db(None, "deactivating", "reservation", self)
             return False
-        
+
         if self.cycle:
             now = (stime - self.start) % self.cycle
         else:
@@ -246,6 +249,8 @@ class Reservation (Data):
                         self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "activating", "reservation", self)
             return True
+        else:
+            return False
 
     def is_over(self):
         '''Determine if a reservation is over and initiate cleanup.
@@ -262,19 +267,20 @@ class Reservation (Data):
                 logger.info("Res %s/%s: Deactivating reservation: %s: Reservation Cycling",
                     self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "deactivating", "reservation", self)
+                dbwriter.log_to_db(None, "instance_end", "reservation", self)
                 self.set_start_to_next_cycle()
                 self.running = False
                 self.res_id = bgsched_id_gen.get()
                 logger.info("Res %s/%s: Cycling reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "cycling", "reservation", self)
-            return False        
-        
+            return False
+
         if (self.start + self.duration) <= stime:
             if self.running == True:
                 #The active reservation is no longer considered active
-                #do this only once to prevent a potential double-deactivate depending
-                #on how/when this check is called.
+                #do this only once to prevent a potential double-deactivate 
+                #depending on how/when this check is called.
                 logger.info("Res %s/%s: Deactivating reservation: %s", 
                              self.res_id, self.cycle_id, self.name) 
                 dbwriter.log_to_db(None, "deactivating", "reservation", self)
@@ -282,41 +288,65 @@ class Reservation (Data):
             return True
         else:
             return False
-    
+
     def set_start_to_next_cycle(self):
+        '''Set the time of the reservation, when it would next go active,
+        to the next start time based on it's cycle time.  The new time is the
+        current reservation start time + the cycle time interval.
+
+        '''
+
 
         if self.cycle:
-            
+
             new_start = self.start
             now = time.time()
             periods = int(math.floor((now - self.start) / float(self.cycle)))
 
-            #so here, we should always be coming out of a reservation.  The only time we wouldn't be
-            #is if for some reason the scheduler was disrupted.
+            #so here, we should always be coming out of a reservation.  The 
+            #only time we wouldn't be is if for some reason the scheduler was 
+            #disrupted.
             if now < self.start:
-                #haven't even started, punt.
                 new_start += self.cycle
-            else: #this is not going to start during a reservation, so we only have to go periods + 1.
+            else: 
+                #this is not going to start during a reservation, so we only
+                #have to go periods + 1.
                 new_start += (periods + 1) * self.cycle
-            
+
             self.start = new_start
-        
+
 
 class ReservationDict (DataDict):
-    
+    '''DataDict-style dictionary for reservation data.
+    Ensueres that there is a queue in the queue manager associated with a new
+    reservation, by either associating with an extant queue, or creating a new
+    one for this reservation's use.
+
+    Will also kill a created queue on reservation deactivation and cleanup.
+
+    '''
     item_cls = Reservation
     key = "name"
-    
+
     global bgsched_id_gen
 
     def q_add (self, *args, **kwargs):
+        '''Add a reservation to tracking.
+        Side Efffects:
+            -Add a queue to be tracked
+            -If no cqm associated queue, create a reservation queue
+            -set policies for new queue
+            -emit numerous creation messages
+
+        '''
+
         qm = ComponentProxy("queue-manager")
         try:
             queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         except ComponentLookupError:
             logger.error("unable to contact queue manager when adding reservation")
             raise
-        
+
         try:
             specs = args[0]
             for spec in specs:
@@ -324,65 +354,81 @@ class ReservationDict (DataDict):
                     spec['res_id'] = bgsched_id_gen.get()
             reservations = Cobalt.Data.DataDict.q_add(self, *args, **kwargs)
 
-        except KeyError, e:
-            raise ReservationError("Error: a reservation named %s already exists" % e)
-                
+        except KeyError, err:
+            raise ReservationError("Error: a reservation named %s already exists" % err)
+
         for reservation in reservations:
             if reservation.queue not in queues:
                 try:
-                    qm.add_queues([{'tag': "queue", 'name':reservation.queue, 'policy':DEFAULT_RESERVATION_POLICY}], "bgsched")
-                except Exception, e:
-                    logger.error("unable to add reservation queue %s (%s)" % \
-                                 (reservation.queue, e))
+                    qm.add_queues([{'tag': "queue", 'name':reservation.queue,
+                        'policy':DEFAULT_RESERVATION_POLICY}], "bgsched")
+                except Exception, err:
+                    logger.error("unable to add reservation queue %s (%s)",
+                                 reservation.queue, err)
                 else:
                     reservation.createdQueue = True
-                    logger.info("added reservation queue %s" % (reservation.queue))
+                    logger.info("added reservation queue %s", reservation.queue)
             try:
-                # we can't set the users list using add_queues, so we want to call set_queues even if bgsched
-                # just created the queue
+                # we can't set the users list using add_queues, so we want to
+                # call set_queues even if bgsched just created the queue
                 qm.set_queues([{'name':reservation.queue}],
                               {'state':"running", 'users':reservation.users}, "bgsched")
-            except Exception, e:
-                logger.error("unable to update reservation queue %s (%s)" % \
-                             (reservation.queue, e))
+            except Exception, err:
+                logger.error("unable to update reservation queue %s (%s)",
+                             reservation.queue, err)
             else:
-                logger.info("updated reservation queue %s" % reservation.queue)
-    
+                logger.info("updated reservation queue %s", reservation.queue)
+
         return reservations
-        
+
     def q_del (self, *args, **kwargs):
+        '''Delete a reservation from tracking.
+        Side Effects: Removes a queue from tracking.
+                      Logs that the reservation has terminated.
+                      Emits a terminated database record
+                      Attempts to mark the queue dead in the queue-manager.
+
+        '''
         reservations = Cobalt.Data.DataDict.q_del(self, *args, **kwargs)
         qm = ComponentProxy('queue-manager')
         queues = [spec['name'] for spec in qm.get_queues([{'name':"*"}])]
         spec = [{'name': reservation.queue} for reservation in reservations \
-                if reservation.createdQueue and reservation.queue in queues and \
-                not self.q_get([{'queue':reservation.queue}])]
+                if reservation.createdQueue and reservation.queue in queues \
+                and not self.q_get([{'queue':reservation.queue}])]
         try:
             qm.set_queues(spec, {'state':"dead"}, "bgsched")
-        except Exception, e:
-            logger.error("problem disabling reservation queue (%s)" % e)
+        except Exception, err:
+            logger.error("problem disabling reservation queue (%s)" % err)
 
         for reservation in reservations:
-            #This should be the last place we have handles to reservations, after this they're heading to GC.
+            #This should be the last place we have handles to reservations, 
+            #after this they're heading to GC.
+            if reservation.is_active():
+                #if we are active, then drop a deactivating message.
+                dbwriter.log_to_db(None, "deactivating", "reservation",
+                        reservation)
+                if reservation.cycle:
+                    dbwriter.log_to_db(None, "instance_end","reservation", self)
             dbwriter.log_to_db(None, "terminated", "reservation", reservation)
         return reservations
 
 
-                
-
 class Job (ForeignData):
-    
-    """A cobalt job."""
-    
+    """A field for the job metadata cache from cqm.  Used for finding a job
+    location.
+
+    """
+
     fields = ForeignData.fields + [
-        "nodes", "location", "jobid", "state", "index", "walltime", "queue", "user", "submittime", 
-        "starttime", "project", 'is_runnable', 'is_active', 'has_resources', "score", 'attrs', 'walltime_p'
+        "nodes", "location", "jobid", "state", "index", "walltime", "queue",
+        "user", "submittime", "starttime", "project", 'is_runnable', 
+        'is_active', 'has_resources', "score", 'attrs', 'walltime_p',
+        'geometry'
     ]
-    
+
     def __init__ (self, spec):
         ForeignData.__init__(self, spec)
         spec = spec.copy()
-        # print spec
         self.partition = "none"
         self.nodes = spec.pop("nodes", None)
         self.location = spec.pop("location", None)
@@ -401,19 +447,28 @@ class Job (ForeignData):
         self.has_resources = spec.pop("has_resources", None)
         self.score = spec.pop("score", 0.0)
         self.attrs = spec.pop("attrs", {})
-        
+        self.geometry = spec.pop("geometry", None)
+
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
 class JobDict(ForeignDataDict):
+    """Dictionary of job metadata from cqm for job location purposes.
+
+    """
     item_cls = Job
     key = 'jobid'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (job)")
     __function__ = ComponentProxy("queue-manager").get_jobs
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
-                  'walltime', 'queue', 'user', 'submittime', 'starttime', 'project',
-                  'is_runnable', 'is_active', 'has_resources', 'score', 'attrs', 'walltime_p',]
+                  'walltime', 'queue', 'user', 'submittime', 'starttime',
+                  'project', 'is_runnable', 'is_active', 'has_resources',
+                  'score', 'attrs', 'walltime_p','geometry']
 
 class Queue(ForeignData):
+    """Cache of queue data for scheduling decisions and reservation 
+    association.
+
+    """
     fields = ForeignData.fields + [
         "name", "state", "policy", "priority"
     ]
@@ -425,8 +480,6 @@ class Queue(ForeignData):
         self.state = spec.pop("state", None)
         self.policy = spec.pop("policy", None)
         self.priority = spec.pop("priority", 0)
-        
-        
 
     def LoadPolicy(self):
         '''Instantiate queue policy modules upon demand'''
@@ -439,21 +492,19 @@ class Queue(ForeignData):
 
 
 class QueueDict(ForeignDataDict):
+    """Dictionary for the queue metadata cache.
+
+    """
     item_cls = Queue
     key = 'name'
     __oserror__ = Cobalt.Util.FailureMode("QM Connection (queue)")
     __function__ = ComponentProxy("queue-manager").get_queues
     __fields__ = ['name', 'state', 'policy', 'priority']
 
-#    def Sync(self):
-#        qp = [(q.name, q.policy) for q in self.itervalues()]
-#        Cobalt.Data.ForeignDataDict.Sync(self)
-#        [q.LoadPolicy() for q in self.itervalues() \
-#         if (q.name, q.policy) not in qp]
-
-
 class BGSched (Component):
-    
+    """The scheduler component interface and driver functions.
+
+    """
     implementation = "bgsched"
     name = "scheduler"
     logger = logging.getLogger("Cobalt.Components.scheduler")
@@ -461,20 +512,20 @@ class BGSched (Component):
 
     _configfields = ['utility_file']
     _config = ConfigParser.ConfigParser()
-    # print Cobalt.CONFIG_FILES
     _config.read(Cobalt.CONFIG_FILES)
     if not _config._sections.has_key('bgsched'):
-        print '''"bgsched" section missing from cobalt config file'''
+        logger.critical('''"bgsched" section missing from cobalt config file''')
         sys.exit(1)
     config = _config._sections['bgsched']
     mfields = [field for field in _configfields if not config.has_key(field)]
     if mfields:
-        print "Missing option(s) in cobalt config file [bgsched] section: %s" % (" ".join(mfields))
+        logger.critical("Missing option(s) in cobalt config file [bgsched] section: %s",
+                (" ".join(mfields)))
         sys.exit(1)
     if config.get("default_reservation_policy"):
         global DEFAULT_RESERVATION_POLICY
         DEFAULT_RESERVATION_POLICY = config.get("default_reservation_policy")
-    
+
     def __init__(self, *args, **kwargs):
         Component.__init__(self, *args, **kwargs)
         self.reservations = ReservationDict()
@@ -483,12 +534,12 @@ class BGSched (Component):
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
         self.active = True
-    
+
         self.get_current_time = time.time
         self.id_gen = IncrID()
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
-        
+
         self.cycle_id_gen = IncrID()
         global bgsched_cycle_id_gen
         bgsched_cycle_id_gen = self.cycle_id_gen
@@ -505,21 +556,21 @@ class BGSched (Component):
                 'msg_queue': dbwriter.msg_queue, 
                 'overflow': dbwriter.overflow})
         return state
-    
+
     def __setstate__(self, state):
         Component.__setstate__(self, state)
 
         self.reservations = state['reservations']
-        if 'active' in state:
+        if 'active' in state.keys():
             self.active = state['active']
         else:
             self.active = True
-        
+
         self.id_gen = IncrID()
         self.id_gen.set(state['next_res_id'])
         global bgsched_id_gen
         bgsched_id_gen = self.id_gen
-        
+
         self.cycle_id_gen = IncrID()
         self.cycle_id_gen.set(state['next_cycle_id'])
         global bgsched_cycle_id_gen
@@ -529,7 +580,7 @@ class BGSched (Component):
         self.jobs = JobDict()
         self.started_jobs = {}
         self.sync_state = Cobalt.Util.FailureMode("Foreign Data Sync")
-        
+
         self.get_current_time = time.time
 
         if state.has_key('msg_queue'):
@@ -540,26 +591,26 @@ class BGSched (Component):
     # order the jobs with biggest utility first
     def utilitycmp(self, job1, job2):
         return -cmp(job1.score, job2.score)
-    
+
     def prioritycmp(self, job1, job2):
         """Compare 2 jobs first using queue priority and then first-in, first-out."""
-        
+
         val = cmp(self.queues[job1.queue].priority, self.queues[job2.queue].priority)
         if val == 0:
             return self.fifocmp(job1, job2)
         else:
             # we want the higher priority first
             return -val
-        
+
     def fifocmp (self, job1, job2):
         """Compare 2 jobs for first-in, first-out."""
-        
+
         def fifo_value (job):
             if job.index is not None:
                 return int(job.index)
             else:
                 return job.jobid
-            
+
         # Implement some simple variations on FIFO scheduling
         # within a particular queue, based on queue policy
         fifoval = cmp(fifo_value(job1), fifo_value(job2))
@@ -583,11 +634,18 @@ class BGSched (Component):
         return cmp(fifo_value(job1), fifo_value(job2))
 
     def save_me(self):
+        '''Automatic method for saving off the component statefile
+
+        '''
         Component.save(self)
-    save_me = automatic(save_me, float(get_bgsched_config('save_me_interval', 10)))
+    save_me = automatic(save_me,
+            float(get_bgsched_config('save_me_interval', 10)))
 
     #user_name in this context is the user setting/modifying the res.
     def add_reservations (self, specs, user_name):
+        '''Exposed method for adding a reservation via setres.
+
+        '''
         self.logger.info("%s adding reservation: %r" % (user_name, specs))
         added_reservations =  self.reservations.q_add(specs)
         for added_reservation in added_reservations:
@@ -597,10 +655,13 @@ class BGSched (Component):
                               user_name, specs))
             dbwriter.log_to_db(user_name, "creating", "reservation", added_reservation)
         return added_reservations
-    
+
     add_reservations = exposed(query(add_reservations))
 
     def del_reservations (self, specs, user_name):
+        '''Exposed method for terminating a reservation from releaseres.
+
+        '''
         self.logger.info("%s releasing reservation: %r" % (user_name, specs))
         del_reservations = self.reservations.q_del(specs)
         for del_reservation in del_reservations:
@@ -608,19 +669,28 @@ class BGSched (Component):
                              (del_reservation.res_id,
                               del_reservation.cycle_id,
                               user_name, specs))
-            #dbwriter.log_to_db(user_name, "ending", "reservation", del_reservation) 
+            #database logging moved to the ReservationDict q_del method
+            #the expected message is "terminated"
         return del_reservations
 
     del_reservations = exposed(query(del_reservations))
 
     def get_reservations (self, specs):
+        '''Exposed method to get reservaton information.
+
+        '''
         return self.reservations.q_get(specs)
     get_reservations = exposed(query(get_reservations))
 
     def set_reservations(self, specs, updates, user_name):
+        '''Exposed method for resetting reservation information from setres.
+        Must target an extant reservation.
+
+        '''
         log_str = "%s modifying reservation: %r with updates %r" % (user_name, specs, updates)
         self.logger.info(log_str)
-        #handle defers as a special case:  have to log these, and not drop a mod record.
+        # handle defers as a special case:  have to log these,
+        # they are frequent enough we don't want a full a mod record
         def _set_reservations(res, newattr):
             res.update(newattr)
         updates['__cmd_user'] = user_name
@@ -631,13 +701,18 @@ class BGSched (Component):
                               mod_reservation.cycle_id,
                               user_name, specs))
         return mod_reservations
-        
+
     set_reservations = exposed(query(set_reservations))
 
 
     def release_reservations(self, specs, user_name):
-        self.logger.info("%s requested release of reservation: %r" % (user_name, specs))
-        self.logger.info("%s releasing reservation: %r" % (user_name, specs))
+        '''Exposed method used by releaseres for user-release of reserved 
+        resrouces.
+
+        '''
+        self.logger.info("%s requested release of reservation: %r",
+                user_name, specs)
+        self.logger.info("%s releasing reservation: %r", user_name, specs)
         rel_res = self.get_reservations(specs)
         for res in rel_res:
             dbwriter.log_to_db(user_name, "released", "reservation", res) 
@@ -652,12 +727,16 @@ class BGSched (Component):
     release_reservations = exposed(query(release_reservations))
 
     def check_reservations(self):
+        '''Validation for reservation resources.  Complain if reservations
+        overlap, since dueling reservation behavior is undefined.
+
+        '''
         ret = ""
         reservations = self.reservations.values()
         for i in range(len(reservations)):
             for j in range(i+1, len(reservations)):
-                # if at least one reservation is cyclic, we want *that* reservation to be the one getting its overlaps method
-                # called
+                # if at least one reservation is cyclic, we want *that* 
+                # reservation to be the one getting its overlaps method called
                 if reservations[i].cycle is not None:
                     res1 = reservations[i]
                     res2 = reservations[j]
@@ -665,8 +744,9 @@ class BGSched (Component):
                     res1 = reservations[j]
                     res2 = reservations[i]
 
-                # we subtract a little bit because the overlaps method isn't really meant to do this
-                # it will report warnings when one reservation starts at the same time another ends
+                # we subtract a little bit because the overlaps method isn't 
+                # really meant to do this it will report warnings when one 
+                # reservation starts at the same time another ends
                 if res1.overlaps(res2.start, res2.duration - 0.00001):
                     # now we need to check for overlap in space
                     results = ComponentProxy("system").get_partitions(
@@ -692,24 +772,28 @@ class BGSched (Component):
     #sync_data = automatic(sync_data)
 
     def _run_reservation_jobs (self, reservations_cache):
+        #FIXME: Get some logging in here so we know what job is being picked.
         # handle each reservation separately, as they shouldn't be competing for resources
         for cur_res in reservations_cache.itervalues():
             #print "trying to run res jobs in", cur_res.name, self.started_jobs
             queue = cur_res.queue
+            #FIXME: this should probably check reservation active rather than just queue
+            # running.
             if not (self.queues.has_key(queue) and self.queues[queue].state == 'running'):
                 continue
-            
+
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue}])
             active_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid) and cur_res.job_within_reservation(j):
                     active_jobs.append(j)
-    
+
             if not active_jobs:
                 continue
             active_jobs.sort(self.utilitycmp)
-            
+
             job_location_args = []
+            #FIXME: make sure job_location_args is ordered.
             for job in active_jobs:
                 job_location_args.append( 
                     { 'jobid': str(job.jobid), 
@@ -720,24 +804,29 @@ class BGSched (Component):
                       'walltime': job.walltime,
                       'attrs': job.attrs,
                       'user': job.user,
+                      'geometry':job.geometry
                     } )
 
-            # there's no backfilling in reservations
+            # there's no backfilling in reservations. Run whatever we get in
+            # best_partition_dict.  There is no draining, backfill windows are
+            # meaningless within reservations.
             try:
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, [])
             except:
                 self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
-    
+
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
+                self.logger.info("Starting job %d/%s in reservation %s",
+                        job.jobid, job.user, cur_res.name)
                 self._start_job(job, best_partition_dict[jobid], {str(job.jobid):cur_res.res_id})
 
     def _start_job(self, job, partition_list, resid=None):
         """Get the queue manager to start a job."""
 
         cqm = ComponentProxy("queue-manager")
-        
+
         try:
             self.logger.info("trying to start job %d on partition %r" % (job.jobid, partition_list))
             cqm.run_jobs([{'tag':"job", 'jobid':job.jobid}], partition_list, None, resid)
@@ -750,22 +839,26 @@ class BGSched (Component):
 
 
     def schedule_jobs (self):
-        '''look at the queued jobs, and decide which ones to start'''
+        '''look at the queued jobs, and decide which ones to start
+        This entire method completes prior to the job's timer starting
+        in cqm.
+
+        '''
 
         started_scheduling = self.get_current_time()
 
         if not self.active:
             return
-        
+
         self.sync_data()
-        
+
         # if we're missing information, don't bother trying to schedule jobs
         if not (self.queues.__oserror__.status and 
                 self.jobs.__oserror__.status):
             self.sync_state.Fail()
             return
         self.sync_state.Pass()
-        
+
         self.component_lock_acquire()
         try:
             # cleanup any reservations which have expired
@@ -785,11 +878,13 @@ class BGSched (Component):
             reservations_cache = self.reservations.copy()
         except:
             # just to make sure we don't keep the lock forever
-            self.logger.error("error in schedule_jobs", exc_info=True)
+            self.logger.error("error in schedule_jobs")
         self.component_lock_release()
-        
+
         # clean up the started_jobs cached data
         # TODO: Make this tunable.
+        # started_jobs are jobs that bgsched has prompted cqm to start
+        # but may not have had job.run has been completed.
         now = self.get_current_time()
         for job_name in self.started_jobs.keys():
             if (now - self.started_jobs[job_name]) > 60:
@@ -809,21 +904,26 @@ class BGSched (Component):
                     spruce_queues.append(queue)
                 else:
                     active_queues.append(queue)
-        
+
         # handle the reservation jobs that might be ready to go
         self._run_reservation_jobs(reservations_cache)
 
         # figure out stuff about queue equivalence classes
         res_info = {}
+        pt_blocking_res = []
         for cur_res in reservations_cache.values():
             res_info[cur_res.name] = cur_res.partitions
+            if cur_res.block_passthrough:
+                pt_blocking_res.append(cur_res.name)
+
         try:
             equiv = ComponentProxy("system").find_queue_equivalence_classes(
-                    res_info, [q.name for q in active_queues + spruce_queues])
+                    res_info, [q.name for q in active_queues + spruce_queues],
+                    pt_blocking_res)
         except:
             self.logger.error("failed to connect to system component")
             return
-        
+
         for eq_class in equiv:
             # recall that is_runnable is True for certain types of holds
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in active_queues \
@@ -832,14 +932,14 @@ class BGSched (Component):
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
                     active_jobs.append(j)
-    
+
             temp_jobs = self.jobs.q_get([{'is_runnable':True, 'queue':queue.name} for queue in spruce_queues \
                 if queue.name in eq_class['queues']])
             spruce_jobs = []
             for j in temp_jobs:
                 if not self.started_jobs.has_key(j.jobid):
                     spruce_jobs.append(j)
-    
+
             # if there are any pending jobs in high_prio queues, those are the only ones that can start
             if spruce_jobs:
                 active_jobs = spruce_jobs
@@ -856,16 +956,16 @@ class BGSched (Component):
                 # continue to cast a small backfilling shadow (we need this for the case
                 # that the final job in a drained partition runs overtime -- which otherwise
                 # allows things to be backfilled into the drained partition)
-                            
+
                 ##*AdjEst*
                 if running_job_walltime_prediction:
                     runtime_estimate = float(job.walltime_p)
                 else:
                     runtime_estimate = float(job.walltime)
-                
+
                 end_time = max(float(job.starttime) + 60 * runtime_estimate, now + 5*60)
                 end_times.append([job.location, end_time])
-            
+
             for res_name in eq_class['reservations']:
                 cur_res = reservations_cache[res_name]
 
@@ -879,52 +979,51 @@ class BGSched (Component):
                 if cur_res.is_active():
                     for part_name in cur_res.partitions.split(":"):
                         end_times.append([[part_name], end_time])
-    
+
             if not active_jobs:
                 continue
             active_jobs.sort(self.utilitycmp)
-            
+
             # now smoosh lots of data together to be passed to the allocator in the system component
             job_location_args = []
             for job in active_jobs:
                 forbidden_locations = set()
+                pt_blocking_locations = set()
                 for res_name in eq_class['reservations']:
                     cur_res = reservations_cache[res_name]
                     if cur_res.overlaps(self.get_current_time(), 60 * float(job.walltime) + SLOP_TIME):
-                        forbidden_locations.update(cur_res.partitions.split(":"))
+                        forbidden_locations.update(cur_res.partitions.split(':'))
+                        if cur_res.block_passthrough:
+                            pt_blocking_locations.update(cur_res.partitions.split(':'))
 
                 job_location_args.append( 
                     { 'jobid': str(job.jobid), 
                       'nodes': job.nodes, 
                       'queue': job.queue, 
                       'forbidden': list(forbidden_locations),
+                      'pt_forbidden': list(pt_blocking_locations),
                       'utility_score': job.score,
                       'walltime': job.walltime,
                       'walltime_p': job.walltime_p, #*AdjEst*
                       'attrs': job.attrs,
                       'user': job.user,
+                      'geometry':job.geometry
                     } )
 
             try:
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
             except:
-                self.logger.error("failed to connect to system component", exc_info=True)
+                self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
-    
+
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
                 self._start_job(job, best_partition_dict[jobid])
-    
 
-        # print "took %f seconds for scheduling loop" % (time.time() - started_scheduling, )
-    schedule_jobs = locking(automatic(schedule_jobs, float(get_bgsched_config('schedule_jobs_interval', 10))))
 
-    def get_resid(self, queue_name):
-        
-        return None
-    get_resid = exposed(get_resid)
+    schedule_jobs = locking(automatic(schedule_jobs,
+        float(get_bgsched_config('schedule_jobs_interval', 10))))
 
-    
     def enable(self, user_name):
         """Enable scheduling"""
         self.logger.info("%s enabling scheduling", user_name)
@@ -947,7 +1046,7 @@ class BGSched (Component):
         logger.info("Reset res_id generator to %s." % id_num)
 
     set_res_id = exposed(set_res_id)
-    
+
     def set_cycle_id(self, id_num):
         """Set the cycle id number."""
         self.cycle_id_gen.set(id_num)
@@ -981,6 +1080,6 @@ class BGSched (Component):
 
     def __flush_msg_queue(self):
         """Send queued messages to the database-writer component"""
-        dbwriter.flush_queue()
+        return dbwriter.flush_queue()
     __flush_msg_queue = automatic(__flush_msg_queue, 
                 float(get_bgsched_config('db_flush_interval', 10)))

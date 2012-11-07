@@ -8,6 +8,7 @@ import sys, xmlrpclib
 import Cobalt.Logging, Cobalt.Util
 import getpass
 import os
+import time
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import QueueError, ComponentLookupError, JobPreemptionError, JobRunError, JobDeleteError
 
@@ -91,7 +92,8 @@ if __name__ == '__main__':
                 print >> sys.stderr, "jobid must be an integer"
                 raise SystemExit, 1
     
-        spec = [{'tag':'job', 'jobid':jobid} for jobid in args]
+        spec = [{'tag':'job', 'jobid':jobid, 'location':'*', 'walltime':'*'}
+                for jobid in args]
 
     try:
         cqm = ComponentProxy("queue-manager")
@@ -144,6 +146,7 @@ if __name__ == '__main__':
             raise SystemExit, 1
         try:
             response = cqm.run_jobs(spec, location.split(':'), whoami)
+
         except xmlrpclib.Fault, flt:
             if flt.faultCode == JobRunError.fault_code:
                 args = eval(flt.faultString)

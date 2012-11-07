@@ -9,7 +9,7 @@ URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python >= 2.6, m2crypto, libxml2 
+Requires: python >= 2.6
 
 %package -n cobalt-clients
 Version: %{version}
@@ -72,7 +72,8 @@ cd ${RPM_BUILD_ROOT}%{_sbindir}
 cd ${RPM_BUILD_ROOT}%{_bindir}
 for file in `find . -name \*.py | sed -e 's/\.py//' |grep -v fake` ; do ln -sf wrapper $file ; done
 find . -wholename "./Parser" -prune -o -name '*.py' -type f -print0 | xargs -0 grep -lE '^#! *(/usr/.*bin/(env +)?) ?python' | xargs sed -r -i -e '1s@^#![[:space:]]*(/usr/(local/)?bin/(env +)?)?python@#!/usr/bin/python@'
-cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done 
+cd ${RPM_BUILD_ROOT}/usr/bin ; for file in `find . -name \*.py -print` ; do ln -sf wrapper `echo $file|sed -e 's/.py//'` ; done
+cd ${RPM_BUILD_ROOT}/usr/sbin ; for file in `find . -name \*.py -print` ; do ln -sf $file `echo $file|sed -e 's/.py//'` ; done
 
 %clean
 rm -rf $RPM_BUILD_ROOT

@@ -1,0 +1,64 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\begin{document}
+\part*{Cobalt Basic Reference}
+\section*{Jobs}
+\subsection*{Queueing Jobs}
+\textit{\textbf{qsub} [flags] \textless executable\textgreater \space [executable\_args]}
+\\
+\\
+\textbf{qsub} is the basic command for submitting jobs for execution.  Commonly used flags include:
+\begin{list}{}{}
+\item \textit{-n \textless size\textgreater}: requested number of nodes
+\item \textit{-t \textless time\textgreater}: requested wallclock time in minutes or HH:MM:SS
+\item \textit{-A \textless project\_name\textgreater}:  run against specified allocation
+\item \textit{-q \textless queue\_name\textgreater}: specify a queue, if none specified routes to "default"
+\item \textit{-\--attrs location=\textless location\textgreater}: run a job on block \textless location\textgreater
+\item \textit{-\-- mode}: one of script (see notes about Script jobs below), or c1,c2,c4,c8,c16,c32,c64.  The cN value corresponds to runjob executing with -\--ranks-per-node N specified.  The default is c1.  
+\item \textit{-\--proccount \textless num\textgreater}: number of MPI processes to start up
+\item \textit{-\--envs key1=val1:key2=val2:...}: pass environment variables into the compute job
+\item \textit{-\--dependencies job1:job2:...}: allow the job to run only if all listed 
+    jobs complete with an exit status of 0
+\item \textit{-\--dependencies None}: remove all dependencies on a job
+\item \textit{-\--cwd \textless dir\textgreater}: set the job's cwd to dir
+\end{list}
+Consult the qsub manpage for more detailed descriptions of the flags available.
+
+\subsection*{Script Jobs}
+If \textit{-\--mode script} is specified, Cobalt will not directly run the executable with runjob, instead, it will run a user-specified script while reserving and booting a block.  The script can invoke runjob after other setup steps, or if desired, multiple runjobs. The name of the block booted for the script-mode job to run in is contained in the \$COBALT\_PARTNAME environment variable.  This environment variable is set by Cobalt for that run of the user-specified script.
+
+\subsection*{Querying Jobs}
+\textbf{qstat} allows you to get information on jobs and queues that are active on the system. Specify a jobid as a positional argument to get information pertaining to one job.
+
+\begin{list}{}{}
+\item \textit{-f}: Get extended information about a job
+\item \textit{-l}: Show information in long view rather than a table view
+\item \textit{-u \textless username\textgreater}: get information on all jobs for user
+\item \textit{-Q}: gets information on queues
+\end{list}
+
+\section*{Reservations}
+Parts of the machine may be isolated by an administrator placing a reservation on it.  Reservations grant exclusive access to a group of resources for a group of users for a predetermined amount of time.  If a job is able to run within a reservation, Cobalt will start the job immediately.  Termination of a reservation does not automatically terminate any job that was running within a reservation when the reservation ends.  
+
+\subsection*{Querying Reservations}
+Reservations information, including the start times of any upcoming reservations can be obtained through the \textbf{showres} command.  Use the \textit{-l} flag for more detailed information on upcoming reservations. 
+
+\subsection*{Submitting To Reservations}
+Typically, a reservation will have an associated queue of \textit{R.\textless res\_name\textgreater}.  Specifying that queue for a job will submit the job such that it runs in the associated reservation.
+
+\subsection*{Releasing Reservations}
+We strongly encourage users to release reservations after the final job for their reservation has started.  This minimizes the amount of time that it takes to resume normal scheduling.  Releasing a reservation is \textit{not fatal} to jobs currently running within a reservation.  
+\\
+\\
+\textit{ureleaseres \textless reservation\_name\textgreater} will release a reservation
+
+\section*{Blocks}
+
+\subsection*{Querying Block Status}
+
+The \textit{partlist} command lists all currently schedulable blocks and their current statuses, including if a block is out of service due to hardware issues, is allocated, or is ready to immediately run jobs.  It also shows the current backfill window if the system is draining a block for another job.
+
+\end{document}
