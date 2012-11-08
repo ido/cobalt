@@ -932,7 +932,8 @@ class BGBaseSystem (Component):
         # Node counts per dimension must be multiples of 4 for A-D and 2 for E 
         # maxima are on a per-system basis
         # Should put a way to note that the geometry and nodecounts disagree
-        Cobalt.Util.validate_geometry(spec['geometry'], int(spec['nodecount']))
+        if isinstance(spec['geometry'], basestring):
+            Cobalt.Util.validate_geometry(spec['geometry'], int(spec['nodecount']))
 
         # need to handle kernel
         return spec
