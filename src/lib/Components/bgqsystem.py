@@ -1669,15 +1669,15 @@ class BGSystem (BGBaseSystem):
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
 
-            ret += "   <Block name='%s'>\n" % p.name
+            ret += "   <Block name='%s'>\n" % b.name
             for nc in b.node_cards:
-                ret += "      <NodeCard id='%s' />\n" % nc.name
-            #for s in p.switches:
-            #    ret += "      <Switch id='%s' />\n" % s
+                ret += "      <NodeBoard id='%s' />\n" % nc.name
+            for s in b.switches:
+                ret += "      <Switch id='%s' />\n" % s
+            for w in b.wires:
+                ret += "      <Wire 'id=%s' />\n" % w
             ret += "   </Block>\n"
-
         ret += "</BlockList>\n"
-
         ret += "</BG>\n"
 
         return ret
