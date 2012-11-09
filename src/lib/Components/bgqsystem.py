@@ -1889,7 +1889,6 @@ class BGSystem (BGBaseSystem):
                 self._fail_boot(pgroup, pgroup.location[0],
                         "%s: job killed: too many boot attempts." % pgroup.jobid)
                 continue
-            cobalt_block.current_reboots += 1
 
             reboot_block = self.get_compute_block(parent_block_name)
             if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
@@ -1903,6 +1902,7 @@ class BGSystem (BGBaseSystem):
                     boot_block.initiateBoot(boot_location)
                     self._log_successful_boot(pgroup, boot_location, 
                         "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
+                    cobalt_block.current_reboots += 1
                 except RuntimeError:
                     self._fail_boot(pgroup, boot_location,
                         "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
@@ -1990,8 +1990,8 @@ class BGSystem (BGBaseSystem):
                 continue
             if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
                 #we are in a state we really shouldn't be in.  Time to fail.
-                if status == pybgsched.Block.Free:
-                    self.logger.warning("%s: Block %s found in free state.  Attempting reboot.", pgroup.label, pgroup.location[0])
+                if status in  [pybgsched.Block.Free, pybgsched.Block.Terminating]:
+                    self.logger.warning("%s: Block %s found in %s state.  Attempting reboot.", pgroup.label, pgroup.location[0], status_str)
                     if not pgroup in self.pgroups_wait_reboot:
                         self.pgroups_wait_reboot.append(pgroup)
                         booted_blocks.append(block_loc)
