@@ -19,7 +19,7 @@ import Cobalt.Logging
 import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Exceptions import QueueError, ComponentLookupError
-
+from Cobalt.Util import parse_geometry_string
 
 helpmsg = """
 Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
@@ -32,14 +32,18 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              --users <user1>:<user2> --run_project
 """
 
+
+
 if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held', 'preemptable':'preemptable', 'run_project':'run_project'}
+    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
+            'preemptable':'preemptable', 'run_project':'run_project'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
                 'A':'project', 'M':'notify', 'e':'error', 'o':'output',
                 'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list'}
+                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list',
+                'geometry':'geometry'}
     (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -57,7 +61,7 @@ if __name__ == '__main__':
 
     CP = ConfigParser.ConfigParser()
     CP.read(Cobalt.CONFIG_FILES)
-    
+
     failed = False
     needed = ['time', 'nodecount'] #, 'project']
     if [field for (field, value) in opts.iteritems() if not value and field in needed] or not command:
@@ -171,6 +175,9 @@ if __name__ == '__main__':
     if user not in jobspec['user_list']:
         jobspec['user_list'].insert(0, user)
 
+    if opts['geometry']:
+        jobspec['geometry'] = parse_geometry_string(opts['geometry'])
+
     jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
                     'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
                     'kernel':opts['kernel'], 'queue':opts['queue'],
@@ -264,7 +271,7 @@ if __name__ == '__main__':
     # log jobid to stdout
     if job:
         print job[0]['jobid']
-                
+
         if jobspec.has_key('cobalt_log_file'):
             filename = jobspec['cobalt_log_file']
             t = string.Template(filename)

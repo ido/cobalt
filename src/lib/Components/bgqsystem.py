@@ -1669,15 +1669,15 @@ class BGSystem (BGBaseSystem):
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
 
-            ret += "   <Block name='%s'>\n" % p.name
+            ret += "   <Block name='%s'>\n" % b.name
             for nc in b.node_cards:
-                ret += "      <NodeCard id='%s' />\n" % nc.name
-            #for s in p.switches:
-            #    ret += "      <Switch id='%s' />\n" % s
+                ret += "      <NodeBoard id='%s' />\n" % nc.name
+            for s in b.switches:
+                ret += "      <Switch id='%s' />\n" % s
+            for w in b.wires:
+                ret += "      <Wire 'id=%s' />\n" % w
             ret += "   </Block>\n"
-
         ret += "</BlockList>\n"
-
         ret += "</BG>\n"
 
         return ret
@@ -1885,9 +1885,9 @@ class BGSystem (BGBaseSystem):
                 continue
             parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
             cobalt_block = self._blocks[pgroup.location[0]]
-            if cobalt_block.max_reboots and cobalt_block.current_reboots >= cobalt_block.max_reboots:
+            if cobalt_block.max_reboots != None and cobalt_block.current_reboots >= cobalt_block.max_reboots:
                 self._fail_boot(pgroup, pgroup.location[0],
-                        "%s: job killed: too many boot attempts.")
+                        "%s: job killed: too many boot attempts." % pgroup.jobid)
                 continue
             cobalt_block.current_reboots += 1
 
@@ -1906,6 +1906,10 @@ class BGSystem (BGBaseSystem):
                 except RuntimeError:
                     self._fail_boot(pgroup, boot_location,
                         "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
+                except:
+                    self.logger.critical()
+                    self._fail_boot(pgroup, boot_location,
+                            "%s: unexpected exception while booting %s. Aborting job startup." % (pgroup.label, boot_location))
                 else:
                     self.booting_blocks[boot_location] = pgroup   
             elif reboot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]: # block rebooting, check pending boot
@@ -1969,7 +1973,6 @@ class BGSystem (BGBaseSystem):
         for block_loc in self.booting_blocks.keys():
             pgroup = self.booting_blocks[block_loc]
 
-
             try:
                 block_location_filter = pybgsched.BlockFilter()
                 block_location_filter.setName(block_loc)
@@ -1993,7 +1996,7 @@ class BGSystem (BGBaseSystem):
                         self.pgroups_wait_reboot.append(pgroup)
                         booted_blocks.append(block_loc)
                 else:
-                    self._fail_boot(pgroup, pgroup.location[0], "%s: Unable to boot block %s. Aborting job startup. Block stautus was %s" % (pgroup.label, pgroup.location[0], status_str))
+                    self._fail_boot(pgroup, pgroup.location[0], "%s: Unable to boot block %s. Aborting job startup. Block status was %s" % (pgroup.label, pgroup.location[0], status_str))
             elif status != pybgsched.Block.Initialized:
                 self.logger.debug("%s: Block: %s waiting for boot: %s",pgroup.label, pgroup.location[0],  boot_block.getStatusString())
                 continue

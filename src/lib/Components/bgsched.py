@@ -73,7 +73,7 @@ class Reservation (Data):
 
     fields = Data.fields + [
         "tag", "name", "start", "duration", "cycle", "users", "partitions",
-        "active", "queue", "res_id", "cycle_id", 'project' 
+        "active", "queue", "res_id", "cycle_id", 'project', "block_passthrough"
     ]
 
     required = ["name", "start", "duration"]
@@ -101,6 +101,7 @@ class Reservation (Data):
 
         self.running = False
         self.project = spec.get("project", None)
+        self.block_passthrough = spec.get("block_passthrough", False)
 
     def _get_active(self):
         return self.is_active()
@@ -421,7 +422,8 @@ class Job (ForeignData):
     fields = ForeignData.fields + [
         "nodes", "location", "jobid", "state", "index", "walltime", "queue",
         "user", "submittime", "starttime", "project", 'is_runnable', 
-        'is_active', 'has_resources', "score", 'attrs', 'walltime_p'
+        'is_active', 'has_resources', "score", 'attrs', 'walltime_p',
+        'geometry'
     ]
 
     def __init__ (self, spec):
@@ -445,6 +447,7 @@ class Job (ForeignData):
         self.has_resources = spec.pop("has_resources", None)
         self.score = spec.pop("score", 0.0)
         self.attrs = spec.pop("attrs", {})
+        self.geometry = spec.pop("geometry", None)
 
         logger.info("Job %s/%s: Found job" % (self.jobid, self.user))
 
@@ -459,7 +462,7 @@ class JobDict(ForeignDataDict):
     __fields__ = ['nodes', 'location', 'jobid', 'state', 'index',
                   'walltime', 'queue', 'user', 'submittime', 'starttime',
                   'project', 'is_runnable', 'is_active', 'has_resources',
-                  'score', 'attrs', 'walltime_p',]
+                  'score', 'attrs', 'walltime_p','geometry']
 
 class Queue(ForeignData):
     """Cache of queue data for scheduling decisions and reservation 
@@ -558,7 +561,7 @@ class BGSched (Component):
         Component.__setstate__(self, state)
 
         self.reservations = state['reservations']
-        if 'active' in state:
+        if 'active' in state.keys():
             self.active = state['active']
         else:
             self.active = True
@@ -801,6 +804,7 @@ class BGSched (Component):
                       'walltime': job.walltime,
                       'attrs': job.attrs,
                       'user': job.user,
+                      'geometry':job.geometry
                     } )
 
             # there's no backfilling in reservations. Run whatever we get in
@@ -814,6 +818,8 @@ class BGSched (Component):
 
             for jobid in best_partition_dict:
                 job = self.jobs[int(jobid)]
+                self.logger.info("Starting job %d/%s in reservation %s",
+                        job.jobid, job.user, cur_res.name)
                 self._start_job(job, best_partition_dict[jobid], {str(job.jobid):cur_res.res_id})
 
     def _start_job(self, job, partition_list, resid=None):
@@ -872,7 +878,7 @@ class BGSched (Component):
             reservations_cache = self.reservations.copy()
         except:
             # just to make sure we don't keep the lock forever
-            self.logger.error("error in schedule_jobs", exc_info=True)
+            self.logger.error("error in schedule_jobs")
         self.component_lock_release()
 
         # clean up the started_jobs cached data
@@ -904,11 +910,16 @@ class BGSched (Component):
 
         # figure out stuff about queue equivalence classes
         res_info = {}
+        pt_blocking_res = []
         for cur_res in reservations_cache.values():
             res_info[cur_res.name] = cur_res.partitions
+            if cur_res.block_passthrough:
+                pt_blocking_res.append(cur_res.name)
+
         try:
             equiv = ComponentProxy("system").find_queue_equivalence_classes(
-                    res_info, [q.name for q in active_queues + spruce_queues])
+                    res_info, [q.name for q in active_queues + spruce_queues],
+                    pt_blocking_res)
         except:
             self.logger.error("failed to connect to system component")
             return
@@ -977,27 +988,32 @@ class BGSched (Component):
             job_location_args = []
             for job in active_jobs:
                 forbidden_locations = set()
+                pt_blocking_locations = set()
                 for res_name in eq_class['reservations']:
                     cur_res = reservations_cache[res_name]
                     if cur_res.overlaps(self.get_current_time(), 60 * float(job.walltime) + SLOP_TIME):
-                        forbidden_locations.update(cur_res.partitions.split(":"))
+                        forbidden_locations.update(cur_res.partitions.split(':'))
+                        if cur_res.block_passthrough:
+                            pt_blocking_locations.update(cur_res.partitions.split(':'))
 
                 job_location_args.append( 
                     { 'jobid': str(job.jobid), 
                       'nodes': job.nodes, 
                       'queue': job.queue, 
                       'forbidden': list(forbidden_locations),
+                      'pt_forbidden': list(pt_blocking_locations),
                       'utility_score': job.score,
                       'walltime': job.walltime,
                       'walltime_p': job.walltime_p, #*AdjEst*
                       'attrs': job.attrs,
                       'user': job.user,
+                      'geometry':job.geometry
                     } )
 
             try:
                 best_partition_dict = ComponentProxy("system").find_job_location(job_location_args, end_times)
             except:
-                self.logger.error("failed to connect to system component", exc_info=True)
+                self.logger.error("failed to connect to system component")
                 best_partition_dict = {}
 
             for jobid in best_partition_dict:

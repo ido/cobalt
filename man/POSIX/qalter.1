@@ -53,6 +53,12 @@ Send job stdout to file specified.
 Sets a colon-separated list of users for the job being submitted.  All users
 in this list will be able to execute cobalt commands to control the job. The 
 submitting user is always able to run commands on a submitted job.
+.TP
+.B \-\-geometry <geometry_spec>
+Sets the geometry of the block that the jobs should run on.  This is in
+the form of AxBxCxDxE.  This must be the geometry of the compute block.
+This may not be a fraction of a block. Geometry may be unset if "None"
+is passed as the geometry specification.
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR qstat(1)

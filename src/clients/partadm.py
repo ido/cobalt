@@ -122,7 +122,13 @@ def print_block_bgq(block_dicts):
                 value_list.append(' '.join([v['name'] for v in value]))
             elif key == 'wire_list':
                 header_list.append(key)
+                value.sort()
                 value_list.append(' '.join([v['id'] for v in value]))
+            elif key in ['midplane_list','parents', 'children', 
+                    'passthrough_blocks', 'wiring_conflict_list']:
+                header_list.append(key)
+                value.sort()
+                value_list.append(', '.join(value))
             else:
                 header_list.append(key)
                 value_list.append(value)
@@ -159,6 +165,7 @@ def print_block_bgp(block_dicts):
 
         Cobalt.Util.print_vertical([header_list,value_list])
     return
+
 
 print_block = print_block_bgp
 
@@ -239,7 +246,7 @@ if __name__ == '__main__':
         func = system.get_partitions
         if sys_type == 'bgq':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
-                'queue':'*', 'relatives':'*'}], )
+                'queue':'*', 'relatives':'*', 'passthrough_blocks':'*', 'node_geometry':'*'}], )
         if sys_type == 'bgp':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
                 'queue':'*', 'parents':'*', 'children':'*'}], )
@@ -305,7 +312,7 @@ if __name__ == '__main__':
                 'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                 'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
                 'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*', 
-                'passthrough_node_card_list':'*'}
+                'passthrough_blocks':'*', 'passthrough_midplane_list':'*'}
                 for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions([{'name':part,'node_card_list':'*',
@@ -340,7 +347,12 @@ if __name__ == '__main__':
 
         try:
             scheduler = ComponentProxy("scheduler", defer=False)
-            reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*", 'active':True}])
+            if sys_type == 'bgq':
+                reservations = scheduler.get_reservations([{'queue':"*",
+                    'partitions':"*", 'active':True, 'block_passthrough':'*'}])
+            elif sys_type == 'bgp':
+                reservations = scheduler.get_reservations([{'queue':"*",
+                    'partitions':"*", 'active':True}])
         except ComponentLookupError:
             print "Failed to connect to scheduler; no reservation data available"
             reservations = []
@@ -353,12 +365,16 @@ if __name__ == '__main__':
                         if expanded_parts.has_key(res['queue']):
                             if sys_type == 'bgq':
                                 expanded_parts[res['queue']].update(p['relatives'])
+                                if res['block_passthrough']:
+                                    expanded_parts[res['queue']].update(p['passthrough_blocks'])
                             elif sys_type == 'bgp':
                                 expanded_parts[res['queue']].update(p['parents'])
                                 expanded_parts[res['queue']].update(p['children'])
                         else:
                             if sys_type == 'bgq':
                                 expanded_parts[res['queue']] = set( p['relatives'] )
+                                if res['block_passthrough']:
+                                    expanded_parts[res['queue']].update(p['passthrough_blocks'])
                             elif sys_type == 'bgp':
                                 expanded_parts[res['queue']] = set( p['parents'] )
                                 expanded_parts[res['queue']].update(p['children'])
@@ -388,11 +404,13 @@ if __name__ == '__main__':
                   if [down for down in offline \
                       if (down in part['parents'] or down in part['children']) ]]
         [part.__setitem__('functional', '-') for part in forced]
-        data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+        data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
         # FIXME find something useful to output in the 'deps' column, since the deps have vanished
-        data += [[part['name'], part['queue'], part['size'], part['functional'], part['scheduled'],
+        data += [[part['name'], part['queue'], part['size'],
+            "x".join([str(i) for i in part['node_geometry']])
+            ,part['functional'], part['scheduled'],
                   part['state'], ','.join([])] for part in parts]
-        Cobalt.Util.printTabular(data, centered=[3, 4])
+        Cobalt.Util.printTabular(data, centered=[4, 5])
 
     elif opts.boot_start or opts.boot_stop: 
         pass

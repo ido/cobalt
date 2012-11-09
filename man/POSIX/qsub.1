@@ -40,6 +40,11 @@ Send job stderr to file specified.
 Set environment variables that will be passed into the job's environment at 
 runtime.
 .TP
+.B \-\-geometry <geometry_spec>
+Sets the geometry of the block that the jobs should run on.  This is in
+the form of AxBxCxDxE.  This must be the geometry of the compute block.
+This may not be a fraction of a block.
+.TP
 .B \-h
 Submit job and immediately place it in the user hold state
 .TP

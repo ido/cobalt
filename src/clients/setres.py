@@ -17,6 +17,7 @@ helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <durati
                   -D -u <user> [-f] [partion1] .. [partionN]
                   --res_id <new res_id>
                   --cycle_id <new cycle_id>
+                  --block_passthrough
 starttime is in format: YYYY_MM_DD-HH:MM
 duration may be in minutes or HH:MM:SS
 cycle time may be in minutes or DD:HH:MM:SS
@@ -37,7 +38,9 @@ if __name__ == '__main__':
         print "Failed to connect to scheduler"
         raise SystemExit, 1
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'A:c:s:d:mn:p:q:u:axD', ['res_id=', 'cycle_id=', 'force_id'])
+        (opts, args) = getopt.getopt(sys.argv[1:], 'A:c:s:d:mn:p:q:u:axD', 
+                ['res_id=', 'cycle_id=', 'force_id', 'block_passthrough',
+                    'allow_passthrough'])
     except getopt.GetoptError, msg:
         print msg
         print helpmsg
@@ -47,12 +50,11 @@ if __name__ == '__main__':
     except ValueError:
         if args:
             partitions = args
-    
+
     opt_dict = {}
     for opt in opts:
         opt_dict[opt[0]] = opt[1] 
 
-    
     only_id_change = True
     for key in opt_dict:
         if key not in ['--cycle_id', '--res_id', '--force_id']:
@@ -70,7 +72,6 @@ if __name__ == '__main__':
         print "Must supply either -p with value or partitions as arguments"
         print helpmsg
         raise SystemExit, 1
-    
 
 
     if '--res_id' in opt_dict.keys():
@@ -87,7 +88,7 @@ if __name__ == '__main__':
         except xmlrpclib.Fault, flt:
             print flt.faultString
             raise SystemExit, 1
-        
+
     if '--cycle_id' in opt_dict.keys():
         try:
             if force_id:
@@ -119,7 +120,7 @@ if __name__ == '__main__':
                 missing = [p for p in partitions if p not in test_parts]
                 print "Missing partitions: %s" % (" ".join(missing))
                 raise SystemExit, 1
-    
+
     try:
         [start] = [opt[1] for opt in opts if opt[0] == '-s']
     except ValueError:
@@ -136,7 +137,7 @@ if __name__ == '__main__':
         else:
             print "Must supply a duration for the reservation with -d"
             raise SystemExit, 1
-    
+
     if duration:
         try:
             minutes = Cobalt.Util.get_time(duration)
@@ -176,12 +177,12 @@ if __name__ == '__main__':
         [nameinfo] = [val for (opt, val) in opts if opt == '-n']
     else:
         nameinfo = 'system'
-    
+
     if '-c' in sys.argv[1:]:
         cycle_time = [opt[1] for opt in opts if opt[0] == '-c'][0]
     else:
         cycle_time = None
-    
+
     if cycle_time:
         try:
             minutes = Cobalt.Util.get_time(cycle_time)
@@ -189,6 +190,12 @@ if __name__ == '__main__':
             print "invalid cycle time specification: %s" % e.args[0]
             sys.exit(1)
         cycle_time = 60 * minutes
+
+    block_passthrough = False
+    if '--allow_passthrough' in opt_dict.keys():
+        block_passthrough = False
+    if '--block_passthrough' in opt_dict.keys():
+        block_passthrough = True
 
     # modify the existing reservation instead of creating a new one
     if '-m' in sys.argv[1:]:
@@ -215,7 +222,7 @@ if __name__ == '__main__':
             cycle = float(res['cycle'])
             now = time.time()
             periods = math.floor((now - start)/cycle)
-    
+
             if(periods < 0):
                 start += cycle
             elif(now - start) % cycle < duration:
@@ -235,7 +242,7 @@ if __name__ == '__main__':
                 updates['start'] = starttime
             if duration:
                 updates['duration'] = dsec
-            
+
         if user:
             updates['users'] = user
         if project_specified:
@@ -244,12 +251,19 @@ if __name__ == '__main__':
             updates['cycle'] = cycle_time
         if partitions:
             updates['partitions'] = ":".join(partitions)
-                
+        if '--block_passthrough' in opt_dict.keys():
+            updates['block_passthrough'] = True
+        if '--allow_passthrough' in opt_dict.keys():
+            updates['block_passthrough'] = False
+
         scheduler.set_reservations([{'name':rname}], updates, pwd.getpwuid(os.getuid())[0])
         print scheduler.check_reservations()
 
         raise SystemExit, 0
-    spec = { 'partitions': ":".join(partitions), 'name': nameinfo, 'users': user, 'start': starttime, 'duration': dsec, 'cycle': cycle_time, 'project': project }
+    spec = { 'partitions': ":".join(partitions), 'name': nameinfo,
+            'users': user, 'start': starttime, 'duration': dsec,
+            'cycle': cycle_time, 'project': project,
+            'block_passthrough':block_passthrough }
     if '-q' in sys.argv:
         spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
     try:
@@ -265,4 +279,4 @@ if __name__ == '__main__':
     except:
         print "Couldn't contact the scheduler"
         raise
-        
+

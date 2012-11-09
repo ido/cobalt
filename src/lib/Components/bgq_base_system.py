@@ -278,6 +278,10 @@ class Node (object):
     def __eq__(self, other):
         return self.name == other.name
 
+    def __hash__(self):
+        return hash(self.name)
+
+
 class NodeCard (object):
     """node boards make up midplanes
 
@@ -431,6 +435,7 @@ class Block (Data):
         self._relatives = set() #list of blocks that have overlapping resources with this one
         self._parents = set() #relatives that are a superset of me
         self._children = set() #relatives that are proper subsets of me
+        self._passthrough_blocks = set() #blocks that contain this block's midplanes in their passthrough lists
 
         self.wires = spec.pop('wires',set()) #list of (src, dst) tuples for cables linking midplanes
         self.admin_failed = False #set this to true if a partadm --fail is issued
@@ -502,6 +507,10 @@ class Block (Data):
 
     relatives = property(_get_relatives)
 
+    def _get_passthrough_blocks (self):
+        return [b.name for b in self._passthrough_blocks]
+
+    passthrough_blocks = property(_get_passthrough_blocks)
 
     def _get_node_card_names (self):
         return [nc.name for nc in self.node_cards]
@@ -522,7 +531,18 @@ class Block (Data):
     wire_list = property(lambda self: list(self.wires))
     wiring_conflict_list = property(lambda self: list(self._wiring_conflicts))
     passthrough_node_card_list = property(lambda self: list(self.passthrough_node_cards))
-    #passthrough_midplane_list = property(lambda self: list(self.passthrough_midplanes))
+    passthrough_block_list = property(lambda self: list(self._passthrough_blocks))
+
+    @property
+    def passthrough_node_card_names(self):
+        return [nc.name for nc in self.passthrough_node_cards]
+
+    @property
+    def passthrough_midplane_list(self):
+        mp = set()
+        for nc in self.passthrough_node_cards:
+            mp.add('-'.join(nc.name.split('-')[:2]))
+        return list(mp)
 
     def _get_node_names (self):
         return [n.name for n in self.nodes]
@@ -620,7 +640,19 @@ class Block (Data):
                 return True
         return False
 
+    def mark_if_passthrough(self, other):
+        """Take a second block and determine if any of our midplanes are in
+        the other block's passthrough list.
 
+        Return: void
+
+        """
+        if (self.node_cards.intersection(other.passthrough_node_cards) or
+                self.passthrough_node_cards.intersection(other.node_cards)):
+            self._passthrough_blocks.add(other)
+            other._passthrough_blocks.add(self)
+
+        return
 
 class BlockDict (DataDict):
     """Default container for blocks.
@@ -798,6 +830,7 @@ class BGBaseSystem (Component):
             b._parents = set()
             b._relatives = set()
             b._children = set()
+            b._passthrough_blocks = set()
 
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
@@ -812,10 +845,12 @@ class BGBaseSystem (Component):
                     b._relatives.add(self._blocks[other_name])
                     self._blocks[other_name]._relatives.add(b)
                 else:
-                    b.mark_if_overlap(self._blocks[other_name])
+                    overlap = b.mark_if_overlap(self._blocks[other_name])
+                    if not overlap:
+                        b.mark_if_passthrough(self._blocks[other_name])
 
             # only a child if the node-level resources are a proper subset of it's parent block.
-            b._parents.update(set([block for block in b._relatives if b.is_parent(block)]))
+            b._parents.update([block for block in b._relatives if b.is_parent(block)])
             b._children.update([block for block in b._relatives if b.is_child(block)])
             #self.logger.debug('Block: %s:\nRelatives: %s', b.name, [block.name for block in b._relatives])
 
@@ -893,6 +928,13 @@ class BGBaseSystem (Component):
         #bring this back to a string, as this is what it comes in as (or should...)
         spec['proccount'] = str(spec['proccount'])
 
+        # Check the geometry
+        # Node counts per dimension must be multiples of 4 for A-D and 2 for E 
+        # maxima are on a per-system basis
+        # Should put a way to note that the geometry and nodecounts disagree
+        if isinstance(spec['geometry'], basestring):
+            Cobalt.Util.validate_geometry(spec['geometry'], int(spec['nodecount']))
+
         # need to handle kernel
         return spec
     validate_job = exposed(validate_job)
@@ -948,7 +990,9 @@ class BGBaseSystem (Component):
         walltime = args['walltime']
         #walltime_p = args.get('walltime_p', walltime)  #*AdjEst* 
         forbidden = set(args.get("forbidden", []))
+        pt_forbidden = set(args.get("pt_forbidden", []))
         required = args.get("required", [])
+        geometry = args.get("geometry", None)
         #if walltime_prediction_enabled:  # *Adj_Est*
         #    runtime_estimate = float(walltime_p)
         #else:
@@ -993,10 +1037,18 @@ class BGBaseSystem (Component):
         else:
             for p in self.possible_locations(nodes, queue):
                 skip = False
-                for bad_name in forbidden:
-                    if p.name==bad_name or bad_name in p.relatives:
-                        skip = True
-                        break
+                if geometry != None and geometry != p.node_geometry:
+                    skip = True
+                if not skip:
+                    for bad_name in forbidden:
+                        if p.name==bad_name or bad_name in p.relatives:
+                            skip = True
+                            break
+                if not skip:
+                    for bad_name in pt_forbidden:
+                        if p.name == bad_name or bad_name in p.passthrough_blocks:
+                            skip = True
+                            break
                 if not skip:
                     if (not requested_location) or (p.name == requested_location):
                         available_blocks.add(p)
@@ -1036,6 +1088,7 @@ class BGBaseSystem (Component):
 
 
     def _find_drain_block(self, job):
+        geometry = job.get('geometry', None)
         # if the user requested a particular block, we only try to drain that one
         if job['attrs'].has_key("location"):
             target_name = job['attrs']['location']
@@ -1045,6 +1098,8 @@ class BGBaseSystem (Component):
         locations = self.possible_locations(job['nodes'], job['queue'])
 
         for p in locations:
+            if geometry != None and geometry != p.node_geometry:
+                continue
             if not drain_block:
                 drain_block = p
             else:
@@ -1120,7 +1175,7 @@ class BGBaseSystem (Component):
         self._locations_cache = per_queue
         self._not_functional_set = not_functional_set
 
-    def find_job_location(self, arg_list, end_times):
+    def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
         ''' get the best location for a job.
 
         '''
@@ -1177,8 +1232,10 @@ class BGBaseSystem (Component):
 
         # first time through, try for starting jobs based on utility scores
         drain_blocks = set()
+        jobs = {}
 
         for job in arg_list:
+            jobs[job['jobid']] = job
             block_name = self._find_job_location(job, drain_blocks)
             if block_name:
                 best_block_dict.update(block_name)
@@ -1190,9 +1247,18 @@ class BGBaseSystem (Component):
             if job.has_key('forbidden'):
                 forbidden_locs = job['forbidden']
 
+            pt_forbidden_locs = []
+            if job.has_key('pt_forbidden'):
+                pt_forbidden_locs = job['pt_forbidden']
+
             forbidden_location_blocks = set(forbidden_locs)
             for loc in forbidden_locs:
                 for forbidden_loc in self._blocks[loc]._relatives:
+                    forbidden_location_blocks.add(forbidden_loc.name)
+
+            #Check to see if this is blocked for passthrough by a reservation
+            for loc in pt_forbidden_locs:
+                for forbidden_loc in self._blocks[loc]._passthrough_blocks:
                     forbidden_location_blocks.add(forbidden_loc.name)
 
             if location is not None:
@@ -1228,18 +1294,31 @@ class BGBaseSystem (Component):
                 # push the backfilling info from the local cache back to the real objects
                 p.draining = self.cached_blocks[p.name].draining
                 p.backfill_time = self.cached_blocks[p.name].backfill_time
-
-            for jobid, block_list in best_block_dict.iteritems():
-                part = self.blocks[block_list[0]]
-                self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
-                part.used_by = int(jobid)
-                part.reserved_until = time.time() + 5*60
-                if part.state == "idle":
-                    part.state = "allocated"
-                    self._recompute_block_state()
         except:
             self.logger.error("error in find_job_location", exc_info=True)
         self._blocks_lock.release()
+
+#            for jobid, block_list in best_block_dict.iteritems():
+                #part = self.blocks[block_list[0]]
+                #self.logger.info("Allocating Block %s to Job %s", part.name, int(jobid))
+                #part.used_by = int(jobid)
+                #part.reserved_until = time.time() + 5*60
+                #if part.state == "idle":
+                    #part.state = "allocated"
+                    #self._recompute_block_state()
+        #except:
+            #self.logger.error("error in find_job_location", exc_info=True)
+#        self._blocks_lock.release()
+
+        reserve_failed = []
+        for jobid, block_list in best_block_dict.iteritems():
+            walltime = float(jobs[jobid]['walltime']) * 60
+            if not self.reserve_resources_until([block_list[0]], time.time() + walltime, int(jobid)):
+                reserve_failed.append(jobid)
+        for j in reserve_failed:
+            self.logger.error("Job %s: failed to reserve block %s.  Removing resource assignment.",
+                    j, best_block_dict[j][0])
+            del best_block_dict[j]
 
         return best_block_dict
     find_job_location = locking(exposed(find_job_location))
@@ -1248,7 +1327,8 @@ class BGBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
+    def find_queue_equivalence_classes(self, reservation_dict,
+            active_queue_names, passthrough_blocking_res_list=[]):
         '''Make reservations equivalent to their queues, and set a block such 
         that jobs outside the reservation aren't scheduled on reserved resources.
 
@@ -1293,7 +1373,7 @@ class BGBaseSystem (Component):
 
         for eq_class in equiv:
             for res_name in reservation_dict:
-                skip = True
+                passthrough_blocking = res_name in passthrough_blocking_res_list
                 for b_name in reservation_dict[res_name].split(":"):
                     b = self.blocks[b_name]
                     if eq_class['data'].intersection(b.node_card_names):
