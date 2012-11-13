@@ -1059,7 +1059,7 @@ class BGSystem (BGBaseSystem):
             allocated = None
             cleaning = None
             for rel_block in b._relatives:
-                if rel_block.used_by:
+                if rel_block.used_by or rel_block.state == 'busy':
                     allocated = rel_block
                     break
                 if rel_block.cleanup_pending:
