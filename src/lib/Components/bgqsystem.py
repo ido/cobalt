@@ -1060,8 +1060,14 @@ class BGSystem (BGBaseSystem):
             cleaning = None
             for rel_block in b._relatives:
                 if rel_block.used_by or rel_block.state == 'busy':
-                    allocated = rel_block
-                    break
+                    if rel_block.block_type != 'pseudoblock':
+                        allocated = rel_block
+                        break
+                    else:
+                        # if it is the subblock parent we're not really busy
+                        if rel_block.name != b.subblock_parent:
+                            allocated = rel_block
+                            break
                 if rel_block.cleanup_pending:
                     cleaning = rel_block
                     break
@@ -1079,6 +1085,23 @@ class BGSystem (BGBaseSystem):
         handled by the pseudoblock itself.
 
         '''
+
+        def offline_if_not_available(block, nc):
+            '''Mark a block offline with an appropriate error indicator
+            if any of the block's nodecards are in a state other than A in
+            the control system. True if the block should be offlined.
+
+            '''
+            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
+                #if control system reports down, then we're really down.
+                block.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
+                self.offline_blocks.append(block.name)
+                if (self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and
+                        self.get_nodecard_isMetaState(nc.name)):
+                    block.state = "hardware offline (%s): nodeboard %s" % ("SoftwareFailure", nc.name)
+                return True
+            return False
+
         #Nodeboards in error
         freeing_error_blocks = []
         for nc in block.node_cards:
@@ -1087,23 +1110,17 @@ class BGSystem (BGBaseSystem):
                 #remember subblock jobs can violate this
                 block.state = "blocked (%s)" % nc.used_by
 
-            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
-                #if control system reports down, then we're really down.
-                block.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
-                self.offline_blocks.append(block.name)
-                if (self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and
-                        nc.used_by != ''):
-                    #we are in a soft error and should attempt to free
-                    if not nc.used_by in freeing_error_blocks:
-                        try:
-                            pybgsched.Block.initiateFree(nc.used_by)
-                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
-                        except RuntimeError:
-                            pass
-                        except:
-                            self.logger.debug("error initiating free for soft error block.")
-                        freeing_error_blocks.append(nc.used_by)
-                return
+            offlined = offline_if_not_available(block, nc)
+            if offlined:
+               return
+
+        #Subblock parent with a nodeboard in error should cause all subblocks to become unavailable.
+        if block.block_type == 'pseudoblock':
+            subblock_parent_block = self._blocks[block.subblock_parent]
+            for nc in subblock_parent_block.node_cards:
+                offlined = offline_if_not_available(block, nc)
+                if offlined:
+                    return
 
         #IOlink status
 
