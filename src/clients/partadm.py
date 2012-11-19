@@ -399,18 +399,25 @@ if __name__ == '__main__':
             forced = [part for part in parts \
                   if [down for down in offline \
                       if down in part['relatives']]]
+            [part.__setitem__('functional', '-') for part in forced]
+            data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+            # FIXME find something useful to output in the 'deps' column, since the deps have vanished
+            data += [[part['name'], part['queue'], part['size'],
+                "x".join([str(i) for i in part['node_geometry']]),
+                part['functional'], part['scheduled'],
+                part['state'], ','.join([])] for part in parts]
+            Cobalt.Util.printTabular(data, centered=[4, 5])
         elif sys_type == 'bgp':
             forced = [part for part in parts \
                   if [down for down in offline \
                       if (down in part['parents'] or down in part['children']) ]]
-        [part.__setitem__('functional', '-') for part in forced]
-        data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
-        # FIXME find something useful to output in the 'deps' column, since the deps have vanished
-        data += [[part['name'], part['queue'], part['size'],
-            "x".join([str(i) for i in part['node_geometry']])
-            ,part['functional'], part['scheduled'],
-                  part['state'], ','.join([])] for part in parts]
-        Cobalt.Util.printTabular(data, centered=[4, 5])
+            [part.__setitem__('functional', '-') for part in forced]
+            data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+            # FIXME find something useful to output in the 'deps' column, since the deps have vanished
+            data += [[part['name'], part['queue'], part['size'],
+                part['functional'], part['scheduled'],
+                part['state'], ','.join([])] for part in parts]
+            Cobalt.Util.printTabular(data, centered=[3,4])
 
     elif opts.boot_start or opts.boot_stop: 
         pass
