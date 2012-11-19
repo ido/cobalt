@@ -1,5 +1,14 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.17
+
+* Support for --geometry has been added.  This will constrain a job to run 
+blocks having a specific geometry in nodes, partadm, partlist and qstat have
+been updated to show this.
+* Support for passthrough blocking reservations has been added.
+* Fixed a bug where a job run outside of Cobalt would not properly block resources.
+* Removed autoreboot in the event of a block entering a control system SoftwareFalure
+state on BG/Q.  Normal cleanup should handle this now.
 
 Changes to 0.99.12
 * As a note, this is a release of fixes and backported features from BG/Q
