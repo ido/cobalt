@@ -31,7 +31,9 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
               --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
               -n <number of nodes> -h --proccount <processor count>
               -M <email address> --mode <mode co/vn>
-              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>"""
+              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
+              --attrs <attr1=val1>:<attr2=val2>
+"""
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
@@ -39,7 +41,8 @@ if __name__ == '__main__':
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies',
                 'M':'notify', 'e':'error', 'o':'output', 'geometry':'geometry',
-                'run_users':'user_list'}
+                'run_users':'user_list', 'attrs':'attrs'}
+
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
     # need to filter here for all args
@@ -218,6 +221,32 @@ if __name__ == '__main__':
                     sys.exit(1)
             updates.update({'geometry': parse_geometry_string(opts['geometry'])})
 
+    if str(opts['attrs']).lower() == 'none':
+        updates.update({'attrs':{}})
+
+    elif opts['attrs'] is not False:
+        attrs = {}
+        newoptsattrs = {}
+        for attr in opts["attrs"].split(":"):
+            if len(attr.split("=")) == 2:
+                key, value = attr.split("=")
+                attrs.update({key:value})
+                newoptsattrs.update({key:value})
+            elif len(attr.split("=")) == 1:
+                if attr[:3] == "no_":
+                    attrs.update({attr[3:]:"false"})
+                    newoptsattrs.update({attr[3:]:"false"})
+                else:
+                    attrs.update({attr:"true"})
+                    newoptsattrs.update({attr:"true"})
+            else:
+                print "Improperly formatted argument to attrs : %s" % attr
+                sys.exit(1)
+        updates.update({'attrs':attrs})
+        opts['attrs'] = newoptsattrs
+
+
+
     if opts['error']:
         updates.update({'errorpath': opts['error']})
     if opts['output']:
@@ -273,6 +302,8 @@ if __name__ == '__main__':
             print >> sys.stderr, "cannot change the output path of a running job"
         if updates.has_key('geometry'):
             print >> sys.stderr, "cannot change the node geometry of a running job"
+        if updates.has_key('attrs'):
+            print >> sys.stderr, "cannot change the attributes of a running job"
         sys.exit(1)
 
     response = False

@@ -1123,6 +1123,7 @@ def validate_geometry(geometry_str, nodecount):
     if get_config_option('bgsystem', 'bgtype') not in ['bgq']:
         raise ValueError("Alternate location geometries not supported on %s"
             " systems." % (get_config_option('system', 'type')))
+
     if geometry_str != None:
         geometry_list = [int(x) for x in geometry_str.split('x')]
         max_nodes_per_dim = []

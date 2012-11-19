@@ -1059,9 +1059,15 @@ class BGSystem (BGBaseSystem):
             allocated = None
             cleaning = None
             for rel_block in b._relatives:
-                if rel_block.used_by:
-                    allocated = rel_block
-                    break
+                if rel_block.used_by or rel_block.state == 'busy':
+                    if rel_block.block_type != 'pseudoblock':
+                        allocated = rel_block
+                        break
+                    else:
+                        # if it is the subblock parent we're not really busy
+                        if rel_block.name != b.subblock_parent:
+                            allocated = rel_block
+                            break
                 if rel_block.cleanup_pending:
                     cleaning = rel_block
                     break
@@ -1079,6 +1085,23 @@ class BGSystem (BGBaseSystem):
         handled by the pseudoblock itself.
 
         '''
+
+        def offline_if_not_available(block, nc):
+            '''Mark a block offline with an appropriate error indicator
+            if any of the block's nodecards are in a state other than A in
+            the control system. True if the block should be offlined.
+
+            '''
+            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
+                #if control system reports down, then we're really down.
+                block.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
+                self.offline_blocks.append(block.name)
+                if (self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and
+                        self.get_nodecard_isMetaState(nc.name)):
+                    block.state = "hardware offline (%s): nodeboard %s" % ("SoftwareFailure", nc.name)
+                return True
+            return False
+
         #Nodeboards in error
         freeing_error_blocks = []
         for nc in block.node_cards:
@@ -1087,23 +1110,17 @@ class BGSystem (BGBaseSystem):
                 #remember subblock jobs can violate this
                 block.state = "blocked (%s)" % nc.used_by
 
-            if self.get_nodecard_state(nc.name) != pybgsched.Hardware.Available:
-                #if control system reports down, then we're really down.
-                block.state = "hardware offline (%s): nodeboard %s" % (self.get_nodecard_state_str(nc.name), nc.name)
-                self.offline_blocks.append(block.name)
-                if (self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and
-                        nc.used_by != ''):
-                    #we are in a soft error and should attempt to free
-                    if not nc.used_by in freeing_error_blocks:
-                        try:
-                            pybgsched.Block.initiateFree(nc.used_by)
-                            self.logger.warning("Attempting to free block %s to clear error.", nc.used_by)
-                        except RuntimeError:
-                            pass
-                        except:
-                            self.logger.debug("error initiating free for soft error block.")
-                        freeing_error_blocks.append(nc.used_by)
-                return
+            offlined = offline_if_not_available(block, nc)
+            if offlined:
+               return
+
+        #Subblock parent with a nodeboard in error should cause all subblocks to become unavailable.
+        if block.block_type == 'pseudoblock':
+            subblock_parent_block = self._blocks[block.subblock_parent]
+            for nc in subblock_parent_block.node_cards:
+                offlined = offline_if_not_available(block, nc)
+                if offlined:
+                    return
 
         #IOlink status
 
@@ -1669,15 +1686,15 @@ class BGSystem (BGBaseSystem):
         for b_name in self._managed_blocks:
             b = self._blocks[b_name]
 
-            ret += "   <Block name='%s'>\n" % p.name
+            ret += "   <Block name='%s'>\n" % b.name
             for nc in b.node_cards:
-                ret += "      <NodeCard id='%s' />\n" % nc.name
-            #for s in p.switches:
-            #    ret += "      <Switch id='%s' />\n" % s
+                ret += "      <NodeBoard id='%s' />\n" % nc.name
+            for s in b.switches:
+                ret += "      <Switch id='%s' />\n" % s
+            for w in b.wires:
+                ret += "      <Wire 'id=%s' />\n" % w
             ret += "   </Block>\n"
-
         ret += "</BlockList>\n"
-
         ret += "</BG>\n"
 
         return ret
@@ -1897,7 +1914,6 @@ class BGSystem (BGBaseSystem):
                 self._fail_boot(pgroup, pgroup.location[0],
                         "%s: job killed: too many boot attempts." % pgroup.jobid)
                 continue
-            cobalt_block.current_reboots += 1
 
             reboot_block = self.get_compute_block(parent_block_name)
             if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
@@ -1911,6 +1927,7 @@ class BGSystem (BGBaseSystem):
                     boot_block.initiateBoot(boot_location)
                     self._log_successful_boot(pgroup, boot_location, 
                         "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
+                    cobalt_block.current_reboots += 1
                 except RuntimeError:
                     self._fail_boot(pgroup, boot_location,
                         "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
@@ -1998,8 +2015,8 @@ class BGSystem (BGBaseSystem):
                 continue
             if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
                 #we are in a state we really shouldn't be in.  Time to fail.
-                if status == pybgsched.Block.Free:
-                    self.logger.warning("%s: Block %s found in free state.  Attempting reboot.", pgroup.label, pgroup.location[0])
+                if status in  [pybgsched.Block.Free, pybgsched.Block.Terminating]:
+                    self.logger.warning("%s: Block %s found in %s state.  Attempting reboot.", pgroup.label, pgroup.location[0], status_str)
                     if not pgroup in self.pgroups_wait_reboot:
                         self.pgroups_wait_reboot.append(pgroup)
                         booted_blocks.append(block_loc)
