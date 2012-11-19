@@ -10,6 +10,10 @@ been updated to show this.
 * Removed autoreboot in the event of a block entering a control system SoftwareFalure
 state on BG/Q.  Normal cleanup should handle this now.
 
+Changes to 0.99.15
+* Fix for an issue that was causing partadm to malfunction when reservations
+were set on the system.
+
 Changes to 0.99.12
 * As a note, this is a release of fixes and backported features from BG/Q
 * Fixed issues that could cause a bad hardware state to be overridden as 
