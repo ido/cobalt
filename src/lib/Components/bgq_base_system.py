@@ -1029,6 +1029,8 @@ class BGBaseSystem (Component):
             for p in available_blocks.copy():
                 if p.size != desired_size:
                     available_blocks.remove(p)
+                elif geometry != None and geometry != p.node_geometry:
+                    available_blocks.remove(p)
                 elif p.name in self._not_functional_set:
                     available_blocks.remove(p)
                 elif requested_location and p.name != requested_location:
