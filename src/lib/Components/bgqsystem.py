@@ -276,6 +276,23 @@ class BGSystem (BGBaseSystem):
         return mp.getNodeBoard(nodecard_pos).getStateString()
 
 
+    def get_node_in_error(self, nodeboard_name):
+        """Return a tuple of a node name and a state if we have a node in a non-available, non-softwarefailure
+        state.  Return none, if all nodes are in SoftwareFailure and Available for both the state and the 
+        node name
+
+        """
+        nodes = SWIG_vector_to_list(pybgsched.getNodes(nodeboard_name))
+        node_name = None
+        state_str = None
+        for node in nodes:
+            if node.getState() not in [pybgsched.Hardware.Available, pybgsched.Hardware.SoftwareFailure]:
+                node_name = node.getLocation()
+                state_str = node.getStateString()
+                break
+
+        return node_name, state_str
+
     def get_switch_state(self, sw_name):
 
         #first character in the switch name is the direction of the switch:
@@ -1098,7 +1115,13 @@ class BGSystem (BGBaseSystem):
                 self.offline_blocks.append(block.name)
                 if (self.get_nodecard_state(nc.name) == pybgsched.Hardware.Error and
                         self.get_nodecard_isMetaState(nc.name)):
-                    block.state = "hardware offline (%s): nodeboard %s" % ("SoftwareFailure", nc.name)
+                    #We have a nonzero number of nodes in error, the nodecard is actually fine
+                    #take the first node that is in a non-software failure, non-available state
+                    error_node_name, state_str = self.get_node_in_error(nc.name)
+                    if error_node_name:
+                        block.state = "hardware offline (%s): node %s" % (state_str, error_node_name)
+                    else:
+                        block.state = "hardware offline (%s): nodeboard %s" % ("SoftwareFailure", nc.name)
                 return True
             return False
 
