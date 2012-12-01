@@ -1,3 +1,7 @@
+'''A Queue.queue paired with a comsumer thread with regiserable handlers and validator functions.
+
+'''
+
 import Queue
 import threading
 import logging
@@ -16,15 +20,18 @@ class QueueThread(threading.Thread):
 
     identity = 'generic'
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         '''Initializes the queue and thread for use.  This does not start the thread.
 
         '''
-        super(QueueThread, self).__init__()
+        super(QueueThread, self).__init__(*args, **kwargs)
         self.msg_queue = Queue.Queue()
         self.msg_validators = {}
         self.msg_handlers = {}
+        self.run_callbacks = {}
         self.hold = False
+
+    #FIXME: need __getstate__ and __setstate__
 
     def send(self, msg):
         '''Add a message to the queue, should the queue be full, will raise the Queue.Empty exception
@@ -72,30 +79,84 @@ class QueueThread(threading.Thread):
         '''
         del self.msg_validators[name]
 
-    def run(self):
+    def register_run_action(self, name, func):
+        '''Register actions to take during the running of the thread.
+        These are called post-message handling.
 
-        while(True):
+        '''
+        self.run_callbacks[name] = func
 
+    def unregister_run_action(self, name):
+        '''Remove an action from the running of the thread.
+
+        '''
+        del self.run_callbacks[name]
+
+    @property
+    def handlers(self):
+        '''List the names of registered message handlers
+
+        '''
+        return self.msg_handlers.keys()
+
+    @property
+    def validators(self):
+        '''List the names of registered message handlers
+
+        '''
+        return self.msg_validators.keys()
+
+    @property
+    def callbacks(self):
+        '''List the names of registered message handlers
+
+        '''
+        return self.run_callbacks.keys()
+
+    def handle_queued_messages(self):
+        '''Pull messages off the queue and invoke handlers.
+
+        '''
+        empty = False
+        while(not empty):
             if self.msg_queue.empty() or self.hold:
                 #no work to do, just iterate
-                Cobalt.Util.sleep(1)
+                empty = True
+            else:
+                curr_msg = self.msg_queue.get()
+                # Terminate this queue if None is sent as a message
+                if curr_msg == None:
+                    self.msg_queue.task_done()
+                    return True
 
-            curr_msg = self.msg_queue.get()
-            # Terminate this queue if None is sent as a message
-            if curr_msg == None:
+                handled = False
+                for name, handler in self.msg_handlers.items():
+                    try:
+                        handled = handled or handler(curr_msg)
+                    except Exception as exc:
+                        _logger.critical("Queue: %s Handler failure: in %s, Exception info follows:", self.identity, name, exc_info=True)
+                        _logger.critical("Queue: %s Message causing failure was: %s", self.identity, curr_msg)
+                if not handled:
+                    _logger.warning("No handlers for message %s", curr_msg)
                 self.msg_queue.task_done()
-                break
+        return False
 
-            handled = False
-            for name, handler in self.msg_handlers.items():
+    def run(self):
+        '''Pull messages off the queue and apply handlers.  If you have additional work to perofrm 
+        in this thread, override this method.  You will have to make sure to call handle_queued_messages in
+        the overriden code as well.
+
+        '''
+        shutdown = False
+        while(not shutdown):
+            shutdown = self.handle_queued_messages()
+            for name, callback in self.run_callbacks.items():
                 try:
-                    handled = handled or handler(curr_msg)
+                    callback(self)
                 except Exception as exc:
-                    _logger.critical("Queue: %s Handler failure: in %s, Exception info follows:", self.identity, name, exc_info=True)
-                    _logger.critical("Queue: %s Message causing failure was: %s", self.identity, curr_msg)
-            if not handled:
-                _logger.warning("No handlers for message %s", curr_msg)
-            self.msg_queue.task_done()
+                    _logger.critical("Queue: %s Action failure: in %s, Exception info follows:", self.identity, name, exc_info=True)
+                    _logger.critical("Queue: %s Action Exception unhandled, trapping to preserve thread.")
 
+            Cobalt.Util.sleep(1) #FIXME: make this an adjustable time
         #End of while(True)
 # End of class QueueThread
