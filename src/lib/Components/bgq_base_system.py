@@ -654,6 +654,20 @@ class Block (Data):
 
         return
 
+    def under_resource_reservation(self, job_id):
+        '''check to see if a block is under a resource reservation.
+        also true if a parent that this block is a child of has a resource
+        reservation.
+
+        '''
+        if self.reserved_by == job_id and self.reserved_until >= time.time():
+            return True
+        else:
+            for parent in self._parents:
+                if parent.reserved_by == job_id and parent.reserved_until and self in parent._children:
+                    return True
+        return False
+
 class BlockDict (DataDict):
     """Default container for blocks.
 

@@ -108,6 +108,20 @@ def _get_state(bridge_partition):
     else:
         return "busy"
 
+def get_compute_block(block, extended_info=False):
+    '''We do this a lot, this is just to make the information call more readable.
+
+    block -- a string containing the block name
+    extended_info -- Default: False.  If set to true, pulls extended info for the
+        block like hardware information.
+
+    '''
+    block_location_filter = pybgsched.BlockFilter()
+    block_location_filter.setName(block)
+    if extended_info:
+        block_location_filter.setExtendedInfo(True)
+    return pybgsched.getBlocks(block_location_filter)[0]
+
 class BGSystem (BGBaseSystem):
 
     """Blue Gene system component.
@@ -1804,7 +1818,7 @@ class BGSystem (BGBaseSystem):
                                 continue
                         #otherwise we should proceed through normal block booting proceedures.
                     boot_completed = self.initiate_boot(boot_location)    
-               else:
+                else:
                     self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
                                                     pgroup.location))
 
@@ -1812,19 +1826,6 @@ class BGSystem (BGBaseSystem):
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
 
-    def get_compute_block(self, block, extended_info=False):
-        '''We do this a lot, this is just to make the information call more readable.
-
-        block -- a string containing the block name
-        extended_info -- Default: False.  If set to true, pulls extended info for the
-            block like hardware information.
-
-        '''
-        block_location_filter = pybgsched.BlockFilter()
-        block_location_filter.setName(block)
-        if extended_info:
-            block_location_filter.setExtendedInfo(True)
-        return pybgsched.getBlocks(block_location_filter)[0]
 
     def initiate_boot(self, boot_location):
         '''Initiate the boot on a block, return True if the boot started successfully, otherwise return false.
@@ -2299,9 +2300,10 @@ class BGSystem (BGBaseSystem):
     def initiate_proxy_boot(self, location, user=None, jobid=None):
         return self.initiate_boot(location)
 
-    @exposed is_block_initialized(self, location):
-        b = self.get_compute_block(location)
-        return if b.getStatus() == pybgsched.Block.Initialized 
+    @exposed 
+    def is_block_initialized(self, location):
+        b = get_compute_block(location)
+        return b.getStatus() == pybgsched.Block.Initialized 
         
     @exposed
     def initiate_proxy_free(self, location, user=None, jobid=None):
