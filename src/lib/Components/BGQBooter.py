@@ -11,6 +11,9 @@ from Cobalt.Data import IncrID
 import mock_pybgsched as pybgsched
 
 #FIXME: also make this handle cleanup
+#TODO: Add message handling
+#TODO: Hook for booting status and suspending ongoing boots
+
 
 _logger = logging.getLogger(__name__)
 
@@ -172,7 +175,7 @@ class BootInitiating(BaseState):
         boot_block = get_compute_block(self.context.subblock_parent)
         if boot_block.getStatus() == pybgsched.Block.Initialized:
             if boot_block.getAction() == pybgsched.Action.Free:
-                _logger.warning("%s/%s: Block for pending boot on %s free. Attempting reboot.", self.context.user, self.context.job_id,
+                _logger.warning("%s/%s: Block for pending boot on %s freeing. Attempting reboot.", self.context.user, self.context.job_id,
                     self.context.subblock_parent)
                 return BootRebooting(self.context)
             else:
@@ -181,42 +184,11 @@ class BootInitiating(BaseState):
                 return BootComplete(self.context)
         elif boot_block.getStatus() in [pybgsched.Block.Free, pybgsched.Block.Terminating]:
             #may have had an inopportune free, go ahead and make this and try and reboot.
-            _logger.warning("%s/%s: Block for pending boot on %s free. Attempting reboot.", self.context.user, self.context.job_id,
+            _logger.warning("%s/%s: Block for pending boot on %s freeing. Attempting reboot.", self.context.user, self.context.job_id,
                     self.context.subblock_parent)
             return BootRebooting(self.context)
+        #allocated and booting states on the block means we stay in this state
         return self
-
-
-            #status = boot_block.getStatus()
-            #status_str = boot_block.getStatusString()
-            #if self._blocks[block_loc].freeing == True:
-                #self.logger.warning("%s: Booting aborted by an incoming free request, will attempt to reboot block %s.", pgroup.label, block_loc)
-                #self.pgroups_wait_reboot.append(pgroup)
-                #booted_blocks.append(block_loc)
-                #continue
-            #if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
-                ##we are in a state we really shouldn't be in.  Time to fail.
-                #if status in  [pybgsched.Block.Free, pybgsched.Block.Terminating]:
-                    #self.logger.warning("%s: Block %s found in %s state.  Attempting reboot.", pgroup.label, pgroup.location[0], status_str)
-                    #if not pgroup in self.pgroups_wait_reboot:
-                        #self.pgroups_wait_reboot.append(pgroup)
-                        #booted_blocks.append(block_loc)
-                #else:
-                    #self._fail_boot(pgroup, pgroup.location[0], "%s: Unable to boot block %s. Aborting job startup. Block status was %s" % (pgroup.label, pgroup.location[0], status_str))
-            #elif status != pybgsched.Block.Initialized:
-                #self.logger.debug("%s: Block: %s waiting for boot: %s",pgroup.label, pgroup.location[0],  boot_block.getStatusString())
-                #continue
-            #else:
-                ##we are good: start the job.
-                #self._log_successful_boot(pgroup, block_loc, "%s: Block %s for location %s successfully booted.  Starting task for job %s. (CBS)" % (pgroup.label, block_loc, pgroup.location[0], pgroup.jobid))
-                #pgroup = self.booting_blocks[block_loc]
-                #self._start_process_group(pgroup, block_loc)
-                #self._clear_boot_lists(pgroup)
-
-        #for block_loc in booted_blocks:
-            #self.booting_blocks.pop(block_loc)
-
-
 
 class BootComplete(BaseState):
 
@@ -250,15 +222,47 @@ class BootRebooting(BaseState):
 
     def __init__(self, context):
         super(BootRebooting, self).__init__(context)
-        _destination_states = frozenset([BootInitiating, BootComplete, BootFailed])
+        _destination_states = frozenset([BootPending, BootInitiating, BootComplete, BootFailed])
 
     def progress(self):
         '''Block found in state that requires reboot.  Increment reboot counter, and check if we have already failed.
 
         '''
-
-
-
+        #Do we still have the resource?
+        if not self.context.block.under_resource_reservation(self.context.job_id):
+            self.context.status_string.append("%s/%s: the internal reservation on %s expired; job has been terminated" % \
+                    (self.context.user, self.context.job_id, self.context.subblock_parent))
+            return BootFailed(self.context)
+        #Check to see if we have any reboots left, if so, wait until free(?) Then go to pending.
+        #If we find that our block is in a booting state already, then go along with the reboot in progress.
+        if self.context.max_reboot_attempts != None and self.context.reboot_attempts >= self.context.max_reboot_attempts:
+            self.context.status_string.append("%s/%s: Boot terminated on %s: too many reboot attempts." % (self.context.user,
+                self.context.job_id, self.context.subblock_parent))
+            return BootFailed(self.context)
+        try:
+            reboot_block = get_compute_block(self.context.subblock_parent)
+        except Exception as e:
+            _logger.critical("%s/%s: Unable to contact control system for block information.", self.context.user,
+                    self.context.job_id, exc_info=True)
+            return self
+        if reboot_block.getStatus() == pybgsched.Block.Free:
+            self.context.status_string.append("%s/%s: Block %s free, retrying boot." % (self.context.user,
+                self.context.job_id, self.context.subblock_parent))
+            self.context.reboot_attempts += 1
+            return BootPending(self.context)
+        elif reboot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]:
+            #block has already started a reboot.  This can happen esaily with subblocks.
+            self.context.status_string.append("%s/%s: Block %s now booting. Waiting for boot completion." % (self.context.user,
+                self.context.job_id, self.context.subblock_parent))
+            self.context.reboot_attempts += 1
+            return BootInitiating(self.context)
+        elif reboot_block.getStatus() == pybgsched.Block.Initialized and reboot_block.getAction() != pybgsched.Action.Free:
+            #The block is apparently in a normal booted state, also shows up in subblock jobs.
+            self.context.status_string.append("%s/%s: Block %s found booted.  Boot complete." % (self.context.user,
+                self.context.job_id, self.context.subblock_parent))
+            self.context.reboot_attempts += 1
+            return BootComplete(self.context)
+        return self
 
 
 class BootContext(object):
@@ -267,7 +271,7 @@ class BootContext(object):
     A pointer to one of these objects is passed to the boot state for processing.
 
     '''
-    def __init__(self, block, job_id, user, block_lock, subblock_parent=None):
+    def __init__(self, block, job_id, user, subblock_parent=None):
 
         self.block = block
         self.block_id = self.block.name
@@ -463,6 +467,73 @@ class test_BootInitiating(object):
         next_state = BootInitiating(context).progress()
         assert 'complete' == str(next_state), "Returned state was %s" % next_state
 
+
+class test_BootRebooting(object):
+
+    class TestBlock(object):
+
+        def __init__(self, name, reserved=True, block_type='normal'):
+            self.name = name
+            self.reserved = reserved
+            self.block_type = 'normal'
+
+        def under_resource_reservation(self, job_id):
+            return self.reserved
+
+    def setup(self):
+        pybgsched.Block('TB-1', 512)
+
+    def teardown(self):
+        pybgsched.block_dict = {}
+
+    def test_reboot_free(self):
+        block = self.TestBlock('TB-1')
+        context = BootContext(block, 1, 'testuser', None)
+        context.max_reboot_attempts = 3
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Free)
+        next_state = BootRebooting(context).progress()
+        assert 'pending' == str(next_state), "Returned state was %s" % next_state
+
+    def test_reboot_initialized(self):
+        block = self.TestBlock('TB-1')
+        context = BootContext(block, 1, 'testuser', None)
+        context.max_reboot_attempts = 3
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Initialized)
+        next_state = BootRebooting(context).progress()
+        assert 'complete' == str(next_state), "Returned state was %s" % next_state
+
+    def test_reboot_initialized_free_pending(self):
+        block = self.TestBlock('TB-1')
+        context = BootContext(block, 1, 'testuser', None)
+        context.max_reboot_attempts = 3
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Initialized)
+        pybgsched.block_dict['TB-1'].set_action(pybgsched.Action.Free)
+        next_state = BootRebooting(context).progress()
+        assert 'rebooting' == str(next_state), "Returned state was %s" % next_state
+
+    def test_reboot_booting(self):
+        block = self.TestBlock('TB-1')
+        context = BootContext(block, 1, 'testuser', None)
+        context.max_reboot_attempts = 3
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Booting)
+        next_state = BootRebooting(context).progress()
+        assert 'initiating' == str(next_state), "Returned state was %s" % next_state
+
+    def test_reboot_allocating(self):
+        block = self.TestBlock('TB-1')
+        context = BootContext(block, 1, 'testuser', None)
+        context.max_reboot_attempts = 3
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Allocated)
+        next_state = BootRebooting(context).progress()
+        assert 'initiating' == str(next_state), "Returned state was %s" % next_state
+
+    def test_reboot_terminating(self):
+        block = self.TestBlock('TB-1')
+        context = BootContext(block, 1, 'testuser', None)
+        context.max_reboot_attempts = 3
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Terminating)
+        next_state = BootRebooting(context).progress()
+        assert 'rebooting' == str(next_state), "Returned state was %s" % next_state
 
 class BGQBooter(Cobalt.QueueThread.QueueThread):
     '''Track boots and reboots.
