@@ -10,6 +10,7 @@ from Cobalt.Data import IncrID
 
 import mock_pybgsched as pybgsched
 
+
 #FIXME: also make this handle cleanup
 #TODO: Add message handling
 #TODO: Hook for booting status and suspending ongoing boots
@@ -346,6 +347,67 @@ class BGQBoot(object):
         return self.boot_id == other.boot_id
 
 
+class BGQBooter(Cobalt.QueueThread.QueueThread):
+    '''Track boots and reboots.
+
+    '''
+
+    def __init__(self, all_blocks, block_lock, reservation_check_fcn):
+        '''register handlers for this set of messages
+
+        '''
+        super(BGQBooter, self).__init__(*args, **kwargs)
+        self.pending_boots = set()
+        self.boot_data_lock = threading.Lock()
+        self.all_blocks = all_blocks
+        self.block_lock =  block_lock
+
+
+    def __getstate__(self):
+        return {'version': 1, 'next_boot_id': __boot_id_gen.idnum,
+                'pending_boots': [boot.get_details() for boot in list(self.pending_boots)]}
+
+    def __setstate__(self, spec):
+        return
+
+
+    def stat(self, block_ids=None):
+        '''Return pending boot statuses.
+
+        block_ids (default None): a list of blocks id's to return pending boot statuses, if None, apply to all blocks
+
+        '''
+        self.boot_data_lock.acquire()
+        if block_ids == None:
+            boot_set = list(self.pending_boots)
+        else:
+            boot_set = set([pending_boot for pending_boot in list(self.pending_boots) if pending_boot.block_id in block_ids])
+        self.boot_data_lock.release()
+        return list(boot_set)
+
+    def reap(self, block_id):
+        '''clear out completed, failed, or otherwise terminated boots
+
+        '''
+        boots_to_clear = []
+        for boot in self.pending_boots():
+            if boot.block_id == block_id and boot.state in ['complete', 'failed']:
+                boots_to_clear.append(boot)
+
+        for boot in boots_to_clear:
+            self.pending_boots.remove(boot)
+
+    def progress_boot(self):
+        '''callback to be registered with the run method.
+        This gets executed after all messages have been parsed.
+
+        '''
+        self.boot_data_lock.acquire()
+        for boot in self.pending_boots:
+            boot.progress()
+        self.boot_data_lock.release()
+
+
 from nose import *
 class test_BootPending(object):
 
@@ -535,63 +597,4 @@ class test_BootRebooting(object):
         next_state = BootRebooting(context).progress()
         assert 'rebooting' == str(next_state), "Returned state was %s" % next_state
 
-class BGQBooter(Cobalt.QueueThread.QueueThread):
-    '''Track boots and reboots.
-
-    '''
-
-    def __init__(self, all_blocks, block_lock, reservation_check_fcn):
-        '''register handlers for this set of messages
-
-        '''
-        super(BGQBooter, self).__init__(*args, **kwargs)
-        self.pending_boots = set()
-        self.boot_data_lock = threading.Lock()
-        self.all_blocks = all_blocks
-        self.block_lock =  block_lock
-
-
-    def __getstate__(self):
-        return {'version': 1, 'next_boot_id': __boot_id_gen.idnum,
-                'pending_boots': [boot.get_details() for boot in list(self.pending_boots)]}
-
-    def __setstate__(self, spec):
-        return
-
-
-    def stat(self, block_ids=None):
-        '''Return pending boot statuses.
-
-        block_ids (default None): a list of blocks id's to return pending boot statuses, if None, apply to all blocks
-
-        '''
-        self.boot_data_lock.acquire()
-        if block_ids == None:
-            boot_set = list(self.pending_boots)
-        else:
-            boot_set = set([pending_boot for pending_boot in list(self.pending_boots) if pending_boot.block_id in block_ids])
-        self.boot_data_lock.release()
-        return list(boot_set)
-
-    def reap(self, block_id):
-        '''clear out completed, failed, or otherwise terminated boots
-
-        '''
-        boots_to_clear = []
-        for boot in self.pending_boots():
-            if boot.block_id == block_id and boot.state in ['complete', 'failed']:
-                boots_to_clear.append(boot)
-
-        for boot in boots_to_clear:
-            self.pending_boots.remove(boot)
-
-    def progress_boot(self):
-        '''callback to be registered with the run method.
-        This gets executed after all messages have been parsed.
-
-        '''
-        self.boot_data_lock.acquire()
-        for boot in self.pending_boots:
-            boot.progress()
-        self.boot_data_lock.release()
 
