@@ -1177,6 +1177,59 @@ class BGBaseSystem (Component):
         self._locations_cache = per_queue
         self._not_functional_set = not_functional_set
 
+    @staticmethod
+    def set_backfill_times(blocks, job_end_times, now, minimum_not_idle=300):
+        '''Set the backfill times for a block.  These get used in both the calculation of the backfill window
+        as well as being used to select drain blocks.
+
+        This will side-effect the blocks, and return a new set of backfill times on said blocks. It will also clear the draining flag (set to False)
+        now is the time to use as the starting point of this drain window
+        minimum_not_idle is a minimum delta in seconds to add to now for non-idle non-job blocks
+        job_end_times is a dict of block_location:job_end_time.  All times for this function are in seconds from epoch.
+        '''
+        #Initialize block to immediately available or ready 5 min from now.
+        #the backfill time is in sec from Epoch.
+        #initialize everything that isn't idle as being ready 5 min from now.
+        for p in blocks.itervalues():
+            if p.state == 'idle':
+                p.backfill_time = now
+            else:
+                p.backfill_time = now + minimum_not_idle
+            p.draining = False
+
+        for p in blocks.itervalues():
+            if p.name in job_end_times.keys():
+                #Keep at least minimum_not_idle open for cleanup.  Also, job may be over time.
+                if job_end_times[p.name] > p.backfill_time:
+                    p.backfill_time = job_end_times[p.name]
+
+                #iterate over current jobs.  Blocks with running jobs are set to the job's end time (startime + walltime)
+                #Iterate over parents and set their time to the backfill window as well.
+                # only set the parent block's time if it is earlier than the block's time
+                for parent_block in p._parents:
+                    if p.backfill_time > parent_block.backfill_time:
+                        parent_block.backfill_time = p.backfill_time
+
+        #Over all blocks, ignore if the time has not been changed, otherwise push
+        # the backfill time to children.  Do so if the child is either immediately available
+        # or if the child has a longer backfill time that the block does.
+        # is this backwards?
+        for p in blocks.itervalues():
+            if p.backfill_time == now:
+                continue
+            for child in p._children:
+                child_block = child
+                if child_block.backfill_time == now  or child_block.backfill_time > p.backfill_time:
+                    child_block.backfill_time = p.backfill_time
+
+        #Go back through, if we're actually running a job on a block, all of it's children should have timese set to the greater of their current time or the parent block's time
+        for name in job_end_times.iterkeys():
+            job_block = blocks[name]
+            for child in job_block._children:
+                if child.backfill_time < job_end_times[name]:
+                    child.backfill_time = job_block.backfill_time
+
+
     def find_job_location(self, arg_list, end_times, pt_blocking_locations=[]):
         ''' get the best location for a job.
 
@@ -1206,31 +1259,7 @@ class BGBaseSystem (Component):
             job_end_times[item[0][0]] = item[1]
 
         now = time.time()
-        for p in self.cached_blocks.itervalues():
-            if p.state == "idle":
-                p.backfill_time = now
-            else:
-                p.backfill_time = now + 5*60
-            p.draining = False
-
-        for p in self.cached_blocks.itervalues():
-            if p.name in job_end_times:
-                if job_end_times[p.name] > p.backfill_time:
-                    p.backfill_time = job_end_times[p.name]
-
-                for parent_name in p.parents:
-                    parent_block = self.cached_blocks[parent_name]
-                    if p.backfill_time > parent_block.backfill_time:
-                        parent_block.backfill_time = p.backfill_time
-
-        for p in self.cached_blocks.itervalues():
-            if p.backfill_time == now:
-                continue
-            for child in p._children:
-                child_block = child
-                if child_block.backfill_time == now or child_block.backfill_time > p.backfill_time:
-                    child_block.backfill_time = p.backfill_time
-
+        self.set_backfill_times(self.cached_blocks, job_end_times, now)
 
         # first time through, try for starting jobs based on utility scores
         drain_blocks = set()
