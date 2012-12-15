@@ -1300,7 +1300,8 @@ class BGBaseSystem (Component):
                         drain_blocks.add(self.cached_blocks[p_name])
                         self.cached_blocks[p_name].draining = True
                     drain_blocks.add(location)
-                    self.logger.debug("job %s is draining %s" % (job['jobid'], location.name))
+                    self.logger.debug("job %s is draining %s backfill ends at %s" % (job['jobid'], location.name, \
+                        time.strftime('%Y-%M-%d %H:%m:%S', time.gmtime(location.backfill_time))))
                     location.draining = True
 
         # the next time through, try to backfill, but only if we couldn't find anything to start
