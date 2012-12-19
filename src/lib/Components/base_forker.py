@@ -487,11 +487,11 @@ class BaseForker (Component):
                 for child,child_obj in self.children.iteritems():
                     if child_obj.runid == runid:
                         return child_obj.id 
-    
+
             # os.environ silently calls putenv().  It also shallow-copies.
             # I'm checking here to make sure user-environments don't leak
             # back into forker's environment.  --PMR
-            
+
             #only should do this for user jobs, we're not using this for
             #helper scripts.
             orig_env = copy.deepcopy(os.environ)
@@ -680,7 +680,7 @@ class BaseForker (Component):
                 else:
                     child.death_timer = Timer(self.DEATH_TIMEOUT)
                     child.death_timer.start()
-            elif timer.has_expired():
+            elif child.death_timer.has_expired:
                 try:
                     child.signal(signal.SIGKILL)
                 except OSError, e:
