@@ -396,7 +396,7 @@ class ClusterBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
+    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names, passthrough_partitions=[]):
         equiv = []
         for q in self.queue_assignments:
             # skip queues that aren't "running"
@@ -457,6 +457,7 @@ class ClusterBaseSystem (Component):
                 self.logger.info("hasty job kill: freeing %s" % host)
         else:
             self.logger.error("failed to reserve location '%r' until '%s'" % (location, time))
+            return True #So we can progress.
     reserve_resources_until = exposed(reserve_resources_until)
 
 
