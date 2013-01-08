@@ -6,6 +6,7 @@ import Queue
 import threading
 import logging
 import Cobalt.Util
+import sys
 
 _logger = logging.getLogger(__name__)
 
@@ -30,8 +31,6 @@ class QueueThread(threading.Thread):
         self.msg_handlers = {}
         self.run_callbacks = {}
         self.hold = False
-
-    #FIXME: need __getstate__ and __setstate__
 
     def send(self, msg):
         '''Add a message to the queue, should the queue be full, will raise the Queue.Empty exception
@@ -138,6 +137,7 @@ class QueueThread(threading.Thread):
                         _logger.critical("Queue: %s Message causing failure was: %s", self.identity, curr_msg)
                 if not handled:
                     _logger.warning("No handlers for message %s", curr_msg)
+
                 self.msg_queue.task_done()
         return False
 
@@ -152,10 +152,10 @@ class QueueThread(threading.Thread):
             shutdown = self.handle_queued_messages()
             for name, callback in self.run_callbacks.items():
                 try:
-                    callback(self)
+                    callback()
                 except Exception as exc:
                     _logger.critical("Queue: %s Action failure: in %s, Exception info follows:", self.identity, name, exc_info=True)
-                    _logger.critical("Queue: %s Action Exception unhandled, trapping to preserve thread.")
+                    _logger.critical("Queue: %s Action Exception unhandled, trapping to preserve thread.", self.identity)
 
             Cobalt.Util.sleep(1) #FIXME: make this an adjustable time
         #End of while(True)
