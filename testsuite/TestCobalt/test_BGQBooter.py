@@ -1,6 +1,18 @@
 '''Unit tests for the BGQBooter module
 
 '''
+CONFIG_FILE_ENTRY = """
+[bgsystem]
+max_reboots=3
+
+"""
+import Cobalt
+#Add a config file to be read
+config_file = Cobalt.CONFIG_FILES[0]
+config_fp = open(config_file, "w")
+config_fp.write(CONFIG_FILE_ENTRY)
+config_fp.close()
+
 import threading
 from nose import *
 from nose.tools import timed, TimeExpired
@@ -8,7 +20,6 @@ from TestCobalt.Utilities.Time import timeout
 import time
 import pybgsched
 from Cobalt.Components.BGQBooter import *
-
 
 
 
@@ -142,7 +153,38 @@ class test_BGQBooter(object):
         reboot_count = self.booter.stat('TB-1')[0].context.reboot_attempts
         assert  reboot_count == 1, "Failure: reboot attempts were %s" % reboot_count
 
-
+    @timeout(20)
+    def test_excessive_reboots(self):
+        #ensure that we honor the max_reboots variable
+        pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Free)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Terminating)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Free)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Terminating)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Free)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Terminating)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Free)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Terminating)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Booting)
+        pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Allocated)
+        self.booter.start()
+        self.booter.initiate_boot('TB-1',1,'testuser')
+        while True:
+            if self.booter.pending_boots != set():
+                break
+        pybgsched.block_dict['TB-1'].set_action(pybgsched.Action._None)
+        for boot in self.booter.pending_boots:
+            boot.context.max_reboot_attempts = 3
+        while (True):
+            time.sleep(1)
+            if len(pybgsched.block_dict['TB-1'].statuses)== 1:
+                time.sleep(1)
+                break
+        for output in self.booter.stat('TB-1')[0].context.status_string:
+            print output
+        boot_state = str(self.booter.stat('TB-1')[0].state)
+        assert boot_state == 'failed', 'Boot state not failed, is %s instead' % boot_state
+        reboot_count = self.booter.stat('TB-1')[0].context.reboot_attempts
+        assert  reboot_count == 3, "Failure: reboot attempts were %s" % reboot_count
 
 class test_BootPending(object):
 

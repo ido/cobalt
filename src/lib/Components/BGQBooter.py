@@ -6,6 +6,9 @@ import Cobalt.QueueThread
 from Cobalt.Components.bgq_base_system import Block
 from Cobalt.QueueThread import ValidationError
 from Cobalt.Data import IncrID
+import Cobalt.Util
+from Cobalt.Util import get_config_option
+
 
 import pybgsched
 
@@ -15,9 +18,12 @@ import pybgsched
 
 import sys
 _logger = logging.getLogger(__name__)
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-_logger.addHandler(ch)
+_logger.setLevel(logging.DEBUG)
+#ch = logging.StreamHandler(sys.stdout)
+#ch.setLevel(logging.DEBUG)
+#_logger.addHandler(ch)
+
+Cobalt.Util.init_cobalt_config()
 
 _boot_id_gen = IncrID()
 
@@ -78,6 +84,7 @@ def _initiate_boot(context):
     '''Initiate the boot. If problems are encountered, then return a BootFailed state, otherwise, return a BootInitiating state.
 
     '''
+    _logger.info("initiating boot")
     try:
         pybgsched.Block.initiateBoot(context.subblock_parent)
     except RuntimeError:
@@ -287,7 +294,12 @@ class BootContext(object):
             self.subblock_parent = self.block.name
         else:
             self.subblock_parent = subblock_parent
-        self.max_reboot_attempts = None #FIXME: make sure this is set
+
+        self.max_reboot_attempts = get_config_option("bgsystem","max_reboots", "unlimited")
+        if self.max_reboot_attempts.lower() == 'unlimited':
+            self.max_reboot_attempts = None
+        else:
+            self.max_reboot_attempts = int(self.max_reboot_attempts)
         self.reboot_attempts = 0
         self.status_string = []
 
@@ -459,10 +471,14 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         if not self.booting_suspended:
-            self.boot_data_lock.acquire()
             for boot in self.pending_boots:
-                boot.progress()
-            self.boot_data_lock.release()
+                self.boot_data_lock.acquire()
+                try:
+                    boot.progress()
+                except Exception:
+                    raise
+                finally:
+                    self.boot_data_lock.release()
         return
 
     def handle_initiate_boot(self, msg):
