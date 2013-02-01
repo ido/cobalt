@@ -17,11 +17,10 @@ import pybgsched
 #TODO: Hook for booting status and suspending ongoing boots
 
 import sys
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
-#ch = logging.StreamHandler(sys.stdout)
-#ch.setLevel(logging.DEBUG)
-#_logger.addHandler(ch)
+import Cobalt.Logging
+_logger = logging.getLogger()
+Cobalt.Logging.log_to_stderr(logging.getLogger(), timestamp=True)
+Cobalt.Logging.setup_logging(__name__, console_timestamp=True)
 
 Cobalt.Util.init_cobalt_config()
 
@@ -89,10 +88,13 @@ def _initiate_boot(context):
         pybgsched.Block.initiateBoot(context.subblock_parent)
     except RuntimeError:
         #fail the boot
+        _logger.warning("%s/%s: Unable to boot block %s due to RuntimeError. Aborting job startup.",context.user, context.job_id,
+                context.subblock_parent)
         context.status_string.append("%s/%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (context.user,
             context.job_id, context.subblock_parent))
         return BootFailed(context)
     else:
+        _logger.info("%s/%s: Initiating boot at location %s.", context.user, context.job_id, context.subblock_parent)
         context.status_string.append("%s/%s: Initiating boot at location %s." % (context.user,
             context.job_id, context.subblock_parent))
         #log boot success
@@ -330,6 +332,7 @@ class BGQBoot(object):
         self.context = BootContext(block, job_id, user, block_lock, subblock_parent)
         self.__statemachine = Cobalt.TriremeStateMachine.StateMachineProcessor()
         self.initialize_state_machine()
+        _logger.info("Boot %s initialized.", self.boot_id)
 
     def initialize_state_machine(self):
 
@@ -379,6 +382,12 @@ class BGQBoot(object):
     def progress(self):
         self.__statemachine.process()
 
+    def pop_status_string(self):
+        if self.context.status_string == []:
+            return None
+        else:
+            return self.context.status_string.pop(0)
+
 class BGQBooter(Cobalt.QueueThread.QueueThread):
     '''Track boots and reboots.
 
@@ -403,6 +412,8 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.booting_suspended = False
         self.register_run_action('progress_boot', self.progress_boot)
         self.register_handler('initiate_boot', self.handle_initiate_boot)
+        _logger.debug("%s", pybgsched.__file__)
+        _logger.info("Booter Initialized")
 
     def __getstate__(self):
         #provided as a convenience for later reconstruction
@@ -442,6 +453,12 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.boot_data_lock.release()
         return list(boot_set)
 
+    def get_boots_by_jobid(self, job_id):
+        self.boot_data_lock.acquire()
+        boot_set = [pending_boot for pending_boot in list(self.pending_boots) if pending_boot.context.job_id == job_id]
+        self.boot_data_lock.release()
+        return boot_set
+
     def cancel(self, block_id, force=False):
         raise NotImplementedError
 
@@ -450,7 +467,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         boots_to_clear = []
-        for boot in self.pending_boots():
+        for boot in self.pending_boots:
             if boot.block_id == block_id and boot.state in ['complete', 'failed']:
                 boots_to_clear.append(boot)
 
@@ -463,6 +480,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         self.send(InitiateBootMsg(block_id, job_id, user, subblock_parent))
+        _logger.debug("Sent message to initiate boot: %s %s %s %s", block_id, job_id, user, subblock_parent)
         return
 
     def progress_boot(self):

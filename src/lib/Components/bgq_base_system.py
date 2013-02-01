@@ -446,14 +446,6 @@ class Block (Data):
 
         self.block_type = spec.get('block_type', None)
 
-        #rebooting-related variables
-        self.current_reboots = 0
-        self.max_reboots = get_config_option("bgsystem","max_reboots", "unlimited")
-        if self.max_reboots.lower() == 'unlimited':
-            self.max_reboots = None
-        else:
-            self.max_reboots = int(self.max_reboots)
-
         if self.block_type == None:
             if self.size < subrun_only_size:
                 #we have to make a pseudoblock

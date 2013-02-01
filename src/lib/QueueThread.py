@@ -7,6 +7,7 @@ import threading
 import logging
 import Cobalt.Util
 import sys
+import Cobalt.Logging
 
 _logger = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ class QueueThread(threading.Thread):
                 raise exc
             except Exception as  exc:
                 _logger.critical("Unexpected Exception recieved in queue %s:", self.identity, exc_info=True)
+        _logger.debug("Adding message: %s", str(msg))
         self.msg_queue.put(msg)
 
     def close(self):
