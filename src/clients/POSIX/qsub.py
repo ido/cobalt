@@ -29,14 +29,14 @@ Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
              -e <error file path> -o <output file path> -i <input file path>
              -n <number of nodes> -h --proccount <processor count> -u <umask>
              --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-             --users <user1>:<user2> --run_project
+             --users <user1>:<user2> --run_project --disable_preboot
 """
 
 
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
-            'preemptable':'preemptable', 'run_project':'run_project'}
+            'preemptable':'preemptable', 'run_project':'run_project', 'disable_preboot':'disable_preboot'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
                 'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
@@ -238,6 +238,10 @@ if __name__ == '__main__':
     if opts['preemptable']:
         jobspec.update({'preemptable':True})
     jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
+
+    jobspec['script_preboot'] = True
+    if opts['disable_preboot']:
+        jobspec['script_preboot'] = False
 
     if opts['dependencies']:
         Cobalt.Util.check_dependencies(opts['dependencies'])

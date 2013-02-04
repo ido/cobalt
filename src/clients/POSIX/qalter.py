@@ -41,7 +41,8 @@ if __name__ == '__main__':
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies',
                 'M':'notify', 'e':'error', 'o':'output', 'geometry':'geometry',
-                'run_users':'user_list', 'attrs':'attrs'}
+                'run_users':'user_list', 'attrs':'attrs', 'disable_preboot':'disable_preboot',
+                'enable_preboot':'enable_preboot'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)
@@ -195,6 +196,10 @@ if __name__ == '__main__':
             if user not in updates['user_list']:
                 updates['user_list'].insert(0, user)
 
+    if opts['disable_preboot']:
+        updates['script_preboot'] = False
+    if opts['enable_preboot']:
+        updates['script_preboot'] = True
 
     if opts['run_project'] == True:
         if not opts['user_list']:

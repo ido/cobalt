@@ -90,7 +90,8 @@ sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
 
 class BGProcessGroup(ProcessGroup):
     """ProcessGroup modified by BlueGene/Q systems"""
-    fields = ProcessGroup.fields + ["nodect", "subblock", "subblock_parent", "corner", "extents"]
+    fields = ProcessGroup.fields + ["nodect", "subblock", "subblock_parent", "corner", "extents",
+            'script_preboot']
 
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec)
@@ -99,6 +100,7 @@ class BGProcessGroup(ProcessGroup):
         self.subblock_parent = None
         self.corner = None
         self.extents = None
+        self.script_preboot = spec.get('script_preboot', True)
 
 # convenience function used several times below
 def _get_state(bridge_partition):
@@ -1786,9 +1788,15 @@ class BGSystem (BGBaseSystem):
                             pgroup.label, pgroup.kernel)
                 if pgroup.mode == "script":
                     pgroup.forker = 'user_script_forker'
+                    if pgroup.script_preboot == False:
+                        self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
+                                pgroup.label, pgroup.location[0])
+                        self._start_process_group(pgroup)
+                    else:
+                        self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent)
                 else:
                     pgroup.forker = 'bg_runjob_forker'
-                self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent)
+                    self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent)
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
@@ -2073,15 +2081,83 @@ class BGSystem (BGBaseSystem):
         return
 
     @exposed
-    def initiate_proxy_boot(self, location, user=None, jobid=None):
-        return self.initiate_boot(location)
+    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None):
+        '''Start a boot at a location on the user's behalf.  Require a valid cobalt jobid or resid for a location
+        along with the proper user.
+
+        '''
+        #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
+        return self.booter.initiate_boot(location, user, jobid)
 
     @exposed 
     def is_block_initialized(self, location):
+        '''Check to see if we have successfully initialized a block, if so, reap and report back that it is initialized
+
+        '''
         b = get_compute_block(location)
         return b.getStatus() == pybgsched.Block.Initialized 
-        
+
     @exposed
-    def initiate_proxy_free(self, location, user=None, jobid=None):
+    def initiate_proxy_free(self, location, user=None, jobid=None, resid=None):
+        '''Free a block on the user's behalf.  Require jobid or resid and user.  User must be submitting user, or user on reservation
+
+        '''
+        #confirm, then poke control system to kill all jobs on block and free.
         raise NotImplementedError, "Proxy freeing is not supported for this configuration."
+
+    @exposed
+    def get_idle_blocks(self, parent_block, size=None, geometry=None):
+        '''Fetch idle blocks.  Allow for size/geometry constraint
+
+            parent_block - the block whose children need to be returned
+            size - Return blocks of specified size, None returns all sizes.  Default None
+            geometry - Geometry of block in nodes in the form of a list [A,B,C,D,E].  None allows any geometry.  Default None
+
+        '''
+        def cmp_blocks(blk1, blk2):
+            retval = 0
+            if blk1.size > blk2.size:
+                retval =  1
+            elif blk1.size < blk2.size:
+                retval =  -1
+            elif blk1.name > blk2.name:
+                retval = 1
+            elif blk2.name < blk2.name:
+                retval = -1
+            return retval
+
+        ret_list = []
+        self._blocks_lock.acquire()
+        try:
+            target_block = self._blocks[parent_block]
+            ret_list = [block for block in list(target_block._children) if self._only_allocated(block)]
+            if size != None:
+                ret_list = [block for block in ret_list if block.size == size]
+            if geometry != None:
+                ret_list = [block for block in ret_list if block.node_geometry == geometry]
+        finally:
+            #make sure we release this lock
+            self._blocks_lock.release()
+        ret_list.sort(cmp=cmp_blocks)
+        return [block.name for block in ret_list]
+
+    def _only_allocated(self, block):
+        '''Determine if a block is actully bootable (i.e. not allocated, and not in a condition that the control system
+        would consider "busy".
+
+        block -- a Cobalt Block object
+
+        Output:
+            Returns true if the block is bootable, if any of it's parents or children are marked busy, cleanup-initiate, cleanup
+            or the block itself is in any of those states return false.
+
+        '''
+
+        blocked_states = set(['busy', 'cleanup-initiate', 'cleanup'])
+        if block.state in blocked_states:
+            return False
+        for relative in block._relatives:
+            if relative.state in blocked_states:
+                return False
+        return True
 

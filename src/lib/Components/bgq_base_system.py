@@ -660,6 +660,7 @@ class Block (Data):
                     return True
         return False
 
+
 class BlockDict (DataDict):
     """Default container for blocks.
 
