@@ -15,6 +15,7 @@ import xmlrpclib
 import copy
 import Cobalt
 import re
+import logging
 import Cobalt.Util
 from Cobalt.Util import get_config_option
 from Cobalt.Data import Data, DataDict
@@ -32,6 +33,8 @@ __all__ = [
     "BlockDict",
     "BGBaseSystem",
 ]
+
+logger = logging.getLogger()
 
 #try:
 #    Cobalt.Util.init_cobalt_config()
@@ -55,7 +58,7 @@ except:
 def generate_base_node_map():
 
     ret_map = [[0,0,0,0,0]]
-    
+
     __transform_subcube(ret_map)
     ret_map.append(__transform_dim(('b','d'), ret_map[len(ret_map)-1])) 
     __transform_subcube(ret_map)
@@ -652,11 +655,14 @@ class Block (Data):
         reservation.
 
         '''
+        logger.debug('%s, %s, %s, %s', job_id, self.reserved_by, self.reserved_until, time.time())
         if self.reserved_by == job_id and self.reserved_until >= time.time():
+            logger.debug("Under Resource Reservation")
             return True
         else:
             for parent in self._parents:
-                if parent.reserved_by == job_id and parent.reserved_until and self in parent._children:
+                logger.debug('%s %s %s', parent.reserved_by, parent.reserved_until, self in parent._children)
+                if parent.reserved_by == job_id and parent.reserved_until >= time.time() and self in parent._children:
                     return True
         return False
 
@@ -1462,29 +1468,33 @@ class BGBaseSystem (Component):
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
 
-#    @exposed
-#    def get_process_group_info(self, pg_list=[]):
-#        fetch_list = []
-#
-#        if pg_list != []:
-#            raise NotImplementedError("process group name list fetch not yet implemeted.")
-#        else:
-#            fetch_list = ['*']
-#        pg_list = []
-#
-#        for pg_id in fetch_list:
-#
-#            pg_list.extend(self.process_groups.q_get([{"id":pg_name,
-#                "args":'*', "cobalt_log_file":'*', "cwd":'*', "env":'*',
-#                "executable":'*', "exit_status":'*', "head_pid":'*',
-#                "jobid":'*', "kernel":'*', "kerneloptions":'*', "location":'*',
-#                "mode":'*', "nodefile":'*', "size":'*', "state":'*', "stderr":'*',
-#                "stdin":'*', "stdout":'*', "umask":'*', "user":'*', "starttime":'*',
-#                "walltime":'*', "resid":'*', "runid":'*', "forker":'*',
-#                "subblock":'*', "subblock_parent":'*', "corner":'*', "extents":'*'
-#                }]))
-#
-#        return pg_list
+
+    def _auth_user_for_block(self, location, user, jobid, resid):
+        '''Given a location, user, jobid, and/or resid, make sure the user is allowed to boot/free blocks associated with that location.
+
+        Return True if the user is allowed to boot/free commands on the block
+        NOTE: For now only jobid supported.
+        '''
+        retval = True
+        #make sure the jobid has the reservation on the job
+        if not self._blocks[location].under_resource_reservation(jobid):
+            self.logger.warning("%s/%s: Resource %s no longer allocated to job. Proxy boot authorization failed.", jobid, user, location)
+            retval = False
+            return retval
+
+        #make sure the pgroup is active and the user is the one running this command.
+        self.logger.debug("%s", self.process_groups.q_get([{'jobid':'*'}]))
+        self.logger.debug('jobid=%s', jobid)
+        pgroups = self.process_groups.q_get([{'jobid':jobid}])
+        if pgroups == []:
+            self.logger.warning("%s/%s: requested process group not found, authorization of block boot command for block %s failed.", jobid, user, location)
+            retval = False
+        else:
+            pgroup = pgroups[0] #there is only one active pgroup at a time for a jobid.
+            if user != pgroup.user:
+                self.logger.warning("%s is not authorized to execute operations on block %s.", user, location)
+                retval = False
+        return retval
 
     @exposed
     def initiate_proxy_boot(self, location, user=None, jobid=None):

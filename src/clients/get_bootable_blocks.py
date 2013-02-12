@@ -49,7 +49,6 @@ def main():
     block_loc = args[0]
 
     idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
-    #idle_blocks.sort()
     print " ".join(idle_blocks)
 
     return 0

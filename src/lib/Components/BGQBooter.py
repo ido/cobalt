@@ -19,8 +19,6 @@ import pybgsched
 import sys
 import Cobalt.Logging
 _logger = logging.getLogger()
-Cobalt.Logging.log_to_stderr(logging.getLogger(), timestamp=True)
-Cobalt.Logging.setup_logging(__name__, console_timestamp=True)
 
 Cobalt.Util.init_cobalt_config()
 
@@ -92,6 +90,12 @@ def _initiate_boot(context):
                 context.subblock_parent)
         context.status_string.append("%s/%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (context.user,
             context.job_id, context.subblock_parent))
+        return BootFailed(context)
+    except Exception:
+        _logger.critical("%s/%s: Unexpected exception recieved during job boot.  Aborting job startup.", context.user, context.job_id,
+                context.subblock_parent)
+        context.status_string.append("%s/%s: Unexpected exception recieved during job boot.  Aborting job startup." % (context.user, context.job_id,
+                context.subblock_parent))
         return BootFailed(context)
     else:
         _logger.info("%s/%s: Initiating boot at location %s.", context.user, context.job_id, context.subblock_parent)
@@ -324,11 +328,12 @@ class BGQBoot(object):
     _state_list = [BootPending, BootInitiating, BootComplete, BootFailed, BootRebooting,]
     _state_instances = []
 
-    def __init__(self, block, job_id, user, block_lock, subblock_parent=None, boot_id=None):
+    def __init__(self, block, job_id, user, block_lock, subblock_parent=None, boot_id=None, tag=None):
         if boot_id != None:
             self.boot_id == boot_id
         else:
             self.boot_id = _boot_id_gen.next()
+        self.tag = tag
         self.context = BootContext(block, job_id, user, block_lock, subblock_parent)
         self.__statemachine = Cobalt.TriremeStateMachine.StateMachineProcessor()
         self.initialize_state_machine()
@@ -453,6 +458,18 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.boot_data_lock.release()
         return list(boot_set)
 
+    def fetch_status_strings(self, location):
+        status_strings = []
+        for boot in self.pending_boots:
+            if boot.block_id == location:
+                while True:
+                    status_string = boot.pop_status_string()
+                    if status_string == None:
+                        break
+                    status_strings.append(status_string)
+                break
+        return status_strings
+
     def get_boots_by_jobid(self, job_id):
         self.boot_data_lock.acquire()
         boot_set = [pending_boot for pending_boot in list(self.pending_boots) if pending_boot.context.job_id == job_id]
@@ -475,11 +492,11 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             self.pending_boots.remove(boot)
         return
 
-    def initiate_boot(self, block_id, job_id, user, subblock_parent=None):
+    def initiate_boot(self, block_id, job_id, user, subblock_parent=None, tag=None):
         '''Asynchrynously initiate a boot.  This will return immediately, the boot should be in the pending state.
 
         '''
-        self.send(InitiateBootMsg(block_id, job_id, user, subblock_parent))
+        self.send(InitiateBootMsg(block_id, job_id, user, subblock_parent, tag))
         _logger.debug("Sent message to initiate boot: %s %s %s %s", block_id, job_id, user, subblock_parent)
         return
 
@@ -503,7 +520,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         '''callback for handling an initate boot message and constructing the boot object
 
         '''
-        new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock)
+        new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock, tag=msg.tag)
         try:
             if msg.msg_type == 'initiate_boot':
                 self.pending_boots.add(new_boot)
@@ -516,15 +533,17 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 #Boot messages, possibly break out into separate file
 class InitiateBootMsg(object):
 
-    def __init__(self, block_id, job_id, user, subblock_parent=None):
+    def __init__(self, block_id, job_id, user, subblock_parent=None, tag=None):
         self.msg_type = 'initiate_boot'
         self.block_id = block_id
         self.job_id = job_id
         self.user = user
         self.subblock_parent = subblock_parent
+        self.tag = tag
 
     def __str__(self):
-        return "<InitiateBootMsg: msg_type=%s, block_id=%s, job_id=%s, user=%s, subblock_parent=%s>" % (self.msg_type, self.block_id, self.job_id, self.user, self.subblock_parent)
+        return "<InitiateBootMsg: msg_type=%s, block_id=%s, job_id=%s, user=%s, subblock_parent=%s, tag=%s>" % \
+                (self.msg_type, self.block_id, self.job_id, self.user, self.subblock_parent, self.tag)
 
 
 
