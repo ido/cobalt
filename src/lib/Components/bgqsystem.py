@@ -1339,8 +1339,11 @@ class BGSystem (BGBaseSystem):
                 return
 
             #Non-pseudoblock jobs only from here on.
+            #Children may have jobs as well due to ensemble jobs
             block_jobs = self._get_jobs_on_block(b.subblock_parent)
-            #At this point new for the Q.  Blow everything away!
+            for child_block in b._children:
+                block_jobs.extend(self._get_jobs_on_block(child_block.name))
+
             if len(block_jobs) != 0:
                 for job in block_jobs:
                     if job.getId() in self.killing_jobs.keys():
@@ -1800,7 +1803,6 @@ class BGSystem (BGBaseSystem):
                                 pgroup.label, pgroup.location[0])
                         #extend the resource resrevation to cover the job's runtime.
                         reserve_status = self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
-                        self.logger.debug("reserved = %s", reserve_status)
                         self._start_process_group(pgroup)
                     else:
                         self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
@@ -2124,7 +2126,7 @@ class BGSystem (BGBaseSystem):
         This should correspond to the block state.
 
         '''
-        compute_block = self.get_compute_block(location)
+        compute_block = get_compute_block(location)
         if compute_block != None:
             return compute_block.getStatusString()
         return None
@@ -2144,6 +2146,7 @@ class BGSystem (BGBaseSystem):
             self._blocks[location].state = 'cleanup'
             pybgsched.Block.initiateFree(location)
             pybgsched.Block.removeUser(location, user)
+            self.logger.info('%s/%s: User requested free on block %s.', user, jobid, location)
             #get the jobs on the location and all child blocks, and signal the jobs.  After 60 sec, the block should then go into Terminating and free itself.
 
             block_jobs = self._get_jobs_on_block(location)
@@ -2207,6 +2210,8 @@ class BGSystem (BGBaseSystem):
         try:
             target_block = self._blocks[parent_block]
             ret_list = [block for block in list(target_block._children) if self._only_allocated(block)]
+            if self._only_allocated(self._blocks[parent_block]):
+                ret_list.append(self._blocks[parent_block])
             if size != None:
                 ret_list = [block for block in ret_list if block.size == size]
             if geometry != None:

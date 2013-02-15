@@ -655,13 +655,10 @@ class Block (Data):
         reservation.
 
         '''
-        logger.debug('%s, %s, %s, %s', job_id, self.reserved_by, self.reserved_until, time.time())
         if self.reserved_by == job_id and self.reserved_until >= time.time():
-            logger.debug("Under Resource Reservation")
             return True
         else:
             for parent in self._parents:
-                logger.debug('%s %s %s', parent.reserved_by, parent.reserved_until, self in parent._children)
                 if parent.reserved_by == job_id and parent.reserved_until >= time.time() and self in parent._children:
                     return True
         return False
@@ -738,7 +735,6 @@ class BGBaseSystem (Component):
         self.logger.info("managed_blocks: %s", self._managed_blocks)
         specs = [{'name':spec.get("name")} for spec in specs]
         self._blocks_lock.acquire()
-        self.logger.debug('add_blocks lock acquired')
         try:
             blocks = [
                 block for block in self._blocks.q_get(specs)
@@ -748,7 +744,6 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in add_blocks", exc_info=True)
         self._blocks_lock.release()
-        self.logger.debug('add_blocks lock released')
 
         self._managed_blocks.update([
             block.name for block in blocks
@@ -1483,8 +1478,6 @@ class BGBaseSystem (Component):
             return retval
 
         #make sure the pgroup is active and the user is the one running this command.
-        self.logger.debug("%s", self.process_groups.q_get([{'jobid':'*'}]))
-        self.logger.debug('jobid=%s', jobid)
         pgroups = self.process_groups.q_get([{'jobid':jobid}])
         if pgroups == []:
             self.logger.warning("%s/%s: requested process group not found, authorization of block boot command for block %s failed.", jobid, user, location)
