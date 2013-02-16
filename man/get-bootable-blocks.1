@@ -1,0 +1,26 @@
+.TH "get-bootable-blocks" 1 "February 15, 2012" "version 0.99.19" "COBALT COMMANDS"
+.SH NAME
+get-bootable-blocks \- Return a list of bootable blocks within a given block name.
+.SH SYNOPSIS
+.B get-bootable-blocks
+[ --size
+.I nodecount
+] [ --geometry
+.I geometry
+] <block-name>
+.SH DESCRIPTION
+.PP
+get-bootable-blocks by default will return a list of block names that Cobalt's system
+component has marked as bootable at the moment.  This list is sorted first by block size
+and then in ascending lexical order.
+.SH OPTIONS
+.TP
+.B \-\-size nodecount
+Return only blocks of the specified nodecount
+.TP
+.B \-\-geometry geometry
+Return only blocks with the specified geometry.  The geometry is in the form of
+AxBxCxDxE where A, B, C, D, and E are the extents of the block geometry in nodes.
+.SH "SEE ALSO"
+.BR qsub(1),
+.BR boot-block(1)

@@ -37,7 +37,8 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
-               'run_project':'run_project'}
+               'run_project':'run_project', 'disable_preboot':'disable_preboot',
+               'enable_preboot':'enable_preboot'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies',
                 'M':'notify', 'e':'error', 'o':'output', 'geometry':'geometry',
@@ -195,6 +196,10 @@ if __name__ == '__main__':
             if user not in updates['user_list']:
                 updates['user_list'].insert(0, user)
 
+    if opts['disable_preboot']:
+        updates['script_preboot'] = False
+    if opts['enable_preboot']:
+        updates['script_preboot'] = True
 
     if opts['run_project'] == True:
         if not opts['user_list']:

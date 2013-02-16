@@ -1,0 +1,52 @@
+.TH "boot-block" 1 "February 15, 2012" "version 0.99.19" "COBALT COMMANDS"
+.SH NAME
+boot-block \- Prompt Cobalt to execute commands on a BlueGene compute block on the user's behalf
+.SH SYNOPSIS
+.B boot-block
+[ --block
+.I block-name
+] [ --jobid
+.I jobid
+] [--free] [--reboot]
+.SH DESCRIPTION
+.PP
+.B boot-block
+is a command that prompts Cobalt's system component to boot, free, or reboot a
+a block on behalf of a user.  This can boot, free or reboot a block.  The command will complete after
+the requested operation has completed.  To execute commands on a block, the user issuing the command
+must be the user running the job, and must have that block, or a block with a superset of the resources
+allocated to them through Cobalt.  Once the Cobalt resource allocation ends, all blocks booted by this
+command on the allocated block will be freed.
+.SH OPTIONS
+.TP
+.B \-\-block block-name
+Boot the specified block. If the block is already booted, this will not cause
+the block to free.  If this is not specified, the COBALT_PARTNAME
+enviornment variable is checked and used as the block to boot.
+.TP
+.B \-\-jobid jobid
+Boot a block for the specified jobid.  The executing user must be the owner of the
+resource allocation in Cobalt, and the jobid must be running.  The environment variable
+COBALT_JOBID is used if this option is not provided.
+.TP
+.B \-\-free
+Free the specified block, and allow it's resources to be rebooted, or be rebooted as a part
+of another block.  All runjobs on the target resource must be terminated for a block free
+to complete. This must not be used in conjunction with the
+.BR \-\-reboot
+flag.
+.TP
+.B \-\-reboot
+Reboot the specified block.  This executes a free followed by a boot.  The block will be
+ready to run jobs on completion.  Like the
+.BR \-\-free
+option the free stage will only
+complete if all running jobs on the target block have been terminated.  This may not be used
+with the
+.BR \-\-free
+option.
+
+Return only blocks of the specified nodecount
+.SH "SEE ALSO"
+.BR qsub(1),
+.BR get-bootable-blocks(1)

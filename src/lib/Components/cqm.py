@@ -676,6 +676,10 @@ class Job (StateMachine):
         self.resource_postscript_ids = []
 
         self.runid = None #A job starts once.
+        #prebooting is assumed for script jobs, unless the user requests that it be turned off
+        #This is here for BG/Q ensemble job support.  --PMR
+        self.script_preboot = spec.get("script_preboot", True) #preboot a block for a script.
+
 
         dbwriter.log_to_db(self.user, "creating", "job_data", 
                            JobDataMsg(self))
@@ -763,6 +767,8 @@ class Job (StateMachine):
             self.resource_epilogue_ids = None
         if not state.has_key("geometry"):
             self.geometry = None
+        if not state.has_key("script_preboot"):
+            self.script_preboot = True
         self.runid = state.get("runid", None)
 
         self.initializing = False
@@ -821,6 +827,7 @@ class Job (StateMachine):
                 'size':self.procs,
                 'nodect':"*",
                 'mode':self.mode,
+                'script_preboot':self.script_preboot,
                 'cwd':self.outputdir,
                 'executable':self.command,
                 'args':self.args,
