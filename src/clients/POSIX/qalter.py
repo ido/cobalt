@@ -37,12 +37,12 @@ Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
 
 if __name__ == '__main__':
     options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
-               'run_project':'run_project'}
+               'run_project':'run_project', 'disable_preboot':'disable_preboot',
+               'enable_preboot':'enable_preboot'}
     doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
                 'proccount':'proccount', 'dependencies':'dependencies',
                 'M':'notify', 'e':'error', 'o':'output', 'geometry':'geometry',
-                'run_users':'user_list', 'attrs':'attrs', 'disable_preboot':'disable_preboot',
-                'enable_preboot':'enable_preboot'}
+                'run_users':'user_list', 'attrs':'attrs'}
 
     (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
                                                options, doptions, helpmsg)

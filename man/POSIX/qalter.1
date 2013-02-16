@@ -59,6 +59,13 @@ Sets the geometry of the block that the jobs should run on.  This is in
 the form of AxBxCxDxE.  This must be the geometry of the compute block.
 This may not be a fraction of a block. Geometry may be unset if "None"
 is passed as the geometry specification.
+.TP
+.B \-\-disable_preboot
+If --mode script is specified, this will cause Cobalt to run the job script without
+booting the block first.  By default the script is executed after the requested block is booted.
+.TP
+.B \-\-enable_preboot
+If prebooting a block has been disabled, re-enable it.
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR qstat(1)
