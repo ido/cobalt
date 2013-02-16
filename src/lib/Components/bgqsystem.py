@@ -35,6 +35,9 @@ from Cobalt.DataTypes.ProcessGroup import ProcessGroup
 
 from pybgsched import SWIG_vector_to_list
 
+
+from Cobalt.Components.BGQBooter import BGQBooter
+
 from Cobalt.Components.bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp, wire_exp
 from Cobalt.Components.bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK, NODECARD_D_DIM_MASK, NODECARD_E_DIM_MASK
 from Cobalt.Components.bgq_base_system import A_DIM, B_DIM, C_DIM, D_DIM, E_DIM
@@ -87,7 +90,8 @@ sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
 
 class BGProcessGroup(ProcessGroup):
     """ProcessGroup modified by BlueGene/Q systems"""
-    fields = ProcessGroup.fields + ["nodect", "subblock", "subblock_parent", "corner", "extents"]
+    fields = ProcessGroup.fields + ["nodect", "subblock", "subblock_parent", "corner", "extents",
+            'script_preboot']
 
     def __init__(self, spec):
         ProcessGroup.__init__(self, spec)
@@ -96,6 +100,13 @@ class BGProcessGroup(ProcessGroup):
         self.subblock_parent = None
         self.corner = None
         self.extents = None
+        self.script_preboot = spec.get('script_preboot', True)
+
+    def __repr__(self):
+        return "<BGProcessGroup id=%s, jobid=%s, location=%s>" % (self.id, self.jobid, self.location)
+
+    def __str__(self):
+            return self.__repr__()
 
 # convenience function used several times below
 def _get_state(bridge_partition):
@@ -107,6 +118,20 @@ def _get_state(bridge_partition):
         return "idle"
     else:
         return "busy"
+
+def get_compute_block(block, extended_info=False):
+    '''We do this a lot, this is just to make the information call more readable.
+
+    block -- a string containing the block name
+    extended_info -- Default: False.  If set to true, pulls extended info for the
+        block like hardware information.
+
+    '''
+    block_location_filter = pybgsched.BlockFilter()
+    block_location_filter.setName(block)
+    if extended_info:
+        block_location_filter.setExtendedInfo(True)
+    return pybgsched.getBlocks(block_location_filter)[0]
 
 class BGSystem (BGBaseSystem):
 
@@ -152,11 +177,10 @@ class BGSystem (BGBaseSystem):
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
         self.killing_jobs = {} 
-        self.booting_blocks = {}
-        self.pgroups_pending_boot = []
-        self.pgroups_wait_reboot = []
         self.suspend_booting = False
         self.failed_io_block_names = set()
+        self.booter = BGQBooter(self._blocks, self._blocks_lock)
+        self.booter.start()
 
     def __getstate__(self):
 
@@ -233,6 +257,8 @@ class BGSystem (BGBaseSystem):
         self.pgroups_wait_reboot = []
 
         self.fail_io_block_names = set()
+        self.booter = BGQBooter(self._blocks, self._blocks_lock)
+        self.booter.start()
 
     def save_me(self):
         Component.save(self)
@@ -277,7 +303,7 @@ class BGSystem (BGBaseSystem):
 
 
     def get_node_in_error(self, nodeboard_name):
-        """Return a tuple of a node name and a state if we have a node in a non-available, non-softwarefailure
+        """Return aeuple of a node name and a state if we have a node in a non-available, non-softwarefailure
         state.  Return none, if all nodes are in SoftwareFailure and Available for both the state and the 
         node name
 
@@ -343,7 +369,7 @@ class BGSystem (BGBaseSystem):
         if len(block.wires) == 0:
             return
 
-        bg_block = self.get_compute_block(block.name, True)
+        bg_block = get_compute_block(block.name, True)
         if bg_block.isSmall():
             #small blocks can't have wiring conflicts
             self.logger.debug("%s cannot have a conflict, skipping",
@@ -366,7 +392,7 @@ class BGSystem (BGBaseSystem):
             if block_nodeset.isdisjoint(other_nodeset):
                 # we have no node-level hardware in common now check for
                 # wiring conflicts
-                bg_other = self.get_compute_block(other.name, True)
+                bg_other = get_compute_block(other.name, True)
                 #if bg_other.isSmall():
                 #    continue
                 bg_other_dims, can_conflict = _gen_block_dims(bg_other)
@@ -1238,7 +1264,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.debug("CLEANUP: Block %s reporting state as %s", block.name, block.state)
                 if block.state not in ["idle", "cleanup-initiate", "cleanup"]:
 
-                    compute_block = self.get_compute_block(block.name)
+                    compute_block = get_compute_block(block.name)
                     if compute_block.getStatus() == pybgsched.Block.Initialized:
                         pybgsched.Block.initiateFree(block.name)
                         block.freeing = True
@@ -1253,8 +1279,6 @@ class BGSystem (BGBaseSystem):
                 self.logger.critical("Unable to initiate block free from bridge!")
                 raise
             return
-
-
 
         def _children_still_allocated(block):
             for child_block in block._children:
@@ -1271,6 +1295,9 @@ class BGSystem (BGBaseSystem):
                 self.logger.info("Continuing control-system block cleanup for block %s", b.name)
                 _initiate_block_free(b)
                 b.state = 'cleanup-initiate'
+                #also initiate for every busy child block
+                for child in b._children:
+                    _initiate_block_free(child)
             else:
                 #ensure nothing else is running on the subblock parent.  If we're the last one out, 
                 #then free the subblock.
@@ -1312,8 +1339,11 @@ class BGSystem (BGBaseSystem):
                 return
 
             #Non-pseudoblock jobs only from here on.
+            #Children may have jobs as well due to ensemble jobs
             block_jobs = self._get_jobs_on_block(b.subblock_parent)
-            #At this point new for the Q.  Blow everything away!
+            for child_block in b._children:
+                block_jobs.extend(self._get_jobs_on_block(child_block.name))
+
             if len(block_jobs) != 0:
                 for job in block_jobs:
                     if job.getId() in self.killing_jobs.keys():
@@ -1385,7 +1415,7 @@ class BGSystem (BGBaseSystem):
                 hardware_fetch_time.stop()
                 self.logger.log(1, "hardware_fetch time: %f", hardware_fetch_time.elapsed_time)
             except:
-                self.logger.error("Error communicating with the bridge to update partition state information.")
+                self.logger.critical("Error communicating with the bridge to update hardware state information.")
                 self.bridge_in_error = True
                 Cobalt.Util.sleep(5) # wait a little bit...
             try:
@@ -1396,8 +1426,9 @@ class BGSystem (BGBaseSystem):
                 bg_cached_blocks = SWIG_vector_to_list(pybgsched.getBlocks(bf))
                 block_cache_time.stop()
                 self.logger.log(1, "block_cache time: %f", block_cache_time.elapsed_time)
-            except:
-                self.logger.error("Error communicating with the bridge to update block information.")
+            except Exception as e:
+                self.logger.critical("Error communicating with the bridge to update block information.")
+                self.logger.critical("%s", traceback.format_exc())
                 self.bridge_in_error = True
                 Cobalt.Util.sleep(5) # wait a little bit...
             if self.bridge_in_error:
@@ -1424,7 +1455,8 @@ class BGSystem (BGBaseSystem):
                 try:
                     pybgsched.Block.checkIO(block_name, unconnected_io, failed_mp)
                 except:
-                    self.logger.error("Error communicating with the bridge to update block information.")
+                    self.logger.critical("Error communicating with the bridge to update block IO information.")
+                    self.logger.critical("%s", traceback.format_exc())
                     self.bridge_in_error = True
                     Cobalt.Util.sleep(5) # wait a little bit...
                     break
@@ -1766,74 +1798,35 @@ class BGSystem (BGBaseSystem):
                             pgroup.label, pgroup.kernel)
                 if pgroup.mode == "script":
                     pgroup.forker = 'user_script_forker'
+                    if pgroup.script_preboot == False:
+                        self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
+                                pgroup.label, pgroup.location[0])
+                        #extend the resource resrevation to cover the job's runtime.
+                        reserve_status = self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
+                        self._start_process_group(pgroup)
+                    else:
+                        self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
                 else:
                     pgroup.forker = 'bg_runjob_forker'
-                if self.reserve_resources_until(pgroup.location,
-                        float(pgroup.starttime) + 60*float(pgroup.walltime),
-                        pgroup.jobid):
-                    boot_location_block = self._blocks[pgroup.location[0]]
-                    boot_location = boot_location_block.subblock_parent
-                    try:
-                        compute_block = self.get_compute_block(boot_location)
-                    except RuntimeError:
-                        self._fail_boot(pgroup, boot_location, "%s: Unable to retrieve control system data for block %s. Aborting job." % (pgroup.label, boot_location))
-
-                    if boot_location_block.block_type == 'pseudoblock':
-                        #we have to boot a subblock job.  This block may already be booted.
-                        pgroup.subblock = True
-                        pgroup.subblock_parent = boot_location
-                        pgroup.corner = boot_location_block.corner_node
-                        pgroup.extents = boot_location_block.extents
-                        boot_block = self.get_compute_block(boot_location)
-                        if boot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]:
-                            #we are in the middle of starting another on the same subblock. We need to wait until this 
-                            #block has completed booting.
-                            self.pgroups_pending_boot.append(pgroup)
-                            continue
-                        elif boot_block.getStatus() == pybgsched.Block.Initialized:
-                            #already booted, we can start right away.
-                            if not (self._blocks[boot_location].state in ['cleanup','cleanup-initiate']) or self._blocks[boot_location].freeing: #well almost.  the block appears to be freeing.
-                                self._log_successful_boot(pgroup, boot_location, "%s: Block %s for location %s already booted.  Starting task for job %s. (APG)" % (pgroup.label, boot_location, pgroup.location[0], pgroup.jobid))
-                                boot_block.addUser(boot_location, pgroup.user)
-                                self._start_process_group(pgroup)
-                                self._clear_boot_lists(pgroup)
-                                continue
-                            else: #we're going to have to wait for this block to free and reboot the block.
-                                self.logger.info("%s trying to start on freeing block %s. waiting until free.", pgroup.label, boot_location)
-                                self.pgroups_wait_reboot.append(pgroup)
-                                continue
-                        #otherwise we should proceed through normal block booting proceedures.
-                    try: #Initiate boot here, I guess?  Need to make this not block.
-                        #if we're already booted, (subblock), we can immediately move to start.
-                        boot_block = self.get_compute_block(boot_location)
-                        boot_block.addUser(boot_location, pgroup.user)
-                        boot_block.initiateBoot(boot_location)
-                        self._log_successful_boot(pgroup, boot_location, "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
-                    except RuntimeError:
-                        self._fail_boot(pgroup, boot_location, "%s: Unable to boot block %s due to RuntimeError. Aborting job startup." % (pgroup.label, boot_location))
-                    else:
-                        self.booting_blocks[boot_location] = pgroup
-                else:
-                    self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
-                                                    pgroup.location))
-
+                    self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
 
-    def get_compute_block(self, block, extended_info=False):
-        '''We do this a lot, this is just to make the information call more readable.
 
-        block -- a string containing the block name
-        extended_info -- Default: False.  If set to true, pulls extended info for the
-            block like hardware information.
+    def _log_boot_messages(self, pgroup):
+        '''log messages from the booter to logfiles appropriate to the ongoing boot.
 
         '''
-        block_location_filter = pybgsched.BlockFilter()
-        block_location_filter.setName(block)
-        if extended_info:
-            block_location_filter.setExtendedInfo(True)
-        return pybgsched.getBlocks(block_location_filter)[0]
+        boots = self.booter.get_boots_by_jobid(pgroup.jobid)
+        for boot in boots:
+            while True:
+                status_string = boot.pop_status_string()
+                if status_string == None:
+                    break
+                self.logger.info(status_string)
+                cobalt_log_write(pgroup.cobalt_log_file, status_string, pgroup.user)
+        return
 
     def _log_successful_boot(self, pgroup, location, success_string=None):
         '''Code to stamp in the cobatlog and syslog that a boot completed successfully.
@@ -1847,51 +1840,6 @@ class BGSystem (BGBaseSystem):
         self.logger.info(success_string)
         cobalt_log_write(pgroup.cobalt_log_file, success_string, pgroup.user)
 
-    def _clear_boot_lists(self, pgroup):
-        '''Clean out the lists of ongoing block boots.
-
-        '''
-        #bb_count = self.booting_blocks.count(pgroup)
-        ppb_count = self.pgroups_pending_boot.count(pgroup)
-        pwr_count = self.pgroups_wait_reboot.count(pgroup)
-
-        try:
-            del self.booting_blocks[self._blocks[pgroup.location[0]].subblock_parent]
-        except KeyError:
-            pass
-        #for i in range(1, bb_count):
-        #    self.booting_blocks.remove(pgroup)
-        for i in range(0,ppb_count):
-            self.pgroups_pending_boot.remove(pgroup)
-        for i in range(0,pwr_count):
-            self.pgroups_wait_reboot.remove(pgroup)
-
-    def _fail_boot(self, pgroup, location, failure_string=None):
-
-        '''Code to cleanup and log the failure of a boot.
-        Also, ensure entries to appropriate log files and .cobaltlogs happen.
-        This will release the resource reservation immediately as well.
-
-        pgroup -- the pgroup affected by the failed boot attempt
-        location -- the block location where the failure occurred
-        failure_string -- an optional string. If not set, default boot failure logging message is used.
-
-        '''
-
-        if failure_string == None:
-            failure_string = "%s: Job %s terminated due to boot failure. No task was started." % (pgroup.label, pgroup.jobid)
-
-        self.logger.warning(failure_string)
-        #COBALTLOG
-        cobalt_log_write(pgroup.cobalt_log_file, failure_string, pgroup.user)
-        pgroup.exit_status = 255
-        #strip pgroup out of appropriate places?
-        self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
-        #reservation should be released at start of cleaning.
-        self._mark_block_for_cleaning(location, pgroup.jobid)
-        self._clear_boot_lists(pgroup)
-
-        return
 
     def subblock_parent_cleaning(self, block_name):
         self._blocks_lock.acquire()
@@ -1899,158 +1847,30 @@ class BGSystem (BGBaseSystem):
         self._blocks_lock.release()
         return retval
 
-    def check_pgroups_wait_reboot (self):
-
-        '''Sometimes we have to wait until we can reboot the block.
-        This is what allows us to do so.
-
-        A block can move from this to starting the job, checking an ongoing
-        boot, it can also initiate a boot if the block is seen as free.
-
-        '''
-        #TODO: check to see if the block is healthy enough to boot,  if we have a sudden case of dead-link,
-        #bad-hardware, et al. we should totally bail out.
-
-
-        if self.suspend_booting:
-            #booting isn't happening right now, just exit.
-            return
-
-        progressing_pgroups = []
-        for pgroup in self.pgroups_wait_reboot:
-
-            if not self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
-                self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
-                                                                        pgroup.location))
-                continue
-            parent_block_name = self._blocks[pgroup.location[0]].subblock_parent
-            cobalt_block = self._blocks[pgroup.location[0]]
-            if cobalt_block.max_reboots != None and cobalt_block.current_reboots >= cobalt_block.max_reboots:
-                self._fail_boot(pgroup, pgroup.location[0],
-                        "%s: job killed: too many boot attempts." % pgroup.jobid)
-                continue
-
-            reboot_block = self.get_compute_block(parent_block_name)
-            if reboot_block.getStatus() == pybgsched.Block.Free: #block freed: initiate reboot
-                progressing_pgroups.append(pgroup) 
-                boot_location_block = self._blocks[pgroup.location[0]]
-                boot_location = boot_location_block.subblock_parent
-                try: #Initiate boot here, I guess?  Need to make this not block.
-                    #if we're already booted, (subblock), we can immediately move to start.
-                    boot_block = self.get_compute_block(boot_location)
-                    boot_block.addUser(boot_location, pgroup.user)
-                    boot_block.initiateBoot(boot_location)
-                    self._log_successful_boot(pgroup, boot_location, 
-                        "%s: Initiating boot at location %s." % (pgroup.label, boot_location))
-                    cobalt_block.current_reboots += 1
-                except RuntimeError:
-                    self._fail_boot(pgroup, boot_location,
-                        "%s: Unable to boot block %s. Aborting job startup." % (pgroup.label, boot_location))
-                except:
-                    self.logger.critical()
-                    self._fail_boot(pgroup, boot_location,
-                            "%s: unexpected exception while booting %s. Aborting job startup." % (pgroup.label, boot_location))
-                else:
-                    self.booting_blocks[boot_location] = pgroup   
-            elif reboot_block.getStatus() in [pybgsched.Block.Allocated, pybgsched.Block.Booting]: # block rebooting, check pending boot
-                self.logger.warning("%s: Block for pending subblock job on %s is booting.  Waiting for boot completion.", pgroup.label, pgroup.location[0])
-                progressing_pgroups.append(pgroup)
-                self.pgroups_pending_boot.append(pgroup)
-            elif reboot_block.getStatus == pybgsched.Block.Initialized:
-                if self._blocks[reboot_block.getName()].freeing == False: #block rebooted. Go ahead and start job.
-                    self._log_successful_boot(pgroup, boot_location, 
-                            "%s: Block for pending subblock job on %s is rebooted.  Starting job." % (pgroup.label, pgroup.location[0]))
-                    reboot_block.addUser(pgroup.subblock_parent, pgroup.user)
-                    self._start_process_group(pgroup)
-                    self._clear_boot_lists(pgroup)
-
-        for pgroup in progressing_pgroups:
-            self.pgroups_wait_reboot.remove(pgroup)
-
-    check_pgroups_wait_reboot = automatic(check_pgroups_wait_reboot, automatic_method_default_interval)
-
-    def check_pgroups_pending_boot(self):
-        '''check up on groups that are waiting to start up.
-
-        '''
-        if self.suspend_booting:
-            #booting isn't happening right now, just exit.
-            return
-
-        booted_pgroups = []
-        for pgroup in self.pgroups_pending_boot:
-            if not self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
-                self._fail_boot(pgroup, pgroup.location[0], "%s: the internal reservation on %s expired; job has been terminated"% (pgroup.label,
-                                                                        pgroup.location))
-                self._clear_boot_lists(pgroup)
-                continue
-            boot_block = self.get_compute_block(pgroup.subblock_parent)
-
-            if boot_block.getStatus() == pybgsched.Block.Initialized:
-                self._log_successful_boot(pgroup, pgroup.subblock_parent,
-                        "%s: Block %s for location %s successfully booted."\
-                        "  Starting task for job %s. (CPPB)" % (pgroup.label,
-                            pgroup.subblock_parent, pgroup.location[0],
-                            pgroup.jobid))
-                boot_block.addUser(pgroup.subblock_parent, pgroup.user)
-                self._start_process_group(pgroup)
-                self._clear_boot_lists(pgroup)
-            elif boot_block.getStatus() == pybgsched.Block.Free: #Something has gone very wrong here, abort. Should we try and boot again?
-                #may have had an inopportune free, go ahead and make this and try and reboot.
-                self.pgroups_wait_reboot.append(pgroup)
-                self.logger.warning("%s: Block for pending subblock job on %s free. Attempting reboot.", pgroup.label, pgroup.location[0])
-                booted_pgroups.append(pgroup)
-
-        #clean up the ones we've stopped tracking
-        for pgroup in booted_pgroups:
-            self.pgroups_pending_boot.remove(pgroup)
-
-    check_pgroups_pending_boot = automatic(check_pgroups_pending_boot, automatic_method_default_interval)
 
     def check_boot_status(self):
+        '''Query ongoing boots.  Once a boot has completed (or failed) take appropriate action for the job, depending on request origin.
 
-        booted_blocks = []
-        for block_loc in self.booting_blocks.keys():
-            pgroup = self.booting_blocks[block_loc]
-
-            try:
-                block_location_filter = pybgsched.BlockFilter()
-                block_location_filter.setName(block_loc)
-                boot_block = pybgsched.getBlocks(block_location_filter)[0]
-            except RuntimeError:
-                self.logger.warning("Unable to get block status from control system during block boot.")
+        '''
+        #if the boot is one of ours and it has completed ping start process groups
+        #let the user reap completed boots (auto reap if jobid no longer in process groups)
+        #if failed then reap (if boot not found for query assume boot failed and reaped)
+        boots = self.booter.stat()
+        for boot in boots:
+            if boot.tag != 'internal':
+                #don't worry about user-invoked boots.
                 continue
-
-            status = boot_block.getStatus()
-            status_str = boot_block.getStatusString()
-            if self._blocks[block_loc].freeing == True:
-                self.logger.warning("%s: Booting aborted by an incoming free request, will attempt to reboot block %s.", pgroup.label, block_loc)
-                self.pgroups_wait_reboot.append(pgroup)
-                booted_blocks.append(block_loc)
-                continue
-            if status not in [pybgsched.Block.Initialized, pybgsched.Block.Allocated, pybgsched.Block.Booting]:
-                #we are in a state we really shouldn't be in.  Time to fail.
-                if status in  [pybgsched.Block.Free, pybgsched.Block.Terminating]:
-                    self.logger.warning("%s: Block %s found in %s state.  Attempting reboot.", pgroup.label, pgroup.location[0], status_str)
-                    if not pgroup in self.pgroups_wait_reboot:
-                        self.pgroups_wait_reboot.append(pgroup)
-                        booted_blocks.append(block_loc)
-                else:
-                    self._fail_boot(pgroup, pgroup.location[0], "%s: Unable to boot block %s. Aborting job startup. Block status was %s" % (pgroup.label, pgroup.location[0], status_str))
-            elif status != pybgsched.Block.Initialized:
-                self.logger.debug("%s: Block: %s waiting for boot: %s",pgroup.label, pgroup.location[0],  boot_block.getStatusString())
-                continue
-            else:
-                #we are good: start the job.
-                self._log_successful_boot(pgroup, block_loc, "%s: Block %s for location %s successfully booted.  Starting task for job %s. (CBS)" % (pgroup.label, block_loc, pgroup.location[0], pgroup.jobid))
-                pgroup = self.booting_blocks[block_loc]
-                self._start_process_group(pgroup, block_loc)
-                self._clear_boot_lists(pgroup)
-
-        for block_loc in booted_blocks:
-            self.booting_blocks.pop(block_loc)
-
-    check_boot_status = automatic(check_boot_status, automatic_method_default_interval)
+            pgroup = self.process_groups.q_get([{'jobid':boot.context.job_id}])[0]
+            self._log_boot_messages(pgroup)
+            if boot.state in ['complete', 'failed']:
+                #should only have one pgroup for jobid
+                #pgroup = self.process_groups.q_get([{'jobid':boot.context.job_id}])[0]
+                #self._log_boot_messages(pgroup)
+                if boot.state == 'complete': #and pgroup.mode != 'script': #and not a script.  Scripts have already started.
+                    #TODO: add a "boot for me" flag.
+                    self._start_process_group(pgroup)
+                self.booter.reap(boot.context.block_id)
+    check_boot_status = automatic(check_boot_status, 1.0)#automatic_method_default_interval)
 
     def _start_process_group(self, pgroup, block_loc=None):
         '''Start a process group at a specified location.
@@ -2172,21 +1992,9 @@ class BGSystem (BGBaseSystem):
                 else:
                     #if we are still booting we need to ignore the process group.  Only you can prevent 1234567's --PMR
                     found = False
-                    for boot_pg in self.booting_blocks.values():
-                        if boot_pg.id == pg.id:
-                            found = True
-                            break
-                    for boot_pg in self.pgroups_pending_boot:
-                        if boot_pg.id == pg.id:
-                            found = True
-                            break
-                    for boot_pg in self.pgroups_wait_reboot:
-                        if boot_pg.id == pg.id:
-                            found = True
-                            break
-                    if found:
+                    boots = self.booter.get_boots_by_jobid(pg.jobid)
+                    if boots != []:
                         continue
-
                     if pg.exit_status is None:
                         # the forker has lost the child for our process group
                         self.logger.info("%s: job exited with unknown status", pg.label)
@@ -2286,3 +2094,151 @@ class BGSystem (BGBaseSystem):
         self._mark_block_for_cleaning(block, jobid)
         #self.reserve_resources_until(pgroup.location, None, jobid)
         return
+
+    @exposed
+    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None):
+        '''Start a boot at a location on the user's behalf.  Require a valid cobalt jobid or resid for a location
+        along with the proper user.
+
+        Return True if boot was initiated succefully.  Otherwise, we failed to authenticate.
+
+        '''
+        retval = False
+        is_authorized = self._auth_user_for_block(location, user, jobid, resid)
+        if is_authorized:
+            #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
+            self._blocks[location].state = 'busy'
+            self.booter.initiate_boot(location, jobid, user, location, tag='external')
+            retval = True
+        return retval
+
+    @exposed 
+    def is_block_initialized(self, location):
+        '''Check to see if we have successfully initialized a block, if so, reap and report back that it is initialized
+
+        '''
+        b = get_compute_block(location)
+        return b.getStatus() == pybgsched.Block.Initialized 
+
+    @exposed
+    def get_block_bgsched_status(self, location):
+        '''Return a string bgsched block status.  This is how we can tell a block is free.
+        This should correspond to the block state.
+
+        '''
+        compute_block = get_compute_block(location)
+        if compute_block != None:
+            return compute_block.getStatusString()
+        return None
+
+    @exposed
+    def initiate_proxy_free(self, location, user=None, jobid=None, resid=None):
+        '''Free a block on the user's behalf.  Require jobid or resid and user.  User must be submitting user, or user on reservation
+
+        The user is responsibile for makeing sure all jobs are dead on this block.  Once this has been invoked, no jobs will run on this block.
+
+        '''
+        #confirm, then poke control system to kill all jobs on block and free.
+        retval = False
+        is_authorized = self._auth_user_for_block(location, user, jobid, resid)
+        if is_authorized:
+            #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
+            self._blocks[location].state = 'cleanup'
+            pybgsched.Block.initiateFree(location)
+            pybgsched.Block.removeUser(location, user)
+            self.logger.info('%s/%s: User requested free on block %s.', user, jobid, location)
+            #get the jobs on the location and all child blocks, and signal the jobs.  After 60 sec, the block should then go into Terminating and free itself.
+
+            block_jobs = self._get_jobs_on_block(location)
+            if len(block_jobs) != 0:
+                for job in block_jobs:
+                    try:
+                        retval = pybgsched.runjob.kill(job.getID(), signal.SIGTERM)
+                        if retval != 0:
+                            raise RuntimeError, "bgsched::runjob::kill failed to kill job!"
+                        self.logger.info("killing backend job: %s for block %s", job.getId(), location)
+                    except:
+                        self.logger.critical("Unknown Error while killing backend job: %s for block %s, will retry.", job.getID(), location, exc_info=True)
+
+            retval = True
+        return retval
+
+
+    @exposed
+    def get_boot_statuses_and_strings(self, location=None):
+        '''Allow a client to fetch the status of ongoing boots.  Returns a tuple of a boot id, status dict, and status strings.
+
+            location - location to check for.  If not provided, return None for strings.
+
+        '''
+        status = self.booter.stat(location)[0] #there is only one boot at a given location
+        if location != None:
+            status_strings = self.booter.fetch_status_strings(location)
+        return (status.boot_id, status.state, status_strings)
+
+    @exposed
+    def reap_boot(self, boot_id):
+        '''Allow the client to clean up ongoing boot objects on it's own.
+
+        '''
+        return self.booter.reap(boot_id)
+
+
+    @exposed
+    def get_idle_blocks(self, parent_block, size=None, geometry=None):
+        '''Fetch idle blocks.  Allow for size/geometry constraint
+
+            parent_block - the block whose children need to be returned
+            size - Return blocks of specified size, None returns all sizes.  Default None
+            geometry - Geometry of block in nodes in the form of a list [A,B,C,D,E].  None allows any geometry.  Default None
+
+        '''
+        def cmp_blocks(blk1, blk2):
+            retval = 0
+            if blk1.size > blk2.size:
+                retval =  1
+            elif blk1.size < blk2.size:
+                retval =  -1
+            elif blk1.name > blk2.name:
+                retval = 1
+            elif blk2.name < blk2.name:
+                retval = -1
+            return retval
+
+        ret_list = []
+        self._blocks_lock.acquire()
+        try:
+            target_block = self._blocks[parent_block]
+            ret_list = [block for block in list(target_block._children) if self._only_allocated(block)]
+            if self._only_allocated(self._blocks[parent_block]):
+                ret_list.append(self._blocks[parent_block])
+            if size != None:
+                ret_list = [block for block in ret_list if block.size == size]
+            if geometry != None:
+                ret_list = [block for block in ret_list if block.node_geometry == geometry]
+        finally:
+            #make sure we release this lock
+            self._blocks_lock.release()
+        ret_list.sort(cmp=cmp_blocks)
+        return [block.name for block in ret_list]
+
+    def _only_allocated(self, block):
+        '''Determine if a block is actully bootable (i.e. not allocated, and not in a condition that the control system
+        would consider "busy".
+
+        block -- a Cobalt Block object
+
+        Output:
+            Returns true if the block is bootable, if any of it's parents or children are marked busy, cleanup-initiate, cleanup
+            or the block itself is in any of those states return false.
+
+        '''
+
+        blocked_states = set(['busy', 'cleanup-initiate', 'cleanup'])
+        if block.state in blocked_states:
+            return False
+        for relative in block._relatives:
+            if relative.state in blocked_states:
+                return False
+        return True
+

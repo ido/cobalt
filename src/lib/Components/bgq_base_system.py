@@ -15,6 +15,7 @@ import xmlrpclib
 import copy
 import Cobalt
 import re
+import logging
 import Cobalt.Util
 from Cobalt.Util import get_config_option
 from Cobalt.Data import Data, DataDict
@@ -32,6 +33,8 @@ __all__ = [
     "BlockDict",
     "BGBaseSystem",
 ]
+
+logger = logging.getLogger()
 
 #try:
 #    Cobalt.Util.init_cobalt_config()
@@ -55,7 +58,7 @@ except:
 def generate_base_node_map():
 
     ret_map = [[0,0,0,0,0]]
-    
+
     __transform_subcube(ret_map)
     ret_map.append(__transform_dim(('b','d'), ret_map[len(ret_map)-1])) 
     __transform_subcube(ret_map)
@@ -446,14 +449,6 @@ class Block (Data):
 
         self.block_type = spec.get('block_type', None)
 
-        #rebooting-related variables
-        self.current_reboots = 0
-        self.max_reboots = get_config_option("bgsystem","max_reboots", "unlimited")
-        if self.max_reboots.lower() == 'unlimited':
-            self.max_reboots = None
-        else:
-            self.max_reboots = int(self.max_reboots)
-
         if self.block_type == None:
             if self.size < subrun_only_size:
                 #we have to make a pseudoblock
@@ -654,6 +649,21 @@ class Block (Data):
 
         return
 
+    def under_resource_reservation(self, job_id):
+        '''check to see if a block is under a resource reservation.
+        also true if a parent that this block is a child of has a resource
+        reservation.
+
+        '''
+        if self.reserved_by == job_id and self.reserved_until >= time.time():
+            return True
+        else:
+            for parent in self._parents:
+                if parent.reserved_by == job_id and parent.reserved_until >= time.time() and self in parent._children:
+                    return True
+        return False
+
+
 class BlockDict (DataDict):
     """Default container for blocks.
 
@@ -725,7 +735,6 @@ class BGBaseSystem (Component):
         self.logger.info("managed_blocks: %s", self._managed_blocks)
         specs = [{'name':spec.get("name")} for spec in specs]
         self._blocks_lock.acquire()
-        self.logger.debug('add_blocks lock acquired')
         try:
             blocks = [
                 block for block in self._blocks.q_get(specs)
@@ -735,7 +744,6 @@ class BGBaseSystem (Component):
             blocks = []
             self.logger.error("error in add_blocks", exc_info=True)
         self._blocks_lock.release()
-        self.logger.debug('add_blocks lock released')
 
         self._managed_blocks.update([
             block.name for block in blocks
@@ -1484,4 +1492,38 @@ class BGBaseSystem (Component):
             self._blocks_lock.release()
         return rc
     reserve_resources_until = exposed(reserve_resources_until)
+
+
+    def _auth_user_for_block(self, location, user, jobid, resid):
+        '''Given a location, user, jobid, and/or resid, make sure the user is allowed to boot/free blocks associated with that location.
+
+        Return True if the user is allowed to boot/free commands on the block
+        NOTE: For now only jobid supported.
+        '''
+        retval = True
+        #make sure the jobid has the reservation on the job
+        if not self._blocks[location].under_resource_reservation(jobid):
+            self.logger.warning("%s/%s: Resource %s no longer allocated to job. Proxy boot authorization failed.", jobid, user, location)
+            retval = False
+            return retval
+
+        #make sure the pgroup is active and the user is the one running this command.
+        pgroups = self.process_groups.q_get([{'jobid':jobid}])
+        if pgroups == []:
+            self.logger.warning("%s/%s: requested process group not found, authorization of block boot command for block %s failed.", jobid, user, location)
+            retval = False
+        else:
+            pgroup = pgroups[0] #there is only one active pgroup at a time for a jobid.
+            if user != pgroup.user:
+                self.logger.warning("%s is not authorized to execute operations on block %s.", user, location)
+                retval = False
+        return retval
+
+    @exposed
+    def initiate_proxy_boot(self, location, user=None, jobid=None):
+        raise NotImplementedError, "Proxy booting is not supported for this configuration."
+
+    @exposed
+    def initiate_proxy_free(self, location, user=None, jobid=None):
+        raise NotImplementedError, "Proxy freeing is not supported for this configuration."
 

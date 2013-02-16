@@ -126,7 +126,10 @@ Run the job with the specified kernel profile.
 Run the job with the specified kernel options (equivalent to 
 .Impirun -kernel_options 
 on Blue Gene/L).
-
+.TP
+.B \-\-disable_preboot
+If --mode script is specified, this will cause Cobalt to run the job script without
+booting the block first.  By default the script is executed after the requested block is booted.
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
 .SH "SEE ALSO"

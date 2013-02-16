@@ -21,11 +21,15 @@ typedef unsigned long uint64_t;
 %include "pybgsched_swig_macros.i"
 
 /*generic exception handling.  Keep exceptions from killing cobalt*/
-%exception {
+%exception  {
+    PyThreadState *_save;
+    _save = PyEval_SaveThread();
     try{
         $action
+        PyEval_RestoreThread(_save);
     }
     catch(std::exception &e){
+        PyEval_RestoreThread(_save);
         SWIG_exception(SWIG_RuntimeError, e.what());
     }
 }
@@ -38,9 +42,12 @@ typedef unsigned long uint64_t;
 %shared_ptr(bgsched::Node)
 %shared_ptr(bgsched::Switch)
 %shared_ptr(bgsched::IOLink)
+%shared_ptr(bgsched::IONode)
+%shared_ptr(bgsched::IODrawer)
 %shared_ptr(bgsched::Cable)
 %shared_ptr(bgsched::Job)
 %shared_ptr(bgsched::Block)
+%shared_ptr(bgsched::IOBlock)
 %shared_ptr(bgsched::Shape)
 
 /*bridge includes*/
@@ -54,20 +61,26 @@ typedef unsigned long uint64_t;
 %include "JobFilter.i"
 %include "Hardware.i"
 %include "Node.i"
+%include "IONode.i"
 %include "Shape.i"
 %include "Cable.i"
 %include "IOLink.i"
 %include "SwitchSettings.i"
 %include "Switch.i"
 %include "NodeBoard.i"
+%include "IODrawer.i"
 %include "Midplane.i"
 %include "Documentation.i"
 %include "ComputeHardware.i"
+%include "IOHardware.i"
 %include "DatabaseException.i"
 %include "BlockSort.i"
+%include "IOBlockSort.i"
 %include "Exception.i"
 %include "Block.i"
 %include "BlockFilter.i"
+%include "IOBlock.i"
+%include "IOBlockFilter.i"
 %include "SchedUtil.i"
 %include "InitializationException.i"
 %include "InternalException.i"
@@ -88,7 +101,7 @@ typedef unsigned long uint64_t;
 %pythoncode %{
 def SWIG_vector_to_list(vec):
     ret_list = []
-    for i in range(0, len(vec)):
+    for i in range(0, vec.size()):
         ret_list.append(vec[i])
     return ret_list
 
@@ -113,9 +126,12 @@ PYBGSCHED_SHARED_PTR_VECTORS(Midplane)
 PYBGSCHED_SHARED_PTR_VECTORS(Node)
 PYBGSCHED_SHARED_PTR_VECTORS(Switch)
 PYBGSCHED_SHARED_PTR_VECTORS(IOLink)
+PYBGSCHED_SHARED_PTR_VECTORS(IONode)
+PYBGSCHED_SHARED_PTR_VECTORS(IODrawer)
 PYBGSCHED_SHARED_PTR_VECTORS(Cable)
 PYBGSCHED_SHARED_PTR_VECTORS(Job)
 PYBGSCHED_SHARED_PTR_VECTORS(Block)
+PYBGSCHED_SHARED_PTR_VECTORS(IOBlock)
 PYBGSCHED_SHARED_PTR_VECTORS(Shape)
 %template(ShapeVector) std::vector<bgsched::Shape>;
 %template(BlockStatusSet) std::set<bgsched::Block::Status>;
