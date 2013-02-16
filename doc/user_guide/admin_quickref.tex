@@ -45,7 +45,7 @@ Reservations may be set with the setres command.  Notes on options:
 \end{itemize}
 All times are in UTC, unless you set your TZ variable. It is recommended that hardware replacement reservations be named \textit{hw.\textless location-name\textgreater}  
 \subsection*{Modifying Reservations}
-A reservation may be modified by using \textit{setres.py -m -t \textless name\textgreater [options-and-new-values]}
+A reservation may be modified by using \textit{setres.py -m -n \textless name\textgreater [options-and-new-values]}
 You may pass in any option that you can specify with \textit{setres}.  These new values will replace the old values.  Keep in mind that if you want to extend a reservation, you need to specify the time from the reservation start (i.e. -d 1:15:00 to add 15 minutes to a 1 hour reservation)
 \subsection*{Releasing Reservations}
 Running \textit{releaseres.py \textless reservation-name\textgreater} with administrator permissions will release any defined reservation.  This command will take a list of reservation names.  A cyclic reservation may be deferred via \textit{setres.py -D -n \textless name\textgreater}.  releaseres will delete a cyclic reservation, not defer it to it's next cycle.

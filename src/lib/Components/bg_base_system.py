@@ -1086,7 +1086,7 @@ class BGBaseSystem (Component):
         return -cmp(float(dict1['walltime']), float(dict2['walltime']))
 
 
-    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names):
+    def find_queue_equivalence_classes(self, reservation_dict, active_queue_names, passthrough_midplanes=[]):
         '''Take a dictionary of reservation information and a list of active
         queues return a list of dictionaries containing queues, partition
         associations and reservation data.
@@ -1094,6 +1094,7 @@ class BGBaseSystem (Component):
         Input:
         reservation_dict: A dict of reservations and associated partitions
         active_queue_names: A list of queues that you can schedule jobs from
+        passthrough_midplanes: not used in this implementation
 
         Output:
         A dictionary of queues and associated reservations that have resources
