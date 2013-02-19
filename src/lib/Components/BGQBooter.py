@@ -101,7 +101,6 @@ def _initiate_boot(context):
         _logger.info("%s/%s: Initiating boot at location %s.", context.user, context.job_id, context.subblock_parent)
         context.status_string.append("%s/%s: Initiating boot at location %s." % (context.user,
             context.job_id, context.subblock_parent))
-        #log boot success
         return BootInitiating(context)
 
 def get_compute_block(block, extended_info=False):
@@ -417,6 +416,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.booting_suspended = False
         self.register_run_action('progress_boot', self.progress_boot)
         self.register_handler('initiate_boot', self.handle_initiate_boot)
+        self.register_handler('reap_boot', self.handle_reap_boot)
         _logger.debug("%s", pybgsched.__file__)
         _logger.info("Booter Initialized")
 
@@ -440,7 +440,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         '''Halt boot progress, needed if force-cleaning a block and certain control system actions'''
         self.booting_suspended = True
 
-    def resume_bootng(self):
+    def resume_booting(self):
         '''Allow booting to progress again'''
         self.booting_suspended = False
 
@@ -459,6 +459,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         return list(boot_set)
 
     def fetch_status_strings(self, location):
+        self.boot_data_lock.acquire()
         status_strings = []
         for boot in self.pending_boots:
             if boot.block_id == location:
@@ -468,6 +469,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
                         break
                     status_strings.append(status_string)
                 break
+        self.boot_data_lock.release()
         return status_strings
 
     def get_boots_by_jobid(self, job_id):
@@ -482,15 +484,31 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
     def reap(self, block_id):
         '''clear out completed, failed, or otherwise terminated boots
 
+        Only reap boots that are in a terminal state.
+
         '''
         boots_to_clear = []
+        self.boot_data_lock.acquire()
         for boot in self.pending_boots:
             if boot.block_id == block_id and boot.state in ['complete', 'failed']:
-                boots_to_clear.append(boot)
-
-        for boot in boots_to_clear:
-            self.pending_boots.remove(boot)
+                self.send(ReapBootMsg(boot))
+        self.boot_data_lock.release()
         return
+
+    def handle_reap_boot(self, msg):
+        '''Handler function for reap messages, keep boot cleanup contained to the booting thread.
+
+        '''
+        retval = False
+        try:
+            self.boot_data_lock.acquire()
+            if msg.msg_type == 'reap_boot':
+                self.pending_boots.remove(msg.boot)
+                _logger.info('Boot for location %s reaped.', msg.boot.block_id)
+                retval = True
+        finally:
+            self.boot_data_lock.release()
+        return retval
 
     def initiate_boot(self, block_id, job_id, user, subblock_parent=None, tag=None):
         '''Asynchrynously initiate a boot.  This will return immediately, the boot should be in the pending state.
@@ -506,29 +524,35 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         if not self.booting_suspended:
+            #A boot could get reaped in the middle of this.
+            self.boot_data_lock.acquire()
             for boot in self.pending_boots:
-                self.boot_data_lock.acquire()
                 try:
                     boot.progress()
                 except Exception:
-                    raise
-                finally:
                     self.boot_data_lock.release()
+                    raise
+            self.boot_data_lock.release()
         return
 
     def handle_initiate_boot(self, msg):
         '''callback for handling an initate boot message and constructing the boot object
 
         '''
-        new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock, tag=msg.tag)
+        retval = False
         try:
+            self.boot_data_lock.acquire()
             if msg.msg_type == 'initiate_boot':
+                new_boot = BGQBoot(self.all_blocks[msg.block_id], msg.job_id, msg.user, self.block_lock, tag=msg.tag)
                 self.pending_boots.add(new_boot)
-                return True
+                retval = True
         except AttributeError:
             #We apparently cannot handle this message as it lacks a message type
-            return False
-        return False
+            #take no action and let another handler try the message
+            pass
+        finally:
+            self.boot_data_lock.release()
+        return retval
 
 #Boot messages, possibly break out into separate file
 class InitiateBootMsg(object):
@@ -546,4 +570,10 @@ class InitiateBootMsg(object):
                 (self.msg_type, self.block_id, self.job_id, self.user, self.subblock_parent, self.tag)
 
 
+class ReapBootMsg(object):
+    def __init__(self, boot):
+        self.msg_type = 'reap_boot'
+        self.boot = boot
 
+    def __str__(self):
+        return "<ReapBootMsg: boot %s>" % self.boot

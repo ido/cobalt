@@ -2075,18 +2075,18 @@ class BGSystem (BGBaseSystem):
     @exposed
     def halt_booting(self, user):
         self.logger.critical("Booting halted by: %s", user)
-        self.suspend_booting = True
+        self.booter.suspend_booting()
         return
 
     @exposed
     def resume_booting(self, user):
         self.logger.critical("Booting resumed by: %s", user)
-        self.suspend_booting = False
+        self.booter.resume_booting()
         return
 
     @exposed
     def booting_status(self):
-        return self.suspend_booting
+        return self.booter.booting_suspended
 
     @exposed
     def set_cleaning(self, block, jobid, whoami):
