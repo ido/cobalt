@@ -1765,7 +1765,7 @@ class BGSystem (BGBaseSystem):
         spec -- dictionary hash specifying a process group to start
         """
 
-        if self.suspend_booting:
+        if self.booter.booting_suspended:
             #booting isn't happening right now, just exit.
             self.logger.critical("Booting suspended.  Unable to add process group right now.")
             raise RuntimeError, "Booting is halted!"
