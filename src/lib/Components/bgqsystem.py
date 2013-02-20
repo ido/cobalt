@@ -1781,11 +1781,9 @@ class BGSystem (BGBaseSystem):
         start_apg_timer = time.time()
         process_groups = self.process_groups.q_add(specs)
         for pgroup in process_groups:
-            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid,
-                    pgroup.user, pgroup.id)
+            pgroup.label = "Job %s/%s/%s" % (pgroup.jobid, pgroup.user, pgroup.id)
             pgroup.nodect = self._blocks[pgroup.location[0]].size
-            self.logger.info("%s: process group %s created to track job status",
-                    pgroup.label, pgroup.id)
+            self.logger.info("%s: process group %s created to track job status", pgroup.label, pgroup.id)
             try:
                 self._set_kernel(pgroup.location[0], pgroup.kernel)
             except Exception, e:
@@ -1860,15 +1858,22 @@ class BGSystem (BGBaseSystem):
             if boot.tag != 'internal':
                 #don't worry about user-invoked boots.
                 continue
-            pgroup = self.process_groups.q_get([{'jobid':boot.context.job_id}])[0]
-            self._log_boot_messages(pgroup)
+            pgroups = self.process_groups.q_get([{'jobid':boot.context.job_id}])
+            pgroup = None
+            if pgroups != []:
+                #only one pgroup per job at a time.  Also, the pgroup may already be gone
+                #if the job has already terminated.
+                pgroup = pgroups[0]
+                self._log_boot_messages(pgroup)
+            else:
+                self.logger.warning('Failed to find process group associated with boot on %s', boot.context.block_id)
             if boot.state in ['complete', 'failed']:
                 #should only have one pgroup for jobid
-                #pgroup = self.process_groups.q_get([{'jobid':boot.context.job_id}])[0]
-                #self._log_boot_messages(pgroup)
-                if boot.state == 'complete': #and pgroup.mode != 'script': #and not a script.  Scripts have already started.
-                    #TODO: add a "boot for me" flag.
-                    self._start_process_group(pgroup)
+                if boot.state == 'complete': 
+                    if pgroup == None:
+                        self.logger.error("Boot %s for location %s has no active pgroup.  Run Aborted.", boot.boot_id, boot.context.block_id)
+                    else:
+                        self._start_process_group(pgroup)
                 self.booter.reap(boot.context.block_id)
     check_boot_status = automatic(check_boot_status, 1.0)#automatic_method_default_interval)
 
@@ -2003,7 +2008,6 @@ class BGSystem (BGBaseSystem):
                         clean_block = True
                 if clean_block:
                     self.reserve_resources_until(pg.location, None, pg.jobid)
-                    #self._mark_block_for_cleaning(pg.location[0], pg.jobid)
 
         # check for children that no longer have a process group associated with them and add them to the cleanup list.  this
         # might have happpened if a previous cleanup attempt failed and the process group has already been waited upon
@@ -2171,6 +2175,11 @@ class BGSystem (BGBaseSystem):
             location - location to check for.  If not provided, return None for strings.
 
         '''
+        statuses = self.booter.stat(location)
+        if statuses != []:
+            status = statuses[0] #there is only one boot at a given location
+        else:
+            return None, None, None
         status = self.booter.stat(location)[0] #there is only one boot at a given location
         if location != None:
             status_strings = self.booter.fetch_status_strings(location)

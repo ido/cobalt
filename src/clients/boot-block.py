@@ -98,15 +98,20 @@ def main():
         cobalt_sleep(3)
         #wait for block to boot
         failed = False
+        found = False
         while True:
             boot_id, status, status_strings = system.get_boot_statuses_and_strings(block)
-            if status_strings != [] and status_strings != None:
-                print "\n".join(status_strings)
-            if status in ['complete', 'failed']:
-                system.reap_boot(block)
-                if status == 'failed':
-                    failed = True
-                break
+            if not found:
+                if boot_id != None:
+                    found = True
+            else:
+                if status_strings != [] and status_strings != None:
+                    print "\n".join(status_strings)
+                if status in ['complete', 'failed']:
+                    system.reap_boot(block)
+                    if status == 'failed':
+                        failed = True
+                    break
             cobalt_sleep(1)
         if failed:
             print "Boot for locaiton %s failed."% (block,)

@@ -518,7 +518,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         _logger.debug("Sent message to initiate boot: %s %s %s %s", block_id, job_id, user, subblock_parent)
         return
 
-    def progress_boot(self):
+    def progress_boot(self, test_delay=0):
         '''callback to be registered with the run method.
         This gets executed after all messages have been parsed.
 
@@ -529,6 +529,10 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             for boot in self.pending_boots:
                 try:
                     boot.progress()
+                    #for race-condition testing
+                    if test_delay !=0:
+                        _logger.debug('sleeping for %s' , test_delay)
+                        Cobalt.Util.sleep(test_delay)
                 except Exception:
                     self.boot_data_lock.release()
                     raise
