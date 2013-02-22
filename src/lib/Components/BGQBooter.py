@@ -558,6 +558,21 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             self.boot_data_lock.release()
         return retval
 
+    def has_pending_boot(self, job_id):
+        '''Check to see if there is a pending boot in the message queue, or in the list of current boots
+
+        '''
+        retval = False
+        queued_boots = self.fetch_queued_messages()
+        for boot_msg in queued_boots:
+            if job_id == msg.job_id:
+                retval = True
+                break
+        if not retval:
+            if self.get_boots_by_jobid(job_id) != []:
+                retval = True
+        return retval
+
 #Boot messages, possibly break out into separate file
 class InitiateBootMsg(object):
 

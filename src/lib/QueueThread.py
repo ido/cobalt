@@ -8,6 +8,7 @@ import logging
 import Cobalt.Util
 import sys
 import Cobalt.Logging
+import copy
 
 _logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class QueueThread(threading.Thread):
         self.msg_handlers = {}
         self.run_callbacks = {}
         self.hold = False
+        self.msg_queue_process_lock = threading.Lock()
 
     def send(self, msg):
         '''Add a message to the queue, should the queue be full, will raise the Queue.Empty exception
@@ -114,6 +116,13 @@ class QueueThread(threading.Thread):
         '''
         return self.run_callbacks.keys()
 
+    def fetch_queued_messages(self):
+        self.msg_queue_process_lock.acquire()
+        queued_items = list(self.msg_queue.queue)
+        retitems = copy.deepcopy(queued_items)
+        self.msg_queue_process_lock.release()
+        return retitems
+
     def handle_queued_messages(self):
         '''Pull messages off the queue and invoke handlers.
 
@@ -124,6 +133,7 @@ class QueueThread(threading.Thread):
                 #no work to do, just iterate
                 empty = True
             else:
+                self.msg_queue_process_lock.acquire()
                 curr_msg = self.msg_queue.get()
                 # Terminate this queue if None is sent as a message
                 if curr_msg == None:
@@ -141,6 +151,7 @@ class QueueThread(threading.Thread):
                     _logger.warning("No handlers for message %s", curr_msg)
 
                 self.msg_queue.task_done()
+                self.msg_queue_process_lock.release()
         return False
 
     def run(self):

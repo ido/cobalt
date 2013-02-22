@@ -1998,7 +1998,7 @@ class BGSystem (BGBaseSystem):
                     #if we are still booting we need to ignore the process group.  Only you can prevent 1234567's --PMR
                     found = False
                     boots = self.booter.get_boots_by_jobid(pg.jobid)
-                    if boots != []:
+                    if self.booter.has_pending_boot(pg.jobid):
                         continue
                     if pg.exit_status is None:
                         # the forker has lost the child for our process group
