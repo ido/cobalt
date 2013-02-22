@@ -1,10 +1,15 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.21
+* Minor fix release to correct a failure mode where we can lose a process group
+  if a job's boot is delayed.
+
 Changes to 0.99.20
-* Small changeset to fix a race condition that was hanging jobs that came in on 0.99.19
-* Better error logging for situations where the boots and the process group information haven't
-  lined up yet.  This usually happens during high-load and can result in block boot completion
-  never being detected.
+* Small changeset to fix a race condition that was hanging jobs that came in
+   on 0.99.19
+* Better error logging for situations where the boots and the process group
+  information haven't lined up yet.  This usually happens during high-load and
+  can result in block boot completion never being detected.
 
 Changes to 0.99.19
 * Manual boot control has been added
@@ -21,8 +26,8 @@ blocks having a specific geometry in nodes, partadm, partlist and qstat have
 been updated to show this.
 * Support for passthrough blocking reservations has been added.
 * Fixed a bug where a job run outside of Cobalt would not properly block resources.
-* Removed autoreboot in the event of a block entering a control system SoftwareFalure
-state on BG/Q.  Normal cleanup should handle this now.
+* Removed autoreboot in the event of a block entering a control system 
+  SoftwareFalure state on BG/Q.  Normal cleanup should handle this now.
 
 Changes to 0.99.15
 * Fix for an issue that was causing partadm to malfunction when reservations
