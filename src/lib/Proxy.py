@@ -211,11 +211,25 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.timeout = timeout
 
     def make_connection(self, host):
-        host = self.get_host_info(host)[0]
-        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
+        #this is a hack
+        try:
+            #python 2.7
+            self._connection
+        except AttributeError:
+            #python not 2.7
+            host = self.get_host_info(host)[0]
+            http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
                                  scns=self.scns, timeout=self.timeout)
-        https = httplib.HTTP()
-        https._setup(http)
+            https = httplib.HTTP()
+            https._setup(http)
+        else:
+            host, self._extra_headers, x509 = self.get_host_info(host)
+            http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
+                                 scns=self.scns, timeout=self.timeout)
+            self._connection = host, http
+            https = self._connection[1]
+            https = httplib.HTTP()
+            https._setup(http)
         return https
 
     def request(self, host, handler, request_body, verbose=0):
