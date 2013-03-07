@@ -516,6 +516,11 @@ class BaseForker (Component):
                 self.children[child.id] = child
                 if child.runid is not None:
                     self.active_runids.append(runid)
+                for c in self.children.iteritems():
+                    if c.pid == child.pid:
+                        if self.marked_for_death.has_key(c.id):
+                            del self.marked_for_death[c.id]
+                        c.pid = None
                 return child.id
             else:
                 return None
