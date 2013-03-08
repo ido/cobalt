@@ -1,5 +1,13 @@
 Changes from previous Cobalt Versions
 
+Changes to 0.99.22
+* Fix for a deadlock that could occur due to a race condition in the 
+  boot-reaping code.
+* Fix for a pid collision that could occur after a forced delete of a job in
+  the system-script-forker component leading to a job getting stuck in the
+  Job_Epilogue state.
+* python 2.7 and it's change to the XMLRPC libraries are now supported.
+
 Changes to 0.99.21
 * Minor fix release to correct a failure mode where we can lose a process group
   if a job's boot is delayed.
