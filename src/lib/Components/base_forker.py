@@ -371,18 +371,21 @@ class BaseChild (object):
             signame = self._signum_map[signum]
         except KeyError:
             signame = str(signum)
-        try:
-            if pg:
-                _logger.info("%s: sending signal %s to process group %s", self.label, signame, self.pid)
-                os.killpg(self.pid, signum)
-            else:
-                _logger.info("%s: sending signal %s to pid %s", self.label, signame, self.pid)
-                os.kill(self.pid, signum)
-        except OSError, e:
-            _logger.error("%s: signal failure: %s", self.label, e)
-            raise
+        if self.pid != None:
+            try:
+                if pg:
+                    _logger.info("%s: sending signal %s to process group %s", self.label, signame, self.pid)
+                    os.killpg(self.pid, signum)
+                else:
+                    _logger.info("%s: sending signal %s to pid %s", self.label, signame, self.pid)
+                    os.kill(self.pid, signum)
+            except OSError, e:
+                _logger.error("%s: signal failure: %s", self.label, e)
+                raise
+        else:
+            _logger.info("%s: unable to send signal %s to dead process", self.label, signame)
 
-            
+
 class BaseForker (Component):
     
     """Generic implementation of the service-location component.
@@ -513,14 +516,14 @@ class BaseForker (Component):
                         " task initialization.")
 
             if child is not None and child.pid is not None:
-                self.children[child.id] = child
-                if child.runid is not None:
-                    self.active_runids.append(runid)
                 for c in self.children.itervalues():
                     if c.pid == child.pid:
                         if self.marked_for_death.has_key(c.id):
                             del self.marked_for_death[c.id]
                         c.pid = None
+                self.children[child.id] = child
+                if child.runid is not None:
+                    self.active_runids.append(runid)
                 return child.id
             else:
                 return None
@@ -645,7 +648,10 @@ class BaseForker (Component):
                     child.exit_status = exit_status
                     child.core_dump = core_dump
                     child.signum = signum
+                    child.pid = None
                     child.complete = True
+                    if self.marked_for_death.has_key(child.id):
+                        del self.marked_for_death[child.id]
                     if child.return_output:
                         try:
                             if child.stdout_file:
