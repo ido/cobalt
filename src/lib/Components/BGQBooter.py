@@ -353,10 +353,10 @@ class BGQBoot(object):
     #reconstructed at restart --PMR
 
     def __getstate__(self):
-        raise RuntimeError, "Serialization for Block not allowed, must be reconstructed."
+        raise RuntimeError, "Serialization for Boot not allowed, must be reconstructed."
 
     def __setstate__(self, state):
-        raise RuntimeError, "Deerialization for Block not allowed, must be reconstructed."
+        raise RuntimeError, "Deerialization for Boot not allowed, must be reconstructed."
 
     @property
     def state(self):
@@ -491,7 +491,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.boot_data_lock.acquire()
         for boot in self.pending_boots:
             if boot.block_id == block_id and boot.state in ['complete', 'failed']:
-                self.send(ReapBootMsg(boot))
+                self.send(ReapBootMsg(boot.boot_id))
         self.boot_data_lock.release()
         return
 
@@ -503,9 +503,15 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         try:
             self.boot_data_lock.acquire()
             if msg.msg_type == 'reap_boot':
-                self.pending_boots.remove(msg.boot)
-                _logger.info('Boot for location %s reaped.', msg.boot.block_id)
-                retval = True
+                found = None
+                for boot in self.pending_boots:
+                    if msg.boot_id == boot.boot_id:
+                        found = boot
+                        break
+                if found != None:
+                    self.pending_boots.remove(found)
+                    _logger.info('Boot for location %s reaped.', found.block_id)
+                    retval = True
         finally:
             self.boot_data_lock.release()
         return retval
@@ -563,9 +569,10 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         retval = False
+        _logger.debug("testing has_pending_boot.")
         queued_boots = self.fetch_queued_messages()
         for boot_msg in queued_boots:
-            if job_id == msg.job_id:
+            if job_id == boot_msg.job_id:
                 retval = True
                 break
         if not retval:
@@ -590,9 +597,9 @@ class InitiateBootMsg(object):
 
 
 class ReapBootMsg(object):
-    def __init__(self, boot):
+    def __init__(self, boot_id):
         self.msg_type = 'reap_boot'
-        self.boot = boot
+        self.boot_id = boot_id
 
     def __str__(self):
-        return "<ReapBootMsg: boot %s>" % self.boot
+        return "<ReapBootMsg: boot_id=%s>" % self.boot_id

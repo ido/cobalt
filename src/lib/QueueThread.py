@@ -118,9 +118,16 @@ class QueueThread(threading.Thread):
 
     def fetch_queued_messages(self):
         self.msg_queue_process_lock.acquire()
-        queued_items = list(self.msg_queue.queue)
-        retitems = copy.deepcopy(queued_items)
-        self.msg_queue_process_lock.release()
+        retitems = []
+        try:
+            queued_items = list(self.msg_queue.queue)
+            _logger.debug("queued items: %s", queued_items)
+            retitems = copy.deepcopy(queued_items)
+        except Exception as exc:
+            #we must preserve the thread.  Report the traceback, but try to continue on.
+            _logger.critical("Queue: %s Unexpected fetch_queued_messages failure, Exception info follows:", self.identity, exc_info=True)
+        finally:
+            self.msg_queue_process_lock.release()
         return retitems
 
     def handle_queued_messages(self):

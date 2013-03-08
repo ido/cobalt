@@ -2025,7 +2025,7 @@ class BGSystem (BGBaseSystem):
                 except:
                     self.logger.error("unexpected exception while requesting that the %s component perform cleanup",
                         forker, exc_info=True)
-    _get_exit_status = automatic(_get_exit_status, float(get_config_option('bgsystem', 'get_exit_status_interval', automatic_method_default_interval)))
+    _get_exit_status = automatic(_get_exit_status, 0.1)#float(get_config_option('bgsystem', 'get_exit_status_interval', automatic_method_default_interval)))
 
 
     def wait_process_groups (self, specs):
@@ -2190,7 +2190,8 @@ class BGSystem (BGBaseSystem):
         '''Allow the client to clean up ongoing boot objects on it's own.
 
         '''
-        return self.booter.reap(boot_id)
+        self.booter.reap(boot_id)
+        return
 
 
     @exposed

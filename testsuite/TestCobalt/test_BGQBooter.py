@@ -20,7 +20,7 @@ from TestCobalt.Utilities.Time import timeout
 import time
 import pybgsched
 from Cobalt.Components.BGQBooter import *
-
+import copy
 
 
 class test_BGQBoot(object):
@@ -41,11 +41,11 @@ class test_BGQBoot(object):
 
     def teardown(self):
         pybgsched.block_dict = {}
+        Cobalt.Components.BGQBooter._boot_id_gen.idnum=0
 
     def test_initialization(self):
         boot = BGQBoot(pybgsched.block_dict['TB-1'], 1, 'testuser', self.block_lock)
         assert str(boot) == "{'block_name': 'TB-1', 'user': 'testuser', 'state': 'pending', 'job_id': 1, 'boot_id': 1}", "Malformed boot: %s" % boot
-
 
 class test_BGQBooter(object):
 
@@ -185,6 +185,19 @@ class test_BGQBooter(object):
         assert boot_state == 'failed', 'Boot state not failed, is %s instead' % boot_state
         reboot_count = self.booter.stat('TB-1')[0].context.reboot_attempts
         assert  reboot_count == 3, "Failure: reboot attempts were %s" % reboot_count
+
+
+    def test_queued_message_fetch(self):
+        #this came out of a bug where the deepcopy blew up on an early
+        #iteration of the Reap Boot message.  Make sure all messages
+        #can be returned by the fetch function of the underlying queue --PMR
+        #Run without the queue being started, so we can ensure messages stay put
+        self.booter.initiate_boot('TB-1', 1, 'testuser')
+        boot = BGQBoot(pybgsched.block_dict['TB-1'], 2, 'testuser', self.block_lock)
+        self.booter.send(ReapBootMsg(2))
+        pending_messages = ",".join([str(msg) for msg in self.booter.fetch_queued_messages()])
+        correct_messages = "<InitiateBootMsg: msg_type=initiate_boot, block_id=TB-1, job_id=1, user=testuser, subblock_parent=None, tag=None>,<ReapBootMsg: boot_id=2>"
+        assert pending_messages == correct_messages, "Pending messages failed: expected %s, got %s" % (correct_messages, pending_messages)
 
 class test_BootPending(object):
 
