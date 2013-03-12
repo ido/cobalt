@@ -37,6 +37,7 @@ typedef unsigned long uint64_t;
 /*boost shared pointer declarations*/
 %shared_ptr(bgsched::Hardware)
 %shared_ptr(bgsched::ComputeHardware)
+%shared_ptr(bgsched::IOHardware)
 %shared_ptr(bgsched::NodeBoard)
 %shared_ptr(bgsched::Midplane)
 %shared_ptr(bgsched::Node)

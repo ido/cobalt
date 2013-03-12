@@ -25,14 +25,19 @@ def write_i_file(include_file):
 if __name__ == '__main__':
 
     include_files = []
-    include_files.extend(gen_file_list("bgsched"))
+    #include_files.extend(gen_file_list("bgsched"))
     #include_files.extend(gen_file_list("bgsched/allocator"))
-    include_files.extend(gen_file_list("bgsched/core"))
+    #include_files.extend(gen_file_list("bgsched/core"))
     #include_files.extend(gen_file_list("bgsched/realtime"))
     #include_files.extend(gen_file_list("bgsched/runjob"))
    
     print "%module libbgsched" 
-    
+    include_files.append("bgsched/IOBlockFilter.h")
+    include_files.append("bgsched/IOBlock.h")
+    include_files.append("bgsched/IOHardware.h")
+    include_files.append("bgsched/IODrawer.h")
+    include_files.append("bgsched/IONode.h")
+    include_files.append("bgsched/core/IOBlockSort.h")
     for file in include_files:
 	    write_i_file(file)
 	    base_filename = os.path.basename(file)
