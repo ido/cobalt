@@ -1,8 +1,6 @@
 '''Base state class to use with the Trireme statemachine.
 
 '''
-
-
 class DuplicateStateError(Exception):
     pass
 

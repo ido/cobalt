@@ -1,7 +1,7 @@
 import Queue
 import logging
 import threading
-import Cobalt.TriremeStateMachine
+import Cobalt.ContextStateMachine
 import Cobalt.QueueThread
 from Cobalt.BaseTriremeState import DuplicateStateError, BaseTriremeState
 from Cobalt.Components.bgq_base_system import Block
@@ -267,8 +267,8 @@ class BootContext(object):
         self.block_lock.release()
         return under_res
 
-class BGQBoot(object):
-    '''Ongoing boot data object
+class BGQBoot(Cobalt.ContextStateMachine.ContextStateMachine):
+    '''Ongoing boot data object. Contains a statemachine for tracking boot progress.
 
     '''
 
@@ -278,26 +278,14 @@ class BGQBoot(object):
     _state_instances = []
 
     def __init__(self, block, job_id, user, block_lock, subblock_parent=None, boot_id=None, tag=None):
+        super(BGQBoot, self).__init__(context=BootContext(block, job_id, user, block_lock, subblock_parent),
+                initialstate='pending', exceptionstate='failed')
         if boot_id != None:
             self.boot_id == boot_id
         else:
             self.boot_id = _boot_id_gen.next()
         self.tag = tag
-        self.context = BootContext(block, job_id, user, block_lock, subblock_parent)
-        self.__statemachine = Cobalt.TriremeStateMachine.StateMachineProcessor()
-        self.initialize_state_machine()
         _logger.info("Boot %s initialized.", self.boot_id)
-
-    def initialize_state_machine(self):
-
-        for state in self._state_list:
-            state_instance = state(self.context)
-            self._state_instances.append(state_instance)
-            self.__statemachine.add_transition(str(state_instance), state_instance.progress, state_instance.get_valid_transition_dict())
-        self.__statemachine.set_initialstate('pending')
-        self.__statemachine.set_exceptionstate('failed')
-        self.__statemachine.initialize()
-        self.__statemachine.start()
 
     #get/setstate not allowed.  Should not be used with this class due to the lock and block data reacquistion.  Must be
     #reconstructed at restart --PMR
@@ -309,10 +297,6 @@ class BGQBoot(object):
         raise RuntimeError, "Deerialization for Boot not allowed, must be reconstructed."
 
     @property
-    def state(self):
-        return self.__statemachine.get_state()
-
-    @property
     def block_id(self):
         return self.context.block_id
 
@@ -322,7 +306,7 @@ class BGQBoot(object):
 
     def get_details(self):
         return {'boot_id': self.boot_id, 'block_name': self.context.block.name, 'job_id': self.context.job_id,
-                'user': self.context.user, 'state': self.__statemachine.get_state(),}
+                'user': self.context.user, 'state': self.state,}
 
     def __str__(self):
         return str(self.get_details())
@@ -332,9 +316,6 @@ class BGQBoot(object):
 
     def __hash__(self):
         return hash(self.boot_id)
-
-    def progress(self):
-        self.__statemachine.process()
 
     def pop_status_string(self):
         if self.context.status_string == []:
@@ -420,7 +401,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
                     status_strings.append(status_string)
                 break
         self.boot_data_lock.release()
-        return status_strings
+        return status_strngs
 
     def get_boots_by_jobid(self, job_id):
         self.boot_data_lock.acquire()
