@@ -6,13 +6,15 @@ import Queue
 import threading
 import logging
 import Cobalt.Util
-import sys
 import Cobalt.Logging
 import copy
 
 _logger = logging.getLogger(__name__)
 
 class ValidationError(Exception):
+    '''Exception to indicate that a message failed to validate.  Should be raised from within a validator.
+
+    '''
     pass
 
 class QueueThread(threading.Thread):
@@ -117,15 +119,19 @@ class QueueThread(threading.Thread):
         return self.run_callbacks.keys()
 
     def fetch_queued_messages(self):
+        '''Return a list of messages that are currently in the queue that have yet to be processed.
+
+        '''
         self.msg_queue_process_lock.acquire()
         retitems = []
         try:
             queued_items = list(self.msg_queue.queue)
             _logger.debug("queued items: %s", queued_items)
             retitems = copy.deepcopy(queued_items)
-        except Exception as exc:
+        except Exception:
             #we must preserve the thread.  Report the traceback, but try to continue on.
-            _logger.critical("Queue: %s Unexpected fetch_queued_messages failure, Exception info follows:", self.identity, exc_info=True)
+            _logger.critical("Queue: %s Unexpected fetch_queued_messages failure, Exception info follows:",
+                    self.identity, exc_info=True)
         finally:
             self.msg_queue_process_lock.release()
         return retitems
@@ -151,8 +157,9 @@ class QueueThread(threading.Thread):
                 for name, handler in self.msg_handlers.items():
                     try:
                         handled = handled or handler(curr_msg)
-                    except Exception as exc:
-                        _logger.critical("Queue: %s Handler failure: in %s, Exception info follows:", self.identity, name, exc_info=True)
+                    except Exception:
+                        _logger.critical("Queue: %s Handler failure: in %s, Exception info follows:", self.identity, name, 
+                                exc_info=True)
                         _logger.critical("Queue: %s Message causing failure was: %s", self.identity, curr_msg)
                 if not handled:
                     _logger.warning("No handlers for message %s", curr_msg)
@@ -173,10 +180,10 @@ class QueueThread(threading.Thread):
             for name, callback in self.run_callbacks.items():
                 try:
                     callback()
-                except Exception as exc:
+                except Exception:
+                    #Must keep the thread running.  Catch and log exceptions that are raised.
                     _logger.critical("Queue: %s Action failure: in %s, Exception info follows:", self.identity, name, exc_info=True)
                     _logger.critical("Queue: %s Action Exception unhandled, trapping to preserve thread.", self.identity)
 
             Cobalt.Util.sleep(1) #FIXME: make this an adjustable time
         #End of while(True)
-# End of class QueueThread
