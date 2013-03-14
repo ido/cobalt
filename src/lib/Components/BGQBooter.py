@@ -3,6 +3,7 @@ import logging
 import threading
 import Cobalt.TriremeStateMachine
 import Cobalt.QueueThread
+from Cobalt.BaseTriremeState import DuplicateStateError, BaseTriremeState
 from Cobalt.Components.bgq_base_system import Block
 from Cobalt.QueueThread import ValidationError
 from Cobalt.Data import IncrID
@@ -24,57 +25,6 @@ Cobalt.Util.init_cobalt_config()
 
 _boot_id_gen = IncrID()
 
-class DupicateStateError(Exception):
-    pass
-
-class BaseState(object):
-
-    _short_string = 'base'
-    _destination_states = frozenset([])
-
-    def __init__(self, context=None):
-        self.context = context
-
-    def __str__(self):
-        return self._short_string
-
-    def __repr__(self):
-        return "<State '%s'>" % self._short_string
-
-    def __hash__(self):
-        return hash(self._short_string)
-
-    def __eq__(self, other):
-        return str(self) == str(other)
-
-    @property
-    def destination_states(self):
-        return self._destination_states
-
-    def exit(self):
-        '''Actions to execute on exiting a state
-
-        '''
-        pass
-
-    def progress(self):
-        raise NotImplementedError('Progress has not been overridden.')
-
-    def get_valid_transition_dict(self):
-        transition_dict = {}
-        for state in self._destination_states:
-            transition_dict[state._short_string] = state._short_string
-        return transition_dict
-
-    def validate_transition(self, new_state):
-        '''Take terminal actions for new state
-
-        '''
-        if not isinstance(new_state, BaseState):
-            raise TypeError, "%s is not a BaseState object"
-        if new_state not in self._destination_states:
-            return False
-        return True
 
 
 def _initiate_boot(context):
@@ -117,7 +67,7 @@ def get_compute_block(block, extended_info=False):
         block_location_filter.setExtendedInfo(True)
     return pybgsched.getBlocks(block_location_filter)[0]
 
-class BootPending(BaseState):
+class BootPending(BaseTriremeState):
     '''A boot has been requested.  This state handles boot initiation.
     Errors contacting the control system at this point are considered fatal for the boot.
     Depending on when this occurs, it may also be fatal to the requesting job.
@@ -166,7 +116,7 @@ class BootPending(BaseState):
         raise RuntimeError, "Unable to return a valid state"
 
 
-class BootInitiating(BaseState):
+class BootInitiating(BaseTriremeState):
     '''Check to determine if our boot is still continuing or has completed.
     Problems contacting the control system at this point are considered fatal to the ongoing boot.
 
@@ -206,7 +156,7 @@ class BootInitiating(BaseState):
         #allocated and booting states on the block means we stay in this state
         return self
 
-class BootComplete(BaseState):
+class BootComplete(BaseTriremeState):
 
     _short_string = 'complete'
 
@@ -220,7 +170,7 @@ class BootComplete(BaseState):
         '''
         return self
 
-class BootFailed(BaseState):
+class BootFailed(BaseTriremeState):
     _short_string = 'failed'
 
     def __init__(self, context):
@@ -233,7 +183,7 @@ class BootFailed(BaseState):
         '''
         return self
 
-class BootRebooting(BaseState):
+class BootRebooting(BaseTriremeState):
     _short_string = 'rebooting'
 
     def __init__(self, context):
