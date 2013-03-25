@@ -17,7 +17,7 @@ import re
 import logging
 
 import Cobalt.Util
-from Cobalt.Component_Proxy import ComponentProxy
+from Cobalt.Proxy import ComponentProxy
 from Cobalt.Util import parse_geometry_string
 from Cobalt.arg_parser import ArgParse
 from Cobalt.Exceptions import QueueError, ComponentLookupError, JobValidationError, JobPreemptionError, JobRunError, JobDeleteError
