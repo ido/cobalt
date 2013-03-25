@@ -1,0 +1,9 @@
+# Command Line Options and Arguments to test qhold
+
+-k 1           # invalid option
+1|-d 1         # debug flag not defined in old qhold, but it is in new qhold
+myq 1 2 3 4    # only integer jobids allowed
+1 2 3 4        # jobids 1,2,3 and 4
+1              # only one job id
+
+--dependencies 1 2 # add dependencies flag since qhold and qrls same code

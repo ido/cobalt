@@ -1,0 +1,99 @@
+# Command Line Options and Arguments to test cqadm
+
+#
+# get queues option
+#
+--getq                              # setq option
+-d --getq                           # setq option w/debug
+-f --getq                           # getq option w/force 
+
+#
+# preempt jobs option
+#
+-d --preempt 1 2 3                  # preempt job w/debug
+-f --preempt 1 2 3                  # preempt job w/force
+
+#
+#  delete jobs options
+#
+--delete 1 2 3 | -d -f --kill 1 2 3 # kill w/force no debug.
+--kill 1 2 3                        # kill
+-d --delete 1 2 3 | -f --kill 1 2 3 # kill w/force and debug, old cqadm using --delete to force delelete
+-d --kill 1 2 3                     # kill w/debug
+
+#
+# set queues options
+#
+|--addq                             # addq option no args. Old cqadm does not handle it correctly, new one does.
+--addq myq1 myq2 myq3               # addq option
+|--delq                             # delq option no args. Old cqadm does not handle it correctly, new one does.
+--delq myq1 myq2 myq3               # delq option
+|--stopq                            # stopq option no args. Old cqadm does not handle it correctly, new one does.
+--stopq myq1 myq2 myq3              # stopq option
+|--startq                           # startq option no args. Old cqadm does not handle it correctly, new one does.
+--startq myq1 myq2 myq3             # startq option
+|--drainq                           # drainq option no args. Old cqadm does not handle it correctly, new one does.
+--drainq myq1 myq2 myq3             # drainq option
+|--killq                            # killq option no args. Old cqadm does not handle it correctly, new one does.
+--killq myq1 myq2 myq3              # killq option
+--policy                            # policy option no args 
+|--policy 'mypolicy'                # policy w/opt args but no queues. Old cqadm does not handle it correctly, new one does
+--policy 'mypolicy' myq1 myq2       # policy w/all needed
+--setq                              # setq option no args 
+|--setq 'a=b b=c a=c'               # setq w/opt args but no queues. Old cqadm does not handle it correctly, new one does
+--setq 'a=b b=c a=c' myq1 myq2      # setq w/all needed
+--unsetq                            # unsetq option no args 
+|--unsetq 'a b a'                   # unsetq w/opt args but no queues. Old cqadm does not handle it correctly, new one does
+--unsetq 'a b a' myq1 myq2          # unsetq w/all needed
+
+#
+# setjobid options
+#
+-j                                  # setjobid no args using short option
+--setjobid                          # setjobid no args using long option
+-j 1                                # setjobid short option with jobid
+--setjobid 1                        # setjobid long option with jobid
+-j 1 --setjobid 2                   # short and long setjobid options
+
+#
+# run job option
+#
+--run                               # run no args
+|--run mayaguez                     # run no jobids. Old cqadm does not handle it correctly, new one does
+--run mayaguez 1 2 3                # run all needed
+#
+# set jobs options
+#
+--hold                              # hold option no args
+--hold 1 2 3                        # hold option
+-d --hold  1 2 3                    # hold option w/debug
+-f --hold  1 2 3                    # hold option w/force
+--release                           # release option no args
+--release 1 2 3                     # release option
+-d --release 1 2 3                  # release option w/debug
+-f --release 1 2 3                  # release option w/force
+--hold --release 1 2 3              # release and hold options
+
+--queue                             # queue option no args
+|--queue myq                        # queue wo jobids. Old cqadm does not handle it correctly, new one does
+--queue myq 1 2 3                   # queue w jobids
+
+--time                              # time option no args 
+|--time 50                          # time option wo jobid. Old cqadm does not handle it correctly, new one does
+--time 50 1 2 3                     # time with all needed
+
+--hold --queue myq --time 50 4 5 6    # update all with hold
+--release --queue myq --time 50 4 5 6 # update all with release
+
+#
+# Do combo options that should not be allowed with new cqadm command.
+#
+
+|--getq --addq myq1 myq2 myq3  # combine getq and addq. New cqadm handles it correctly not old cqadm
+|--getq -j 1 123               # combine getq and setjobid. New cqadm handles it correctly not old cqadm
+|--time 50 --getq              # combine time and getq options. New cqadm handles it correctly not old cqadm
+|--release --getq 123          # combine time and getq options. New cqadm handles it correctly not old cqadm
+|--setq 'a=1 b=2' --queue q 1  # combine setq with queue option. New cqadm handles it correctly not old cqadm
+|--addq --delq q1 q2           # combine addq adn delq. New cqadm handles it correctly not old cqadm
+|--stopq --addq q1 q2          # combine addq adn stopq. New cqadm handles it correctly not old cqadm
+|--startq --addq q1 q2         # combine addq adn startq. New cqadm handles it correctly not old cqadm

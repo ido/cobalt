@@ -1,0 +1,9 @@
+# Command Line Options and Arguments to test qrls
+
+-k 1           # invalid option
+-d 1           # debug flag 
+myq 1 2 3 4    # only integer jobids allowed
+1 2 3 4        # jobids 1,2,3 and 4
+1              # only one job id
+
+-d --dependencies 1 2 # set dependencies flag 

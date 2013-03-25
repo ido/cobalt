@@ -1,0 +1,45 @@
+# Command Line Options and Arguments to test setres
+
+# ID changes
+
+--res_id 8                     # only res id
+--cycle_id 8                   # only cycle id
+--res_id 8 --cycle_id 8        # res and cycle id
+|--res_id 8 p1 p2 p3           # res id with arg. old setres let it go. new set res does not
+|--cycle_id 8 p1 p2 p3         # cycle id with arg. old setres let it go. new set res does not
+|--res_id 8 -m -n resname      # New setres does not allow mixing id changing options with other options I
+|--cycle_id 8 -p p1            # mixing id changing options with other options II
+
+--cycle_id 8 --res_id 8 --force_id   # use the force id flag with id changes
+--force_id                           # use only force id flag
+--force_id -p p1 -s 2013_03_09-10:30 # force id flag with other options
+--force_id -m -n resname             # force id flag with modify res options
+
+# Modify Reservation 
+
+-m                             # modify no reservation name
+-m -n resname                  # modify with reservation name
+|-m -n resname -D -c 10:10:10  # modify with cycle time specified. new setres handles this correctly
+
+-m -n resname -D -s 2013_03_9-10:10:10 # modify with bad start time specified
+|-m -n resname -D -s 2013_03_9-10:10   # modify with start time specified. new setres handles this correctly
+-m -n resname -D -d 10:10:10   # modify with duration
+-m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00 # modify with starttime cycle time and duration
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u georgerojas # modify with starttime cycle time and duration
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u georgerojas:georgerojas # modify with starttime,cycle time, duration, users
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u georgerojas # modify with starttime cycle time, duration, user, project
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough # add block passthrough
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough # add allow passthrough
+|-m -n resname --allow_passthrough --block_passthrough # allow and block set at the same time. new setres does not allow this.
+-m -n resname -A myproj --block_passthrough p1 p2 p3
+
+# Add Reservation
+
+-n resname -D # try to add reservation without partitions
+|-n resname -D p1 p2 p3 # No start time. old setres tries to verify the partitions before rejecting this command line
+|-n resname -s 2013_03_9-10:10 p1 p2 # add res with start time
+-n resname -s 2013_03_9-10:10 -d 50 p1 p2 # add res with start time and duration
+-n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2 # add res with start time and duration and cycle time
+-s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2 # add res with start time and duration and cycle time no res name
+-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough # add res with block passthrough
+-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj # add res with block_passthrough , queue and project

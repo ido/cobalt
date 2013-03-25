@@ -1,0 +1,12 @@
+# Command Line Options and Arguments to test qselect
+
+-k                  # invalid option
+|1                  # with arguments. old qselect allows this, but weird result, new one does not.
+-d|                 # new qselect with no options, but old one does not
+-d                  # debug flag
+-h user_hold        # held state flag
+-n 312              # nodecount option
+-n 312 -h user_hold # state and nodecount
+-t 10:10:10         # walltime
+--mode vn           # mode
+-v                  # verbose

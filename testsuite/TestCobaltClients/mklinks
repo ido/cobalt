@@ -1,0 +1,16 @@
+ln -fs args/cqadm_args.txt
+ln -fs args/cqadm_paths.txt
+ln -fs args/qalter_args.txt
+ln -fs args/qalter_paths.txt
+ln -fs args/qdel_args.txt
+ln -fs args/qdel_paths.txt
+ln -fs args/qmove_args.txt
+ln -fs args/qmove_paths.txt
+ln -fs args/qsub_args.txt
+ln -fs args/qsub_paths.txt
+ln -fs args/setres_args.txt
+ln -fs args/setres_paths.txt
+ln -fs args/qhold_args.txt
+ln -fs args/qhold_paths.txt
+ln -fs args/qrls_args.txt
+ln -fs args/qrls_paths.txt

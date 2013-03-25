@@ -1,0 +1,56 @@
+# Command Line Options and Arguments to test qsub
+
+#
+# Longer options here:
+#
+
+#  Try to set all options
+-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M george@therojas.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users georgerojas:georgerojas --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls # Sets all the options to valid values except for --version and --help ( -v does not do anything but it gets accepted as an option )
+
+# Eric 1
+--mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /gpfs/mira-fs0/projects/Acceptance/harness_workspace/at-fp-exit-th-stability_151/911_31768/src/MPI_matrix_multiplication_16384x32768_o3 # Eric 1
+
+# Eric 2
+-A Acceptance -q testing -n 4096 -t 120 --mode script --env base_directory=/gpfs/mira-fs0/projects/Acceptance/harness_workspace:source_directory=/gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-gfmc-performance_178/1405_30034/src /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-gfmc-performance_178/1405_30034/src/script.sh /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-gfmc-performance_178/1405_30034/src/src/mc/x.adlb.12c-6_states n32768-no3pi.gfmc1a.in 8 8 # Eric 2
+
+# Eric 3
+-A Acceptance -q testing -n 49152 -t 60 --mode script /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-mpi-benchmark_144/905_31576/src/pingpong/script.sh /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-mpi-benchmark_144/905_31576/src # Eric 3
+
+#
+# Shorter options here:
+#
+
+/bin/ls                # No options passed
+-z -t10 -n10 /bin/ls   # non existant option -z
+-d                     # debug flag only
+-v                     # verbose flag only
+
+|--mode smp -t50 -nfive --geometry 40x40x50x50 /bin/ls  # Invalid nodecount
+|--mode smp -t50 -n2048 --geometry 40x40x50x50 /bin/ls  # This will fail because non-realistic node count is accepted in the old qsub, but not new qsub
+
+--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls     # mode set to co
+--mode smp -t50 -n10 --geometry x /bin/ls              # Invalid geometry flag
+
+-A -t50 -n10 /bin/ls     # No project specified
+-A who -t50 -n10 /bin/ls # project specified
+
+--attrs xxxx -t50 -n10 /bin/ls                # Check attrs 1
+--attrs 1111 -t50 -n10 /bin/ls                # Check attrs 2
+--attrs xx=:yy -t50 -n10 /bin/ls              # Check attrs 3
+--attrs xx=one:yy=1:zz=1one -t50 -n10 /bin/ls # Check attrs 4
+
+--cwd /tmp/ -t10 -n 10 -e p /bin/ls       # Check valid --cwd terminated with '/' with -e relative path
+--cwd /tmp -t10 -n 10 -e p /bin/ls        # Check valid --cwd not terminated with '/' with -e relative path
+--cwd /x -t10 -n 10 -e p /bin/ls          # Check invalid --cwd
+--cwd /tmp/ -t10 -n 10 -e p -o x /bin/ls  # Check --cwd terminated with '/' -o relative path
+--cwd /tmp -t10 -n 10 -e p -o x /bin/ls   # Check --cwd not terminated with '/' -o relative path
+-t10 -n 10 -e p -o x --debuglog y /bin/ls # Add --debuglog relative path no --cwd specified
+-i none -t10 -n 10 /bin/ls                # Check inputfile (file does not exist)
+-i y -t10 -n 10 /bin/ls                   # Check inputfile (file exist)
+
+-M g -t10 -n10 /bin/ls            # Nofity email
+-O /tmp -t10 -n10 /bin/ls         # Check outputprefix
+-run_users bobo -t10 -n10 /bin/ls # check users with an invalid user
+
+-t10 -n512 --proccount 1023 --mode dual /bin/ls # mode check
+-t10 -n512 --proccount 1023 --mode vn /bin/ls   # mode check

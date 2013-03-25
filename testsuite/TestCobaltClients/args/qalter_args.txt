@@ -1,0 +1,31 @@
+# Command Line Options and Arguments to test qalter
+
+-d -n30  # debug and nodecount set to 10 no job ids. old qalter 
+-d -n30 1 # same with jobid
+
+-d -v n10 -t5 1 2 3                 # time and nodecounts 
+-d -v -n10 -t+5 1 2 3               # delta time <IGNORE> new qsub handles this correctly old does not
+-d -v -n10 -t+20 1 2 3 4 5 6 7      # more delta times <IGNORE> new qsub handles this correctly old does not
+-d -v -n10 -t30 1 2 3 4 5 6 7 10 15 # more absolute time
+-d -v -n10 -t00:00:30 1 2 3         # time in hh:mm:ss format
+-d -v -n10 -t+00:00:30 1 2 3        # delta time in hh:mm:ss format <IGNORE> new qalter handles this correctly old does not
+-d -v -n10 -t 00:00:30 1 2 3        # time in hh:mm:ss format a little different
+-d -v -n10 -t +00:00:30 1 2 3       # delta time in hh:mm:ss format a little different <IGNORE> new qalter handles this correctly old does not
+
+-d -v -m j@gmail.com      # invalid option
+-d -v -M j@gmail.com 1 2  # change notification for jobs 1 and 2
+
+-d -v --mode jjj  -n40 -t50 -e p -o o 1 2 3 # invalid mode
+-d -v --mode dual -n40 -t50 -e p -o o 1 2 3 # valid mode
+
+-d -v --mode dual -n512 --proccount one -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10    # Invalid proccount
+-d -v --mode dual -n512 --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10   # Valid proccount
+-d -v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10 # Invalid nodecount
+
+-d -v --run_users georgerojas:georgerojas 1 2 3 4 5 # Valid user list
+-d -v --run_users georgerojas:george 1 2 3 4 5      # Invalid user list
+
+-d -v --run_project 10 20 30 # Set run project flag
+
+|-d -v --geometry 10 1 2 3 4 5         # invalid geometry. old qalter tries to validate a bad geometry. new qalter will discard this before it tries to validate
+-d -v --geometry 10x10x10x10 1 2 3 4 5 # valid geometry

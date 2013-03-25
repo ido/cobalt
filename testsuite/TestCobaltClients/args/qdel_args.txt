@@ -1,0 +1,12 @@
+# Command Line Options and Arguments to test qdel
+
+-k 1           # invalid option
+-d 1           # debug flag not defined for qdel
+myq 1 2 3 4    # only integer jobids allowed
+1 2 3 4        # jobids 1,2,3 and 4
+1              # only one job id
+
+
+
+
+

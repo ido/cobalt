@@ -1,0 +1,16 @@
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/cqadm_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/cqadm_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qalter_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qalter_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qdel_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qdel_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qmove_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qmove_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qsub_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qsub_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/setres_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/setres_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qhold_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qhold_paths.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qrls_args.txt
+rm ~/p/Cobalt/working/testsuite/TestCobaltClients/qrls_paths.txt
