@@ -2,81 +2,92 @@
 .SH "NAME"
 cqadm \- queue manager administration tool
 .SH "SYNOPSIS"
-.B cqadm [-d] [--hold] [--release] [--run=<location>] [--kill] [--delete] [--queue=newqueue] <jobid> <jobid>
+.B cqadm [queue options] <queue> ... <queue>
 
-.B cqadm [-d] [-f] [--addq] [--delq] [--getq] [--setq 'prop=value prop=value'] [--unsetq 'property property'] <queue> <queue>
+.B cqadm [jobid options] <jobid> ... <jobid>
 
-.B cqadm [--version]
+.B cqadm [no arg options]
 
 .SH "DESCRIPTION"
-Administrative interface for queue manager. Allows one to hold, run, kill, and set the queue for jobs in the queue manager. Can also add/del queues and set queue properties.
+Administrative interface for queue manager. Allows one to hold, run, kill, and set the queue for jobs in the queue manager. Can also add/del queues and set queue properties. 
 
-.SH "OPTIONS"
-.TP
-.B \-\-version
-Display client revision and Cobalt version
+.SH "OPTIONS WITH NO VALUES AND NO ARGUMENTS"
+
 .TP
 .B \-d
-Enable communication debugging
+Enable communication debugging. 
 .TP
 .B \-f
-Force queue deletion
+Force queue deletion.
 .TP
-.B \-\-hold jobid
-Set job state to hold, preventing execution (only works on 'queued' jobs)
+.B \-\-getq
+List queue(s) in queue manager
+
+.SH "OPTIONS WITH VALUES BUT NO ARGUMENTS (Stand alone opions)"
+
 .TP
-.B \-\-release jobid
-Set job state to ready, allowing execution
-.TP
-.B \-\-run=<location> jobid
-Run the job immediately on the specified location
-.TP
-.B \-\-kill jobid
-Kill job(s) using normal mechanism
-.TP
-.B \-\-delete jobid
-Kill job(s) using forceable deletion. Job state will be deleted. This
-may leave processes dangling on computation resources. 
-.TP
-.B \-\-queue=<queue> jobid
-Move job to specified queue (only works on jobs that are not 'running')
-.TP
-.B \-\-time=<walltime> jobid
-Change job walltime to specified one
-.TP
-.B \-i index jobid
-Change the sorting index of the job, so that fifo behaves differently
-in scheduling.
-.TP
-.B \-j next jobid
+.B \-j \-\-setjobid=<next jobid>
 Set the jobID of the next job submitted to Cobalt
 .TP
-.B \-\-addq queue
+.B \-\-savestate=<filename>
+Pickles all the components to the specified file
+
+.SH "OPTIONS WITH NO VALUES BUT WITH QUEUE ARGUMENTS (Stand alone opions)"
+
+.TP
+.B \-\-addq queue(s)
 Add specified queue(s) to queue manager
 .TP
-.B \-\-delq queue
+.B \-\-delq queue(s)
 Delete specified queue(s) from queue manager
 .TP
-.B \-\-getq queue
-List queue(s) in queue manager
-.TP
-.B \-\-startq queue
-Start queue(s). Queue state is set to 'running'.
-.TP
-.B \-\-stopq queue
-Stop queue(s). Queue state is set to 'stopped'. New jobs can be submitted, but existing jobs will not be run.
-.TP
-.B \-\-drainq queue
+.B \-\-drainq queue(s)
 Drain queue(s). No new jobs can be submitted, and jobs already in the queue will run normally. Queue state is set to 'draining'.
 .TP
-.B \-\-killq queue
+.B \-\-killq queue(s)
 Kill the queue(s). No new jobs can be submitted, and no jobs in the queue will run. Queue state is set to 'dead'.
 .TP
-.B \-\-setq 'prop=value prop=value' queue
+.B \-\-startq queue(s)
+Start queue(s). Queue state is set to 'running'.
+.TP
+.B \-\-stopq queue(s)
+Stop queue(s). Queue state is set to 'stopped'. New jobs can be submitted, but existing jobs will not be run.
+
+.SH "OPTIONS WITH VALUES BUT WITH QUEUE ARGUMENTS (Stand alone options)"
+.TP
+.B \-\-policy <Queue Policy> queue(s)
+Set queue policy for the queues specified.
+.TP
+.B \-\-setq 'prop=value prop=value' queue(s)
 Set properties for one or more queues. The prop=value pairs are separated by whitespace.
 .TP
-.B \-\-unsetq 'property property' queue
+.B \-\-unsetq 'property property' queue(s)
 Move a property back to its unset state.  Used for example, to remove a queue restriction.
+
+.SH "OPTIONS WITH NO VALUES BUT WITH JOBID ARGUMENTS (Stand alone options)"
+.TP
+.B \-\-hold jobid(s)
+Set job state to hold, preventing execution (only works on 'queued' jobs)
+.TP
+.B \-\-kill jobid(s)
+Kill job(s) using normal mechanism. Add -f or --force option for force kill. When forceable deletion used then this may leave processes dangling on computation resources.
+.TP
+.B \-\-preempt jobid(s)
+Preempt jobid.
+.TP
+.B \-\-release jobid(s)
+Set job state to ready, allowing execution
+
+.SH "OPTIONS WITH VALUES and JOBID ARGUMENTS (The following options you can mix them together)"
+.TP
+.B \-\-queue=<queue> jobid(s)
+Move job to specified queue (only works on jobs that are not 'running')
+.TP
+.B \-\-run=<location> jobid(s)
+Run the job immediately on the specified location
+.TP
+.B \-\-time=<walltime> jobid(s)
+Change job walltime to specified one
 .TP
 .SH "Properties"
 .RS
