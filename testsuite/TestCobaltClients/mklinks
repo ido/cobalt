@@ -14,7 +14,8 @@ ln -fs args/qhold_args.txt
 ln -fs args/qhold_paths.txt
 ln -fs args/qrls_args.txt
 ln -fs args/qrls_paths.txt
-ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/client_utils.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/arg_parser.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/Util.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py Cobalt/client_utils.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   Cobalt/arg_parser.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         Cobalt/Util.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     Cobalt/__init__.py
 
