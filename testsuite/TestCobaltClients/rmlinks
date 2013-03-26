@@ -14,7 +14,13 @@ rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/qhold_args.txt
 rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/qhold_paths.txt
 rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/qrls_args.txt
 rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/qrls_paths.txt
-rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/Util.py
-rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/__init__.py
-rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/arg_parser.py
-rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt/client_utils.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/client_utils.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/Exceptions.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/Logging.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/JSONEncoders.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/arg_parser.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/Util.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/__init__.py
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/StubLib/Components
+rm $COBALT_SOURCE_DIR/testsuite/TestCobaltClients/Cobalt
+

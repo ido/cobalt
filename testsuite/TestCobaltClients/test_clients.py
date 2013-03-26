@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Client Command Compatability Test
+Cobalt Client Test Framework
 """
 import os
 import logging
@@ -77,6 +77,47 @@ def getlines(filename):
     fd.close()
     return lines
 
+def write_test_data():
+    """
+    write run the arguments are write the test data
+    """
+    # open the test data file to write to it. 
+    fd = open('client_test_data.txt','w')
+
+    argsfile_list = glob.glob(ARGS_FILES) # get the list of files with command args test runs
+
+    ret_status = 0 # init return status ok
+
+    # go through every client command file 
+    for argsfile in argsfile_list:
+        argslist = getlines(argsfile) # get the list of command line arguments 
+        name     = getname(argsfile)
+        paths    = getlines(name+PATHFILES)
+        if paths == None: continue
+        cmd1     = "%s/%s.py" % (paths[0],name)
+        cmd2     = "%s/%s.py" % (paths[1],name)
+
+        for args in argslist:
+            print args
+            continue
+            if args    == '' : continue # skip null line
+            if args[0] == '#': continue # skip comment line
+            comment  = getcomment(args) # get the comment if there is one
+            ignore   = args.find(IGNORE_TAG) != -1 # ignore failures if args is tagged
+            args     = stripcomment(args).split('|') # strip out comments
+            if len(args) == 2:
+                arg1 = args[0]
+                arg2 = args[1]
+            else:
+                arg1 = args[0]
+                arg2 = args[0]
+            rs1,buf1 = run_cmd(cmd1,1,arg1,comment)
+            print(buf1)
+            fd.write(buf1)
+    fd.close()
+
+    return ret_status
+
 def test():
     """
     functon that will run a list of commands pairs and make sure that they are functionally the same
@@ -134,4 +175,5 @@ def test():
 
     return ret_status
 
-r = test()
+#r = test()
+r = write_test_data()

@@ -14,8 +14,13 @@ ln -fs args/qhold_args.txt
 ln -fs args/qhold_paths.txt
 ln -fs args/qrls_args.txt
 ln -fs args/qrls_paths.txt
-ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py Cobalt/client_utils.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   Cobalt/arg_parser.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         Cobalt/Util.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     Cobalt/__init__.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py StubLib/client_utils.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/Exceptions.py   StubLib/Exceptions.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/Logging.py      StubLib/Logging.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/JSONEncoders.py StubLib/JSONEncoders.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   StubLib/arg_parser.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         StubLib/Util.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     StubLib/__init__.py
+ln -fs $COBALT_SOURCE_DIR/src/lib/Components      StubLib/Components
+ln -fs Stublib                                    Cobalt
 
