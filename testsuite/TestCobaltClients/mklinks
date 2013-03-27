@@ -1,26 +1,11 @@
-ln -fs args/cqadm_args.txt
-ln -fs args/cqadm_paths.txt
-ln -fs args/qalter_args.txt
-ln -fs args/qalter_paths.txt
-ln -fs args/qdel_args.txt
-ln -fs args/qdel_paths.txt
-ln -fs args/qmove_args.txt
-ln -fs args/qmove_paths.txt
-ln -fs args/qsub_args.txt
-ln -fs args/qsub_paths.txt
-ln -fs args/setres_args.txt
-ln -fs args/setres_paths.txt
-ln -fs args/qhold_args.txt
-ln -fs args/qhold_paths.txt
-ln -fs args/qrls_args.txt
-ln -fs args/qrls_paths.txt
-ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py StubLib/client_utils.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/Exceptions.py   StubLib/Exceptions.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/Logging.py      StubLib/Logging.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/JSONEncoders.py StubLib/JSONEncoders.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   StubLib/arg_parser.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         StubLib/Util.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     StubLib/__init__.py
-ln -fs $COBALT_SOURCE_DIR/src/lib/Components      StubLib/Components
+source rmlinks
+ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Exceptions.py   StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Logging.py      StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/JSONEncoders.py StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     StubLib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Components      StubLib/
 ln -fs Stublib                                    Cobalt
 

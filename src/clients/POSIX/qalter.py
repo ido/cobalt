@@ -221,7 +221,7 @@ def main():
         if parser.options.nodes != None:
             update_procs(new_spec,parser)
         if parser.options.geometry != None:
-            client_utils.validate_geometry(new_spec['geometry'],job['nodes'])
+            client_utils.validate_geometry(opts['geometry'],job['nodes'])
 
         del job['is_active']
         orig_job = job.copy()

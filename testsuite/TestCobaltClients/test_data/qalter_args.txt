@@ -4,13 +4,13 @@
 -d -n30 1 # same with jobid
 
 -d -v n10 -t5 1 2 3                 # time and nodecounts 
--d -v -n10 -t+5 1 2 3               # delta time <IGNORE> new qsub handles this correctly old does not
--d -v -n10 -t+20 1 2 3 4 5 6 7      # more delta times <IGNORE> new qsub handles this correctly old does not
+-d -v -n10 -t+5 1 2 3               # delta time <NEW_ONLY> new qsub handles this correctly old does not
+-d -v -n10 -t+20 1 2 3 4 5 6 7      # more delta times <NEW_ONLY> new qsub handles this correctly old does not
 -d -v -n10 -t30 1 2 3 4 5 6 7 10 15 # more absolute time
 -d -v -n10 -t00:00:30 1 2 3         # time in hh:mm:ss format
--d -v -n10 -t+00:00:30 1 2 3        # delta time in hh:mm:ss format <IGNORE> new qalter handles this correctly old does not
+-d -v -n10 -t+00:00:30 1 2 3        # delta time in hh:mm:ss format <NEW_ONLY> new qalter handles this correctly old does not
 -d -v -n10 -t 00:00:30 1 2 3        # time in hh:mm:ss format a little different
--d -v -n10 -t +00:00:30 1 2 3       # delta time in hh:mm:ss format a little different <IGNORE> new qalter handles this correctly old does not
+-d -v -n10 -t +00:00:30 1 2 3       # delta time in hh:mm:ss format a little different <NEW_ONLY> new qalter handles this correctly old does not
 
 -d -v -m j@gmail.com      # invalid option
 -d -v -M j@gmail.com 1 2  # change notification for jobs 1 and 2
@@ -27,5 +27,6 @@
 
 -d -v --run_project 10 20 30 # Set run project flag
 
-|-d -v --geometry 10 1 2 3 4 5         # invalid geometry. old qalter tries to validate a bad geometry. new qalter will discard this before it tries to validate
--d -v --geometry 10x10x10x10 1 2 3 4 5 # valid geometry
+|-d -v --geometry 10 1 2 3 4 5  # geometry 1
+-d -v --geometry 10x10x10x10x10 1 2 3 4 5 # geometry 2
+-d -v --geometry 04x04x04x04x04 1 2 3 4 # geometry 3
