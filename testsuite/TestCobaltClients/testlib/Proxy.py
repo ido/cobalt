@@ -1,7 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-fn = 'proxystub.log'
+fn = 'stub.out'
 fd = open(fn,'w')
 logbuf       = ''
 vbuf         = ''
