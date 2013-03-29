@@ -463,7 +463,9 @@ def setup_logging(level):
     logger.already_setup = True
 
     # log the command line arguments for the current command
-    logger.info(str(sys.argv)) # TBD: --GDR
+    cmdinfo = os.path.split(sys.argv[0])
+    args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
+    logger.info(args)
 
 def validate_geometry(geometry,nodes):
     """

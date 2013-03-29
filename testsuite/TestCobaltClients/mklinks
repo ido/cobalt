@@ -1,11 +1,11 @@
 source rmlinks
-ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/Exceptions.py   StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/Logging.py      StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/JSONEncoders.py StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     StubLib/
-ln -fs $COBALT_SOURCE_DIR/src/lib/Components      StubLib/
-ln -fs Stublib                                    Cobalt
+ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Exceptions.py   testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Logging.py      testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/JSONEncoders.py testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/arg_parser.py   testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Util.py         testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/__init__.py     testlib/
+ln -fs $COBALT_SOURCE_DIR/src/lib/Components      testlib/
+ln -fs testlib                                    Cobalt
 
