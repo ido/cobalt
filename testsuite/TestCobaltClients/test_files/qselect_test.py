@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qselect_invalid_option():
     """
     qselect test run: invalid_option
@@ -33,9 +34,8 @@ qselect.py: error: no such option: -k
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_only_arg():
     """
     qselect test run: only_arg
@@ -67,9 +67,8 @@ qselect takes no arguments
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_no_args_opts():
     """
     qselect test run: no_args_opts
@@ -114,9 +113,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_debug_flag():
     """
     qselect test run: debug_flag
@@ -162,9 +160,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_held_option():
     """
     qselect test run: held_option
@@ -209,9 +206,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_nodecount_option():
     """
     qselect test run: nodecount_option
@@ -256,9 +252,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_state_and_nodecount():
     """
     qselect test run: state_and_nodecount
@@ -303,9 +298,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_walltime():
     """
     qselect test run: walltime
@@ -350,9 +344,8 @@ walltime:610
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_mode():
     """
     qselect test run: mode
@@ -397,9 +390,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qselect_verbose():
     """
     qselect test run: verbose
@@ -443,6 +435,4 @@ walltime:*
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

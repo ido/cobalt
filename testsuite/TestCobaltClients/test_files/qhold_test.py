@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qhold_invalid_option():
     """
     qhold test run: invalid_option
@@ -33,9 +34,8 @@ qhold.py: error: no such option: -k
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qhold_debg_option():
     """
     qhold test run: debg_option
@@ -92,9 +92,8 @@ user_hold:True
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qhold_jobid_1():
     """
     qhold test run: jobid_1
@@ -126,9 +125,8 @@ jobid must be an integer: myq
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qhold_jobid_2():
     """
     qhold test run: jobid_2
@@ -214,9 +212,8 @@ user_hold:True
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qhold_jobid_3():
     """
     qhold test run: jobid_3
@@ -272,9 +269,8 @@ user_hold:True
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qhold_dependancy_option():
     """
     qhold test run: dependancy_option
@@ -307,6 +303,4 @@ qhold.py: error: no such option: --dependencies
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

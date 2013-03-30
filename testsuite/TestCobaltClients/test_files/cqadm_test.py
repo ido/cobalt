@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_cqadm_getq_option_1():
     """
     cqadm test run: getq_option_1
@@ -54,9 +55,8 @@ users:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_getq_option_2():
     """
     cqadm test run: getq_option_2
@@ -112,9 +112,8 @@ users:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_getq_option_3():
     """
     cqadm test run: getq_option_3
@@ -169,9 +168,8 @@ users:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_preempt_job_1():
     """
     cqadm test run: preempt_job_1
@@ -221,9 +219,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_preempt_job_2():
     """
     cqadm test run: preempt_job_2
@@ -272,9 +269,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_kill_job_1():
     """
     cqadm test run: kill_job_1
@@ -324,9 +320,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_kill_job_2():
     """
     cqadm test run: kill_job_2
@@ -375,9 +370,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_kill_job_3():
     """
     cqadm test run: kill_job_3
@@ -426,9 +420,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_kill_job_4():
     """
     cqadm test run: kill_job_4
@@ -478,9 +471,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_addq_option_1():
     """
     cqadm test run: addq_option_1
@@ -512,9 +504,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_addq_option_2():
     """
     cqadm test run: addq_option_2
@@ -580,9 +571,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_delq_option_1():
     """
     cqadm test run: delq_option_1
@@ -614,9 +604,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_delq_option_2():
     """
     cqadm test run: delq_option_2
@@ -664,9 +653,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_stopq_option_1():
     """
     cqadm test run: stopq_option_1
@@ -698,9 +686,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_stopq_option_2():
     """
     cqadm test run: stopq_option_2
@@ -743,9 +730,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_startq_option_1():
     """
     cqadm test run: startq_option_1
@@ -777,9 +763,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_startq_option_2():
     """
     cqadm test run: startq_option_2
@@ -822,9 +807,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_drainq_option_1():
     """
     cqadm test run: drainq_option_1
@@ -856,9 +840,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_drainq_option_2():
     """
     cqadm test run: drainq_option_2
@@ -901,9 +884,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_killq_option_1():
     """
     cqadm test run: killq_option_1
@@ -935,9 +917,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_killq_option_2():
     """
     cqadm test run: killq_option_2
@@ -980,9 +961,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_policy_option_1():
     """
     cqadm test run: policy_option_1
@@ -1016,9 +996,8 @@ cqadm.py: error: --policy option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_policy_option_2():
     """
     cqadm test run: policy_option_2
@@ -1050,9 +1029,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_policy_option_3():
     """
     cqadm test run: policy_option_3
@@ -1093,9 +1071,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setq_option_1():
     """
     cqadm test run: setq_option_1
@@ -1129,9 +1106,8 @@ cqadm.py: error: --setq option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setq_option_2():
     """
     cqadm test run: setq_option_2
@@ -1163,9 +1139,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setq_option_3():
     """
     cqadm test run: setq_option_3
@@ -1206,9 +1181,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_unsetq_option_1():
     """
     cqadm test run: unsetq_option_1
@@ -1242,9 +1216,8 @@ cqadm.py: error: --unsetq option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_unsetq_option_2():
     """
     cqadm test run: unsetq_option_2
@@ -1276,9 +1249,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_unsetq_option_3():
     """
     cqadm test run: unsetq_option_3
@@ -1319,9 +1291,8 @@ tag:queue
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setjobid_option_1():
     """
     cqadm test run: setjobid_option_1
@@ -1355,9 +1326,8 @@ cqadm.py: error: -j option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setjobid_option_2():
     """
     cqadm test run: setjobid_option_2
@@ -1391,9 +1361,8 @@ cqadm.py: error: --setjobid option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setjobid_option_3():
     """
     cqadm test run: setjobid_option_3
@@ -1430,9 +1399,8 @@ whoami:georgerojas
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setjobid_option_4():
     """
     cqadm test run: setjobid_option_4
@@ -1469,9 +1437,8 @@ whoami:georgerojas
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_setjobid_option_5():
     """
     cqadm test run: setjobid_option_5
@@ -1508,9 +1475,8 @@ whoami:georgerojas
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_run_option_1():
     """
     cqadm test run: run_option_1
@@ -1544,9 +1510,8 @@ cqadm.py: error: --run option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_run_option_2():
     """
     cqadm test run: run_option_2
@@ -1578,9 +1543,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_run_option_3():
     """
     cqadm test run: run_option_3
@@ -1633,9 +1597,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_hold_option_1():
     """
     cqadm test run: hold_option_1
@@ -1667,9 +1630,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_hold_option_2():
     """
     cqadm test run: hold_option_2
@@ -1726,9 +1688,8 @@ admin_hold:True
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_hold_option_3():
     """
     cqadm test run: hold_option_3
@@ -1786,9 +1747,8 @@ admin_hold:True
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_hold_option_4():
     """
     cqadm test run: hold_option_4
@@ -1845,9 +1805,8 @@ admin_hold:True
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_release_option_1():
     """
     cqadm test run: release_option_1
@@ -1879,9 +1838,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_release_option_2():
     """
     cqadm test run: release_option_2
@@ -1938,9 +1896,8 @@ admin_hold:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_release_option_3():
     """
     cqadm test run: release_option_3
@@ -1998,9 +1955,8 @@ admin_hold:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_release_option_4():
     """
     cqadm test run: release_option_4
@@ -2057,9 +2013,8 @@ admin_hold:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_release_and_hold():
     """
     cqadm test run: release_and_hold
@@ -2091,9 +2046,8 @@ Attribute admin_hold already set
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_queue_option_1():
     """
     cqadm test run: queue_option_1
@@ -2127,9 +2081,8 @@ cqadm.py: error: --queue option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_queue_option_2():
     """
     cqadm test run: queue_option_2
@@ -2161,9 +2114,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_queue_option_3():
     """
     cqadm test run: queue_option_3
@@ -2217,9 +2169,8 @@ queue:myq
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_time_option_1():
     """
     cqadm test run: time_option_1
@@ -2253,9 +2204,8 @@ cqadm.py: error: --time option requires an argument
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_time_option_2():
     """
     cqadm test run: time_option_2
@@ -2287,9 +2237,8 @@ At least on jobid or queue name must be supplied
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_time_option_4():
     """
     cqadm test run: time_option_4
@@ -2343,9 +2292,8 @@ walltime:50
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_update_all_1():
     """
     cqadm test run: update_all_1
@@ -2404,9 +2352,8 @@ walltime:50
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_update_all_2():
     """
     cqadm test run: update_all_2
@@ -2465,9 +2412,8 @@ walltime:50
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_getq_and_addq():
     """
     cqadm test run: combine_getq_and_addq
@@ -2499,9 +2445,8 @@ Option combinations not allowed with: addq, getq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_getq_and_setjobid():
     """
     cqadm test run: combine_getq_and_setjobid
@@ -2533,9 +2478,8 @@ Option combinations not allowed with: setjobid, getq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_time_and_getq():
     """
     cqadm test run: combine_time_and_getq
@@ -2567,9 +2511,8 @@ Option combinations not allowed with: getq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_release_and_getq():
     """
     cqadm test run: combine_release_and_getq
@@ -2601,9 +2544,8 @@ Option combinations not allowed with: getq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_setq_with_queue():
     """
     cqadm test run: combine_setq_with_queue
@@ -2635,9 +2577,8 @@ Option combinations not allowed with: setq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_addq_and_delq():
     """
     cqadm test run: combine_addq_and_delq
@@ -2669,9 +2610,8 @@ Option combinations not allowed with: addq, delq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_addq_and_stopq():
     """
     cqadm test run: combine_addq_and_stopq
@@ -2703,9 +2643,8 @@ Option combinations not allowed with: addq, stopq option(s)
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_cqadm_combine_addq_and_startq():
     """
     cqadm test run: combine_addq_and_startq
@@ -2736,6 +2675,4 @@ Option combinations not allowed with: addq, startq option(s)
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

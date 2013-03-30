@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qalter_simple_1():
     """
     qalter test run: simple_1
@@ -31,9 +32,8 @@ No Jobid(s) given
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_simple_2():
     """
     qalter test run: simple_2
@@ -127,9 +127,8 @@ walltime:5
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_1():
     """
     qalter test run: time_1
@@ -161,9 +160,8 @@ jobid must be an integer: n10
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_2():
     """
     qalter test run: time_2
@@ -374,9 +372,8 @@ walltime:20.0
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_3():
     """
     qalter test run: time_3
@@ -819,9 +816,8 @@ walltime:55.0
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_4():
     """
     qalter test run: time_4
@@ -1379,9 +1375,8 @@ walltime:30
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_5():
     """
     qalter test run: time_5
@@ -1592,9 +1587,8 @@ walltime:0
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_6():
     """
     qalter test run: time_6
@@ -1805,9 +1799,8 @@ walltime:15.0
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_7():
     """
     qalter test run: time_7
@@ -2018,9 +2011,8 @@ walltime:0
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_time_8():
     """
     qalter test run: time_8
@@ -2231,9 +2223,8 @@ walltime:15.0
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_invalid_option():
     """
     qalter test run: invalid_option
@@ -2267,9 +2258,8 @@ qalter.py: error: no such option: -m
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_email_option():
     """
     qalter test run: email_option
@@ -2418,9 +2408,8 @@ walltime:10
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_mode_1():
     """
     qalter test run: mode_1
@@ -2455,9 +2444,8 @@ script
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_mode_2():
     """
     qalter test run: mode_2
@@ -2492,9 +2480,8 @@ script
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_proccount_1():
     """
     qalter test run: proccount_1
@@ -2529,9 +2516,8 @@ script
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_proccount_2():
     """
     qalter test run: proccount_2
@@ -2566,9 +2552,8 @@ script
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_invalid_nodecount():
     """
     qalter test run: invalid_nodecount
@@ -2603,9 +2588,8 @@ script
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_user_1():
     """
     qalter test run: user_1
@@ -2927,9 +2911,8 @@ walltime:25
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_user_2():
     """
     qalter test run: user_2
@@ -2961,9 +2944,8 @@ user george does not exist.
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_project():
     """
     qalter test run: project
@@ -3177,9 +3159,8 @@ walltime:15
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_geometry_1():
     """
     qalter test run: geometry_1
@@ -3211,9 +3192,8 @@ Invalid geometry entered:
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_geometry_2():
     """
     qalter test run: geometry_2
@@ -3301,9 +3281,8 @@ walltime:*
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qalter_geometry_3():
     """
     qalter test run: geometry_3
@@ -3380,6 +3359,4 @@ walltime:*
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

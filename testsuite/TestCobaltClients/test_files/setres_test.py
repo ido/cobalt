@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_setres_id_change_1():
     """
     setres test run: id_change_1
@@ -36,9 +37,8 @@ id: 8
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_id_change_2():
     """
     setres test run: id_change_2
@@ -75,9 +75,8 @@ id: 8
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_id_change_3():
     """
     setres test run: id_change_3
@@ -119,9 +118,8 @@ id: 8
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_id_change_4():
     """
     setres test run: id_change_4
@@ -153,9 +151,8 @@ No partition arguments or other options allowed with id change options
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_id_change_5():
     """
     setres test run: id_change_5
@@ -187,9 +184,8 @@ No partition arguments or other options allowed with id change options
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_id_change_6():
     """
     setres test run: id_change_6
@@ -221,9 +217,8 @@ No partition arguments or other options allowed with id change options
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_id_change_7():
     """
     setres test run: id_change_7
@@ -255,9 +250,8 @@ No partition arguments or other options allowed with id change options
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_force_1():
     """
     setres test run: force_1
@@ -299,9 +293,8 @@ id: 8
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_force_2():
     """
     setres test run: force_2
@@ -333,9 +326,8 @@ ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_force_3():
     """
     setres test run: force_3
@@ -368,9 +360,8 @@ ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_force_4():
     """
     setres test run: force_4
@@ -402,9 +393,8 @@ ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_1():
     """
     setres test run: modify_1
@@ -436,9 +426,8 @@ setres.py -m
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_2():
     """
     setres test run: modify_2
@@ -486,9 +475,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_3():
     """
     setres test run: modify_3
@@ -520,9 +508,8 @@ Cannot use -D while changing start or cycle time
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_4():
     """
     setres test run: modify_4
@@ -555,9 +542,8 @@ start time is expected to be in the format: YYYY_MM_DD-HH:MM
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_5():
     """
     setres test run: modify_5
@@ -590,9 +576,8 @@ Cannot use -D while changing start or cycle time
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_6():
     """
     setres test run: modify_6
@@ -643,9 +628,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_7():
     """
     setres test run: modify_7
@@ -697,9 +681,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_8():
     """
     setres test run: modify_8
@@ -752,9 +735,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_9():
     """
     setres test run: modify_9
@@ -807,9 +789,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_10():
     """
     setres test run: modify_10
@@ -863,9 +844,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_11():
     """
     setres test run: modify_11
@@ -919,9 +899,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_12():
     """
     setres test run: modify_12
@@ -975,9 +954,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_13():
     """
     setres test run: modify_13
@@ -1009,9 +987,8 @@ Attribute block_passthrough already set
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_modify_14():
     """
     setres test run: modify_14
@@ -1074,9 +1051,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_1():
     """
     setres test run: add_res_1
@@ -1108,9 +1084,8 @@ ERROR:root:Must supply either -p with value or partitions as arguments
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_2():
     """
     setres test run: add_res_2
@@ -1142,9 +1117,8 @@ Must supply a start time for the reservation with -s
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_3():
     """
     setres test run: add_res_3
@@ -1177,9 +1151,8 @@ Must supply a duration time for the reservation with -d
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_4():
     """
     setres test run: add_res_4
@@ -1237,9 +1210,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_5():
     """
     setres test run: add_res_5
@@ -1297,9 +1269,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_6():
     """
     setres test run: add_res_6
@@ -1357,9 +1328,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_7():
     """
     setres test run: add_res_7
@@ -1413,9 +1383,8 @@ CHECK_RESERVATIONS
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_setres_add_res_8():
     """
     setres test run: add_res_8
@@ -1469,6 +1438,4 @@ CHECK_RESERVATIONS
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

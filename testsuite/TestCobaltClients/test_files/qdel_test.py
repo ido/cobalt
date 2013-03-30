@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qdel_invalid_option():
     """
     qdel test run: invalid_option
@@ -33,9 +34,8 @@ qdel.py: error: no such option: -k
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qdel_debug_option():
     """
     qdel test run: debug_option
@@ -69,9 +69,8 @@ qdel.py: error: no such option: -d
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qdel_jobid_1():
     """
     qdel test run: jobid_1
@@ -103,9 +102,8 @@ jobid must be an integer: myq
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qdel_jobid_2():
     """
     qdel test run: jobid_2
@@ -161,9 +159,8 @@ user:georgerojas
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qdel_jobid_3():
     """
     qdel test run: jobid_3
@@ -206,6 +203,4 @@ user:georgerojas
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

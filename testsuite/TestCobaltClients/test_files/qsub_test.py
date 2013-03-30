@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qsub_all_options():
     """
     qsub test run: all_options
@@ -105,9 +106,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Eric_1():
     """
     qsub test run: Eric_1
@@ -139,9 +139,8 @@ command /gpfs/mira-fs0/projects/Acceptance/harness_workspace/at-fp-exit-th-stabi
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Eric_2():
     """
     qsub test run: Eric_2
@@ -173,9 +172,8 @@ node count out of realistic range
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Eric_3():
     """
     qsub test run: Eric_3
@@ -207,9 +205,8 @@ node count out of realistic range
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_no_options_passed():
     """
     qsub test run: no_options_passed
@@ -242,9 +239,8 @@ No required options entered
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_non_existant_option():
     """
     qsub test run: non_existant_option
@@ -278,9 +274,8 @@ qsub.py: error: no such option: -z
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_debug_flag_only():
     """
     qsub test run: debug_flag_only
@@ -313,9 +308,8 @@ No required options entered
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_verbose_flag_only():
     """
     qsub test run: verbose_flag_only
@@ -348,9 +342,8 @@ No required options entered
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_non_integer_nodecount():
     """
     qsub test run: non_integer_nodecount
@@ -384,9 +377,8 @@ qsub.py: error: option -n: invalid integer value: 'five'
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_non_realistic_nodecount():
     """
     qsub test run: non_realistic_nodecount
@@ -418,9 +410,8 @@ node count out of realistic range
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_invalid_geometry():
     """
     qsub test run: invalid_geometry
@@ -452,9 +443,8 @@ Invalid geometry entered:
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_no_roject_specified():
     """
     qsub test run: no_roject_specified
@@ -486,9 +476,8 @@ qsub.py -A -t50 -n10 /bin/ls
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_project_specified():
     """
     qsub test run: project_specified
@@ -577,9 +566,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Check_attrs_1():
     """
     qsub test run: Check_attrs_1
@@ -668,9 +656,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Check_attrs_2():
     """
     qsub test run: Check_attrs_2
@@ -759,9 +746,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Check_attrs_3():
     """
     qsub test run: Check_attrs_3
@@ -850,9 +836,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_Check_attrs_4():
     """
     qsub test run: Check_attrs_4
@@ -941,9 +926,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_cwd_option_1():
     """
     qsub test run: cwd_option_1
@@ -1032,9 +1016,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_cwd_option_2():
     """
     qsub test run: cwd_option_2
@@ -1123,9 +1106,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_cwd_option_3():
     """
     qsub test run: cwd_option_3
@@ -1157,9 +1139,8 @@ directory /x/p does not exist
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_cwd_option_4():
     """
     qsub test run: cwd_option_4
@@ -1249,9 +1230,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_cwd_option_5():
     """
     qsub test run: cwd_option_5
@@ -1341,9 +1321,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_debuglog_option():
     """
     qsub test run: debuglog_option
@@ -1434,9 +1413,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_inputfile_option_1():
     """
     qsub test run: inputfile_option_1
@@ -1468,9 +1446,8 @@ file /Users/georgerojas/p/Cobalt/client-refactor/testsuite/TestCobaltClients/non
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_inputfile_option_2():
     """
     qsub test run: inputfile_option_2
@@ -1559,9 +1536,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_email_option():
     """
     qsub test run: email_option
@@ -1650,9 +1626,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_outputprefix():
     """
     qsub test run: outputprefix
@@ -1745,9 +1720,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_invalid_user():
     """
     qsub test run: invalid_user
@@ -1781,9 +1755,8 @@ qsub.py: error: no such option: -r
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_mode_option_1():
     """
     qsub test run: mode_option_1
@@ -1871,9 +1844,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_mode_option_2():
     """
     qsub test run: mode_option_2
@@ -1961,9 +1933,8 @@ version:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qsub_mode_option_3():
     """
     qsub test run: mode_option_3
@@ -2051,6 +2022,4 @@ version:False
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

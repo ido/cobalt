@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qrls_invalid_option():
     """
     qrls test run: invalid_option
@@ -33,9 +34,8 @@ qrls.py: error: no such option: -k
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qrls_debug_flag():
     """
     qrls test run: debug_flag
@@ -92,9 +92,8 @@ user_hold:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qrls_jobid_1():
     """
     qrls test run: jobid_1
@@ -126,9 +125,8 @@ jobid must be an integer: myq
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qrls_jobid_2():
     """
     qrls test run: jobid_2
@@ -214,9 +212,8 @@ user_hold:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qrls_jobid_3():
     """
     qrls test run: jobid_3
@@ -272,9 +269,8 @@ user_hold:False
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qrls_dependancy_option():
     """
     qrls test run: dependancy_option
@@ -338,6 +334,4 @@ all_dependencies:[]
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 

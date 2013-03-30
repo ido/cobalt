@@ -1,5 +1,6 @@
 import testutils
 
+# ---------------------------------------------------------------------------------
 def test_qmove_invalid_option():
     """
     qmove test run: invalid_option
@@ -33,9 +34,8 @@ qmove.py: error: no such option: -k
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qmove_queue_1():
     """
     qmove test run: queue_1
@@ -242,9 +242,8 @@ walltime:15
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qmove_queue_2():
     """
     qmove test run: queue_2
@@ -451,9 +450,8 @@ walltime:15
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
 # ---------------------------------------------------------------------------------
-
-
 def test_qmove_queu_3():
     """
     qmove test run: queu_3
@@ -484,6 +482,4 @@ jobid must be an integer: q2
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
-
-# ---------------------------------------------------------------------------------
 
