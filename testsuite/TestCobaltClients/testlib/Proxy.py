@@ -1,6 +1,15 @@
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+import time
+
+def stub_time():
+    return 1364335099.14
+
+# redefine the standard time() function
+time.time = stub_time
+
+
 fn = 'stub.out'
 fd = open(fn,'w')
 logbuf       = ''

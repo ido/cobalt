@@ -37,6 +37,7 @@ TQ  = '<TQ>'
 TC  = '<TC_COMMENT>'
 CM  = '<CMD>'
 SF  = '<STUBFILE>'
+ES  = '\\\n""""""' # empty string 
 RTQ = '"""'
 
 TEST_TEMPLATE = \
@@ -46,8 +47,7 @@ def test_<CMD>_<TC_COMMENT>():
 <DOCSTR>
     <TQ>
 
-    args      = \\
-<TQ><ARGS><TQ>
+    args      = <TQ><ARGS><TQ>
 
     cmdout    = \\
 <TQ><CMDOUT><TQ>
@@ -55,7 +55,6 @@ def test_<CMD>_<TC_COMMENT>():
     stubout   = \\
 <TQ><STUBOUT><TQ>
 
-    retstat      = <RS>
     stubout_file = "<STUBFILE>"
 
     expected_results = ( 
@@ -64,11 +63,14 @@ def test_<CMD>_<TC_COMMENT>():
                        stubout # Expected stub functions output
                        ) 
 
-    results = testutils.run_cmd('<CMD>.py',args,stubout_file) # TBD IMPROVE THE GETTING OF THE COMMAND <CMD> not hardcode .py
-    result  = testutils.validate_results(retstat,results,expected_results)
+    results = testutils.run_cmd('<CMD>.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
 
     correct = 1
-    assert result == correct, "Result:%s != Correct:%s" % (result, correct)
+    assert result == correct, "Result:\\n%s" % result
+
+# ---------------------------------------------------------------------------------
+
 """
 
 # get command name
@@ -92,11 +94,11 @@ indent = lambda x,buf:'\n'.join([(x*' ')+line for line in buf.split('\n')])
 
 def gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file):
     """
-    Get Test from template
+    Get Test from template with all tags replace
     """
-    return \
-        TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_comment).replace(TQ,RTQ).replace(DS,docstr).replace(AR,args). \
-        replace(CO,cmdout).replace(SO,stubout).replace(RS,str(retstat)).replace('""""""',"''").replace(SF,stubout_file)
+    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_comment).replace(TQ,RTQ).    \
+        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout). \
+        replace(RS,str(retstat)).replace(ES,"''").replace(SF,stubout_file)
 
 def get_output(filename):
     """
@@ -117,16 +119,17 @@ def getdiff(buf1,buf2):
     dfunc = lambda diff: diff[2] if diff[0] not in ['+','-'] else '<' + diff[0]+diff[2]+'> '
     return ''.join([ dfunc(diff) for diff in list(difflib.ndiff(buf1,buf2))])
 
-def validate_results(exp_retstat,results,expected_results):
+def validate_results(results,expected_results,stubout_compare_func = None):
     """
     Validate the results against expected results and return 1 if all validate correctly otherwise return 
     """
     result = 1
-    retstat    = results[0]
-    cmdout     = results[1]
-    stubout    = results[2]
-    exp_cmdout     = expected_results[1]
-    exp_stubout    = expected_results[2]
+    retstat     = results[0]
+    cmdout      = results[1]
+    stubout     = results[2]
+    exp_retstat = expected_results[0]
+    exp_cmdout  = expected_results[1]
+    exp_stubout = expected_results[2]
 
     # Validate expected results
     if int(retstat) != int(exp_retstat):
@@ -134,7 +137,9 @@ def validate_results(exp_retstat,results,expected_results):
         result += "Expected Return Status: %s, Actual Return Status: %s\n" % (str(exp_retstat),str(retstat))
 
     elif exp_stubout:
-        if exp_stubout != stubout:
+        cfunc = lambda e,a: e != a
+        compare_function = cfunc if stubout_compare_func == None else stubout_compare_function
+        if compare_function(exp_stubout,stubout):
             diffs   = getdiff(exp_stubout,stubout)
             result  = "*** STUB OUTPUT DOES NOT MATCH ***\n"
             result += diffs
@@ -180,15 +185,17 @@ def get_argsfile_list(args_list,args_path):
         retlist = glob.glob(args_path+ARGS_FILES)
     return retlist
 
-def gentest(fd, cmd, tc_comment, args, retstat, old_results, new_results, stubout_file):
+def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file):
     """
     This function will do validation of the generated data and compare the expected outpus
     and then generate the test for the specified arguments
     """
-    docstr  = '    Test Case: ' + tc_comment + '\n'
+    docstr  = '    %s test run: %s\n' % (cmd,tc_comment)
     result  = 1
     if old_results:
-        result  = validate_results(retstat, old_results, new_results)
+        # redefine old_results to use the new return status and command output
+        old_results = (new_results[0], new_results[1], old_results[2])
+        result  = validate_results(old_results, new_results)
         stubout = old_results[2] # need the old command stub output for generated test
     else:
         stubout = new_results[2] # no old so use new
@@ -196,6 +203,7 @@ def gentest(fd, cmd, tc_comment, args, retstat, old_results, new_results, stubou
     if result != 1:
         docstr += indent(4,result)
         
+    retstat = new_results[0] # need the new return status for generated test
     cmdout  = new_results[1] # need the new command output for generated test
 
     test = gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file)
@@ -227,29 +235,23 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
             if args    == '' : continue # skip null line
             if args[0] == '#': continue # skip comment line
             tc_comment = getcomment(args) # get the comment if there is one
-            retstat    = getrs(args)      # get the expected return status
             new_only   = args.find(NEW_ONLY_TAG) != -1 or old_cmd == new_cmd # only new command applies not old
             args       = stripcomment(args).split('|') # strip out comments
             #
             # if there are two args then old command is different arg for same functionality
             if len(args) == 2:
-                old_args = args[0]
-                new_args = args[1]
+                old_args = args[0].strip()
+                new_args = args[1].strip()
             else:
-                old_args = args[0]
-                new_args = args[0]
+                old_args = args[0].strip()
+                new_args = args[0].strip()
             # flag new command only
             if new_only:
                 oresults = None
             else:
                 oresults = run_cmd(old_cmd,old_args,stubout_file)
             nresults = run_cmd(new_cmd,new_args,stubout_file)
-            #
-            # We do not need the old command output at this point
-            # We will use only the new command output
-            if oresults:
-                oresults = (oresults[0],nresults[1],oresults[2])
-            gentest(fd, name, tc_comment, new_args, retstat, oresults, nresults, stubout_file)
+            gentest(fd, name, tc_comment, new_args, oresults, nresults, stubout_file)
         fd.close()
 
 def main():
