@@ -11,7 +11,6 @@ BGBaseSystem -- base system component
 
 import sys
 import time
-import xmlrpclib
 import copy
 import Cobalt
 import re
@@ -24,6 +23,8 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 import thread, ConfigParser
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
+from Cobalt.Components.bgq_io_block import IOBlock, IOBlockDict
+from Cobalt.Components.bgq_io_hardware import IODrawer, IONode
 
 
 __all__ = [
@@ -710,6 +711,8 @@ class BGBaseSystem (Component):
         Component.__init__(self, *args, **kwargs)
         self._blocks = BlockDict()
         self._managed_blocks = set()
+        self._io_blocks = IOBlockDict()
+        self._managed_io_blocks = set()
         self.process_groups = BGProcessGroupDict()
         self._blocks_lock = thread.allocate_lock()
 
@@ -720,54 +723,82 @@ class BGBaseSystem (Component):
         self.offline_blocks = []
 
     def _get_blocks (self):
+        '''return a BlockDcit of Blocks if the blocks are in the managed blocks list
+
+        '''
         return BlockDict([
-            (block.name, block) for block in self._blocks.itervalues()
-            if block.name in self._managed_blocks
-        ])
+            (block.name, block) for block in self._blocks.itervalues() if block.name in self._managed_blocks])
 
     blocks = property(_get_blocks)
 
-    def add_blocks (self, specs, user_name=None):
+    def _get_io_blocks(self):
+        '''Return a IOBlockDict of IOBlock objects that are in the list of managed IO Blocks..
+
+        '''
+        return IOBlockDict([
+            (io_block.name, io_block) for io_block in self._io_blocks.itervalues() if io_block.name in self._managed_io_blocks])
+    io_blocks = property(_get_io_blocks)
+
+    def add_to_managed_blocks (self, specs, user_name, block_dict, managed_set):
         """Add a block to the managed block list.
 
         """
-        self.logger.info("%s called add_blocks(%r)", user_name, specs)
-        self.logger.info("managed_blocks: %s", self._managed_blocks)
+        self.logger.info("%s called add_to_managed_blocks(%r)", user_name, specs)
+        self.logger.log(1, "managed_blocks: %s", managed_set)
         specs = [{'name':spec.get("name")} for spec in specs]
         self._blocks_lock.acquire()
         try:
-            blocks = [
-                block for block in self._blocks.q_get(specs)
-                if block.name not in self._managed_blocks
-            ]
-        except:
+            blocks = [block for block in block_dict.q_get(specs) if block.name not in managed_set]
+        except Exception:
             blocks = []
-            self.logger.error("error in add_blocks", exc_info=True)
+            self.logger.error("error in add_to_managed_blocks", exc_info=True)
         self._blocks_lock.release()
 
-        self._managed_blocks.update([
+        managed_set.update([
             block.name for block in blocks
         ])
         self.update_relatives()
         return blocks
-    add_block = exposed(query(add_blocks))
-    add_partitions = exposed(query(add_blocks))
 
-    def get_blocks (self, specs):
-        """Query blocks on simulator.
+    @exposed
+    @query
+    def add_blocks (self, specs, user_name=None):
+        '''add a block to the managed_blocks list.'''
+        return self.add_to_managed_blocks(specs, user_name, self._blocks, self._managed_blocks)
+    add_partitions = exposed(query(add_blocks)) #for backwards API compatiblity --PMR
+
+    @query
+    @exposed
+    def add_io_blocks(self, specs, user_name=None):
+        '''add a block to the managed_io_blocks list.'''
+        return self.add_to_managed_blocks(specs, user_name, self._io_blocks, self._managed_io_blocks)
+
+    def _get_block_info (self, specs, block_dict):
+        """Get general information on a block
 
         """
         self._blocks_lock.acquire()
         try:
-            blocks = self.blocks.q_get(specs)
-        except:
+            blocks = block_dict.q_get(specs)
+        except Exception:
             blocks = []
-            self.logger.error("error in get_blocks", exc_info=True)
+            self.logger.error("error in _get_blocks_info", exc_info=True)
         self._blocks_lock.release()
 
         return blocks
-    get_blocks = exposed(query(get_blocks))
+
+    @query
+    @exposed
+    def get_blocks (self, specs):
+        '''Fetch block data on managed compute blocks'''
+        return self._get_block_info(specs, self.blocks)
     get_partitions = exposed(query(get_blocks))
+
+    @query
+    @exposed
+    def get_io_blocks(self, specs):
+        '''Fetch block data on managed IO blocks'''
+        return self._get_block_info(specs, self.io_blocks)
 
     def verify_locations(self, location_list):
         """Providing a system agnostic interface for making sure a 'location string' is valid
@@ -975,8 +1006,8 @@ class BGBaseSystem (Component):
 
         '''
         self.logger.info("%s unfailing block %s", user_name, specs)
-        block = self.get_blocks(specs)
-        if not parts:
+        blocks = self.get_blocks(specs)
+        if not blocks:
             ret = "no matching blocks found\n"
         else:
             ret = ""
@@ -985,7 +1016,7 @@ class BGBaseSystem (Component):
                 ret += "unfailing %s\n" % b.name
                 b.admin_failed = False
             else:
-                ret += "%s is not currently failing\n" % p.name
+                ret += "%s is not currently failing\n" % b.name
 
         return ret
     unfail_blocks = exposed(unfail_blocks)
@@ -1519,11 +1550,14 @@ class BGBaseSystem (Component):
                 retval = False
         return retval
 
+    @query
     @exposed
-    def initiate_proxy_boot(self, location, user=None, jobid=None):
+    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None):
         raise NotImplementedError, "Proxy booting is not supported for this configuration."
 
+    @query
     @exposed
-    def initiate_proxy_free(self, location, user=None, jobid=None):
+    def initiate_proxy_free(self, location, user=None, jobid=None, resid=None):
         raise NotImplementedError, "Proxy freeing is not supported for this configuration."
+
 

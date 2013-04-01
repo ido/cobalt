@@ -34,6 +34,7 @@ Usage: partadm.py --savestate filename
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
 
+
 '''
 
 opt_parser = optparse.OptionParser(usage=helpmsg, 
@@ -79,6 +80,13 @@ opt_parser.add_option("--pg_list", action="store_true", dest="pg_list",
         help="not implemented yet")
 opt_parser.add_option("-c", "--clean_block", action="store_true", dest="clean_block",
         help="force the block to cleanup and clear all internal reservations on that resource")
+opt_parser.add_option("-i", "--list_io", action="store_true", dest="list_io", 
+        help="list information on IOBlock status")
+opt_parser.add_option("--add_io_block", action="store_true", dest="add_io_block",
+        help="add an IO Block to the list of managed IO blocks")
+opt_parser.add_option("--del_io_block", action="store_true", dest="del_io_block",
+        help="del an IO Block to the list of managed IO blocks")
+
 
 #detect arguemnts that conflict, use this in a verification callback.
 conflicting_args = {'add':['delete','fail','unfail','boot_stop','boot_start'],
@@ -141,6 +149,14 @@ def print_pg_info(pg_list):
     return
 
 
+def print_io_block(io_block_dicts):
+    '''print detailed information on a set of IO blocks.'''
+    for block in io_block_dicts:
+        header_list = block.keys()
+        value_list = block.values()
+        Cobalt.Util.print_vertical([header_list, value_list])
+
+
 def print_block_bgp(block_dicts):
     '''Formatted printing of a list of blocks.  This expects a list of 
     dictionaries of block data, such as the output from the system component's
@@ -151,7 +167,7 @@ def print_block_bgp(block_dicts):
         header_list = []
         value_list = []
 
-        for key,value in block.iteritems():
+        for key, value in block.iteritems():
 
             if key in ['node_cards','nodes']:
                 if block['size'] > 32 and key == 'nodes':
@@ -163,7 +179,7 @@ def print_block_bgp(block_dicts):
                 header_list.append(key)
                 value_list.append(value)
 
-        Cobalt.Util.print_vertical([header_list,value_list])
+        Cobalt.Util.print_vertical([header_list, value_list])
     return
 
 
@@ -205,6 +221,9 @@ if __name__ == '__main__':
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
             'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts])
         parts = system.add_partitions(args, whoami)
+    elif opts.add_io_block:
+        args = ([{'name':partname} for partname in parts])
+        parts = system.add_io_blocks(args, whoami)
     elif opts.delete:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
         parts = component_call(system.del_partitions, args)
@@ -330,10 +349,6 @@ if __name__ == '__main__':
             sys.exit(0)
         sched_enabled = ComponentProxy('scheduler',defer=False).sched_status()
         boot_disabled = system.booting_status()
-        #if sched_enabled or not boot_disabled:
-        #    print "scheduling and booting must be disabled prior to force-cleaning blocks."
-        #    print "No blocks were marked for cleaning."
-        #    sys.exit(1)
         for part in parts:
             system.set_cleaning(part, None, whoami)
             print "Initiating cleanup on block %s" % part
@@ -341,10 +356,6 @@ if __name__ == '__main__':
 
     if opts.list_blocks:
         # need to cascade up busy and non-functional flags
-#        print "buildRackTopology sees : " + repr(parts)
-#
-#        partinfo = Cobalt.Util.buildRackTopology(parts)
-
         try:
             scheduler = ComponentProxy("scheduler", defer=False)
             if sys_type == 'bgq':
@@ -424,4 +435,17 @@ if __name__ == '__main__':
     else:
         print parts
 
+    if opts.list_io:
+        if sys_type != 'bgq':
+            print >> sys.stderr, "WARNING: IO Block information only exists on BG/Q-type systems."
+
+        #fetch and print bulk IO Block data
+        if sys_type == 'bgq':
+            args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*'}],)
+            io_block_info = component_call(system.get_io_blocks, args)
+            data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes']]
+            for io_block in io_block_info:
+                data.append([io_block['name'], io_block['size'], io_block['state'], io_block['status'],
+                    'x' if io_block['block_computes_for_reboot'] else '-'])
+            Cobalt.Util.printTabular(data, centered=[4])
 
