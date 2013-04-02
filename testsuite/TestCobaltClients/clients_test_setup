@@ -1,4 +1,14 @@
-source rmlinks
+export COBALT_SOURCE_DIR=$P/Cobalt/client-refactor
+export COBALT_RUNTIME_DIR=$P/Cobalt/sysroot-brooklyn
+export COBALT_SYSTEM_TYPE=BGSIM
+
+export COBALT_CONFIG_FILES=$COBALT_RUNTIME_DIR/etc/cobalt.conf
+export PYTHONPATH=$COBALT_SOURCE_DIR/testsuite/TestCobaltClients/:$COBALT_SOURCE_DIR/src:$COBALT_SOURCE_DIR/testsuite/TestCobaltClients/testlib
+export PATH=${COBALT_SOURCE_DIR}/src/clients:${COBALT_SOURCE_DIR}/src/clients/POSIX:$PATH
+
+rm -rf testlib/Components
+rm -rf Cobalt
+
 ln -fs $COBALT_SOURCE_DIR/src/lib/client_utils.py testlib/
 ln -fs $COBALT_SOURCE_DIR/src/lib/Exceptions.py   testlib/
 ln -fs $COBALT_SOURCE_DIR/src/lib/Logging.py      testlib/

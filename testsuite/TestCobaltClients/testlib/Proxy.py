@@ -2,13 +2,23 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import time
+import pwd
+import os
 
 def stub_time():
     return 1364335099.14
+def stub_getpwuid(x):
+    return ('georgerojas', '********', 501, 20, 'George Rojas', '/Users/georgerojas', '/bin/bash')
+def stub_getcwd():
+    return '/Users/georgerojas/p/Cobalt/client-refactor/testsuite/TestCobaltClients'
 
 # redefine the standard time() function
 time.time = stub_time
-
+# redefine the  pwd.getpwuid
+pwd.getpwuid = stub_getpwuid
+# redefine path
+os.environ['PATH'] = '/Users/georgerojas/p/Cobalt/client-refactor/src/clients:/Users/georgerojas/p/Cobalt/client-refactor/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin'
+os.getcwd = stub_getcwd
 
 fn = 'stub.out'
 fd = open(fn,'w')
