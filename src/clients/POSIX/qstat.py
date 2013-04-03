@@ -13,12 +13,12 @@ Option with no values:
 '-f','--full',dest='full',help='show more verbose information',action='store_true'
 '-l','--long',dest='long',help='show job info in vertical format',action='store_true'
 '-Q',dest='Q',help='show queues and properties',action='store_true'
-'--reverse',dest='reverser',help='show output in reverse',action='store_true'
+'--reverse',dest='reverse',help='show output in reverse',action='store_true'
 
 Option with values:
 
 '--header',dest='header',type='string',help='Specify the state of the job',callback=cb_split
-'--sort',dest='sort',type='string',help='Specify the state of the job',callback=cb_split
+'--sort',dest='sort',type='string',default='score',help='Specify the state of the job',callback=cb_split
 '-u','--user',dest='user',type='string',help='Specify user'
 
 """
@@ -86,13 +86,12 @@ def get_output_for_queues(parser,hinfo):
 
     return output
 
-def get_output_for_jobs(parser,hinfo):
+def get_output_for_jobs(parser,hinfo,queues):
     """
     get jobs from specified jobids
     """
     names              = parser.args if not parser.no_args() else ['*']
     user_name          = parser.options.user if parser.options.user != None else '*'
-    queues             = client_utils.get_queues([{'name':'*','state':'*'}])
     query_dependencies = {'QueuedTime':['SubmitTime','StartTime'],'RunTime':['StartTime'],'TimeRemaining':['WallTime','StartTime']}
 
     try:
@@ -206,8 +205,7 @@ def process_the_output(output,parser,hinfo):
     """
     process the qstat output
     """
-    field             = parser.options.sort if parser.options.sort != None else 'score'
-    fields            = [f.lower() for f in field.split(":")]
+    fields            = parser.options.sort 
     lower_case_header = [str(h).lower() for h in hinfo.header]
     idxes             = []
 
@@ -236,7 +234,7 @@ def process_the_output(output,parser,hinfo):
     output.sort(_my_cmp)
 
     if parser.options.reverse != None:
-        output.reverser()
+        output.reverse()
     
     if "short_state" in lower_case_header:
         idx = lower_case_header.index("short_state")
@@ -264,12 +262,13 @@ def main():
     client_utils.read_config()
 
     delim = ':'
+    lower = True
 
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args (tuple) >
         ( cb_debug        , () ),
-        ( cb_split        , (delim,) ) ]
+        ( cb_split        , (delim,lower) ) ]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)
@@ -281,6 +280,9 @@ def main():
     # Get the header instance 
     hinfo = client_utils.header_info(parser)
 
+    # Get the queues for job ids
+    queues = client_utils.get_queues([{'name':'*','state':'*'}])
+
     #  if Q option specified then get the info for the specified queues 
     if parser.options.Q != None:
 
@@ -289,7 +291,7 @@ def main():
     else:
 
         # build query from long_header (all fields) and fetch response        
-        output = get_output_for_jobs(parser,hinfo)
+        output = get_output_for_jobs(parser,hinfo,queues)
 
     process_the_output(output,parser,hinfo)
             

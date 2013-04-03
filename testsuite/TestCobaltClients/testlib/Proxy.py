@@ -4,27 +4,51 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import time
 import pwd
 import os
+import getpass
 
 def stub_time():
     return 1364335099.14
+
 def stub_getpwuid(x):
-    return ('georgerojas', '********', 501, 20, 'George Rojas', '/Users/georgerojas', '/bin/bash')
+    return ('gooduser', '********', 501, 20, 'Good User', '/home/gooduser', '/bin/bash')
+
+def stub_getpwnam(user):
+    if user == 'naughtyuser':
+        raise KeyError
+    return (user, '********', 501, 20, '%s %s' % (user,user), '/home/%s' % user, '/bin/bash')
+
 def stub_getcwd():
-    return '/Users/georgerojas/p/Cobalt/client-refactor/testsuite/TestCobaltClients'
+    return '/tmp'
+
+def stub_getuser():
+    return stub_getpwuid(1)[0]
 
 # redefine the standard time() function
 time.time = stub_time
+
 # redefine the  pwd.getpwuid
 pwd.getpwuid = stub_getpwuid
+
+# redefine the  pwd.getpwuid
+pwd.getpwnam = stub_getpwnam
+
 # redefine path
-os.environ['PATH'] = '/Users/georgerojas/p/Cobalt/client-refactor/src/clients:/Users/georgerojas/p/Cobalt/client-refactor/src/clients/POSIX:/opt/local/bin:/opt/local/sbin:/Library/Frameworks/Python.framework/Versions/2.6/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin:/usr/local/git/bin:~/bin'
+os.environ['PATH'] = '/tmp'
+
+# redefine getting the current working directory
 os.getcwd = stub_getcwd
+
+# redfine getuser 
+getpass.getuser = stub_getuser
 
 fn = 'stub.out'
 fd = open(fn,'w')
 logbuf       = ''
 vbuf         = ''
 logwrite     = True
+
+USERS  = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
+QUEUES = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq']
 
 def enable_logwrite():
     global logwrite
@@ -99,13 +123,13 @@ class CqmStub(object):
         queues = [{'maxtime'      : None,
                    'mintime'      : None,
                    'name'         : job['name'],
-                   'user'         : 'georgerojas',
+                   'user'         : 'gooduser',
                    'maxrunning'   : 20,
                    'maxqueued'    : 20,
                    'maxusernodes' : 20,
                    'maxnodehours' : 20,
                    'totalnodes'   : 100,
-                   'adminemail'   : 'george@therojas.com',
+                   'adminemail'   : 'myemail@gmail.com',
                    'state'        : 'deleted',
                    'cron'         : 'whocares',
                    'policy'       : 'mypolicy',
@@ -119,13 +143,13 @@ class CqmStub(object):
         queues = [{'maxtime'      : None,
                    'mintime'      : None,
                    'name'         : job['name'],
-                   'user'         : 'georgerojas',
+                   'user'         : 'gooduser',
                    'maxrunning'   : 20,
                    'maxqueued'    : 20,
                    'maxusernodes' : 20,
                    'maxnodehours' : 20,
                    'totalnodes'   : 100,
-                   'adminemail'   : 'george@therojas.com',
+                   'adminemail'   : 'myemail@gmail.com',
                    'state'        : 'running',
                    'cron'         : 'whocares',
                    'policy'       : 'mypolicy',
@@ -135,34 +159,23 @@ class CqmStub(object):
     def get_queues(s,jobslist):
         logmsg("\nGET_QUEUES\n")
         logdiclist(jobslist)
-        queues = [{'maxtime'      : None,
-                   'mintime'      : None,
-                   'name'         : 'queue1',
-                   'users'        : 'rojas:rich',
-                   'maxrunning'   : 20,
-                   'maxqueued'    : 20,
-                   'maxusernodes' : 20,
-                   'maxnodehours' : 20,
-                   'totalnodes'   : 100,
-                   'adminemail'   : 'george@therojas.com',
-                   'state'        : 'running',
-                   'cron'         : 'whocares',
-                   'policy'       : 'mypolicy',
-                   'priority'     : 'urgent'},
-                  {'maxtime'      : None,
-                   'mintime'      : None,
-                   'name'         : 'queue2',
-                   'users'        : 'georgerojas',
-                   'maxrunning'   : 21,
-                   'maxqueued'    : 21,
-                   'maxusernodes' : 21,
-                   'maxnodehours' : 21,
-                   'totalnodes'   : 101,
-                   'adminemail'   : 'george@therojas.com',
-                   'state'        : 'running',
-                   'cron'         : 'whocares',
-                   'policy'       : 'mypolicy',
-                   'priority'     : 'urgent'}]
+        queues = []
+        for i in range(10):
+            queue = {'maxtime'      : None,
+                     'mintime'      : None,
+                     'name'         : QUEUES[i],
+                     'users'        : USERS[i],
+                     'maxrunning'   : 20,
+                     'maxqueued'    : 20,
+                     'maxusernodes' : 20,
+                     'maxnodehours' : 20,
+                     'totalnodes'   : 100,
+                     'adminemail'   : 'myemail@gmail.com',
+                     'state'        : 'running',
+                     'cron'         : 'whocares',
+                     'policy'       : 'mypolicy',
+                     'priority'     : 'urgent'}
+            queues.append(queue)
         return queues
 
     def preempt_jobs(s,jobslist,whoami,force):
@@ -204,22 +217,23 @@ class CqmStub(object):
         _job_specs = []
         wtime = 5
         nodes = 512
+        ndx = 0
         for job in ojoblist:
             _job = {}
             _job['tag']           = 'job'
-            _job['user']          = 'georgerojas'
+            _job['user']          = USERS[ndx]
             _job['jobid']         = job['jobid']
-            _job['project']       = 'gdr_project'
-            _job['notify']        = 'george@therojas.com'
+            _job['project']       = 'my_project'
+            _job['notify']        = 'myemag@gmail.com'
             _job['walltime']      = wtime
             _job['procs']         = nodes
             _job['nodes']         = nodes
             _job['is_active']     = False
-            _job['queue']         = 'default'
+            _job['queue']         = QUEUES[ndx]
             _job['mode']          = 'smp'
-            _job['errorpath']     = '/Users/georgerojas/mypython'
-            _job['errorpath']     = '/Users/georgerojas/mypython'
-            _job['outputpath']    = '/Users/georgerojas/mypython'
+            _job['errorpath']     = '/tmp'
+            _job['errorpath']     = '/tmp'
+            _job['outputpath']    = '/tmp'
             _job['user_hold']     = False
             _job['has_completed'] = False
             for key in newjob:
@@ -227,6 +241,7 @@ class CqmStub(object):
             _job_specs.append(_job)
             wtime += 5
             nodes += 512
+            ndx += 1
         return _job_specs
 
     def get_jobs(s,job_specs):
@@ -237,6 +252,7 @@ class CqmStub(object):
         wtime = 5
         nodes = 512
         jobid = 100
+        ndx = 1
         for job in job_specs:
             if type(job['jobid']) != type(1):
                 j = jobid
@@ -247,28 +263,33 @@ class CqmStub(object):
                 state = job['state']
             else:
                 state = 'user_hold'
-                    
+
             _job = {}
             _job['tag']           = 'job'
-            _job['user']          = 'georgerojas'
+            _job['user']          = USERS[ndx]
             _job['state']         = state
             _job['jobid']         = j
-            _job['project']       = 'gdr_project'
-            _job['notify']        = 'george@therojas.com'
+            _job['project']       = 'my_project'
+            _job['notify']        = 'myemail@gmail.com'
             _job['walltime']      = wtime
             _job['procs']         = nodes
             _job['nodes']         = nodes
             _job['is_active']     = False
-            _job['queue']         = 'default'
+            _job['queue']         = QUEUES[ndx]
             _job['mode']          = 'smp'
-            _job['errorpath']     = '/Users/georgerojas/mypython'
-            _job['errorpath']     = '/Users/georgerojas/mypython'
-            _job['outputpath']    = '/Users/georgerojas/mypython'
+            _job['errorpath']     = '/tmp'
+            _job['errorpath']     = '/tmp'
+            _job['outputpath']    = '/tmp'
             _job['user_hold']     = False
             _job['has_completed'] = False
-            _job['location']      = '/Users/georgerojas/myphthon'
+            _job['location']      = '/tmp'
             _job['submittime']    = 60
-            _job['envs']          = ''
+            _job['envs']          = {}
+            _job['args']          = ''
+            _job['user_list']     = [u for u in USERS]
+            _job['geometry']      = None
+            _job['score']         = 50
+            ndx += 1
             _job_specs.append(_job)
             wtime += 5
             nodes += 512

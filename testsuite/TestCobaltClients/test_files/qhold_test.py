@@ -4,7 +4,11 @@ import testutils
 def test_qhold_invalid_option():
     """
     qhold test run: invalid_option
-
+        Old Command Output:
+          option -k not recognized
+          Usage:
+          qhold [--version] <jobid> <jobid>
+          
     """
 
     args      = """-k 1"""
@@ -39,7 +43,10 @@ qhold.py: error: no such option: -k
 def test_qhold_debg_option():
     """
     qhold test run: debg_option
-
+        Old Command Output:
+             Placed user hold on jobs: 
+                1
+          
     """
 
     args      = """-d 1"""
@@ -48,7 +55,7 @@ def test_qhold_debg_option():
 """
 qhold.py -d 1
 
-Response: [{'queue': 'default', 'has_completed': False, 'errorpath': '/Users/georgerojas/mypython', 'mode': 'smp', 'outputpath': '/Users/georgerojas/mypython', 'is_active': False, 'jobid': 1, 'project': 'gdr_project', 'tag': 'job', 'notify': 'george@therojas.com', 'nodes': 512, 'walltime': 5, 'user_hold': True, 'procs': 512, 'user': 'georgerojas'}]
+Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': True, 'procs': 512, 'user': 'james'}]
 Placed user hold on jobs: 
       1
 """
@@ -59,7 +66,7 @@ GET_JOBS
 
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 
 SET_JOBS
@@ -70,7 +77,7 @@ Original Jobs:
 is_active:*
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 
 New Job Info:
@@ -97,7 +104,9 @@ user_hold:True
 def test_qhold_jobid_1():
     """
     qhold test run: jobid_1
-
+        Old Command Output:
+          jobid must be an integer
+          
     """
 
     args      = """myq 1 2 3 4"""
@@ -130,7 +139,13 @@ jobid must be an integer: myq
 def test_qhold_jobid_2():
     """
     qhold test run: jobid_2
-
+        Old Command Output:
+             Placed user hold on jobs: 
+                1
+                2
+                3
+                4
+          
     """
 
     args      = """1 2 3 4"""
@@ -152,19 +167,19 @@ GET_JOBS
 
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 jobid:2
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 jobid:3
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 jobid:4
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 
 SET_JOBS
@@ -175,22 +190,22 @@ Original Jobs:
 is_active:*
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 is_active:*
 jobid:2
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 is_active:*
 jobid:3
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 is_active:*
 jobid:4
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 
 New Job Info:
@@ -217,7 +232,10 @@ user_hold:True
 def test_qhold_jobid_3():
     """
     qhold test run: jobid_3
-
+        Old Command Output:
+             Placed user hold on jobs: 
+                1
+          
     """
 
     args      = """1"""
@@ -236,7 +254,7 @@ GET_JOBS
 
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 
 SET_JOBS
@@ -247,7 +265,7 @@ Original Jobs:
 is_active:*
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 user_hold:*
 
 New Job Info:
@@ -274,7 +292,11 @@ user_hold:True
 def test_qhold_dependancy_option():
     """
     qhold test run: dependancy_option
-
+        Old Command Output:
+          option --dependencies not recognized
+          Usage:
+          qhold [--version] <jobid> <jobid>
+          
     """
 
     args      = """--dependencies 1 2"""

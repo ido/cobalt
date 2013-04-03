@@ -27,16 +27,16 @@
 
 # Modify Reservation 
 
--m                             # <tc:modify_1> modify no reservation name
--m -n resname                  # <tc:modify_2> modify with reservation name
-|-m -n resname -D -c 10:10:10  # <tc:modify_3> modify with cycle time specified. new setres handles this correctly
--m -n resname -D -s 2013_03_9-10:10:10 # <tc:modify_4> modify with bad start time specified
-|-m -n resname -D -s 2013_03_9-10:10   # <tc:modify_5> modify with start time specified. new setres handles this correctly
--m -n resname -D -d 10:10:10           # <tc:modify_6> modify with duration
--m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00    # <tc:modify_7> modify with starttime cycle time and duration
--m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u georgerojas # <tc:modify_8> modify with starttime cycle time and duration, user
--m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u georgerojas:georgerojas # <tc:modify_9> add users
--m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u georgerojas   # <tc:modify_10> add user
+-m                                                                         # <tc:modify_1> modify no reservation name
+-m -n resname                                                              # <tc:modify_2> modify with reservation name
+|-m -n resname -D -c 10:10:10                                              # <tc:modify_3> modify with -c 
+-m -n resname -D -s 2013_03_9-10:10:10                                     # <tc:modify_4> modify with bad start time specified
+|-m -n resname -D -s 2013_03_9-10:10                                       # <tc:modify_5> modify with start time specified. 
+-m -n resname -D -d 10:10:10                                               # <tc:modify_6> modify with duration
+-m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00                   # <tc:modify_7> with -c and -d
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1                      # <tc:modify_8> with -c and -u
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1:user2                # <tc:modify_9> add users
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u user1            # <tc:modify_10> add user
 -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough # <tc:modify_11> add block passthrough
 -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough # <tc:modify_12> add allow passthrough
 |-m -n resname --allow_passthrough --block_passthrough                     # <tc:modify_13> add allow and block passthrough
@@ -44,11 +44,11 @@
 
 # Add Reservation
 
--n resname -D                             # <tc:add_res_1> try to add reservation without partitions
-|-n resname -D p1 p2 p3                   # <tc:add_res_2> No start time. 
-|-n resname -s 2013_03_9-10:10 p1 p2      # <tc:add_res_3> add res with start time
--n resname -s 2013_03_9-10:10 -d 50 p1 p2 # <tc:add_res_4> add res with start time and duration
+-n resname -D                                            # <tc:add_res_1> try to add reservation without partitions
+|-n resname -D p1 p2 p3                                  # <tc:add_res_2> No start time. 
+|-n resname -s 2013_03_9-10:10 p1 p2                     # <tc:add_res_3> add res with start time
+-n resname -s 2013_03_9-10:10 -d 50 p1 p2                # <tc:add_res_4> add res with start time and duration
 -n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2    # <tc:add_res_5> add res with start time and duration and cycle time
 -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2               # <tc:add_res_6> no res name
--s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough                  # <tc:add_res_7> add res with block passthrough
+-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough # <tc:add_res_7> add res with block passthrough
 -s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj # <tc:add_res_8> add queue and project

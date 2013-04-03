@@ -4,7 +4,11 @@ import testutils
 def test_qdel_invalid_option():
     """
     qdel test run: invalid_option
-
+        Old Command Output:
+          option -k not recognized
+          Usage:
+          qdel [--version] [-f] <jobid> <jobid>
+          
     """
 
     args      = """-k 1"""
@@ -39,7 +43,11 @@ qdel.py: error: no such option: -k
 def test_qdel_debug_option():
     """
     qdel test run: debug_option
-
+        Old Command Output:
+          option -d not recognized
+          Usage:
+          qdel [--version] [-f] <jobid> <jobid>
+          
     """
 
     args      = """-d 1"""
@@ -74,7 +82,9 @@ qdel.py: error: no such option: -d
 def test_qdel_jobid_1():
     """
     qdel test run: jobid_1
-
+        Old Command Output:
+          jobid must be an integer
+          
     """
 
     args      = """myq 1 2 3 4"""
@@ -107,7 +117,15 @@ jobid must be an integer: myq
 def test_qdel_jobid_2():
     """
     qdel test run: jobid_2
-
+        Old Command Output:
+                Deleted Jobs
+          JobID  User      
+          =================
+          1      gooduser  
+          2      gooduser  
+          3      gooduser  
+          4      gooduser  
+          
     """
 
     args      = """1 2 3 4"""
@@ -117,12 +135,12 @@ def test_qdel_jobid_2():
 qdel.py 1 2 3 4
 
       Deleted Jobs
-JobID  User         
-====================
-1      georgerojas  
-2      georgerojas  
-3      georgerojas  
-4      georgerojas  
+JobID  User      
+=================
+1      gooduser  
+2      gooduser  
+3      gooduser  
+4      gooduser  
 """
 
     stubout   = \
@@ -130,19 +148,19 @@ JobID  User
 DEL_JOBS
 
 force:False
-whoami:georgerojas
+whoami:gooduser
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 jobid:2
 tag:job
-user:georgerojas
+user:gooduser
 jobid:3
 tag:job
-user:georgerojas
+user:gooduser
 jobid:4
 tag:job
-user:georgerojas
+user:gooduser
 """
 
     stubout_file = "stub.out"
@@ -164,7 +182,12 @@ user:georgerojas
 def test_qdel_jobid_3():
     """
     qdel test run: jobid_3
-
+        Old Command Output:
+                Deleted Jobs
+          JobID  User      
+          =================
+          1      gooduser  
+          
     """
 
     args      = """1"""
@@ -174,9 +197,9 @@ def test_qdel_jobid_3():
 qdel.py 1
 
       Deleted Jobs
-JobID  User         
-====================
-1      georgerojas  
+JobID  User      
+=================
+1      gooduser  
 """
 
     stubout   = \
@@ -184,10 +207,10 @@ JobID  User
 DEL_JOBS
 
 force:False
-whoami:georgerojas
+whoami:gooduser
 jobid:1
 tag:job
-user:georgerojas
+user:gooduser
 """
 
     stubout_file = "stub.out"

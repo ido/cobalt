@@ -10,16 +10,11 @@
 #       i.e -d -j | -d --job
 
 #  Try to set all options
--v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M george@therojas.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users georgerojas:georgerojas --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls # <tc:all_options> 
+-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls # <tc:all_options> 
 
-# Eric 1
---mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /gpfs/mira-fs0/projects/Acceptance/harness_workspace/at-fp-exit-th-stability_151/911_31768/src/MPI_matrix_multiplication_16384x32768_o3 # <tc:Eric_1> 
+# Misc 1
+--mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls # <tc:misc_1> 
 
-# Eric 2
--A Acceptance -q testing -n 4096 -t 120 --mode script --env base_directory=/gpfs/mira-fs0/projects/Acceptance/harness_workspace:source_directory=/gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-gfmc-performance_178/1405_30034/src /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-gfmc-performance_178/1405_30034/src/script.sh /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-gfmc-performance_178/1405_30034/src/src/mc/x.adlb.12c-6_states n32768-no3pi.gfmc1a.in 8 8 # <tc:Eric_2> 
-
-# Eric 3
--A Acceptance -q testing -n 49152 -t 60 --mode script /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-mpi-benchmark_144/905_31576/src/pingpong/script.sh /gpfs/mira-fs0/projects/Acceptance/harness_workspace/app-mpi-benchmark_144/905_31576/src # <tc:Eric_3> 
 
 /bin/ls                # <tc:no_options_passed>      
 -z -t10 -n10 /bin/ls   # <tc:non_existant_option>    
@@ -54,8 +49,9 @@
 
 -O /tmp -t10 -n10 /bin/ls         # <tc:outputprefix> 
 
--run_users bobo -t10 -n10 /bin/ls # <tc:invalid_user> 
+-run_users naughtyuser -t10 -n10 /bin/ls # <tc:invalid_user> 
 
--t10 -n512 --proccount 1023 --mode dual /bin/ls    # <tc:mode_option_1> 
--t10 -n512 --proccount 1023 --mode vn /bin/ls      # <tc:mode_option_2> 
---mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls # <tc:mode_option_3> 
+-t10 -n512 --proccount 1023 --mode dual /bin/ls                # <tc:mode_option_1> 
+-t10 -n512 --proccount 1023 --mode vn /bin/ls                  # <tc:mode_option_2> 
+--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls             # <tc:mode_option_3> 
+|-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls # <tc:mode_option_4>

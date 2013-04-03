@@ -4,7 +4,10 @@ import testutils
 def test_qmove_invalid_option():
     """
     qmove test run: invalid_option
-
+        Old Command Output:
+          Usage:
+          qmove <queue name> <jobid> <jobid>
+          
     """
 
     args      = """-k"""
@@ -39,7 +42,11 @@ qmove.py: error: no such option: -k
 def test_qmove_queue_1():
     """
     qmove test run: queue_1
-
+        Old Command Output:
+          moved job 1 to queue 'myq'
+          moved job 2 to queue 'myq'
+          moved job 3 to queue 'myq'
+          
     """
 
     args      = """myq 1 2 3"""
@@ -65,7 +72,7 @@ procs:*
 project:*
 queue:*
 tag:job
-user:georgerojas
+user:gooduser
 walltime:*
 jobid:2
 nodes:*
@@ -74,7 +81,7 @@ procs:*
 project:*
 queue:*
 tag:job
-user:georgerojas
+user:gooduser
 walltime:*
 jobid:3
 nodes:*
@@ -83,7 +90,7 @@ procs:*
 project:*
 queue:*
 tag:job
-user:georgerojas
+user:gooduser
 walltime:*
 
 SET_JOBS
@@ -91,46 +98,54 @@ SET_JOBS
 
 Original Jobs:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:1
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:512
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:512
-project:gdr_project
-queue:default
+project:my_project
+queue:jello
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:land
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:5
 
 New Job Info:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:1
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:512
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:512
-project:gdr_project
+project:my_project
 queue:myq
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:land
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:5
 
 SET_JOBS
@@ -138,46 +153,54 @@ SET_JOBS
 
 Original Jobs:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:2
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1024
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1024
-project:gdr_project
-queue:default
+project:my_project
+queue:bello
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:house
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:10
 
 New Job Info:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:2
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1024
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1024
-project:gdr_project
+project:my_project
 queue:myq
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:house
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:10
 
 SET_JOBS
@@ -185,46 +208,54 @@ SET_JOBS
 
 Original Jobs:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:3
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1536
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1536
-project:gdr_project
-queue:default
+project:my_project
+queue:aaa
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:dog
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:15
 
 New Job Info:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:3
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1536
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1536
-project:gdr_project
+project:my_project
 queue:myq
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:dog
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:15
 """
 
@@ -247,7 +278,11 @@ walltime:15
 def test_qmove_queue_2():
     """
     qmove test run: queue_2
-
+        Old Command Output:
+          moved job 2 to queue '1'
+          moved job 3 to queue '1'
+          moved job 4 to queue '1'
+          
     """
 
     args      = """1 2 3 4"""
@@ -273,7 +308,7 @@ procs:*
 project:*
 queue:*
 tag:job
-user:georgerojas
+user:gooduser
 walltime:*
 jobid:3
 nodes:*
@@ -282,7 +317,7 @@ procs:*
 project:*
 queue:*
 tag:job
-user:georgerojas
+user:gooduser
 walltime:*
 jobid:4
 nodes:*
@@ -291,7 +326,7 @@ procs:*
 project:*
 queue:*
 tag:job
-user:georgerojas
+user:gooduser
 walltime:*
 
 SET_JOBS
@@ -299,46 +334,54 @@ SET_JOBS
 
 Original Jobs:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:2
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:512
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:512
-project:gdr_project
-queue:default
+project:my_project
+queue:jello
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:land
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:5
 
 New Job Info:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:2
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:512
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:512
-project:gdr_project
+project:my_project
 queue:1
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:land
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:5
 
 SET_JOBS
@@ -346,46 +389,54 @@ SET_JOBS
 
 Original Jobs:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:3
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1024
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1024
-project:gdr_project
-queue:default
+project:my_project
+queue:bello
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:house
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:10
 
 New Job Info:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:3
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1024
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1024
-project:gdr_project
+project:my_project
 queue:1
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:house
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:10
 
 SET_JOBS
@@ -393,46 +444,54 @@ SET_JOBS
 
 Original Jobs:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:4
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1536
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1536
-project:gdr_project
-queue:default
+project:my_project
+queue:aaa
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:dog
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:15
 
 New Job Info:
 
-envs:
-errorpath:/Users/georgerojas/mypython
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
 has_completed:False
 is_active:False
 jobid:4
-location:/Users/georgerojas/myphthon
+location:/tmp
 mode:smp
 nodes:1536
-notify:george@therojas.com
-outputpath:/Users/georgerojas/mypython
+notify:myemail@gmail.com
+outputpath:/tmp
 procs:1536
-project:gdr_project
+project:my_project
 queue:1
+score:50
 state:user_hold
 submittime:60
 tag:job
-user:georgerojas
+user:dog
 user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
 walltime:15
 """
 
@@ -455,7 +514,9 @@ walltime:15
 def test_qmove_queu_3():
     """
     qmove test run: queu_3
-
+        Old Command Output:
+          jobid must be an integer
+          
     """
 
     args      = """q1 q2 1 2 3"""

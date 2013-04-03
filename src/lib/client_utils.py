@@ -140,7 +140,7 @@ class header_info(object):
 
         if parser.options.Q != None:
             self.header = ['Name','Users','MinTime','MaxTime','MaxRunning','MaxQueued','MaxUserNodes','MaxNodeHours','TotalNodes','State']
-        if parser.options.full != None and parser.options.long != None:
+        elif parser.options.full != None and parser.options.long != None:
             self.header = self.long_header
         elif parser.options.full and self.custom_header_full != None:
             self.header = self.custom_header_full
@@ -420,7 +420,8 @@ def getuid():
     """
     Get current user id 
     """
-    return pwd.getpwuid(os.getuid())[0] 
+    user = pwd.getpwuid(os.getuid())[0] 
+    return user
 
 def getcwd():
     """
@@ -927,7 +928,13 @@ def cb_split(option,opt_str,value,parser,*args):
     split string according to passed delimiter
     """
     delim = args[0] # delimiter to use for splitting the string value
-    split_value = value.split(delim)
+    lower = args[1] # lower the case
+
+    if lower:
+        split_value = [field.lower() for field in value.split(delim)]
+    else:
+        split_value = [field for field in value.split(delim)]
+
     setattr(parser.values,option.dest,split_value) # set the option 
 
 def cb_env(option,opt_str,value,parser,*args):

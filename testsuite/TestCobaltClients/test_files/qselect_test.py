@@ -4,7 +4,13 @@ import testutils
 def test_qselect_invalid_option():
     """
     qselect test run: invalid_option
-
+        Old Command Output:
+          option -k not recognized
+          
+          Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
+                         -t <time in minutes> -h <hold types> --mode <mode co/vn>
+          
+          
     """
 
     args      = """-k"""
@@ -39,7 +45,12 @@ qselect.py: error: no such option: -k
 def test_qselect_only_arg():
     """
     qselect test run: only_arg
-
+        Old Command Output:
+          
+          Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
+                         -t <time in minutes> -h <hold types> --mode <mode co/vn>
+          
+          
     """
 
     args      = """1"""
@@ -72,7 +83,11 @@ qselect takes no arguments
 def test_qselect_no_args_opts():
     """
     qselect test run: no_args_opts
-
+        Old Command Output:
+           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """"""
@@ -118,7 +133,11 @@ walltime:*
 def test_qselect_debug_flag():
     """
     qselect test run: debug_flag
-
+        Old Command Output:
+           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """-d"""
@@ -127,7 +146,7 @@ def test_qselect_debug_flag():
 """
 qselect.py -d
 
-[{'queue': 'default', 'has_completed': False, 'errorpath': '/Users/georgerojas/mypython', 'mode': 'smp', 'outputpath': '/Users/georgerojas/mypython', 'is_active': False, 'location': '/Users/georgerojas/myphthon', 'jobid': 100, 'project': 'gdr_project', 'submittime': 60, 'state': '*', 'tag': 'job', 'notify': 'george@therojas.com', 'envs': '', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'georgerojas'}]
+[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
    The following jobs matched your query:
       100
 """
@@ -165,7 +184,10 @@ walltime:*
 def test_qselect_held_option():
     """
     qselect test run: held_option
-
+        Old Command Output:
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """-h user_hold"""
@@ -211,7 +233,10 @@ walltime:*
 def test_qselect_nodecount_option():
     """
     qselect test run: nodecount_option
-
+        Old Command Output:
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """-n 312"""
@@ -257,7 +282,10 @@ walltime:*
 def test_qselect_state_and_nodecount():
     """
     qselect test run: state_and_nodecount
-
+        Old Command Output:
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """-n 312 -h user_hold"""
@@ -303,7 +331,10 @@ walltime:*
 def test_qselect_walltime():
     """
     qselect test run: walltime
-
+        Old Command Output:
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """-t 10:10:10"""
@@ -349,7 +380,10 @@ walltime:610
 def test_qselect_mode():
     """
     qselect test run: mode
-
+        Old Command Output:
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """--mode vn"""
@@ -395,7 +429,10 @@ walltime:*
 def test_qselect_verbose():
     """
     qselect test run: verbose
-
+        Old Command Output:
+             The following jobs matched your query:
+                100
+          
     """
 
     args      = """-v"""
