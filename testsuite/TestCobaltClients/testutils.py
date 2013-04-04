@@ -192,7 +192,7 @@ def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file):
     docstr  = '    %s test run: %s\n' % (cmd,tc_comment)
     result  = 1
     if old_results:
-        docstr += '        Old Command Output:\n' + indent(10,old_results[1])
+        docstr += indent(8,'Old Command Output:') + '\n' + indent(10,old_results[1]) + '\n'
         # redefine old_results to use the new return status and command output
         old_results = (new_results[0], new_results[1], old_results[2])
         result  = validate_results(old_results, new_results)

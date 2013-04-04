@@ -17,9 +17,9 @@ Option with no values:
 
 Option with values:
 
-'--header',dest='header',type='string',help='Specify the state of the job',callback=cb_split
-'--sort',dest='sort',type='string',default='score',help='Specify the state of the job',callback=cb_split
-'-u','--user',dest='user',type='string',help='Specify user'
+'--header',dest='header',type='string',help='specify custom header',callback=cb_split
+'--sort',dest='sort',type='string',help='sort output by specified attribute',callback=cb_split
+'-u','--user',dest='user',type='string',help='Specify username'
 
 """
 import math
@@ -205,7 +205,7 @@ def process_the_output(output,parser,hinfo):
     """
     process the qstat output
     """
-    fields            = parser.options.sort 
+    fields            = ['score'] if parser.options.sort == None else [f.lower() for f in parser.options.sort]
     lower_case_header = [str(h).lower() for h in hinfo.header]
     idxes             = []
 
@@ -262,13 +262,12 @@ def main():
     client_utils.read_config()
 
     delim = ':'
-    lower = True
 
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args (tuple) >
         ( cb_debug        , () ),
-        ( cb_split        , (delim,lower) ) ]
+        ( cb_split        , (delim,) ) ]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

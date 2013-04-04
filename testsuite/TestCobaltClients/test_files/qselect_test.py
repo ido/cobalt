@@ -11,6 +11,7 @@ def test_qselect_invalid_option():
                          -t <time in minutes> -h <hold types> --mode <mode co/vn>
           
           
+
     """
 
     args      = """-k"""
@@ -51,6 +52,7 @@ def test_qselect_only_arg():
                          -t <time in minutes> -h <hold types> --mode <mode co/vn>
           
           
+
     """
 
     args      = """1"""
@@ -88,6 +90,7 @@ def test_qselect_no_args_opts():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """"""
@@ -138,6 +141,7 @@ def test_qselect_debug_flag():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """-d"""
@@ -188,6 +192,7 @@ def test_qselect_held_option():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """-h user_hold"""
@@ -237,6 +242,7 @@ def test_qselect_nodecount_option():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """-n 312"""
@@ -286,6 +292,7 @@ def test_qselect_state_and_nodecount():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """-n 312 -h user_hold"""
@@ -335,6 +342,7 @@ def test_qselect_walltime():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """-t 10:10:10"""
@@ -384,6 +392,7 @@ def test_qselect_mode():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """--mode vn"""
@@ -433,6 +442,7 @@ def test_qselect_verbose():
              The following jobs matched your query:
                 100
           
+
     """
 
     args      = """-v"""

@@ -23,6 +23,7 @@
 -f -l --sort queue 1 2 3 4 5              # <tc:full_option_8>
 -f -l --reverse --sort queue 1 2 3 4 5    # <tc:full_option_9>
 -f                                        # <tc:full_option_10>
+-f --header Jobid:State:RunTime  1 2 3    # <tc:full_option_11>
 
 -l                                        # <tc:long_option_1>
 -l 1 2 3 4 5                              # <tc:long_option_2>
@@ -30,18 +31,20 @@
 -l --sort user 1 2 3 4 5                  # <tc:long_option_4>
 -l --reverse --sort user 1 2 3 4 5        # <tc:long_option_5>
 -l --sort queue 1 2 3 4 5                 # <tc:long_option_6>
+-l --header Jobid:State:RunTime  1 2 3    # <tc:long_option_11>
 
 # Old commands will call get_queues one too many times. So only check for new qstat
--f -Q -l 1 2 3               # <tc:queue_option_1> 
--f --reverse -Q -l 1 2 3     # <tc:queue_option_2> 
--f --sort users -Q           # <tc:queue_option_3> 
--Q                           # <tc:queue_option_4> 
--Q --reverse                 # <tc:queue_option_5> 
--Q --sort users              # <tc:queue_option_6> 
--Q --sort users --reverse    # <tc:queue_option_7>
--Q -l                        # <tc:queue_option_8> 
--Q --reverse -l              # <tc:queue_option_9> 
--Q --sort users -l           # <tc:queue_option_10> 
--Q --sort users --reverse -l # <tc:queue_option_11>
+-f -Q -l 1 2 3                  # <tc:queue_option_1> 
+-f --reverse -Q -l 1 2 3        # <tc:queue_option_2> 
+-f --sort users -Q              # <tc:queue_option_3> 
+-Q                              # <tc:queue_option_4> 
+-Q --reverse                    # <tc:queue_option_5> 
+-Q --sort users                 # <tc:queue_option_6> 
+-Q --sort users --reverse       # <tc:queue_option_7>
+-Q -l                           # <tc:queue_option_8> 
+-Q --reverse -l                 # <tc:queue_option_9> 
+-Q --sort users -l              # <tc:queue_option_10> 
+-Q --sort users --reverse -l    # <tc:queue_option_11>
+-Q --header Jobid:State:RunTime # <tc:queue_option_12>
 
  # <tc:no_arguments_or_options>

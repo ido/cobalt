@@ -245,6 +245,7 @@ def main():
 
     parser.parse_it() # parse the command line
     opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opts['disable_preboot'] = not spec['script_preboot']
 
     client_utils.setumask(spec['umask'])
     validate_args(parser,spec,opt_count)

@@ -8,6 +8,7 @@ def test_qstat_version_option():
           qstat $Revision: 406 $
           cobalt $Version$
           
+
     """
 
     args      = """--version"""
@@ -45,6 +46,7 @@ def test_qstat_help_option():
                  qstat [-d] -Q <queue> <queue>
                  qstat [--version]
           
+
     """
 
     args      = """-h"""
@@ -63,9 +65,9 @@ Options:
   -l, --long            show job info in vertical format
   -Q                    show queues and properties
   --reverse             show output in reverse
-  --header=HEADER       Specify the state of the job
-  --sort=SORT           Specify the state of the job
-  -u USER, --user=USER  Specify user
+  --header=HEADER       specify custom header
+  --sort=SORT           sort output by specified attribute
+  -u USER, --user=USER  Specify username
 """
 
     stubout   = ''
@@ -94,6 +96,7 @@ def test_qstat_debug_only():
           ===============================================
           100    land  00:05:00  512    *      /tmp      
           
+
     """
 
     args      = """-d"""
@@ -179,12 +182,13 @@ def test_qstat_full_option_1():
         Old Command Output:
           JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
           ========================================================================================================================
+          5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+          3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
           1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-          2      tmp      house   50.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-          3      tmp      dog     50.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-          4      tmp      cat     50.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-          5      tmp      henry   50.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+          2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+          4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
           
+
     """
 
     args      = """-d -f 1 2 3 4 5"""
@@ -196,11 +200,11 @@ qstat.py -d -f 1 2 3 4 5
 get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
+5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
 1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-2      tmp      house   50.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-3      tmp      dog     50.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-4      tmp      cat     50.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-5      tmp      henry   50.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
 """
 
     stubout   = \
@@ -426,12 +430,13 @@ def test_qstat_full_option_2():
         Old Command Output:
           JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
           ========================================================================================================================
+          5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+          3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
           1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-          2      tmp      house   50.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-          3      tmp      dog     50.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-          4      tmp      cat     50.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-          5      tmp      henry   50.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+          2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+          4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
           
+
     """
 
     args      = """-f 1 2 3 4 5"""
@@ -443,11 +448,11 @@ qstat.py -f 1 2 3 4 5
 get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
+5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
 1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
-2      tmp      house   50.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
-3      tmp      dog     50.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-4      tmp      cat     50.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-5      tmp      henry   50.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
+2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
 """
 
     stubout   = \
@@ -673,12 +678,13 @@ def test_qstat_full_option_3():
         Old Command Output:
           JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
           ========================================================================================================================
-          5      tmp      henry   50.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
-          4      tmp      cat     50.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-          3      tmp      dog     50.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-          2      tmp      house   50.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+          4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
+          2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
           1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+          3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+          5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
           
+
     """
 
     args      = """-f --reverse 1 2 3 4 5"""
@@ -690,11 +696,11 @@ qstat.py -f --reverse 1 2 3 4 5
 get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
-5      tmp      henry   50.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
-4      tmp      cat     50.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
-3      tmp      dog     50.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
-2      tmp      house   50.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
+2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
 1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
 """
 
     stubout   = \
@@ -918,6 +924,84 @@ def test_qstat_full_option_4():
     """
     qstat test run: full_option_4
         Old Command Output:
+          JobID: 5
+              JobName       : tmp
+              User          : henry
+              WallTime      : 00:25:00
+              QueuedTime    : 378981:57:19
+              RunTime       : N/A
+              TimeRemaining : N/A
+              Nodes         : 2560
+              State         : *
+              Location      : /tmp
+              Mode          : smp
+              Procs         : 2560
+              Preemptable   : -
+              User_Hold     : False
+              Admin_Hold    : -
+              Queue         : hhh
+              StartTime     : N/A
+              Index         : -
+              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+              Path          : -
+              OutputDir     : -
+              ErrorPath     : /tmp
+              OutputPath    : /tmp
+              Envs          : 
+              Command       : -
+              Args          : 
+              Kernel        : -
+              KernelOptions : -
+              Project       : my_project
+              Dependencies  : -
+              S             : -
+              Notify        : myemail@gmail.com
+              Score         :  30.0  
+              Maxtasktime   : -
+              attrs         : -
+              dep_frac      : -
+              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+              Geometry      : Any
+          
+          JobID: 3
+              JobName       : tmp
+              User          : dog
+              WallTime      : 00:15:00
+              QueuedTime    : 378981:57:19
+              RunTime       : N/A
+              TimeRemaining : N/A
+              Nodes         : 1536
+              State         : *
+              Location      : /tmp
+              Mode          : smp
+              Procs         : 1536
+              Preemptable   : -
+              User_Hold     : False
+              Admin_Hold    : -
+              Queue         : aaa
+              StartTime     : N/A
+              Index         : -
+              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+              Path          : -
+              OutputDir     : -
+              ErrorPath     : /tmp
+              OutputPath    : /tmp
+              Envs          : 
+              Command       : -
+              Args          : 
+              Kernel        : -
+              KernelOptions : -
+              Project       : my_project
+              Dependencies  : -
+              S             : -
+              Notify        : myemail@gmail.com
+              Score         :  40.0  
+              Maxtasktime   : -
+              attrs         : -
+              dep_frac      : -
+              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+              Geometry      : Any
+          
           JobID: 1
               JobName       : tmp
               User          : land
@@ -989,46 +1073,7 @@ def test_qstat_full_option_4():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
-              Maxtasktime   : -
-              attrs         : -
-              dep_frac      : -
-              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-              Geometry      : Any
-          
-          JobID: 3
-              JobName       : tmp
-              User          : dog
-              WallTime      : 00:15:00
-              QueuedTime    : 378981:57:19
-              RunTime       : N/A
-              TimeRemaining : N/A
-              Nodes         : 1536
-              State         : *
-              Location      : /tmp
-              Mode          : smp
-              Procs         : 1536
-              Preemptable   : -
-              User_Hold     : False
-              Admin_Hold    : -
-              Queue         : aaa
-              StartTime     : N/A
-              Index         : -
-              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-              Path          : -
-              OutputDir     : -
-              ErrorPath     : /tmp
-              OutputPath    : /tmp
-              Envs          : 
-              Command       : -
-              Args          : 
-              Kernel        : -
-              KernelOptions : -
-              Project       : my_project
-              Dependencies  : -
-              S             : -
-              Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  55.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -1067,46 +1112,7 @@ def test_qstat_full_option_4():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
-              Maxtasktime   : -
-              attrs         : -
-              dep_frac      : -
-              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-              Geometry      : Any
-          
-          JobID: 5
-              JobName       : tmp
-              User          : henry
-              WallTime      : 00:25:00
-              QueuedTime    : 378981:57:19
-              RunTime       : N/A
-              TimeRemaining : N/A
-              Nodes         : 2560
-              State         : *
-              Location      : /tmp
-              Mode          : smp
-              Procs         : 2560
-              Preemptable   : -
-              User_Hold     : False
-              Admin_Hold    : -
-              Queue         : hhh
-              StartTime     : N/A
-              Index         : -
-              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-              Path          : -
-              OutputDir     : -
-              ErrorPath     : /tmp
-              OutputPath    : /tmp
-              Envs          : 
-              Command       : -
-              Args          : 
-              Kernel        : -
-              KernelOptions : -
-              Project       : my_project
-              Dependencies  : -
-              S             : -
-              Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  60.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -1114,6 +1120,7 @@ def test_qstat_full_option_4():
               Geometry      : Any
           
           
+
     """
 
     args      = """-f -l 1 2 3 4 5"""
@@ -1123,6 +1130,84 @@ def test_qstat_full_option_4():
 qstat.py -f -l 1 2 3 4 5
 
 get_config_option: Option cqstat_header not found in section [cqm]
+JobID: 5
+    JobName       : tmp
+    User          : henry
+    WallTime      : 00:25:00
+    QueuedTime    : 378981:57:19
+    RunTime       : N/A
+    TimeRemaining : N/A
+    Nodes         : 2560
+    State         : *
+    Location      : /tmp
+    Mode          : smp
+    Procs         : 2560
+    Preemptable   : -
+    User_Hold     : False
+    Admin_Hold    : -
+    Queue         : hhh
+    StartTime     : N/A
+    Index         : -
+    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    Path          : -
+    OutputDir     : -
+    ErrorPath     : /tmp
+    OutputPath    : /tmp
+    Envs          : 
+    Command       : -
+    Args          : 
+    Kernel        : -
+    KernelOptions : -
+    Project       : my_project
+    Dependencies  : -
+    S             : -
+    Notify        : myemail@gmail.com
+    Score         :  30.0  
+    Maxtasktime   : -
+    attrs         : -
+    dep_frac      : -
+    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry      : Any
+
+JobID: 3
+    JobName       : tmp
+    User          : dog
+    WallTime      : 00:15:00
+    QueuedTime    : 378981:57:19
+    RunTime       : N/A
+    TimeRemaining : N/A
+    Nodes         : 1536
+    State         : *
+    Location      : /tmp
+    Mode          : smp
+    Procs         : 1536
+    Preemptable   : -
+    User_Hold     : False
+    Admin_Hold    : -
+    Queue         : aaa
+    StartTime     : N/A
+    Index         : -
+    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    Path          : -
+    OutputDir     : -
+    ErrorPath     : /tmp
+    OutputPath    : /tmp
+    Envs          : 
+    Command       : -
+    Args          : 
+    Kernel        : -
+    KernelOptions : -
+    Project       : my_project
+    Dependencies  : -
+    S             : -
+    Notify        : myemail@gmail.com
+    Score         :  40.0  
+    Maxtasktime   : -
+    attrs         : -
+    dep_frac      : -
+    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry      : Any
+
 JobID: 1
     JobName       : tmp
     User          : land
@@ -1194,46 +1279,7 @@ JobID: 2
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
-
-JobID: 3
-    JobName       : tmp
-    User          : dog
-    WallTime      : 00:15:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 1536
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 1536
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : aaa
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  55.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -1272,46 +1318,7 @@ JobID: 4
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
-
-JobID: 5
-    JobName       : tmp
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  60.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -1541,45 +1548,6 @@ def test_qstat_full_option_5():
     """
     qstat test run: full_option_5
         Old Command Output:
-          JobID: 5
-              JobName       : tmp
-              User          : henry
-              WallTime      : 00:25:00
-              QueuedTime    : 378981:57:19
-              RunTime       : N/A
-              TimeRemaining : N/A
-              Nodes         : 2560
-              State         : *
-              Location      : /tmp
-              Mode          : smp
-              Procs         : 2560
-              Preemptable   : -
-              User_Hold     : False
-              Admin_Hold    : -
-              Queue         : hhh
-              StartTime     : N/A
-              Index         : -
-              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-              Path          : -
-              OutputDir     : -
-              ErrorPath     : /tmp
-              OutputPath    : /tmp
-              Envs          : 
-              Command       : -
-              Args          : 
-              Kernel        : -
-              KernelOptions : -
-              Project       : my_project
-              Dependencies  : -
-              S             : -
-              Notify        : myemail@gmail.com
-              Score         :  50.0  
-              Maxtasktime   : -
-              attrs         : -
-              dep_frac      : -
-              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-              Geometry      : Any
-          
           JobID: 4
               JobName       : tmp
               User          : cat
@@ -1596,6 +1564,84 @@ def test_qstat_full_option_5():
               User_Hold     : False
               Admin_Hold    : -
               Queue         : bbb
+              StartTime     : N/A
+              Index         : -
+              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+              Path          : -
+              OutputDir     : -
+              ErrorPath     : /tmp
+              OutputPath    : /tmp
+              Envs          : 
+              Command       : -
+              Args          : 
+              Kernel        : -
+              KernelOptions : -
+              Project       : my_project
+              Dependencies  : -
+              S             : -
+              Notify        : myemail@gmail.com
+              Score         :  60.0  
+              Maxtasktime   : -
+              attrs         : -
+              dep_frac      : -
+              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+              Geometry      : Any
+          
+          JobID: 2
+              JobName       : tmp
+              User          : house
+              WallTime      : 00:10:00
+              QueuedTime    : 378981:57:19
+              RunTime       : N/A
+              TimeRemaining : N/A
+              Nodes         : 1024
+              State         : *
+              Location      : /tmp
+              Mode          : smp
+              Procs         : 1024
+              Preemptable   : -
+              User_Hold     : False
+              Admin_Hold    : -
+              Queue         : bello
+              StartTime     : N/A
+              Index         : -
+              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+              Path          : -
+              OutputDir     : -
+              ErrorPath     : /tmp
+              OutputPath    : /tmp
+              Envs          : 
+              Command       : -
+              Args          : 
+              Kernel        : -
+              KernelOptions : -
+              Project       : my_project
+              Dependencies  : -
+              S             : -
+              Notify        : myemail@gmail.com
+              Score         :  55.0  
+              Maxtasktime   : -
+              attrs         : -
+              dep_frac      : -
+              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+              Geometry      : Any
+          
+          JobID: 1
+              JobName       : tmp
+              User          : land
+              WallTime      : 00:05:00
+              QueuedTime    : 378981:57:19
+              RunTime       : N/A
+              TimeRemaining : N/A
+              Nodes         : 512
+              State         : *
+              Location      : /tmp
+              Mode          : smp
+              Procs         : 512
+              Preemptable   : -
+              User_Hold     : False
+              Admin_Hold    : -
+              Queue         : jello
               StartTime     : N/A
               Index         : -
               SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
@@ -1651,29 +1697,29 @@ def test_qstat_full_option_5():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  40.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
               user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
               Geometry      : Any
           
-          JobID: 2
+          JobID: 5
               JobName       : tmp
-              User          : house
-              WallTime      : 00:10:00
+              User          : henry
+              WallTime      : 00:25:00
               QueuedTime    : 378981:57:19
               RunTime       : N/A
               TimeRemaining : N/A
-              Nodes         : 1024
+              Nodes         : 2560
               State         : *
               Location      : /tmp
               Mode          : smp
-              Procs         : 1024
+              Procs         : 2560
               Preemptable   : -
               User_Hold     : False
               Admin_Hold    : -
-              Queue         : bello
+              Queue         : hhh
               StartTime     : N/A
               Index         : -
               SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
@@ -1690,46 +1736,7 @@ def test_qstat_full_option_5():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
-              Maxtasktime   : -
-              attrs         : -
-              dep_frac      : -
-              user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-              Geometry      : Any
-          
-          JobID: 1
-              JobName       : tmp
-              User          : land
-              WallTime      : 00:05:00
-              QueuedTime    : 378981:57:19
-              RunTime       : N/A
-              TimeRemaining : N/A
-              Nodes         : 512
-              State         : *
-              Location      : /tmp
-              Mode          : smp
-              Procs         : 512
-              Preemptable   : -
-              User_Hold     : False
-              Admin_Hold    : -
-              Queue         : jello
-              StartTime     : N/A
-              Index         : -
-              SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-              Path          : -
-              OutputDir     : -
-              ErrorPath     : /tmp
-              OutputPath    : /tmp
-              Envs          : 
-              Command       : -
-              Args          : 
-              Kernel        : -
-              KernelOptions : -
-              Project       : my_project
-              Dependencies  : -
-              S             : -
-              Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  30.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -1737,6 +1744,7 @@ def test_qstat_full_option_5():
               Geometry      : Any
           
           
+
     """
 
     args      = """-f -l --reverse 1 2 3 4 5"""
@@ -1746,45 +1754,6 @@ def test_qstat_full_option_5():
 qstat.py -f -l --reverse 1 2 3 4 5
 
 get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 5
-    JobName       : tmp
-    User          : henry
-    WallTime      : 00:25:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 2560
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 2560
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : hhh
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
-
 JobID: 4
     JobName       : tmp
     User          : cat
@@ -1801,6 +1770,84 @@ JobID: 4
     User_Hold     : False
     Admin_Hold    : -
     Queue         : bbb
+    StartTime     : N/A
+    Index         : -
+    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    Path          : -
+    OutputDir     : -
+    ErrorPath     : /tmp
+    OutputPath    : /tmp
+    Envs          : 
+    Command       : -
+    Args          : 
+    Kernel        : -
+    KernelOptions : -
+    Project       : my_project
+    Dependencies  : -
+    S             : -
+    Notify        : myemail@gmail.com
+    Score         :  60.0  
+    Maxtasktime   : -
+    attrs         : -
+    dep_frac      : -
+    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry      : Any
+
+JobID: 2
+    JobName       : tmp
+    User          : house
+    WallTime      : 00:10:00
+    QueuedTime    : 378981:57:19
+    RunTime       : N/A
+    TimeRemaining : N/A
+    Nodes         : 1024
+    State         : *
+    Location      : /tmp
+    Mode          : smp
+    Procs         : 1024
+    Preemptable   : -
+    User_Hold     : False
+    Admin_Hold    : -
+    Queue         : bello
+    StartTime     : N/A
+    Index         : -
+    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
+    Path          : -
+    OutputDir     : -
+    ErrorPath     : /tmp
+    OutputPath    : /tmp
+    Envs          : 
+    Command       : -
+    Args          : 
+    Kernel        : -
+    KernelOptions : -
+    Project       : my_project
+    Dependencies  : -
+    S             : -
+    Notify        : myemail@gmail.com
+    Score         :  55.0  
+    Maxtasktime   : -
+    attrs         : -
+    dep_frac      : -
+    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
+    Geometry      : Any
+
+JobID: 1
+    JobName       : tmp
+    User          : land
+    WallTime      : 00:05:00
+    QueuedTime    : 378981:57:19
+    RunTime       : N/A
+    TimeRemaining : N/A
+    Nodes         : 512
+    State         : *
+    Location      : /tmp
+    Mode          : smp
+    Procs         : 512
+    Preemptable   : -
+    User_Hold     : False
+    Admin_Hold    : -
+    Queue         : jello
     StartTime     : N/A
     Index         : -
     SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
@@ -1856,29 +1903,29 @@ JobID: 3
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  40.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
     user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
     Geometry      : Any
 
-JobID: 2
+JobID: 5
     JobName       : tmp
-    User          : house
-    WallTime      : 00:10:00
+    User          : henry
+    WallTime      : 00:25:00
     QueuedTime    : 378981:57:19
     RunTime       : N/A
     TimeRemaining : N/A
-    Nodes         : 1024
+    Nodes         : 2560
     State         : *
     Location      : /tmp
     Mode          : smp
-    Procs         : 1024
+    Procs         : 2560
     Preemptable   : -
     User_Hold     : False
     Admin_Hold    : -
-    Queue         : bello
+    Queue         : hhh
     StartTime     : N/A
     Index         : -
     SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
@@ -1895,46 +1942,7 @@ JobID: 2
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
-    Maxtasktime   : -
-    attrs         : -
-    dep_frac      : -
-    user_list     : james:land:house:dog:cat:henry:king:queen:girl:boy
-    Geometry      : Any
-
-JobID: 1
-    JobName       : tmp
-    User          : land
-    WallTime      : 00:05:00
-    QueuedTime    : 378981:57:19
-    RunTime       : N/A
-    TimeRemaining : N/A
-    Nodes         : 512
-    State         : *
-    Location      : /tmp
-    Mode          : smp
-    Procs         : 512
-    Preemptable   : -
-    User_Hold     : False
-    Admin_Hold    : -
-    Queue         : jello
-    StartTime     : N/A
-    Index         : -
-    SubmitTime    : Thu Jan  1 00:01:00 1970 +0000 (UTC)
-    Path          : -
-    OutputDir     : -
-    ErrorPath     : /tmp
-    OutputPath    : /tmp
-    Envs          : 
-    Command       : -
-    Args          : 
-    Kernel        : -
-    KernelOptions : -
-    Project       : my_project
-    Dependencies  : -
-    S             : -
-    Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  30.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -2196,7 +2204,7 @@ def test_qstat_full_option_6():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  60.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2235,7 +2243,7 @@ def test_qstat_full_option_6():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  40.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2274,7 +2282,7 @@ def test_qstat_full_option_6():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  30.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2313,7 +2321,7 @@ def test_qstat_full_option_6():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  55.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2360,6 +2368,7 @@ def test_qstat_full_option_6():
               Geometry      : Any
           
           
+
     """
 
     args      = """-f -l --sort user 1 2 3 4 5"""
@@ -2401,7 +2410,7 @@ JobID: 4
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  60.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -2440,7 +2449,7 @@ JobID: 3
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  40.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -2479,7 +2488,7 @@ JobID: 5
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  30.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -2518,7 +2527,7 @@ JobID: 2
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  55.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -2858,7 +2867,7 @@ def test_qstat_full_option_7():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  55.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2897,7 +2906,7 @@ def test_qstat_full_option_7():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  30.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2936,7 +2945,7 @@ def test_qstat_full_option_7():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  40.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2975,7 +2984,7 @@ def test_qstat_full_option_7():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  60.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -2983,6 +2992,7 @@ def test_qstat_full_option_7():
               Geometry      : Any
           
           
+
     """
 
     args      = """-f -l --reverse --sort user 1 2 3 4 5"""
@@ -3063,7 +3073,7 @@ JobID: 2
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  55.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3102,7 +3112,7 @@ JobID: 5
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  30.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3141,7 +3151,7 @@ JobID: 3
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  40.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3180,7 +3190,7 @@ JobID: 4
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  60.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3442,7 +3452,7 @@ def test_qstat_full_option_8():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  40.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -3481,7 +3491,7 @@ def test_qstat_full_option_8():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  60.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -3520,7 +3530,7 @@ def test_qstat_full_option_8():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  55.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -3559,7 +3569,7 @@ def test_qstat_full_option_8():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  30.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -3606,6 +3616,7 @@ def test_qstat_full_option_8():
               Geometry      : Any
           
           
+
     """
 
     args      = """-f -l --sort queue 1 2 3 4 5"""
@@ -3647,7 +3658,7 @@ JobID: 3
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  40.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3686,7 +3697,7 @@ JobID: 4
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  60.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3725,7 +3736,7 @@ JobID: 2
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  55.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -3764,7 +3775,7 @@ JobID: 5
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  30.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -4104,7 +4115,7 @@ def test_qstat_full_option_9():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  30.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -4143,7 +4154,7 @@ def test_qstat_full_option_9():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  55.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -4182,7 +4193,7 @@ def test_qstat_full_option_9():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  60.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -4221,7 +4232,7 @@ def test_qstat_full_option_9():
               Dependencies  : -
               S             : -
               Notify        : myemail@gmail.com
-              Score         :  50.0  
+              Score         :  40.0  
               Maxtasktime   : -
               attrs         : -
               dep_frac      : -
@@ -4229,6 +4240,7 @@ def test_qstat_full_option_9():
               Geometry      : Any
           
           
+
     """
 
     args      = """-f -l --reverse --sort queue 1 2 3 4 5"""
@@ -4309,7 +4321,7 @@ JobID: 5
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  30.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -4348,7 +4360,7 @@ JobID: 2
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  55.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -4387,7 +4399,7 @@ JobID: 4
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  60.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -4426,7 +4438,7 @@ JobID: 3
     Dependencies  : -
     S             : -
     Notify        : myemail@gmail.com
-    Score         :  50.0  
+    Score         :  40.0  
     Maxtasktime   : -
     attrs         : -
     dep_frac      : -
@@ -4660,6 +4672,7 @@ def test_qstat_full_option_10():
           =======================================================================================================================
           100    tmp      land   50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
           
+
     """
 
     args      = """-f"""
@@ -4739,6 +4752,174 @@ walltime:*
 
 
 # ---------------------------------------------------------------------------------
+def test_qstat_full_option_11():
+    """
+    qstat test run: full_option_11
+        Old Command Output:
+          JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+          ========================================================================================================================
+          3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+          1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+          2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+          
+
+    """
+
+    args      = """-f --header Jobid:State:RunTime  1 2 3"""
+
+    cmdout    = \
+"""
+qstat.py -f --header Jobid:State:RunTime 1 2 3
+
+get_config_option: Option cqstat_header not found in section [cqm]
+JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+========================================================================================================================
+3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
+1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+state:*
+
+GET_JOBS
+
+admin_hold:*
+args:*
+attrs:*
+command:*
+dep_frac:*
+dependencies:*
+envs:*
+errorpath:*
+geometry:*
+index:*
+jobid:1
+kernel:*
+kerneloptions:*
+location:*
+maxtasktime:*
+mode:*
+nodes:*
+notify:*
+outputdir:*
+outputpath:*
+path:*
+preemptable:*
+procs:*
+project:*
+queue:*
+queuedtime:*
+runtime:*
+score:*
+short_state:*
+starttime:*
+state:*
+submittime:*
+tag:job
+timeremaining:*
+user:*
+user_hold:*
+user_list:*
+walltime:*
+admin_hold:*
+args:*
+attrs:*
+command:*
+dep_frac:*
+dependencies:*
+envs:*
+errorpath:*
+geometry:*
+index:*
+jobid:2
+kernel:*
+kerneloptions:*
+location:*
+maxtasktime:*
+mode:*
+nodes:*
+notify:*
+outputdir:*
+outputpath:*
+path:*
+preemptable:*
+procs:*
+project:*
+queue:*
+queuedtime:*
+runtime:*
+score:*
+short_state:*
+starttime:*
+state:*
+submittime:*
+tag:job
+timeremaining:*
+user:*
+user_hold:*
+user_list:*
+walltime:*
+admin_hold:*
+args:*
+attrs:*
+command:*
+dep_frac:*
+dependencies:*
+envs:*
+errorpath:*
+geometry:*
+index:*
+jobid:3
+kernel:*
+kerneloptions:*
+location:*
+maxtasktime:*
+mode:*
+nodes:*
+notify:*
+outputdir:*
+outputpath:*
+path:*
+preemptable:*
+procs:*
+project:*
+queue:*
+queuedtime:*
+runtime:*
+score:*
+short_state:*
+starttime:*
+state:*
+submittime:*
+tag:job
+timeremaining:*
+user:*
+user_hold:*
+user_list:*
+walltime:*
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    results = testutils.run_cmd('qstat.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_qstat_long_option_1():
     """
     qstat test run: long_option_1
@@ -4751,6 +4932,7 @@ def test_qstat_long_option_1():
               Location : /tmp
           
           
+
     """
 
     args      = """-l"""
@@ -4874,6 +5056,7 @@ def test_qstat_long_option_2():
               Location : /tmp
           
           
+
     """
 
     args      = """-l 1 2 3 4 5"""
@@ -5177,6 +5360,7 @@ def test_qstat_long_option_3():
               Location : /tmp
           
           
+
     """
 
     args      = """-l --reverse 1 2 3 4 5"""
@@ -5480,6 +5664,7 @@ def test_qstat_long_option_4():
               Location : /tmp
           
           
+
     """
 
     args      = """-l --sort user 1 2 3 4 5"""
@@ -5783,6 +5968,7 @@ def test_qstat_long_option_5():
               Location : /tmp
           
           
+
     """
 
     args      = """-l --reverse --sort user 1 2 3 4 5"""
@@ -6086,6 +6272,7 @@ def test_qstat_long_option_6():
               Location : /tmp
           
           
+
     """
 
     args      = """-l --sort queue 1 2 3 4 5"""
@@ -6349,6 +6536,188 @@ walltime:*
 
 
 # ---------------------------------------------------------------------------------
+def test_qstat_long_option_11():
+    """
+    qstat test run: long_option_11
+        Old Command Output:
+          Jobid: 1
+              State   : *
+              RunTime : N/A
+          
+          Jobid: 2
+              State   : *
+              RunTime : N/A
+          
+          Jobid: 3
+              State   : *
+              RunTime : N/A
+          
+          
+
+    """
+
+    args      = """-l --header Jobid:State:RunTime  1 2 3"""
+
+    cmdout    = \
+"""
+qstat.py -l --header Jobid:State:RunTime 1 2 3
+
+get_config_option: Option cqstat_header not found in section [cqm]
+Jobid: 1
+    State   : *
+    RunTime : N/A
+
+Jobid: 2
+    State   : *
+    RunTime : N/A
+
+Jobid: 3
+    State   : *
+    RunTime : N/A
+
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+state:*
+
+GET_JOBS
+
+admin_hold:*
+args:*
+attrs:*
+command:*
+dep_frac:*
+dependencies:*
+envs:*
+errorpath:*
+geometry:*
+index:*
+jobid:1
+kernel:*
+kerneloptions:*
+location:*
+maxtasktime:*
+mode:*
+nodes:*
+notify:*
+outputdir:*
+outputpath:*
+path:*
+preemptable:*
+procs:*
+project:*
+queue:*
+queuedtime:*
+runtime:*
+score:*
+short_state:*
+starttime:*
+state:*
+submittime:*
+tag:job
+timeremaining:*
+user:*
+user_hold:*
+user_list:*
+walltime:*
+admin_hold:*
+args:*
+attrs:*
+command:*
+dep_frac:*
+dependencies:*
+envs:*
+errorpath:*
+geometry:*
+index:*
+jobid:2
+kernel:*
+kerneloptions:*
+location:*
+maxtasktime:*
+mode:*
+nodes:*
+notify:*
+outputdir:*
+outputpath:*
+path:*
+preemptable:*
+procs:*
+project:*
+queue:*
+queuedtime:*
+runtime:*
+score:*
+short_state:*
+starttime:*
+state:*
+submittime:*
+tag:job
+timeremaining:*
+user:*
+user_hold:*
+user_list:*
+walltime:*
+admin_hold:*
+args:*
+attrs:*
+command:*
+dep_frac:*
+dependencies:*
+envs:*
+errorpath:*
+geometry:*
+index:*
+jobid:3
+kernel:*
+kerneloptions:*
+location:*
+maxtasktime:*
+mode:*
+nodes:*
+notify:*
+outputdir:*
+outputpath:*
+path:*
+preemptable:*
+procs:*
+project:*
+queue:*
+queuedtime:*
+runtime:*
+score:*
+short_state:*
+starttime:*
+state:*
+submittime:*
+tag:job
+timeremaining:*
+user:*
+user_hold:*
+user_list:*
+walltime:*
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    results = testutils.run_cmd('qstat.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_qstat_queue_option_1():
     """
     qstat test run: queue_option_1
@@ -6464,6 +6833,7 @@ def test_qstat_queue_option_1():
               State        : running
           
           
+
     """
 
     args      = """-f -Q -l 1 2 3"""
@@ -6757,6 +7127,7 @@ def test_qstat_queue_option_2():
               State        : running
           
           
+
     """
 
     args      = """-f --reverse -Q -l 1 2 3"""
@@ -6952,6 +7323,7 @@ def test_qstat_queue_option_3():
           jello  land   None     None     20          20         20            20            100         running  
           myq    queen  None     None     20          20         20            20            100         running  
           
+
     """
 
     args      = """-f --sort users -Q"""
@@ -7029,6 +7401,7 @@ def test_qstat_queue_option_4():
           yours  girl   None     None     20          20         20            20            100         running  
           zq     boy    None     None     20          20         20            20            100         running  
           
+
     """
 
     args      = """-Q"""
@@ -7106,6 +7479,7 @@ def test_qstat_queue_option_5():
           bbb    cat    None     None     20          20         20            20            100         running  
           aaa    dog    None     None     20          20         20            20            100         running  
           
+
     """
 
     args      = """-Q --reverse"""
@@ -7183,6 +7557,7 @@ def test_qstat_queue_option_6():
           jello  land   None     None     20          20         20            20            100         running  
           myq    queen  None     None     20          20         20            20            100         running  
           
+
     """
 
     args      = """-Q --sort users"""
@@ -7260,6 +7635,7 @@ def test_qstat_queue_option_7():
           bbb    cat    None     None     20          20         20            20            100         running  
           zq     boy    None     None     20          20         20            20            100         running  
           
+
     """
 
     args      = """-Q --sort users --reverse"""
@@ -7435,6 +7811,7 @@ def test_qstat_queue_option_8():
               State        : running
           
           
+
     """
 
     args      = """-Q -l"""
@@ -7708,6 +8085,7 @@ def test_qstat_queue_option_9():
               State        : running
           
           
+
     """
 
     args      = """-Q --reverse -l"""
@@ -7981,6 +8359,7 @@ def test_qstat_queue_option_10():
               State        : running
           
           
+
     """
 
     args      = """-Q --sort users -l"""
@@ -8254,6 +8633,7 @@ def test_qstat_queue_option_11():
               State        : running
           
           
+
     """
 
     args      = """-Q --sort users --reverse -l"""
@@ -8412,6 +8792,84 @@ users:*
 
 
 # ---------------------------------------------------------------------------------
+def test_qstat_queue_option_12():
+    """
+    qstat test run: queue_option_12
+        Old Command Output:
+          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ========================================================================================================
+          aaa    dog    None     None     20          20         20            20            100         running  
+          bbb    cat    None     None     20          20         20            20            100         running  
+          bello  house  None     None     20          20         20            20            100         running  
+          dito   king   None     None     20          20         20            20            100         running  
+          hhh    henry  None     None     20          20         20            20            100         running  
+          jello  land   None     None     20          20         20            20            100         running  
+          kebra  james  None     None     20          20         20            20            100         running  
+          myq    queen  None     None     20          20         20            20            100         running  
+          yours  girl   None     None     20          20         20            20            100         running  
+          zq     boy    None     None     20          20         20            20            100         running  
+          
+
+    """
+
+    args      = """-Q --header Jobid:State:RunTime"""
+
+    cmdout    = \
+"""
+qstat.py -Q --header Jobid:State:RunTime
+
+get_config_option: Option cqstat_header not found in section [cqm]
+Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+========================================================================================================
+aaa    dog    None     None     20          20         20            20            100         running  
+bbb    cat    None     None     20          20         20            20            100         running  
+bello  house  None     None     20          20         20            20            100         running  
+dito   king   None     None     20          20         20            20            100         running  
+hhh    henry  None     None     20          20         20            20            100         running  
+jello  land   None     None     20          20         20            20            100         running  
+kebra  james  None     None     20          20         20            20            100         running  
+myq    queen  None     None     20          20         20            20            100         running  
+yours  girl   None     None     20          20         20            20            100         running  
+zq     boy    None     None     20          20         20            20            100         running  
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+state:*
+
+GET_QUEUES
+
+maxnodehours:*
+maxqueued:*
+maxrunning:*
+maxtime:*
+maxusernodes:*
+mintime:*
+name:*
+state:*
+totalnodes:*
+users:*
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    results = testutils.run_cmd('qstat.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_qstat_no_arguments_or_options():
     """
     qstat test run: no_arguments_or_options
@@ -8420,6 +8878,7 @@ def test_qstat_no_arguments_or_options():
           ===============================================
           100    land  00:05:00  512    *      /tmp      
           
+
     """
 
     args      = """"""

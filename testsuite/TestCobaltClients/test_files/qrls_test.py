@@ -9,6 +9,7 @@ def test_qrls_invalid_option():
           
           qrls.py: error: no such option: -k
           
+
     """
 
     args      = """-k 1"""
@@ -48,6 +49,7 @@ def test_qrls_debug_flag():
              Failed to remove user hold on jobs: 
                 job 1 does not have a 'user hold'
           
+
     """
 
     args      = """-d 1"""
@@ -108,6 +110,7 @@ def test_qrls_jobid_1():
         Old Command Output:
           jobid must be an integer
           
+
     """
 
     args      = """myq 1 2 3 4"""
@@ -147,6 +150,7 @@ def test_qrls_jobid_2():
                 job 3 does not have a 'user hold'
                 job 4 does not have a 'user hold'
           
+
     """
 
     args      = """1 2 3 4"""
@@ -237,6 +241,7 @@ def test_qrls_jobid_3():
              Failed to remove user hold on jobs: 
                 job 1 does not have a 'user hold'
           
+
     """
 
     args      = """1"""
@@ -298,6 +303,7 @@ def test_qrls_dependancy_option():
                 1
                 2
           
+
     """
 
     args      = """-d --dependencies 1 2"""
