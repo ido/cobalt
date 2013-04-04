@@ -48,7 +48,8 @@ vbuf         = ''
 logwrite     = True
 
 USERS  = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
-QUEUES = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq']
+QUEUES = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq' ]
+SCORES = [ 45    ,  50    ,  55    ,  40  ,  60  ,  30    ,  20   ,  25    ,  35     ,  2   ]
 
 def enable_logwrite():
     global logwrite
@@ -288,7 +289,7 @@ class CqmStub(object):
             _job['args']          = ''
             _job['user_list']     = [u for u in USERS]
             _job['geometry']      = None
-            _job['score']         = 50
+            _job['score']         = SCORES[ndx]
             ndx += 1
             _job_specs.append(_job)
             wtime += 5

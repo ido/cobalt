@@ -55,3 +55,5 @@
 -t10 -n512 --proccount 1023 --mode vn /bin/ls                  # <tc:mode_option_2> 
 --mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls             # <tc:mode_option_3> 
 |-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls # <tc:mode_option_4>
+
+--disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls # <tc:preboot_option> 

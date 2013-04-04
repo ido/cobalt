@@ -26,7 +26,7 @@ Option with values:
 '-e','--error',dest='errorpath',type='string',help='modify error file path for jobs in args'
 '-o','--output',dest='outputpath',type='string',help='modify output file path for jobs in args'
 '--dependencies',dest='all_dependencies',type='string',help='for jobs in args (jobid1:jobid2:..)',callback=cb_upd_dep
-'--attrs',dest='attrs',type='string',help='modify attributes for jobs in args(attr1=val1:attr2=val2:...',callback=cb_attrs
+'--attrs',dest='attrs',type='string',help='modify attributes for jobs in args(attr1=val1:attr2=val2:...)',callback=cb_attrs
 '--run_users',dest='user_list',type='string',help='modify user list for jobs in args (user1:user2:...)',callback=cb_user_list
 
 The following optins are only valid on IBM BlueGene architecture platforms:

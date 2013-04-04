@@ -18,6 +18,7 @@ def test_cqadm_getq_option_1():
           yours  girl   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
           zq     boy    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
           
+
     """
 
     args      = """--getq"""
@@ -96,6 +97,7 @@ def test_cqadm_getq_option_2():
           yours  girl   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
           zq     boy    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
           
+
     """
 
     args      = """-d --getq"""
@@ -174,6 +176,7 @@ def test_cqadm_getq_option_3():
           yours  girl   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
           zq     boy    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
           
+
     """
 
     args      = """-f --getq"""
@@ -240,6 +243,7 @@ def test_cqadm_preempt_job_1():
         Old Command Output:
           True
           
+
     """
 
     args      = """-d --preempt 1 2 3"""
@@ -292,6 +296,7 @@ def test_cqadm_preempt_job_2():
     cqadm test run: preempt_job_2
         Old Command Output:
           
+
     """
 
     args      = """-f --preempt 1 2 3"""
@@ -343,6 +348,7 @@ def test_cqadm_kill_job_1():
     cqadm test run: kill_job_1
         Old Command Output:
           
+
     """
 
     args      = """-d -f --kill 1 2 3"""
@@ -395,6 +401,7 @@ def test_cqadm_kill_job_2():
     cqadm test run: kill_job_2
         Old Command Output:
           
+
     """
 
     args      = """--kill 1 2 3"""
@@ -447,6 +454,7 @@ def test_cqadm_kill_job_3():
         Old Command Output:
            {'tag': 'job', 'jobid': 1, 'location': '*', 'walltime': '*'}  {'tag': 'job', 'jobid': 2, 'location': '*', 'walltime': '*'}  {'tag': 'job', 'jobid': 3, 'location': '*', 'walltime': '*'} 
           
+
     """
 
     args      = """-f --kill 1 2 3"""
@@ -499,6 +507,7 @@ def test_cqadm_kill_job_4():
         Old Command Output:
            {'tag': 'job', 'jobid': 1, 'location': '*', 'walltime': '*'}  {'tag': 'job', 'jobid': 2, 'location': '*', 'walltime': '*'}  {'tag': 'job', 'jobid': 3, 'location': '*', 'walltime': '*'} 
           
+
     """
 
     args      = """-d --kill 1 2 3"""
@@ -556,6 +565,7 @@ def test_cqadm_addq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--addq"""
@@ -595,6 +605,7 @@ def test_cqadm_addq_option_2():
           myq2          
           myq3          
           
+
     """
 
     args      = """--addq myq1 myq2 myq3"""
@@ -668,6 +679,7 @@ def test_cqadm_delq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--delq"""
@@ -707,6 +719,7 @@ def test_cqadm_delq_option_2():
           myq2            
           myq3            
           
+
     """
 
     args      = """--delq myq1 myq2 myq3"""
@@ -762,6 +775,7 @@ def test_cqadm_stopq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--stopq"""
@@ -796,6 +810,7 @@ def test_cqadm_stopq_option_2():
     cqadm test run: stopq_option_2
         Old Command Output:
           
+
     """
 
     args      = """--stopq myq1 myq2 myq3"""
@@ -846,6 +861,7 @@ def test_cqadm_startq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--startq"""
@@ -880,6 +896,7 @@ def test_cqadm_startq_option_2():
     cqadm test run: startq_option_2
         Old Command Output:
           
+
     """
 
     args      = """--startq myq1 myq2 myq3"""
@@ -930,6 +947,7 @@ def test_cqadm_drainq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--drainq"""
@@ -964,6 +982,7 @@ def test_cqadm_drainq_option_2():
     cqadm test run: drainq_option_2
         Old Command Output:
           
+
     """
 
     args      = """--drainq myq1 myq2 myq3"""
@@ -1014,6 +1033,7 @@ def test_cqadm_killq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--killq"""
@@ -1048,6 +1068,7 @@ def test_cqadm_killq_option_2():
     cqadm test run: killq_option_2
         Old Command Output:
           
+
     """
 
     args      = """--killq myq1 myq2 myq3"""
@@ -1098,6 +1119,7 @@ def test_cqadm_policy_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--policy"""
@@ -1139,6 +1161,7 @@ def test_cqadm_policy_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--policy 'mypolicy'"""
@@ -1173,6 +1196,7 @@ def test_cqadm_policy_option_3():
     cqadm test run: policy_option_3
         Old Command Output:
           
+
     """
 
     args      = """--policy 'mypolicy' myq1 myq2"""
@@ -1221,6 +1245,7 @@ def test_cqadm_setq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--setq"""
@@ -1262,6 +1287,7 @@ def test_cqadm_setq_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--setq 'a=b b=c a=c'"""
@@ -1296,6 +1322,7 @@ def test_cqadm_setq_option_3():
     cqadm test run: setq_option_3
         Old Command Output:
           
+
     """
 
     args      = """--setq 'a=b b=c a=c' myq1 myq2"""
@@ -1344,6 +1371,7 @@ def test_cqadm_unsetq_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--unsetq"""
@@ -1385,6 +1413,7 @@ def test_cqadm_unsetq_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--unsetq 'a b a'"""
@@ -1419,6 +1448,7 @@ def test_cqadm_unsetq_option_3():
     cqadm test run: unsetq_option_3
         Old Command Output:
           
+
     """
 
     args      = """--unsetq 'a b a' myq1 myq2"""
@@ -1467,6 +1497,7 @@ def test_cqadm_setjobid_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """-j"""
@@ -1508,6 +1539,7 @@ def test_cqadm_setjobid_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--setjobid"""
@@ -1544,6 +1576,7 @@ def test_cqadm_setjobid_option_3():
     cqadm test run: setjobid_option_3
         Old Command Output:
           
+
     """
 
     args      = """-j 1"""
@@ -1583,6 +1616,7 @@ def test_cqadm_setjobid_option_4():
     cqadm test run: setjobid_option_4
         Old Command Output:
           
+
     """
 
     args      = """--setjobid 1"""
@@ -1622,6 +1656,7 @@ def test_cqadm_setjobid_option_5():
     cqadm test run: setjobid_option_5
         Old Command Output:
           
+
     """
 
     args      = """-j 1 --setjobid 2"""
@@ -1666,6 +1701,7 @@ def test_cqadm_run_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--run"""
@@ -1707,6 +1743,7 @@ def test_cqadm_run_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--run mayaguez"""
@@ -1741,6 +1778,7 @@ def test_cqadm_run_option_3():
     cqadm test run: run_option_3
         Old Command Output:
           
+
     """
 
     args      = """--run mayaguez 1 2 3"""
@@ -1797,6 +1835,7 @@ def test_cqadm_hold_option_1():
         Old Command Output:
           you must specify a jobid to hold
           
+
     """
 
     args      = """--hold"""
@@ -1831,6 +1870,7 @@ def test_cqadm_hold_option_2():
     cqadm test run: hold_option_2
         Old Command Output:
           
+
     """
 
     args      = """--hold 1 2 3"""
@@ -1891,6 +1931,7 @@ def test_cqadm_hold_option_3():
         Old Command Output:
            {'user': 'james', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': True, 'jobid': 1, 'queue': 'kebra', 'tag': 'job', 'mode': 'smp', 'nodes': 512, 'has_completed': False, 'procs': 512, 'walltime': 5, 'notify': 'myemag@gmail.com'}     {'user': 'land', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': True, 'jobid': 2, 'queue': 'jello', 'tag': 'job', 'mode': 'smp', 'nodes': 1024, 'has_completed': False, 'procs': 1024, 'walltime': 10, 'notify': 'myemag@gmail.com'}   {'user': 'house', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': True, 'jobid': 3, 'queue': 'bello', 'tag': 'job', 'mode': 'smp', 'nodes': 1536, 'has_completed': False, 'procs': 1536, 'walltime': 15, 'notify': 'myemag@gmail.com'} 
           
+
     """
 
     args      = """-d --hold  1 2 3"""
@@ -1951,6 +1992,7 @@ def test_cqadm_hold_option_4():
     cqadm test run: hold_option_4
         Old Command Output:
           
+
     """
 
     args      = """-f --hold  1 2 3"""
@@ -2011,6 +2053,7 @@ def test_cqadm_release_option_1():
         Old Command Output:
           you must specify a jobid to release
           
+
     """
 
     args      = """--release"""
@@ -2045,6 +2088,7 @@ def test_cqadm_release_option_2():
     cqadm test run: release_option_2
         Old Command Output:
           
+
     """
 
     args      = """--release 1 2 3"""
@@ -2105,6 +2149,7 @@ def test_cqadm_release_option_3():
         Old Command Output:
            {'user': 'james', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': False, 'jobid': 1, 'queue': 'kebra', 'tag': 'job', 'mode': 'smp', 'nodes': 512, 'has_completed': False, 'procs': 512, 'walltime': 5, 'notify': 'myemag@gmail.com'}     {'user': 'land', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': False, 'jobid': 2, 'queue': 'jello', 'tag': 'job', 'mode': 'smp', 'nodes': 1024, 'has_completed': False, 'procs': 1024, 'walltime': 10, 'notify': 'myemag@gmail.com'}   {'user': 'house', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': False, 'jobid': 3, 'queue': 'bello', 'tag': 'job', 'mode': 'smp', 'nodes': 1536, 'has_completed': False, 'procs': 1536, 'walltime': 15, 'notify': 'myemag@gmail.com'} 
           
+
     """
 
     args      = """-d --release 1 2 3"""
@@ -2165,6 +2210,7 @@ def test_cqadm_release_option_4():
     cqadm test run: release_option_4
         Old Command Output:
           
+
     """
 
     args      = """-f --release 1 2 3"""
@@ -2229,6 +2275,7 @@ def test_cqadm_release_and_hold():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--hold --release 1 2 3"""
@@ -2268,6 +2315,7 @@ def test_cqadm_queue_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--queue"""
@@ -2309,6 +2357,7 @@ def test_cqadm_queue_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--queue myq"""
@@ -2343,6 +2392,7 @@ def test_cqadm_queue_option_3():
     cqadm test run: queue_option_3
         Old Command Output:
           
+
     """
 
     args      = """--queue myq 1 2 3"""
@@ -2404,6 +2454,7 @@ def test_cqadm_time_option_1():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--time"""
@@ -2445,6 +2496,7 @@ def test_cqadm_time_option_2():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--time 50"""
@@ -2479,6 +2531,7 @@ def test_cqadm_time_option_4():
     cqadm test run: time_option_4
         Old Command Output:
           
+
     """
 
     args      = """--time 50 1 2 3"""
@@ -2535,6 +2588,7 @@ def test_cqadm_update_all_1():
     cqadm test run: update_all_1
         Old Command Output:
           
+
     """
 
     args      = """--hold --queue myq --time 50 4 5 6"""
@@ -2596,6 +2650,7 @@ def test_cqadm_update_all_2():
     cqadm test run: update_all_2
         Old Command Output:
           
+
     """
 
     args      = """--release --queue myq --time 50 4 5 6"""
@@ -2662,6 +2717,7 @@ def test_cqadm_combine_getq_and_addq():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--getq --addq myq1 myq2 myq3"""
@@ -2701,6 +2757,7 @@ def test_cqadm_combine_getq_and_setjobid():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--getq -j 1 123"""
@@ -2740,6 +2797,7 @@ def test_cqadm_combine_time_and_getq():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--time 50 --getq"""
@@ -2779,6 +2837,7 @@ def test_cqadm_combine_release_and_getq():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--release --getq 123"""
@@ -2818,6 +2877,7 @@ def test_cqadm_combine_setq_with_queue():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--setq 'a=1 b=2' --queue q 1"""
@@ -2857,6 +2917,7 @@ def test_cqadm_combine_addq_and_delq():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--addq --delq q1 q2"""
@@ -2896,6 +2957,7 @@ def test_cqadm_combine_addq_and_stopq():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--stopq --addq q1 q2"""
@@ -2935,6 +2997,7 @@ def test_cqadm_combine_addq_and_startq():
                  cqadm [-j <next jobid>]
                  cqadm [--savestate <filename>]
           
+
     """
 
     args      = """--startq --addq q1 q2"""

@@ -136,7 +136,7 @@ class header_info(object):
             self.custom_header_full = os.environ['QSTAT_HEADER_FULL'].split(':')
 
         if parser.options.header != None:
-            self.custom_header = parser.options.header.split(':')
+            self.custom_header = parser.options.header
 
         if parser.options.Q != None:
             self.header = ['Name','Users','MinTime','MaxTime','MaxRunning','MaxQueued','MaxUserNodes','MaxNodeHours','TotalNodes','State']
@@ -928,12 +928,7 @@ def cb_split(option,opt_str,value,parser,*args):
     split string according to passed delimiter
     """
     delim = args[0] # delimiter to use for splitting the string value
-    lower = args[1] # lower the case
-
-    if lower:
-        split_value = [field.lower() for field in value.split(delim)]
-    else:
-        split_value = [field for field in value.split(delim)]
+    split_value = [field for field in value.split(delim)]
 
     setattr(parser.values,option.dest,split_value) # set the option 
 

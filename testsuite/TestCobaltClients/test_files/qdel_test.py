@@ -9,6 +9,7 @@ def test_qdel_invalid_option():
           Usage:
           qdel [--version] [-f] <jobid> <jobid>
           
+
     """
 
     args      = """-k 1"""
@@ -48,6 +49,7 @@ def test_qdel_debug_option():
           Usage:
           qdel [--version] [-f] <jobid> <jobid>
           
+
     """
 
     args      = """-d 1"""
@@ -85,6 +87,7 @@ def test_qdel_jobid_1():
         Old Command Output:
           jobid must be an integer
           
+
     """
 
     args      = """myq 1 2 3 4"""
@@ -126,6 +129,7 @@ def test_qdel_jobid_2():
           3      gooduser  
           4      gooduser  
           
+
     """
 
     args      = """1 2 3 4"""
@@ -188,6 +192,7 @@ def test_qdel_jobid_3():
           =================
           1      gooduser  
           
+
     """
 
     args      = """1"""

@@ -7,6 +7,7 @@ def test_qsub_all_options():
         Old Command Output:
           1
           
+
     """
 
     args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls"""
@@ -116,6 +117,7 @@ def test_qsub_misc_1():
         Old Command Output:
           1
           
+
     """
 
     args      = """--mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls"""
@@ -218,6 +220,7 @@ def test_qsub_no_options_passed():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """/bin/ls"""
@@ -264,6 +267,7 @@ def test_qsub_non_existant_option():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """-z -t10 -n10 /bin/ls"""
@@ -311,6 +315,7 @@ def test_qsub_debug_flag_only():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """-d"""
@@ -357,6 +362,7 @@ def test_qsub_verbose_flag_only():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """-v"""
@@ -403,6 +409,7 @@ def test_qsub_non_integer_nodecount():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """--mode smp -t50 -nfive --geometry 40x40x50x50 /bin/ls"""
@@ -450,6 +457,7 @@ def test_qsub_non_realistic_nodecount():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """--mode smp -t50 -n2048 --geometry 40x40x50x50 /bin/ls"""
@@ -484,12 +492,13 @@ def test_qsub_invalid_geometry():
     qsub test run: invalid_geometry
         Old Command Output:
           Traceback (most recent call last):
-            File "commands/qsub.py", line 179, in <module>
+            File "oldcmds/qsub.py", line 179, in <module>
               jobspec['geometry'] = parse_geometry_string(opts['geometry'])
             File "/Users/georgerojas/p/Cobalt/client-refactor/testsuite/TestCobaltClients/Cobalt/Util.py", line 1111, in parse_geometry_string
               raise ValueError, "%s is an invalid geometry specification." % geometry_str
           ValueError: x is an invalid geometry specification.
           
+
     """
 
     args      = """--mode smp -t50 -n10 --geometry x /bin/ls"""
@@ -535,6 +544,7 @@ def test_qsub_no_roject_specified():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """-A -t50 -n10 /bin/ls"""
@@ -570,6 +580,7 @@ def test_qsub_project_specified():
         Old Command Output:
           1
           
+
     """
 
     args      = """-A who -t50 -n10 /bin/ls"""
@@ -662,6 +673,7 @@ def test_qsub_Check_attrs_1():
         Old Command Output:
           1
           
+
     """
 
     args      = """--attrs xxxx -t50 -n10 /bin/ls"""
@@ -754,6 +766,7 @@ def test_qsub_Check_attrs_2():
         Old Command Output:
           1
           
+
     """
 
     args      = """--attrs 1111 -t50 -n10 /bin/ls"""
@@ -846,6 +859,7 @@ def test_qsub_Check_attrs_3():
         Old Command Output:
           1
           
+
     """
 
     args      = """--attrs xx=:yy -t50 -n10 /bin/ls"""
@@ -938,6 +952,7 @@ def test_qsub_Check_attrs_4():
         Old Command Output:
           1
           
+
     """
 
     args      = """--attrs xx=one:yy=1:zz=1one -t50 -n10 /bin/ls"""
@@ -1030,6 +1045,7 @@ def test_qsub_cwd_option_1():
         Old Command Output:
           1
           
+
     """
 
     args      = """--cwd /tmp/ -t10 -n 10 -e p /bin/ls"""
@@ -1122,6 +1138,7 @@ def test_qsub_cwd_option_2():
         Old Command Output:
           1
           
+
     """
 
     args      = """--cwd /tmp -t10 -n 10 -e p /bin/ls"""
@@ -1214,6 +1231,7 @@ def test_qsub_cwd_option_3():
         Old Command Output:
           Error: dir '/x' is not a directory
           
+
     """
 
     args      = """--cwd /x -t10 -n 10 -e p /bin/ls"""
@@ -1249,6 +1267,7 @@ def test_qsub_cwd_option_4():
         Old Command Output:
           1
           
+
     """
 
     args      = """--cwd /tmp/ -t10 -n 10 -e p -o x /bin/ls"""
@@ -1342,6 +1361,7 @@ def test_qsub_cwd_option_5():
         Old Command Output:
           1
           
+
     """
 
     args      = """--cwd /tmp -t10 -n 10 -e p -o x /bin/ls"""
@@ -1435,6 +1455,7 @@ def test_qsub_debuglog_option():
         Old Command Output:
           1
           
+
     """
 
     args      = """-t10 -n 10 -e p -o x --debuglog y /bin/ls"""
@@ -1529,6 +1550,7 @@ def test_qsub_inputfile_option_1():
         Old Command Output:
           file /tmp/none not found, or is not a file
           
+
     """
 
     args      = """-i none -t10 -n 10 /bin/ls"""
@@ -1564,6 +1586,7 @@ def test_qsub_inputfile_option_2():
         Old Command Output:
           1
           
+
     """
 
     args      = """-i y -t10 -n 10 /bin/ls"""
@@ -1656,6 +1679,7 @@ def test_qsub_email_option():
         Old Command Output:
           1
           
+
     """
 
     args      = """-M g -t10 -n10 /bin/ls"""
@@ -1750,6 +1774,7 @@ def test_qsub_outputprefix():
                    Permission denied
           1
           
+
     """
 
     args      = """-O /tmp -t10 -n10 /bin/ls"""
@@ -1856,6 +1881,7 @@ def test_qsub_invalid_user():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """-run_users naughtyuser -t10 -n10 /bin/ls"""
@@ -1893,6 +1919,7 @@ def test_qsub_mode_option_1():
         Old Command Output:
           1
           
+
     """
 
     args      = """-t10 -n512 --proccount 1023 --mode dual /bin/ls"""
@@ -1984,6 +2011,7 @@ def test_qsub_mode_option_2():
         Old Command Output:
           1
           
+
     """
 
     args      = """-t10 -n512 --proccount 1023 --mode vn /bin/ls"""
@@ -2075,6 +2103,7 @@ def test_qsub_mode_option_3():
         Old Command Output:
           1
           
+
     """
 
     args      = """--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls"""
@@ -2177,6 +2206,7 @@ def test_qsub_mode_option_4():
                        --users <user1>:<user2> --run_project --disable_preboot
           
           
+
     """
 
     args      = """-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls"""
@@ -2194,6 +2224,98 @@ node count out of realistic range
 
     expected_results = ( 
                        256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_preboot_option():
+    """
+    qsub test run: preboot_option
+        Old Command Output:
+          1
+          
+
+    """
+
+    args      = """--disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls"""
+
+    cmdout    = \
+"""
+qsub.py --disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls
+
+get_config_option: Option filters not found in section [cqm]
+1
+"""
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+command:/bin/ls
+cwd:/tmp
+jobid:*
+kernel:default
+mode:dual
+nodes:512
+outputdir:/tmp
+path:/tmp
+procs:1023
+queue:default
+run_project:False
+script_preboot:False
+tag:job
+umask:18
+user:gooduser
+user_list:['gooduser']
+walltime:10
+
+VALIDATE_JOB
+
+attrs:{}
+cwd:/tmp
+debug:False
+debuglog:False
+dependencies:False
+disable_preboot:True
+env:False
+error:False
+forcenoval:False
+geometry:False
+held:False
+inputfile:False
+kernel:default
+kerneloptions:False
+mode:dual
+nodecount:512
+notify:False
+output:False
+outputprefix:False
+preemptable:False
+proccount:1023
+project:False
+queue:default
+run_project:False
+time:10
+umask:False
+user_list:False
+verbose:False
+version:False
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 

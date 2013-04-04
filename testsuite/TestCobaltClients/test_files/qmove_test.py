@@ -8,6 +8,7 @@ def test_qmove_invalid_option():
           Usage:
           qmove <queue name> <jobid> <jobid>
           
+
     """
 
     args      = """-k"""
@@ -47,6 +48,7 @@ def test_qmove_queue_1():
           moved job 2 to queue 'myq'
           moved job 3 to queue 'myq'
           
+
     """
 
     args      = """myq 1 2 3"""
@@ -168,7 +170,7 @@ outputpath:/tmp
 procs:1024
 project:my_project
 queue:bello
-score:50
+score:55
 state:user_hold
 submittime:60
 tag:job
@@ -194,7 +196,7 @@ outputpath:/tmp
 procs:1024
 project:my_project
 queue:myq
-score:50
+score:55
 state:user_hold
 submittime:60
 tag:job
@@ -223,7 +225,7 @@ outputpath:/tmp
 procs:1536
 project:my_project
 queue:aaa
-score:50
+score:40
 state:user_hold
 submittime:60
 tag:job
@@ -249,7 +251,7 @@ outputpath:/tmp
 procs:1536
 project:my_project
 queue:myq
-score:50
+score:40
 state:user_hold
 submittime:60
 tag:job
@@ -283,6 +285,7 @@ def test_qmove_queue_2():
           moved job 3 to queue '1'
           moved job 4 to queue '1'
           
+
     """
 
     args      = """1 2 3 4"""
@@ -404,7 +407,7 @@ outputpath:/tmp
 procs:1024
 project:my_project
 queue:bello
-score:50
+score:55
 state:user_hold
 submittime:60
 tag:job
@@ -430,7 +433,7 @@ outputpath:/tmp
 procs:1024
 project:my_project
 queue:1
-score:50
+score:55
 state:user_hold
 submittime:60
 tag:job
@@ -459,7 +462,7 @@ outputpath:/tmp
 procs:1536
 project:my_project
 queue:aaa
-score:50
+score:40
 state:user_hold
 submittime:60
 tag:job
@@ -485,7 +488,7 @@ outputpath:/tmp
 procs:1536
 project:my_project
 queue:1
-score:50
+score:40
 state:user_hold
 submittime:60
 tag:job
@@ -517,6 +520,7 @@ def test_qmove_queu_3():
         Old Command Output:
           jobid must be an integer
           
+
     """
 
     args      = """q1 q2 1 2 3"""

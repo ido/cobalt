@@ -7,6 +7,7 @@ def test_setres_id_change_1():
         Old Command Output:
           Setting res id to 8
           
+
     """
 
     args      = """--res_id 8"""
@@ -47,6 +48,7 @@ def test_setres_id_change_2():
         Old Command Output:
           Setting cycle_id to 8
           
+
     """
 
     args      = """--cycle_id 8"""
@@ -88,6 +90,7 @@ def test_setres_id_change_3():
           Setting res id to 8
           Setting cycle_id to 8
           
+
     """
 
     args      = """--res_id 8 --cycle_id 8"""
@@ -143,6 +146,7 @@ def test_setres_id_change_4():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """--res_id 8 p1 p2 p3"""
@@ -188,6 +192,7 @@ def test_setres_id_change_5():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """--cycle_id 8 p1 p2 p3"""
@@ -233,6 +238,7 @@ def test_setres_id_change_6():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """--res_id 8 -m -n resname"""
@@ -278,6 +284,7 @@ def test_setres_id_change_7():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """--cycle_id 8 -p p1"""
@@ -314,6 +321,7 @@ def test_setres_force_1():
           WARNING: Forcing res id to 8
           WARNING: Forcing cycle id to 8
           
+
     """
 
     args      = """--cycle_id 8 --res_id 8 --force_id"""
@@ -358,6 +366,7 @@ def test_setres_force_2():
     setres test run: force_2
         Old Command Output:
           
+
     """
 
     args      = """--force_id"""
@@ -393,6 +402,7 @@ def test_setres_force_3():
         Old Command Output:
           --force_id can only be used with --cycle_id and/or --res_id.
           
+
     """
 
     args      = """--force_id -p p1 -s 2013_03_09-10:30"""
@@ -429,6 +439,7 @@ def test_setres_force_4():
         Old Command Output:
           --force_id can only be used with --cycle_id and/or --res_id.
           
+
     """
 
     args      = """--force_id -m -n resname"""
@@ -464,6 +475,7 @@ def test_setres_modify_1():
         Old Command Output:
           -m must by called with -n <reservation name>
           
+
     """
 
     args      = """-m"""
@@ -499,6 +511,7 @@ def test_setres_modify_2():
         Old Command Output:
           True
           
+
     """
 
     args      = """-m -n resname"""
@@ -560,6 +573,7 @@ def test_setres_modify_3():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """-m -n resname -D -c 10:10:10"""
@@ -596,6 +610,7 @@ def test_setres_modify_4():
           Error: start time '2013_03_9-10:10:10' is invalid
           start time is expected to be in the format: YYYY_MM_DD-HH:MM
           
+
     """
 
     args      = """-m -n resname -D -s 2013_03_9-10:10:10"""
@@ -642,6 +657,7 @@ def test_setres_modify_5():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """-m -n resname -D -s 2013_03_9-10:10"""
@@ -679,6 +695,7 @@ def test_setres_modify_6():
           Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
           True
           
+
     """
 
     args      = """-m -n resname -D -d 10:10:10"""
@@ -734,6 +751,7 @@ def test_setres_modify_7():
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
           True
           
+
     """
 
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00"""
@@ -790,6 +808,7 @@ def test_setres_modify_8():
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
           True
           
+
     """
 
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1"""
@@ -847,6 +866,7 @@ def test_setres_modify_9():
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
           True
           
+
     """
 
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1:user2"""
@@ -904,6 +924,7 @@ def test_setres_modify_10():
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
           True
           
+
     """
 
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u user1"""
@@ -962,6 +983,7 @@ def test_setres_modify_11():
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
           True
           
+
     """
 
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough"""
@@ -1020,6 +1042,7 @@ def test_setres_modify_12():
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
           True
           
+
     """
 
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough"""
@@ -1087,6 +1110,7 @@ def test_setres_modify_13():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """-m -n resname --allow_passthrough --block_passthrough"""
@@ -1122,6 +1146,7 @@ def test_setres_modify_14():
         Old Command Output:
           True
           
+
     """
 
     args      = """-m -n resname -A myproj --block_passthrough p1 p2 p3"""
@@ -1199,6 +1224,7 @@ def test_setres_add_res_1():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """-n resname -D"""
@@ -1244,6 +1270,7 @@ def test_setres_add_res_2():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """-n resname -D p1 p2 p3"""
@@ -1289,6 +1316,7 @@ def test_setres_add_res_3():
           queue name is only needed to specify a name other than the default
           cycle time, queue name, and user are optional
           
+
     """
 
     args      = """-n resname -s 2013_03_9-10:10 p1 p2"""
@@ -1327,6 +1355,7 @@ def test_setres_add_res_4():
           True
           True
           
+
     """
 
     args      = """-n resname -s 2013_03_9-10:10 -d 50 p1 p2"""
@@ -1390,6 +1419,7 @@ def test_setres_add_res_5():
           True
           True
           
+
     """
 
     args      = """-n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2"""
@@ -1453,6 +1483,7 @@ def test_setres_add_res_6():
           True
           True
           
+
     """
 
     args      = """-s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2"""
@@ -1516,6 +1547,7 @@ def test_setres_add_res_7():
           True
           True
           
+
     """
 
     args      = """-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough"""
@@ -1575,6 +1607,7 @@ def test_setres_add_res_8():
           True
           True
           
+
     """
 
     args      = """-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj"""
