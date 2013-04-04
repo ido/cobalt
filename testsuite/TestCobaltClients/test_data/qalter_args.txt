@@ -1,0 +1,42 @@
+# Command Line Options and Arguments to test qalter
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+-d -n30  # <tc:simple_1> debug and nodecount set to 10 no job ids. old qalter 
+-d -n30 1 # <tc:simple_2> same with jobid
+
+-d -v n10 -t5 1 2 3                 # <tc:time_1> time and nodecounts
+-d -v -n10 -t+5 1 2 3               # <tc:time_2> delta time <NEW_ONLY> new qsub handles this correctly old does not
+-d -v -n10 -t+20 1 2 3 4 5 6 7      # <tc:time_3> more delta times <NEW_ONLY> new qsub handles this correctly old does not
+-d -v -n10 -t30 1 2 3 4 5 6 7 10 15 # <tc:time_4> more absolute time
+-d -v -n10 -t00:00:30 1 2 3         # <tc:time_5> time in hh:mm:ss format
+-d -v -n10 -t+00:00:30 1 2 3        # <tc:time_6> delta time in hh:mm:ss format <NEW_ONLY> new qalter handles this correctly old does not
+-d -v -n10 -t 00:00:30 1 2 3        # <tc:time_7> time in hh:mm:ss format a little different
+-d -v -n10 -t +00:00:30 1 2 3       # <tc:time_8> delta time in hh:mm:ss format a little different <NEW_ONLY> new qalter handles this correctly old does not
+
+-d -v -m j@gmail.com      # <tc:invalid_option> invalid option
+-d -v -M j@gmail.com 1 2  # <tc:email_option> change notification for jobs 1 and 2
+
+-d -v --mode jjj  -n40 -t50 -e p -o o 1 2 3 # <tc:mode_1> invalid mode
+-d -v --mode dual -n40 -t50 -e p -o o 1 2 3 # <tc:mode_2> valid mode
+
+-d -v --mode dual -n512 --proccount one -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10    # <tc:proccount_1> Invalid proccount
+-d -v --mode dual -n512 --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10   # <tc:proccount_2> Valid proccount
+
+-d -v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10 # <tc:invalid_nodecount>
+
+-d -v --run_users user1:user2:user3 1 2 3 4 5 # <tc:user_1> Valid user list
+-d -v --run_users user1:naughtyuser 1 2 3 4 5 # <tc:user_2> Invalid user list
+
+-d -v --run_project 10 20 30 # <tc:project> Set run project flag
+
+|-d -v --geometry 10 1 2 3 4 5            # <tc:geometry_1>
+-d -v --geometry 10x10x10x10x10 1 2 3 4 5 # <tc:geometry_2>
+-d -v --geometry 04x04x04x04x04 1 2 3 4   # <tc:geometry_3>

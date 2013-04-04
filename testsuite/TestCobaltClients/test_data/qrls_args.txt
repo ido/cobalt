@@ -1,0 +1,18 @@
+# Command Line Options and Arguments to test qrls
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+-k 1           # <tc:invalid_option>
+-d 1           # <tc:debug_flag>
+myq 1 2 3 4    # <tc:jobid_1> only integer jobids allowed
+1 2 3 4        # <tc:jobid_2> jobids 1,2,3 and 4
+1              # <tc:jobid_3> only one job id
+
+-d --dependencies 1 2 # <tc:dependancy_option> set dependencies flag 

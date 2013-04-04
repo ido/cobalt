@@ -1,0 +1,21 @@
+# Command Line Options and Arguments to test qselect
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+-k                  # <tc:invalid_option>
+|1                  # <tc:only_arg> with arguments. old qselect allows this, but weird result, new one does not.
+-d|                 # <tc:no_args_opts> new qselect with no options, but old one does not
+-d                  # <tc:debug_flag>
+-h user_hold        # <tc:held_option> held state flag
+-n 312              # <tc:nodecount_option>
+-n 312 -h user_hold # <tc:state_and_nodecount>
+-t 10:10:10         # <tc:walltime>
+--mode vn           # <tc:mode>
+-v                  # <tc:verbose>
