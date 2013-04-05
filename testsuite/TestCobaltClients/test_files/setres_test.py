@@ -509,7 +509,12 @@ def test_setres_modify_2():
     """
     setres test run: modify_2
         Old Command Output:
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -520,7 +525,19 @@ def test_setres_modify_2():
 """
 setres.py -m -n resname
 
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x108f3a0>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -531,20 +548,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -692,8 +701,12 @@ def test_setres_modify_6():
     """
     setres test run: modify_6
         Old Command Output:
-          Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -704,8 +717,19 @@ def test_setres_modify_6():
 """
 setres.py -m -n resname -D -d 10:10:10
 
-Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x108f3a0>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -716,22 +740,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-defer:True
-start:1364335300.0
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -749,7 +763,12 @@ def test_setres_modify_7():
     setres test run: modify_7
         Old Command Output:
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -761,7 +780,19 @@ def test_setres_modify_7():
 setres.py -m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00
 
 Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x109cbe8>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -772,23 +803,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-cycle:37800
-duration:60
-start:1362845400.0
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -806,7 +826,12 @@ def test_setres_modify_8():
     setres test run: modify_8
         Old Command Output:
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -818,7 +843,19 @@ def test_setres_modify_8():
 setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1
 
 Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x109cbe8>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -829,24 +866,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-cycle:600
-duration:3000
-start:1362845400.0
-users:user1
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -864,7 +889,12 @@ def test_setres_modify_9():
     setres test run: modify_9
         Old Command Output:
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -876,7 +906,19 @@ def test_setres_modify_9():
 setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1:user2
 
 Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x109cc10>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -887,24 +929,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-cycle:600
-duration:3000
-start:1362845400.0
-users:user1:user2
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -922,7 +952,12 @@ def test_setres_modify_10():
     setres test run: modify_10
         Old Command Output:
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -934,7 +969,19 @@ def test_setres_modify_10():
 setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u user1
 
 Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x109cbe8>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -945,25 +992,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-cycle:600
-duration:3000
-project:myproj
-start:1362845400.0
-users:user1
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -981,7 +1015,12 @@ def test_setres_modify_11():
     setres test run: modify_11
         Old Command Output:
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -993,7 +1032,19 @@ def test_setres_modify_11():
 setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough
 
 Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x109cbe8>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -1004,25 +1055,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-block_passthrough:True
-cycle:600
-duration:3000
-project:myproj
-start:1362845400.0
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -1040,7 +1078,12 @@ def test_setres_modify_12():
     setres test run: modify_12
         Old Command Output:
           Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -1052,7 +1095,19 @@ def test_setres_modify_12():
 setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough
 
 Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x109cbe8>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -1063,25 +1118,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-block_passthrough:False
-cycle:600
-duration:3000
-project:myproj
-start:1362845400.0
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -1144,7 +1186,12 @@ def test_setres_modify_14():
     """
     setres test run: modify_14
         Old Command Output:
-          True
+          Traceback (most recent call last):
+            File "oldcmds/setres.py", line 207, in <module>
+              res_list = scheduler.get_reservations(query)
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+              res_list.append()
+          TypeError: append() takes exactly one argument (0 given)
           
 
     """
@@ -1155,7 +1202,19 @@ def test_setres_modify_14():
 """
 setres.py -m -n resname -A myproj --block_passthrough p1 p2 p3
 
-True
+*** FATAL EXCEPTION: (<type 'exceptions.TypeError'>, TypeError('append() takes exactly one argument (0 given)',), <traceback object at 0x108f3a0>) ***
+Traceback (most recent call last):
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 221, in <module>
+    main()
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 213, in main
+    modify_reservation(parser)
+  File "/Users/georgerojas/p/Cobalt/cobalt/src/clients/setres.py", line 112, in modify_reservation
+    res_list = client_utils.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/client_utils.py", line 828, in get_reservations
+    res_list = scheduler.get_reservations(query)
+  File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Proxy.py", line 341, in get_reservations
+    res_list.append()
+TypeError: append() takes exactly one argument (0 given)
 """
 
     stubout   = \
@@ -1178,23 +1237,12 @@ cycle:*
 duration:*
 name:resname
 start:*
-
-SET_RESERVATIONS
-
-name:resname
-block_passthrough:True
-partitions:p1:p2:p3
-project:myproj
-user: gooduser
-
-CHECK_RESERVATIONS
-
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 

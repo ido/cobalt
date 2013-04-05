@@ -47,9 +47,10 @@ logbuf       = ''
 vbuf         = ''
 logwrite     = True
 
-USERS  = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
-QUEUES = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq' ]
-SCORES = [ 45    ,  50    ,  55    ,  40  ,  60  ,  30    ,  20   ,  25    ,  35     ,  2   ]
+USERS    = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
+QUEUES   = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq' ]
+SCORES   = [ 45    ,  50    ,  55    ,  40  ,  60  ,  30    ,  20   ,  25    ,  35     ,  2   ]
+PARTS    = ['A','B','C','D','E','F','G','H','I','J']
 
 def enable_logwrite():
     global logwrite
@@ -89,7 +90,13 @@ class SystemStub(object):
     def get_partitions(s,plist):
         logmsg("\nGET_PARTITIONS\n")
         logmsg('plist: '+str(plist))
-        return 'P'
+        parts = []
+        i = 0
+        for p in PARTS:
+            parts.append({'name':p,'queue':QUEUES[i],'children':'a','size':i,'node_geometry':['48','48','48','48','48'],
+                          'draining':False,'state':'idle','functional':True,'scheduled':True})
+            i += 1
+        return parts
 
     def verify_locations(s,location_list):
         logmsg("\nVERIFY_LOCATIONS\n")
@@ -323,14 +330,24 @@ class SchedStub(object):
         logmsg("\nGET_RESERVATIONS\n")
         logdiclist(query)
         res_list = []
-        ct = 0
-        d  = 0
-        st = 0
-        for res in query:
-            ct += 300
-            d  += 500
-            st += 1000000
-            res_list.append({'name':res['name'],'cycle':ct,'duration':d,'start':st})
+        ct   = 300
+        d    = 500
+        st   = 1000000
+        res  = query[0]
+        sz   = 100
+        if 'name' in res:
+            _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,
+                    'active':True,'partitions':':'.join(PARTS)}
+            res_list.append()
+        else:
+            for q in QUEUES:
+                ct += 300
+                d  += 500
+                st += 1000000
+                sz -= 1
+                res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
+                                 'partitions':':'.join(PARTS)})
+            
         return res_list
 
     def set_reservations(s,res_list,spec,user):

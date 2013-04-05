@@ -108,7 +108,8 @@ def modify_reservation(parser):
     """
     this will handle reservation modifications
     """
-    res_list = client_utils.get_reservations(parser.options.name)
+    query = [{'name':parser.options.name, 'start':'*', 'cycle':'*', 'duration':'*'}]
+    res_list = client_utils.get_reservations(query)
 
     updates = {} # updates to reservation
     if parser.options.defer != None:

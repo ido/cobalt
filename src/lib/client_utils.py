@@ -171,6 +171,13 @@ def print_tabular(rows):
     """
     Cobalt.Util.print_tabular(rows)
 
+def printTabular(rows, centered = []):
+    """
+    print tabular abstract the util verion incase we want to modify it.
+    TODO: We may pull it in incase we want to use the client logging facility. --GDR
+    """
+    Cobalt.Util.printTabular(rows, centered)
+
 def print_vertical(rows):
     """
     print veritical abstract the util verion incase we want to modify it.
@@ -639,12 +646,26 @@ def del_jobs(jobs,force,user):
             raise
     return response
 
+def get_partitions(spec):
+    """
+    get partitions
+    """
+    try:
+        system = client_data.system_manager()
+        parts = system.get_partitions(spec)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == NotSupportedError.fault_code:
+            print "incompatible with cluster support:  try nodelist"
+            raise SystemExit, 1
+        else:
+            raise
+    return parts
+
 def run_jobs(jobs,location,user):
     """
     run jobs
     """
-    system = client_data.system_manager()
-    part_list = system.get_partitions([{'name': location}])
+    part_list = get_partitions([{'name': location}])
     if len(part_list) != 1:
         logger.error("Error: cannot find partition named '%s'" % location)
         sys.exit(1)
@@ -799,12 +820,11 @@ def verify_locations(partitions):
             logger.error("Missing partitions: %s" % (" ".join(missing)))
             sys.exit(1)
 
-def get_reservations(rname):
+def get_reservations(query):
     """"
     get reservation list according to query
     """
     scheduler = client_data.scheduler_manager(False)
-    query = [{'name':rname, 'start':'*', 'cycle':'*', 'duration':'*'}]
     res_list = scheduler.get_reservations(query)
     if not res_list:
         logger.error("cannot find reservation named '%s'" % rname)
