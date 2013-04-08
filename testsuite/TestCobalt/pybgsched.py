@@ -14,9 +14,25 @@ class BlockFilter(object):
     def setName(self, name):
         self.name = name
 
+class IOBlockFilter(BlockFilter):
+
+    def __init__(self):
+        self.name = None
+        self.extended_info=None
+
+    def getName(self):
+        return self.name
+
+    def setName(self, name):
+        self.name = name
+
 def getBlocks(bf):
+    block_dict[bf.name].raise_error()
     return [block_dict[bf.name]]
 
+def getIOBlocks(bf):
+    io_block_dict[bf.name].raise_error()
+    return [io_block_dict[bf.name]]
 
 class Action(object):
     _None = 0
@@ -24,6 +40,8 @@ class Action(object):
     Boot = 2
 
 block_dict = {}
+io_block_dict = {}
+
 
 class Block(object):
 
@@ -90,3 +108,23 @@ class Block(object):
     def getAction(self):
         self.raise_error()
         return self.action
+
+class IOBlock(Block):
+
+    def __init__(self, name, size):
+        self.name = name
+        self.size = size
+        self.error = None
+        self.users = []
+        self.action = Action._None
+        io_block_dict[name] = self
+        self.statuses = [self.Free]
+
+    @classmethod
+    def initiateBoot(cls, location, allow_holes, uninit1, uninit2):
+        return
+
+class StringVector(object):
+
+    def size(self):
+        return 0

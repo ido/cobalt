@@ -47,6 +47,8 @@ class test_BGQBoot(object):
         boot = BGQBoot(pybgsched.block_dict['TB-1'], 1, 'testuser', self.block_lock)
         assert str(boot) == "{'block_name': 'TB-1', 'user': 'testuser', 'state': 'pending', 'job_id': 1, 'boot_id': 1}", "Malformed boot: %s" % boot
 
+
+
 class test_BGQBooter(object):
 
     class TestBlock(object):
@@ -200,7 +202,6 @@ class test_BGQBooter(object):
         assert pending_messages == correct_messages, "Pending messages failed: expected %s, got %s" % (correct_messages, pending_messages)
 
 class test_BootPending(object):
-
 
     class TestBlock(object):
 
@@ -397,4 +398,105 @@ class test_BootRebooting(object):
         next_state = BootRebooting(context).progress()
         assert 'rebooting' == str(next_state), "Returned state was %s" % next_state
 
+class test_IOBootPending(object):
+
+    class TestIOBlock(object):
+        def __init__(self, name):
+            self.name = name
+
+    def setup(self):
+        pybgsched.IOBlock('IO-1', 8)
+        self.test_blocks = {}
+        self.test_blocks['IO-1'] = test_BGQBooter.TestBlock('IO-1')
+        self.block_lock = threading.Lock()
+
+    def teardown(self):
+        pybgsched.io_block_dict = {}
+
+    def test_progress_initiating(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        next_state = IOBootPending(context).progress()
+        assert 'initiating' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_bridge_failure(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.IOBlock.set_error('control system failure')
+        next_state = IOBootPending(context).progress()
+        assert 'failed' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_already_initialzied(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Initialized)
+        next_state = IOBootPending(context).progress()
+        assert 'failed' == str(next_state), "Returned state was %s" % next_state
+
+
+class test_IOBootInitiating(object):
+
+    class TestIOBlock(object):
+        def __init__(self, name):
+            self.name = name
+
+    def setup(self):
+        pybgsched.IOBlock('IO-1', 8)
+        self.test_blocks = {}
+        self.test_blocks['IO-1'] = test_BGQBooter.TestBlock('IO-1')
+        self.block_lock = threading.Lock()
+
+    def teardown(self):
+        pybgsched.io_block_dict = {}
+
+    def test_progress_initiating_free_booting_action(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Free)
+        pybgsched.io_block_dict['IO-1'].set_action(pybgsched.Action.Boot)
+        next_state = IOBootInitiating(context).progress()
+        assert 'initiating' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_initiating_allocated(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Allocated)
+        next_state = IOBootInitiating(context).progress()
+        assert 'initiating' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_initiating_booting(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Booting)
+        next_state = IOBootInitiating(context).progress()
+        assert 'initiating' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_initiating_initialized(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Initialized)
+        next_state = IOBootInitiating(context).progress()
+        assert 'completed' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_initiating_initialized(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Initialized)
+        next_state = IOBootInitiating(context).progress()
+        assert 'completed' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_initiating_initialized_freeing(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Initialized)
+        pybgsched.io_block_dict['IO-1'].set_action(pybgsched.Action.Free)
+        next_state = IOBootInitiating(context).progress()
+        assert 'failed' == str(next_state), "Returned state was %s" % next_state
+
+    def test_progress_initiating_terminating(self):
+        block = self.TestIOBlock('IO-1')
+        context = IOBlockBootContext('IO-1', 'testuser')
+        pybgsched.io_block_dict['IO-1'].set_status(pybgsched.IOBlock.Terminating)
+        next_state = IOBootInitiating(context).progress()
+        assert 'failed' == str(next_state), "Returned state was %s" % next_state
 
