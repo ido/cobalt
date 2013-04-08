@@ -34,6 +34,12 @@ class ContextStateMachine(object):
         '''current state of statemachine'''
         return self.__statemachine.get_state()
 
+    def get_details(self):
+        return {}
+
+    def __str__(self):
+        return str(self.get_details())
+
     def progress(self):
         self.__statemachine.process()
 
