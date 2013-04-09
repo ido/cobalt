@@ -18,7 +18,7 @@ The purpose of this readme file is to help setup local Cobalt running environmen
 
 In the ~/p/Cobalt directory do the following command:
 
-git clone git://git.mcs.anl.gov/cobalt.git src-primary
+git clone -b testing git://git.mcs.anl.gov/cobalt.git src-primary
 
 3. From ../src-primary/tools/local_sim copy the following files:
 
