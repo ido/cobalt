@@ -3,38 +3,41 @@
 qselect \- shows the jobids of all of the pending jobs matching the selection criteria
 .SH "SYNOPSIS"
 .B qselect 
-.I [--version] [-d] [-A project] [-t time] [-n number of nodes] [--mode mode] [-q queue] [-h state] <jobid1> <jobid2>
+.I [options]
 .SH "DESCRIPTION"
 .PP
 .B qselect
 shows the jobids of all of the pending jobs matching the selection criteria
 .SH "OPTIONS"
 .TP
-.B \-d
+.B \-A \-\-project "project"
+Specifies the project with which the job is associated.
+.TP
+.B \-d \-\-debug
 Turn on communication debugging.
 .TP
-.B \-\-version
-Print out version string.
+.B \-h \-\-held "state"
+Specifies the held state of the job.
+.TP
+.B \-\-help
+Display help.
 .TP
 .B \-\-mode "mode"
 Specifies the job mode.
 .TP
-.B \-n "node count"
+.B \-n \-\-nodecount "node count"
 Specifies the node count for a job.
 .TP
-.B \-A "project"
-Specifies the project with which the job is associated.
+.B \-q \-\-queue "queue"
+Specifies the queue in which the job resides.
 .TP
-.B \-t "wall clock time" 
+.B \-t \-\-time "wall clock time" 
 Specifies the runtime for a job. The time specified is the full amount in minutes
 allotted to the job for execution. If the job runs over this limit, it
 will be killed. If colon-delimited time is specified, the format is HH:MM:SS.
 .TP
-.B \-q "queue"
-Specifies the queue in which the job resides.
-.TP
-.B \-h "state"
-Specifies the state of the job.
+.B \-\-version
+Print out version string.
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR qstat(1)

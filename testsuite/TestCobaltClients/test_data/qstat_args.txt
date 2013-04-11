@@ -1,0 +1,50 @@
+# Command Line Options and Arguments to test qstat
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+--version # <tc:version_option>
+-h        # <tc:help_option>
+-d        # <tc:debug_only>
+
+-d -f 1 2 3 4 5                           # <tc:full_option_1>
+-f 1 2 3 4 5                              # <tc:full_option_2>
+-f --reverse 1 2 3 4 5                    # <tc:full_option_3>
+-f -l 1 2 3 4 5                           # <tc:full_option_4>
+-f -l --reverse 1 2 3 4 5                 # <tc:full_option_5>
+-f -l --sort user 1 2 3 4 5               # <tc:full_option_6>
+-f -l --reverse --sort user 1 2 3 4 5     # <tc:full_option_7>
+-f -l --sort queue 1 2 3 4 5              # <tc:full_option_8>
+-f -l --reverse --sort queue 1 2 3 4 5    # <tc:full_option_9>
+-f                                        # <tc:full_option_10>
+-f --header Jobid:State:RunTime  1 2 3    # <tc:full_option_11>
+
+-l                                        # <tc:long_option_1>
+-l 1 2 3 4 5                              # <tc:long_option_2>
+-l --reverse 1 2 3 4 5                    # <tc:long_option_3>
+-l --sort user 1 2 3 4 5                  # <tc:long_option_4>
+-l --reverse --sort user 1 2 3 4 5        # <tc:long_option_5>
+-l --sort queue 1 2 3 4 5                 # <tc:long_option_6>
+-l --header Jobid:State:RunTime  1 2 3    # <tc:long_option_11>
+
+# Old commands will call get_queues one too many times. So only check for new qstat
+-f -Q -l 1 2 3                  # <tc:queue_option_1> 
+-f --reverse -Q -l 1 2 3        # <tc:queue_option_2> 
+-f --sort users -Q              # <tc:queue_option_3> 
+-Q                              # <tc:queue_option_4> 
+-Q --reverse                    # <tc:queue_option_5> 
+-Q --sort users                 # <tc:queue_option_6> 
+-Q --sort users --reverse       # <tc:queue_option_7>
+-Q -l                           # <tc:queue_option_8> 
+-Q --reverse -l                 # <tc:queue_option_9> 
+-Q --sort users -l              # <tc:queue_option_10> 
+-Q --sort users --reverse -l    # <tc:queue_option_11>
+-Q --header Jobid:State:RunTime # <tc:queue_option_12>
+
+ # <tc:no_arguments_or_options>

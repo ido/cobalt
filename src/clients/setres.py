@@ -1,282 +1,226 @@
 #!/usr/bin/env python
+"""
+Setup reservations in the scheduler
 
-'''Setup reservations in the scheduler'''
+Usage: %prog [options] <partition1> ... <partitionN>
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS:
+
+'-A','--project',dest='project',type='string',help='set project name for partitions in args'
+'-D','--defer',dest='defer',help='defer flag. needs to be used with -m',action='store_true'
+'-c','--cycletime',dest='cycle',type='string',help='set cycle time in minutes or HH:MM:SS',callback=cb_time
+'-d','--duration',dest='duration',type='string',help='duration time in minutes or HH:MM:SS>',callback=cb_time
+'-m','--modify_res',dest='modify_res',help='modify current reservation specified in -n',action='store_true'
+'-n','--name',dest='name',type='string',help='reservation name to add or modify'
+'-p','--partition',dest='partitions',type='string',help='partition (now optional)'
+'-q','--queue',dest='queue',type='string',help='queue name'
+'-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM>',callback=cb_date
+'-u','--user',dest='users',type='string',help='user id list (user1:user2:...)',callback=cb_user_list
+
+'--allow_passthrough',dest='block_passthrough',help='allow passthrough',callback=cb_passthrough
+'--block_passthrough',dest='block_passthrough',help='do not allow passthrough',callback=cb_passthrough
+
+OPTIONS TO CHANGE IDS ONLY:
+
+'--cycle_id',dest='cycle_id',type='int',help='cycle id'
+'--force_id',dest='force_id',default=False,help='force id flag (only used with --cycle_id or --res_id',action='store_true'
+'--res_id',dest='res_id',type='int',help='res id'
+"""
+import logging
+import math
+import sys
+import time
+from Cobalt import client_utils
+from Cobalt.client_utils import \
+    cb_time, cb_date, cb_passthrough, cb_user_list
+
+from Cobalt.arg_parser import ArgParse
+
 __revision__ = '$Id: setres.py 2154 2011-05-25 00:22:56Z richp $'
 __version__ = '$Version$'
 
-import getopt, math, pwd, sys, time
-import os
-import xmlrpclib
-import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
-from Cobalt.Util import sec_to_str
+def validate_args(parser,spec,opt_count):
+    """
+    Validate setres arguments. Will return true if we want to continue processing options.
+    """
+    if parser.options.partitions != None:
+        parser.args += [parser.options.partitions]
 
-helpmsg = '''Usage: setres.py [--version] [-m] -n name -s <starttime> -d <duration> 
-                  -c <cycle time> -p <partition> -q <queue name> 
-                  -D -u <user> [-f] [partion1] .. [partionN]
-                  --res_id <new res_id>
-                  --cycle_id <new cycle_id>
-                  --block_passthrough
-starttime is in format: YYYY_MM_DD-HH:MM
-duration may be in minutes or HH:MM:SS
-cycle time may be in minutes or DD:HH:MM:SS
-queue name is only needed to specify a name other than the default
-cycle time, queue name, and user are optional'''
+    if parser.options.cycle_id != None or parser.options.res_id != None:
+        only_id_change = True
+        if not parser.no_args() or (opt_count != 0):
+            client_utils.logger.error('No partition arguments or other options allowed with id change options')
+            sys.exit(1)
+    else:
+        only_id_change = False
 
-if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "setres %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
-    if '-h' in sys.argv or '--help' in sys.argv or len(sys.argv) == 1:
-        print helpmsg
-        raise SystemExit, 0
-    try:
-        scheduler = ComponentProxy("scheduler", defer=False)
-    except ComponentLookupError:
-        print "Failed to connect to scheduler"
-        raise SystemExit, 1
-    try:
-        (opts, args) = getopt.getopt(sys.argv[1:], 'A:c:s:d:mn:p:q:u:axD', 
-                ['res_id=', 'cycle_id=', 'force_id', 'block_passthrough',
-                    'allow_passthrough'])
-    except getopt.GetoptError, msg:
-        print msg
-        print helpmsg
-        raise SystemExit, 1
-    try:
-        partitions = [opt[1] for opt in opts if opt[0] == '-p'] + args
-    except ValueError:
-        if args:
-            partitions = args
-
-    opt_dict = {}
-    for opt in opts:
-        opt_dict[opt[0]] = opt[1] 
-
-    only_id_change = True
-    for key in opt_dict:
-        if key not in ['--cycle_id', '--res_id', '--force_id']:
-            only_id_change = False
-            break
-
-    force_id = False
-    if '--force_id' in opt_dict.keys():
-        force_id = True
-        if not only_id_change:
-            print "--force_id can only be used with --cycle_id and/or --res_id."
-            raise SystemExit, 1
-
-    if (not partitions and '-m' not in sys.argv[1:]) and (not only_id_change):
-        print "Must supply either -p with value or partitions as arguments"
-        print helpmsg
-        raise SystemExit, 1
-
-
-    if '--res_id' in opt_dict.keys():
-        try:
-            if force_id:
-                scheduler.force_res_id(int(opt_dict['--res_id']))
-                print "WARNING: Forcing res id to %s" % opt_dict['--res_id']
-            else:
-                scheduler.set_res_id(int(opt_dict['--res_id']))
-                print "Setting res id to %s" % opt_dict['--res_id']
-        except ValueError:
-            print "res_id must be set to an integer value."
-            raise SystemExit, 1
-        except xmlrpclib.Fault, flt:
-            print flt.faultString
-            raise SystemExit, 1
-
-    if '--cycle_id' in opt_dict.keys():
-        try:
-            if force_id:
-                scheduler.force_cycle_id(int(opt_dict['--cycle_id']))
-                print "WARNING: Forcing cycle id to %s" % opt_dict['--cycle_id']
-            else:
-                scheduler.set_cycle_id(int(opt_dict['--cycle_id']))
-                print "Setting cycle_id to %s" % opt_dict['--cycle_id']
-        except ValueError:
-            print "cycle_id must be set to an integer value."
-            raise SystemExit, 1
-        except xmlrpclib.Fault, flt:
-            print flt.faultString
-            raise SystemExit, 1
+    if parser.options.force_id and not only_id_change:
+        client_utils.logging.error("--force_id can only be used with --cycle_id and/or --res_id.")
+        sys.exit(1)
 
     if only_id_change:
-        raise SystemExit, 0
 
-    if '-f' not in sys.argv:
-        # we best check that the partitions are valid
-        try:
-            system = ComponentProxy("system", defer=False)
-        except ComponentLookupError:
-            print "Failed to contact system component for partition check"
-            raise SystemExit, 1
-        for p in partitions:
-            test_parts = system.verify_locations(partitions)
-            if len(test_parts) != len(partitions):
-                missing = [p for p in partitions if p not in test_parts]
-                print "Missing partitions: %s" % (" ".join(missing))
-                raise SystemExit, 1
+        # make the ID change and we are done with setres
+        
+        if parser.options.res_id != None:
+            client_utils.set_res_id(parser)
+        if parser.options.cycle_id != None:
+            client_utils.set_cycle_id(parser)
 
+        continue_processing_options = False # quit, setres is done
+
+    else:
+
+        if parser.no_args() and (parser.options.modify_res == None):
+            client_utils.logging.error("Must supply either -p with value or partitions as arguments")
+            sys.exit(1)
+
+        if parser.options.start == None and parser.options.modify_res == None:
+            client_utils.logger.error("Must supply a start time for the reservation with -s")
+            sys.exit(1)
+
+        if parser.options.duration == None and parser.options.modify_res == None:
+            client_utils.logger.error("Must supply a duration time for the reservation with -d")
+            sys.exit(1)
+
+        if parser.options.defer != None and (parser.options.start != None or parser.options.cycle != None):
+            client_utils.logger.error("Cannot use -D while changing start or cycle time")
+            sys.exit(1)
+
+        if parser.options.name == None and parser.options.modify_res != None:
+            client_utils.logger.error("-m must by called with -n <reservation name>")
+            sys.exit(1)
+
+        # if we have args then verify the args (partitions)
+        if not parser.no_args():
+            client_utils.verify_locations(parser.args)
+
+        # if we have command line arguments put them in spec
+        if not parser.no_args(): spec['partitions'] = ":".join(parser.args)
+
+        continue_processing_options = True # continue, setres is not done.
+
+    return continue_processing_options
+
+        
+def modify_reservation(parser):
+    """
+    this will handle reservation modifications
+    """
+    query = [{'name':parser.options.name, 'start':'*', 'cycle':'*', 'duration':'*'}]
+    res_list = client_utils.get_reservations(query)
+
+    updates = {} # updates to reservation
+    if parser.options.defer != None:
+        res = res_list[0]
+
+        if not res['cycle']:
+            client_utils.logger.error("Cannot use -D on a non-cyclic reservation")
+            sys.exit(1)
+
+        start    = res['start']
+        duration = res['duration']
+        cycle    = float(res['cycle'])
+        now      = time.time()
+        periods  = math.floor((now - start)/cycle)
+
+        if(periods < 0):
+            start += cycle
+        elif(now - start) % cycle < duration:
+            start += (periods + 1) * cycle
+        else:
+            start += (periods + 2) * cycle
+
+        newstart = time.strftime("%c", time.localtime(start))
+        client_utils.logger.info("Setting new start time for for reservation '%s': %s" % (res['name'], newstart))
+
+        updates['start'] = start
+
+        #add a field to updates to indicate we're deferring:
+        updates['defer'] = True
+    else:
+        if parser.options.start != None:
+            updates['start'] = parser.options.start
+        if parser.options.duration != None:
+            updates['duration'] = parser.options.duration
+
+    if parser.options.users != None:
+        updates['users'] = ':'.join(parser.options.users)
+    if parser.options.project != None:
+        updates['project'] = parser.options.project
+    if parser.options.cycle != None:
+        updates['cycle'] = parser.options.cycle
+    if not parser.no_args():
+        updates['partitions'] = ":".join(parser.args)
+    if parser.options.block_passthrough != None:
+        updates['block_passthrough'] = parser.options.block_passthrough
+
+    client_utils.modify_reservation(parser.options.name,updates)
+
+def add_reservation(parser,spec,user):
+    """
+    add reservation 
+    """
+    spec['users']             = ':'.join(parser.options.users) if parser.options.users != None else None
+    spec['cycle']             = parser.options.cycle 
+    spec['project']           = parser.options.project
+    if parser.options.name              == None: spec['name']              = 'system'
+    if parser.options.block_passthrough == None: spec['block_passthrough'] = False
+
+    client_utils.add_reservation(spec,user)
+
+
+def main():
+    """
+    setres main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
+
+    spec     = {} # map of destination option strings and parsed values
+    opts     = {} # old map
+    opt2spec = {}
+
+    dt_allowed = False # Delta time not allowed
+    seconds    = True  # convert to seconds
+    add_user   = False # do not add current user to the list
+
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>           <cb args>
+        [ cb_time                , (dt_allowed,seconds) ],
+        [ cb_date                , () ],
+        [ cb_passthrough         , () ],
+        [ cb_user_list           , (opts,add_user) ]]
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+
+    user = client_utils.getuid()
+
+    parser.parse_it() # parse the command line
+    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+
+    # if continue to process options then
+    if validate_args(parser,spec,opt_count):
+
+        # modify an existing reservation
+        if parser.options.modify_res != None:
+            modify_reservation(parser)
+        
+        # add new reservation
+        else:
+            add_reservation(parser,spec,user)
+
+if __name__ == '__main__':
     try:
-        [start] = [opt[1] for opt in opts if opt[0] == '-s']
-    except ValueError:
-        if '-m' in sys.argv[1:]:
-            start = None
-        else:
-            print "Must supply a start time for the reservation with -s"
-            raise SystemExit, 1
-    try:
-        [duration] = [opt[1] for opt in opts if opt[0] == '-d']
-    except ValueError:
-        if '-m' in sys.argv[1:]:
-            duration = None
-        else:
-            print "Must supply a duration for the reservation with -d"
-            raise SystemExit, 1
-
-    if duration:
-        try:
-            minutes = Cobalt.Util.get_time(duration)
-        except Cobalt.Exceptions.TimeFormatError, e:
-            print "invalid duration specification: %s" % e.args[0]
-            sys.exit(1)
-        dsec = 60 * minutes
-    if start:
-        try:
-            starttime = Cobalt.Util.parse_datetime(start)
-            print "Got starttime %s" % (sec_to_str(starttime))
-        except ValueError:
-            print >> sys.stderr, "Error: start time '%s' is invalid" % start
-            print >> sys.stderr, "start time is expected to be in the format: YYYY_MM_DD-HH:MM"
-            raise SystemExit, 1
-            #starttime = time.mktime((syear, smonth, sday, shour, smin, 0, 0, 0, -1))
-    if '-u' in sys.argv[1:]:
-        user = [opt[1] for opt in opts if opt[0] == '-u'][0]
-        for usr in user.split(':'):
-            try:
-                pwd.getpwnam(usr)
-            except KeyError:
-                print "User %s does not exist" % (usr)
-    else:
-        user = None
-
-    project_specified = False
-    if '-A' in sys.argv[1:]:
-        project_specified = True
-        project = [opt[1] for opt in opts if opt[0] == '-A'][0]
-        if project.lower() == 'none':
-            project = None
-    else:
-        project = None
-
-    if '-n' in sys.argv[1:]:
-        [nameinfo] = [val for (opt, val) in opts if opt == '-n']
-    else:
-        nameinfo = 'system'
-
-    if '-c' in sys.argv[1:]:
-        cycle_time = [opt[1] for opt in opts if opt[0] == '-c'][0]
-    else:
-        cycle_time = None
-
-    if cycle_time:
-        try:
-            minutes = Cobalt.Util.get_time(cycle_time)
-        except Cobalt.Exceptions.TimeFormatError, e:
-            print "invalid cycle time specification: %s" % e.args[0]
-            sys.exit(1)
-        cycle_time = 60 * minutes
-
-    block_passthrough = False
-    if '--allow_passthrough' in opt_dict.keys():
-        block_passthrough = False
-    if '--block_passthrough' in opt_dict.keys():
-        block_passthrough = True
-
-    # modify the existing reservation instead of creating a new one
-    if '-m' in sys.argv[1:]:
-        if '-n' not in sys.argv[1:]:
-            print "-m must by called with -n <reservation name>"
-            raise SystemExit
-        rname = [arg for (opt, arg) in opts if opt == '-n'][0]
-        query = [{'name':rname, 'start':'*', 'cycle':'*', 'duration':'*'}]
-        res_list = scheduler.get_reservations(query)
-        if not res_list:
-            print "cannot find reservation named '%s'" % rname
-            raise SystemExit, 1
-        updates = {}
-        if '-D' in sys.argv:
-            res = res_list[0]
-            if start or cycle_time:
-                print "Cannot use -D while changing start or cycle time"
-                raise SystemExit, 1
-            if not res['cycle']:
-                print "Cannot use -D on a non-cyclic reservation"
-                raise SystemExit, 1
-            start = res['start']
-            duration = res['duration']
-            cycle = float(res['cycle'])
-            now = time.time()
-            periods = math.floor((now - start)/cycle)
-
-            if(periods < 0):
-                start += cycle
-            elif(now - start) % cycle < duration:
-                start += (periods + 1) * cycle
-            else:
-                start += (periods + 2) * cycle
-
-            newstart = time.strftime("%c", time.localtime(start))
-            print "Setting new start time for for reservation '%s': %s" \
-                  % (res['name'], newstart)
-
-            updates['start'] = start
-            #add a field to updates to indicate we're deferring:
-            updates['defer'] = True
-        else:
-            if start:
-                updates['start'] = starttime
-            if duration:
-                updates['duration'] = dsec
-
-        if user:
-            updates['users'] = user
-        if project_specified:
-            updates['project'] = project
-        if cycle_time:
-            updates['cycle'] = cycle_time
-        if partitions:
-            updates['partitions'] = ":".join(partitions)
-        if '--block_passthrough' in opt_dict.keys():
-            updates['block_passthrough'] = True
-        if '--allow_passthrough' in opt_dict.keys():
-            updates['block_passthrough'] = False
-
-        scheduler.set_reservations([{'name':rname}], updates, pwd.getpwuid(os.getuid())[0])
-        print scheduler.check_reservations()
-
-        raise SystemExit, 0
-    spec = { 'partitions': ":".join(partitions), 'name': nameinfo,
-            'users': user, 'start': starttime, 'duration': dsec,
-            'cycle': cycle_time, 'project': project,
-            'block_passthrough':block_passthrough }
-    if '-q' in sys.argv:
-        spec['queue'] = [opt[1] for opt in opts if opt[0] == '-q'][0]
-    try:
-        print scheduler.add_reservations([spec], pwd.getpwuid(os.getuid())[0])
-        print scheduler.check_reservations()
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == ComponentLookupError.fault_code:
-            print "Couldn't contact the scheduler"
-            sys.exit(1)
-        else:
-            print flt.faultString
-            sys.exit(1)
-    except:
-        print "Couldn't contact the scheduler"
+        main()
+    except SystemExit:
         raise
-
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise

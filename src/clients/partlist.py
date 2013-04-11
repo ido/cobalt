@@ -1,71 +1,75 @@
 #!/usr/bin/env python
+"""
+Cobalt partlist command - Partlist displays online partitions for users
 
-'''Partlist displays online partitions for users'''
+Usage: %prog [options] 
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS:
+
+"""
+import time
+import logging
+import sys
+from Cobalt import client_utils
+
+from Cobalt.arg_parser import ArgParse
+
 __revision__ = '$Revision: 1981 $'
 __version__ = '$Version$'
 
-import sys, operator
-import time
-from optparse import OptionParser
-import Cobalt.Util
-import xmlrpclib
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError, NotSupportedError
-import Cobalt.Util
+def main():
+    """
+    partlist main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
-helpmsg = '''Usage: partlist [--version]'''
+    # read the cobalt config files
+    client_utils.read_config()
 
-Cobalt.Util.init_cobalt_config()
-get_config_option = Cobalt.Util.get_config_option
+    # list of callback with its arguments
+    callbacks = None
 
-sys_type = get_config_option('bgsystem', 'bgtype')
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
 
-if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "partlist %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
+    parser = ArgParse(opt_def,callbacks)
 
-    try:
-        system = ComponentProxy("system", defer=False)
-    except ComponentLookupError:
-        print "Failed to connect to system"
-        raise SystemExit, 1
+    parser.parse_it() # parse the command line
 
-    try:
-        scheduler = ComponentProxy("scheduler", defer=False)
-    except ComponentLookupError:
-        print "Failed to connect to scheduler"
-        raise SystemExit, 1
+    if not parser.no_args():
+        client_utils.logger.error("No arguments required")
+        sys.exit(1)
+    
+    sys_info = client_utils.system_info()
+    
+    sys_type = sys_info[0]
+
     if sys_type == 'bgq':
         spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*',
-            'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
-            'backfill_time':"*", 'draining':"*",'node_geometry':"*"}]
+                 'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
+                 'backfill_time':"*", 'draining':"*",'node_geometry':"*"}]
     else:
         spec = [{'tag':'partition', 'name':'*', 'queue':'*', 'state':'*',
-            'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
-            'backfill_time':"*", 'draining':"*"}]
-    try:
-        parts = system.get_partitions(spec)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == NotSupportedError.fault_code:
-            print "incompatible with cluster support:  try nodelist"
-            raise SystemExit, 1
-        else:
-            raise
+                 'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
+                 'backfill_time':"*", 'draining':"*"}]
 
-    reservations = scheduler.get_reservations([{'queue':"*", 'partitions':"*",
-        'active':True}])
+    parts = client_utils.get_partitions(spec)
+    reservations = client_utils.get_reservations([{'queue':'*','partitions':'*','active':True}])
+
     expanded_parts = {}
     for res in reservations:
-        for res_part in res['partitions'].split(":"):
+        for res_part in res['partitions'].split(':'):
             for p in parts:
                 if p['name'] == res_part:
                     if expanded_parts.has_key(res['queue']):
                         expanded_parts[res['queue']].update(p['children'])
                     else:
                         expanded_parts[res['queue']] = set( p['children'] )
-                    expanded_parts[res['queue']].add(p['name'])
+                    expanded_parts[res['queue']].add(p['name'])    
+    
     for res in reservations:
         for p in parts:
             if p['name'] in expanded_parts.get(res['queue'], []):
@@ -91,8 +95,6 @@ if __name__ == '__main__':
         else:
             part['backfill'] = "-"
 
-
-
     if sys_type == 'bgq':
         header = [['Name', 'Queue', 'State', 'Backfill', 'node_geometry']]
         #build output list, adding
@@ -105,4 +107,14 @@ if __name__ == '__main__':
         header = [['Name', 'Queue', 'State', 'Backfill']]
         #build output list, adding
         output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
-    Cobalt.Util.printTabular(header + output)
+    client_utils.printTabular(header + output)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise
+

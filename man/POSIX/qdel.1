@@ -3,18 +3,18 @@
 qdel \- Delete job from the queue manager
 .SH SYNOPSIS
 .B qdel
-.I [--version] [-d] [jobid1] [jobid2]
+.I [options]  jobid1 [jobid2 ... jobidN]
 .SH DESCRIPTION
 .PP
 .B qdel
 Delete a job from the queue. 
 .SH OPTIONS
 .TP
+.B \-\-help
+Print help
+.TP
 .B \-\-version
 Print out version string
-.TP
-.B \-d
-Run in debugging mode.
 .SH "SEE ALSO"
 .BR qstat(1),
 .BR qsub(1),

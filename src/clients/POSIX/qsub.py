@@ -1,295 +1,270 @@
 #!/usr/bin/env python
+"""
+Submit jobs to the queue manager for execution.
 
-'''Cobalt qsub command'''
-__revision__ = '$Revision: 559 $'
-__version__ = '$Version$'
+Usage: %prog [options] <executable> [<excutable options>]
+version: "%prog " + __revision__ + , Cobalt  + __version__
 
-import os
-import sys
-import pwd
-import os.path
-import xmlrpclib
-import ConfigParser
-import re
+OPTIONS DEFINITIONS:
+
+Option with no values:
+
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+'-v','--verbose',dest='verbose',help='not used',action='store_true'
+'-h','--held',dest='user_hold',help='hold this job once submitted',action='store_true'
+'--preemptable',dest='preemptable',help='make this job preemptable',action='store_true'
+'--run_project',dest='run_project',help='set run project flag for this job',action='store_true'
+'--disable_preboot',dest='script_preboot',help='disable script preboot',action='store_false'
+
+Option with values:
+
+'-n','--nodecount',dest='nodes',type='int',help='set job node count',callback=cb_nodes
+'--proccount',dest='procs',type='int',help='set job proc count',callback=cb_gtzero
+'-A','--project',dest='project',type='string',help='set project name'
+'--cwd',dest='cwd',type='string',help='set current working directory'
+'-q','--queue',dest='queue',type='string',help='set queue name'
+'-M','--notify',dest='notify',type='string',help='set notification email address'
+'--env',dest='envs',type='string',help='set env variables (envvar1=val1:envvar2=val2:...:envvarN=valN)',callback=cb_env
+'-t','--time',dest='walltime',type='string',help='set walltime (minutes or HH:MM:SS)',callback=cb_time
+'-u','--umask',dest='umask',type='string',help='set umask: octal number default(022)',callback=cb_umask
+'-O','--outputprefix',dest='outputprefix',type='string',help='output prefix for error,output or debuglog files',callback=cb_path
+'-e','--error',dest='errorpath',type='string',help='set error file path',callback=cb_path
+'-o','--output',dest='outputpath',type='string',help='set output file path',callback=cb_path
+'-i','--inputfile',dest='inputfile',type='string',help='set input file',callback=cb_path
+'--debuglog',dest='cobalt_log_file',type='string',help='set debug log path file',callback=cb_path
+'--dependencies',dest='all_dependencies',type='string',help='set job dependencies (jobid1:jobid2:...:jobidN)',callback=cb_dep
+'--attrs',dest='attrs',type='string',help='set attributes (attr1=val1:attr2=val2:...:attrN=valN)',callback=cb_attrs
+'--user_list','--run_users',dest='user_list',type='string',help='set user list (user1:user2:...:userN)',callback=cb_user_list
+
+The following options are only valid on IBM BlueGene architecture platforms:
+
+'--kernel',dest='kernel',type='string',help='set kernel profile'
+'-K','--kerneloptions',dest='kerneloptions',type='string',help='set kernel options'
+'--mode',dest='mode',type='string',help='select system mode'
+'--geometry',dest='geometry',type='string',help='set geometry (AxBxCxDxE)',callback=cb_geometry
+
+"""
 import logging
 import string
+import os
+import sys
+from Cobalt import client_utils
+from Cobalt.client_utils import \
+    cb_debug, cb_env, cb_nodes, cb_time, cb_umask, cb_path, \
+    cb_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero
+from Cobalt.arg_parser import ArgParse
 
-import Cobalt
-import Cobalt.Logging
-import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import QueueError, ComponentLookupError
-from Cobalt.Util import parse_geometry_string
+    
+__revision__ = '$Revision: 559 $'
+__version__  = '$Version$'
 
-helpmsg = """
-Usage: qsub [-d] [-v] -A <project name> -q <queue> --cwd <working directory>
-             --dependencies <jobid1>:<jobid2> --preemptable
-             --env envvar1=value1:envvar2=value2 --kernel <kernel profile>
-             -K <kernel options> -O <outputprefix> -t time <in minutes>
-             -e <error file path> -o <output file path> -i <input file path>
-             -n <number of nodes> -h --proccount <processor count> -u <umask>
-             --mode <mode> --debuglog <cobaltlog file path> <command> <args>
-             --users <user1>:<user2> --run_project --disable_preboot
-"""
+def validate_args(parser, spec, opt_count):
+    """
+    Validate qsub arguments
+    """
 
+    # Check if any required option entered
+    if opt_count == 0:
+        client_utils.logger.error("No required options entered")
 
-
-if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
-            'preemptable':'preemptable', 'run_project':'run_project', 'disable_preboot':'disable_preboot'}
-    doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
-                'proccount':'proccount', 'cwd':'cwd', 'env':'env', 'kernel':'kernel',
-                'K':'kerneloptions', 'q':'queue', 'O':'outputprefix', 'u':'umask',
-                'A':'project', 'M':'notify', 'e':'error', 'o':'output',
-                'i':'inputfile', 'dependencies':'dependencies', 'F':'forcenoval',
-                'debuglog':'debuglog', 'attrs':'attrs', 'run_users':'user_list',
-                'geometry':'geometry'}
-    (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
-                                               options, doptions, helpmsg)
-    # need to filter here for all args
-    if opts['version']:
-        print "qsub %s" % __revision__
-        print "cobalt %s" % __version__
+    # If no time supplied flag it and exit
+    if parser.options.walltime == None:
+        client_utils.logger.error("'time' not provided")
         sys.exit(1)
 
-    # setup logging
-    level = 30
-    if '-d' in sys.argv:
-        level = 10
-    Cobalt.Logging.setup_logging('qsub', to_syslog=False, level=level)
-    logger = logging.getLogger('qsub')
-
-    CP = ConfigParser.ConfigParser()
-    CP.read(Cobalt.CONFIG_FILES)
-
-    failed = False
-    needed = ['time', 'nodecount'] #, 'project']
-    if [field for (field, value) in opts.iteritems() if not value and field in needed] or not command:
-        for ofield in needed:
-            if opts[ofield]:
-                needed.remove(ofield)
-        if command:
-            logger.error("Not all required arguments provided: %s needed" % (",".join(needed)))
-        else:
-            logger.error("Command required")
-        logger.error(helpmsg)
+    # If no nodecount give then flag it an exit
+    if parser.options.nodes == None:
+        client_utils.logger.error("'nodecount' not provided")
         sys.exit(1)
 
-    jobspec = {'tag':'job'}
-    if opts['umask']:
-        jobspec['umask'] = int(opts['umask'], 8)
-        os.umask(int(opts['umask'], 8))
+    # if no excecutable specified then flag it an exit
+    if parser.no_args():
+        client_utils.logger.error("No executable specified")
+        sys.exit(1)
+
+    # Check if it is a valid executable/file
+    cmd = parser.args[0].replace(' ','')
+    if cmd[0] != '/':
+        cmd = spec['cwd'] + '/' + cmd
+
+    if not os.path.isfile(cmd):
+        client_utils.logger.error("command %s not found, or is not a file" % cmd)
+        sys.exit(1)
+
+    if not os.access(cmd, os.X_OK | os.R_OK):
+        client_utils.logger.error("command %s is not executable" % cmd)
+        sys.exit(1)
+
+    # if there are any arguments for the specified command store them in spec
+    spec['command'] = cmd
+    if len(parser.args) > 1:
+        spec['args'] = parser.args[1:]
     else:
-        um = os.umask(022)
-        os.umask(um)
-        jobspec['umask'] = um
+        spec['args'] = []
 
-    if opts['kerneloptions']:
-        jobspec['kerneloptions'] = opts['kerneloptions']
+def update_outputprefix(parser,spec):
+    """
+    Update the the appropriate paths with the outputprefix path
+    """
+    # If the paths for the error log, output log, or the debuglog are not provided 
+    # then update them with what is provided in outputprefix.
+    if parser.options.outputprefix != None:
+        # pop the value for outputrefix 
+        op = spec.pop('outputprefix')
 
-    if opts['cwd'] == False:
-        opts['cwd'] = os.getcwd()
-    if not os.path.isdir(opts['cwd']):
-        logger.error("Error: dir '%s' is not a directory" % opts['cwd'])
-        sys.exit(1)
-    # ensure time is actually in minutes
-    try:
-        minutes = Cobalt.Util.get_time(opts['time'])
-    except Cobalt.Exceptions.TimeFormatError, e:
-        logger.error("invalid time specification: %s" % e.args[0])
-        sys.exit(1)
-    #logger.error("submitting walltime=%s minutes" % str(minutes))
-    opts['time'] = str(minutes)
-    user = pwd.getpwuid(os.getuid())[0]
-    if command[0][0] != '/':
-        command[0] = opts['cwd'] + '/' + command[0]
+        # if error path, cobalt log path or output log path not provide then update them wiht outputprefix
+        if parser.options.errorpath == None:
+            spec['errorpath'] = op + ".error"
+        if parser.options.cobalt_log_file == None:
+            spec['cobalt_log_file'] = op + ".cobaltlog"
+        if parser.options.outputpath == None:
+            spec['outputpath'] = op + ".output"
 
-    if not os.path.isfile(command[0]):
-        logger.error("command %s not found, or is not a file" % command[0])
-        sys.exit(1)
-
-    if not os.access(command[0], os.X_OK | os.R_OK):
-        logger.error("command %s is not executable" % command[0])
-        sys.exit(1)
-    for field in ['kernel', 'queue']:
-        if not opts[field]:
-            opts[field] = 'default'
-
-    if opts['attrs'] is not False:
-        if sys.argv.count('--attrs') - command.count('--attrs') > 1:
-            logger.error("Use of multiple --attrs options is not supported.  Specify multiple attributes to match with --attrs FOO=1:BAR=2")
-            raise SystemExit(1)
-        jobspec['attrs'] = {}
-        newoptsattrs = {}
-        for attr in opts["attrs"].split(":"):
-            if len(attr.split("=")) == 2:
-                key, value = attr.split("=")
-                jobspec["attrs"].update({key:value})
-                newoptsattrs.update({key:value})
-            elif len(attr.split("=")) == 1:
-                if attr[:3] == "no_":
-                    jobspec["attrs"].update({attr[3:]:"false"})
-                    newoptsattrs.update({attr[3:]:"false"})
+def update_paths(spec):
+    """
+    This functiojn will update all the paths in spec that need the current working directory.
+    """
+    for key in spec:
+        value = spec[key]
+        # if path needs current working directory then
+        if type(value) == type(""):
+            if value.find(client_utils.CWD_TAG) != -1:
+                if 'cwd' in spec:
+                    _cwd = spec['cwd']
                 else:
-                    jobspec["attrs"].update({attr:"true"})
-                    newoptsattrs.update({attr:"true"})
-            else:
-                print "Improperly formatted argument to attrs : %s" % attr
-                sys.exit(1)
-        opts['attrs'] = newoptsattrs
-    else:
-        opts['attrs'] = {}
+                    _cwd = client_utils.getcwd()
+                _path = spec[key].replace(client_utils.CWD_TAG,_cwd)
+                # validate the path
+                if not os.path.isdir(os.path.dirname(_path)):
+                    client_utils.logger.error("directory %s does not exist" % _path)
+                    sys.exit(1)
+                spec[key] = _path
 
-    try:
-        try:
-            system = ComponentProxy("system", defer=False)
-        except:
-            print >> sys.stderr, "Failed to contact system component"
-            sys.exit(1)
-        opts = system.validate_job(opts)
-    except xmlrpclib.Fault, flt:
-        logger.error("Job failed to validate: %s" % (flt.faultString))
-        if not opts['forcenoval']:
+def check_inputfile(parser,spec):
+    """
+    Verify the input file is an actual file
+    """
+    if parser.options.inputfile != None:
+        inputfile = spec['inputfile']
+        if not os.path.isfile(inputfile):
+            client_utils.logger.error("file %s not found, or is not a file" % inputfile)
             sys.exit(1)
 
-    if opts['project']:
-        jobspec['project'] = opts['project']
+def update_spec(opts,spec,opt2spec):
+    """
+    This function will update the appropriate spec values with the opts values
+    """
+    # Get the key validated values into spec dictionary
+    # INFO: This needs to be updated if we add or delete validated values --GDR
+    # TODO: If we move job validation to cqm.add_jobs then we can get rid of this. --GDR
+    for opt in ['mode','proccount']:
+        spec[opt2spec[opt]] = opts[opt]
 
-    jobspec['run_project'] =  opts['run_project']
-
-    if opts['notify']:
-        jobspec['notify'] = opts['notify']
-
-    if opts['user_list']:
-        jobspec['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]  
-        for auth_user in jobspec['user_list']:
-            try:
-                pwd.getpwnam(auth_user)
-            except KeyError:
-                logger.error("user %s does not exist." % auth_user)
-                sys.exit(1)
-            except Exception:
-                raise
-    else:
-        jobspec['user_list'] = [user]
-    if user not in jobspec['user_list']:
-        jobspec['user_list'].insert(0, user)
-
-    if opts['geometry']:
-        jobspec['geometry'] = parse_geometry_string(opts['geometry'])
-
-    jobspec.update({'user':user, 'outputdir':opts['cwd'], 'walltime':opts['time'],
-                    'jobid':'*', 'path':os.environ['PATH'], 'mode':opts.get('mode', 'co'),
-                    'kernel':opts['kernel'], 'queue':opts['queue'],
-                    'procs':opts.get('proccount'), 'nodes':opts.get('nodecount')})
-    if opts['outputprefix']:
-        if opts['outputprefix'][0] == '/':
-            jobspec.update({'outputpath':"%s.output" % (opts['outputprefix']),
-                            'errorpath':"%s.error" % (opts['outputprefix']),
-                            'cobalt_log_file':"%s.cobaltlog" % (opts['outputprefix'])})
-        else:
-            jobspec.update({'outputpath':"%s/%s.output" % (opts['cwd'],
-                                                           opts['outputprefix']),
-                            'errorpath':"%s/%s.error" % (opts['cwd'], opts['outputprefix']),
-                            'cobalt_log_file':"%s/%s.cobaltlog" % (opts['cwd'], opts['outputprefix'])})
-    if opts['error']:
-        if not opts['error'].startswith('/'):
-            jobspec.update({'errorpath':"%s/%s" % (opts['cwd'], opts['error'])})
-        else:
-            jobspec.update({'errorpath':opts['error']})
-        if not os.path.isdir(os.path.dirname(jobspec.get('errorpath'))):
-            logger.error("directory %s does not exist" % jobspec.get('errorpath'))
-            sys.exit(1)
-    if opts['output']:
-        if not opts['output'].startswith('/'):
-            jobspec.update({'outputpath':"%s/%s" % (opts['cwd'], opts['output'])})
-        else:
-            jobspec.update({'outputpath':opts['output']})
-        if not os.path.isdir(os.path.dirname(jobspec.get('outputpath'))):
-            logger.error("directory %s does not exist" % jobspec.get('outputpath'))
-            sys.exit(1)
-    if opts['debuglog']:
-        if not opts['debuglog'].startswith('/'):
-            jobspec.update({'cobalt_log_file':"%s/%s" % (opts['cwd'], opts['debuglog'])})
-        else:
-            jobspec.update({'cobalt_log_file':opts['debuglog']})
-        if not os.path.isdir(os.path.dirname(jobspec.get('cobalt_log_file'))):
-            logger.error("directory %s does not exist" % jobspec.get('cobalt_log_file'))
-            sys.exit(1)
-    if opts['held']:
-        jobspec.update({'user_hold':True})
-    if opts['env']:
-        jobspec['envs'] = {}
-        key_value_pairs = [item.split('=', 1) for item in re.split(r':(?=\w+\b=)', opts['env'])]
-        for kv in key_value_pairs:
-            if len(kv) != 2:
-                print "Improperly formatted argument to env : %r" % kv
-                sys.exit(1)
-        for key, value in key_value_pairs:
-            jobspec['envs'].update({key:value})
-    if opts['inputfile']:
-        if not opts['inputfile'].startswith('/'):
-            jobspec.update({'inputfile':"%s/%s" % (opts['cwd'], opts['inputfile'])})
-        else:
-            jobspec.update({'inputfile':opts['inputfile']})
-        if not os.path.isfile(jobspec.get('inputfile')):
-            logger.error("file %s not found, or is not a file" % jobspec.get('inputfile'))
-            sys.exit(1)
-    if opts['preemptable']:
-        jobspec.update({'preemptable':True})
-    jobspec.update({'cwd':opts['cwd'], 'command':command[0], 'args':command[1:]})
-
-    jobspec['script_preboot'] = True
-    if opts['disable_preboot']:
-        jobspec['script_preboot'] = False
-
-    if opts['dependencies']:
-        Cobalt.Util.check_dependencies(opts['dependencies'])
-        jobspec['all_dependencies'] = opts['dependencies']
-    try:
-        filters = CP.get('cqm', 'filters').split(':')
-    except ConfigParser.NoOptionError:
-        filters = []
-    for filt in filters:
-        Cobalt.Util.processfilter(filt, jobspec)
-
-    try:
-        cqm = ComponentProxy("queue-manager", defer=False)
-        job = cqm.add_jobs([jobspec])
-    except ComponentLookupError:
-        print >> sys.stderr, "Failed to connect to queue manager"
-        sys.exit(1)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == QueueError.fault_code:
-            logger.error(flt.faultString)
-            sys.exit(1)
-        else:
-            logger.error("Job submission failed")
-            print repr(flt.faultCode)
-            print repr(QueueError.fault_code)
-            logger.error(flt)
-            sys.exit(1)
-    except:
-        logger.error("Error submitting job")
-        sys.exit(1)
+def logjob(job,spec):
+    """
+    log job info
+    """
     # log jobid to stdout
     if job:
-        print job[0]['jobid']
-
-        if jobspec.has_key('cobalt_log_file'):
-            filename = jobspec['cobalt_log_file']
+        client_utils.logger.info(job['jobid'])
+        if spec.has_key('cobalt_log_file'):
+            filename = spec['cobalt_log_file']
             t = string.Template(filename)
-            filename = t.safe_substitute(jobid=job[0]['jobid'])
+            filename = t.safe_substitute(jobid=job['jobid'])
         else:
-            filename = "%s/%s.cobaltlog" % (jobspec['outputdir'], job[0]['jobid'])
+            filename = "%s/%s.cobaltlog" % (spec['outputdir'], job['jobid'])
 
         try:
             cobalt_log_file = open(filename, "a")
             print >> cobalt_log_file, "%s\n" % (" ".join(sys.argv))
-            print >> cobalt_log_file, "submitted with cwd set to: %s\n" % jobspec['cwd']
+            print >> cobalt_log_file, "submitted with cwd set to: %s\n" % spec['cwd']
             cobalt_log_file.close()
         except Exception, e:
-            logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
-            logger.error("         %s" % e.strerror)
+            client_utils.logger.error("WARNING: failed to create cobalt log file at: %s" % filename)
+            client_utils.logger.error("         %s" % e.strerror)
     else:
-        logger.error("failed to create the job.  Maybe a queue isn't there?")
+        client_utils.logger.error("failed to create the job.  Maybe a queue isn't there?")
+
+def main():
+    """
+    qsub main function.
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
+    
+    # read the cobalt config files
+    client_utils.read_config()
+
+    spec     = {} # map of destination option strings and parsed values
+    opts     = {} # old map
+    opt2spec = {}
+
+    dt_allowed = False  # delta time NOT allowed
+    use_cwd    = True   # use cwd when relative path given
+    add_user   = True   # add current user to the list
+    seconds    = False  # do not convert time to seconds
+
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args (tuple) >
+        ( cb_debug        , () ),
+        ( cb_env          , (opts,) ),
+        ( cb_nodes        , () ),
+        ( cb_gtzero       , () ),
+        ( cb_time         , (dt_allowed,seconds) ),
+        ( cb_umask        , () ),
+        ( cb_path         , (opts, use_cwd) ),
+        ( cb_dep          , () ),
+        ( cb_attrs        , () ),
+        ( cb_user_list    , (opts,add_user) ),
+        ( cb_geometry     , (opts,) )]
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+
+    user = client_utils.getuid()
+
+    # Set required default values
+    spec['tag']            = 'job'
+    spec['user']           = user
+    spec['outputdir']      = client_utils.CWD_TAG
+    spec['jobid']          = '*'
+    spec['path']           = client_utils.getpath()
+    spec['mode']           = False
+    spec['cwd']            = client_utils.getcwd()
+    spec['kernel']         = 'default'
+    spec['queue']          = 'default'
+    spec['umask']          = 022
+    spec['run_project']    = False
+    spec['user_list']      = [user]
+    spec['procs']          = False
+    spec['script_preboot'] = True
+
+    parser.parse_it() # parse the command line
+    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opts['disable_preboot'] = not spec['script_preboot']
+
+    client_utils.setumask(spec['umask'])
+    validate_args(parser,spec,opt_count)
+    update_outputprefix(parser,spec)
+    update_paths(spec)
+    check_inputfile(parser,spec)
+    client_utils.validate_job(opts)
+    filters = client_utils.get_filters()
+    client_utils.process_filters(filters,spec)
+    update_spec(opts,spec,opt2spec)
+    jobs = client_utils.add_jobs([spec])
+    logjob(jobs[0],spec)
+    
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise

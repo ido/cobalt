@@ -1,58 +1,65 @@
 #!/usr/bin/env python
+"""
+Cobalt qdel command
 
-'''Cobalt queue delete'''
+Usage: %prog [options] <jobid1> [ ... <jobidN>]
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS: NONE
+"""
+import time
+import logging
+import sys
+from Cobalt import client_utils
+
+from Cobalt.arg_parser import ArgParse
+
 __revision__ = '$Revision: 345 $'
 __version__ = '$Version$'
 
-import getopt, os, pwd, sys, time
-import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
+def main():
+    """
+    qdel main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
-usehelp = "Usage:\nqdel [--version] [-f] <jobid> <jobid>"
+    # read the cobalt config files
+    client_utils.read_config()
+
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args>
+        [ None             , () ] ]
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+
+    user = client_utils.getuid()
+
+    # Set required default values: None
+
+    parser.parse_it() # parse the command line
+
+    jobids = client_utils.validate_jobid_args(parser)
+    jobs   = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in jobids]
+
+    deleted_jobs = client_utils.del_jobs(jobs, False, user)
+    time.sleep(1)
+    if deleted_jobs:
+        data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in deleted_jobs]
+        client_utils.logger.info("      Deleted Jobs")
+        client_utils.print_tabular(data)
 
 if __name__ == '__main__':
-    if '--version' in sys.argv:
-        print "qdel %s" % __revision__
-        print "cobalt %s" % __version__
-        raise SystemExit, 0
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f')
-    except getopt.GetoptError, gerr:
-        print gerr
-        print usehelp
-        raise SystemExit, 1
-    if len(args) < 1:
-        print usehelp
-        raise SystemExit, 1
-    level = 30
-    if '-d' in sys.argv:
-        level = 10
-    user = pwd.getpwuid(os.getuid())[0]
-    Cobalt.Logging.setup_logging('qdel', to_syslog=False, level=level)
-    logger = Cobalt.Logging.logging.getLogger('qdel')
-    try:
-        cqm = ComponentProxy("queue-manager", defer=False)
-    except ComponentLookupError:
-        print >> sys.stderr, "Failed to connect to queue manager"
-        sys.exit(1)
-    
-    for i in range(len(args)):
-        if args[i] == '*':
-            continue
-        try:
-            args[i] = int(args[i])
-        except:
-            logger.error("jobid must be an integer")
-            raise SystemExit, 1
-    
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in args]
-    jobs = cqm.del_jobs(spec, False, user)
-    time.sleep(1)
-    if jobs:
-        data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in jobs]
-        print "      Deleted Jobs"
-        Cobalt.Util.print_tabular(data)
-    else:
-        print "qdel: Job %s not found" % sys.argv[-1]
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise
 
