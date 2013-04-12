@@ -98,6 +98,7 @@ class Block(object):
         return
 
     def getStatus(self):
+        print "fetching statuses"
         self.raise_error()
         if len(self.statuses) > 1:
             status = self.statuses.pop()

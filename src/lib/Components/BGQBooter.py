@@ -137,10 +137,15 @@ class BGQIOBlockBoot(Cobalt.ContextStateMachine.ContextStateMachine):
     _state_instances = []
 
     def __init__(self, io_block_name, user, tag):
-        super(BGQIOBlockBoot, self).__init__(context=IOBlockBootContext(io_block_name, user))
+        super(BGQIOBlockBoot, self).__init__(context=IOBlockBootContext(io_block_name, user), initialstate='pending',
+                exceptionstate='failed')
         self.io_boot_id = _io_boot_id_gen.next()
         self.tag = tag
         _logger.info("IO Block Boot on %s initialized.", self.io_boot_id)
+
+    @property
+    def block_id(self):
+        return self.context.io_block_name
 
     def get_details(self):
         return {'io_boot_id': self.io_boot_id, 'tag':self.tag, 'user':self.context.user,
@@ -184,6 +189,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.booting_suspended = False
         self.register_run_action('progress_boot', self.progress_boot)
         self.register_handler('initiate_boot', self.handle_initiate_boot)
+        self.register_handler('initiate_io_boot', self.handle_initiate_io_boot)
         self.register_handler('reap_boot', self.handle_reap_boot)
         _logger.debug("%s", pybgsched.__file__)
         _logger.info("Booter Initialized")
@@ -292,6 +298,11 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         _logger.debug("Sent message to initiate boot: %s %s %s %s", block_id, job_id, user, subblock_parent)
         return
 
+    def initiate_io_boot(self, io_block_id, user=None, tag=None):
+        self.send(InitiateIOBootMsg(io_block_id, user, tag))
+        _logger.debug("Sent message to initiate IO boot: %s %s %s", io_block_id, user, tag)
+        return
+
     def progress_boot(self, test_delay=0):
         '''callback to be registered with the run method.
         This gets executed after all messages have been parsed.
@@ -301,8 +312,8 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             #A boot could get reaped in the middle of this.
             self.boot_data_lock.acquire()
             for boot in self.pending_boots:
+                boot.progress()
                 try:
-                    boot.progress()
                     #for race-condition testing
                     if test_delay !=0:
                         _logger.debug('sleeping for %s' , test_delay)
@@ -328,6 +339,20 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             #We apparently cannot handle this message as it lacks a message type
             #take no action and let another handler try the message
             pass
+        finally:
+            self.boot_data_lock.release()
+        return retval
+
+    def handle_initiate_io_boot(self, msg):
+
+        retval = False
+        try:
+            self.boot_data_lock.acquire()
+            if msg.msg_type == 'initiate_io_boot':
+                new_io_boot = BGQIOBlockBoot(msg.io_block_name, msg.user, msg.tag)
+                self.pending_boots.add(new_io_boot)
+        except AttributeError:
+            raise
         finally:
             self.boot_data_lock.release()
         return retval
@@ -379,5 +404,4 @@ class InitiateIOBootMsg(object):
         self.io_block_name = io_block_name
         self.user = user
         self.tag = tag
-
 
