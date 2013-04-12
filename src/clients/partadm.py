@@ -73,7 +73,7 @@ def validate_args(parser):
         client_utils.logger.error(errmsg)
         sys.exit(1)
 
-    opts_wo_args = ['list_blocks','xml','dump','savestate','boot_stop','boot_start','boot_status']
+    opts_wo_args = ['list_blocks','xml','dump','savestate','boot_stop','boot_start','boot_status','list_io']
 
     # Make sure jobid or queue is supplied for the appropriate commands
     if parser.no_args() and not [opt for opt in spec if opt in opts_wo_args]:
@@ -487,7 +487,7 @@ def main():
                       part['state'], ','.join([])] for part in parts]
             client_utils.printTabular(data, centered=[3,4])
 
-    elif opts.boot_start or opts.boot_stop: 
+    elif opts.boot_start or opts.boot_stop or opts.list_io:
         pass
     else:
         client_utils.logger.info(parts)
@@ -499,12 +499,12 @@ def main():
         #fetch and print bulk IO Block data
         if sys_type == 'bgq':
             args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*'}],)
-            io_block_info = component_call(system.get_io_blocks, args)
+            io_block_info = client_utils.component_call(system.get_io_blocks, args)
             data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes']]
             for io_block in io_block_info:
                 data.append([io_block['name'], io_block['size'], io_block['state'], io_block['status'],
                     'x' if io_block['block_computes_for_reboot'] else '-'])
-            Cobalt.Util.printTabular(data, centered=[4])
+            client_utils.printTabular(data, centered=[4])
 
 if __name__ == '__main__':
     try:
