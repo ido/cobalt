@@ -5,6 +5,10 @@ parsing command line options and positional arguments.
 """
 import optparse
 
+# function will return true if specified tag is found in the given line it 
+# will ignore case and strip beginning and ending blanks
+tag_found = lambda tag,line:line.lower().strip()[0:len(tag)] == tag.lower()
+
 class ArgParse(object):
     """
     Class use for parsing command line arguments.
@@ -48,19 +52,26 @@ class ArgParse(object):
         lines = option_def.split('\n')
         no_cbs = (None,None) 
 
+        get_usage = False
+            
         for line in lines:
-
-            # lower case for finding usage and version without caring about case
-            line_lower = line.lower()
-            
             # get usage string
-            if line_lower.find('usage:') != -1: 
+            if not get_usage and tag_found('usage:',line):
+                get_usage = True
                 self.usage = line # keep case
-            
+
             # get version string
-            elif line_lower.find('version:') != -1:
+            elif tag_found('version:',line):
+                get_usage    = False # if start usage was set make sure it is cleared now.
                 self.version = line # keep case
                 
+            # get the usage string until empty line encountered
+            elif get_usage:
+                if tag_found('options definitions:',line):
+                    get_usage = False
+                else:
+                    self.usage += '\n' + line # keep getting usage until tag encountered
+            
             # Any line with '- should be an option line
             elif line.find("'-") != -1:
                 # check if there is callback

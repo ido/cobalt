@@ -102,7 +102,8 @@ def main():
         #Hack to make the display cleaner.
         header[0][4] = 'Geometry'
         for o in output:
-            o[4] = 'x'.join([str(i) for i in o[4]])
+            if o[4] != None:
+                o[4] = 'x'.join([str(i) for i in o[4]])
     else:
         header = [['Name', 'Queue', 'State', 'Backfill']]
         #build output list, adding

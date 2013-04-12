@@ -115,16 +115,16 @@ class TestQueueThread(object):
         self.qt.register_handler("handle_a", self.handler_1)
         self.qt.register_handler("handle_b", self.handler_2)
         self.qt.send("a")
-        Cobalt.Util.sleep(1)
+        Cobalt.Util.sleep(3)
         assert self.action, "No action for a"
         self.action = False
         self.qt.send("b")
-        Cobalt.Util.sleep(1)
+        Cobalt.Util.sleep(3)
         assert self.action, "No action for b"
         self.action = False
         self.qt.send('a')
         self.qt.send('b')
-        Cobalt.Util.sleep(5)
+        Cobalt.Util.sleep(6)
         assert self.qt.msg_queue.empty(), "Queue not cleared."
         assert self.action, "Actions not taken"
 

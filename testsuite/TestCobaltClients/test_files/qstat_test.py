@@ -8881,7 +8881,7 @@ def test_qstat_no_arguments_or_options():
 
     """
 
-    args      = """"""
+    args      = ''
 
     cmdout    = \
 """

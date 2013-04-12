@@ -110,6 +110,9 @@ def modify_reservation(parser):
     """
     query = [{'name':parser.options.name, 'start':'*', 'cycle':'*', 'duration':'*'}]
     res_list = client_utils.get_reservations(query)
+    if not res_list:
+        client_utils.logger.error("cannot find reservation named '%s'" % parser.options.name)
+        sys.exit(1)
 
     updates = {} # updates to reservation
     if parser.options.defer != None:
