@@ -146,7 +146,7 @@ def validate_args(parser):
             errmsg += ' blockinfo'
             optc += 1
         if parser.options.clean_block != None: 
-            errmsg += ' enable'
+            errmsg += ' clean_block'
             optc += 1
         if parser.options.list_blocks != None: 
             errmsg += ' list_blocks'
