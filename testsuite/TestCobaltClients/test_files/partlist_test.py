@@ -239,7 +239,7 @@ def test_partlist_argument_2():
 
     """
 
-    args      = """"""
+    args      = ''
 
     cmdout    = \
 """

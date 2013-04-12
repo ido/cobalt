@@ -93,7 +93,7 @@ def test_qselect_no_args_opts():
 
     """
 
-    args      = """"""
+    args      = ''
 
     cmdout    = \
 """

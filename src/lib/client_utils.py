@@ -81,7 +81,7 @@ class client_data(object):
         return client_data.sys_conn
 
     @staticmethod
-    def scheduler_manager(defer=True):
+    def scheduler_manager(defer=True,exit_on_error = True):
         """
         connect to the scheduler component
         """
@@ -93,9 +93,24 @@ class client_data(object):
                 client_data.sch_conn = ComponentProxy("scheduler", defer=defer)
         except:
             logger.error( "Failed to connect to scheduler")
-            sys.exit(1)
+            if exit_on_error:
+                sys.exit(1)
+            client_data.sch_conn = None
         return client_data.sch_conn
 
+def component_call(func, args):
+    """
+    Actually call a function on another component and handle XML RPC faults
+    gracefully, and other faults with something other than a traceback.
+    """
+    parts = []
+    try:
+        parts = apply(func, args)
+    except xmlrpclib.Fault, fault:
+        logger.error("Command failure %s" % fault)
+    except:
+        logger.error("Non-RPC Fault failure")
+    return parts
 
 class header_info(object):
     """
@@ -820,16 +835,13 @@ def verify_locations(partitions):
             logger.error("Missing partitions: %s" % (" ".join(missing)))
             sys.exit(1)
 
-def get_reservations(query):
+def get_reservations(query,exit_on_error=True):
     """"
     get reservation list according to query
     """
-    scheduler = client_data.scheduler_manager(False)
-    res_list = scheduler.get_reservations(query)
-    if not res_list:
-        logger.error("cannot find reservation named '%s'" % rname)
-        sys.exit(1)
-    return res_list
+    scheduler = client_data.scheduler_manager(False,exit_on_error)
+    reslist = scheduler.get_reservations(query)
+    return reslist
 
 def modify_reservation(rname,spec):
     """"
@@ -838,6 +850,13 @@ def modify_reservation(rname,spec):
     scheduler = client_data.scheduler_manager(False)
     scheduler.set_reservations([{'name':rname}], spec, getuid())
     logger.info(scheduler.check_reservations())
+
+def sched_status():
+    """"
+    schedule status
+    """
+    scheduler = client_data.scheduler_manager(False)
+    return scheduler.sched_status()
 
 def add_reservation(spec,user):
     """

@@ -1,0 +1,79 @@
+# Command Line Options and Arguments to test partadm
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+--version      # <tc:version_option>
+-h             # <tc:help_option_1>
+--help         # <tc:help_option_2>
+
+               # <tc:no_arg_1> <NEW_ONLY>
+-a             # <tc:no_arg_2> <NEW_ONLY>
+
+-a -d PART                    # <tc:combo_options_1>  <NEW_ONLY>
+-a --enable PART              # <tc:combo_options_2>  <NEW_ONLY>
+-d --enable PART              # <tc:combo_options_3>  <NEW_ONLY>
+--enable --disable PART       # <tc:combo_options_4>  <NEW_ONLY>
+--deactivate --activate PART  # <tc:combo_options_5>  <NEW_ONLY>
+-a --deactivate PART          # <tc:combo_options_6>  <NEW_ONLY>
+--fail --unfail PART          # <tc:combo_options_7>  <NEW_ONLY>
+--savestate /tmp/savestate -a # <tc:combo_options_8>  <NEW_ONLY>
+-l --xml                      # <tc:combo_options_9>  <NEW_ONLY>
+-l --xml                      # <tc:combo_options_10> <NEW_ONLY>
+-a --queue q1 PART            # <tc:combo_options_11> <NEW_ONLY>
+--dump --queue q1 PART        # <tc:combo_options_12> <NEW_ONLY>
+
+-a -r PART            # <tc:add_option_1>
+-a --recursive PART   # <tc:add_option_2>
+-a PART1 PART2 PART3  # <tc:add_option_3>
+-a -b PART1 PART2     # <tc:add_option_4>
+-a -c PART1 PART2     # <tc:add_option_5>
+
+-d -r PART            # <tc:delete_option_1>
+-d --recursive PART   # <tc:delete_option_2>
+-d PART1 PART2 PART3  # <tc:delete_option_3>
+-d -b PART1 PART2     # <tc:delete_option_4>
+-d -c PART1 PART2     # <tc:delete_option_5>
+
+--enable -r PART            # <tc:enable_option_1>
+--enable --recursive PART   # <tc:enable_option_2>
+--enable PART1 PART2 PART3  # <tc:enable_option_3>
+--enable -b PART1 PART2     # <tc:enable_option_4>
+--enable -c PART1 PART2     # <tc:enable_option_5>
+
+--disable -r PART            # <tc:disable_option_1>
+--disable --recursive PART   # <tc:disable_option_2>
+--disable PART1 PART2 PART3  # <tc:disable_option_3>
+--disable -b PART1 PART2     # <tc:disable_option_4>
+--disable -c PART1 PART2     # <tc:disable_option_5>
+
+--activate -r PART            # <tc:activate_option_1>
+--activate --recursive PART   # <tc:activate_option_2>
+--activate PART1 PART2 PART3  # <tc:activate_option_3>
+--activate -b PART1 PART2     # <tc:activate_option_4>
+--activate -c PART1 PART2     # <tc:activate_option_5>
+
+--deactivate -r PART            # <tc:deactivate_option_1>
+--deactivate --recursive PART   # <tc:deactivate_option_2>
+--deactivate PART1 PART2 PART3  # <tc:deactivate_option_3>
+--deactivate -b PART1 PART2     # <tc:deactivate_option_4>
+--deactivate -c PART1 PART2     # <tc:deactivate_option_5>
+
+--fail -r PART            # <tc:fail_option_1>
+--fail --recursive PART   # <tc:fail_option_2>
+--fail PART1 PART2 PART3  # <tc:fail_option_3>
+--fail -b PART1 PART2     # <tc:fail_option_4>
+--fail -c PART1 PART2     # <tc:fail_option_5>
+
+--unfail -r PART            # <tc:unfail_option_1>
+--unfail --recursive PART   # <tc:unfail_option_2>
+--unfail PART1 PART2 PART3  # <tc:unfail_option_3>
+--unfail -b PART1 PART2     # <tc:unfail_option_4>
+--unfail -c PART1 PART2     # <tc:unfail_option_5>
+

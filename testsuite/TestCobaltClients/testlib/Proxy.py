@@ -79,6 +79,55 @@ def logdic(dic):
 def logdiclist(diclist):
     for dic in diclist: logdic(dic)
 
+def gen_partitions(specs,updates,whoami):
+    logmsg('whoami: %s' % str(whoami))
+    logdiclist(specs)
+    if updates:
+        logdic(updates)
+    parts = []
+    i = 0
+    for spec in specs:
+        parts.append({'name':PARTS[i],'queue':QUEUES[i],'children':'a', 'size':i, 
+                      'node_geometry':['48','48','48','48','48'],'relatives':'b','passthrough_blocks':'A',
+                      'draining':False,'state':'idle','functional':True, 'scheduled':True})
+        for s in specs:
+            for k in s:
+                parts[i][k] = s[k]
+        if updates:
+            for k in updates:
+                parts[i][k] = updates[k]
+        i += 1
+    return parts
+
+def genplist(specs):
+    logdiclist(specs)
+    plist = []
+    for s in specs:
+        if s['name'] == '*':
+            for p in PARTS:
+                plist.append(p)
+            break
+        plist.append(s['name'])
+    return plist
+
+def get_parts(plist):
+    logmsg('plist: '+str(plist))
+    parts = []
+    i = 0
+    for p1 in plist:
+        if p1['name'] == '*':
+            for p2 in PARTS:
+                parts.append({'name':p2,'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
+                              'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
+                              'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                i += 1
+            break
+        parts.append({'name':p1['name'],'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
+                      'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
+                      'draining':False,'state':'idle','functional':True, 'scheduled':True})
+        i += 1
+    return parts
+
 class SystemStub(object):
     def validate_job(s,opts):
         disable_logwrite()
@@ -89,19 +138,66 @@ class SystemStub(object):
 
     def get_partitions(s,plist):
         logmsg("\nGET_PARTITIONS\n")
-        logmsg('plist: '+str(plist))
-        parts = []
-        i = 0
-        for p in PARTS:
-            parts.append({'name':p,'queue':QUEUES[i],'children':'a','size':i,'node_geometry':['48','48','48','48','48'],
-                          'draining':False,'state':'idle','functional':True,'scheduled':True})
-            i += 1
-        return parts
+        return get_parts(plist)
+
+    def get_blocks(s,plist):
+        logmsg("\nGET_BLOCKS\n")
+        return get_parts(plist)
 
     def verify_locations(s,location_list):
         logmsg("\nVERIFY_LOCATIONS\n")
         logmsg('location list: '+str(location_list))
         return location_list
+
+    def add_partitions (s, specs, user_name=None):
+        logmsg("\nADD_PARTITION\n")
+        return genplist(specs)
+
+    def del_partitions (s, specs, user_name=None):
+        logmsg("\nDEL_PARTITION\n")
+        return genplist(specs)
+
+    def set_partitions (s, specs, updates, user_name=None):
+        logmsg("\nSET_PARTITION\n")
+        return genplist(specs)
+
+    def generate_xml(s):
+        logmsg("\GENERATE_XML\n")
+        return genplist([{'name':'*'}])
+
+    def fail_partitions(s, specs, user_name=None):
+        logmsg("\nFAIL_PARTITION\n")
+        return genplist(specs)
+
+    def unfail_partitions(s, specs, user_name=None):
+        logmsg("\nUNFAIL_PARTITION\n")
+        return genplist(specs)
+
+    def save(s,filename):
+        logmsg("\nSAVE\n")
+        logmsg('filename:'+str(filename))
+        return get_parts([{'name':'*'}])
+
+    def halt_booting(s,user_name=None):
+        logmsg("\HALT_BOOTING\n")
+        logmsg('whoami: %s' % str(user_name))
+        return True
+
+    def resume_booting(s,user_name=None):
+        logmsg("\RESUME_BOOTING\n")
+        logmsg('whoami: %s' % str(user_name))
+        return True
+
+    def booting_status(s):
+        logmsg("\nBOOTING_STATUS\n")
+        return False
+
+    def set_cleaning(s,part,var2,user_name):
+        logmsg("\nSET_CLEANING\n")
+        logmsg("part: %s" % part)
+        logmsg("var2 : %s" % var2)
+        logmsg('whoami: %s' % str(user_name))
+        return True
 
 class CqmStub(object):
     
@@ -337,8 +433,8 @@ class SchedStub(object):
         sz   = 100
         if 'name' in res:
             _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,
-                    'active':True,'partitions':':'.join(PARTS)}
-            res_list.append()
+                    'active':True,'partitions':':'.join(PARTS),'block_passthrough':True}
+            res_list.append(_res)
         else:
             for q in QUEUES:
                 ct += 300
@@ -346,7 +442,7 @@ class SchedStub(object):
                 st += 1000000
                 sz -= 1
                 res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
-                                 'partitions':':'.join(PARTS)})
+                                 'partitions':':'.join(PARTS),'block_passthrough':True})
             
         return res_list
 
@@ -365,6 +461,10 @@ class SchedStub(object):
 
     def check_reservations(s):
         logmsg("\nCHECK_RESERVATIONS\n")
+        return True
+
+    def sched_status(s):
+        logmsg("\nSCHED_STATUS\n")
         return True
 
 system    = SystemStub()

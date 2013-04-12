@@ -390,6 +390,12 @@ def main():
         if sys_type == 'bgp':
             client_utils.logger.info("Force clenaing not available for BG/P systems")
             sys.exit(0)
+        sched_enabled = client_utils.sched_status()
+        boot_disabled = system.booting_status()
+        #if sched_enabled or not boot_disabled:
+        #    print "scheduling and booting must be disabled prior to force-cleaning blocks."
+        #    print "No blocks were marked for cleaning."
+        #    sys.exit(1)
         for part in parts:
             system.set_cleaning(part, None, whoami)
             client_utils.logger.info("Initiating cleanup on block %s" % part)
