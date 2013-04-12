@@ -103,7 +103,7 @@ class test_BGQBooter(object):
         bl_str = " ".join([str(boot) for boot in boot_list])
         assert boot_list != [] and bl_str == correct_boot_list_str , "Boot list failed: got %s" % bl_str
 
-    @timeout(6)
+    @timeout(8)
     def test_boot_sequence(self):
         #set up pybgsched block transitions, treat these as events
         #It's LIFO, so revere everything, and make sure to reset the final state
@@ -120,12 +120,12 @@ class test_BGQBooter(object):
         while (True):
             time.sleep(1)
             if pybgsched.block_dict['TB-1'].statuses == [pybgsched.Block.Initialized]:
-                time.sleep(1)
+                time.sleep(3)
                 break
         boot_state = str(self.booter.stat('TB-1')[0].state)
         assert boot_state == 'complete', 'Boot state not complete, is %s instead' % boot_state
 
-    @timeout(11)
+    @timeout(14)
     def test_reboot_sequence(self):
         pybgsched.block_dict['TB-1'].set_status(pybgsched.Block.Initialized)
         pybgsched.block_dict['TB-1'].add_status(pybgsched.Block.Booting)
@@ -144,7 +144,7 @@ class test_BGQBooter(object):
         while (True):
             time.sleep(1)
             if pybgsched.block_dict['TB-1'].statuses == [pybgsched.Block.Initialized]:
-                time.sleep(1)
+                time.sleep(3)
                 break
         for output in self.booter.stat('TB-1')[0].context.status_string:
             print output
