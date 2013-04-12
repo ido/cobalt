@@ -1090,7 +1090,7 @@ class BGSystem (BGBaseSystem):
         self._blocks.update(blocks)
         return
 
-    def _recompute_block_state(self, bg_cached_io_blocks=None):
+    def _recompute_block_state(self, bg_cached_io_blocks=[]):
         '''Recompute the hardware and cleaning/allocated blockage for all
         managed blocks.
 
