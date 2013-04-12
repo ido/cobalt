@@ -1777,7 +1777,6 @@ def test_cqadm_run_option_3():
     """
     cqadm test run: run_option_3
         Old Command Output:
-          Error: cannot find partition named 'mayaguez'
           
 
     """
@@ -1788,7 +1787,6 @@ def test_cqadm_run_option_3():
 """
 cqadm.py --run mayaguez 1 2 3
 
-Error: cannot find partition named 'mayaguez'
 """
 
     stubout   = \
@@ -1796,12 +1794,29 @@ Error: cannot find partition named 'mayaguez'
 GET_PARTITIONS
 
 plist: [{'name': 'mayaguez'}]
+
+RUN_JOBS
+
+location:['mayaguez']
+whoami:gooduser
+jobid:1
+location:*
+tag:job
+walltime:*
+jobid:2
+location:*
+tag:job
+walltime:*
+jobid:3
+location:*
+tag:job
+walltime:*
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       256, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 

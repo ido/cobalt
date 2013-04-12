@@ -492,7 +492,7 @@ def test_qsub_invalid_geometry():
     qsub test run: invalid_geometry
         Old Command Output:
           Traceback (most recent call last):
-            File "oldcmds/qsub.py", line 179, in <module>
+            File "oldcmds//qsub.py", line 179, in <module>
               jobspec['geometry'] = parse_geometry_string(opts['geometry'])
             File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Util.py", line 1111, in parse_geometry_string
               raise ValueError, "%s is an invalid geometry specification." % geometry_str
