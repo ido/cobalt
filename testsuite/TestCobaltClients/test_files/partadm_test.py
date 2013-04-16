@@ -98,7 +98,7 @@ def test_partadm_help_option_1():
 """
 partadm.py -h
 
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -109,6 +109,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -225,7 +226,7 @@ def test_partadm_help_option_2():
 """
 partadm.py --help
 
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -236,6 +237,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -3418,7 +3420,7 @@ def test_partadm_savestate_option_3():
 """
 partadm.py --savestate
 
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -3429,6 +3431,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -4901,7 +4904,7 @@ def test_partadm_queue_option_1():
 """
 partadm.py --queue
 
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -4912,6 +4915,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.

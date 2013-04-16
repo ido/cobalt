@@ -2,7 +2,7 @@
 """
 Partadm sets partition attributes in the scheduler
 
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -13,6 +13,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
