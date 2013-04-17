@@ -199,6 +199,40 @@ class SystemStub(object):
         logmsg('whoami: %s' % str(user_name))
         return True
 
+    def get_implementation(s):
+        logmsg("\nGET_IMPLEMENTATION\n")
+        return 'cluster_system'
+
+    def nodes_down(s,args,whoami):
+        logmsg("\nNODES_DOWN\n")
+        logmsg("whoami: %s" % whoami)
+        for a in args:
+            logmsg(a)
+        return ["D1","D2","D3","D4","D5"]
+
+    def nodes_up(s,args,whoami):
+        logmsg("\nNODES_UP\n")
+        logmsg("whoami: %s" % whoami)
+        logmsg("args: %s" % str(args))
+        return ["U1","U2","U3","U4","U5"]
+
+    def get_node_status(s):
+        logmsg("\nGET_NODES_STATUS\n")
+        return [ ['D1','good'],['D2','bad'],['D3','ugly'],['U1','one'],['U2','two'],['U3','three']]
+
+    def get_queue_assignments(s):
+        logmsg('\nGET_QUEUE_ASSIGNMENTS\n')
+        ret = {'QU1':'U1','QD1':'D1','QU2':'U2','QD2':'D2','QU3':'U3','QD3':'D3'}
+        return ret
+
+    def set_queue_assignments(s,queues,args,whoami):
+        logmsg('\nGET_QUEUE_ASSIGNMENTS\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("args: %s" % str(args))
+        logmsg("queues: %s" % str(queues))
+        ret = queues
+        return ret
+
 class CqmStub(object):
     
     def set_jobid(s,jobid, whoami):

@@ -835,6 +835,19 @@ def verify_locations(partitions):
             logger.error("Missing partitions: %s" % (" ".join(missing)))
             sys.exit(1)
 
+def get_implementation():
+    """
+    Get implementation
+    """
+    system = client_data.system_manager(False)
+    try:
+        impl = system.get_implementation()
+    except: 
+        logger.error("lost connection to system component")
+        sys.exit(1)
+    return impl
+
+
 def get_reservations(query,exit_on_error=True):
     """"
     get reservation list according to query
