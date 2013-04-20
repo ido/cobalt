@@ -44,9 +44,9 @@ def test_qmove_queue_1():
     """
     qmove test run: queue_1
         Old Command Output:
-          moved job 1 to queue 'myq'
-          moved job 2 to queue 'myq'
-          moved job 3 to queue 'myq'
+          moved job 1 to queue 'kebra'
+          moved job 2 to queue 'kebra'
+          moved job 3 to queue 'kebra'
           
 
     """
@@ -58,9 +58,9 @@ def test_qmove_queue_1():
 qmove.py myq 1 2 3
 
 get_config_option: Option filters not found in section [cqm]
-moved job 1 to queue 'myq'
-moved job 2 to queue 'myq'
-moved job 3 to queue 'myq'
+moved job 1 to queue 'kebra'
+moved job 2 to queue 'kebra'
+moved job 3 to queue 'kebra'
 """
 
     stubout   = \
@@ -281,9 +281,9 @@ def test_qmove_queue_2():
     """
     qmove test run: queue_2
         Old Command Output:
-          moved job 2 to queue '1'
-          moved job 3 to queue '1'
-          moved job 4 to queue '1'
+          moved job 2 to queue 'kebra'
+          moved job 3 to queue 'kebra'
+          moved job 4 to queue 'kebra'
           
 
     """
@@ -295,9 +295,9 @@ def test_qmove_queue_2():
 qmove.py 1 2 3 4
 
 get_config_option: Option filters not found in section [cqm]
-moved job 2 to queue '1'
-moved job 3 to queue '1'
-moved job 4 to queue '1'
+moved job 2 to queue 'kebra'
+moved job 3 to queue 'kebra'
+moved job 4 to queue 'kebra'
 """
 
     stubout   = \

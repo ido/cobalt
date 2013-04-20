@@ -162,7 +162,7 @@ class SystemStub(object):
         return genplist(specs)
 
     def generate_xml(s):
-        logmsg("\GENERATE_XML\n")
+        logmsg("\nGENERATE_XML\n")
         return genplist([{'name':'*'}])
 
     def fail_partitions(s, specs, user_name=None):
@@ -179,12 +179,12 @@ class SystemStub(object):
         return get_parts([{'name':'*'}])
 
     def halt_booting(s,user_name=None):
-        logmsg("\HALT_BOOTING\n")
+        logmsg("\nHALT_BOOTING\n")
         logmsg('whoami: %s' % str(user_name))
         return True
 
     def resume_booting(s,user_name=None):
-        logmsg("\RESUME_BOOTING\n")
+        logmsg("\nRESUME_BOOTING\n")
         logmsg('whoami: %s' % str(user_name))
         return True
 
@@ -232,6 +232,45 @@ class SystemStub(object):
         logmsg("queues: %s" % str(queues))
         ret = queues
         return ret
+
+def change_jobs(ojoblist, newjob,user):
+    logmsg("\nOriginal Jobs:\n")
+    logdiclist(ojoblist)
+    logmsg("\nNew Job Info:\n")
+    if type(newjob) == type([]) or type(newjob) == type({}):
+        logdic(newjob)
+    else:
+        logmsg(str(newjob))
+    _job_specs = []
+    wtime = 5
+    nodes = 512
+    ndx = 0
+    for job in ojoblist:
+        _job = {}
+        _job['tag']           = 'job'
+        _job['user']          = USERS[ndx]
+        _job['jobid']         = job['jobid']
+        _job['project']       = 'my_project'
+        _job['notify']        = 'myemag@gmail.com'
+        _job['walltime']      = wtime
+        _job['procs']         = nodes
+        _job['nodes']         = nodes
+        _job['is_active']     = False
+        _job['queue']         = QUEUES[ndx]
+        _job['mode']          = 'smp'
+        _job['errorpath']     = '/tmp'
+        _job['errorpath']     = '/tmp'
+        _job['outputpath']    = '/tmp'
+        _job['user_hold']     = False
+        _job['has_completed'] = False
+        if type(newjob) == type([]):
+            for key in newjob:
+                _job[key] = newjob[key]
+        _job_specs.append(_job)
+        wtime += 5
+        nodes += 512
+        ndx += 1
+    return _job_specs
 
 class CqmStub(object):
     
@@ -348,39 +387,11 @@ class CqmStub(object):
         
     def set_jobs(s,ojoblist, newjob,user):
         logmsg("\nSET_JOBS\n")
-        logmsg("\nOriginal Jobs:\n")
-        logdiclist(ojoblist)
-        logmsg("\nNew Job Info:\n")
-        logdic(newjob)
-        _job_specs = []
-        wtime = 5
-        nodes = 512
-        ndx = 0
-        for job in ojoblist:
-            _job = {}
-            _job['tag']           = 'job'
-            _job['user']          = USERS[ndx]
-            _job['jobid']         = job['jobid']
-            _job['project']       = 'my_project'
-            _job['notify']        = 'myemag@gmail.com'
-            _job['walltime']      = wtime
-            _job['procs']         = nodes
-            _job['nodes']         = nodes
-            _job['is_active']     = False
-            _job['queue']         = QUEUES[ndx]
-            _job['mode']          = 'smp'
-            _job['errorpath']     = '/tmp'
-            _job['errorpath']     = '/tmp'
-            _job['outputpath']    = '/tmp'
-            _job['user_hold']     = False
-            _job['has_completed'] = False
-            for key in newjob:
-                _job[key] = newjob[key]
-            _job_specs.append(_job)
-            wtime += 5
-            nodes += 512
-            ndx += 1
-        return _job_specs
+        return change_jobs(ojoblist,newjob,user)
+
+    def adjust_job_scores(s,ojoblist, newjob,user):
+        logmsg("\nADJUST_JOB_SCORES\n")
+        return change_jobs(ojoblist,newjob,user)
 
     def get_jobs(s,job_specs):
         if len(job_specs) == 0: return
@@ -434,7 +445,16 @@ class CqmStub(object):
         enable_logwrite()
         return _job_specs
 
+    def define_user_utility_functions(s,whoami):
+        logmsg("\nDEFINE_USER_UTILITY_FUNCTION\n")
+        logmsg('whoami: %s' % str(whoami))
+
 class SchedStub(object):
+
+    def save(s,filename):
+        logmsg("\nSAVE\n")
+        logmsg('filename:'+str(filename))
+        return True
 
     def force_res_id(s,id):
         logmsg("\nFORCE_RES_ID\n")
@@ -500,6 +520,14 @@ class SchedStub(object):
     def sched_status(s):
         logmsg("\nSCHED_STATUS\n")
         return True
+
+    def disable(s,whoami):
+        logmsg("\nDISABLE\n")
+        logmsg('whoami: %s' % str(whoami))
+
+    def enable(s,whoami):
+        logmsg("\nENABLE\n")
+        logmsg('whoami: %s' % str(whoami))
 
 system    = SystemStub()
 cqm       = CqmStub()

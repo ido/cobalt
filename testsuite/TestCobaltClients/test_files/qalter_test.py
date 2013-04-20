@@ -57,7 +57,7 @@ qalter.py -d -n30 1
 get_config_option: Option filters not found in section [cqm]
 nodes changed from 512 to 30
 procs changed from 512 to 30
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': 30, 'args': '', 'is_active': False, 'user': 'land', 'procs': 30, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 1, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -203,7 +203,7 @@ walltime changed from 10 to 15.0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 20.0
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 10, 'walltime': '20.0', 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'aaa', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -451,7 +451,7 @@ walltime changed from 30 to 50.0
 nodes changed from 3584 to 10
 procs changed from 3584 to 10
 walltime changed from 35 to 55.0
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 25, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'queen', 'procs': 10, 'walltime': '55.0', 'geometry': None, 'user_hold': False, 'jobid': 7, 'queue': 'myq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 7, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -986,7 +986,7 @@ walltime changed from 40 to 30
 nodes changed from 4608 to 10
 procs changed from 4608 to 10
 walltime changed from 45 to 30
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 2, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'boy', 'procs': 10, 'walltime': 30, 'geometry': None, 'user_hold': False, 'jobid': 15, 'queue': 'zq', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 15, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -1612,7 +1612,7 @@ walltime changed from 10 to 0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 0
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 10, 'walltime': 0, 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'aaa', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -1848,7 +1848,7 @@ walltime changed from 10 to 10.0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 15.0
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 10, 'walltime': '15.0', 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'aaa', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2096,7 +2096,7 @@ walltime changed from 10 to 0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 0
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 10, 'walltime': 0, 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'aaa', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2332,7 +2332,7 @@ walltime changed from 10 to 10.0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 15.0
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 10, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 10, 'walltime': '15.0', 'geometry': None, 'user_hold': False, 'jobid': 3, 'queue': 'aaa', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2613,7 +2613,7 @@ qalter.py -d -v -M j@gmail.com 1 2
 get_config_option: Option filters not found in section [cqm]
 notify changed from myemail@gmail.com to j@gmail.com
 notify changed from myemail@gmail.com to j@gmail.com
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'j@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 55, 'location': '/tmp', 'nodes': 1024, 'args': '', 'is_active': False, 'user': 'house', 'procs': 1024, 'walltime': 10, 'geometry': None, 'user_hold': False, 'jobid': 2, 'queue': 'bello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2997,7 +2997,7 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 30, 'location': '/tmp', 'nodes': 2560, 'args': '', 'is_active': False, 'user': 'henry', 'procs': 2560, 'walltime': 25, 'geometry': None, 'user_hold': False, 'jobid': 5, 'queue': 'hhh', 'mode': 'smp', 'user_list': ['gooduser', 'user1', 'user2', 'user3']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 5, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -3401,7 +3401,7 @@ run_project set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
 run_project set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 1536, 'run_project': True, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 1536, 'walltime': 15, 'geometry': None, 'user_hold': False, 'jobid': 30, 'queue': 'aaa', 'mode': 'smp', 'user_list': ['gooduser']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 30, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -3872,7 +3872,7 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 run_project set to True
 script_preboot set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 1536, 'run_project': True, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 1536, 'walltime': 15, 'geometry': None, 'user_hold': False, 'jobid': 30, 'queue': 'aaa', 'script_preboot': True, 'mode': 'smp', 'user_list': ['gooduser']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 30, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -4126,7 +4126,7 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 run_project set to True
 script_preboot set to False
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 40, 'location': '/tmp', 'nodes': 1536, 'run_project': True, 'args': '', 'is_active': False, 'user': 'dog', 'procs': 1536, 'walltime': 15, 'geometry': None, 'user_hold': False, 'jobid': 30, 'queue': 'aaa', 'script_preboot': False, 'mode': 'smp', 'user_list': ['gooduser']}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 30, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \

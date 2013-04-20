@@ -219,6 +219,17 @@ def get_queues(info):
         sys.exit(1)
     return ret
 
+def define_user_utility_functions(whoami):
+    """
+    define user utility function
+    """
+    try:
+        cqm = client_data.queue_manager()
+        cqm.define_user_utility_functions(whoami)
+    except:
+        logger.error("Failed to connect to queue manager")
+        sys.exit(1)
+
 def validate_jobid_args(parser):
     """
     Validate jobids command line arguments.
@@ -628,19 +639,23 @@ def set_jobid(jobid,user):
         sys.exit(1)
     return response
 
-def save(filename):
+def save(filename,cmp='cqm'):
     """
     Will save the state to the specified location
     """
     try:
-        cqm = client_data.queue_manager()
+        if cmp == 'cqm':
+            component = client_data.queue_manager()
+        elif cmp == 'scheduler':
+            component = client_data.scheduler_manager()
+            
         directory = os.path.dirname(filename)
         if not os.path.exists(directory):
             logger.error("directory %s does not exist" % directory)
             sys.exit(1)
-        response = cqm.save(filename)
+        response = component.save(filename)
     except Exception, e:
-        logger(e)
+        logger.error(e)
         sys.exit(1)
     return response
 
@@ -784,6 +799,18 @@ def add_jobs(jobs):
         logger.error("Error submitting job")
         sys.exit(1)
     return jobs
+
+def adjust_job_scores(spec, new_score, whoami):
+    """
+    adjust new job scores
+    """
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.adjust_job_scores(spec, new_score, whoami)
+    except:
+        logger.error("Failed to connect to queue manager")
+        sys.exit(1)
+    return response
 
 def set_res_id(parser):
     """

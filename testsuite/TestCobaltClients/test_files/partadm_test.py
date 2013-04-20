@@ -3907,7 +3907,8 @@ partadm.py --xml
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 """
@@ -3947,7 +3948,8 @@ partadm.py --xml p1
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 """
@@ -3991,7 +3993,8 @@ partadm.py --xml --recursive p1
 GET_PARTITIONS
 
 plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-\GENERATE_XML
+
+GENERATE_XML
 
 name:*
 """
@@ -4289,7 +4292,8 @@ scheduled: True
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 
@@ -4351,7 +4355,8 @@ Initiating cleanup on block J
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 
@@ -4719,7 +4724,8 @@ scheduled: True
 GET_PARTITIONS
 
 plist: []
-\GENERATE_XML
+
+GENERATE_XML
 
 name:*
 
@@ -4785,7 +4791,8 @@ Initiating cleanup on block J
 GET_PARTITIONS
 
 plist: []
-\GENERATE_XML
+
+GENERATE_XML
 
 name:*
 
@@ -6357,7 +6364,8 @@ Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6397,7 +6405,8 @@ Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6441,7 +6450,8 @@ Halting booting: halting scheduling is advised
 GET_PARTITIONS
 
 plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-\HALT_BOOTING
+
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6481,7 +6491,8 @@ Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6521,7 +6532,8 @@ Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6565,7 +6577,8 @@ Halting booting: halting scheduling is advised
 GET_PARTITIONS
 
 plist: []
-\HALT_BOOTING
+
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6609,7 +6622,8 @@ Halting booting: halting scheduling is advised
 GET_PARTITIONS
 
 plist: []
-\HALT_BOOTING
+
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6649,7 +6663,8 @@ Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6689,7 +6704,8 @@ Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6733,7 +6749,8 @@ Enabling booting
 GET_PARTITIONS
 
 plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-\RESUME_BOOTING
+
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6773,7 +6790,8 @@ Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6813,7 +6831,8 @@ Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6857,7 +6876,8 @@ Enabling booting
 GET_PARTITIONS
 
 plist: []
-\RESUME_BOOTING
+
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6901,7 +6921,8 @@ Enabling booting
 GET_PARTITIONS
 
 plist: []
-\RESUME_BOOTING
+
+RESUME_BOOTING
 
 whoami: gooduser
 """

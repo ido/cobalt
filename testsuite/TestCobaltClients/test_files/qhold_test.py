@@ -45,8 +45,8 @@ def test_qhold_debg_option():
     """
     qhold test run: debg_option
         Old Command Output:
-             Placed user hold on jobs: 
-                1
+             Failed to place user hold on jobs: 
+                job 1 encountered an unexpected problem while attempting to place the 'user hold'
           
 
     """
@@ -57,9 +57,9 @@ def test_qhold_debg_option():
 """
 qhold.py -d 1
 
-Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': True, 'procs': 512, 'user': 'james'}]
-Placed user hold on jobs: 
-      1
+Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
+   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
@@ -143,11 +143,11 @@ def test_qhold_jobid_2():
     """
     qhold test run: jobid_2
         Old Command Output:
-             Placed user hold on jobs: 
-                1
-                2
-                3
-                4
+             Failed to place user hold on jobs: 
+                job 1 encountered an unexpected problem while attempting to place the 'user hold'
+                job 2 encountered an unexpected problem while attempting to place the 'user hold'
+                job 3 encountered an unexpected problem while attempting to place the 'user hold'
+                job 4 encountered an unexpected problem while attempting to place the 'user hold'
           
 
     """
@@ -158,11 +158,11 @@ def test_qhold_jobid_2():
 """
 qhold.py 1 2 3 4
 
-Placed user hold on jobs: 
-      1
-      2
-      3
-      4
+   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
+      job 2 encountered an unexpected problem while attempting to place the 'user hold'
+      job 3 encountered an unexpected problem while attempting to place the 'user hold'
+      job 4 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
@@ -237,8 +237,8 @@ def test_qhold_jobid_3():
     """
     qhold test run: jobid_3
         Old Command Output:
-             Placed user hold on jobs: 
-                1
+             Failed to place user hold on jobs: 
+                job 1 encountered an unexpected problem while attempting to place the 'user hold'
           
 
     """
@@ -249,8 +249,8 @@ def test_qhold_jobid_3():
 """
 qhold.py 1
 
-Placed user hold on jobs: 
-      1
+   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
