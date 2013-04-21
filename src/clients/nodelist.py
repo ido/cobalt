@@ -1,29 +1,56 @@
 #!/usr/bin/env python
+"""
+Cobalt qmove command
 
+Usage: %prog
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS: None
+
+"""
+import logging
 import sys
-import optparse
-import Cobalt
-import Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
+from Cobalt import client_utils
 
+from Cobalt.arg_parser import ArgParse
 
-if __name__ == '__main__':
+__revision__ = 'TBD'
+__version__ = 'TBD'
 
-    try:
-        system = Cobalt.Proxy.ComponentProxy("system", defer=False)
-    except:
-        print >> sys.stderr, "failed to connect to system component"
-        sys.exit(1)
+def main():
+    """
+    qmove main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
-    try:
-        impl = system.get_implementation()
-    except: 
-        print >> sys.stderr, "lost connection to system component"
-        sys.exit(1)
+    # read the cobalt config files
+    client_utils.read_config()
 
+    # list of callback with its arguments
+    callbacks = []
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+
+    # Set required default values: None
+
+    parser.parse_it() # parse the command line
+
+    if not parser.no_args():
+        client_utils.logger.info("No arguments needed")
+    
+    impl = client_utils.get_implementation()
+
+    # make sure we're on a cluster-system
     if "cluster_system" != impl:
-        print >> sys.stderr, "nodelist is only supported on cluster systems.  Try partlist instead."
+        client_utils.logger.error("nodelist is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
+
+    system = client_utils.client_data.system_manager()
 
     status = system.get_node_status()
     queue_data = system.get_queue_assignments()
@@ -40,4 +67,13 @@ if __name__ == '__main__':
                 queues.append(q) 
         output.append([host_name, ":".join(queues), status])
         
-    Cobalt.Util.printTabular(header + output)
+    client_utils.printTabular(header + output)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise

@@ -48,7 +48,7 @@ def validate_args(parser):
 
     # make sure we're on a cluster-system
     if "cluster_system" != impl:
-        client_utils.logger.error("nodelist is only supported on cluster systems.  Try partlist instead.")
+        client_utils.logger.error("nodeadm is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
 
     optc = 0

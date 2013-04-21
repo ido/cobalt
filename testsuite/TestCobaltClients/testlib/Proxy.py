@@ -486,8 +486,8 @@ class SchedStub(object):
         res  = query[0]
         sz   = 100
         if 'name' in res:
-            _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,
-                    'active':True,'partitions':':'.join(PARTS),'block_passthrough':True}
+            _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,'active':True,
+                    'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':USERS[0]}
             res_list.append(_res)
         else:
             for q in QUEUES:
