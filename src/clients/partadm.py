@@ -43,7 +43,10 @@ OPTIONS DEFINITIONS:
 '-c', '--clean_block', action='store_true', dest='clean_block', help='force the block to cleanup and clear all internal reservations on that resource'
 '-i', '--list_io', action='store_true', dest='list_io', help='list information on IOBlock status'
 '--add_io_block', action='store_true', dest='add_io_block', help='add an IO Block to the list of managed IO blocks'
-'--del_io_block', action='store_true', dest='del_io_block', help='del an IO Block to the list of managed IO blocks'
+'--del_io_block', action='store_true', dest='del_io_block', help='delete an IO Block to the list of managed IO blocks'
+'--boot_io_block', action='store_true', dest='boot_io_block', help='initiate a boot of the IO Blocks as positional arguments'
+'--free_io_block', action='store_true', dest='free_io_block', help='initiate a free of the IO Blocks as positional arguments'
+
 
 """
 import logging
@@ -372,6 +375,12 @@ def main():
             client_utils.logger.info("Block Booting: ENABLED")
         else:
             client_utils.logger.info("Block Booting: SUSPENDED.")
+        sys.exit(0)
+    elif opts.boot_io_block:
+        user = client_utils.getuid()
+        tag = 'partadm'
+        system.initiate_io_boot(parts, user, tag)
+        client_utils.logger.info('IO Boot initiated on %s', " ".join(parts))
         sys.exit(0)
 
     if opts.pg_list:

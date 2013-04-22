@@ -1068,7 +1068,7 @@ class BGSystem (BGBaseSystem):
             #ion_blocks = []
             switch_list = []
 
-            for nc in block_def.getiterator("NodeCard"):
+            for nc in block_def.getiteator("NodeCard"):
                 node_card_list.append(self._get_node_card(nc.get("id")))
             nc_count = len(node_card_list)
             if nc_count <= 0:
@@ -2372,3 +2372,27 @@ class BGSystem (BGBaseSystem):
                 return False
         return True
 
+    @exposed
+    def initiate_io_boot(self, io_locations, user=None, tag=None):
+        '''Initiate a boot of an ION block.  Returns once boot request has been placed, and is asynchrynous.
+        Raises: ValueError if invalid io_locaions
+
+        '''
+        if not set(io_locations).issubset(set(self._io_blocks.keys())):
+            raise ValueError, "Invalid IO Block name in specified locaitons"
+        for io_location in io_locations:
+            self._blocks_lock.acquire()
+            try:
+                self.booter.initiate_io_boot(io_location, user, tag)
+            except Exception:
+                self.logger.critical("Unexpected error from initiate_io_boot.  Traceback follows.", exc_info=True)
+                raise
+            finally:
+                self._blocks_lock.release()
+        return
+
+
+    @exposed
+    @query
+    def initiate_io_free(self, io_locations):
+        raise NotImplementedError

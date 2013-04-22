@@ -405,3 +405,7 @@ class InitiateIOBootMsg(object):
         self.user = user
         self.tag = tag
 
+class InitiateIOFreeMsg(object):
+    def __init__(self, io_block_name, user=None):
+        self.msg_type = 'initiate_io_free'
+        self.io_block_name = io_block_name
