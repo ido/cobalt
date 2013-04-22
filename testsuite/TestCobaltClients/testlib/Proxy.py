@@ -50,7 +50,7 @@ logwrite     = True
 USERS    = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
 QUEUES   = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq' ]
 SCORES   = [ 45    ,  50    ,  55    ,  40  ,  60  ,  30    ,  20   ,  25    ,  35     ,  2   ]
-PARTS    = ['A','B','C','D','E','F','G','H','I','J']
+PARTS    = ['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10']
 
 def enable_logwrite():
     global logwrite
@@ -487,7 +487,8 @@ class SchedStub(object):
         sz   = 100
         if 'name' in res:
             _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,'active':True,
-                    'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':USERS[0]}
+                    'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':USERS[0],
+                    'project':'proj','res_id':'id'}
             res_list.append(_res)
         else:
             for q in QUEUES:
@@ -496,7 +497,7 @@ class SchedStub(object):
                 st += 1000000
                 sz -= 1
                 res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
-                                 'partitions':':'.join(PARTS),'block_passthrough':True})
+                                 'partitions':':'.join(PARTS),'block_passthrough':True,'project':'proj','res_id':'id'})
             
         return res_list
 

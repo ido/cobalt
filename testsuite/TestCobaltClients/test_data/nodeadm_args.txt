@@ -1,4 +1,4 @@
-# Command Line Options and Arguments to test cqadm
+# Command Line Options and Arguments to test nodeadm
 # Special Instructions:
 #    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
 #    2. Test case comment needs to be unique to this file.

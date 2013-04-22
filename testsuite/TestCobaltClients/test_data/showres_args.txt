@@ -1,4 +1,4 @@
-# Command Line Options and Arguments to test nodelist
+# Command Line Options and Arguments to test showres
 # Special Instructions:
 #    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
 #    2. Test case comment needs to be unique to this file.
@@ -10,8 +10,18 @@
 #       i.e -d -j | -d --job
 
             # <tc:arg_1>
-arg1        # <tc:arg_2>
--l          # <tc:options_1> <NEW_ONLY>
---help      # <tc:options_2> <NEW_ONLY>
--h          # <tc:options_3> <NEW_ONLY>
---version   # <tc:options_4> <NEW_ONLY>
+--oldts     # <tc:arg_2>
+arg1        # <tc:arg_3>
+
+-l          # <tc:l_option_1>
+-l --oldts  # <tc:l_option_2>
+
+-x          # <tc:x_option_1>
+-x --oldts  # <tc:x_option_1>
+
+-l -x       # <tc:combo> <NEW_ONLY>
+
+--help      # <tc:help_1> <NEW_ONLY>
+-h          # <tc:help_2> <NEW_ONLY>
+
+--version   # <tc:version> <NEW_ONLY>

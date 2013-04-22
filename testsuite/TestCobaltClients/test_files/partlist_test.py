@@ -225,16 +225,16 @@ def test_partlist_argument_2():
         Old Command Output:
           Name  Queue                                                  State  Backfill  Geometry      
           ==============================================================================================
-          J     zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-          I     yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          H     myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          G     dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-          F     hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          E     bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          D     aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          C     bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          B     jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          A     kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
+          P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+          P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
+          P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+          P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+          P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+          P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
           
 
     """
@@ -247,16 +247,16 @@ partlist.py
 
 Name  Queue                                                  State  Backfill  Geometry      
 ==============================================================================================
-J     zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-I     yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-H     myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-G     dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-F     hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-E     bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-D     aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-C     bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-B     jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-A     kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
+P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
+P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
 """
 
     stubout   = \
