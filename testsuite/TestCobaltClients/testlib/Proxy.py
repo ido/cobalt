@@ -5,6 +5,7 @@ import time
 import pwd
 import os
 import getpass
+import testutils
 
 def stub_time():
     return 1364335099.14
@@ -530,9 +531,23 @@ class SchedStub(object):
         logmsg("\nENABLE\n")
         logmsg('whoami: %s' % str(whoami))
 
+class SlpStub(object):
+
+    def get_services(s,query):
+        logmsg("\nGET_SERVICES\n")
+        logdiclist(query)
+        tinfo = testutils.get_testinfo()
+        if tinfo.find("NO SERVICES") != -1:
+            return []
+        services = []
+        for i in range(5):
+            services.append({'name':'S'+str(i), 'location':'P'+str(i),'stamp':1366668370.0+(i*10)})
+        return services
+
 system    = SystemStub()
 cqm       = CqmStub()
 scheduler = SchedStub()
+slp       = SlpStub()
 
 def ComponentProxy(component_name, **kwargs):
     """
@@ -544,4 +559,6 @@ def ComponentProxy(component_name, **kwargs):
         return cqm
     elif component_name == "scheduler":
         return scheduler
+    elif component_name == "service-location":
+        return slp
         

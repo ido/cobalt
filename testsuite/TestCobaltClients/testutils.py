@@ -26,6 +26,7 @@ from arg_parser import ArgParse
 NEW_ONLY_TAG    = '<NEW_ONLY>'
 CMD_OUTPUT      = 'cmd.out'
 ARGS_FILES      = '*_args.txt'
+TESTINFO_FILE   = 'testinfo.txt'
 
 # Template constants
 DS  = '<DOCSTR>'
@@ -35,6 +36,7 @@ SO  = '<STUBOUT>'
 RS  = '<RS>'
 TQ  = '<TQ>'
 TC  = '<TC_COMMENT>'
+TI  = '<TEST_INFO>'
 CM  = '<CMD>'
 SF  = '<STUBFILE>'
 ES1 = '\\\n""""""' # empty string 
@@ -65,8 +67,12 @@ def test_<CMD>_<TC_COMMENT>():
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("<TEST_INFO>")
+
     results = testutils.run_cmd('<CMD>.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\\n%s" % result
@@ -85,22 +91,46 @@ stripcomment = lambda data: ic_p.sub(r'\1',data)
 cm_p = re.compile(r'.*#.*<tc:(\w*)>.*')
 getcomment = lambda data: '' if cm_p.match(data) == None else cm_p.sub(r'\1',data)
 
-# get expected return status lambda function definition
-rs_p = re.compile(r'.*#.*<rs:(\d*)>.*')
-getrs = lambda data: '' if rs_p.match(data) == None else rs_p.sub(r'\1',data)
+# get test info
+ti_p = re.compile(r'.*#.*<ti:(.+)>.*')
+gettestinfo = lambda data: '' if ti_p.match(data) == None else ti_p.sub(r'\1',data)
 
 # indent buffer
 indent = lambda x,buf:'\n'.join([(x*' ')+line for line in buf.split('\n')])
 
-def gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file):
+def save_testinfo(testinfo):
+    """
+    save the test information string that can be use to control testing permutations
+    """
+    if testinfo != '':
+        fd = open(TESTINFO_FILE,'w')
+        fd.write(testinfo)
+        fd.close()
+
+def get_testinfo():
+    """
+    get the saved test information 
+    """
+    info = get_output(TESTINFO_FILE,False)
+    return info
+
+def remove_testinfo():
+    """
+    remove the test info file
+    """
+    if os.path.isfile(TESTINFO_FILE):
+        os.remove(TESTINFO_FILE)
+
+def gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file,tinfo):
     """
     Get Test from template with all tags replace
     """
-    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_comment).replace(TQ,RTQ).    \
-        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout). \
-        replace(RS,str(retstat)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''")
+    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_comment).replace(TQ,RTQ).               \
+        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).            \
+        replace(RS,str(retstat)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
+        replace(TI,tinfo)
 
-def get_output(filename):
+def get_output(filename,remove_file = True):
     """
     get output from the specified filename. delete file after getting the data
     """
@@ -109,7 +139,8 @@ def get_output(filename):
         fd = open(filename,'r')
         output = fd.read()
         fd.close()
-        os.remove(filename)
+        if remove_file:
+            os.remove(filename)
     return output
 
 def getdiff(buf1,buf2):
@@ -185,7 +216,7 @@ def get_argsfile_list(args_list,args_path):
         retlist = glob.glob(args_path+ARGS_FILES)
     return retlist
 
-def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file):
+def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file, tinfo):
     """
     This function will do validation of the generated data and compare the expected outpus
     and then generate the test for the specified arguments
@@ -207,7 +238,7 @@ def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file):
     retstat = new_results[0] # need the new return status for generated test
     cmdout  = new_results[1] # need the new command output for generated test
 
-    test = gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file)
+    test = gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file,tinfo)
 
     fd.write(test)
 
@@ -215,6 +246,7 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
     """
     write run the arguments are write the test data
     """
+    global global_testinfo
     argsfile_list = get_argsfile_list(args_list,args_path)
 
     # go through every client command file 
@@ -235,7 +267,9 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
         for args in argslist:
             if args    == '' : continue # skip null line
             if args[0] == '#': continue # skip comment line
-            tc_comment = getcomment(args) # get the comment if there is one
+            tc_comment = getcomment(args)  # get the comment if there is one
+            tinfo      = gettestinfo(args) # get test info
+            save_testinfo(tinfo)
             new_only   = args.find(NEW_ONLY_TAG) != -1 or old_cmd == new_cmd # only new command applies not old
             args       = stripcomment(args).split('|') # strip out comments
             #
@@ -252,7 +286,8 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
             else:
                 oresults = run_cmd(old_cmd,old_args,stubout_file)
             nresults = run_cmd(new_cmd,new_args,stubout_file)
-            gentest(fd, name, tc_comment, new_args, oresults, nresults, stubout_file)
+            remove_testinfo()
+            gentest(fd, name, tc_comment, new_args, oresults, nresults, stubout_file, tinfo)
         fd.close()
 
 def main():

@@ -1,18 +1,17 @@
 import testutils
 
 # ---------------------------------------------------------------------------------
-def test_nodelist_arg_1():
+def test_slpstat_arg_1():
     """
-    nodelist test run: arg_1
+    slpstat test run: arg_1
         Old Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          Name  Location  Update Time               
+          ==========================================
+          S0    P0        Mon Apr 22 17:06:10 2013  
+          S1    P1        Mon Apr 22 17:06:20 2013  
+          S2    P2        Mon Apr 22 17:06:30 2013  
+          S3    P3        Mon Apr 22 17:06:40 2013  
+          S4    P4        Mon Apr 22 17:06:50 2013  
           
 
     """
@@ -21,28 +20,25 @@ def test_nodelist_arg_1():
 
     cmdout    = \
 """
-nodelist.py 
+slpstat.py 
 
-Host  Queue  State
-====================
-D1    QD1    good 
-D2    QD2    bad  
-D3    QD3    ugly 
-U1    QU1    one  
-U2    QU2    two  
-U3    QU3    three
+Name  Location  Update Time               
+==========================================
+S0    P0        Mon Apr 22 17:06:10 2013  
+S1    P1        Mon Apr 22 17:06:20 2013  
+S2    P2        Mon Apr 22 17:06:30 2013  
+S3    P3        Mon Apr 22 17:06:40 2013  
+S4    P4        Mon Apr 22 17:06:50 2013  
 """
 
     stubout   = \
 """
-GET_IMPLEMENTATION
+GET_SERVICES
 
-
-GET_NODES_STATUS
-
-
-GET_QUEUE_ASSIGNMENTS
-
+location:*
+name:*
+stamp:*
+tag:service
 """
 
     stubout_file = "stub.out"
@@ -55,7 +51,7 @@ GET_QUEUE_ASSIGNMENTS
 
     testutils.save_testinfo("")
 
-    results = testutils.run_cmd('nodelist.py',args,stubout_file) 
+    results = testutils.run_cmd('slpstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
     testutils.remove_testinfo()
@@ -65,18 +61,65 @@ GET_QUEUE_ASSIGNMENTS
 
 
 # ---------------------------------------------------------------------------------
-def test_nodelist_arg_2():
+def test_slpstat_arg_2():
     """
-    nodelist test run: arg_2
+    slpstat test run: arg_2
         Old Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          no services registered
+          
+
+    """
+
+    args      = ''
+
+    cmdout    = \
+"""
+slpstat.py 
+
+no services registered
+"""
+
+    stubout   = \
+"""
+GET_SERVICES
+
+location:*
+name:*
+stamp:*
+tag:service
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("NO SERVICES")
+
+    results = testutils.run_cmd('slpstat.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_slpstat_arg_3():
+    """
+    slpstat test run: arg_3
+        Old Command Output:
+          Name  Location  Update Time               
+          ==========================================
+          S0    P0        Mon Apr 22 17:06:10 2013  
+          S1    P1        Mon Apr 22 17:06:20 2013  
+          S2    P2        Mon Apr 22 17:06:30 2013  
+          S3    P3        Mon Apr 22 17:06:40 2013  
+          S4    P4        Mon Apr 22 17:06:50 2013  
           
 
     """
@@ -85,29 +128,26 @@ def test_nodelist_arg_2():
 
     cmdout    = \
 """
-nodelist.py arg1
+slpstat.py arg1
 
 No arguments needed
-Host  Queue  State
-====================
-D1    QD1    good 
-D2    QD2    bad  
-D3    QD3    ugly 
-U1    QU1    one  
-U2    QU2    two  
-U3    QU3    three
+Name  Location  Update Time               
+==========================================
+S0    P0        Mon Apr 22 17:06:10 2013  
+S1    P1        Mon Apr 22 17:06:20 2013  
+S2    P2        Mon Apr 22 17:06:30 2013  
+S3    P3        Mon Apr 22 17:06:40 2013  
+S4    P4        Mon Apr 22 17:06:50 2013  
 """
 
     stubout   = \
 """
-GET_IMPLEMENTATION
+GET_SERVICES
 
-
-GET_NODES_STATUS
-
-
-GET_QUEUE_ASSIGNMENTS
-
+location:*
+name:*
+stamp:*
+tag:service
 """
 
     stubout_file = "stub.out"
@@ -120,7 +160,7 @@ GET_QUEUE_ASSIGNMENTS
 
     testutils.save_testinfo("")
 
-    results = testutils.run_cmd('nodelist.py',args,stubout_file) 
+    results = testutils.run_cmd('slpstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
     testutils.remove_testinfo()
@@ -130,48 +170,9 @@ GET_QUEUE_ASSIGNMENTS
 
 
 # ---------------------------------------------------------------------------------
-def test_nodelist_options_1():
+def test_slpstat_help_1():
     """
-    nodelist test run: options_1
-
-    """
-
-    args      = """-l"""
-
-    cmdout    = \
-"""
-nodelist.py -l
-
-Usage: nodelist.py
-
-nodelist.py: error: no such option: -l
-"""
-
-    stubout   = ''
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       512, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout # Expected stub functions output
-                       ) 
-
-    testutils.save_testinfo("")
-
-    results = testutils.run_cmd('nodelist.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    testutils.remove_testinfo()
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
-def test_nodelist_options_2():
-    """
-    nodelist test run: options_2
+    slpstat test run: help_1
 
     """
 
@@ -179,13 +180,14 @@ def test_nodelist_options_2():
 
     cmdout    = \
 """
-nodelist.py --help
+slpstat.py --help
 
-Usage: nodelist.py
+Usage: slpstat.py [options] <queue name> <jobid1> [... <jobidN>]
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
 """
 
     stubout   = ''
@@ -200,7 +202,7 @@ Options:
 
     testutils.save_testinfo("")
 
-    results = testutils.run_cmd('nodelist.py',args,stubout_file) 
+    results = testutils.run_cmd('slpstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
     testutils.remove_testinfo()
@@ -210,9 +212,9 @@ Options:
 
 
 # ---------------------------------------------------------------------------------
-def test_nodelist_options_3():
+def test_slpstat_help_2():
     """
-    nodelist test run: options_3
+    slpstat test run: help_2
 
     """
 
@@ -220,13 +222,14 @@ def test_nodelist_options_3():
 
     cmdout    = \
 """
-nodelist.py -h
+slpstat.py -h
 
-Usage: nodelist.py
+Usage: slpstat.py [options] <queue name> <jobid1> [... <jobidN>]
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
 """
 
     stubout   = ''
@@ -241,7 +244,7 @@ Options:
 
     testutils.save_testinfo("")
 
-    results = testutils.run_cmd('nodelist.py',args,stubout_file) 
+    results = testutils.run_cmd('slpstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
     testutils.remove_testinfo()
@@ -251,9 +254,9 @@ Options:
 
 
 # ---------------------------------------------------------------------------------
-def test_nodelist_options_4():
+def test_slpstat_version():
     """
-    nodelist test run: options_4
+    slpstat test run: version
 
     """
 
@@ -261,9 +264,9 @@ def test_nodelist_options_4():
 
     cmdout    = \
 """
-nodelist.py --version
+slpstat.py --version
 
-version: "nodelist.py " + TBD + , Cobalt  + TBD
+version: "slpstat.py " + $Revision: 1221 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''
@@ -278,7 +281,7 @@ version: "nodelist.py " + TBD + , Cobalt  + TBD
 
     testutils.save_testinfo("")
 
-    results = testutils.run_cmd('nodelist.py',args,stubout_file) 
+    results = testutils.run_cmd('slpstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
     testutils.remove_testinfo()
