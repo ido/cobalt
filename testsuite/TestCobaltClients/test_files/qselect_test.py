@@ -17,10 +17,7 @@ def test_qselect_invalid_option():
     args      = """-k"""
 
     cmdout    = \
-"""
-qselect.py -k
-
-Usage: qselect.py [options]
+"""Usage: qselect.py [options]
 
 qselect.py: error: no such option: -k
 """
@@ -62,10 +59,7 @@ def test_qselect_only_arg():
     args      = """1"""
 
     cmdout    = \
-"""
-qselect.py 1
-
-qselect takes no arguments
+"""qselect takes no arguments
 """
 
     stubout   = ''
@@ -104,10 +98,7 @@ def test_qselect_no_args_opts():
     args      = ''
 
     cmdout    = \
-"""
-qselect.py 
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -159,10 +150,7 @@ def test_qselect_debug_flag():
     args      = """-d"""
 
     cmdout    = \
-"""
-qselect.py -d
-
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+"""[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
    The following jobs matched your query:
       100
 """
@@ -214,10 +202,7 @@ def test_qselect_held_option():
     args      = """-h user_hold"""
 
     cmdout    = \
-"""
-qselect.py -h user_hold
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -268,10 +253,7 @@ def test_qselect_nodecount_option():
     args      = """-n 312"""
 
     cmdout    = \
-"""
-qselect.py -n 312
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -322,10 +304,7 @@ def test_qselect_state_and_nodecount():
     args      = """-n 312 -h user_hold"""
 
     cmdout    = \
-"""
-qselect.py -n 312 -h user_hold
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -376,10 +355,7 @@ def test_qselect_walltime():
     args      = """-t 10:10:10"""
 
     cmdout    = \
-"""
-qselect.py -t 10:10:10
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -430,10 +406,7 @@ def test_qselect_mode():
     args      = """--mode vn"""
 
     cmdout    = \
-"""
-qselect.py --mode vn
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -484,10 +457,7 @@ def test_qselect_verbose():
     args      = """-v"""
 
     cmdout    = \
-"""
-qselect.py -v
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 

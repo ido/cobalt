@@ -1091,14 +1091,15 @@ class disk_writer_thread(Thread):
 
         logger.warn("Non-blocking File IO thread terminated.")
 
-
+bgq_node_geo_re = re.compile(r'^([0-9]+)x([0-9]+)x([0-9]+)x([0-9]+)x([1-2])$')
+midplane_geo_re = re.compile(r'^([0-9]+)x([0-9]+)x([0-9]+)x([0-9]+)$')
 
 def parse_geometry_string(geometry_str):
 
     geometry_list = None
     geo_regexes = []
-    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)x(\d*)'))
-    geo_regexes.append(re.compile(r'(\d*)x(\d*)x(\d*)x(\d*)'))
+    geo_regexes.append(bgq_node_geo_re)
+    geo_regexes.append(midplane_geo_re)
 
     found = False
     for regex in geo_regexes:

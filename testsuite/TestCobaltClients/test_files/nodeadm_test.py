@@ -20,10 +20,7 @@ def test_nodeadm_args_1():
     args      = ''
 
     cmdout    = \
-"""
-nodeadm.py 
-
-No arguments provided
+"""No arguments provided
 Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 
 Options:
@@ -76,10 +73,7 @@ def test_nodeadm_args_2():
     args      = """p1"""
 
     cmdout    = \
-"""
-nodeadm.py p1
-
-Need at least one option
+"""Need at least one option
 Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 
 Options:
@@ -125,10 +119,7 @@ def test_nodeadm_combo_1():
     args      = """--up --down p1"""
 
     cmdout    = \
-"""
-nodeadm.py --up --down p1
-
-Option combinations not allowed with: down, up option(s)
+"""Option combinations not allowed with: down, up option(s)
 """
 
     stubout   = \
@@ -166,10 +157,7 @@ def test_nodeadm_combo_2():
     args      = """--up -l p1"""
 
     cmdout    = \
-"""
-nodeadm.py --up -l p1
-
-Option combinations not allowed with: up, queue, list option(s)
+"""Option combinations not allowed with: up, queue, list option(s)
 """
 
     stubout   = \
@@ -207,10 +195,7 @@ def test_nodeadm_combo_3():
     args      = """--list --queue q1 p1"""
 
     cmdout    = \
-"""
-nodeadm.py --list --queue q1 p1
-
-Option combinations not allowed with: queue, list option(s)
+"""Option combinations not allowed with: queue, list option(s)
 """
 
     stubout   = \
@@ -248,10 +233,7 @@ def test_nodeadm_combo_4():
     args      = """--up --queue q1 p1"""
 
     cmdout    = \
-"""
-nodeadm.py --up --queue q1 p1
-
-nodes marked up:
+"""nodes marked up:
    U1
    U2
    U3
@@ -302,10 +284,7 @@ def test_nodeadm_combo_5():
     args      = """--down --list p1"""
 
     cmdout    = \
-"""
-nodeadm.py --down --list p1
-
-Option combinations not allowed with: down, queue, list option(s)
+"""Option combinations not allowed with: down, queue, list option(s)
 """
 
     stubout   = \
@@ -356,10 +335,7 @@ def test_nodeadm_up_1():
     args      = """--up p1 p2 p3"""
 
     cmdout    = \
-"""
-nodeadm.py --up p1 p2 p3
-
-nodes marked up:
+"""nodes marked up:
    U1
    U2
    U3
@@ -423,10 +399,7 @@ def test_nodeadm_up_2():
     args      = """--up U1 U2 U5 p1"""
 
     cmdout    = \
-"""
-nodeadm.py --up U1 U2 U5 p1
-
-nodes marked up:
+"""nodes marked up:
    U1
    U2
    U3
@@ -490,10 +463,7 @@ def test_nodeadm_down_1():
     args      = """--down p1 p2 p3"""
 
     cmdout    = \
-"""
-nodeadm.py --down p1 p2 p3
-
-nodes marked down:
+"""nodes marked down:
    D1
    D2
    D3
@@ -559,10 +529,7 @@ def test_nodeadm_down_2():
     args      = """--down D1 D2 D5 p1"""
 
     cmdout    = \
-"""
-nodeadm.py --down D1 D2 D5 p1
-
-nodes marked down:
+"""nodes marked down:
    D1
    D2
    D3
@@ -626,10 +593,7 @@ def test_nodeadm_list_1():
     args      = """-l"""
 
     cmdout    = \
-"""
-nodeadm.py -l
-
-Host  Queue  State
+"""Host  Queue  State
 ====================
 D1    QD1    good 
 D2    QD2    bad  
@@ -690,10 +654,7 @@ def test_nodeadm_list_2():
     args      = """-l p1"""
 
     cmdout    = \
-"""
-nodeadm.py -l p1
-
-Host  Queue  State
+"""Host  Queue  State
 ====================
 D1    QD1    good 
 D2    QD2    bad  
@@ -754,10 +715,7 @@ def test_nodeadm_queue_1():
     args      = """--queue QU1"""
 
     cmdout    = \
-"""
-nodeadm.py --queue QU1
-
-No arguments provided
+"""No arguments provided
 Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 
 Options:
@@ -803,10 +761,7 @@ def test_nodeadm_queue_2():
     args      = """--queue "QU1 QD1" U1 D1 P1"""
 
     cmdout    = \
-"""
-nodeadm.py --queue QU1 QD1 U1 D1 P1
-
-QU1 QD1
+"""QU1 QD1
 """
 
     stubout   = \

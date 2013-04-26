@@ -217,6 +217,18 @@ class SystemStub(object):
         logmsg("args: %s" % str(args))
         return ["U1","U2","U3","U4","U5"]
 
+    def get_idle_blocks(s,block_loc, query_size,geo_list):
+        logmsg("\nGET_IDLE_BLOCKS\n")
+        logmsg("block location: %s" % str(block_loc))
+        logmsg("query size: %s" % str(query_size))
+        geo = ''
+        if geo_list != None: 
+            for g in geo_list:
+                geo += str(g) + 'x'
+            geo = geo[:-1]
+        logmsg("geoometry: %s" % geo)
+        return ["I1","I2","I3","I4","I5"]
+
     def get_node_status(s):
         logmsg("\nGET_NODES_STATUS\n")
         return [ ['D1','good'],['D2','bad'],['D3','ugly'],['U1','one'],['U2','two'],['U3','three']]

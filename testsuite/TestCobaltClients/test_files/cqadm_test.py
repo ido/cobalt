@@ -24,10 +24,7 @@ def test_cqadm_getq_option_1():
     args      = """--getq"""
 
     cmdout    = \
-"""
-cqadm.py --getq
-
-Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+"""Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
 =========================================================================================================================================================
 aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
@@ -107,10 +104,7 @@ def test_cqadm_getq_option_2():
     args      = """-d --getq"""
 
     cmdout    = \
-"""
-cqadm.py -d --getq
-
-[{'users': 'james', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'kebra', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'land', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'jello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'house', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'bello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'dog', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'aaa', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'cat', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'bbb', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'henry', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'hhh', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'king', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'dito', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'queen', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'myq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'girl', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'yours', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'boy', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'zq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}]
+"""[{'users': 'james', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'kebra', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'land', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'jello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'house', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'bello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'dog', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'aaa', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'cat', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'bbb', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'henry', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'hhh', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'king', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'dito', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'queen', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'myq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'girl', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'yours', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'boy', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'zq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}]
 Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
 =========================================================================================================================================================
 aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
@@ -190,10 +184,7 @@ def test_cqadm_getq_option_3():
     args      = """-f --getq"""
 
     cmdout    = \
-"""
-cqadm.py -f --getq
-
-Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+"""Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
 =========================================================================================================================================================
 aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
@@ -261,10 +252,7 @@ def test_cqadm_preempt_job_1():
     args      = """-d --preempt 1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py -d --preempt 1 2 3
-
-True
+"""True
 """
 
     stubout   = \
@@ -317,11 +305,7 @@ def test_cqadm_preempt_job_2():
 
     args      = """-f --preempt 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --preempt 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -374,10 +358,7 @@ def test_cqadm_kill_job_1():
     args      = """-d -f --kill 1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py -d -f --kill 1 2 3
-
-[{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}]
+"""[{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}]
 """
 
     stubout   = \
@@ -430,11 +411,7 @@ def test_cqadm_kill_job_2():
 
     args      = """--kill 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --kill 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -487,11 +464,7 @@ def test_cqadm_kill_job_3():
 
     args      = """-f --kill 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --kill 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -545,10 +518,7 @@ def test_cqadm_kill_job_4():
     args      = """-d --kill 1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py -d --kill 1 2 3
-
-[{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}]
+"""[{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}]
 """
 
     stubout   = \
@@ -607,10 +577,7 @@ def test_cqadm_addq_option_1():
     args      = """--addq"""
 
     cmdout    = \
-"""
-cqadm.py --addq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -651,10 +618,7 @@ def test_cqadm_addq_option_2():
     args      = """--addq myq1 myq2 myq3"""
 
     cmdout    = \
-"""
-cqadm.py --addq myq1 myq2 myq3
-
-Added Queues  
+"""Added Queues  
 ==============
 myq1          
 myq2          
@@ -729,10 +693,7 @@ def test_cqadm_delq_option_1():
     args      = """--delq"""
 
     cmdout    = \
-"""
-cqadm.py --delq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -773,10 +734,7 @@ def test_cqadm_delq_option_2():
     args      = """--delq myq1 myq2 myq3"""
 
     cmdout    = \
-"""
-cqadm.py --delq myq1 myq2 myq3
-
-Deleted Queues  
+"""Deleted Queues  
 ================
 myq1            
 myq2            
@@ -833,10 +791,7 @@ def test_cqadm_stopq_option_1():
     args      = """--stopq"""
 
     cmdout    = \
-"""
-cqadm.py --stopq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -871,11 +826,7 @@ def test_cqadm_stopq_option_2():
 
     args      = """--stopq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --stopq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -927,10 +878,7 @@ def test_cqadm_startq_option_1():
     args      = """--startq"""
 
     cmdout    = \
-"""
-cqadm.py --startq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -965,11 +913,7 @@ def test_cqadm_startq_option_2():
 
     args      = """--startq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --startq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1021,10 +965,7 @@ def test_cqadm_drainq_option_1():
     args      = """--drainq"""
 
     cmdout    = \
-"""
-cqadm.py --drainq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1059,11 +1000,7 @@ def test_cqadm_drainq_option_2():
 
     args      = """--drainq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --drainq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1115,10 +1052,7 @@ def test_cqadm_killq_option_1():
     args      = """--killq"""
 
     cmdout    = \
-"""
-cqadm.py --killq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1153,11 +1087,7 @@ def test_cqadm_killq_option_2():
 
     args      = """--killq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --killq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1209,10 +1139,7 @@ def test_cqadm_policy_option_1():
     args      = """--policy"""
 
     cmdout    = \
-"""
-cqadm.py --policy
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --policy option requires an argument
 """
@@ -1255,10 +1182,7 @@ def test_cqadm_policy_option_2():
     args      = """--policy 'mypolicy'"""
 
     cmdout    = \
-"""
-cqadm.py --policy mypolicy
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1293,11 +1217,7 @@ def test_cqadm_policy_option_3():
 
     args      = """--policy 'mypolicy' myq1 myq2"""
 
-    cmdout    = \
-"""
-cqadm.py --policy mypolicy myq1 myq2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1347,10 +1267,7 @@ def test_cqadm_setq_option_1():
     args      = """--setq"""
 
     cmdout    = \
-"""
-cqadm.py --setq
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --setq option requires an argument
 """
@@ -1393,10 +1310,7 @@ def test_cqadm_setq_option_2():
     args      = """--setq 'a=b b=c a=c'"""
 
     cmdout    = \
-"""
-cqadm.py --setq a=b b=c a=c
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1431,11 +1345,7 @@ def test_cqadm_setq_option_3():
 
     args      = """--setq 'a=b b=c a=c' myq1 myq2"""
 
-    cmdout    = \
-"""
-cqadm.py --setq a=b b=c a=c myq1 myq2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1485,10 +1395,7 @@ def test_cqadm_unsetq_option_1():
     args      = """--unsetq"""
 
     cmdout    = \
-"""
-cqadm.py --unsetq
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --unsetq option requires an argument
 """
@@ -1531,10 +1438,7 @@ def test_cqadm_unsetq_option_2():
     args      = """--unsetq 'a b a'"""
 
     cmdout    = \
-"""
-cqadm.py --unsetq a b a
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1569,11 +1473,7 @@ def test_cqadm_unsetq_option_3():
 
     args      = """--unsetq 'a b a' myq1 myq2"""
 
-    cmdout    = \
-"""
-cqadm.py --unsetq a b a myq1 myq2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1623,10 +1523,7 @@ def test_cqadm_setjobid_option_1():
     args      = """-j"""
 
     cmdout    = \
-"""
-cqadm.py -j
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: -j option requires an argument
 """
@@ -1669,10 +1566,7 @@ def test_cqadm_setjobid_option_2():
     args      = """--setjobid"""
 
     cmdout    = \
-"""
-cqadm.py --setjobid
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --setjobid option requires an argument
 """
@@ -1709,11 +1603,7 @@ def test_cqadm_setjobid_option_3():
 
     args      = """-j 1"""
 
-    cmdout    = \
-"""
-cqadm.py -j 1
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1753,11 +1643,7 @@ def test_cqadm_setjobid_option_4():
 
     args      = """--setjobid 1"""
 
-    cmdout    = \
-"""
-cqadm.py --setjobid 1
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1797,11 +1683,7 @@ def test_cqadm_setjobid_option_5():
 
     args      = """-j 1 --setjobid 2"""
 
-    cmdout    = \
-"""
-cqadm.py -j 1 --setjobid 2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1847,10 +1729,7 @@ def test_cqadm_run_option_1():
     args      = """--run"""
 
     cmdout    = \
-"""
-cqadm.py --run
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --run option requires an argument
 """
@@ -1893,10 +1772,7 @@ def test_cqadm_run_option_2():
     args      = """--run mayaguez"""
 
     cmdout    = \
-"""
-cqadm.py --run mayaguez
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1931,11 +1807,7 @@ def test_cqadm_run_option_3():
 
     args      = """--run mayaguez 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --run mayaguez 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1993,10 +1865,7 @@ def test_cqadm_hold_option_1():
     args      = """--hold"""
 
     cmdout    = \
-"""
-cqadm.py --hold
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2031,11 +1900,7 @@ def test_cqadm_hold_option_2():
 
     args      = """--hold 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --hold 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2097,10 +1962,7 @@ def test_cqadm_hold_option_3():
     args      = """-d --hold  1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py -d --hold 1 2 3
-
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+"""[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
 """
 
     stubout   = \
@@ -2161,11 +2023,7 @@ def test_cqadm_hold_option_4():
 
     args      = """-f --hold  1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --hold 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2227,10 +2085,7 @@ def test_cqadm_release_option_1():
     args      = """--release"""
 
     cmdout    = \
-"""
-cqadm.py --release
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2265,11 +2120,7 @@ def test_cqadm_release_option_2():
 
     args      = """--release 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --release 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2331,10 +2182,7 @@ def test_cqadm_release_option_3():
     args      = """-d --release 1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py -d --release 1 2 3
-
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+"""[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
 """
 
     stubout   = \
@@ -2395,11 +2243,7 @@ def test_cqadm_release_option_4():
 
     args      = """-f --release 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --release 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2465,10 +2309,7 @@ def test_cqadm_release_and_hold():
     args      = """--hold --release 1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py --hold --release 1 2 3
-
-Attribute admin_hold already set
+"""Attribute admin_hold already set
 """
 
     stubout   = ''
@@ -2509,10 +2350,7 @@ def test_cqadm_queue_option_1():
     args      = """--queue"""
 
     cmdout    = \
-"""
-cqadm.py --queue
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --queue option requires an argument
 """
@@ -2555,10 +2393,7 @@ def test_cqadm_queue_option_2():
     args      = """--queue myq"""
 
     cmdout    = \
-"""
-cqadm.py --queue myq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2593,11 +2428,7 @@ def test_cqadm_queue_option_3():
 
     args      = """--queue myq 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --queue myq 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2660,10 +2491,7 @@ def test_cqadm_time_option_1():
     args      = """--time"""
 
     cmdout    = \
-"""
-cqadm.py --time
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --time option requires an argument
 """
@@ -2706,10 +2534,7 @@ def test_cqadm_time_option_2():
     args      = """--time 50"""
 
     cmdout    = \
-"""
-cqadm.py --time 50
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2744,11 +2569,7 @@ def test_cqadm_time_option_4():
 
     args      = """--time 50 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --time 50 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2805,11 +2626,7 @@ def test_cqadm_update_all_1():
 
     args      = """--hold --queue myq --time 50 4 5 6"""
 
-    cmdout    = \
-"""
-cqadm.py --hold --queue myq --time 50 4 5 6
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2871,11 +2688,7 @@ def test_cqadm_update_all_2():
 
     args      = """--release --queue myq --time 50 4 5 6"""
 
-    cmdout    = \
-"""
-cqadm.py --release --queue myq --time 50 4 5 6
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2943,10 +2756,7 @@ def test_cqadm_combine_getq_and_addq():
     args      = """--getq --addq myq1 myq2 myq3"""
 
     cmdout    = \
-"""
-cqadm.py --getq --addq myq1 myq2 myq3
-
-Option combinations not allowed with: addq, getq option(s)
+"""Option combinations not allowed with: addq, getq option(s)
 """
 
     stubout   = ''
@@ -2987,10 +2797,7 @@ def test_cqadm_combine_getq_and_setjobid():
     args      = """--getq -j 1 123"""
 
     cmdout    = \
-"""
-cqadm.py --getq -j 1 123
-
-Option combinations not allowed with: setjobid, getq option(s)
+"""Option combinations not allowed with: setjobid, getq option(s)
 """
 
     stubout   = ''
@@ -3031,10 +2838,7 @@ def test_cqadm_combine_time_and_getq():
     args      = """--time 50 --getq"""
 
     cmdout    = \
-"""
-cqadm.py --time 50 --getq
-
-Option combinations not allowed with: getq option(s)
+"""Option combinations not allowed with: getq option(s)
 """
 
     stubout   = ''
@@ -3075,10 +2879,7 @@ def test_cqadm_combine_release_and_getq():
     args      = """--release --getq 123"""
 
     cmdout    = \
-"""
-cqadm.py --release --getq 123
-
-Option combinations not allowed with: getq option(s)
+"""Option combinations not allowed with: getq option(s)
 """
 
     stubout   = ''
@@ -3119,10 +2920,7 @@ def test_cqadm_combine_setq_with_queue():
     args      = """--setq 'a=1 b=2' --queue q 1"""
 
     cmdout    = \
-"""
-cqadm.py --setq a=1 b=2 --queue q 1
-
-Option combinations not allowed with: setq option(s)
+"""Option combinations not allowed with: setq option(s)
 """
 
     stubout   = ''
@@ -3163,10 +2961,7 @@ def test_cqadm_combine_addq_and_delq():
     args      = """--addq --delq q1 q2"""
 
     cmdout    = \
-"""
-cqadm.py --addq --delq q1 q2
-
-Option combinations not allowed with: addq, delq option(s)
+"""Option combinations not allowed with: addq, delq option(s)
 """
 
     stubout   = ''
@@ -3207,10 +3002,7 @@ def test_cqadm_combine_addq_and_stopq():
     args      = """--stopq --addq q1 q2"""
 
     cmdout    = \
-"""
-cqadm.py --stopq --addq q1 q2
-
-Option combinations not allowed with: addq, stopq option(s)
+"""Option combinations not allowed with: addq, stopq option(s)
 """
 
     stubout   = ''
@@ -3251,10 +3043,7 @@ def test_cqadm_combine_addq_and_startq():
     args      = """--startq --addq q1 q2"""
 
     cmdout    = \
-"""
-cqadm.py --startq --addq q1 q2
-
-Option combinations not allowed with: addq, startq option(s)
+"""Option combinations not allowed with: addq, startq option(s)
 """
 
     stubout   = ''

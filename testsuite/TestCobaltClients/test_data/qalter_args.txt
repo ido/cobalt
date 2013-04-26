@@ -37,9 +37,11 @@
 
 -d -v --run_project 10 20 30 # <tc:project> Set run project flag
 
-|-d -v --geometry 10 1 2 3 4 5            # <tc:geometry_1>
--d -v --geometry 10x10x10x10x10 1 2 3 4 5 # <tc:geometry_2>
--d -v --geometry 04x04x04x04x04 1 2 3 4   # <tc:geometry_3>
+|-d -v --geometry 10 1 2 3 4 5             # <tc:geometry_1>
+|-d -v --geometry 10x10x10x10x10 1 2 3 4 5 # <tc:geometry_2>
+-d -v --geometry 04x04x04x04    1 2 3 4    # <tc:geometry_3> <NEW_ONLY> old one does not handle very well
+-d -v --geometry 10x10x10x10x1  1 2 3 4 5  # <tc:geometry_4>
+-d -v --geometry 04x04x04x04x2  1 2 3 4    # <tc:geometry_5> <NEW_ONLY>
 
 -d -v --enable_preboot --run_project 10 20 30  # <tc:preboot_1> Set run project flag
 -d -v --disable_preboot --run_project 10 20 30 # <tc:preboot_2> Set run project flag

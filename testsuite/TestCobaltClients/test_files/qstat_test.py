@@ -14,10 +14,7 @@ def test_qstat_version_option():
     args      = """--version"""
 
     cmdout    = \
-"""
-qstat.py --version
-
-version: "qstat.py " + $Revision: 406 $ + , Cobalt  + $Version$
+"""version: "qstat.py " + $Revision: 406 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''
@@ -56,10 +53,7 @@ def test_qstat_help_option():
     args      = """-h"""
 
     cmdout    = \
-"""
-qstat.py -h
-
-Usage: qstat.py [options] <jobids1> ... <jobidsN>
+"""Usage: qstat.py [options] <jobids1> ... <jobidsN>
 
 Options:
   --version             show program's version number and exit
@@ -110,10 +104,7 @@ def test_qstat_debug_only():
     args      = """-d"""
 
     cmdout    = \
-"""
-qstat.py -d
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  User  WallTime  Nodes  State  Location  
 ===============================================
 100    land  00:05:00  512    *      /tmp      
@@ -206,10 +197,7 @@ def test_qstat_full_option_1():
     args      = """-d -f 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -d -f 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
@@ -458,10 +446,7 @@ def test_qstat_full_option_2():
     args      = """-f 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
@@ -710,10 +695,7 @@ def test_qstat_full_option_3():
     args      = """-f --reverse 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f --reverse 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
@@ -1150,10 +1132,7 @@ def test_qstat_full_option_4():
     args      = """-f -l 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f -l 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 5
     JobName       : tmp
     User          : henry
@@ -1778,10 +1757,7 @@ def test_qstat_full_option_5():
     args      = """-f -l --reverse 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f -l --reverse 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 4
     JobName       : tmp
     User          : cat
@@ -2406,10 +2382,7 @@ def test_qstat_full_option_6():
     args      = """-f -l --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f -l --sort user 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 4
     JobName       : tmp
     User          : cat
@@ -3034,10 +3007,7 @@ def test_qstat_full_option_7():
     args      = """-f -l --reverse --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f -l --reverse --sort user 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 1
     JobName       : tmp
     User          : land
@@ -3662,10 +3632,7 @@ def test_qstat_full_option_8():
     args      = """-f -l --sort queue 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f -l --sort queue 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 3
     JobName       : tmp
     User          : dog
@@ -4290,10 +4257,7 @@ def test_qstat_full_option_9():
     args      = """-f -l --reverse --sort queue 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -f -l --reverse --sort queue 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 1
     JobName       : tmp
     User          : land
@@ -4726,10 +4690,7 @@ def test_qstat_full_option_10():
     args      = """-f"""
 
     cmdout    = \
-"""
-qstat.py -f
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User  Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 =======================================================================================================================
 100    tmp      land   50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
@@ -4820,10 +4781,7 @@ def test_qstat_full_option_11():
     args      = """-f --header Jobid:State:RunTime  1 2 3"""
 
     cmdout    = \
-"""
-qstat.py -f --header Jobid:State:RunTime 1 2 3
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
@@ -4994,10 +4952,7 @@ def test_qstat_long_option_1():
     args      = """-l"""
 
     cmdout    = \
-"""
-qstat.py -l
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 100
     User     : land
     WallTime : 00:05:00
@@ -5122,10 +5077,7 @@ def test_qstat_long_option_2():
     args      = """-l 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -l 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 1
     User     : land
     WallTime : 00:05:00
@@ -5430,10 +5382,7 @@ def test_qstat_long_option_3():
     args      = """-l --reverse 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -l --reverse 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 5
     User     : henry
     WallTime : 00:25:00
@@ -5738,10 +5687,7 @@ def test_qstat_long_option_4():
     args      = """-l --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -l --sort user 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 4
     User     : cat
     WallTime : 00:20:00
@@ -6046,10 +5992,7 @@ def test_qstat_long_option_5():
     args      = """-l --reverse --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -l --reverse --sort user 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 1
     User     : land
     WallTime : 00:05:00
@@ -6354,10 +6297,7 @@ def test_qstat_long_option_6():
     args      = """-l --sort queue 1 2 3 4 5"""
 
     cmdout    = \
-"""
-qstat.py -l --sort queue 1 2 3 4 5
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID: 1
     User     : land
     WallTime : 00:05:00
@@ -6639,10 +6579,7 @@ def test_qstat_long_option_11():
     args      = """-l --header Jobid:State:RunTime  1 2 3"""
 
     cmdout    = \
-"""
-qstat.py -l --header Jobid:State:RunTime 1 2 3
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Jobid: 1
     State   : *
     RunTime : N/A
@@ -6923,10 +6860,7 @@ def test_qstat_queue_option_1():
     args      = """-f -Q -l 1 2 3"""
 
     cmdout    = \
-"""
-qstat.py -f -Q -l 1 2 3
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name: aaa
     Users        : dog
     MinTime      : None
@@ -7221,10 +7155,7 @@ def test_qstat_queue_option_2():
     args      = """-f --reverse -Q -l 1 2 3"""
 
     cmdout    = \
-"""
-qstat.py -f --reverse -Q -l 1 2 3
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name: zq
     Users        : boy
     MinTime      : None
@@ -7421,10 +7352,7 @@ def test_qstat_queue_option_3():
     args      = """-f --sort users -Q"""
 
     cmdout    = \
-"""
-qstat.py -f --sort users -Q
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 zq     boy    None     None     20          20         20            20            100         running  
@@ -7503,10 +7431,7 @@ def test_qstat_queue_option_4():
     args      = """-Q"""
 
     cmdout    = \
-"""
-qstat.py -Q
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 aaa    dog    None     None     20          20         20            20            100         running  
@@ -7585,10 +7510,7 @@ def test_qstat_queue_option_5():
     args      = """-Q --reverse"""
 
     cmdout    = \
-"""
-qstat.py -Q --reverse
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 zq     boy    None     None     20          20         20            20            100         running  
@@ -7667,10 +7589,7 @@ def test_qstat_queue_option_6():
     args      = """-Q --sort users"""
 
     cmdout    = \
-"""
-qstat.py -Q --sort users
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 zq     boy    None     None     20          20         20            20            100         running  
@@ -7749,10 +7668,7 @@ def test_qstat_queue_option_7():
     args      = """-Q --sort users --reverse"""
 
     cmdout    = \
-"""
-qstat.py -Q --sort users --reverse
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 myq    queen  None     None     20          20         20            20            100         running  
@@ -7929,10 +7845,7 @@ def test_qstat_queue_option_8():
     args      = """-Q -l"""
 
     cmdout    = \
-"""
-qstat.py -Q -l
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name: aaa
     Users        : dog
     MinTime      : None
@@ -8207,10 +8120,7 @@ def test_qstat_queue_option_9():
     args      = """-Q --reverse -l"""
 
     cmdout    = \
-"""
-qstat.py -Q --reverse -l
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name: zq
     Users        : boy
     MinTime      : None
@@ -8485,10 +8395,7 @@ def test_qstat_queue_option_10():
     args      = """-Q --sort users -l"""
 
     cmdout    = \
-"""
-qstat.py -Q --sort users -l
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name: zq
     Users        : boy
     MinTime      : None
@@ -8763,10 +8670,7 @@ def test_qstat_queue_option_11():
     args      = """-Q --sort users --reverse -l"""
 
     cmdout    = \
-"""
-qstat.py -Q --sort users --reverse -l
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name: myq
     Users        : queen
     MinTime      : None
@@ -8943,10 +8847,7 @@ def test_qstat_queue_option_12():
     args      = """-Q --header Jobid:State:RunTime"""
 
     cmdout    = \
-"""
-qstat.py -Q --header Jobid:State:RunTime
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 aaa    dog    None     None     20          20         20            20            100         running  
@@ -9016,10 +8917,7 @@ def test_qstat_no_arguments_or_options():
     args      = ''
 
     cmdout    = \
-"""
-qstat.py 
-
-get_config_option: Option cqstat_header not found in section [cqm]
+"""get_config_option: Option cqstat_header not found in section [cqm]
 JobID  User  WallTime  Nodes  State  Location  
 ===============================================
 100    land  00:05:00  512    *      /tmp      

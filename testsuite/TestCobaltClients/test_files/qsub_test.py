@@ -13,10 +13,7 @@ def test_qsub_all_options():
     args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -127,10 +124,7 @@ def test_qsub_misc_1():
     args      = """--mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -234,10 +228,7 @@ def test_qsub_no_options_passed():
     args      = """/bin/ls"""
 
     cmdout    = \
-"""
-qsub.py /bin/ls
-
-No required options entered
+"""No required options entered
 'time' not provided
 """
 
@@ -285,10 +276,7 @@ def test_qsub_non_existant_option():
     args      = """-z -t10 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -z -t10 -n10 /bin/ls
-
-Usage: qsub.py [options] <executable> [<excutable options>]
+"""Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: no such option: -z
 """
@@ -337,10 +325,7 @@ def test_qsub_debug_flag_only():
     args      = """-d"""
 
     cmdout    = \
-"""
-qsub.py -d
-
-No required options entered
+"""No required options entered
 'time' not provided
 """
 
@@ -388,10 +373,7 @@ def test_qsub_verbose_flag_only():
     args      = """-v"""
 
     cmdout    = \
-"""
-qsub.py -v
-
-No required options entered
+"""No required options entered
 'time' not provided
 """
 
@@ -436,13 +418,10 @@ def test_qsub_non_integer_nodecount():
 
     """
 
-    args      = """--mode smp -t50 -nfive --geometry 40x40x50x50 /bin/ls"""
+    args      = """--mode smp -t50 -nfive --geometry 40x40x50x50   /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --mode smp -t50 -nfive --geometry 40x40x50x50 /bin/ls
-
-Usage: qsub.py [options] <executable> [<excutable options>]
+"""Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: option -n: invalid integer value: 'five'
 """
@@ -488,13 +467,10 @@ def test_qsub_non_realistic_nodecount():
 
     """
 
-    args      = """--mode smp -t50 -n2048 --geometry 40x40x50x50 /bin/ls"""
+    args      = """--mode smp -t50 -n2048 --geometry 40x40x50x50x1 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --mode smp -t50 -n2048 --geometry 40x40x50x50 /bin/ls
-
-node count out of realistic range
+"""node count out of realistic range
 """
 
     stubout   = ''
@@ -519,14 +495,14 @@ node count out of realistic range
 
 
 # ---------------------------------------------------------------------------------
-def test_qsub_invalid_geometry():
+def test_qsub_invalid_geometry_1():
     """
-    qsub test run: invalid_geometry
+    qsub test run: invalid_geometry_1
         Old Command Output:
           Traceback (most recent call last):
             File "oldcmds//qsub.py", line 179, in <module>
               jobspec['geometry'] = parse_geometry_string(opts['geometry'])
-            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Util.py", line 1111, in parse_geometry_string
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Util.py", line 1112, in parse_geometry_string
               raise ValueError, "%s is an invalid geometry specification." % geometry_str
           ValueError: x is an invalid geometry specification.
           
@@ -536,10 +512,7 @@ def test_qsub_invalid_geometry():
     args      = """--mode smp -t50 -n10 --geometry x /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --mode smp -t50 -n10 --geometry x /bin/ls
-
-Invalid geometry entered: 
+"""Invalid geometry entered: 
 """
 
     stubout   = ''
@@ -548,6 +521,424 @@ Invalid geometry entered:
 
     expected_results = ( 
                        256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_invalid_geometry_2():
+    """
+    qsub test run: invalid_geometry_2
+        Old Command Output:
+          1
+          
+
+    """
+
+    args      = """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
+
+    cmdout    = \
+"""get_config_option: Option filters not found in section [cqm]
+1
+"""
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+command:/bin/ls
+cwd:/tmp
+geometry:[1, 2, 3, 4, 2]
+jobid:*
+kernel:default
+mode:smp
+nodes:10
+outputdir:/tmp
+path:/tmp
+procs:False
+queue:default
+run_project:False
+script_preboot:True
+tag:job
+umask:18
+user:gooduser
+user_list:['gooduser']
+walltime:50
+
+VALIDATE_JOB
+
+attrs:{}
+cwd:/tmp
+debug:False
+debuglog:False
+dependencies:False
+disable_preboot:False
+env:False
+error:False
+forcenoval:False
+geometry:1x2x3x4
+held:False
+inputfile:False
+kernel:default
+kerneloptions:False
+mode:smp
+nodecount:10
+notify:False
+output:False
+outputprefix:False
+preemptable:False
+proccount:False
+project:False
+queue:default
+run_project:False
+time:50
+umask:False
+user_list:False
+verbose:False
+version:False
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_invalid_geometry_3():
+    """
+    qsub test run: invalid_geometry_3
+        Old Command Output:
+          1
+          
+
+    """
+
+    args      = """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls"""
+
+    cmdout    = \
+"""get_config_option: Option filters not found in section [cqm]
+1
+"""
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+command:/bin/ls
+cwd:/tmp
+geometry:[1, 2, 3, 4, 2]
+jobid:*
+kernel:default
+mode:smp
+nodes:10
+outputdir:/tmp
+path:/tmp
+procs:False
+queue:default
+run_project:False
+script_preboot:True
+tag:job
+umask:18
+user:gooduser
+user_list:['gooduser']
+walltime:50
+
+VALIDATE_JOB
+
+attrs:{}
+cwd:/tmp
+debug:False
+debuglog:False
+dependencies:False
+disable_preboot:False
+env:False
+error:False
+forcenoval:False
+geometry:1x2x3x4
+held:False
+inputfile:False
+kernel:default
+kerneloptions:False
+mode:smp
+nodecount:10
+notify:False
+output:False
+outputprefix:False
+preemptable:False
+proccount:False
+project:False
+queue:default
+run_project:False
+time:50
+umask:False
+user_list:False
+verbose:False
+version:False
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_invalid_geometry_4():
+    """
+    qsub test run: invalid_geometry_4
+        Old Command Output:
+          1
+          
+
+    """
+
+    args      = """--mode smp -t50 -n10 --geometry 48x48x48x48x2  /bin/ls"""
+
+    cmdout    = \
+"""get_config_option: Option filters not found in section [cqm]
+1
+"""
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+command:/bin/ls
+cwd:/tmp
+geometry:[48, 48, 48, 48, 2]
+jobid:*
+kernel:default
+mode:smp
+nodes:10
+outputdir:/tmp
+path:/tmp
+procs:False
+queue:default
+run_project:False
+script_preboot:True
+tag:job
+umask:18
+user:gooduser
+user_list:['gooduser']
+walltime:50
+
+VALIDATE_JOB
+
+attrs:{}
+cwd:/tmp
+debug:False
+debuglog:False
+dependencies:False
+disable_preboot:False
+env:False
+error:False
+forcenoval:False
+geometry:48x48x48x48x2
+held:False
+inputfile:False
+kernel:default
+kerneloptions:False
+mode:smp
+nodecount:10
+notify:False
+output:False
+outputprefix:False
+preemptable:False
+proccount:False
+project:False
+queue:default
+run_project:False
+time:50
+umask:False
+user_list:False
+verbose:False
+version:False
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_invalid_geometry_5():
+    """
+    qsub test run: invalid_geometry_5
+        Old Command Output:
+          Traceback (most recent call last):
+            File "oldcmds//qsub.py", line 179, in <module>
+              jobspec['geometry'] = parse_geometry_string(opts['geometry'])
+            File "/Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/Cobalt/Util.py", line 1112, in parse_geometry_string
+              raise ValueError, "%s is an invalid geometry specification." % geometry_str
+          ValueError: 48x48x48x48x3 is an invalid geometry specification.
+          
+
+    """
+
+    args      = """--mode smp -t50 -n10 --geometry 48x48x48x48x3  /bin/ls"""
+
+    cmdout    = \
+"""Invalid geometry entered: 
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_invalid_geometry_6():
+    """
+    qsub test run: invalid_geometry_6
+        Old Command Output:
+          1
+          
+
+    """
+
+    args      = """--mode smp -t50 -n10 --geometry 128x64x32x4    /bin/ls"""
+
+    cmdout    = \
+"""get_config_option: Option filters not found in section [cqm]
+1
+"""
+
+    stubout   = \
+"""
+ADD_JOBS
+
+args:[]
+command:/bin/ls
+cwd:/tmp
+geometry:[128, 64, 32, 4, 2]
+jobid:*
+kernel:default
+mode:smp
+nodes:10
+outputdir:/tmp
+path:/tmp
+procs:False
+queue:default
+run_project:False
+script_preboot:True
+tag:job
+umask:18
+user:gooduser
+user_list:['gooduser']
+walltime:50
+
+VALIDATE_JOB
+
+attrs:{}
+cwd:/tmp
+debug:False
+debuglog:False
+dependencies:False
+disable_preboot:False
+env:False
+error:False
+forcenoval:False
+geometry:128x64x32x4
+held:False
+inputfile:False
+kernel:default
+kerneloptions:False
+mode:smp
+nodecount:10
+notify:False
+output:False
+outputprefix:False
+preemptable:False
+proccount:False
+project:False
+queue:default
+run_project:False
+time:50
+umask:False
+user_list:False
+verbose:False
+version:False
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -586,10 +977,7 @@ def test_qsub_no_roject_specified():
     args      = """-A -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -A -t50 -n10 /bin/ls
-
-'time' not provided
+"""'time' not provided
 """
 
     stubout   = ''
@@ -626,10 +1014,7 @@ def test_qsub_project_specified():
     args      = """-A who -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -A who -t50 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -723,10 +1108,7 @@ def test_qsub_Check_attrs_1():
     args      = """--attrs xxxx -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --attrs xxxx -t50 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -820,10 +1202,7 @@ def test_qsub_Check_attrs_2():
     args      = """--attrs 1111 -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --attrs 1111 -t50 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -917,10 +1296,7 @@ def test_qsub_Check_attrs_3():
     args      = """--attrs xx=:yy -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --attrs xx=:yy -t50 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1014,10 +1390,7 @@ def test_qsub_Check_attrs_4():
     args      = """--attrs xx=one:yy=1:zz=1one -t50 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --attrs xx=one:yy=1:zz=1one -t50 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1111,10 +1484,7 @@ def test_qsub_cwd_option_1():
     args      = """--cwd /tmp/ -t10 -n 10 -e p /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --cwd /tmp/ -t10 -n 10 -e p /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1208,10 +1578,7 @@ def test_qsub_cwd_option_2():
     args      = """--cwd /tmp -t10 -n 10 -e p /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --cwd /tmp -t10 -n 10 -e p /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1305,10 +1672,7 @@ def test_qsub_cwd_option_3():
     args      = """--cwd /x -t10 -n 10 -e p /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --cwd /x -t10 -n 10 -e p /bin/ls
-
-directory /x/p does not exist
+"""directory /x/p does not exist
 """
 
     stubout   = ''
@@ -1345,10 +1709,7 @@ def test_qsub_cwd_option_4():
     args      = """--cwd /tmp/ -t10 -n 10 -e p -o x /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --cwd /tmp/ -t10 -n 10 -e p -o x /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1443,10 +1804,7 @@ def test_qsub_cwd_option_5():
     args      = """--cwd /tmp -t10 -n 10 -e p -o x /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --cwd /tmp -t10 -n 10 -e p -o x /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1541,10 +1899,7 @@ def test_qsub_debuglog_option():
     args      = """-t10 -n 10 -e p -o x --debuglog y /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -t10 -n 10 -e p -o x --debuglog y /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1640,10 +1995,7 @@ def test_qsub_inputfile_option_1():
     args      = """-i none -t10 -n 10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -i none -t10 -n 10 /bin/ls
-
-file /tmp/none not found, or is not a file
+"""file /tmp/none not found, or is not a file
 """
 
     stubout   = ''
@@ -1680,10 +2032,7 @@ def test_qsub_inputfile_option_2():
     args      = """-i y -t10 -n 10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -i y -t10 -n 10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1777,10 +2126,7 @@ def test_qsub_email_option():
     args      = """-M g -t10 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -M g -t10 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -1876,10 +2222,7 @@ def test_qsub_outputprefix():
     args      = """-O /tmp -t10 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -O /tmp -t10 -n10 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 WARNING: failed to create cobalt log file at: /tmp.cobaltlog
          Permission denied
@@ -1987,10 +2330,7 @@ def test_qsub_invalid_user():
     args      = """-run_users naughtyuser -t10 -n10 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -run_users naughtyuser -t10 -n10 /bin/ls
-
-Usage: qsub.py [options] <executable> [<excutable options>]
+"""Usage: qsub.py [options] <executable> [<excutable options>]
 
 qsub.py: error: no such option: -r
 """
@@ -2029,10 +2369,7 @@ def test_qsub_mode_option_1():
     args      = """-t10 -n512 --proccount 1023 --mode dual /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -t10 -n512 --proccount 1023 --mode dual /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -2125,10 +2462,7 @@ def test_qsub_mode_option_2():
     args      = """-t10 -n512 --proccount 1023 --mode vn /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -t10 -n512 --proccount 1023 --mode vn /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -2221,10 +2555,7 @@ def test_qsub_mode_option_3():
     args      = """--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -2328,10 +2659,7 @@ def test_qsub_mode_option_4():
     args      = """-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py -A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls
-
-node count out of realistic range
+"""node count out of realistic range
 """
 
     stubout   = ''
@@ -2368,10 +2696,7 @@ def test_qsub_preboot_option():
     args      = """--disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls"""
 
     cmdout    = \
-"""
-qsub.py --disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 1
 """
 

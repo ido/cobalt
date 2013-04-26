@@ -38,6 +38,7 @@ TQ  = '<TQ>'
 TC  = '<TC_COMMENT>'
 TI  = '<TEST_INFO>'
 CM  = '<CMD>'
+NM  = '<NAME>'
 SF  = '<STUBFILE>'
 ES1 = '\\\n""""""' # empty string 
 ES2 = '""""""' # empty string
@@ -46,7 +47,7 @@ RTQ = '"""'
 TEST_TEMPLATE = \
 """
 # ---------------------------------------------------------------------------------
-def test_<CMD>_<TC_COMMENT>():
+def test_<NAME>_<TC_COMMENT>():
     <TQ>
 <DOCSTR>
     <TQ>
@@ -128,7 +129,7 @@ def gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file,tinfo
     return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_comment).replace(TQ,RTQ).               \
         replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).            \
         replace(RS,str(retstat)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
-        replace(TI,tinfo)
+        replace(TI,tinfo).replace(NM,cmd.replace('-','_'))
 
 def get_output(filename,remove_file = True):
     """

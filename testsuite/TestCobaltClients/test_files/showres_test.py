@@ -15,10 +15,7 @@ def test_showres_arg_1():
     args      = ''
 
     cmdout    = \
-"""
-showres.py 
-
-Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
+"""Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
 ====================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
 """
@@ -77,10 +74,7 @@ def test_showres_arg_2():
     args      = """--oldts"""
 
     cmdout    = \
-"""
-showres.py --oldts
-
-Reservation  Queue  User   Start                     Duration  Passthrough  Partitions  
+"""Reservation  Queue  User   Start                     Duration  Passthrough  Partitions  
 ========================================================================================
 *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     
 """
@@ -139,10 +133,7 @@ def test_showres_arg_3():
     args      = """arg1"""
 
     cmdout    = \
-"""
-showres.py arg1
-
-No arguments needed
+"""No arguments needed
 Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
 ====================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
@@ -202,10 +193,7 @@ def test_showres_l_option_1():
     args      = """-l"""
 
     cmdout    = \
-"""
-showres.py -l
-
-Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  
+"""Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  
 ======================================================================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     
 """
@@ -264,10 +252,7 @@ def test_showres_l_option_2():
     args      = """-l --oldts"""
 
     cmdout    = \
-"""
-showres.py -l --oldts
-
-Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  
+"""Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  
 ==============================================================================================================================
 *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     
 """
@@ -326,10 +311,7 @@ def test_showres_x_option_1():
     args      = """-x"""
 
     cmdout    = \
-"""
-showres.py -x
-
-Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
+"""Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
 ===============================================================================================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       
 """
@@ -388,10 +370,7 @@ def test_showres_x_option_1():
     args      = """-x --oldts"""
 
     cmdout    = \
-"""
-showres.py -x --oldts
-
-Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
+"""Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
 =======================================================================================================================================================
 *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       
 """
@@ -445,10 +424,7 @@ def test_showres_combo():
     args      = """-l -x"""
 
     cmdout    = \
-"""
-showres.py -l -x
-
-Only use -l or -x not both
+"""Only use -l or -x not both
 """
 
     stubout   = ''
@@ -482,10 +458,7 @@ def test_showres_help_1():
     args      = """--help"""
 
     cmdout    = \
-"""
-showres.py --help
-
-Usage: showres [-l] [-x] [--oldts] [--version]
+"""Usage: showres [-l] [-x] [--oldts] [--version]
 
 Options:
   --version   show program's version number and exit
@@ -526,10 +499,7 @@ def test_showres_help_2():
     args      = """-h"""
 
     cmdout    = \
-"""
-showres.py -h
-
-Usage: showres [-l] [-x] [--oldts] [--version]
+"""Usage: showres [-l] [-x] [--oldts] [--version]
 
 Options:
   --version   show program's version number and exit
@@ -570,10 +540,7 @@ def test_showres_version():
     args      = """--version"""
 
     cmdout    = \
-"""
-showres.py --version
-
-version: "showres.py " + $Revision: 2154 $ + , Cobalt  + $Version$
+"""version: "showres.py " + $Revision: 2154 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''

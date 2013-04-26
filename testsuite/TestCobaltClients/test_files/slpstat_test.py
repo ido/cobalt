@@ -19,10 +19,7 @@ def test_slpstat_arg_1():
     args      = ''
 
     cmdout    = \
-"""
-slpstat.py 
-
-Name  Location  Update Time               
+"""Name  Location  Update Time               
 ==========================================
 S0    P0        Mon Apr 22 17:06:10 2013  
 S1    P1        Mon Apr 22 17:06:20 2013  
@@ -73,10 +70,7 @@ def test_slpstat_arg_2():
     args      = ''
 
     cmdout    = \
-"""
-slpstat.py 
-
-no services registered
+"""no services registered
 """
 
     stubout   = \
@@ -127,10 +121,7 @@ def test_slpstat_arg_3():
     args      = """arg1"""
 
     cmdout    = \
-"""
-slpstat.py arg1
-
-No arguments needed
+"""No arguments needed
 Name  Location  Update Time               
 ==========================================
 S0    P0        Mon Apr 22 17:06:10 2013  
@@ -179,10 +170,7 @@ def test_slpstat_help_1():
     args      = """--help"""
 
     cmdout    = \
-"""
-slpstat.py --help
-
-Usage: slpstat.py [options] <queue name> <jobid1> [... <jobidN>]
+"""Usage: slpstat.py [options] <queue name> <jobid1> [... <jobidN>]
 
 Options:
   --version    show program's version number and exit
@@ -221,10 +209,7 @@ def test_slpstat_help_2():
     args      = """-h"""
 
     cmdout    = \
-"""
-slpstat.py -h
-
-Usage: slpstat.py [options] <queue name> <jobid1> [... <jobidN>]
+"""Usage: slpstat.py [options] <queue name> <jobid1> [... <jobidN>]
 
 Options:
   --version    show program's version number and exit
@@ -263,10 +248,7 @@ def test_slpstat_version():
     args      = """--version"""
 
     cmdout    = \
-"""
-slpstat.py --version
-
-version: "slpstat.py " + $Revision: 1221 $ + , Cobalt  + $Version$
+"""version: "slpstat.py " + $Revision: 1221 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''

@@ -20,10 +20,7 @@ def test_nodelist_arg_1():
     args      = ''
 
     cmdout    = \
-"""
-nodelist.py 
-
-Host  Queue  State
+"""Host  Queue  State
 ====================
 D1    QD1    good 
 D2    QD2    bad  
@@ -84,10 +81,7 @@ def test_nodelist_arg_2():
     args      = """arg1"""
 
     cmdout    = \
-"""
-nodelist.py arg1
-
-No arguments needed
+"""No arguments needed
 Host  Queue  State
 ====================
 D1    QD1    good 
@@ -139,10 +133,7 @@ def test_nodelist_options_1():
     args      = """-l"""
 
     cmdout    = \
-"""
-nodelist.py -l
-
-Usage: nodelist.py
+"""Usage: nodelist.py
 
 nodelist.py: error: no such option: -l
 """
@@ -178,10 +169,7 @@ def test_nodelist_options_2():
     args      = """--help"""
 
     cmdout    = \
-"""
-nodelist.py --help
-
-Usage: nodelist.py
+"""Usage: nodelist.py
 
 Options:
   --version   show program's version number and exit
@@ -219,10 +207,7 @@ def test_nodelist_options_3():
     args      = """-h"""
 
     cmdout    = \
-"""
-nodelist.py -h
-
-Usage: nodelist.py
+"""Usage: nodelist.py
 
 Options:
   --version   show program's version number and exit
@@ -260,10 +245,7 @@ def test_nodelist_options_4():
     args      = """--version"""
 
     cmdout    = \
-"""
-nodelist.py --version
-
-version: "nodelist.py " + TBD + , Cobalt  + TBD
+"""version: "nodelist.py " + TBD + , Cobalt  + TBD
 """
 
     stubout   = ''

@@ -14,10 +14,7 @@ def test_qmove_invalid_option():
     args      = """-k"""
 
     cmdout    = \
-"""
-qmove.py -k
-
-Usage: qmove.py [options] <queue name> <jobid1> [... <jobidN>]
+"""Usage: qmove.py [options] <queue name> <jobid1> [... <jobidN>]
 
 qmove.py: error: no such option: -k
 """
@@ -58,10 +55,7 @@ def test_qmove_queue_1():
     args      = """myq 1 2 3"""
 
     cmdout    = \
-"""
-qmove.py myq 1 2 3
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 moved job 1 to queue 'kebra'
 moved job 2 to queue 'kebra'
 moved job 3 to queue 'kebra'
@@ -299,10 +293,7 @@ def test_qmove_queue_2():
     args      = """1 2 3 4"""
 
     cmdout    = \
-"""
-qmove.py 1 2 3 4
-
-get_config_option: Option filters not found in section [cqm]
+"""get_config_option: Option filters not found in section [cqm]
 moved job 2 to queue 'kebra'
 moved job 3 to queue 'kebra'
 moved job 4 to queue 'kebra'
@@ -538,10 +529,7 @@ def test_qmove_queu_3():
     args      = """q1 q2 1 2 3"""
 
     cmdout    = \
-"""
-qmove.py q1 q2 1 2 3
-
-jobid must be an integer: q2
+"""jobid must be an integer: q2
 """
 
     stubout   = ''

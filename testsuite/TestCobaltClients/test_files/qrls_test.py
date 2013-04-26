@@ -15,10 +15,7 @@ def test_qrls_invalid_option():
     args      = """-k 1"""
 
     cmdout    = \
-"""
-qrls.py -k 1
-
-Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
+"""Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
 
 qrls.py: error: no such option: -k
 """
@@ -59,10 +56,7 @@ def test_qrls_debug_flag():
     args      = """-d 1"""
 
     cmdout    = \
-"""
-qrls.py -d 1
-
-Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
+"""Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
    Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
 """
@@ -124,10 +118,7 @@ def test_qrls_jobid_1():
     args      = """myq 1 2 3 4"""
 
     cmdout    = \
-"""
-qrls.py myq 1 2 3 4
-
-jobid must be an integer: myq
+"""jobid must be an integer: myq
 """
 
     stubout   = ''
@@ -168,10 +159,7 @@ def test_qrls_jobid_2():
     args      = """1 2 3 4"""
 
     cmdout    = \
-"""
-qrls.py 1 2 3 4
-
-   Failed to remove user hold on jobs: 
+"""   Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
       job 2 does not have a 'user hold'
       job 3 does not have a 'user hold'
@@ -263,10 +251,7 @@ def test_qrls_jobid_3():
     args      = """1"""
 
     cmdout    = \
-"""
-qrls.py 1
-
-   Failed to remove user hold on jobs: 
+"""   Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
 """
 
@@ -329,10 +314,7 @@ def test_qrls_dependancy_option():
     args      = """-d --dependencies 1 2"""
 
     cmdout    = \
-"""
-qrls.py -d --dependencies 1 2
-
-   Removed dependencies from jobs: 
+"""   Removed dependencies from jobs: 
       1
 """
 

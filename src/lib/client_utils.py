@@ -382,8 +382,8 @@ def get_partitions(spec):
         parts = system.get_partitions(spec)
     except xmlrpclib.Fault, flt:
         if flt.faultCode == NotSupportedError.fault_code:
-            print "incompatible with cluster support:  try nodelist"
-            raise SystemExit, 1
+            logger.error("incompatible with cluster support:  try nodelist")
+            sys.exit(1)
         else:
             raise
     return parts
@@ -867,7 +867,7 @@ def setup_logging(level):
     # log the command line arguments for the current command
     cmdinfo = os.path.split(sys.argv[0])
     args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
-    logger.info(args)
+    logger.debug(args)
 
 def validate_geometry(geometry,nodes):
     """
@@ -878,6 +878,9 @@ def validate_geometry(geometry,nodes):
     except JobValidationError as err:
         logger.error(err.message)
         logger.error( "Jobs not altered.")
+        sys.exit(1)
+    except:
+        logger.error("Invalid Geometry")
         sys.exit(1)
 
 def system_info():
@@ -1094,6 +1097,18 @@ def cb_geometry(option,opt_str,value,parser,*args):
         sys.exit(1)
     setattr(parser.values,option.dest,geom_str) # set the option
     opts[option.dest] = value
+
+def cb_bgq_geo(option,opt_str,value,parser,*args):
+    """
+    This callback will validate the bgq geometry value and store it
+    """
+    geo_list = None
+    match = Cobalt.Util.bgq_node_geo_re.match(value)
+    if match == None:
+        logger.error("Invalid Geometry. Geometry must be in the form of AxBxCxDxE")
+        sys.exit(1)
+    geo_list = [int(nodect) for nodect in match.groups()]
+    setattr(parser.values,option.dest,geo_list)
 
 def cb_attrs(option,opt_str,value,parser,*args):
     """

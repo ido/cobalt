@@ -13,10 +13,7 @@ def test_partadm_version_option():
     args      = """--version"""
 
     cmdout    = \
-"""
-partadm.py --version
-
-version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
+"""version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''
@@ -99,10 +96,7 @@ def test_partadm_help_option_1():
     args      = """-h"""
 
     cmdout    = \
-"""
-partadm.py -h
-
-Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -231,10 +225,7 @@ def test_partadm_help_option_2():
     args      = """--help"""
 
     cmdout    = \
-"""
-partadm.py --help
-
-Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -314,10 +305,7 @@ def test_partadm_no_arg_1():
     args      = ''
 
     cmdout    = \
-"""
-partadm.py 
-
-Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
+"""Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
 
 """
@@ -353,10 +341,7 @@ def test_partadm_no_arg_2():
     args      = """-a"""
 
     cmdout    = \
-"""
-partadm.py -a
-
-At least one partition must be supplied
+"""At least one partition must be supplied
 """
 
     stubout   = ''
@@ -390,10 +375,7 @@ def test_partadm_combo_options_1():
     args      = """-a -d PART"""
 
     cmdout    = \
-"""
-partadm.py -a -d PART
-
-Option combinations not allowed with: add, delete option(s)
+"""Option combinations not allowed with: add, delete option(s)
 """
 
     stubout   = ''
@@ -427,10 +409,7 @@ def test_partadm_combo_options_2():
     args      = """-a --enable PART"""
 
     cmdout    = \
-"""
-partadm.py -a --enable PART
-
-Option combinations not allowed with: add, enable option(s)
+"""Option combinations not allowed with: add, enable option(s)
 """
 
     stubout   = ''
@@ -464,10 +443,7 @@ def test_partadm_combo_options_3():
     args      = """-d --enable PART"""
 
     cmdout    = \
-"""
-partadm.py -d --enable PART
-
-Option combinations not allowed with: delete, enable option(s)
+"""Option combinations not allowed with: delete, enable option(s)
 """
 
     stubout   = ''
@@ -501,10 +477,7 @@ def test_partadm_combo_options_4():
     args      = """--enable --disable PART"""
 
     cmdout    = \
-"""
-partadm.py --enable --disable PART
-
-Option combinations not allowed with: enable, disable option(s)
+"""Option combinations not allowed with: enable, disable option(s)
 """
 
     stubout   = ''
@@ -538,10 +511,7 @@ def test_partadm_combo_options_5():
     args      = """--deactivate --activate PART"""
 
     cmdout    = \
-"""
-partadm.py --deactivate --activate PART
-
-Option combinations not allowed with: activate, deactivate option(s)
+"""Option combinations not allowed with: activate, deactivate option(s)
 """
 
     stubout   = ''
@@ -575,10 +545,7 @@ def test_partadm_combo_options_6():
     args      = """-a --deactivate PART"""
 
     cmdout    = \
-"""
-partadm.py -a --deactivate PART
-
-Option combinations not allowed with: add, deactivate option(s)
+"""Option combinations not allowed with: add, deactivate option(s)
 """
 
     stubout   = ''
@@ -612,10 +579,7 @@ def test_partadm_combo_options_7():
     args      = """--fail --unfail PART"""
 
     cmdout    = \
-"""
-partadm.py --fail --unfail PART
-
-Option combinations not allowed with: fail, unfail option(s)
+"""Option combinations not allowed with: fail, unfail option(s)
 """
 
     stubout   = ''
@@ -649,10 +613,7 @@ def test_partadm_combo_options_8():
     args      = """--savestate /tmp/savestate -a"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/savestate -a
-
-Option combinations not allowed with: add, savestate option(s)
+"""Option combinations not allowed with: add, savestate option(s)
 """
 
     stubout   = ''
@@ -686,10 +647,7 @@ def test_partadm_combo_options_9():
     args      = """-l --xml"""
 
     cmdout    = \
-"""
-partadm.py -l --xml
-
-Option combinations not allowed with: xml, list_blocks option(s)
+"""Option combinations not allowed with: xml, list_blocks option(s)
 """
 
     stubout   = ''
@@ -723,10 +681,7 @@ def test_partadm_combo_options_10():
     args      = """-l --xml"""
 
     cmdout    = \
-"""
-partadm.py -l --xml
-
-Option combinations not allowed with: xml, list_blocks option(s)
+"""Option combinations not allowed with: xml, list_blocks option(s)
 """
 
     stubout   = ''
@@ -760,10 +715,7 @@ def test_partadm_combo_options_11():
     args      = """-a --queue q1 PART"""
 
     cmdout    = \
-"""
-partadm.py -a --queue q1 PART
-
-Option combinations not allowed with: add, queue option(s)
+"""Option combinations not allowed with: add, queue option(s)
 """
 
     stubout   = ''
@@ -797,10 +749,7 @@ def test_partadm_combo_options_12():
     args      = """--dump --queue q1 PART"""
 
     cmdout    = \
-"""
-partadm.py --dump --queue q1 PART
-
-Option combinations not allowed with: queue, dump option(s)
+"""Option combinations not allowed with: queue, dump option(s)
 """
 
     stubout   = ''
@@ -834,10 +783,7 @@ def test_partadm_combo_options_13():
     args      = """--savestate /tmp/s --xml"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/s --xml
-
-Option combinations not allowed with: xml, savestate option(s)
+"""Option combinations not allowed with: xml, savestate option(s)
 """
 
     stubout   = ''
@@ -871,10 +817,7 @@ def test_partadm_combo_options_14():
     args      = """-a -c -b PART"""
 
     cmdout    = \
-"""
-partadm.py -a -c -b PART
-
-Option combinations not allowed with: blockinfo, clean_block option(s)
+"""Option combinations not allowed with: blockinfo, clean_block option(s)
 """
 
     stubout   = ''
@@ -911,10 +854,7 @@ def test_partadm_add_option_1():
     args      = """-a -r PART"""
 
     cmdout    = \
-"""
-partadm.py -a -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -973,10 +913,7 @@ def test_partadm_add_option_2():
     args      = """-a --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py -a --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1035,10 +972,7 @@ def test_partadm_add_option_3():
     args      = """-a PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py -a PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -1125,10 +1059,7 @@ def test_partadm_add_option_4():
     args      = """-a -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -a -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -1213,10 +1144,7 @@ def test_partadm_add_option_5():
     args      = """-a -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -a -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -1290,10 +1218,7 @@ def test_partadm_delete_option_1():
     args      = """-d -r PART"""
 
     cmdout    = \
-"""
-partadm.py -d -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1342,10 +1267,7 @@ def test_partadm_delete_option_2():
     args      = """-d --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py -d --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1394,10 +1316,7 @@ def test_partadm_delete_option_3():
     args      = """-d PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py -d PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -1469,10 +1388,7 @@ def test_partadm_delete_option_4():
     args      = """-d -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -d -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -1547,10 +1463,7 @@ def test_partadm_delete_option_5():
     args      = """-d -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -d -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -1614,10 +1527,7 @@ def test_partadm_enable_option_1():
     args      = """--enable -r PART"""
 
     cmdout    = \
-"""
-partadm.py --enable -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1666,10 +1576,7 @@ def test_partadm_enable_option_2():
     args      = """--enable --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --enable --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1718,10 +1625,7 @@ def test_partadm_enable_option_3():
     args      = """--enable PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --enable PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -1793,10 +1697,7 @@ def test_partadm_enable_option_4():
     args      = """--enable -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --enable -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -1871,10 +1772,7 @@ def test_partadm_enable_option_5():
     args      = """--enable -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --enable -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -1938,10 +1836,7 @@ def test_partadm_disable_option_1():
     args      = """--disable -r PART"""
 
     cmdout    = \
-"""
-partadm.py --disable -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1990,10 +1885,7 @@ def test_partadm_disable_option_2():
     args      = """--disable --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --disable --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2042,10 +1934,7 @@ def test_partadm_disable_option_3():
     args      = """--disable PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --disable PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -2117,10 +2006,7 @@ def test_partadm_disable_option_4():
     args      = """--disable -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --disable -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2195,10 +2081,7 @@ def test_partadm_disable_option_5():
     args      = """--disable -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --disable -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2262,10 +2145,7 @@ def test_partadm_activate_option_1():
     args      = """--activate -r PART"""
 
     cmdout    = \
-"""
-partadm.py --activate -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2314,10 +2194,7 @@ def test_partadm_activate_option_2():
     args      = """--activate --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --activate --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2366,10 +2243,7 @@ def test_partadm_activate_option_3():
     args      = """--activate PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --activate PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -2441,10 +2315,7 @@ def test_partadm_activate_option_4():
     args      = """--activate -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --activate -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2519,10 +2390,7 @@ def test_partadm_activate_option_5():
     args      = """--activate -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --activate -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2586,10 +2454,7 @@ def test_partadm_deactivate_option_1():
     args      = """--deactivate -r PART"""
 
     cmdout    = \
-"""
-partadm.py --deactivate -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2638,10 +2503,7 @@ def test_partadm_deactivate_option_2():
     args      = """--deactivate --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --deactivate --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2690,10 +2552,7 @@ def test_partadm_deactivate_option_3():
     args      = """--deactivate PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --deactivate PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -2765,10 +2624,7 @@ def test_partadm_deactivate_option_4():
     args      = """--deactivate -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --deactivate -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2843,10 +2699,7 @@ def test_partadm_deactivate_option_5():
     args      = """--deactivate -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --deactivate -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2910,10 +2763,7 @@ def test_partadm_fail_option_1():
     args      = """--fail -r PART"""
 
     cmdout    = \
-"""
-partadm.py --fail -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2962,10 +2812,7 @@ def test_partadm_fail_option_2():
     args      = """--fail --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --fail --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -3014,10 +2861,7 @@ def test_partadm_fail_option_3():
     args      = """--fail PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --fail PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -3089,10 +2933,7 @@ def test_partadm_fail_option_4():
     args      = """--fail -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --fail -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -3167,10 +3008,7 @@ def test_partadm_fail_option_5():
     args      = """--fail -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --fail -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -3234,10 +3072,7 @@ def test_partadm_unfail_option_1():
     args      = """--unfail -r PART"""
 
     cmdout    = \
-"""
-partadm.py --unfail -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -3286,10 +3121,7 @@ def test_partadm_unfail_option_2():
     args      = """--unfail --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --unfail --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -3338,10 +3170,7 @@ def test_partadm_unfail_option_3():
     args      = """--unfail PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --unfail PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -3413,10 +3242,7 @@ def test_partadm_unfail_option_4():
     args      = """--unfail -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --unfail -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -3491,10 +3317,7 @@ def test_partadm_unfail_option_5():
     args      = """--unfail -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --unfail -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -3558,10 +3381,7 @@ def test_partadm_savestate_option_1():
     args      = """--savestate /bad/save"""
 
     cmdout    = \
-"""
-partadm.py --savestate /bad/save
-
-directory /bad/save does not exist
+"""directory /bad/save does not exist
 """
 
     stubout   = ''
@@ -3598,10 +3418,7 @@ def test_partadm_savestate_option_2():
     args      = """--savestate /tmp/save p1"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/save p1
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -3661,10 +3478,7 @@ def test_partadm_savestate_option_3():
     args      = """--savestate"""
 
     cmdout    = \
-"""
-partadm.py --savestate
-
-Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -3727,10 +3541,7 @@ def test_partadm_savestate_option_4():
     args      = """--savestate /tmp/save -c p1"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/save -c p1
-
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+"""Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
@@ -3977,10 +3788,7 @@ def test_partadm_savestate_option_5():
     args      = """--savestate /tmp/save -b p1"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/save -b p1
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -4156,10 +3964,7 @@ def test_partadm_xml_option_1():
     args      = """--xml"""
 
     cmdout    = \
-"""
-partadm.py --xml
-
-['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
+"""['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
     stubout   = \
@@ -4201,10 +4006,7 @@ def test_partadm_xml_option_2():
     args      = """--xml p1"""
 
     cmdout    = \
-"""
-partadm.py --xml p1
-
-['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
+"""['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
     stubout   = \
@@ -4246,10 +4048,7 @@ def test_partadm_xml_option_3():
     args      = """--xml --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --xml --recursive p1
-
-['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
+"""['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
     stubout   = \
@@ -4424,10 +4223,7 @@ def test_partadm_xml_option_4():
     args      = """--xml --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --xml --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -4611,10 +4407,7 @@ def test_partadm_xml_option_5():
     args      = """--xml --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --xml --clean_block
-
-Initiating cleanup on block P1
+"""Initiating cleanup on block P1
 Initiating cleanup on block P2
 Initiating cleanup on block P3
 Initiating cleanup on block P4
@@ -4860,10 +4653,7 @@ def test_partadm_xml_option_6():
     args      = """--xml --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --xml --recursive --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -5051,10 +4841,7 @@ def test_partadm_xml_option_7():
     args      = """--xml --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --xml --recursive --clean_block
-
-Initiating cleanup on block P1
+"""Initiating cleanup on block P1
 Initiating cleanup on block P2
 Initiating cleanup on block P3
 Initiating cleanup on block P4
@@ -5192,10 +4979,7 @@ def test_partadm_queue_option_1():
     args      = """--queue"""
 
     cmdout    = \
-"""
-partadm.py --queue
-
-Usage: partadm.py [-a|-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -5250,10 +5034,7 @@ def test_partadm_queue_option_2():
     args      = """--queue q1:q2 p1 p2 p3"""
 
     cmdout    = \
-"""
-partadm.py --queue q1:q2 p1 p2 p3
-
-'q1' is not an existing queue
+"""'q1' is not an existing queue
 'q2' is not an existing queue
 """
 
@@ -5297,10 +5078,7 @@ def test_partadm_queue_option_3():
     args      = """--queue kebra:bbb:myq p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb:myq p1
-
-['p1']
+"""['p1']
 """
 
     stubout   = \
@@ -5348,10 +5126,7 @@ def test_partadm_queue_option_4():
     args      = """--queue kebra:bbb:myq -c p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb:myq -c p1
-
-Initiating cleanup on block p1
+"""Initiating cleanup on block p1
 """
 
     stubout   = \
@@ -5423,10 +5198,7 @@ def test_partadm_queue_option_5():
     args      = """--queue kebra:bbb:myq -b p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb:myq -b p1
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -5515,10 +5287,7 @@ def test_partadm_queue_option_6():
     args      = """--queue kebra:bbb -r -b p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb -r -b p1
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -5602,10 +5371,7 @@ def test_partadm_queue_option_7():
     args      = """--queue kebra:bbb -r -c p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb -r -c p1
-
-Initiating cleanup on block p1
+"""Initiating cleanup on block p1
 Initiating cleanup on block a
 """
 
@@ -5678,10 +5444,7 @@ def test_partadm_dump_option_1():
     args      = """--dump"""
 
     cmdout    = \
-"""
-partadm.py --dump
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -5723,10 +5486,7 @@ def test_partadm_dump_option_2():
     args      = """--dump p1"""
 
     cmdout    = \
-"""
-partadm.py --dump p1
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -5768,10 +5528,7 @@ def test_partadm_dump_option_3():
     args      = """--dump --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --dump --recursive p1
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -5946,10 +5703,7 @@ def test_partadm_dump_option_4():
     args      = """--dump --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --dump --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -6133,10 +5887,7 @@ def test_partadm_dump_option_5():
     args      = """--dump --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --dump --clean_block
-
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+"""Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
@@ -6382,10 +6133,7 @@ def test_partadm_dump_option_6():
     args      = """--dump --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --dump --recursive --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -6573,10 +6321,7 @@ def test_partadm_dump_option_7():
     args      = """--dump --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --dump --recursive --clean_block
-
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+"""Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
@@ -6697,10 +6442,7 @@ def test_partadm_boot_stop_option_1():
     args      = """--boot-stop"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6742,10 +6484,7 @@ def test_partadm_boot_stop_option_2():
     args      = """--boot-stop p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop p1
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6787,10 +6526,7 @@ def test_partadm_boot_stop_option_3():
     args      = """--boot-stop --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --recursive p1
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6836,10 +6572,7 @@ def test_partadm_boot_stop_option_4():
     args      = """--boot-stop --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --blockinfo
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6881,10 +6614,7 @@ def test_partadm_boot_stop_option_5():
     args      = """--boot-stop --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --clean_block
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6926,10 +6656,7 @@ def test_partadm_boot_stop_option_6():
     args      = """--boot-stop --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --recursive --blockinfo
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6975,10 +6702,7 @@ def test_partadm_boot_stop_option_7():
     args      = """--boot-stop --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --recursive --clean_block
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -7024,10 +6748,7 @@ def test_partadm_boot_start_option_1():
     args      = """--boot-start"""
 
     cmdout    = \
-"""
-partadm.py --boot-start
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7069,10 +6790,7 @@ def test_partadm_boot_start_option_2():
     args      = """--boot-start p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-start p1
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7114,10 +6832,7 @@ def test_partadm_boot_start_option_3():
     args      = """--boot-start --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --recursive p1
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7163,10 +6878,7 @@ def test_partadm_boot_start_option_4():
     args      = """--boot-start --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --blockinfo
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7208,10 +6920,7 @@ def test_partadm_boot_start_option_5():
     args      = """--boot-start --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --clean_block
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7253,10 +6962,7 @@ def test_partadm_boot_start_option_6():
     args      = """--boot-start --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --recursive --blockinfo
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7302,10 +7008,7 @@ def test_partadm_boot_start_option_7():
     args      = """--boot-start --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --recursive --clean_block
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -7351,10 +7054,7 @@ def test_partadm_boot_status_option_1():
     args      = """--boot-status"""
 
     cmdout    = \
-"""
-partadm.py --boot-status
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7395,10 +7095,7 @@ def test_partadm_boot_status_option_2():
     args      = """--boot-status p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-status p1
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7439,10 +7136,7 @@ def test_partadm_boot_status_option_3():
     args      = """--boot-status --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --recursive p1
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7487,10 +7181,7 @@ def test_partadm_boot_status_option_4():
     args      = """--boot-status --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --blockinfo
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7531,10 +7222,7 @@ def test_partadm_boot_status_option_5():
     args      = """--boot-status --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --clean_block
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7575,10 +7263,7 @@ def test_partadm_boot_status_option_6():
     args      = """--boot-status --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --recursive --blockinfo
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7623,10 +7308,7 @@ def test_partadm_():
     args      = """--boot-status --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --recursive --clean_block
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \

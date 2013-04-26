@@ -14,10 +14,7 @@ def test_partlist_version_option_1():
     args      = """--version"""
 
     cmdout    = \
-"""
-partlist.py --version
-
-version: "partlist.py " + $Revision: 1981 $ + , Cobalt  + $Version$
+"""version: "partlist.py " + $Revision: 1981 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''
@@ -55,10 +52,7 @@ def test_partlist_version_option_2():
     args      = """-v"""
 
     cmdout    = \
-"""
-partlist.py -v
-
-Usage: partlist.py [options] 
+"""Usage: partlist.py [options] 
 
 partlist.py: error: no such option: -v
 """
@@ -94,10 +88,7 @@ def test_partlist_help_option_1():
     args      = """-h"""
 
     cmdout    = \
-"""
-partlist.py -h
-
-Usage: partlist.py [options] 
+"""Usage: partlist.py [options] 
 
 Options:
   --version   show program's version number and exit
@@ -135,10 +126,7 @@ def test_partlist_help_option_1():
     args      = """--help"""
 
     cmdout    = \
-"""
-partlist.py --help
-
-Usage: partlist.py [options] 
+"""Usage: partlist.py [options] 
 
 Options:
   --version   show program's version number and exit
@@ -176,10 +164,7 @@ def test_partlist_invalid():
     args      = """-k"""
 
     cmdout    = \
-"""
-partlist.py -k
-
-Usage: partlist.py [options] 
+"""Usage: partlist.py [options] 
 
 partlist.py: error: no such option: -k
 """
@@ -215,10 +200,7 @@ def test_partlist_argument_1():
     args      = """arg"""
 
     cmdout    = \
-"""
-partlist.py arg
-
-No arguments required
+"""No arguments required
 """
 
     stubout   = ''
@@ -266,10 +248,7 @@ def test_partlist_argument_2():
     args      = ''
 
     cmdout    = \
-"""
-partlist.py 
-
-Name  Queue                                                  State  Backfill  Geometry      
+"""Name  Queue                                                  State  Backfill  Geometry      
 ==============================================================================================
 P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
 P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48

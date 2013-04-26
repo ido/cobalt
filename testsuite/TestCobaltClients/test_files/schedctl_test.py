@@ -25,10 +25,7 @@ def test_schedctl_args_1():
     args      = ''
 
     cmdout    = \
-"""
-schedctl.py 
-
-Need at least one option
+"""Need at least one option
 Usage: schedctl.py [--stop | --start | --status | --reread-policy | --savestate]
 Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
 
@@ -80,10 +77,7 @@ def test_schedctl_args_2():
     args      = """1"""
 
     cmdout    = \
-"""
-schedctl.py 1
-
-Need at least one option
+"""Need at least one option
 Usage: schedctl.py [--stop | --start | --status | --reread-policy | --savestate]
 Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
 
@@ -148,10 +142,7 @@ def test_schedctl_combo_1():
     args      = """--start --stop"""
 
     cmdout    = \
-"""
-schedctl.py --start --stop
-
-Option combinations not allowed with: stop, start option(s)
+"""Option combinations not allowed with: stop, start option(s)
 """
 
     stubout   = ''
@@ -200,10 +191,7 @@ def test_schedctl_combo_2():
     args      = """--stop --status"""
 
     cmdout    = \
-"""
-schedctl.py --stop --status
-
-Option combinations not allowed with: stop, stat option(s)
+"""Option combinations not allowed with: stop, stat option(s)
 """
 
     stubout   = ''
@@ -252,10 +240,7 @@ def test_schedctl_combo_3():
     args      = """--start --status"""
 
     cmdout    = \
-"""
-schedctl.py --start --status
-
-Option combinations not allowed with: start, stat option(s)
+"""Option combinations not allowed with: start, stat option(s)
 """
 
     stubout   = ''
@@ -304,10 +289,7 @@ def test_schedctl_combo_4():
     args      = """--reread-policy --status"""
 
     cmdout    = \
-"""
-schedctl.py --reread-policy --status
-
-Option combinations not allowed with: stat, reread option(s)
+"""Option combinations not allowed with: stat, reread option(s)
 """
 
     stubout   = ''
@@ -356,10 +338,7 @@ def test_schedctl_combo_5():
     args      = """--score 1.1 --stop"""
 
     cmdout    = \
-"""
-schedctl.py --score 1.1 --stop
-
-At least one jobid must be supplied
+"""At least one jobid must be supplied
 """
 
     stubout   = ''
@@ -408,10 +387,7 @@ def test_schedctl_combo_6():
     args      = """--inherit 1.1 --start"""
 
     cmdout    = \
-"""
-schedctl.py --inherit 1.1 --start
-
-At least one jobid must be supplied
+"""At least one jobid must be supplied
 """
 
     stubout   = ''
@@ -460,10 +436,7 @@ def test_schedctl_combo_7():
     args      = """--start --savestate /tmp/s"""
 
     cmdout    = \
-"""
-schedctl.py --start --savestate /tmp/s
-
-Option combinations not allowed with: start, savestate option(s)
+"""Option combinations not allowed with: start, savestate option(s)
 """
 
     stubout   = ''
@@ -500,10 +473,7 @@ def test_schedctl_start_1():
     args      = """--start 1"""
 
     cmdout    = \
-"""
-schedctl.py --start 1
-
-No arguments needed
+"""No arguments needed
 Job Scheduling: ENABLED
 """
 
@@ -546,10 +516,7 @@ def test_schedctl_start_2():
     args      = """--start"""
 
     cmdout    = \
-"""
-schedctl.py --start
-
-Job Scheduling: ENABLED
+"""Job Scheduling: ENABLED
 """
 
     stubout   = \
@@ -591,10 +558,7 @@ def test_schedctl_stop_1():
     args      = """--stop  1"""
 
     cmdout    = \
-"""
-schedctl.py --stop 1
-
-No arguments needed
+"""No arguments needed
 Job Scheduling: DISABLED
 """
 
@@ -637,10 +601,7 @@ def test_schedctl_stop_2():
     args      = """--stop"""
 
     cmdout    = \
-"""
-schedctl.py --stop
-
-Job Scheduling: DISABLED
+"""Job Scheduling: DISABLED
 """
 
     stubout   = \
@@ -682,10 +643,7 @@ def test_schedctl_reread_1():
     args      = """--reread-policy 1"""
 
     cmdout    = \
-"""
-schedctl.py --reread-policy 1
-
-No arguments needed
+"""No arguments needed
 Attempting to reread utility functions.
 """
 
@@ -729,10 +687,7 @@ def test_schedctl_reread_2():
     args      = """--reread-policy"""
 
     cmdout    = \
-"""
-schedctl.py --reread-policy
-
-Attempting to reread utility functions.
+"""Attempting to reread utility functions.
 """
 
     stubout   = \
@@ -774,10 +729,7 @@ def test_schedctl_save_1():
     args      = """--savestate /tmp/s"""
 
     cmdout    = \
-"""
-schedctl.py --savestate /tmp/s
-
-True
+"""True
 """
 
     stubout   = \
@@ -819,10 +771,7 @@ def test_schedctl_save_2():
     args      = """--savestate s"""
 
     cmdout    = \
-"""
-schedctl.py --savestate s
-
-directory s does not exist
+"""directory s does not exist
 """
 
     stubout   = ''
