@@ -9,6 +9,7 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
 
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 '--stop',action='store_true',dest='stop',help='stop scheduling jobs'
 '--start',action='store_true',dest='start',help='resume scheduling jobs'
 '--status',action='store_true',dest='stat',help='query scheduling status'
@@ -22,7 +23,7 @@ import logging
 import sys
 
 from Cobalt import client_utils
-from Cobalt.client_utils import cb_path
+from Cobalt.client_utils import cb_debug, cb_path
 
 from Cobalt.arg_parser import ArgParse
 
@@ -107,7 +108,8 @@ def main():
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args (tuple) >
-        ( cb_path         , (options, use_cwd) ) ]
+        [ cb_debug        , () ],
+        [ cb_path         , (options, use_cwd) ] ]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

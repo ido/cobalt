@@ -7,6 +7,7 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
 
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 '-l',dest='verbose',action='store_true',help='print reservation list verbose'
 '--oldts',dest='oldts',action='store_true',help='use old timestamp'
 '-x',dest='really_verbose',action='store_true',help='print reservations really verbose'
@@ -17,6 +18,7 @@ import math
 import sys
 import time
 from Cobalt import client_utils
+from Cobalt.client_utils import cb_debug
 
 from Cobalt.arg_parser import ArgParse
 
@@ -42,7 +44,9 @@ def main():
     client_utils.read_config()
 
     # list of callback with its arguments
-    callbacks = []
+    callbacks = [
+        # <cb function>     <cb args>
+        [ cb_debug        , () ] ]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

@@ -864,11 +864,6 @@ def setup_logging(level):
     logger.setLevel(level)
     logger.already_setup = True
 
-    # log the command line arguments for the current command
-    cmdinfo = os.path.split(sys.argv[0])
-    args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
-    logger.debug(args)
-
 def validate_geometry(geometry,nodes):
     """
     This will validate the geometry for the specified job
@@ -962,6 +957,12 @@ def cb_debug(option,opt_str,value,parser,*args):
     Set debug mode for logging
     """
     logger.setLevel(logging.DEBUG)
+
+    # log the command line arguments for the current command
+    cmdinfo = os.path.split(sys.argv[0])
+    args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
+    logger.debug(args)
+
     setattr(parser.values,option.dest,True) # set the option
 
 def cb_nodes(option,opt_str,value,parser,*args):

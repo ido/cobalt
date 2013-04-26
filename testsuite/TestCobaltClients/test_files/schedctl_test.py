@@ -33,6 +33,7 @@ Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
 Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
+  -d, --debug           turn on communication debugging
   --stop                stop scheduling jobs
   --start               resume scheduling jobs
   --status              query scheduling status
@@ -85,6 +86,7 @@ Usage: schedctl.py [--score | --inherit] jobid1 .. jobidN
 Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
+  -d, --debug           turn on communication debugging
   --stop                stop scheduling jobs
   --start               resume scheduling jobs
   --status              query scheduling status
@@ -602,6 +604,48 @@ def test_schedctl_stop_2():
 
     cmdout    = \
 """Job Scheduling: DISABLED
+"""
+
+    stubout   = \
+"""
+DISABLE
+
+whoami: gooduser
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_stop_3():
+    """
+    schedctl test run: stop_3
+
+    """
+
+    args      = """-d --stop"""
+
+    cmdout    = \
+"""
+schedctl.py -d --stop
+
+Job Scheduling: DISABLED
 """
 
     stubout   = \

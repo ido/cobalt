@@ -13,7 +13,10 @@ def test_qalter_simple_1():
     args      = """-d -n30"""
 
     cmdout    = \
-"""No Jobid(s) given
+"""
+qalter.py -d -n30
+
+No Jobid(s) given
 """
 
     stubout   = ''
@@ -52,10 +55,120 @@ def test_qalter_simple_2():
     args      = """-d -n30 1"""
 
     cmdout    = \
-"""get_config_option: Option filters not found in section [cqm]
+"""
+qalter.py -d -n30 1
+
+get_config_option: Option filters not found in section [cqm]
 nodes changed from 512 to 30
 procs changed from 512 to 30
 [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
+"""
+
+    stubout   = \
+"""
+GET_JOBS
+
+is_active:*
+jobid:1
+nodes:*
+notify:*
+procs:*
+project:*
+queue:*
+tag:job
+user:gooduser
+walltime:*
+
+SET_JOBS
+
+
+Original Jobs:
+
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
+has_completed:False
+jobid:1
+location:/tmp
+mode:smp
+nodes:512
+notify:myemail@gmail.com
+outputpath:/tmp
+procs:512
+project:my_project
+queue:jello
+score:50
+state:user_hold
+submittime:60
+tag:job
+user:land
+user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
+walltime:5
+
+New Job Info:
+
+args:
+envs:{}
+errorpath:/tmp
+geometry:None
+has_completed:False
+jobid:1
+location:/tmp
+mode:smp
+nodes:30
+notify:myemail@gmail.com
+outputpath:/tmp
+procs:30
+project:my_project
+queue:jello
+score:50
+state:user_hold
+submittime:60
+tag:job
+user:land
+user_hold:False
+user_list:['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']
+walltime:5
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qalter.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qalter_simple_3():
+    """
+    qalter test run: simple_3
+        Old Command Output:
+          nodes changed from 512 to 30
+          procs changed from 512 to 30
+          
+
+    """
+
+    args      = """-n30 1"""
+
+    cmdout    = \
+"""get_config_option: Option filters not found in section [cqm]
+nodes changed from 512 to 30
+procs changed from 512 to 30
 """
 
     stubout   = \
@@ -156,7 +269,7 @@ def test_qalter_time_1():
 
     """
 
-    args      = """-d -v n10 -t5 1 2 3"""
+    args      = """-v n10 -t5 1 2 3"""
 
     cmdout    = \
 """jobid must be an integer: n10
@@ -190,7 +303,7 @@ def test_qalter_time_2():
 
     """
 
-    args      = """-d -v -n10 -t+5 1 2 3"""
+    args      = """-v -n10 -t+5 1 2 3"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -203,7 +316,6 @@ walltime changed from 10 to 15.0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 20.0
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -427,7 +539,7 @@ def test_qalter_time_3():
 
     """
 
-    args      = """-d -v -n10 -t+20 1 2 3 4 5 6 7"""
+    args      = """-v -n10 -t+20 1 2 3 4 5 6 7"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -452,7 +564,6 @@ walltime changed from 30 to 50.0
 nodes changed from 3584 to 10
 procs changed from 3584 to 10
 walltime changed from 35 to 55.0
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 7, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -926,7 +1037,6 @@ def test_qalter_time_4():
     """
     qalter test run: time_4
         Old Command Output:
-          True
           nodes changed from 512 to 10
           procs changed from 512 to 10
           walltime changed from 5 to 30
@@ -958,7 +1068,7 @@ def test_qalter_time_4():
 
     """
 
-    args      = """-d -v -n10 -t30 1 2 3 4 5 6 7 10 15"""
+    args      = """-v -n10 -t30 1 2 3 4 5 6 7 10 15"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -988,7 +1098,6 @@ walltime changed from 40 to 30
 nodes changed from 4608 to 10
 procs changed from 4608 to 10
 walltime changed from 45 to 30
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 15, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -1588,7 +1697,6 @@ def test_qalter_time_5():
     """
     qalter test run: time_5
         Old Command Output:
-          True
           nodes changed from 512 to 10
           procs changed from 512 to 10
           walltime changed from 5 to 0
@@ -1602,7 +1710,7 @@ def test_qalter_time_5():
 
     """
 
-    args      = """-d -v -n10 -t00:00:30 1 2 3"""
+    args      = """-v -n10 -t00:00:30 1 2 3"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -1615,7 +1723,6 @@ walltime changed from 10 to 0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 0
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -1839,7 +1946,7 @@ def test_qalter_time_6():
 
     """
 
-    args      = """-d -v -n10 -t+00:00:30 1 2 3"""
+    args      = """-v -n10 -t+00:00:30 1 2 3"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -1852,7 +1959,6 @@ walltime changed from 10 to 10.0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 15.0
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2074,7 +2180,6 @@ def test_qalter_time_7():
     """
     qalter test run: time_7
         Old Command Output:
-          True
           nodes changed from 512 to 10
           procs changed from 512 to 10
           walltime changed from 5 to 0
@@ -2088,7 +2193,7 @@ def test_qalter_time_7():
 
     """
 
-    args      = """-d -v -n10 -t 00:00:30 1 2 3"""
+    args      = """-v -n10 -t 00:00:30 1 2 3"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -2101,7 +2206,6 @@ walltime changed from 10 to 0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 0
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2325,7 +2429,7 @@ def test_qalter_time_8():
 
     """
 
-    args      = """-d -v -n10 -t +00:00:30 1 2 3"""
+    args      = """-v -n10 -t +00:00:30 1 2 3"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -2338,7 +2442,6 @@ walltime changed from 10 to 10.0
 nodes changed from 1536 to 10
 procs changed from 1536 to 10
 walltime changed from 15 to 15.0
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2574,7 +2677,7 @@ def test_qalter_invalid_option():
 
     """
 
-    args      = """-d -v -m j@gmail.com"""
+    args      = """-v -m j@gmail.com"""
 
     cmdout    = \
 """Usage: qalter.py [options] <jobids1> ... <jobidsN>
@@ -2608,20 +2711,18 @@ def test_qalter_email_option():
     """
     qalter test run: email_option
         Old Command Output:
-          True
           notify changed from myemail@gmail.com to j@gmail.com
           notify changed from myemail@gmail.com to j@gmail.com
           
 
     """
 
-    args      = """-d -v -M j@gmail.com 1 2"""
+    args      = """-v -M j@gmail.com 1 2"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
 notify changed from myemail@gmail.com to j@gmail.com
 notify changed from myemail@gmail.com to j@gmail.com
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -2788,7 +2889,7 @@ def test_qalter_mode_1():
 
     """
 
-    args      = """-d -v --mode jjj  -n40 -t50 -e p -o o 1 2 3"""
+    args      = """-v --mode jjj  -n40 -t50 -e p -o o 1 2 3"""
 
     cmdout    = \
 """Specifed mode 'jjj' not valid, valid modes are
@@ -2831,7 +2932,7 @@ def test_qalter_mode_2():
 
     """
 
-    args      = """-d -v --mode dual -n40 -t50 -e p -o o 1 2 3"""
+    args      = """-v --mode dual -n40 -t50 -e p -o o 1 2 3"""
 
     cmdout    = \
 """Specifed mode 'dual' not valid, valid modes are
@@ -2874,7 +2975,7 @@ def test_qalter_proccount_1():
 
     """
 
-    args      = """-d -v --mode dual -n512 --proccount one -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
+    args      = """-v --mode dual -n512 --proccount one -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
 
     cmdout    = \
 """Specifed mode 'dual' not valid, valid modes are
@@ -2917,7 +3018,7 @@ def test_qalter_proccount_2():
 
     """
 
-    args      = """-d -v --mode dual -n512 --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
+    args      = """-v --mode dual -n512 --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
 
     cmdout    = \
 """Specifed mode 'dual' not valid, valid modes are
@@ -2957,7 +3058,7 @@ def test_qalter_invalid_nodecount():
 
     """
 
-    args      = """-d -v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
+    args      = """-v --mode dual -nfiver --proccount 1023 -t50 -e /tmp/p -o /tmp/o 1 2 3 4 5 6 7 8 9 10"""
 
     cmdout    = \
 """Specifed mode 'dual' not valid, valid modes are
@@ -2992,7 +3093,6 @@ def test_qalter_user_1():
     """
     qalter test run: user_1
         Old Command Output:
-          True
           user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
           user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
           user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
@@ -3002,7 +3102,7 @@ def test_qalter_user_1():
 
     """
 
-    args      = """-d -v --run_users user1:user2:user3 1 2 3 4 5"""
+    args      = """-v --run_users user1:user2:user3 1 2 3 4 5"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -3011,7 +3111,6 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 5, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -3364,7 +3463,7 @@ def test_qalter_user_2():
 
     """
 
-    args      = """-d -v --run_users user1:naughtyuser 1 2 3 4 5"""
+    args      = """-v --run_users user1:naughtyuser 1 2 3 4 5"""
 
     cmdout    = \
 """user naughtyuser does not exist.
@@ -3396,7 +3495,6 @@ def test_qalter_project():
     """
     qalter test run: project
         Old Command Output:
-          True
           run_project set to True
           user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
           run_project set to True
@@ -3407,7 +3505,7 @@ def test_qalter_project():
 
     """
 
-    args      = """-d -v --run_project 10 20 30"""
+    args      = """-v --run_project 10 20 30"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -3417,7 +3515,6 @@ run_project set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
 run_project set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 30, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -3655,7 +3752,7 @@ def test_qalter_geometry_1():
 
     """
 
-    args      = """-d -v --geometry 10 1 2 3 4 5"""
+    args      = """-v --geometry 10 1 2 3 4 5"""
 
     cmdout    = \
 """Invalid geometry entered: 
@@ -3700,7 +3797,7 @@ def test_qalter_geometry_2():
 
     """
 
-    args      = """-d -v --geometry 10x10x10x10x10 1 2 3 4 5"""
+    args      = """-v --geometry 10x10x10x10x10 1 2 3 4 5"""
 
     cmdout    = \
 """Invalid geometry entered: 
@@ -3734,7 +3831,7 @@ def test_qalter_geometry_3():
 
     """
 
-    args      = """-d -v --geometry 04x04x04x04    1 2 3 4"""
+    args      = """-v --geometry 04x04x04x04    1 2 3 4"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -3817,7 +3914,7 @@ def test_qalter_geometry_4():
 
     """
 
-    args      = """-d -v --geometry 10x10x10x10x1  1 2 3 4 5"""
+    args      = """-v --geometry 10x10x10x10x1  1 2 3 4 5"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -3907,7 +4004,7 @@ def test_qalter_geometry_5():
 
     """
 
-    args      = """-d -v --geometry 04x04x04x04x2  1 2 3 4"""
+    args      = """-v --geometry 04x04x04x04x2  1 2 3 4"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -3915,7 +4012,6 @@ geometry changed from None to [4, 4, 4, 4, 2]
 geometry changed from None to [4, 4, 4, 4, 2]
 geometry changed from None to [4, 4, 4, 4, 2]
 geometry changed from None to [4, 4, 4, 4, 2]
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 4, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -4200,7 +4296,6 @@ def test_qalter_preboot_1():
     """
     qalter test run: preboot_1
         Old Command Output:
-          True
           run_project set to True
           script_preboot set to True
           user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
@@ -4214,7 +4309,7 @@ def test_qalter_preboot_1():
 
     """
 
-    args      = """-d -v --enable_preboot --run_project 10 20 30"""
+    args      = """-v --enable_preboot --run_project 10 20 30"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -4227,7 +4322,6 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 run_project set to True
 script_preboot set to True
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 30, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \
@@ -4455,7 +4549,6 @@ def test_qalter_preboot_2():
     """
     qalter test run: preboot_2
         Old Command Output:
-          True
           run_project set to True
           script_preboot set to False
           user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
@@ -4469,7 +4562,7 @@ def test_qalter_preboot_2():
 
     """
 
-    args      = """-d -v --disable_preboot --run_project 10 20 30"""
+    args      = """-v --disable_preboot --run_project 10 20 30"""
 
     cmdout    = \
 """get_config_option: Option filters not found in section [cqm]
@@ -4482,7 +4575,6 @@ user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king',
 run_project set to True
 script_preboot set to False
 user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 30, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
 """
 
     stubout   = \

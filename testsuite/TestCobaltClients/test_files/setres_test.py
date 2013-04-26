@@ -43,6 +43,42 @@ id: 8
 
 
 # ---------------------------------------------------------------------------------
+def test_setres_id_change_1():
+    """
+    setres test run: id_change_1
+
+    """
+
+    args      = """--debub --res_id 8"""
+
+    cmdout    = \
+"""Usage: setres.py [options] <partition1> ... <partitionN>
+
+setres.py: error: no such option: --debub
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       512, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_setres_id_change_2():
     """
     setres test run: id_change_2

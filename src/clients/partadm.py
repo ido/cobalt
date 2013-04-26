@@ -24,6 +24,7 @@ OPTIONS DEFINITIONS:
 
 '-a', action='store_true', dest='add', help='add the block to the list of managed blocks'
 '-d', action='store_true', dest='delete', help='remove the block from the list of managed blocks'
+'--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 '-l', action='store_true', dest='list_blocks', help='list all blocks and their status'
 '-r', '--recursive', action='store_true', dest='recursive', help='recursively add all child blocks of the specified blocks in the positional arguments'
 '--queue', action='store', type='string', dest='queue', help='set the queues associated with the target blocks to this list of queues'
@@ -48,7 +49,7 @@ import logging
 import sys
 
 from Cobalt import client_utils
-from Cobalt.client_utils import cb_path
+from Cobalt.client_utils import cb_debug, cb_path
 
 from Cobalt.arg_parser import ArgParse
 
@@ -248,7 +249,8 @@ def main():
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args (tuple) >
-        ( cb_path         , (options, use_cwd) ) ]
+        [ cb_debug        , () ],
+        [ cb_path         , (options, use_cwd) ] ]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

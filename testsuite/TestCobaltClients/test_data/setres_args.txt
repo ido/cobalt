@@ -13,6 +13,7 @@
 # ID changes
 
 --res_id 8                     # <tc:id_change_1> only res id
+--debub --res_id 8             # <tc:id_change_1> only res id <NEW_ONLY> no debug command in old command
 --cycle_id 8                   # <tc:id_change_2> only cycle id
 --res_id 8 --cycle_id 8        # <tc:id_change_3> res and cycle id
 |--res_id 8 p1 p2 p3           # <tc:id_change_4> res id with arg. old setres let it go. new set res does not

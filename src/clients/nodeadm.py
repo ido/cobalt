@@ -7,6 +7,7 @@ version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
 
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 '--down',dest='down',help='mark nodes as down',action='store_true'
 '--up',dest='up',help='mark nodes as up (even if allocated)',action='store_true'
 '--queue',action='store', dest='queue', help='set queue associations'
@@ -18,6 +19,7 @@ import math
 import sys
 import time
 from Cobalt import client_utils
+from Cobalt.client_utils import cb_debug
 
 from Cobalt.arg_parser import ArgParse
 
@@ -81,7 +83,9 @@ def main():
     client_utils.setup_logging(logging.INFO)
 
     # list of callback with its arguments
-    callbacks = []
+    callbacks = [
+        # <cb function>     <cb args>
+        [ cb_debug        , () ] ]
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

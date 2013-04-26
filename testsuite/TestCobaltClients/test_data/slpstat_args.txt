@@ -13,6 +13,9 @@
             # <tc:arg_2> <ti:NO SERVICES>
 arg1        # <tc:arg_3>
 
+-d          # <tc:debug_1>
+-d          # <tc:debug_2> <ti:NO SERVICES>
+
 --help      # <tc:help_1> <NEW_ONLY>
 -h          # <tc:help_2> <NEW_ONLY>
 

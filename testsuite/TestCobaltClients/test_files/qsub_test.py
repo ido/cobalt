@@ -1,9 +1,9 @@
 import testutils
 
 # ---------------------------------------------------------------------------------
-def test_qsub_all_options():
+def test_qsub_all_options_1():
     """
-    qsub test run: all_options
+    qsub test run: all_options_1
         Old Command Output:
           1
           
@@ -13,7 +13,10 @@ def test_qsub_all_options():
     args      = """-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls"""
 
     cmdout    = \
-"""get_config_option: Option filters not found in section [cqm]
+"""
+qsub.py -v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls
+
+get_config_option: Option filters not found in section [cqm]
 1
 """
 
@@ -303,9 +306,9 @@ qsub.py: error: no such option: -z
 
 
 # ---------------------------------------------------------------------------------
-def test_qsub_debug_flag_only():
+def test_qsub_debug_flag_only_1():
     """
-    qsub test run: debug_flag_only
+    qsub test run: debug_flag_only_1
         Old Command Output:
           Command required
           
@@ -325,7 +328,47 @@ def test_qsub_debug_flag_only():
     args      = """-d"""
 
     cmdout    = \
-"""No required options entered
+"""
+qsub.py -d
+
+No required options entered
+'time' not provided
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('qsub.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qsub_debug_flag_only_2():
+    """
+    qsub test run: debug_flag_only_2
+
+    """
+
+    args      = """-debug"""
+
+    cmdout    = \
+"""
+qsub.py -debug
+
 'time' not provided
 """
 

@@ -38,4 +38,4 @@ arg         # <tc:arg_2>
 -h          # <tc:help_2>
 
 --version   # <tc:version>
-
+--debug     # <tc:debug> <NEW_ONLY>

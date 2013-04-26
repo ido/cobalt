@@ -104,7 +104,10 @@ def test_qstat_debug_only():
     args      = """-d"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
+"""
+qstat.py -d
+
+get_config_option: Option cqstat_header not found in section [cqm]
 JobID  User  WallTime  Nodes  State  Location  
 ===============================================
 100    land  00:05:00  512    *      /tmp      
@@ -197,7 +200,10 @@ def test_qstat_full_option_1():
     args      = """-d -f 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
+"""
+qstat.py -d -f 1 2 3 4 5
+
+get_config_option: Option cqstat_header not found in section [cqm]
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        

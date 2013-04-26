@@ -1093,3 +1093,40 @@ def test_get_bootable_blocks_version():
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_debug():
+    """
+    get-bootable-blocks test run: debug
+
+    """
+
+    args      = """--debug"""
+
+    cmdout    = \
+"""
+get-bootable-blocks.py --debug
+
+Must specify a block location for search
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+

@@ -25,3 +25,4 @@ arg1        # <tc:arg_3>
 -h          # <tc:help_2> <NEW_ONLY>
 
 --version   # <tc:version> <NEW_ONLY>
+--debug     # <tc:debug>   <NEW_ONLY>

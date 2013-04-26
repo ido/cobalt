@@ -22,7 +22,8 @@
 --up U1 U2 U5 p1             # <tc:up_2>
 
 --down p1 p2 p3              # <tc:down_1>
---down D1 D2 D5 p1           # <tc:down_2>
+-d --down p1 p2 p3           # <tc:down_2> <NEW_ONLY>
+--down D1 D2 D5 p1           # <tc:down_3>
 
 -l                           # <tc:list_1>
 -l p1                        # <tc:list_2>

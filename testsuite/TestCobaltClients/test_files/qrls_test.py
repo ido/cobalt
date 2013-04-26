@@ -56,7 +56,10 @@ def test_qrls_debug_flag():
     args      = """-d 1"""
 
     cmdout    = \
-"""Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
+"""
+qrls.py -d 1
+
+Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
    Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
 """
@@ -314,7 +317,10 @@ def test_qrls_dependancy_option():
     args      = """-d --dependencies 1 2"""
 
     cmdout    = \
-"""   Removed dependencies from jobs: 
+"""
+qrls.py -d --dependencies 1 2
+
+   Removed dependencies from jobs: 
       1
 """
 

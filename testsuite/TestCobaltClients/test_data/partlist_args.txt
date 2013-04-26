@@ -11,6 +11,7 @@
 
 --version      # <tc:version_option_1>
 --version | -v # <tc:version_option_2>
+-d             # <tc:debug>            <NEW_ONLY>
 -h             # <tc:help_option_1>    <NEW_ONLY>
 --help         # <tc:help_option_1>    <NEW_ONLY>
 -k             # <tc:invalid>          <NEW_ONLY>

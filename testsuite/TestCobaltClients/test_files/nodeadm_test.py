@@ -26,6 +26,7 @@ Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 Options:
   --version      show program's version number and exit
   -h, --help     show this help message and exit
+  -d, --debug    turn on communication debugging
   --down         mark nodes as down
   --up           mark nodes as up (even if allocated)
   --queue=QUEUE  set queue associations
@@ -79,6 +80,7 @@ Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 Options:
   --version      show program's version number and exit
   -h, --help     show this help message and exit
+  -d, --debug    turn on communication debugging
   --down         mark nodes as down
   --up           mark nodes as up (even if allocated)
   --queue=QUEUE  set queue associations
@@ -512,6 +514,64 @@ p3
 def test_nodeadm_down_2():
     """
     nodeadm test run: down_2
+
+    """
+
+    args      = """-d --down p1 p2 p3"""
+
+    cmdout    = \
+"""
+nodeadm.py -d --down p1 p2 p3
+
+nodes marked down:
+   D1
+   D2
+   D3
+   D4
+   D5
+
+unknown nodes:
+   p1
+   p2
+   p3
+"""
+
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+
+NODES_DOWN
+
+whoami: gooduser
+p1
+p2
+p3
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_nodeadm_down_3():
+    """
+    nodeadm test run: down_3
         Old Command Output:
           nodes marked down:
              D1
@@ -721,6 +781,7 @@ Usage: nodeadm.py [-l] [--down part1 part2] [--up part1 part2]"
 Options:
   --version      show program's version number and exit
   -h, --help     show this help message and exit
+  -d, --debug    turn on communication debugging
   --down         mark nodes as down
   --up           mark nodes as up (even if allocated)
   --queue=QUEUE  set queue associations

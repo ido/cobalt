@@ -45,28 +45,36 @@ qdel.py: error: no such option: -k
 def test_qdel_debug_option():
     """
     qdel test run: debug_option
-        Old Command Output:
-          option -d not recognized
-          Usage:
-          qdel [--version] [-f] <jobid> <jobid>
-          
 
     """
 
     args      = """-d 1"""
 
     cmdout    = \
-"""Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
+"""
+qdel.py -d 1
 
-qdel.py: error: no such option: -d
+      Deleted Jobs
+JobID  User      
+=================
+1      gooduser  
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+DEL_JOBS
+
+force:False
+whoami:gooduser
+jobid:1
+tag:job
+user:gooduser
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       512, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 

@@ -118,6 +118,7 @@ Options:
   -h, --help            show this help message and exit
   -a                    add the block to the list of managed blocks
   -d                    remove the block from the list of managed blocks
+  --debug               turn on communication debugging
   -l                    list all blocks and their status
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
@@ -247,6 +248,7 @@ Options:
   -h, --help            show this help message and exit
   -a                    add the block to the list of managed blocks
   -d                    remove the block from the list of managed blocks
+  --debug               turn on communication debugging
   -l                    list all blocks and their status
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
@@ -342,6 +344,45 @@ def test_partadm_no_arg_2():
 
     cmdout    = \
 """At least one partition must be supplied
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_debug():
+    """
+    partadm test run: debug
+
+    """
+
+    args      = """--debug"""
+
+    cmdout    = \
+"""
+partadm.py --debug
+
+Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
+Adding "-r" or "--recursive" will add the children of the blocks passed in.
+
 """
 
     stubout   = ''

@@ -461,11 +461,12 @@ def test_showres_help_1():
 """Usage: showres [-l] [-x] [--oldts] [--version]
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
-  -l          print reservation list verbose
-  --oldts     use old timestamp
-  -x          print reservations really verbose
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
+  -l           print reservation list verbose
+  --oldts      use old timestamp
+  -x           print reservations really verbose
 """
 
     stubout   = ''
@@ -502,11 +503,12 @@ def test_showres_help_2():
 """Usage: showres [-l] [-x] [--oldts] [--version]
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
-  -l          print reservation list verbose
-  --oldts     use old timestamp
-  -x          print reservations really verbose
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
+  -l           print reservation list verbose
+  --oldts      use old timestamp
+  -x           print reservations really verbose
 """
 
     stubout   = ''
@@ -544,6 +546,63 @@ def test_showres_version():
 """
 
     stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('showres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_showres_debug():
+    """
+    showres test run: debug
+
+    """
+
+    args      = """--debug"""
+
+    cmdout    = \
+"""
+showres.py --debug
+
+Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
+====================================================================================================
+*            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
+"""
+
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+
+GET_RESERVATIONS
+
+block_passthrough:*
+cycle:*
+cycle_id:*
+duration:*
+name:*
+partitions:*
+project:*
+queue:*
+res_id:*
+start:*
+users:*
+"""
 
     stubout_file = "stub.out"
 

@@ -11,6 +11,7 @@
 
             # <tc:arg_1>
 arg1        # <tc:arg_2>
+-d          # <tc:debug>     <NEW_ONLY>
 -l          # <tc:options_1> <NEW_ONLY>
 --help      # <tc:options_2> <NEW_ONLY>
 -h          # <tc:options_3> <NEW_ONLY>

@@ -25,12 +25,10 @@
 
 --stop  1                    # <tc:stop_1>
 --stop                       # <tc:stop_2>
+-d --stop                    # <tc:stop_3> <NEW_ONLY>
 
 --reread-policy 1            # <tc:reread_1>
 --reread-policy              # <tc:reread_2>
 
 --savestate /tmp/s           # <tc:save_1>
 --savestate s                # <tc:save_2>
-
-
-

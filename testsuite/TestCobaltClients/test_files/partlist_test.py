@@ -79,6 +79,65 @@ partlist.py: error: no such option: -v
 
 
 # ---------------------------------------------------------------------------------
+def test_partlist_debug():
+    """
+    partlist test run: debug
+
+    """
+
+    args      = """-d"""
+
+    cmdout    = \
+"""
+partlist.py -d
+
+Name  Queue                                                  State  Backfill  Geometry      
+==============================================================================================
+P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
+P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
+P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
+P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+"""
+
+    stubout   = \
+"""
+GET_PARTITIONS
+
+plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition', 'backfill_time': '*', 'children': '*', 'size': '*', 'name': '*', 'node_geometry': '*', 'queue': '*', 'state': '*'}]
+
+GET_RESERVATIONS
+
+active:True
+partitions:*
+queue:*
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('partlist.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_partlist_help_option_1():
     """
     partlist test run: help_option_1
@@ -91,8 +150,9 @@ def test_partlist_help_option_1():
 """Usage: partlist.py [options] 
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
 """
 
     stubout   = ''
@@ -129,8 +189,9 @@ def test_partlist_help_option_1():
 """Usage: partlist.py [options] 
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
+  --version    show program's version number and exit
+  -h, --help   show this help message and exit
+  -d, --debug  turn on communication debugging
 """
 
     stubout   = ''
