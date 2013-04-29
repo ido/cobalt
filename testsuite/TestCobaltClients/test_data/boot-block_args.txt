@@ -1,0 +1,31 @@
+# Command Line Options and Arguments to test boot-blocks
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+--free --reboot --block b --jobid 1 # <tc:combo>
+
+--free                     # <tc:free_1>
+--free --jobid 1           # <tc:free_2>
+--free --jobid 1 --block b # <tc:free_3>
+
+--reboot                      # <tc:reboot_1>
+--reboot --jobid 1            # <tc:reboot_2>
+--reboot --jobid 1 --block b  # <tc:reboot_3>
+
+--jobid 1            # <tc:nofree_noreboot_1>
+--block b            # <tc:nofree_noreboot_2>
+--jobid 1 --block b  # <tc:nofree_noreboot_3>
+
+--help      # <tc:help_1>
+-h          # <tc:help_2>
+
+--version   # <tc:version>
+--debug     # <tc:debug_1> <NEW_ONLY>
+--d         # <tc:debug_2> <NEW_ONLY>

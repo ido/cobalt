@@ -130,6 +130,44 @@ def get_parts(plist):
     return parts
 
 class SystemStub(object):
+
+    def initiate_proxy_boot(s,block, user, jobid):
+        logmsg("\nINITIATE_PROXY_BOOT\n")
+        logmsg("block: %s" % block)
+        logmsg("user: %s" % user)
+        logmsg("jobid: %s" % str(jobid))
+        return True
+
+    def initiate_proxy_free(s,block, user, jobid):
+        logmsg("\nINITIATE_PROXY_FREE\n")
+        logmsg("block: %s" % block)
+        logmsg("user: %s" % user)
+        logmsg("jobid: %s" % str(jobid))
+        return True
+
+    def get_boot_statuses_and_strings(s,block):
+        logmsg("\nGET_BOOT_STATUSES_AND_STRINGS\n")
+        logmsg("block: %s" % block)
+        boot_id        = 1
+        status         = 'complete'
+        status_strings = ['status 1','status 2','status 3']
+        return (boot_id, status, status_strings)
+
+    def reap_boot(s,block):
+        logmsg("\nREAP_BOOT\n")
+        logmsg("block: %s" % block)
+        return True
+        
+    def get_block_bgsched_status(s,block):
+        logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
+        logmsg("block: %s" % block)
+        return 'Free'
+        
+    def get_block_bgsched_status(s,block):
+        logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
+        logmsg("block: %s" % block)
+        return 'Free'
+        
     def validate_job(s,opts):
         disable_logwrite()
         logmsg("\nVALIDATE_JOB\n")

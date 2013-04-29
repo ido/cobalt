@@ -557,11 +557,11 @@ class header_info(object):
         else:
             self.header = self.default_header
 
-def logargs():
+def sleep(t):
     """
-    This function will log the command line arguments.
+    Wrap the Util sleep function
     """
-    pass
+    Cobalt.Util.sleep(t)
 
 def sec_to_str(t):
     """
