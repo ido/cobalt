@@ -351,8 +351,9 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             if msg.msg_type == 'initiate_io_boot':
                 new_io_boot = BGQIOBlockBoot(msg.io_block_name, msg.user, msg.tag)
                 self.pending_boots.add(new_io_boot)
+                retval = True
         except AttributeError:
-            raise
+            pass
         finally:
             self.boot_data_lock.release()
         return retval

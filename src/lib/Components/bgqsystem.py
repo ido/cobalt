@@ -862,7 +862,7 @@ class BGSystem (BGBaseSystem):
         midplane_list = []
         nodecard_list = []
         pt_nodecard_list = []
-        io_link_list = []
+        io_node_list = []
         wire_set = set()
         midplane_ids = block_def.getMidplanes()
         passthrough_ids = block_def.getPassthroughMidplanes()
@@ -887,12 +887,6 @@ class BGSystem (BGBaseSystem):
                 switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
                 midplane_nodecards.extend([nb.getLocation() 
                     for nb in SWIG_vector_to_list(pybgsched.getNodeBoards(midplane.getLocation()))])
-            #for small partitions may have a subset of nodecards, fortunately the block knows this.i
-            #try: #This calls out, not using cached ComputeHardware data.  Not sure if this is desirable.
-            #    possible_nodecards = pybgsched.getNodeBoards(midplane_id)
-            #except RuntimeError:
-            #    self.logger.critical ("Error communicating with the bridge during NodeBoard acquisition")
-            #    init_fail_exit()
 
             block_nodecards = SWIG_vector_to_list(block_def.getNodeBoards())
             if block_nodecards == []:
@@ -904,6 +898,7 @@ class BGSystem (BGBaseSystem):
                     if pybgsched.hardware_in_error_state(nc):
                         state = "error"
                     nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+            io_node_list.extend([link.getDestinationLocation() for link in SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))])
 
         # Add in passthrough switches
         for midplane_id in passthrough_ids:
@@ -973,7 +968,6 @@ class BGSystem (BGBaseSystem):
                         state = "error"
                     pt_nodecard_list.append(self._get_node_card(nc.getLocation(), state))
 
-
         d = dict(
             name = block_def.getName(),
             queue = "default",
@@ -984,6 +978,7 @@ class BGSystem (BGBaseSystem):
             node_cards = nodecard_list,
             passthrough_node_cards = pt_nodecard_list,
             switches = switch_list,
+            io_nodes = io_node_list,
             state = block_def.getStatus(),
             block_type = 'normal',
             wires = wire_set
@@ -1097,8 +1092,45 @@ class BGSystem (BGBaseSystem):
         Also handles IO Blocks
 
         '''
-
+        io_block_updates = []
+        reboot_blocked_ions = set()
         self.offline_blocks = []
+
+        #IO Block state update 
+        for cached_io_block in bg_cached_io_blocks:
+            try:
+                cobalt_io_block = self._io_blocks[cached_io_block.getName()]
+            except KeyError:
+                #FIXME: block not found, ignore for now
+                pass
+            cobalt_io_block.update_bridge_status(self.io_hardware_vec, cached_io_block)
+            new_state = cobalt_io_block.get_state_for_update(self.io_hardware_vec, cached_io_block)
+            if new_state != cobalt_io_block.state:
+                io_block_updates.append((cobalt_io_block.name, new_state))
+
+            #now that we've updated check for reboot
+            if cached_io_block.getName() in self._managed_io_blocks:
+                cobalt_io_block = self._io_blocks[cached_io_block.getName()]
+                if cobalt_io_block.ions_in_soft_failure and cobalt_io_block.clear_to_reboot:
+                    self.logger.warning("IO Block %s: SoftwareFailure detected on autoreboot block.  System initiating free.",
+                            cobalt_io_block.name)
+                    self.free_io_block(cached_io_block.getName())
+
+            if cobalt_io_block.block_computes_for_reboot:
+                reboot_blocked_ions.update(cobalt_io_block.io_nodes)
+
+            #if we are rebooting then the block is free, and nodes will be unavailable until the boot has completed, assuming
+            # they are runnable to begin with
+            if (cobalt_io_block.autoreboot and cobalt_io_block.state.split()[0] != 'blocked' and
+                    cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
+                self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
+                        cobalt_io_block.name)
+                self.booter.initiate_io_boot(cobalt_io_block.name, None, 'auto')
+
+        for io_block_name, new_state in io_block_updates:
+            self._io_blocks[io_block_name].state = new_state
+
+        #Compute Block state update
         for b in self._blocks.values():
 
             if b.name not in self._managed_blocks:
@@ -1118,6 +1150,11 @@ class BGSystem (BGBaseSystem):
 
             self.check_block_hardware(b)
             if b.state != 'idle':
+                continue
+
+            #check to see if our conencted IO block is about to become unusable
+            if not b.io_nodes.isdisjoint(reboot_blocked_ions):
+                b.state = 'blocked (Pending ION Reboot)'
                 continue
 
             if b.used_by:
@@ -1185,19 +1222,6 @@ class BGSystem (BGBaseSystem):
             elif allocated:
                 b.state = "blocked (%s)" % (allocated.name,)
 
-        io_block_updates = []
-        for cached_io_block in bg_cached_io_blocks:
-            try:
-                cobalt_io_block = self._io_blocks[cached_io_block.getName()]
-            except KeyError:
-                #FIXME: block not found, ignore for now
-                pass
-            cobalt_io_block.update_bridge_status(cached_io_block)
-            new_state = cobalt_io_block.get_state_for_update(self.io_hardware_vec, cached_io_block)
-            if new_state != cobalt_io_block.state:
-                io_block_updates.append((cobalt_io_block.name, new_state))
-        for io_block_name, new_state in io_block_updates:
-            self._io_blocks[io_block_name].state = new_state
 
     def check_block_hardware(self, block, subblock_parent=False):
         '''Check the cached hardware state and see if the block would
@@ -2375,7 +2399,7 @@ class BGSystem (BGBaseSystem):
     @exposed
     def initiate_io_boot(self, io_locations, user=None, tag=None):
         '''Initiate a boot of an ION block.  Returns once boot request has been placed, and is asynchrynous.
-        Raises: ValueError if invalid io_locaions
+        Raises: ValueError if invalid io_locations
 
         '''
         if not set(io_locations).issubset(set(self._io_blocks.keys())):
@@ -2385,7 +2409,7 @@ class BGSystem (BGBaseSystem):
             try:
                 self.booter.initiate_io_boot(io_location, user, tag)
             except Exception:
-                self.logger.critical("Unexpected error from initiate_io_boot.  Traceback follows.", exc_info=True)
+                self.logger.critical("Unexpected error from initiate_io_boot.")
                 raise
             finally:
                 self._blocks_lock.release()
@@ -2393,6 +2417,72 @@ class BGSystem (BGBaseSystem):
 
 
     @exposed
-    @query
-    def initiate_io_free(self, io_locations):
-        raise NotImplementedError
+    def initiate_io_free(self, io_locations, force=False, user=None):
+        '''Remote-initiate the freeing of an IO block.  Once this starts, make sure to mark all computes as offline.
+
+        if force is True, also mark all connected computes for cleaning.
+
+        if false returned error occurred, check logs for details
+        '''
+        for io_location in io_locations:
+            self._blocks_lock.acquire()
+            try:
+                self.free_io_block(io_location, force, user)
+                self.logger.info("IO Block free initiated on %s by user %s", io_location ,user)
+            except ValueError:
+                self.logger.warning("unable to free IO Block for locaiton %s", io_location)
+                return False
+            finally:
+                self._blocks_lock.release()
+        return True
+
+    def free_io_block(self, io_location, force=False, user=None):
+
+        '''Free an IO block.  Also mark that rebooting is occuring.
+
+        '''
+        if io_location not in self._io_blocks.keys():
+            self.logger.warning("IO Block location: %s not found in list of managed IO Blocks.", io_location)
+            raise ValueError("IO Block location: %s not found in list of managed IO Blocks." % io_location)
+        io_block = self._io_blocks[io_location]
+        try:
+            connected_blocks = pybgsched.IOBlock.getConnectedComputeBlocks(io_location)
+            if connected_blocks.size() !=0 and force == False:
+                self.logger.warning("IO Block location: %s free failed due to connected compute blocks.", io_location)
+                raise ValueError("Attempting to free an IO block with conencted computes and no force flag.  Free at %s failed."\
+                        % io_location)
+            for connected_block in connected_blocks:
+                #Clean if we have force set.
+                self._mark_block_for_cleaning(connected_block, None, user)
+            io_block.block_computes_for_reboot = True
+            #will complete once underlying blocks have freed
+            pybgsched.IOBlock.initiateFree(io_location)
+            self.logger.info("IOBlock free initiated on %s", io_location)
+        except RuntimeError:
+            self.logger.critical("Scheduler interface failed to free IO Block %s.", io_location)
+            self.logger.debug("Traceback follows:", exc_info=True)
+        return True
+
+    @exposed
+    def set_autoreboot(self, io_locations, user):
+        ret_locs = []
+        for location in io_locations:
+            try:
+                self._io_blocks[location].autoreboot = True
+                ret_locs.append(location)
+            except KeyError:
+                pass
+        self.logger.warning('User %s setting autoreboot to True for IO Blocks: %s', user, ", ".join(ret_locs))
+        return ret_locs
+
+    @exposed
+    def unset_autoreboot(self, io_locations, user):
+        ret_locs = []
+        for location in io_locations:
+            try:
+                self._io_blocks[location].autoreboot = True
+                ret_locs.append(location)
+            except KeyError:
+                pass
+        self.logger.warning('User %s setting autoreboot to False for IO Blocks: %s', user, ", ".join(ret_locs))
+        return ret_locs

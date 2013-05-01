@@ -46,11 +46,15 @@ OPTIONS DEFINITIONS:
 '--del_io_block', action='store_true', dest='del_io_block', help='delete an IO Block to the list of managed IO blocks'
 '--boot_io_block', action='store_true', dest='boot_io_block', help='initiate a boot of the IO Blocks as positional arguments'
 '--free_io_block', action='store_true', dest='free_io_block', help='initiate a free of the IO Blocks as positional arguments'
-
+'--set_io_autoboot', action='store_true', dest='set_io_autoboot', help='set an IO block to be automatically booted'
+'--unset_io_autoboot', action='store_true', dest='unset_io_autoboot', help='stop automatically rebooting an IO block'
+'--io_autoboot_start', action='store_true', dest='autoboot_start', help='enable IO Block autobooting'
+'--io_autoboot_stop', action='store_true', dest='autoboot_stop', help='disable IO Block autobooting'
 
 """
 import logging
 import sys
+import xmlrpclib
 
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_path
@@ -173,6 +177,9 @@ def print_block_bgq(block_dicts):
         header_list = []
         value_list = []
 
+        header_list.append('Name')
+        value_list.append(block['name'])
+
         for key,value in block.iteritems():
 
             if key in ['passthrough_node_card_list', 'node_card_list','node_list']:
@@ -187,10 +194,12 @@ def print_block_bgq(block_dicts):
                 value.sort()
                 value_list.append(' '.join([v['id'] for v in value]))
             elif key in ['midplane_list','parents', 'children', 
-                    'passthrough_blocks', 'wiring_conflict_list']:
+                    'passthrough_blocks', 'wiring_conflict_list', 'io_drawer_list', 'io_node_list']:
                 header_list.append(key)
                 value.sort()
                 value_list.append(', '.join(value))
+            elif key == 'name':
+                pass
             else:
                 header_list.append(key)
                 value_list.append(value)
@@ -383,6 +392,24 @@ def main():
         client_utils.logger.info('IO Boot initiated on %s', " ".join(parts))
         sys.exit(0)
 
+    elif opts.free_io_block:
+        user = client_utils.getuid()
+        system.initiate_io_free(parts, False, user)
+        client_utils.logger.info('IO Free initiated on %s', " ".join(parts))
+        sys.exit(0)
+
+    elif opts.set_io_autoboot:
+        user = client_utils.getuid()
+        activated = system.set_autoreboot(parts, user)
+        client_utils.logger.info('Autoreboot flag set for IO Blocks: %s', " ".join(parts))
+        sys.exit(0)
+
+    elif opts.set_io_autoboot:
+        user = client_utils.getuid()
+        activated = system.unset_autoreboot(parts, user)
+        client_utils.logger.info('Autoreboot flag unset for IO Blocks: %s', " ".join(parts))
+        sys.exit(0)
+
     if opts.pg_list:
         print_pg_info(None)
         sys.exit(0)
@@ -397,8 +424,10 @@ def main():
                       'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
                       'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
                       'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*',
-                      'passthrough_blocks':'*', 'passthrough_midplane_list':'*'}
+                      'passthrough_blocks':'*', 'passthrough_midplane_list':'*', 'io_node_list':'*'}
                      for part in parts]))
+            print_block(system.get_io_blocks([{'name':part, 'status':'*', 'state':'*', 'size':'*', 'io_drawer_list':'*',
+                'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'} for part in parts]))
         elif sys_type == 'bgp':
             print_block(system.get_partitions(
                     [{'name':part,'node_card_list':'*','wire_list':'*','switch_list':'*',
@@ -507,12 +536,12 @@ def main():
 
         #fetch and print bulk IO Block data
         if sys_type == 'bgq':
-            args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*'}],)
+            args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'}],)
             io_block_info = client_utils.component_call(system.get_io_blocks, args)
-            data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes']]
+            data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes', 'Autoreboot']]
             for io_block in io_block_info:
                 data.append([io_block['name'], io_block['size'], io_block['state'], io_block['status'],
-                    'x' if io_block['block_computes_for_reboot'] else '-'])
+                    'x' if io_block['block_computes_for_reboot'] else '-', 'x' if io_block['autoreboot'] else '-'])
             client_utils.printTabular(data, centered=[4])
 
 if __name__ == '__main__':

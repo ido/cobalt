@@ -394,10 +394,10 @@ class Block (Data):
     fields = Data.fields + [
         "tag", "scheduled", "name", "functional",
         "queue", "size", "parents", "children", "state", 
-        "backfill_time", "node_cards", "nodes", "switches", "io_links",
+        "backfill_time", "node_cards", "nodes", "switches", "io_nodes",
         "reserved_until", "reserved_by", "used_by", "cleanup_pending",
         "freeing", "backfill_time", "draining", "subblock_parent",
-        "block_type", "corner_node", "extents", 'wire_list',
+        "block_type", "corner_node", "extents", 'wire_list', 'io_node_list',
     ]
 
     def __init__ (self, spec):
@@ -418,7 +418,7 @@ class Block (Data):
         self.passthrough_node_cards = set(spec.get("passthrough_node_cards", []))
         self.nodes = set(spec.get("nodes", []))
         self.switches = spec.get("switches", [])
-        self.io_links = spec.get("io_links", [])
+        self.io_nodes = set(spec.get("io_nodes", []))
         self.reserved_until = False
         self.reserved_by = None
         self.used_by = None
@@ -522,6 +522,7 @@ class Block (Data):
     children = property(_get_childeren)
 
     node_list = property(lambda self: list(self.nodes))
+    io_node_list = property(lambda self: list(self.io_nodes))
     node_card_list = property(lambda self: list(self.node_cards))
     midplane_list = property(lambda self: list(self.midplanes))
     wire_list = property(lambda self: list(self.wires))
@@ -702,6 +703,11 @@ class BGBaseSystem (Component):
     update_relatives -- should be called when blocks are added and removed from the managed list
 
     *_partitions are also exposed so that external components don't have to be rewritten.
+    add_io_blocks -- tell the system to manage io_blocks
+    get_io_blocks -- retrieve io_blocks and their information
+    initiate_proxy_boot -- prompt the system component to start booting a compute block
+    set_autoreboot -- set autoreboot flags for IO blocks
+
 
     Note: This class uses Python's threading module.
 
@@ -746,28 +752,30 @@ class BGBaseSystem (Component):
         self.logger.info("%s called add_to_managed_blocks(%r)", user_name, specs)
         self.logger.log(1, "managed_blocks: %s", managed_set)
         specs = [{'name':spec.get("name")} for spec in specs]
+        self.logger.debug("%s", specs)
+        self.logger.debug("%s", block_dict.q_get([{'name':'Q0G-I0-384'},]))
         self._blocks_lock.acquire()
         try:
             blocks = [block for block in block_dict.q_get(specs) if block.name not in managed_set]
         except Exception:
             blocks = []
             self.logger.error("error in add_to_managed_blocks", exc_info=True)
-        self._blocks_lock.release()
-
         managed_set.update([
             block.name for block in blocks
         ])
+        self._blocks_lock.release()
+        self.logger.debug("%s", [block.name for block in blocks])
+        self.logger.debug("%s", [b.name for b in block_dict.values()])
+        self.logger.debug("%s", managed_set)
         self.update_relatives()
-        return blocks
+        return [block.name for block in blocks]
 
     @exposed
-    @query
     def add_blocks (self, specs, user_name=None):
         '''add a block to the managed_blocks list.'''
         return self.add_to_managed_blocks(specs, user_name, self._blocks, self._managed_blocks)
-    add_partitions = exposed(query(add_blocks)) #for backwards API compatiblity --PMR
+    add_partitions = exposed(add_blocks) #for backwards API compatiblity --PMR
 
-    @query
     @exposed
     def add_io_blocks(self, specs, user_name=None):
         '''add a block to the managed_io_blocks list.'''
@@ -823,10 +831,9 @@ class BGBaseSystem (Component):
         except:
             blocks = []
             self.logger.error("error in del_blocks", exc_info=True)
-        self._blocks_lock.release()
 
         self._managed_blocks -= set( [block.name for block in blocks] )
-        import copy
+        self._blocks_lock.release()
 
         self.update_relatives()
         return blocks
@@ -1560,4 +1567,10 @@ class BGBaseSystem (Component):
     def initiate_proxy_free(self, location, user=None, jobid=None, resid=None):
         raise NotImplementedError, "Proxy freeing is not supported for this configuration."
 
+    @exposed
+    def set_autoreboot(self, io_locations, user):
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."
 
+    @exposed
+    def unset_autoreboot(self, io_locations, user):
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."

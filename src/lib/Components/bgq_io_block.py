@@ -15,7 +15,8 @@ _logger = logging.getLogger()
 class IOBlock(Cobalt.Data.Data):
     '''BlueGene/Q IO Block'''
 
-    fields = Cobalt.Data.Data.fields + ['state', 'status', 'io_drawers', 'io_links', 'connected_compute_blocks']
+    fields = Cobalt.Data.Data.fields + ['name', 'state', 'status', 'io_drawers', 'io_links', 'connected_compute_blocks',
+            'autoreboot']
 
     def __init__(self, spec):
         '''
@@ -35,8 +36,16 @@ class IOBlock(Cobalt.Data.Data):
         self.status = spec.pop('status', 'Free') #control system status
         self.state = spec.pop('state', 'idle')
         self.size = spec.pop('size', ) #size in nodes
-        self.io_drawers = spec.pop('io_drawers', [])
+        self.io_drawers = set(spec.pop('io_drawers', []))
+        self.io_nodes = set(spec.pop('io_nodes', []))
         self.block_computes_for_reboot = False
+        self.ions_in_soft_failure = False
+        self.autoreboot = False
+
+        _logger.debug('initiaizing %s', self.name)
+
+    io_drawer_list = property(lambda self: list(self.io_drawers))
+    io_node_list = property(lambda self: list(self.io_nodes))
 
     def __str__(self):
         return self.name
@@ -59,6 +68,8 @@ class IOBlock(Cobalt.Data.Data):
         offline) -- all hardware for the block is reported as offline
         blocked -- The block has IONs that are in-use by another IO Block.  This block may or may not be controled by Cobalt.
 
+        NOTE: this does not actually set the state, only fetches what it should be.  This does not side-effect the io block itself
+
         '''
         #the theory here is that we get a list of states, a list of blocks and then do a bulk update.
         error_string = ''
@@ -78,7 +89,8 @@ class IOBlock(Cobalt.Data.Data):
                     bad_ion_found = True
                 elif not any_live_hardware:
                     any_live_hardware = True
-                if not hardware_in_use and ion.isInUse() and ion.getIOBlockName() != self.name:
+                if (not hardware_in_use and ion.isInUse() and ion.getIOBlockName() != self.name and
+                        ion.getLocation() in self.io_nodes):
                     hardware_in_use = True
                     error_string = 'blocked (%s)' % ion.getIOBlockName()
 
@@ -98,10 +110,31 @@ class IOBlock(Cobalt.Data.Data):
 
         return retstate
 
-    def update_bridge_status(self, bridge_io_block):
-        '''update the status that is being reported by the bridge.'''
-        self.status = bridge_io_block.getStatusString()
+    def clear_to_reboot(self):
+        '''Requires pybgsched to be up and working.  We need to get the current connected compute blocks.
 
+        '''
+        #connected_computes is really a C++ vector type of strings.  Access using the C++ methods.  --PMR
+        connected_computes = pybgsched.IOBlock.getConnectedComputeBlocks(self.name)
+        return connected_computes.size() == 0
+
+
+    def update_bridge_status(self, io_hardware, bridge_io_block):
+        '''update the status that is being reported by the bridge. This resets the cached control system state and also clears the
+        reboot flag and notes if we have any ions in a software failure in this block.
+
+        '''
+        self.status = bridge_io_block.getStatusString()
+        if (self.block_computes_for_reboot and
+            bridge_io_block.getStatus != pybgsched.IOBlock.Initialized and
+            bridge_io_block.getAction() != pybgsched.IOBlock.Free):
+            self.block_computes_for_reboot = False
+        #check io nodes and make sure that we shouldn't be about to reboot
+        self.ions_in_soft_failure = False
+        for ion in self.io_nodes:
+            self.ions_in_soft_failure = io_hardware.getIONode(ion).getState() == pybgsched.Hardware.SoftwareFailure
+            if self.ions_in_soft_failure:
+                break
 
 class IOBlockDict (Cobalt.Data.DataDict):
     """Default container for blocks.
