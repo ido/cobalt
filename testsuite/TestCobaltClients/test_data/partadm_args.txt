@@ -16,6 +16,8 @@
                # <tc:no_arg_1> <NEW_ONLY>
 -a             # <tc:no_arg_2> <NEW_ONLY>
 
+--debug        # <tc:debug> <NEW_ONLY>
+
 -a -d PART                    # <tc:combo_options_1>  <NEW_ONLY>
 -a --enable PART              # <tc:combo_options_2>  <NEW_ONLY>
 -d --enable PART              # <tc:combo_options_3>  <NEW_ONLY>

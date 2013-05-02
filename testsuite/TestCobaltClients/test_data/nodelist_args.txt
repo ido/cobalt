@@ -1,4 +1,4 @@
-# Command Line Options and Arguments to test partlist
+# Command Line Options and Arguments to test nodelist
 # Special Instructions:
 #    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
 #    2. Test case comment needs to be unique to this file.
@@ -9,15 +9,10 @@
 #       put the old args first then use the separate character '|' and put the new args.
 #       i.e -d -j | -d --job
 
---version      # <tc:version_option_1>
---version | -v # <tc:version_option_2>
--d             # <tc:debug>            <NEW_ONLY>
--h             # <tc:help_option_1>    <NEW_ONLY>
---help         # <tc:help_option_1>    <NEW_ONLY>
--k             # <tc:invalid>          <NEW_ONLY>
-arg            # <tc:argument_1>       <NEW_ONLY>
-               # <tc:argument_2>
-
-
-
-
+            # <tc:arg_1>
+arg1        # <tc:arg_2>
+-d          # <tc:debug>     <NEW_ONLY>
+-l          # <tc:options_1> <NEW_ONLY>
+--help      # <tc:options_2> <NEW_ONLY>
+-h          # <tc:options_3> <NEW_ONLY>
+--version   # <tc:options_4> <NEW_ONLY>

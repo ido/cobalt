@@ -13,10 +13,7 @@ def test_setres_id_change_1():
     args      = """--res_id 8"""
 
     cmdout    = \
-"""
-setres.py --res_id 8
-
-Setting res id to 8
+"""Setting res id to 8
 """
 
     stubout   = \
@@ -34,8 +31,48 @@ id: 8
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_setres_id_change_1():
+    """
+    setres test run: id_change_1
+
+    """
+
+    args      = """--debub --res_id 8"""
+
+    cmdout    = \
+"""Usage: setres.py [options] <partition1> ... <partitionN>
+
+setres.py: error: no such option: --debub
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       512, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('setres.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -54,10 +91,7 @@ def test_setres_id_change_2():
     args      = """--cycle_id 8"""
 
     cmdout    = \
-"""
-setres.py --cycle_id 8
-
-Setting cycle_id to 8
+"""Setting cycle_id to 8
 """
 
     stubout   = \
@@ -75,8 +109,12 @@ id: 8
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -96,10 +134,7 @@ def test_setres_id_change_3():
     args      = """--res_id 8 --cycle_id 8"""
 
     cmdout    = \
-"""
-setres.py --res_id 8 --cycle_id 8
-
-Setting res id to 8
+"""Setting res id to 8
 Setting cycle_id to 8
 """
 
@@ -122,8 +157,12 @@ id: 8
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -152,10 +191,7 @@ def test_setres_id_change_4():
     args      = """--res_id 8 p1 p2 p3"""
 
     cmdout    = \
-"""
-setres.py --res_id 8 p1 p2 p3
-
-No partition arguments or other options allowed with id change options
+"""No partition arguments or other options allowed with id change options
 """
 
     stubout   = ''
@@ -168,8 +204,12 @@ No partition arguments or other options allowed with id change options
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -198,10 +238,7 @@ def test_setres_id_change_5():
     args      = """--cycle_id 8 p1 p2 p3"""
 
     cmdout    = \
-"""
-setres.py --cycle_id 8 p1 p2 p3
-
-No partition arguments or other options allowed with id change options
+"""No partition arguments or other options allowed with id change options
 """
 
     stubout   = ''
@@ -214,8 +251,12 @@ No partition arguments or other options allowed with id change options
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -244,10 +285,7 @@ def test_setres_id_change_6():
     args      = """--res_id 8 -m -n resname"""
 
     cmdout    = \
-"""
-setres.py --res_id 8 -m -n resname
-
-No partition arguments or other options allowed with id change options
+"""No partition arguments or other options allowed with id change options
 """
 
     stubout   = ''
@@ -260,8 +298,12 @@ No partition arguments or other options allowed with id change options
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -290,10 +332,7 @@ def test_setres_id_change_7():
     args      = """--cycle_id 8 -p p1"""
 
     cmdout    = \
-"""
-setres.py --cycle_id 8 -p p1
-
-No partition arguments or other options allowed with id change options
+"""No partition arguments or other options allowed with id change options
 """
 
     stubout   = ''
@@ -306,8 +345,12 @@ No partition arguments or other options allowed with id change options
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -327,10 +370,7 @@ def test_setres_force_1():
     args      = """--cycle_id 8 --res_id 8 --force_id"""
 
     cmdout    = \
-"""
-setres.py --cycle_id 8 --res_id 8 --force_id
-
-WARNING: Forcing res id to 8
+"""WARNING: Forcing res id to 8
 WARNING: Forcing cycle id to 8
 """
 
@@ -353,8 +393,12 @@ id: 8
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -372,10 +416,7 @@ def test_setres_force_2():
     args      = """--force_id"""
 
     cmdout    = \
-"""
-setres.py --force_id
-
-ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+"""ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
 """
 
     stubout   = ''
@@ -388,8 +429,12 @@ ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -408,10 +453,7 @@ def test_setres_force_3():
     args      = """--force_id -p p1 -s 2013_03_09-10:30"""
 
     cmdout    = \
-"""
-setres.py --force_id -p p1 -s 2013_03_09-10:30
-
-Got starttime Sat Mar  9 16:30:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:30:00 2013 +0000 (UTC)
 ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
 """
 
@@ -425,8 +467,12 @@ ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -445,10 +491,7 @@ def test_setres_force_4():
     args      = """--force_id -m -n resname"""
 
     cmdout    = \
-"""
-setres.py --force_id -m -n resname
-
-ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
+"""ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
 """
 
     stubout   = ''
@@ -461,8 +504,12 @@ ERROR:root:--force_id can only be used with --cycle_id and/or --res_id.
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -481,10 +528,7 @@ def test_setres_modify_1():
     args      = """-m"""
 
     cmdout    = \
-"""
-setres.py -m
-
--m must by called with -n <reservation name>
+"""-m must by called with -n <reservation name>
 """
 
     stubout   = ''
@@ -497,8 +541,12 @@ setres.py -m
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -517,10 +565,7 @@ def test_setres_modify_2():
     args      = """-m -n resname"""
 
     cmdout    = \
-"""
-setres.py -m -n resname
-
-True
+"""True
 """
 
     stubout   = \
@@ -549,8 +594,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -579,10 +628,7 @@ def test_setres_modify_3():
     args      = """-m -n resname -D -c 10:10:10"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -D -c 10:10:10
-
-Cannot use -D while changing start or cycle time
+"""Cannot use -D while changing start or cycle time
 """
 
     stubout   = ''
@@ -595,8 +641,12 @@ Cannot use -D while changing start or cycle time
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -616,10 +666,7 @@ def test_setres_modify_4():
     args      = """-m -n resname -D -s 2013_03_9-10:10:10"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -D -s 2013_03_9-10:10:10
-
-Error: start time '2013_03_9-10:10:10' is invalid
+"""Error: start time '2013_03_9-10:10:10' is invalid
 start time is expected to be in the format: YYYY_MM_DD-HH:MM
 """
 
@@ -633,8 +680,12 @@ start time is expected to be in the format: YYYY_MM_DD-HH:MM
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -663,10 +714,7 @@ def test_setres_modify_5():
     args      = """-m -n resname -D -s 2013_03_9-10:10"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -D -s 2013_03_9-10:10
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 Cannot use -D while changing start or cycle time
 """
 
@@ -680,8 +728,12 @@ Cannot use -D while changing start or cycle time
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -701,10 +753,7 @@ def test_setres_modify_6():
     args      = """-m -n resname -D -d 10:10:10"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -D -d 10:10:10
-
-Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
+"""Setting new start time for for reservation 'resname': Tue Mar 26 17:01:40 2013
 True
 """
 
@@ -736,8 +785,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -757,10 +810,7 @@ def test_setres_modify_7():
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 """
 
@@ -793,8 +843,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -814,10 +868,7 @@ def test_setres_modify_8():
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 """
 
@@ -851,8 +902,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -872,10 +927,7 @@ def test_setres_modify_9():
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1:user2"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1:user2
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 """
 
@@ -909,8 +961,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -930,10 +986,7 @@ def test_setres_modify_10():
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u user1"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u user1
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 """
 
@@ -968,8 +1021,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -989,10 +1046,7 @@ def test_setres_modify_11():
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 """
 
@@ -1027,8 +1081,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1048,10 +1106,7 @@ def test_setres_modify_12():
     args      = """-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 """
 
@@ -1086,8 +1141,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1116,10 +1175,7 @@ def test_setres_modify_13():
     args      = """-m -n resname --allow_passthrough --block_passthrough"""
 
     cmdout    = \
-"""
-setres.py -m -n resname --allow_passthrough --block_passthrough
-
-Attribute block_passthrough already set
+"""Attribute block_passthrough already set
 """
 
     stubout   = ''
@@ -1132,8 +1188,12 @@ Attribute block_passthrough already set
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1152,10 +1212,7 @@ def test_setres_modify_14():
     args      = """-m -n resname -A myproj --block_passthrough p1 p2 p3"""
 
     cmdout    = \
-"""
-setres.py -m -n resname -A myproj --block_passthrough p1 p2 p3
-
-True
+"""True
 """
 
     stubout   = \
@@ -1199,8 +1256,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1230,10 +1291,7 @@ def test_setres_add_res_1():
     args      = """-n resname -D"""
 
     cmdout    = \
-"""
-setres.py -n resname -D
-
-ERROR:root:Must supply either -p with value or partitions as arguments
+"""ERROR:root:Must supply either -p with value or partitions as arguments
 """
 
     stubout   = ''
@@ -1246,8 +1304,12 @@ ERROR:root:Must supply either -p with value or partitions as arguments
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1276,10 +1338,7 @@ def test_setres_add_res_2():
     args      = """-n resname -D p1 p2 p3"""
 
     cmdout    = \
-"""
-setres.py -n resname -D p1 p2 p3
-
-Must supply a start time for the reservation with -s
+"""Must supply a start time for the reservation with -s
 """
 
     stubout   = ''
@@ -1292,8 +1351,12 @@ Must supply a start time for the reservation with -s
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1322,10 +1385,7 @@ def test_setres_add_res_3():
     args      = """-n resname -s 2013_03_9-10:10 p1 p2"""
 
     cmdout    = \
-"""
-setres.py -n resname -s 2013_03_9-10:10 p1 p2
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 Must supply a duration time for the reservation with -d
 """
 
@@ -1339,8 +1399,12 @@ Must supply a duration time for the reservation with -d
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1361,10 +1425,7 @@ def test_setres_add_res_4():
     args      = """-n resname -s 2013_03_9-10:10 -d 50 p1 p2"""
 
     cmdout    = \
-"""
-setres.py -n resname -s 2013_03_9-10:10 -d 50 p1 p2
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 True
 """
@@ -1403,8 +1464,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1425,10 +1490,7 @@ def test_setres_add_res_5():
     args      = """-n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2"""
 
     cmdout    = \
-"""
-setres.py -n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 True
 """
@@ -1467,8 +1529,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1489,10 +1555,7 @@ def test_setres_add_res_6():
     args      = """-s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2"""
 
     cmdout    = \
-"""
-setres.py -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 True
 """
@@ -1531,8 +1594,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1553,10 +1620,7 @@ def test_setres_add_res_7():
     args      = """-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough"""
 
     cmdout    = \
-"""
-setres.py -s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 True
 """
@@ -1591,8 +1655,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1613,10 +1681,7 @@ def test_setres_add_res_8():
     args      = """-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj"""
 
     cmdout    = \
-"""
-setres.py -s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj
-
-Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
+"""Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
 True
 True
 """
@@ -1652,8 +1717,12 @@ CHECK_RESERVATIONS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('setres.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

@@ -17,10 +17,7 @@ def test_qselect_invalid_option():
     args      = """-k"""
 
     cmdout    = \
-"""
-qselect.py -k
-
-Usage: qselect.py [options]
+"""Usage: qselect.py [options]
 
 qselect.py: error: no such option: -k
 """
@@ -35,8 +32,12 @@ qselect.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -58,10 +59,7 @@ def test_qselect_only_arg():
     args      = """1"""
 
     cmdout    = \
-"""
-qselect.py 1
-
-qselect takes no arguments
+"""qselect takes no arguments
 """
 
     stubout   = ''
@@ -74,8 +72,12 @@ qselect takes no arguments
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -96,10 +98,7 @@ def test_qselect_no_args_opts():
     args      = ''
 
     cmdout    = \
-"""
-qselect.py 
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -125,8 +124,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -177,8 +180,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -198,10 +205,7 @@ def test_qselect_held_option():
     args      = """-h user_hold"""
 
     cmdout    = \
-"""
-qselect.py -h user_hold
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -227,8 +231,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -248,10 +256,7 @@ def test_qselect_nodecount_option():
     args      = """-n 312"""
 
     cmdout    = \
-"""
-qselect.py -n 312
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -277,8 +282,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -298,10 +307,7 @@ def test_qselect_state_and_nodecount():
     args      = """-n 312 -h user_hold"""
 
     cmdout    = \
-"""
-qselect.py -n 312 -h user_hold
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -327,8 +333,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -348,10 +358,7 @@ def test_qselect_walltime():
     args      = """-t 10:10:10"""
 
     cmdout    = \
-"""
-qselect.py -t 10:10:10
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -377,8 +384,12 @@ walltime:610
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -398,10 +409,7 @@ def test_qselect_mode():
     args      = """--mode vn"""
 
     cmdout    = \
-"""
-qselect.py --mode vn
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -427,8 +435,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -448,10 +460,7 @@ def test_qselect_verbose():
     args      = """-v"""
 
     cmdout    = \
-"""
-qselect.py -v
-
-   The following jobs matched your query:
+"""   The following jobs matched your query:
       100
 """
 
@@ -477,8 +486,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qselect.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

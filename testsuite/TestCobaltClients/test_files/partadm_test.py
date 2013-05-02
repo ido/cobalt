@@ -13,10 +13,7 @@ def test_partadm_version_option():
     args      = """--version"""
 
     cmdout    = \
-"""
-partadm.py --version
-
-version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
+"""version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
 """
 
     stubout   = ''
@@ -29,8 +26,12 @@ version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -95,10 +96,7 @@ def test_partadm_help_option_1():
     args      = """-h"""
 
     cmdout    = \
-"""
-partadm.py -h
-
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -109,6 +107,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -119,6 +118,7 @@ Options:
   -h, --help            show this help message and exit
   -a                    add the block to the list of managed blocks
   -d                    remove the block from the list of managed blocks
+  --debug               turn on communication debugging
   -l                    list all blocks and their status
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
@@ -156,8 +156,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -222,10 +226,7 @@ def test_partadm_help_option_2():
     args      = """--help"""
 
     cmdout    = \
-"""
-partadm.py --help
-
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -236,6 +237,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -246,6 +248,7 @@ Options:
   -h, --help            show this help message and exit
   -a                    add the block to the list of managed blocks
   -d                    remove the block from the list of managed blocks
+  --debug               turn on communication debugging
   -l                    list all blocks and their status
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
@@ -283,8 +286,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -300,8 +307,78 @@ def test_partadm_no_arg_1():
     args      = ''
 
     cmdout    = \
+"""Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
+Adding "-r" or "--recursive" will add the children of the blocks passed in.
+
 """
-partadm.py 
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_no_arg_2():
+    """
+    partadm test run: no_arg_2
+
+    """
+
+    args      = """-a"""
+
+    cmdout    = \
+"""At least one partition must be supplied
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testinfo("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_debug():
+    """
+    partadm test run: debug
+
+    """
+
+    args      = """--debug"""
+
+    cmdout    = \
+"""
+partadm.py --debug
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -318,41 +395,12 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
                        stubout # Expected stub functions output
                        ) 
 
-    results = testutils.run_cmd('partadm.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
-def test_partadm_no_arg_2():
-    """
-    partadm test run: no_arg_2
-
-    """
-
-    args      = """-a"""
-
-    cmdout    = \
-"""
-partadm.py -a
-
-At least one partition must be supplied
-"""
-
-    stubout   = ''
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       256, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout # Expected stub functions output
-                       ) 
+    testutils.save_testinfo("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -368,10 +416,7 @@ def test_partadm_combo_options_1():
     args      = """-a -d PART"""
 
     cmdout    = \
-"""
-partadm.py -a -d PART
-
-Option combinations not allowed with: add, delete option(s)
+"""Option combinations not allowed with: add, delete option(s)
 """
 
     stubout   = ''
@@ -384,8 +429,12 @@ Option combinations not allowed with: add, delete option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -401,10 +450,7 @@ def test_partadm_combo_options_2():
     args      = """-a --enable PART"""
 
     cmdout    = \
-"""
-partadm.py -a --enable PART
-
-Option combinations not allowed with: add, enable option(s)
+"""Option combinations not allowed with: add, enable option(s)
 """
 
     stubout   = ''
@@ -417,8 +463,12 @@ Option combinations not allowed with: add, enable option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -434,10 +484,7 @@ def test_partadm_combo_options_3():
     args      = """-d --enable PART"""
 
     cmdout    = \
-"""
-partadm.py -d --enable PART
-
-Option combinations not allowed with: delete, enable option(s)
+"""Option combinations not allowed with: delete, enable option(s)
 """
 
     stubout   = ''
@@ -450,8 +497,12 @@ Option combinations not allowed with: delete, enable option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -467,10 +518,7 @@ def test_partadm_combo_options_4():
     args      = """--enable --disable PART"""
 
     cmdout    = \
-"""
-partadm.py --enable --disable PART
-
-Option combinations not allowed with: enable, disable option(s)
+"""Option combinations not allowed with: enable, disable option(s)
 """
 
     stubout   = ''
@@ -483,8 +531,12 @@ Option combinations not allowed with: enable, disable option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -500,10 +552,7 @@ def test_partadm_combo_options_5():
     args      = """--deactivate --activate PART"""
 
     cmdout    = \
-"""
-partadm.py --deactivate --activate PART
-
-Option combinations not allowed with: activate, deactivate option(s)
+"""Option combinations not allowed with: activate, deactivate option(s)
 """
 
     stubout   = ''
@@ -516,8 +565,12 @@ Option combinations not allowed with: activate, deactivate option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -533,10 +586,7 @@ def test_partadm_combo_options_6():
     args      = """-a --deactivate PART"""
 
     cmdout    = \
-"""
-partadm.py -a --deactivate PART
-
-Option combinations not allowed with: add, deactivate option(s)
+"""Option combinations not allowed with: add, deactivate option(s)
 """
 
     stubout   = ''
@@ -549,8 +599,12 @@ Option combinations not allowed with: add, deactivate option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -566,10 +620,7 @@ def test_partadm_combo_options_7():
     args      = """--fail --unfail PART"""
 
     cmdout    = \
-"""
-partadm.py --fail --unfail PART
-
-Option combinations not allowed with: fail, unfail option(s)
+"""Option combinations not allowed with: fail, unfail option(s)
 """
 
     stubout   = ''
@@ -582,8 +633,12 @@ Option combinations not allowed with: fail, unfail option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -599,10 +654,7 @@ def test_partadm_combo_options_8():
     args      = """--savestate /tmp/savestate -a"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/savestate -a
-
-Option combinations not allowed with: add, savestate option(s)
+"""Option combinations not allowed with: add, savestate option(s)
 """
 
     stubout   = ''
@@ -615,8 +667,12 @@ Option combinations not allowed with: add, savestate option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -632,10 +688,7 @@ def test_partadm_combo_options_9():
     args      = """-l --xml"""
 
     cmdout    = \
-"""
-partadm.py -l --xml
-
-Option combinations not allowed with: xml, list_blocks option(s)
+"""Option combinations not allowed with: xml, list_blocks option(s)
 """
 
     stubout   = ''
@@ -648,8 +701,12 @@ Option combinations not allowed with: xml, list_blocks option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -665,10 +722,7 @@ def test_partadm_combo_options_10():
     args      = """-l --xml"""
 
     cmdout    = \
-"""
-partadm.py -l --xml
-
-Option combinations not allowed with: xml, list_blocks option(s)
+"""Option combinations not allowed with: xml, list_blocks option(s)
 """
 
     stubout   = ''
@@ -681,8 +735,12 @@ Option combinations not allowed with: xml, list_blocks option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -698,10 +756,7 @@ def test_partadm_combo_options_11():
     args      = """-a --queue q1 PART"""
 
     cmdout    = \
-"""
-partadm.py -a --queue q1 PART
-
-Option combinations not allowed with: add, queue option(s)
+"""Option combinations not allowed with: add, queue option(s)
 """
 
     stubout   = ''
@@ -714,8 +769,12 @@ Option combinations not allowed with: add, queue option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -731,10 +790,7 @@ def test_partadm_combo_options_12():
     args      = """--dump --queue q1 PART"""
 
     cmdout    = \
-"""
-partadm.py --dump --queue q1 PART
-
-Option combinations not allowed with: queue, dump option(s)
+"""Option combinations not allowed with: queue, dump option(s)
 """
 
     stubout   = ''
@@ -747,8 +803,12 @@ Option combinations not allowed with: queue, dump option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -764,10 +824,7 @@ def test_partadm_combo_options_13():
     args      = """--savestate /tmp/s --xml"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/s --xml
-
-Option combinations not allowed with: xml, savestate option(s)
+"""Option combinations not allowed with: xml, savestate option(s)
 """
 
     stubout   = ''
@@ -780,8 +837,12 @@ Option combinations not allowed with: xml, savestate option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -797,10 +858,7 @@ def test_partadm_combo_options_14():
     args      = """-a -c -b PART"""
 
     cmdout    = \
-"""
-partadm.py -a -c -b PART
-
-Option combinations not allowed with: blockinfo, clean_block option(s)
+"""Option combinations not allowed with: blockinfo, clean_block option(s)
 """
 
     stubout   = ''
@@ -813,8 +871,12 @@ Option combinations not allowed with: blockinfo, clean_block option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -833,10 +895,7 @@ def test_partadm_add_option_1():
     args      = """-a -r PART"""
 
     cmdout    = \
-"""
-partadm.py -a -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -871,8 +930,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -891,10 +954,7 @@ def test_partadm_add_option_2():
     args      = """-a --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py -a --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -929,8 +989,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -949,10 +1013,7 @@ def test_partadm_add_option_3():
     args      = """-a PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py -a PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -990,8 +1051,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1035,10 +1100,7 @@ def test_partadm_add_option_4():
     args      = """-a -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -a -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -1098,8 +1160,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1119,10 +1185,7 @@ def test_partadm_add_option_5():
     args      = """-a -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -a -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -1172,8 +1235,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1192,10 +1259,7 @@ def test_partadm_delete_option_1():
     args      = """-d -r PART"""
 
     cmdout    = \
-"""
-partadm.py -d -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1220,8 +1284,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1240,10 +1308,7 @@ def test_partadm_delete_option_2():
     args      = """-d --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py -d --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1268,8 +1333,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1288,10 +1357,7 @@ def test_partadm_delete_option_3():
     args      = """-d PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py -d PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -1314,8 +1380,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1359,10 +1429,7 @@ def test_partadm_delete_option_4():
     args      = """-d -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -d -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -1412,8 +1479,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1433,10 +1504,7 @@ def test_partadm_delete_option_5():
     args      = """-d -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py -d -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -1476,8 +1544,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1496,10 +1568,7 @@ def test_partadm_enable_option_1():
     args      = """--enable -r PART"""
 
     cmdout    = \
-"""
-partadm.py --enable -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1524,8 +1593,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1544,10 +1617,7 @@ def test_partadm_enable_option_2():
     args      = """--enable --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --enable --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1572,8 +1642,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1592,10 +1666,7 @@ def test_partadm_enable_option_3():
     args      = """--enable PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --enable PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -1618,8 +1689,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1663,10 +1738,7 @@ def test_partadm_enable_option_4():
     args      = """--enable -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --enable -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -1716,8 +1788,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1737,10 +1813,7 @@ def test_partadm_enable_option_5():
     args      = """--enable -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --enable -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -1780,8 +1853,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1800,10 +1877,7 @@ def test_partadm_disable_option_1():
     args      = """--disable -r PART"""
 
     cmdout    = \
-"""
-partadm.py --disable -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1828,8 +1902,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1848,10 +1926,7 @@ def test_partadm_disable_option_2():
     args      = """--disable --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --disable --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -1876,8 +1951,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1896,10 +1975,7 @@ def test_partadm_disable_option_3():
     args      = """--disable PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --disable PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -1922,8 +1998,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1967,10 +2047,7 @@ def test_partadm_disable_option_4():
     args      = """--disable -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --disable -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2020,8 +2097,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2041,10 +2122,7 @@ def test_partadm_disable_option_5():
     args      = """--disable -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --disable -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2084,8 +2162,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2104,10 +2186,7 @@ def test_partadm_activate_option_1():
     args      = """--activate -r PART"""
 
     cmdout    = \
-"""
-partadm.py --activate -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2132,8 +2211,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2152,10 +2235,7 @@ def test_partadm_activate_option_2():
     args      = """--activate --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --activate --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2180,8 +2260,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2200,10 +2284,7 @@ def test_partadm_activate_option_3():
     args      = """--activate PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --activate PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -2226,8 +2307,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2271,10 +2356,7 @@ def test_partadm_activate_option_4():
     args      = """--activate -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --activate -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2324,8 +2406,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2345,10 +2431,7 @@ def test_partadm_activate_option_5():
     args      = """--activate -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --activate -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2388,8 +2471,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2408,10 +2495,7 @@ def test_partadm_deactivate_option_1():
     args      = """--deactivate -r PART"""
 
     cmdout    = \
-"""
-partadm.py --deactivate -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2436,8 +2520,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2456,10 +2544,7 @@ def test_partadm_deactivate_option_2():
     args      = """--deactivate --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --deactivate --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2484,8 +2569,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2504,10 +2593,7 @@ def test_partadm_deactivate_option_3():
     args      = """--deactivate PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --deactivate PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -2530,8 +2616,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2575,10 +2665,7 @@ def test_partadm_deactivate_option_4():
     args      = """--deactivate -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --deactivate -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2628,8 +2715,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2649,10 +2740,7 @@ def test_partadm_deactivate_option_5():
     args      = """--deactivate -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --deactivate -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2692,8 +2780,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2712,10 +2804,7 @@ def test_partadm_fail_option_1():
     args      = """--fail -r PART"""
 
     cmdout    = \
-"""
-partadm.py --fail -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2740,8 +2829,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2760,10 +2853,7 @@ def test_partadm_fail_option_2():
     args      = """--fail --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --fail --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -2788,8 +2878,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2808,10 +2902,7 @@ def test_partadm_fail_option_3():
     args      = """--fail PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --fail PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -2834,8 +2925,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2879,10 +2974,7 @@ def test_partadm_fail_option_4():
     args      = """--fail -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --fail -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -2932,8 +3024,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2953,10 +3049,7 @@ def test_partadm_fail_option_5():
     args      = """--fail -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --fail -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -2996,8 +3089,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3016,10 +3113,7 @@ def test_partadm_unfail_option_1():
     args      = """--unfail -r PART"""
 
     cmdout    = \
-"""
-partadm.py --unfail -r PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -3044,8 +3138,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3064,10 +3162,7 @@ def test_partadm_unfail_option_2():
     args      = """--unfail --recursive PART"""
 
     cmdout    = \
-"""
-partadm.py --unfail --recursive PART
-
-['PART', 'a']
+"""['PART', 'a']
 """
 
     stubout   = \
@@ -3092,8 +3187,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3112,10 +3211,7 @@ def test_partadm_unfail_option_3():
     args      = """--unfail PART1 PART2 PART3"""
 
     cmdout    = \
-"""
-partadm.py --unfail PART1 PART2 PART3
-
-['PART1', 'PART2', 'PART3']
+"""['PART1', 'PART2', 'PART3']
 """
 
     stubout   = \
@@ -3138,8 +3234,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3183,10 +3283,7 @@ def test_partadm_unfail_option_4():
     args      = """--unfail -b PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --unfail -b PART1 PART2
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -3236,8 +3333,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3257,10 +3358,7 @@ def test_partadm_unfail_option_5():
     args      = """--unfail -c PART1 PART2"""
 
     cmdout    = \
-"""
-partadm.py --unfail -c PART1 PART2
-
-Initiating cleanup on block PART1
+"""Initiating cleanup on block PART1
 Initiating cleanup on block PART2
 """
 
@@ -3300,8 +3398,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3320,10 +3422,7 @@ def test_partadm_savestate_option_1():
     args      = """--savestate /bad/save"""
 
     cmdout    = \
-"""
-partadm.py --savestate /bad/save
-
-directory /bad/save does not exist
+"""directory /bad/save does not exist
 """
 
     stubout   = ''
@@ -3336,8 +3435,12 @@ directory /bad/save does not exist
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3348,7 +3451,7 @@ def test_partadm_savestate_option_2():
     """
     partadm test run: savestate_option_2
         Old Command Output:
-          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
           
 
     """
@@ -3356,10 +3459,7 @@ def test_partadm_savestate_option_2():
     args      = """--savestate /tmp/save p1"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/save p1
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -3378,8 +3478,12 @@ plist: [{'name': '*'}]
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3415,10 +3519,7 @@ def test_partadm_savestate_option_3():
     args      = """--savestate"""
 
     cmdout    = \
-"""
-partadm.py --savestate
-
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -3429,6 +3530,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -3447,8 +3549,12 @@ partadm.py: error: --savestate option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3459,16 +3565,16 @@ def test_partadm_savestate_option_4():
     """
     partadm test run: savestate_option_4
         Old Command Output:
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
           
 
     """
@@ -3476,19 +3582,16 @@ def test_partadm_savestate_option_4():
     args      = """--savestate /tmp/save -c p1"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/save -c p1
-
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+"""Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 """
 
     stubout   = \
@@ -3506,61 +3609,61 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 """
@@ -3573,8 +3676,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3591,7 +3698,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 0
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : kebra
@@ -3604,7 +3711,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 1
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : jello
@@ -3617,7 +3724,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 2
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bello
@@ -3630,7 +3737,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 3
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : aaa
@@ -3643,7 +3750,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 4
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bbb
@@ -3656,7 +3763,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 5
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : hhh
@@ -3669,7 +3776,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 6
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : dito
@@ -3682,7 +3789,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 7
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : myq
@@ -3695,7 +3802,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 8
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : yours
@@ -3708,7 +3815,7 @@ def test_partadm_savestate_option_5():
               passthrough_blocks : A
               children           : a
               size               : 9
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : zq
@@ -3722,16 +3829,13 @@ def test_partadm_savestate_option_5():
     args      = """--savestate /tmp/save -b p1"""
 
     cmdout    = \
-"""
-partadm.py --savestate /tmp/save -b p1
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
     children           : a
     size               : 0
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : kebra
@@ -3744,7 +3848,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 1
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : jello
@@ -3757,7 +3861,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 2
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bello
@@ -3770,7 +3874,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 3
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : aaa
@@ -3783,7 +3887,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 4
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bbb
@@ -3796,7 +3900,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 5
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : hhh
@@ -3809,7 +3913,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 6
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : dito
@@ -3822,7 +3926,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 7
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : myq
@@ -3835,7 +3939,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 8
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : yours
@@ -3848,7 +3952,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 9
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : zq
@@ -3866,7 +3970,7 @@ plist: [{'name': '*'}]
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -3877,8 +3981,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3889,7 +3997,7 @@ def test_partadm_xml_option_1():
     """
     partadm test run: xml_option_1
         Old Command Output:
-          ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+          ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
           
 
     """
@@ -3897,14 +4005,12 @@ def test_partadm_xml_option_1():
     args      = """--xml"""
 
     cmdout    = \
-"""
-partadm.py --xml
-
-['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+"""['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 """
@@ -3917,8 +4023,12 @@ name:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3929,7 +4039,7 @@ def test_partadm_xml_option_2():
     """
     partadm test run: xml_option_2
         Old Command Output:
-          ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+          ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
           
 
     """
@@ -3937,14 +4047,12 @@ def test_partadm_xml_option_2():
     args      = """--xml p1"""
 
     cmdout    = \
-"""
-partadm.py --xml p1
-
-['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+"""['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 """
@@ -3957,8 +4065,12 @@ name:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3969,7 +4081,7 @@ def test_partadm_xml_option_3():
     """
     partadm test run: xml_option_3
         Old Command Output:
-          ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+          ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
           
 
     """
@@ -3977,10 +4089,7 @@ def test_partadm_xml_option_3():
     args      = """--xml --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --xml --recursive p1
-
-['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+"""['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
 """
 
     stubout   = \
@@ -3988,7 +4097,8 @@ partadm.py --xml --recursive p1
 GET_PARTITIONS
 
 plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-\GENERATE_XML
+
+GENERATE_XML
 
 name:*
 """
@@ -4001,8 +4111,12 @@ name:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4019,7 +4133,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 0
-              name               : A
+              name               : P1
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : kebra
@@ -4032,7 +4146,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 1
-              name               : B
+              name               : P2
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : jello
@@ -4045,7 +4159,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 2
-              name               : C
+              name               : P3
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bello
@@ -4058,7 +4172,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 3
-              name               : D
+              name               : P4
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : aaa
@@ -4071,7 +4185,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 4
-              name               : E
+              name               : P5
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bbb
@@ -4084,7 +4198,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 5
-              name               : F
+              name               : P6
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : hhh
@@ -4097,7 +4211,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 6
-              name               : G
+              name               : P7
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : dito
@@ -4110,7 +4224,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 7
-              name               : H
+              name               : P8
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : myq
@@ -4123,7 +4237,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 8
-              name               : I
+              name               : P9
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : yours
@@ -4136,7 +4250,7 @@ def test_partadm_xml_option_4():
               passthrough_blocks : A
               children           : a
               size               : 9
-              name               : J
+              name               : P10
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : zq
@@ -4150,16 +4264,13 @@ def test_partadm_xml_option_4():
     args      = """--xml --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --xml --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
     children           : a
     size               : 0
-    name               : A
+    name               : P1
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : kebra
@@ -4172,7 +4283,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 1
-    name               : B
+    name               : P2
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : jello
@@ -4185,7 +4296,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 2
-    name               : C
+    name               : P3
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bello
@@ -4198,7 +4309,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 3
-    name               : D
+    name               : P4
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : aaa
@@ -4211,7 +4322,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 4
-    name               : E
+    name               : P5
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bbb
@@ -4224,7 +4335,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 5
-    name               : F
+    name               : P6
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : hhh
@@ -4237,7 +4348,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 6
-    name               : G
+    name               : P7
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : dito
@@ -4250,7 +4361,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 7
-    name               : H
+    name               : P8
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : myq
@@ -4263,7 +4374,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 8
-    name               : I
+    name               : P9
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : yours
@@ -4276,7 +4387,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 9
-    name               : J
+    name               : P10
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : zq
@@ -4286,13 +4397,14 @@ scheduled: True
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'A', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'B', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'C', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'D', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'E', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'F', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'G', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'H', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'I', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'J', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P3', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P4', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P5', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P6', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P7', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P8', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P9', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P10', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -4303,8 +4415,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4315,16 +4431,16 @@ def test_partadm_xml_option_5():
     """
     partadm test run: xml_option_5
         Old Command Output:
-          Initiating cleanup on block A
-          Initiating cleanup on block B
-          Initiating cleanup on block C
-          Initiating cleanup on block D
-          Initiating cleanup on block E
-          Initiating cleanup on block F
-          Initiating cleanup on block G
-          Initiating cleanup on block H
-          Initiating cleanup on block I
-          Initiating cleanup on block J
+          Initiating cleanup on block P1
+          Initiating cleanup on block P2
+          Initiating cleanup on block P3
+          Initiating cleanup on block P4
+          Initiating cleanup on block P5
+          Initiating cleanup on block P6
+          Initiating cleanup on block P7
+          Initiating cleanup on block P8
+          Initiating cleanup on block P9
+          Initiating cleanup on block P10
           
 
     """
@@ -4332,23 +4448,21 @@ def test_partadm_xml_option_5():
     args      = """--xml --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --xml --clean_block
-
-Initiating cleanup on block A
-Initiating cleanup on block B
-Initiating cleanup on block C
-Initiating cleanup on block D
-Initiating cleanup on block E
-Initiating cleanup on block F
-Initiating cleanup on block G
-Initiating cleanup on block H
-Initiating cleanup on block I
-Initiating cleanup on block J
+"""Initiating cleanup on block P1
+Initiating cleanup on block P2
+Initiating cleanup on block P3
+Initiating cleanup on block P4
+Initiating cleanup on block P5
+Initiating cleanup on block P6
+Initiating cleanup on block P7
+Initiating cleanup on block P8
+Initiating cleanup on block P9
+Initiating cleanup on block P10
 """
 
     stubout   = \
-"""\GENERATE_XML
+"""
+GENERATE_XML
 
 name:*
 
@@ -4360,61 +4474,61 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: A
+part: P1
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: B
+part: P2
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: C
+part: P3
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: D
+part: P4
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: E
+part: P5
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: F
+part: P6
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: G
+part: P7
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: H
+part: P8
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: I
+part: P9
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: J
+part: P10
 var2 : None
 whoami: gooduser
 """
@@ -4427,8 +4541,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4445,7 +4563,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 0
-              name               : A
+              name               : P1
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : kebra
@@ -4458,7 +4576,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 1
-              name               : B
+              name               : P2
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : jello
@@ -4471,7 +4589,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 2
-              name               : C
+              name               : P3
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bello
@@ -4484,7 +4602,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 3
-              name               : D
+              name               : P4
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : aaa
@@ -4497,7 +4615,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 4
-              name               : E
+              name               : P5
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bbb
@@ -4510,7 +4628,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 5
-              name               : F
+              name               : P6
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : hhh
@@ -4523,7 +4641,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 6
-              name               : G
+              name               : P7
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : dito
@@ -4536,7 +4654,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 7
-              name               : H
+              name               : P8
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : myq
@@ -4549,7 +4667,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 8
-              name               : I
+              name               : P9
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : yours
@@ -4562,7 +4680,7 @@ def test_partadm_xml_option_6():
               passthrough_blocks : A
               children           : a
               size               : 9
-              name               : J
+              name               : P10
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : zq
@@ -4576,16 +4694,13 @@ def test_partadm_xml_option_6():
     args      = """--xml --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --xml --recursive --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
     children           : a
     size               : 0
-    name               : A
+    name               : P1
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : kebra
@@ -4598,7 +4713,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 1
-    name               : B
+    name               : P2
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : jello
@@ -4611,7 +4726,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 2
-    name               : C
+    name               : P3
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bello
@@ -4624,7 +4739,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 3
-    name               : D
+    name               : P4
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : aaa
@@ -4637,7 +4752,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 4
-    name               : E
+    name               : P5
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bbb
@@ -4650,7 +4765,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 5
-    name               : F
+    name               : P6
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : hhh
@@ -4663,7 +4778,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 6
-    name               : G
+    name               : P7
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : dito
@@ -4676,7 +4791,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 7
-    name               : H
+    name               : P8
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : myq
@@ -4689,7 +4804,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 8
-    name               : I
+    name               : P9
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : yours
@@ -4702,7 +4817,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 9
-    name               : J
+    name               : P10
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : zq
@@ -4716,13 +4831,14 @@ scheduled: True
 GET_PARTITIONS
 
 plist: []
-\GENERATE_XML
+
+GENERATE_XML
 
 name:*
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'A', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'B', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'C', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'D', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'E', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'F', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'G', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'H', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'I', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'J', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P3', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P4', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P5', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P6', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P7', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P8', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P9', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P10', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -4733,8 +4849,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4745,16 +4865,16 @@ def test_partadm_xml_option_7():
     """
     partadm test run: xml_option_7
         Old Command Output:
-          Initiating cleanup on block A
-          Initiating cleanup on block B
-          Initiating cleanup on block C
-          Initiating cleanup on block D
-          Initiating cleanup on block E
-          Initiating cleanup on block F
-          Initiating cleanup on block G
-          Initiating cleanup on block H
-          Initiating cleanup on block I
-          Initiating cleanup on block J
+          Initiating cleanup on block P1
+          Initiating cleanup on block P2
+          Initiating cleanup on block P3
+          Initiating cleanup on block P4
+          Initiating cleanup on block P5
+          Initiating cleanup on block P6
+          Initiating cleanup on block P7
+          Initiating cleanup on block P8
+          Initiating cleanup on block P9
+          Initiating cleanup on block P10
           
 
     """
@@ -4762,19 +4882,16 @@ def test_partadm_xml_option_7():
     args      = """--xml --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --xml --recursive --clean_block
-
-Initiating cleanup on block A
-Initiating cleanup on block B
-Initiating cleanup on block C
-Initiating cleanup on block D
-Initiating cleanup on block E
-Initiating cleanup on block F
-Initiating cleanup on block G
-Initiating cleanup on block H
-Initiating cleanup on block I
-Initiating cleanup on block J
+"""Initiating cleanup on block P1
+Initiating cleanup on block P2
+Initiating cleanup on block P3
+Initiating cleanup on block P4
+Initiating cleanup on block P5
+Initiating cleanup on block P6
+Initiating cleanup on block P7
+Initiating cleanup on block P8
+Initiating cleanup on block P9
+Initiating cleanup on block P10
 """
 
     stubout   = \
@@ -4782,7 +4899,8 @@ Initiating cleanup on block J
 GET_PARTITIONS
 
 plist: []
-\GENERATE_XML
+
+GENERATE_XML
 
 name:*
 
@@ -4794,61 +4912,61 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: A
+part: P1
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: B
+part: P2
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: C
+part: P3
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: D
+part: P4
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: E
+part: P5
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: F
+part: P6
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: G
+part: P7
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: H
+part: P8
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: I
+part: P9
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: J
+part: P10
 var2 : None
 whoami: gooduser
 """
@@ -4861,8 +4979,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4898,10 +5020,7 @@ def test_partadm_queue_option_1():
     args      = """--queue"""
 
     cmdout    = \
-"""
-partadm.py --queue
-
-Usage: partadm.py [-a] [-d] part1 part2 (add or del)
+"""Usage: partadm.py [-a|-d] part1 part2 (add or del)
 Usage: partadm.py -l
 Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
 Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -4912,6 +5031,7 @@ Usage: partadm.py --dump
 Usage: partadm.py --xml
 Usage: partadm.py --version
 Usage: partadm.py --savestate filename
+Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
 
 Must supply one of -a or -d or -l or -start or -stop or --queue or -b
 Adding "-r" or "--recursive" will add the children of the blocks passed in.
@@ -4930,8 +5050,12 @@ partadm.py: error: --queue option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4951,10 +5075,7 @@ def test_partadm_queue_option_2():
     args      = """--queue q1:q2 p1 p2 p3"""
 
     cmdout    = \
-"""
-partadm.py --queue q1:q2 p1 p2 p3
-
-'q1' is not an existing queue
+"""'q1' is not an existing queue
 'q2' is not an existing queue
 """
 
@@ -4974,8 +5095,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4994,10 +5119,7 @@ def test_partadm_queue_option_3():
     args      = """--queue kebra:bbb:myq p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb:myq p1
-
-['p1']
+"""['p1']
 """
 
     stubout   = \
@@ -5021,8 +5143,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5041,10 +5167,7 @@ def test_partadm_queue_option_4():
     args      = """--queue kebra:bbb:myq -c p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb:myq -c p1
-
-Initiating cleanup on block p1
+"""Initiating cleanup on block p1
 """
 
     stubout   = \
@@ -5080,8 +5203,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5112,10 +5239,7 @@ def test_partadm_queue_option_5():
     args      = """--queue kebra:bbb:myq -b p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb:myq -b p1
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -5155,8 +5279,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5200,10 +5328,7 @@ def test_partadm_queue_option_6():
     args      = """--queue kebra:bbb -r -b p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb -r -b p1
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
@@ -5262,8 +5387,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5283,10 +5412,7 @@ def test_partadm_queue_option_7():
     args      = """--queue kebra:bbb -r -c p1"""
 
     cmdout    = \
-"""
-partadm.py --queue kebra:bbb -r -c p1
-
-Initiating cleanup on block p1
+"""Initiating cleanup on block p1
 Initiating cleanup on block a
 """
 
@@ -5335,8 +5461,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5347,7 +5477,7 @@ def test_partadm_dump_option_1():
     """
     partadm test run: dump_option_1
         Old Command Output:
-          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
           
 
     """
@@ -5355,10 +5485,7 @@ def test_partadm_dump_option_1():
     args      = """--dump"""
 
     cmdout    = \
-"""
-partadm.py --dump
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -5376,8 +5503,12 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5388,7 +5519,7 @@ def test_partadm_dump_option_2():
     """
     partadm test run: dump_option_2
         Old Command Output:
-          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
           
 
     """
@@ -5396,10 +5527,7 @@ def test_partadm_dump_option_2():
     args      = """--dump p1"""
 
     cmdout    = \
-"""
-partadm.py --dump p1
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -5417,8 +5545,12 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5429,7 +5561,7 @@ def test_partadm_dump_option_3():
     """
     partadm test run: dump_option_3
         Old Command Output:
-          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+          [{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
           
 
     """
@@ -5437,10 +5569,7 @@ def test_partadm_dump_option_3():
     args      = """--dump --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --dump --recursive p1
-
-[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
+"""[{'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}]
 """
 
     stubout   = \
@@ -5462,8 +5591,12 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5480,7 +5613,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 0
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : kebra
@@ -5493,7 +5626,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 1
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : jello
@@ -5506,7 +5639,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 2
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bello
@@ -5519,7 +5652,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 3
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : aaa
@@ -5532,7 +5665,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 4
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bbb
@@ -5545,7 +5678,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 5
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : hhh
@@ -5558,7 +5691,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 6
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : dito
@@ -5571,7 +5704,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 7
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : myq
@@ -5584,7 +5717,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 8
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : yours
@@ -5597,7 +5730,7 @@ def test_partadm_dump_option_4():
               passthrough_blocks : A
               children           : a
               size               : 9
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : zq
@@ -5611,16 +5744,13 @@ def test_partadm_dump_option_4():
     args      = """--dump --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --dump --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
     children           : a
     size               : 0
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : kebra
@@ -5633,7 +5763,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 1
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : jello
@@ -5646,7 +5776,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 2
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bello
@@ -5659,7 +5789,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 3
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : aaa
@@ -5672,7 +5802,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 4
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bbb
@@ -5685,7 +5815,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 5
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : hhh
@@ -5698,7 +5828,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 6
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : dito
@@ -5711,7 +5841,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 7
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : myq
@@ -5724,7 +5854,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 8
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : yours
@@ -5737,7 +5867,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 9
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : zq
@@ -5754,7 +5884,7 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -5765,8 +5895,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5777,16 +5911,16 @@ def test_partadm_dump_option_5():
     """
     partadm test run: dump_option_5
         Old Command Output:
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
           
 
     """
@@ -5794,19 +5928,16 @@ def test_partadm_dump_option_5():
     args      = """--dump --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --dump --clean_block
-
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+"""Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 """
 
     stubout   = \
@@ -5823,61 +5954,61 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 """
@@ -5890,8 +6021,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5908,7 +6043,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 0
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : kebra
@@ -5921,7 +6056,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 1
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : jello
@@ -5934,7 +6069,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 2
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bello
@@ -5947,7 +6082,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 3
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : aaa
@@ -5960,7 +6095,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 4
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : bbb
@@ -5973,7 +6108,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 5
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : hhh
@@ -5986,7 +6121,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 6
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : dito
@@ -5999,7 +6134,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 7
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : myq
@@ -6012,7 +6147,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 8
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : yours
@@ -6025,7 +6160,7 @@ def test_partadm_dump_option_6():
               passthrough_blocks : A
               children           : a
               size               : 9
-              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+              name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
               node_geometry      : ['48', '48', '48', '48', '48']
               state              : idle
               queue              : zq
@@ -6039,16 +6174,13 @@ def test_partadm_dump_option_6():
     args      = """--dump --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --dump --recursive --blockinfo
-
-scheduled: True
+"""scheduled: True
     functional         : True
     draining           : False
     passthrough_blocks : A
     children           : a
     size               : 0
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : kebra
@@ -6061,7 +6193,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 1
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : jello
@@ -6074,7 +6206,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 2
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bello
@@ -6087,7 +6219,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 3
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : aaa
@@ -6100,7 +6232,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 4
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : bbb
@@ -6113,7 +6245,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 5
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : hhh
@@ -6126,7 +6258,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 6
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : dito
@@ -6139,7 +6271,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 7
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : myq
@@ -6152,7 +6284,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 8
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : yours
@@ -6165,7 +6297,7 @@ scheduled: True
     passthrough_blocks : A
     children           : a
     size               : 9
-    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+    name               : {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
     node_geometry      : ['48', '48', '48', '48', '48']
     state              : idle
     queue              : zq
@@ -6186,7 +6318,7 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -6197,8 +6329,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6209,16 +6345,16 @@ def test_partadm_dump_option_7():
     """
     partadm test run: dump_option_7
         Old Command Output:
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+          Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
           
 
     """
@@ -6226,19 +6362,16 @@ def test_partadm_dump_option_7():
     args      = """--dump --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --dump --recursive --clean_block
-
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
-Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+"""Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+Initiating cleanup on block {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 """
 
     stubout   = \
@@ -6259,61 +6392,61 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'A', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'B', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'C', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'D', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'E', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'F', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'G', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'H', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'I', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 
 SET_CLEANING
 
-part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'J', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
+part: {'scheduled': True, 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c']}
 var2 : None
 whoami: gooduser
 """
@@ -6326,8 +6459,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6346,14 +6483,12 @@ def test_partadm_boot_stop_option_1():
     args      = """--boot-stop"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6366,8 +6501,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6386,14 +6525,12 @@ def test_partadm_boot_stop_option_2():
     args      = """--boot-stop p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop p1
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6406,8 +6543,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6426,10 +6567,7 @@ def test_partadm_boot_stop_option_3():
     args      = """--boot-stop --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --recursive p1
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6437,7 +6575,8 @@ Halting booting: halting scheduling is advised
 GET_PARTITIONS
 
 plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-\HALT_BOOTING
+
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6450,8 +6589,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6470,14 +6613,12 @@ def test_partadm_boot_stop_option_4():
     args      = """--boot-stop --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --blockinfo
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6490,8 +6631,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6510,14 +6655,12 @@ def test_partadm_boot_stop_option_5():
     args      = """--boot-stop --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --clean_block
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
-"""\HALT_BOOTING
+"""
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6530,8 +6673,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6550,10 +6697,7 @@ def test_partadm_boot_stop_option_6():
     args      = """--boot-stop --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --recursive --blockinfo
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6561,7 +6705,8 @@ Halting booting: halting scheduling is advised
 GET_PARTITIONS
 
 plist: []
-\HALT_BOOTING
+
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6574,8 +6719,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6594,10 +6743,7 @@ def test_partadm_boot_stop_option_7():
     args      = """--boot-stop --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-stop --recursive --clean_block
-
-Halting booting: halting scheduling is advised
+"""Halting booting: halting scheduling is advised
 """
 
     stubout   = \
@@ -6605,7 +6751,8 @@ Halting booting: halting scheduling is advised
 GET_PARTITIONS
 
 plist: []
-\HALT_BOOTING
+
+HALT_BOOTING
 
 whoami: gooduser
 """
@@ -6618,8 +6765,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6638,14 +6789,12 @@ def test_partadm_boot_start_option_1():
     args      = """--boot-start"""
 
     cmdout    = \
-"""
-partadm.py --boot-start
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6658,8 +6807,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6678,14 +6831,12 @@ def test_partadm_boot_start_option_2():
     args      = """--boot-start p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-start p1
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6698,8 +6849,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6718,10 +6873,7 @@ def test_partadm_boot_start_option_3():
     args      = """--boot-start --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --recursive p1
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -6729,7 +6881,8 @@ Enabling booting
 GET_PARTITIONS
 
 plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-\RESUME_BOOTING
+
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6742,8 +6895,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6762,14 +6919,12 @@ def test_partadm_boot_start_option_4():
     args      = """--boot-start --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --blockinfo
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6782,8 +6937,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6802,14 +6961,12 @@ def test_partadm_boot_start_option_5():
     args      = """--boot-start --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --clean_block
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
-"""\RESUME_BOOTING
+"""
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6822,8 +6979,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6842,10 +7003,7 @@ def test_partadm_boot_start_option_6():
     args      = """--boot-start --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --recursive --blockinfo
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -6853,7 +7011,8 @@ Enabling booting
 GET_PARTITIONS
 
 plist: []
-\RESUME_BOOTING
+
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6866,8 +7025,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6886,10 +7049,7 @@ def test_partadm_boot_start_option_7():
     args      = """--boot-start --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-start --recursive --clean_block
-
-Enabling booting
+"""Enabling booting
 """
 
     stubout   = \
@@ -6897,7 +7057,8 @@ Enabling booting
 GET_PARTITIONS
 
 plist: []
-\RESUME_BOOTING
+
+RESUME_BOOTING
 
 whoami: gooduser
 """
@@ -6910,8 +7071,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6930,10 +7095,7 @@ def test_partadm_boot_status_option_1():
     args      = """--boot-status"""
 
     cmdout    = \
-"""
-partadm.py --boot-status
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -6950,8 +7112,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6970,10 +7136,7 @@ def test_partadm_boot_status_option_2():
     args      = """--boot-status p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-status p1
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -6990,8 +7153,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7010,10 +7177,7 @@ def test_partadm_boot_status_option_3():
     args      = """--boot-status --recursive p1"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --recursive p1
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7034,8 +7198,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7054,10 +7222,7 @@ def test_partadm_boot_status_option_4():
     args      = """--boot-status --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --blockinfo
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7074,8 +7239,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7094,10 +7263,7 @@ def test_partadm_boot_status_option_5():
     args      = """--boot-status --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --clean_block
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7114,8 +7280,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7134,10 +7304,7 @@ def test_partadm_boot_status_option_6():
     args      = """--boot-status --recursive --blockinfo"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --recursive --blockinfo
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7158,8 +7325,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7178,10 +7349,7 @@ def test_partadm_():
     args      = """--boot-status --recursive --clean_block"""
 
     cmdout    = \
-"""
-partadm.py --boot-status --recursive --clean_block
-
-Block Booting: ENABLED
+"""Block Booting: ENABLED
 """
 
     stubout   = \
@@ -7202,8 +7370,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

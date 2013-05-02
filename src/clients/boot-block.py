@@ -1,50 +1,73 @@
 #!/usr/bin/env python
+"""
+Prompt cobalt to boot a block on behalf of a user.
 
-'''Prompt cobalt to boot a block on behalf of a user.
+Usage: %prog [options]
+version: "%prog " + __revision__ + , Cobalt  + __version__
 
-    Options:
-    --block - Block to boot.  User must be authorized for the block.
-    --reboot - If the block is not already free, free the block, and reboot it
+OPTIONS DEFINITIONS:
 
-'''
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+'--block', dest='block', type='string', help='Name of block to boot.'
+'--reboot', action='store_true', dest='reboot', help='If the block is already booted, free the block and reboot.'
+'--free', action='store_true', dest='free', help='Free the block, if booted.  May not be combined with reboot'
+'--jobid', dest='jobid', type='int', help='Specify a cobalt jobid for this boot.',callback=cb_gtzero
 
-__version__ = '$Version$'
-helpmsg = '''Instruct Cobalt's system component to boot a block on your behalf.'''
-
-import optparse
+"""
+import logging
+import time
 import sys
 import os
-import pwd
+from Cobalt import client_utils
+from Cobalt.client_utils import cb_debug, cb_gtzero
 
-from Cobalt.Util import sleep as cobalt_sleep
-from Cobalt.Proxy import ComponentProxy
-import pybgsched #only use read commands from this.  For reboot tracking.
+from Cobalt.arg_parser import ArgParse
 
-AUTH_FAIL = 2
+__revision__= 'TBD'
+__version__ = '$Version$'
+
+AUTH_FAIL       = 2
 BAD_OPTION_FAIL = 3
-GENERAL_FAIL = 1
-SUCCESS = 0
+GENERAL_FAIL    = 1
+SUCCESS         = 0
 
 def main():
+    """
+    get-bootable-blocks main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
-    retval = SUCCESS
+    # read the cobalt config files
+    client_utils.read_config()
 
-    parser = optparse.OptionParser(usage=helpmsg, version=__version__)
-    parser.add_option('--block', action='store', dest='block', type='string', help='Name of block to boot.')
-    parser.add_option('--reboot', action='store_true', dest='reboot', help='If the block is already booted, free the block and reboot.')
-    parser.add_option('--free', action='store_true', dest='free', help='Free the block, if booted.  May not be combined with reboot')
-    parser.add_option('--jobid', action='store', dest='jobid', help='Specify a cobalt jobid for this boot.')
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args>
+        [ cb_debug        , () ],
+        [ cb_gtzero       , () ] ]
 
-    opts, args = parser.parse_args()
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+
+    user = client_utils.getuid()
+
+    parser.parse_it() # parse the command line
+    opts   = parser.options
+    args   = parser.args
+
+    if not parser.no_args():
+        client_utils.logger.info('No arguments needed')
 
     if opts.free and opts.reboot:
-        print >> sys.stderr, "ERROR: --free may not be specified with --reboot."
-        return BAD_OPTION_FAIL
+        client_utils.logger.error("ERROR: --free may not be specified with --reboot.")
+        sys.exit(BAD_OPTION_FAIL)
 
-    user = pwd.getpwuid(os.getuid())[0]
-
-    block = None
-    if opts.block == None:
+    block = opts.block
+    if block == None:
         try:
             block = os.environ['COBALT_PARTNAME']
         except KeyError:
@@ -54,48 +77,42 @@ def main():
         except KeyError:
             pass
         if block == None:
-            print >> sys.stderr, "ERROR: block not specified as option or in environment."
-            return BAD_OPTION_FAIL
-    else:
-        block = opts.block
+            client_utils.logger.error("ERROR: block not specified as option or in environment.")
+            sys.exit(BAD_OPTION_FAIL)
 
-    jobid = None
-    if opts.jobid == None:
+    jobid = opts.jobid
+    if jobid == None:
         try:
             jobid = os.environ['COBALT_JOBID']
         except KeyError:
-            print >> sys.stderr, "ERROR: Cobalt jobid not specified as option or in environment."
-            return BAD_OPTION_FAIL
-    else:
-        jobid = opts.jobid
-    #make sure this is an expected type
-    jobid = int(jobid)
+            client_utils.logger.error("ERROR: Cobalt jobid not specified as option or in environment.")
+            sys.exit(BAD_OPTION_FAIL)
 
-    #we have block, we have jobid, we have user, try and boot.
-    system = ComponentProxy('system', defer=False)
+    # Get the system component
+    system = client_utils.client_data.system_manager(False)
 
     if opts.reboot or opts.free:
         #Start the free on the block
         #poke cobalt to kill all jobs on the resource as well.
         success = system.initiate_proxy_free(block, user, jobid)
-        print "Block free on %s initiated." % (block,)
+        client_utils.logger.info("Block free on %s initiated." % (block,))
         if not success:
-            print >> sys.stderr, "Free request for block %s failed authorization." % (block, )
-            return AUTH_FAIL
+            client_utils.logger.error("Free request for block %s failed authorization." % (block, ))
+            sys.exit(AUTH_FAIL)
         while (True):
             #wait for free.  If the user still has jobs running, this won't complete.
             #the proxy free should take care of this, though.
             if system.get_block_bgsched_status(block) == 'Free':
-                print "Block %s successfully freed." % (block,)
+                client_utils.logger.info("Block %s successfully freed." % (block,))
                 break
 
     if not opts.free:
         success = system.initiate_proxy_boot(block, user, jobid)
         if not success:
-            print >> sys.stderr, "Boot request for block %s failed authorization." % (block, )
-            return AUTH_FAIL
+            client_utils.logger.error("Boot request for block %s failed authorization." % (block, ))
+            sys.exit(AUTH_FAIL)
         #give the system component a moment to initiate the boot
-        cobalt_sleep(3)
+        client_utils.sleep(3)
         #wait for block to boot
         failed = False
         found = False
@@ -112,13 +129,17 @@ def main():
                     if status == 'failed':
                         failed = True
                     break
-            cobalt_sleep(1)
+            client_utils.sleep(1)
         if failed:
-            print "Boot for locaiton %s failed."% (block,)
+            client_utils.logger.error("Boot for locaiton %s failed."% (block,))
         else:
-            print "Boot for locaiton %s complete."% (block,)
-    return retval
+            client_utils.logger.info("Boot for locaiton %s complete."% (block,))
 
 if __name__ == '__main__':
-    exit_status = main()
-    sys.exit(exit_status)
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise

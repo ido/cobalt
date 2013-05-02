@@ -9,10 +9,12 @@
 #       put the old args first then use the separate character '|' and put the new args.
 #       i.e -d -j | -d --job
 
--k          # <tc:invalid_option>
-myq 1 2 3   # <tc:queue_1> queue name myq and jobids 1,2 and 3
-1 2 3 4     # <tc:queue_2> queue name '1' and jobids 2,3 and 4
-q1 q2 1 2 3 # <tc:queu_3> multiple queue names
+-k           # <tc:invalid_option>
+myq 1 2 3    # <tc:queue_1> queue name myq and jobids 1,2 and 3
+-d myq 1 2 3 # <tc:queue_2> queue name myq and jobids 1,2 and 3 with debug <NEW_ONLY>
+1 2 3 4      # <tc:queue_3> queue name '1' and jobids 2,3 and 4
+q1 q2 1 2 3  # <tc:queu_4> multiple queue names
+
 
 
 

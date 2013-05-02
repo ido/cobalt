@@ -17,6 +17,8 @@ OPTIONS DEFINITIONS:
 '-q','--queue',dest='queue',type='string',help='queue name'
 '-s','--starttime',dest='start',type='string',help='start date time: YYYY_MM_DD-HH:MM>',callback=cb_date
 '-u','--user',dest='users',type='string',help='user id list (user1:user2:...)',callback=cb_user_list
+'--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+
 
 '--allow_passthrough',dest='block_passthrough',help='allow passthrough',callback=cb_passthrough
 '--block_passthrough',dest='block_passthrough',help='do not allow passthrough',callback=cb_passthrough
@@ -32,8 +34,7 @@ import math
 import sys
 import time
 from Cobalt import client_utils
-from Cobalt.client_utils import \
-    cb_time, cb_date, cb_passthrough, cb_user_list
+from Cobalt.client_utils import cb_debug, cb_time, cb_date, cb_passthrough, cb_user_list
 
 from Cobalt.arg_parser import ArgParse
 
@@ -195,6 +196,7 @@ def main():
         [ cb_time                , (dt_allowed,seconds) ],
         [ cb_date                , () ],
         [ cb_passthrough         , () ],
+        [ cb_debug               , () ],
         [ cb_user_list           , (opts,add_user) ]]
 
     # Get the version information

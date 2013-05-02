@@ -48,6 +48,10 @@ class client_data(object):
     sch_conn   = None
     sch_defer  = True
 
+    # slp_conn and slp_defer globals should only be explicitly used and modified in fucntion slp_manager
+    slp_conn   = None
+    slp_defer  = True
+
     @staticmethod
     def queue_manager(defer=True):
         """
@@ -88,7 +92,7 @@ class client_data(object):
         try:
             # if scheduler manager connection has not yet been establish or the defer flag 
             # is different than previously specified then extabblish schedulre  manager connection
-            if client_data.sch_conn == None or client_data.sys_defer != defer:
+            if client_data.sch_conn == None or client_data.sch_defer != defer:
                 client_data.sch_defer = defer
                 client_data.sch_conn = ComponentProxy("scheduler", defer=defer)
         except:
@@ -97,6 +101,393 @@ class client_data(object):
                 sys.exit(1)
             client_data.sch_conn = None
         return client_data.sch_conn
+
+    @staticmethod
+    def slp_manager(defer=True,exit_on_error = True):
+        """
+        connect to the service locator component
+        """
+        try:
+            # if service location manager connection has not yet been establish or the defer flag 
+            # is different than previously specified then extabblish service location manager connection
+            if client_data.slp_conn == None or client_data.slp_defer != defer:
+                client_data.slp_defer = defer
+                client_data.slp_conn = ComponentProxy("service-location", defer=defer)
+        except:
+            logger.error( "Unable to find service-locatoion")
+            if exit_on_error:
+                sys.exit(1)
+            client_data.slp_conn = None
+        return client_data.slp_conn
+
+def get_services(query):
+    """
+    get services
+    """
+    try:
+        slp      = client_data.slp_manager(False)
+        services = slp.get_services(query)
+    except socket.error, e:
+        logger.error("unable to connect to service-locator (%s)" % (e))
+        sys.exit(1)
+    except xmlrpclib.Fault, e:
+        logger.error("RPC fault (%s)" % (e))
+        sys.exit(1)
+    return services
+    
+def set_jobs(jobs,job,user):
+    """
+    Will update the current job with the new info
+    """
+    response = []
+    try:
+        cqm = client_data.queue_manager(False) 
+        response = cqm.set_jobs(jobs, job, user)
+    except xmlrpclib.Fault, flt:
+        logger.error( flt.faultString)
+        sys.exit(1)
+    return response
+    
+def set_jobid(jobid,user):
+    """
+    Will set the next jobid
+    """
+    response = []
+    try:
+        cqm = client_data.queue_manager() 
+        response = cqm.set_jobid(int(jobid), user)
+    except ValueError:
+        logger.error("The new jobid must be an integer")
+        sys.exit(1)
+    except xmlrpclib.Fault, flt:
+        logger.error(flt.faultString)
+        sys.exit(1)
+    return response
+
+def save(filename,cmp='cqm'):
+    """
+    Will save the state to the specified location
+    """
+    try:
+        if cmp == 'cqm':
+            component = client_data.queue_manager()
+        elif cmp == 'scheduler':
+            component = client_data.scheduler_manager()
+            
+        directory = os.path.dirname(filename)
+        if not os.path.exists(directory):
+            logger.error("directory %s does not exist" % directory)
+            sys.exit(1)
+        response = component.save(filename)
+    except Exception, e:
+        logger.error(e)
+        sys.exit(1)
+    return response
+
+def del_jobs(jobs,force,user):
+    """
+    delete jobs
+    """
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.del_jobs(jobs, force, user)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == JobDeleteError.fault_code:
+            args = eval(flt.faultString)
+            exc = JobDeleteError(*args)
+            logger.error("Job %s: ERROR - %s" % (exc.jobid, exc.message))
+            sys.exit(1)
+        else:
+            raise
+    return response
+
+def run_jobs(jobs,location,user):
+    """
+    run jobs
+    """
+    part_list = get_partitions([{'name': location}])
+    if len(part_list) != 1:
+        logger.error("Error: cannot find partition named '%s'" % location)
+        sys.exit(1)
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.run_jobs(jobs, location.split(':'), user)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == JobRunError.fault_code:
+            args = eval(flt.faultString)
+            exc = JobRunError(*args)
+            logger.error("Job %s: ERROR - %s" % (exc.jobid, exc.message))
+            sys.exit(1)
+        else:
+            raise
+    return response
+
+def add_queues(jobs,parser,user,info):
+    """
+    add queues
+    """
+    existing_queues = get_queues(info)
+    if [qname for qname in parser.args if qname in
+        [q.get('name') for q in existing_queues]]:
+        logger.error('queue already exists')
+        sys.exit(1)
+    elif len(parser.args) < 1:
+        logger.error('Must specify queue name')
+        sys.exit(1)
+    cqm = client_data.queue_manager()
+    response = cqm.add_queues(jobs, user)
+    datatoprint = [('Added Queues', )] + [(q.get('name'), ) for q in response]
+    print_tabular(datatoprint)
+    return response
+
+def del_queues(jobs,force,user):
+    """
+    delete queue
+    """
+    response = []
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.del_queues(jobs, force, user)
+        datatoprint = [('Deleted Queues', )] + \
+                      [(q.get('name'), ) for q in response]
+        print_tabular(datatoprint)
+    except xmlrpclib.Fault, flt:
+        logger.error(flt.faultString)
+    return response
+
+def set_queues(jobs, qdata, user):
+    """
+    set queues
+    """
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.set_queues(jobs, qdata, user)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == QueueError.fault_code:
+            logger.error(flt.faultString)
+            sys.exit(1)
+    return response
+
+def preempt_jobs(jobs,user,force):
+    """
+    preempt jobs
+    """
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.preempt_jobs(jobs, user, force)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == JobPreemptionError.fault_code:
+            args = eval(flt.faultString)
+            exc = JobPreemptionError(*args)
+            logger.error("Job %s: ERROR - %s" % (exc.jobid, exc.message))
+            sys.exit(1)
+        else:
+            raise
+    return response
+    
+def add_jobs(jobs):
+    """
+    This function will go add the job to the queue
+    """
+    try:
+        cqm = client_data.queue_manager(False)
+        jobs = cqm.add_jobs(jobs)
+    except ComponentLookupError:
+        logger.error( "Failed to connect to queue manager")
+        sys.exit(1)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == QueueError.fault_code:
+            logger.error(flt.faultString)
+            sys.exit(1)
+        else:
+            logger.error("Job submission failed")
+            logger.error( repr(flt.faultCode))
+            logger.error( repr(QueueError.fault_code))
+            logger.error(flt)
+            sys.exit(1)
+    except:
+        logger.error("Error submitting job")
+        sys.exit(1)
+    return jobs
+
+def adjust_job_scores(spec, new_score, whoami):
+    """
+    adjust new job scores
+    """
+    try:
+        cqm = client_data.queue_manager()
+        response = cqm.adjust_job_scores(spec, new_score, whoami)
+    except:
+        logger.error("Failed to connect to queue manager")
+        sys.exit(1)
+    return response
+
+def define_user_utility_functions(whoami):
+    """
+    define user utility function
+    """
+    try:
+        cqm = client_data.queue_manager()
+        cqm.define_user_utility_functions(whoami)
+    except:
+        logger.error("Failed to connect to queue manager")
+        sys.exit(1)
+
+def get_jobs(jobs):
+    """
+    Get jobs
+    """
+    jobdata = None
+    try:
+        cqm = client_data.queue_manager(False)
+        jobdata = cqm.get_jobs(jobs)
+    except ComponentLookupError:
+        logger.error("Failed to connect to queue manager")
+        sys.exit(1)
+    if not jobdata:
+        logger.error("Failed to match any jobs")
+        sys.exit(1)
+    return jobdata
+
+def get_queues(info):
+    """
+    get queues
+    """
+    try:
+        cqm = client_data.queue_manager()
+        ret = cqm.get_queues(info)
+    except:
+        logger.error("Failed to connect to queue manager")
+        sys.exit(1)
+    return ret
+
+def get_implementation():
+    """
+    Get implementation
+    """
+    system = client_data.system_manager(False)
+    try:
+        impl = system.get_implementation()
+    except: 
+        logger.error("lost connection to system component")
+        sys.exit(1)
+    return impl
+
+def get_partitions(spec):
+    """
+    get partitions
+    """
+    try:
+        system = client_data.system_manager()
+        parts = system.get_partitions(spec)
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == NotSupportedError.fault_code:
+            logger.error("incompatible with cluster support:  try nodelist")
+            sys.exit(1)
+        else:
+            raise
+    return parts
+
+def validate_job(opts):
+    """
+    This function tries to communicate with the Component Proxy and tries to validate the job
+    TODO: May try to move this to cqm.add_jobs that way we do not need do two xmlrpc calls. --GDR
+    """
+    try:
+        system = client_data.system_manager(False)
+        opts = system.validate_job(opts)
+    except xmlrpclib.Fault, flt:
+        logger.error("Job failed to validate: %s" % (flt.faultString))
+        sys.exit(1)
+
+def verify_locations(partitions):
+    """
+    verify that partitions are valid
+    """
+    system = client_data.system_manager(False)
+    for p in partitions:
+        test_parts = system.verify_locations(partitions)
+        if len(test_parts) != len(partitions):
+            missing = [p for p in partitions if p not in test_parts]
+            logger.error("Missing partitions: %s" % (" ".join(missing)))
+            sys.exit(1)
+
+def set_res_id(parser):
+    """
+    set res id
+    """
+    try:
+        scheduler = client_data.scheduler_manager(False)
+        if parser.options.force_id:
+            scheduler.force_res_id(parser.options.res_id)
+            logger.info("WARNING: Forcing res id to %s" % parser.options.res_id)
+        else:
+            scheduler.set_res_id(parser.options.res_id)
+            logger.info("Setting res id to %s" % parser.options.res_id)
+    except ValueError:
+        logger.error("res_id must be set to an integer value.")
+        sys.exit(1)
+    except xmlrpclib.Fault, flt:
+        logger.error(flt.faultString)
+        sys.exit(1)
+
+def set_cycle_id(parser):
+    """
+    set cycle id
+    """
+    try:
+        scheduler = client_data.scheduler_manager(False)
+        if parser.options.force_id:
+            scheduler.force_cycle_id(parser.options.cycle_id)
+            logger.info("WARNING: Forcing cycle id to %s" % parser.options.cycle_id)
+        else:
+            scheduler.set_cycle_id(parser.options.cycle_id)
+            logger.info("Setting cycle_id to %s" % parser.options.cycle_id)
+    except ValueError:
+        logger.error("cycle_id must be set to an integer value.")
+        sys.exit(1)
+    except xmlrpclib.Fault, flt:
+        logger.error(flt.faultString)
+        sys.exit(1)
+
+def get_reservations(query,exit_on_error=True):
+    """"
+    get reservation list according to query
+    """
+    scheduler = client_data.scheduler_manager(False,exit_on_error)
+    reslist = scheduler.get_reservations(query)
+    return reslist
+
+def modify_reservation(rname,spec):
+    """"
+    modify reservation
+    """
+    scheduler = client_data.scheduler_manager(False)
+    scheduler.set_reservations([{'name':rname}], spec, getuid())
+    logger.info(scheduler.check_reservations())
+
+def sched_status():
+    """"
+    schedule status
+    """
+    scheduler = client_data.scheduler_manager(False)
+    return scheduler.sched_status()
+
+def add_reservation(spec,user):
+    """
+    add reservation
+    """
+    try:
+        scheduler = client_data.scheduler_manager(False)
+        logger.info(scheduler.add_reservations([spec], user))
+        logger.info(scheduler.check_reservations())
+    except xmlrpclib.Fault, flt:
+        if flt.faultCode == ComponentLookupError.fault_code:
+            logger.error("Couldn't contact the scheduler")
+            sys.exit(1)
+        else:
+            logger.error(flt.faultString)
+            sys.exit(1)
 
 def component_call(func, args):
     """
@@ -166,11 +557,11 @@ class header_info(object):
         else:
             self.header = self.default_header
 
-def logargs():
+def sleep(t):
     """
-    This function will log the command line arguments.
+    Wrap the Util sleep function
     """
-    pass
+    Cobalt.Util.sleep(t)
 
 def sec_to_str(t):
     """
@@ -206,18 +597,6 @@ def merge_nodelist(nodelist):
     TODO: We may pull it in incase we want to use the client logging facility. --GDR
     """
     return Cobalt.Util.merge_nodelist(nodelist)
-
-def get_queues(info):
-    """
-    get queues
-    """
-    try:
-        cqm = client_data.queue_manager()
-        ret = cqm.get_queues(info)
-    except:
-        logger.error("Failed to connect to queue manager")
-        sys.exit(1)
-    return ret
 
 def validate_jobid_args(parser):
     """
@@ -485,11 +864,6 @@ def setup_logging(level):
     logger.setLevel(level)
     logger.already_setup = True
 
-    # log the command line arguments for the current command
-    cmdinfo = os.path.split(sys.argv[0])
-    args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
-    logger.info(args)
-
 def validate_geometry(geometry,nodes):
     """
     This will validate the geometry for the specified job
@@ -500,22 +874,9 @@ def validate_geometry(geometry,nodes):
         logger.error(err.message)
         logger.error( "Jobs not altered.")
         sys.exit(1)
-
-def get_jobs(jobs):
-    """
-    Get jobs
-    """
-    jobdata = None
-    try:
-        cqm = client_data.queue_manager(False)
-        jobdata = cqm.get_jobs(jobs)
-    except ComponentLookupError:
-        logger.error("Failed to connect to queue manager")
+    except:
+        logger.error("Invalid Geometry")
         sys.exit(1)
-    if not jobdata:
-        logger.error("Failed to match any jobs")
-        sys.exit(1)
-    return jobdata
 
 def system_info():
     """
@@ -555,18 +916,6 @@ def get_jobids(args):
         jobids.add(jobid)
     return jobids
 
-def validate_job(opts):
-    """
-    This function tries to communicate with the Component Proxy and tries to validate the job
-    TODO: May try to move this to cqm.add_jobs that way we do not need do two xmlrpc calls. --GDR
-    """
-    try:
-        system = client_data.system_manager(False)
-        opts = system.validate_job(opts)
-    except xmlrpclib.Fault, flt:
-        logger.error("Job failed to validate: %s" % (flt.faultString))
-        sys.exit(1)
-
 def get_cqm_option(cqm_option):
     """
     get a cqm option from the config parser 
@@ -599,281 +948,6 @@ def process_filters(filters,spec):
     for filt in filters:
         Cobalt.Util.processfilter(filt, spec)
 
-def set_jobs(jobs,job,user):
-    """
-    Will update the current job with the new info
-    """
-    response = []
-    try:
-        cqm = client_data.queue_manager(False) 
-        response = cqm.set_jobs(jobs, job, user)
-    except xmlrpclib.Fault, flt:
-        logger.error( flt.faultString)
-        sys.exit(1)
-    return response
-    
-def set_jobid(jobid,user):
-    """
-    Will set the next jobid
-    """
-    response = []
-    try:
-        cqm = client_data.queue_manager() 
-        response = cqm.set_jobid(int(jobid), user)
-    except ValueError:
-        logger.error("The new jobid must be an integer")
-        sys.exit(1)
-    except xmlrpclib.Fault, flt:
-        logger.error(flt.faultString)
-        sys.exit(1)
-    return response
-
-def save(filename):
-    """
-    Will save the state to the specified location
-    """
-    try:
-        cqm = client_data.queue_manager()
-        directory = os.path.dirname(filename)
-        if not os.path.exists(directory):
-            logger.error("directory %s does not exist" % directory)
-            sys.exit(1)
-        response = cqm.save(filename)
-    except Exception, e:
-        logger(e)
-        sys.exit(1)
-    return response
-
-def del_jobs(jobs,force,user):
-    """
-    delete jobs
-    """
-    try:
-        cqm = client_data.queue_manager()
-        response = cqm.del_jobs(jobs, force, user)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == JobDeleteError.fault_code:
-            args = eval(flt.faultString)
-            exc = JobDeleteError(*args)
-            logger.error("Job %s: ERROR - %s" % (exc.jobid, exc.message))
-            sys.exit(1)
-        else:
-            raise
-    return response
-
-def get_partitions(spec):
-    """
-    get partitions
-    """
-    try:
-        system = client_data.system_manager()
-        parts = system.get_partitions(spec)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == NotSupportedError.fault_code:
-            print "incompatible with cluster support:  try nodelist"
-            raise SystemExit, 1
-        else:
-            raise
-    return parts
-
-def run_jobs(jobs,location,user):
-    """
-    run jobs
-    """
-    part_list = get_partitions([{'name': location}])
-    if len(part_list) != 1:
-        logger.error("Error: cannot find partition named '%s'" % location)
-        sys.exit(1)
-    try:
-        cqm = client_data.queue_manager()
-        response = cqm.run_jobs(jobs, location.split(':'), user)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == JobRunError.fault_code:
-            args = eval(flt.faultString)
-            exc = JobRunError(*args)
-            logger.error("Job %s: ERROR - %s" % (exc.jobid, exc.message))
-            sys.exit(1)
-        else:
-            raise
-    return response
-
-def add_queues(jobs,parser,user,info):
-    """
-    add queues
-    """
-    existing_queues = get_queues(info)
-    if [qname for qname in parser.args if qname in
-        [q.get('name') for q in existing_queues]]:
-        logger.error('queue already exists')
-        sys.exit(1)
-    elif len(parser.args) < 1:
-        logger.error('Must specify queue name')
-        sys.exit(1)
-    cqm = client_data.queue_manager()
-    response = cqm.add_queues(jobs, user)
-    datatoprint = [('Added Queues', )] + [(q.get('name'), ) for q in response]
-    print_tabular(datatoprint)
-    return response
-
-def del_queues(jobs,force,user):
-    """
-    delete queue
-    """
-    response = []
-    try:
-        cqm = client_data.queue_manager()
-        response = cqm.del_queues(jobs, force, user)
-        datatoprint = [('Deleted Queues', )] + \
-                      [(q.get('name'), ) for q in response]
-        print_tabular(datatoprint)
-    except xmlrpclib.Fault, flt:
-        logger.error(flt.faultString)
-    return response
-
-def set_queues(jobs, qdata, user):
-    """
-    set queues
-    """
-    try:
-        cqm = client_data.queue_manager()
-        response = cqm.set_queues(jobs, qdata, user)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == QueueError.fault_code:
-            logger.error(flt.faultString)
-            sys.exit(1)
-    return response
-
-def preempt_jobs(jobs,user,force):
-    """
-    preempt jobs
-    """
-    try:
-        cqm = client_data.queue_manager()
-        response = cqm.preempt_jobs(jobs, user, force)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == JobPreemptionError.fault_code:
-            args = eval(flt.faultString)
-            exc = JobPreemptionError(*args)
-            logger.error("Job %s: ERROR - %s" % (exc.jobid, exc.message))
-            sys.exit(1)
-        else:
-            raise
-    return response
-    
-def add_jobs(jobs):
-    """
-    This function will go add the job to the queue
-    """
-    try:
-        cqm = client_data.queue_manager(False)
-        jobs = cqm.add_jobs(jobs)
-    except ComponentLookupError:
-        logger.error( "Failed to connect to queue manager")
-        sys.exit(1)
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == QueueError.fault_code:
-            logger.error(flt.faultString)
-            sys.exit(1)
-        else:
-            logger.error("Job submission failed")
-            logger.error( repr(flt.faultCode))
-            logger.error( repr(QueueError.fault_code))
-            logger.error(flt)
-            sys.exit(1)
-    except:
-        logger.error("Error submitting job")
-        sys.exit(1)
-    return jobs
-
-def set_res_id(parser):
-    """
-    set res id
-    """
-    try:
-        scheduler = client_data.scheduler_manager(False)
-        if parser.options.force_id:
-            scheduler.force_res_id(parser.options.res_id)
-            logger.info("WARNING: Forcing res id to %s" % parser.options.res_id)
-        else:
-            scheduler.set_res_id(parser.options.res_id)
-            logger.info("Setting res id to %s" % parser.options.res_id)
-    except ValueError:
-        logger.error("res_id must be set to an integer value.")
-        sys.exit(1)
-    except xmlrpclib.Fault, flt:
-        logger.error(flt.faultString)
-        sys.exit(1)
-
-def set_cycle_id(parser):
-    """
-    set cycle id
-    """
-    try:
-        scheduler = client_data.scheduler_manager(False)
-        if parser.options.force_id:
-            scheduler.force_cycle_id(parser.options.cycle_id)
-            logger.info("WARNING: Forcing cycle id to %s" % parser.options.cycle_id)
-        else:
-            scheduler.set_cycle_id(parser.options.cycle_id)
-            logger.info("Setting cycle_id to %s" % parser.options.cycle_id)
-    except ValueError:
-        logger.error("cycle_id must be set to an integer value.")
-        sys.exit(1)
-    except xmlrpclib.Fault, flt:
-        logger.error(flt.faultString)
-        sys.exit(1)
-
-def verify_locations(partitions):
-    """
-    verify that partitions are valid
-    """
-    system = client_data.system_manager(False)
-    for p in partitions:
-        test_parts = system.verify_locations(partitions)
-        if len(test_parts) != len(partitions):
-            missing = [p for p in partitions if p not in test_parts]
-            logger.error("Missing partitions: %s" % (" ".join(missing)))
-            sys.exit(1)
-
-def get_reservations(query,exit_on_error=True):
-    """"
-    get reservation list according to query
-    """
-    scheduler = client_data.scheduler_manager(False,exit_on_error)
-    reslist = scheduler.get_reservations(query)
-    return reslist
-
-def modify_reservation(rname,spec):
-    """"
-    modify reservation
-    """
-    scheduler = client_data.scheduler_manager(False)
-    scheduler.set_reservations([{'name':rname}], spec, getuid())
-    logger.info(scheduler.check_reservations())
-
-def sched_status():
-    """"
-    schedule status
-    """
-    scheduler = client_data.scheduler_manager(False)
-    return scheduler.sched_status()
-
-def add_reservation(spec,user):
-    """
-    add reservation
-    """
-    try:
-        scheduler = client_data.scheduler_manager(False)
-        logger.info(scheduler.add_reservations([spec], user))
-        logger.info(scheduler.check_reservations())
-    except xmlrpclib.Fault, flt:
-        if flt.faultCode == ComponentLookupError.fault_code:
-            logger.error("Couldn't contact the scheduler")
-            sys.exit(1)
-        else:
-            logger.error(flt.faultString)
-            sys.exit(1)
-
 #  
 # Callback fucntions for argument parsing defined below
 #
@@ -883,6 +957,12 @@ def cb_debug(option,opt_str,value,parser,*args):
     Set debug mode for logging
     """
     logger.setLevel(logging.DEBUG)
+
+    # log the command line arguments for the current command
+    cmdinfo = os.path.split(sys.argv[0])
+    args    = '\n'+cmdinfo[1] + ' ' + ' '.join(sys.argv[1:])+'\n'
+    logger.debug(args)
+
     setattr(parser.values,option.dest,True) # set the option
 
 def cb_nodes(option,opt_str,value,parser,*args):
@@ -1018,6 +1098,18 @@ def cb_geometry(option,opt_str,value,parser,*args):
         sys.exit(1)
     setattr(parser.values,option.dest,geom_str) # set the option
     opts[option.dest] = value
+
+def cb_bgq_geo(option,opt_str,value,parser,*args):
+    """
+    This callback will validate the bgq geometry value and store it
+    """
+    geo_list = None
+    match = Cobalt.Util.bgq_node_geo_re.match(value)
+    if match == None:
+        logger.error("Invalid Geometry. Geometry must be in the form of AxBxCxDxE")
+        sys.exit(1)
+    geo_list = [int(nodect) for nodect in match.groups()]
+    setattr(parser.values,option.dest,geo_list)
 
 def cb_attrs(option,opt_str,value,parser,*args):
     """

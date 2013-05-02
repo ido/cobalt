@@ -15,10 +15,7 @@ def test_qrls_invalid_option():
     args      = """-k 1"""
 
     cmdout    = \
-"""
-qrls.py -k 1
-
-Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
+"""Usage: qrls.py [options] <jobid1> [ ... <jobidN> ]
 
 qrls.py: error: no such option: -k
 """
@@ -33,8 +30,12 @@ qrls.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qrls.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -96,8 +97,12 @@ user_hold:False
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qrls.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -116,10 +121,7 @@ def test_qrls_jobid_1():
     args      = """myq 1 2 3 4"""
 
     cmdout    = \
-"""
-qrls.py myq 1 2 3 4
-
-jobid must be an integer: myq
+"""jobid must be an integer: myq
 """
 
     stubout   = ''
@@ -132,8 +134,12 @@ jobid must be an integer: myq
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qrls.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -156,10 +162,7 @@ def test_qrls_jobid_2():
     args      = """1 2 3 4"""
 
     cmdout    = \
-"""
-qrls.py 1 2 3 4
-
-   Failed to remove user hold on jobs: 
+"""   Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
       job 2 does not have a 'user hold'
       job 3 does not have a 'user hold'
@@ -226,8 +229,12 @@ user_hold:False
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qrls.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -247,10 +254,7 @@ def test_qrls_jobid_3():
     args      = """1"""
 
     cmdout    = \
-"""
-qrls.py 1
-
-   Failed to remove user hold on jobs: 
+"""   Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
 """
 
@@ -287,8 +291,12 @@ user_hold:False
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qrls.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -358,8 +366,12 @@ all_dependencies:[]
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qrls.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

@@ -10,21 +10,29 @@
 #       i.e -d -j | -d --job
 
 #  Try to set all options
--v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls # <tc:all_options> 
+-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls # <tc:all_options_1> 
 
 # Misc 1
 --mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls # <tc:misc_1> 
 
 
 /bin/ls                # <tc:no_options_passed>      
--z -t10 -n10 /bin/ls   # <tc:non_existant_option>    
--d                     # <tc:debug_flag_only>        
+-z -t10 -n10 /bin/ls   # <tc:non_existant_option>
+-d                     # <tc:debug_flag_only_1>
+-debug                 # <tc:debug_flag_only_2> <NEW_ONLY>
 -v                     # <tc:verbose_flag_only>      
 
-|--mode smp -t50 -nfive --geometry 40x40x50x50 /bin/ls  # <tc:non_integer_nodecount>   
-|--mode smp -t50 -n2048 --geometry 40x40x50x50 /bin/ls  # <tc:non_realistic_nodecount> 
+|--mode smp -t50 -nfive --geometry 40x40x50x50   /bin/ls  # <tc:non_integer_nodecount>   
+|--mode smp -t50 -n2048 --geometry 40x40x50x50x1 /bin/ls  # <tc:non_realistic_nodecount> 
 
---mode smp -t50 -n10 --geometry x /bin/ls              # <tc:invalid_geometry>   
+--mode smp -t50 -n10 --geometry x /bin/ls               # <tc:invalid_geometry_1>
+--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls         # <tc:invalid_geometry_2>
+--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls         # <tc:invalid_geometry_3>
+--mode smp -t50 -n10 --geometry 48x48x48x48x2  /bin/ls  # <tc:invalid_geometry_4>
+--mode smp -t50 -n10 --geometry 48x48x48x48x3  /bin/ls  # <tc:invalid_geometry_5>
+--mode smp -t50 -n10 --geometry 128x64x32x4    /bin/ls  # <tc:invalid_geometry_6>
+
+
 
 -A -t50 -n10 /bin/ls     # <tc:no_roject_specified> 
 -A who -t50 -n10 /bin/ls # <tc:project_specified>   

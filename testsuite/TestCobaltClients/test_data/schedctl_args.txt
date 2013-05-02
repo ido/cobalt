@@ -1,0 +1,34 @@
+# Command Line Options and Arguments to test schedctl
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+                             # <tc:args_1>
+1                            # <tc:args_2>
+
+|--start --stop              # <tc:combo_1>
+|--stop --status             # <tc:combo_2>
+|--start --status            # <tc:combo_3>
+|--reread-policy --status    # <tc:combo_4>
+|--score 1.1 --stop          # <tc:combo_5>
+|--inherit 1.1 --start       # <tc:combo_6>
+|--start --savestate /tmp/s  # <tc:combo_7>
+
+--start 1                    # <tc:start_1>
+--start                      # <tc:start_2>
+
+--stop  1                    # <tc:stop_1>
+--stop                       # <tc:stop_2>
+-d --stop                    # <tc:stop_3> <NEW_ONLY>
+
+--reread-policy 1            # <tc:reread_1>
+--reread-policy              # <tc:reread_2>
+
+--savestate /tmp/s           # <tc:save_1>
+--savestate s                # <tc:save_2>

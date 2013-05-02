@@ -1,0 +1,33 @@
+# Command Line Options and Arguments to test nodeadm
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+                             # <tc:args_1>
+|p1                          # <tc:args_2>
+
+--up --down p1               # <tc:combo_1>
+--up -l p1                   # <tc:combo_2> <NEW_ONLY>
+--list --queue q1 p1         # <tc:combo_3> <NEW_ONLY>
+--up --queue q1 p1           # <tc:combo_4> <NEW_ONLY>
+--down --list p1             # <tc:combo_5> <NEW_ONLY>
+
+--up p1 p2 p3                # <tc:up_1>
+--up U1 U2 U5 p1             # <tc:up_2>
+
+--down p1 p2 p3              # <tc:down_1>
+-d --down p1 p2 p3           # <tc:down_2> <NEW_ONLY>
+--down D1 D2 D5 p1           # <tc:down_3>
+
+-l                           # <tc:list_1>
+-l p1                        # <tc:list_2>
+
+|--queue QU1                 # <tc:queue_1>
+--queue "QU1 QD1" U1 D1 P1   # <tc:queue_2>
+

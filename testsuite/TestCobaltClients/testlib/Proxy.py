@@ -5,6 +5,7 @@ import time
 import pwd
 import os
 import getpass
+import testutils
 
 def stub_time():
     return 1364335099.14
@@ -50,7 +51,7 @@ logwrite     = True
 USERS    = ['james', 'land' , 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl'  , 'boy']
 QUEUES   = ['kebra', 'jello', 'bello', 'aaa', 'bbb', 'hhh'  , 'dito', 'myq'  , 'yours' , 'zq' ]
 SCORES   = [ 45    ,  50    ,  55    ,  40  ,  60  ,  30    ,  20   ,  25    ,  35     ,  2   ]
-PARTS    = ['A','B','C','D','E','F','G','H','I','J']
+PARTS    = ['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10']
 
 def enable_logwrite():
     global logwrite
@@ -129,6 +130,44 @@ def get_parts(plist):
     return parts
 
 class SystemStub(object):
+
+    def initiate_proxy_boot(s,block, user, jobid):
+        logmsg("\nINITIATE_PROXY_BOOT\n")
+        logmsg("block: %s" % block)
+        logmsg("user: %s" % user)
+        logmsg("jobid: %s" % str(jobid))
+        return True
+
+    def initiate_proxy_free(s,block, user, jobid):
+        logmsg("\nINITIATE_PROXY_FREE\n")
+        logmsg("block: %s" % block)
+        logmsg("user: %s" % user)
+        logmsg("jobid: %s" % str(jobid))
+        return True
+
+    def get_boot_statuses_and_strings(s,block):
+        logmsg("\nGET_BOOT_STATUSES_AND_STRINGS\n")
+        logmsg("block: %s" % block)
+        boot_id        = 1
+        status         = 'complete'
+        status_strings = ['status 1','status 2','status 3']
+        return (boot_id, status, status_strings)
+
+    def reap_boot(s,block):
+        logmsg("\nREAP_BOOT\n")
+        logmsg("block: %s" % block)
+        return True
+        
+    def get_block_bgsched_status(s,block):
+        logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
+        logmsg("block: %s" % block)
+        return 'Free'
+        
+    def get_block_bgsched_status(s,block):
+        logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
+        logmsg("block: %s" % block)
+        return 'Free'
+        
     def validate_job(s,opts):
         disable_logwrite()
         logmsg("\nVALIDATE_JOB\n")
@@ -162,7 +201,7 @@ class SystemStub(object):
         return genplist(specs)
 
     def generate_xml(s):
-        logmsg("\GENERATE_XML\n")
+        logmsg("\nGENERATE_XML\n")
         return genplist([{'name':'*'}])
 
     def fail_partitions(s, specs, user_name=None):
@@ -179,12 +218,12 @@ class SystemStub(object):
         return get_parts([{'name':'*'}])
 
     def halt_booting(s,user_name=None):
-        logmsg("\HALT_BOOTING\n")
+        logmsg("\nHALT_BOOTING\n")
         logmsg('whoami: %s' % str(user_name))
         return True
 
     def resume_booting(s,user_name=None):
-        logmsg("\RESUME_BOOTING\n")
+        logmsg("\nRESUME_BOOTING\n")
         logmsg('whoami: %s' % str(user_name))
         return True
 
@@ -198,6 +237,91 @@ class SystemStub(object):
         logmsg("var2 : %s" % var2)
         logmsg('whoami: %s' % str(user_name))
         return True
+
+    def get_implementation(s):
+        logmsg("\nGET_IMPLEMENTATION\n")
+        return 'cluster_system'
+
+    def nodes_down(s,args,whoami):
+        logmsg("\nNODES_DOWN\n")
+        logmsg("whoami: %s" % whoami)
+        for a in args:
+            logmsg(a)
+        return ["D1","D2","D3","D4","D5"]
+
+    def nodes_up(s,args,whoami):
+        logmsg("\nNODES_UP\n")
+        logmsg("whoami: %s" % whoami)
+        logmsg("args: %s" % str(args))
+        return ["U1","U2","U3","U4","U5"]
+
+    def get_idle_blocks(s,block_loc, query_size,geo_list):
+        logmsg("\nGET_IDLE_BLOCKS\n")
+        logmsg("block location: %s" % str(block_loc))
+        logmsg("query size: %s" % str(query_size))
+        geo = ''
+        if geo_list != None: 
+            for g in geo_list:
+                geo += str(g) + 'x'
+            geo = geo[:-1]
+        logmsg("geoometry: %s" % geo)
+        return ["I1","I2","I3","I4","I5"]
+
+    def get_node_status(s):
+        logmsg("\nGET_NODES_STATUS\n")
+        return [ ['D1','good'],['D2','bad'],['D3','ugly'],['U1','one'],['U2','two'],['U3','three']]
+
+    def get_queue_assignments(s):
+        logmsg('\nGET_QUEUE_ASSIGNMENTS\n')
+        ret = {'QU1':'U1','QD1':'D1','QU2':'U2','QD2':'D2','QU3':'U3','QD3':'D3'}
+        return ret
+
+    def set_queue_assignments(s,queues,args,whoami):
+        logmsg('\nGET_QUEUE_ASSIGNMENTS\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("args: %s" % str(args))
+        logmsg("queues: %s" % str(queues))
+        ret = queues
+        return ret
+
+def change_jobs(ojoblist, newjob,user):
+    logmsg("\nOriginal Jobs:\n")
+    logdiclist(ojoblist)
+    logmsg("\nNew Job Info:\n")
+    if type(newjob) == type([]) or type(newjob) == type({}):
+        logdic(newjob)
+    else:
+        logmsg(str(newjob))
+    _job_specs = []
+    wtime = 5
+    nodes = 512
+    ndx = 0
+    for job in ojoblist:
+        _job = {}
+        _job['tag']           = 'job'
+        _job['user']          = USERS[ndx]
+        _job['jobid']         = job['jobid']
+        _job['project']       = 'my_project'
+        _job['notify']        = 'myemag@gmail.com'
+        _job['walltime']      = wtime
+        _job['procs']         = nodes
+        _job['nodes']         = nodes
+        _job['is_active']     = False
+        _job['queue']         = QUEUES[ndx]
+        _job['mode']          = 'smp'
+        _job['errorpath']     = '/tmp'
+        _job['errorpath']     = '/tmp'
+        _job['outputpath']    = '/tmp'
+        _job['user_hold']     = False
+        _job['has_completed'] = False
+        if type(newjob) == type([]):
+            for key in newjob:
+                _job[key] = newjob[key]
+        _job_specs.append(_job)
+        wtime += 5
+        nodes += 512
+        ndx += 1
+    return _job_specs
 
 class CqmStub(object):
     
@@ -314,39 +438,11 @@ class CqmStub(object):
         
     def set_jobs(s,ojoblist, newjob,user):
         logmsg("\nSET_JOBS\n")
-        logmsg("\nOriginal Jobs:\n")
-        logdiclist(ojoblist)
-        logmsg("\nNew Job Info:\n")
-        logdic(newjob)
-        _job_specs = []
-        wtime = 5
-        nodes = 512
-        ndx = 0
-        for job in ojoblist:
-            _job = {}
-            _job['tag']           = 'job'
-            _job['user']          = USERS[ndx]
-            _job['jobid']         = job['jobid']
-            _job['project']       = 'my_project'
-            _job['notify']        = 'myemag@gmail.com'
-            _job['walltime']      = wtime
-            _job['procs']         = nodes
-            _job['nodes']         = nodes
-            _job['is_active']     = False
-            _job['queue']         = QUEUES[ndx]
-            _job['mode']          = 'smp'
-            _job['errorpath']     = '/tmp'
-            _job['errorpath']     = '/tmp'
-            _job['outputpath']    = '/tmp'
-            _job['user_hold']     = False
-            _job['has_completed'] = False
-            for key in newjob:
-                _job[key] = newjob[key]
-            _job_specs.append(_job)
-            wtime += 5
-            nodes += 512
-            ndx += 1
-        return _job_specs
+        return change_jobs(ojoblist,newjob,user)
+
+    def adjust_job_scores(s,ojoblist, newjob,user):
+        logmsg("\nADJUST_JOB_SCORES\n")
+        return change_jobs(ojoblist,newjob,user)
 
     def get_jobs(s,job_specs):
         if len(job_specs) == 0: return
@@ -400,7 +496,16 @@ class CqmStub(object):
         enable_logwrite()
         return _job_specs
 
+    def define_user_utility_functions(s,whoami):
+        logmsg("\nDEFINE_USER_UTILITY_FUNCTION\n")
+        logmsg('whoami: %s' % str(whoami))
+
 class SchedStub(object):
+
+    def save(s,filename):
+        logmsg("\nSAVE\n")
+        logmsg('filename:'+str(filename))
+        return True
 
     def force_res_id(s,id):
         logmsg("\nFORCE_RES_ID\n")
@@ -432,8 +537,9 @@ class SchedStub(object):
         res  = query[0]
         sz   = 100
         if 'name' in res:
-            _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,
-                    'active':True,'partitions':':'.join(PARTS),'block_passthrough':True}
+            _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,'active':True,
+                    'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':USERS[0],
+                    'project':'proj','res_id':'id'}
             res_list.append(_res)
         else:
             for q in QUEUES:
@@ -442,7 +548,7 @@ class SchedStub(object):
                 st += 1000000
                 sz -= 1
                 res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
-                                 'partitions':':'.join(PARTS),'block_passthrough':True})
+                                 'partitions':':'.join(PARTS),'block_passthrough':True,'project':'proj','res_id':'id'})
             
         return res_list
 
@@ -467,9 +573,31 @@ class SchedStub(object):
         logmsg("\nSCHED_STATUS\n")
         return True
 
+    def disable(s,whoami):
+        logmsg("\nDISABLE\n")
+        logmsg('whoami: %s' % str(whoami))
+
+    def enable(s,whoami):
+        logmsg("\nENABLE\n")
+        logmsg('whoami: %s' % str(whoami))
+
+class SlpStub(object):
+
+    def get_services(s,query):
+        logmsg("\nGET_SERVICES\n")
+        logdiclist(query)
+        tinfo = testutils.get_testinfo()
+        if tinfo.find("NO SERVICES") != -1:
+            return []
+        services = []
+        for i in range(5):
+            services.append({'name':'S'+str(i), 'location':'P'+str(i),'stamp':1366668370.0+(i*10)})
+        return services
+
 system    = SystemStub()
 cqm       = CqmStub()
 scheduler = SchedStub()
+slp       = SlpStub()
 
 def ComponentProxy(component_name, **kwargs):
     """
@@ -481,4 +609,6 @@ def ComponentProxy(component_name, **kwargs):
         return cqm
     elif component_name == "scheduler":
         return scheduler
+    elif component_name == "service-location":
+        return slp
         

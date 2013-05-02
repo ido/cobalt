@@ -15,10 +15,7 @@ def test_qdel_invalid_option():
     args      = """-k 1"""
 
     cmdout    = \
-"""
-qdel.py -k 1
-
-Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
+"""Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
 
 qdel.py: error: no such option: -k
 """
@@ -33,8 +30,12 @@ qdel.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -44,11 +45,6 @@ qdel.py: error: no such option: -k
 def test_qdel_debug_option():
     """
     qdel test run: debug_option
-        Old Command Output:
-          option -d not recognized
-          Usage:
-          qdel [--version] [-f] <jobid> <jobid>
-          
 
     """
 
@@ -58,23 +54,37 @@ def test_qdel_debug_option():
 """
 qdel.py -d 1
 
-Usage: qdel.py [options] <jobid1> [ ... <jobidN>]
-
-qdel.py: error: no such option: -d
+      Deleted Jobs
+JobID  User      
+=================
+1      gooduser  
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+DEL_JOBS
+
+force:False
+whoami:gooduser
+jobid:1
+tag:job
+user:gooduser
+"""
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       512, # Expected return status 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -93,10 +103,7 @@ def test_qdel_jobid_1():
     args      = """myq 1 2 3 4"""
 
     cmdout    = \
-"""
-qdel.py myq 1 2 3 4
-
-jobid must be an integer: myq
+"""jobid must be an integer: myq
 """
 
     stubout   = ''
@@ -109,8 +116,12 @@ jobid must be an integer: myq
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -135,10 +146,7 @@ def test_qdel_jobid_2():
     args      = """1 2 3 4"""
 
     cmdout    = \
-"""
-qdel.py 1 2 3 4
-
-      Deleted Jobs
+"""      Deleted Jobs
 JobID  User      
 =================
 1      gooduser  
@@ -175,8 +183,12 @@ user:gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -198,10 +210,7 @@ def test_qdel_jobid_3():
     args      = """1"""
 
     cmdout    = \
-"""
-qdel.py 1
-
-      Deleted Jobs
+"""      Deleted Jobs
 JobID  User      
 =================
 1      gooduser  
@@ -226,8 +235,12 @@ user:gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

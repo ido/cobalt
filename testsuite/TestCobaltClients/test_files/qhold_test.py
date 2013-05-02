@@ -15,10 +15,7 @@ def test_qhold_invalid_option():
     args      = """-k 1"""
 
     cmdout    = \
-"""
-qhold.py -k 1
-
-Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
+"""Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
 
 qhold.py: error: no such option: -k
 """
@@ -33,8 +30,12 @@ qhold.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -45,8 +46,8 @@ def test_qhold_debg_option():
     """
     qhold test run: debg_option
         Old Command Output:
-             Placed user hold on jobs: 
-                1
+             Failed to place user hold on jobs: 
+                job 1 encountered an unexpected problem while attempting to place the 'user hold'
           
 
     """
@@ -57,9 +58,9 @@ def test_qhold_debg_option():
 """
 qhold.py -d 1
 
-Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': True, 'procs': 512, 'user': 'james'}]
-Placed user hold on jobs: 
-      1
+Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
+   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
@@ -95,8 +96,12 @@ user_hold:True
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -115,10 +120,7 @@ def test_qhold_jobid_1():
     args      = """myq 1 2 3 4"""
 
     cmdout    = \
-"""
-qhold.py myq 1 2 3 4
-
-jobid must be an integer: myq
+"""jobid must be an integer: myq
 """
 
     stubout   = ''
@@ -131,8 +133,12 @@ jobid must be an integer: myq
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -143,11 +149,11 @@ def test_qhold_jobid_2():
     """
     qhold test run: jobid_2
         Old Command Output:
-             Placed user hold on jobs: 
-                1
-                2
-                3
-                4
+             Failed to place user hold on jobs: 
+                job 1 encountered an unexpected problem while attempting to place the 'user hold'
+                job 2 encountered an unexpected problem while attempting to place the 'user hold'
+                job 3 encountered an unexpected problem while attempting to place the 'user hold'
+                job 4 encountered an unexpected problem while attempting to place the 'user hold'
           
 
     """
@@ -155,14 +161,11 @@ def test_qhold_jobid_2():
     args      = """1 2 3 4"""
 
     cmdout    = \
-"""
-qhold.py 1 2 3 4
-
-Placed user hold on jobs: 
-      1
-      2
-      3
-      4
+"""   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
+      job 2 encountered an unexpected problem while attempting to place the 'user hold'
+      job 3 encountered an unexpected problem while attempting to place the 'user hold'
+      job 4 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
@@ -225,8 +228,12 @@ user_hold:True
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -237,8 +244,8 @@ def test_qhold_jobid_3():
     """
     qhold test run: jobid_3
         Old Command Output:
-             Placed user hold on jobs: 
-                1
+             Failed to place user hold on jobs: 
+                job 1 encountered an unexpected problem while attempting to place the 'user hold'
           
 
     """
@@ -246,11 +253,8 @@ def test_qhold_jobid_3():
     args      = """1"""
 
     cmdout    = \
-"""
-qhold.py 1
-
-Placed user hold on jobs: 
-      1
+"""   Failed to place user hold on jobs: 
+      job 1 encountered an unexpected problem while attempting to place the 'user hold'
 """
 
     stubout   = \
@@ -286,8 +290,12 @@ user_hold:True
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -308,10 +316,7 @@ def test_qhold_dependancy_option():
     args      = """--dependencies 1 2"""
 
     cmdout    = \
-"""
-qhold.py --dependencies 1 2
-
-Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
+"""Usage: qhold.py [options] <jobid1> [ ... <jobidN> ]
 
 qhold.py: error: no such option: --dependencies
 """
@@ -326,8 +331,12 @@ qhold.py: error: no such option: --dependencies
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

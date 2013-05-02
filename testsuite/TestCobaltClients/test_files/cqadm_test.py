@@ -24,10 +24,7 @@ def test_cqadm_getq_option_1():
     args      = """--getq"""
 
     cmdout    = \
-"""
-cqadm.py --getq
-
-Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+"""Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
 =========================================================================================================================================================
 aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
@@ -71,8 +68,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -151,8 +152,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -182,10 +187,7 @@ def test_cqadm_getq_option_3():
     args      = """-f --getq"""
 
     cmdout    = \
-"""
-cqadm.py -f --getq
-
-Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
+"""Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
 =========================================================================================================================================================
 aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
 bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
@@ -229,8 +231,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -283,8 +289,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -301,11 +311,7 @@ def test_cqadm_preempt_job_2():
 
     args      = """-f --preempt 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --preempt 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -335,8 +341,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -388,8 +398,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -406,11 +420,7 @@ def test_cqadm_kill_job_2():
 
     args      = """--kill 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --kill 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -440,8 +450,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -459,11 +473,7 @@ def test_cqadm_kill_job_3():
 
     args      = """-f --kill 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --kill 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -493,8 +503,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -547,8 +561,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -571,10 +589,7 @@ def test_cqadm_addq_option_1():
     args      = """--addq"""
 
     cmdout    = \
-"""
-cqadm.py --addq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -587,8 +602,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -611,10 +630,7 @@ def test_cqadm_addq_option_2():
     args      = """--addq myq1 myq2 myq3"""
 
     cmdout    = \
-"""
-cqadm.py --addq myq1 myq2 myq3
-
-Added Queues  
+"""Added Queues  
 ==============
 myq1          
 myq2          
@@ -661,8 +677,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -685,10 +705,7 @@ def test_cqadm_delq_option_1():
     args      = """--delq"""
 
     cmdout    = \
-"""
-cqadm.py --delq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -701,8 +718,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -725,10 +746,7 @@ def test_cqadm_delq_option_2():
     args      = """--delq myq1 myq2 myq3"""
 
     cmdout    = \
-"""
-cqadm.py --delq myq1 myq2 myq3
-
-Deleted Queues  
+"""Deleted Queues  
 ================
 myq1            
 myq2            
@@ -757,8 +775,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -781,10 +803,7 @@ def test_cqadm_stopq_option_1():
     args      = """--stopq"""
 
     cmdout    = \
-"""
-cqadm.py --stopq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -797,8 +816,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -815,11 +838,7 @@ def test_cqadm_stopq_option_2():
 
     args      = """--stopq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --stopq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -843,8 +862,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -867,10 +890,7 @@ def test_cqadm_startq_option_1():
     args      = """--startq"""
 
     cmdout    = \
-"""
-cqadm.py --startq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -883,8 +903,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -901,11 +925,7 @@ def test_cqadm_startq_option_2():
 
     args      = """--startq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --startq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -929,8 +949,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -953,10 +977,7 @@ def test_cqadm_drainq_option_1():
     args      = """--drainq"""
 
     cmdout    = \
-"""
-cqadm.py --drainq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -969,8 +990,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -987,11 +1012,7 @@ def test_cqadm_drainq_option_2():
 
     args      = """--drainq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --drainq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1015,8 +1036,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1039,10 +1064,7 @@ def test_cqadm_killq_option_1():
     args      = """--killq"""
 
     cmdout    = \
-"""
-cqadm.py --killq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1055,8 +1077,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1073,11 +1099,7 @@ def test_cqadm_killq_option_2():
 
     args      = """--killq myq1 myq2 myq3"""
 
-    cmdout    = \
-"""
-cqadm.py --killq myq1 myq2 myq3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1101,8 +1123,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1125,10 +1151,7 @@ def test_cqadm_policy_option_1():
     args      = """--policy"""
 
     cmdout    = \
-"""
-cqadm.py --policy
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --policy option requires an argument
 """
@@ -1143,8 +1166,12 @@ cqadm.py: error: --policy option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1167,10 +1194,7 @@ def test_cqadm_policy_option_2():
     args      = """--policy 'mypolicy'"""
 
     cmdout    = \
-"""
-cqadm.py --policy mypolicy
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1183,8 +1207,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1201,11 +1229,7 @@ def test_cqadm_policy_option_3():
 
     args      = """--policy 'mypolicy' myq1 myq2"""
 
-    cmdout    = \
-"""
-cqadm.py --policy mypolicy myq1 myq2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1227,8 +1251,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1251,10 +1279,7 @@ def test_cqadm_setq_option_1():
     args      = """--setq"""
 
     cmdout    = \
-"""
-cqadm.py --setq
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --setq option requires an argument
 """
@@ -1269,8 +1294,12 @@ cqadm.py: error: --setq option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1293,10 +1322,7 @@ def test_cqadm_setq_option_2():
     args      = """--setq 'a=b b=c a=c'"""
 
     cmdout    = \
-"""
-cqadm.py --setq a=b b=c a=c
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1309,8 +1335,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1327,11 +1357,7 @@ def test_cqadm_setq_option_3():
 
     args      = """--setq 'a=b b=c a=c' myq1 myq2"""
 
-    cmdout    = \
-"""
-cqadm.py --setq a=b b=c a=c myq1 myq2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1353,8 +1379,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1377,10 +1407,7 @@ def test_cqadm_unsetq_option_1():
     args      = """--unsetq"""
 
     cmdout    = \
-"""
-cqadm.py --unsetq
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --unsetq option requires an argument
 """
@@ -1395,8 +1422,12 @@ cqadm.py: error: --unsetq option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1419,10 +1450,7 @@ def test_cqadm_unsetq_option_2():
     args      = """--unsetq 'a b a'"""
 
     cmdout    = \
-"""
-cqadm.py --unsetq a b a
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1435,8 +1463,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1453,11 +1485,7 @@ def test_cqadm_unsetq_option_3():
 
     args      = """--unsetq 'a b a' myq1 myq2"""
 
-    cmdout    = \
-"""
-cqadm.py --unsetq a b a myq1 myq2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1479,8 +1507,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1503,10 +1535,7 @@ def test_cqadm_setjobid_option_1():
     args      = """-j"""
 
     cmdout    = \
-"""
-cqadm.py -j
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: -j option requires an argument
 """
@@ -1521,8 +1550,12 @@ cqadm.py: error: -j option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1545,10 +1578,7 @@ def test_cqadm_setjobid_option_2():
     args      = """--setjobid"""
 
     cmdout    = \
-"""
-cqadm.py --setjobid
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --setjobid option requires an argument
 """
@@ -1563,8 +1593,12 @@ cqadm.py: error: --setjobid option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1581,11 +1615,7 @@ def test_cqadm_setjobid_option_3():
 
     args      = """-j 1"""
 
-    cmdout    = \
-"""
-cqadm.py -j 1
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1603,8 +1633,12 @@ whoami:gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1621,11 +1655,7 @@ def test_cqadm_setjobid_option_4():
 
     args      = """--setjobid 1"""
 
-    cmdout    = \
-"""
-cqadm.py --setjobid 1
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1643,8 +1673,12 @@ whoami:gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1661,11 +1695,7 @@ def test_cqadm_setjobid_option_5():
 
     args      = """-j 1 --setjobid 2"""
 
-    cmdout    = \
-"""
-cqadm.py -j 1 --setjobid 2
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1683,8 +1713,12 @@ whoami:gooduser
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1707,10 +1741,7 @@ def test_cqadm_run_option_1():
     args      = """--run"""
 
     cmdout    = \
-"""
-cqadm.py --run
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --run option requires an argument
 """
@@ -1725,8 +1756,12 @@ cqadm.py: error: --run option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1749,10 +1784,7 @@ def test_cqadm_run_option_2():
     args      = """--run mayaguez"""
 
     cmdout    = \
-"""
-cqadm.py --run mayaguez
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1765,8 +1797,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1783,11 +1819,7 @@ def test_cqadm_run_option_3():
 
     args      = """--run mayaguez 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --run mayaguez 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1821,8 +1853,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1841,10 +1877,7 @@ def test_cqadm_hold_option_1():
     args      = """--hold"""
 
     cmdout    = \
-"""
-cqadm.py --hold
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -1857,8 +1890,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1875,11 +1912,7 @@ def test_cqadm_hold_option_2():
 
     args      = """--hold 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --hold 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -1917,8 +1950,12 @@ admin_hold:True
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1929,7 +1966,7 @@ def test_cqadm_hold_option_3():
     """
     cqadm test run: hold_option_3
         Old Command Output:
-           {'user': 'james', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': True, 'jobid': 1, 'queue': 'kebra', 'tag': 'job', 'mode': 'smp', 'nodes': 512, 'has_completed': False, 'procs': 512, 'walltime': 5, 'notify': 'myemag@gmail.com'}     {'user': 'land', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': True, 'jobid': 2, 'queue': 'jello', 'tag': 'job', 'mode': 'smp', 'nodes': 1024, 'has_completed': False, 'procs': 1024, 'walltime': 10, 'notify': 'myemag@gmail.com'}   {'user': 'house', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': True, 'jobid': 3, 'queue': 'bello', 'tag': 'job', 'mode': 'smp', 'nodes': 1536, 'has_completed': False, 'procs': 1536, 'walltime': 15, 'notify': 'myemag@gmail.com'} 
+           {'errorpath': '/tmp', 'is_active': False, 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemag@gmail.com', 'has_completed': False, 'procs': 512, 'walltime': 5, 'project': 'my_project', 'user_hold': False, 'jobid': 1, 'queue': 'kebra', 'mode': 'smp', 'nodes': 512, 'user': 'james'}     {'errorpath': '/tmp', 'is_active': False, 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemag@gmail.com', 'has_completed': False, 'procs': 1024, 'walltime': 10, 'project': 'my_project', 'user_hold': False, 'jobid': 2, 'queue': 'jello', 'mode': 'smp', 'nodes': 1024, 'user': 'land'}   {'errorpath': '/tmp', 'is_active': False, 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemag@gmail.com', 'has_completed': False, 'procs': 1536, 'walltime': 15, 'project': 'my_project', 'user_hold': False, 'jobid': 3, 'queue': 'bello', 'mode': 'smp', 'nodes': 1536, 'user': 'house'} 
           
 
     """
@@ -1940,7 +1977,7 @@ def test_cqadm_hold_option_3():
 """
 cqadm.py -d --hold 1 2 3
 
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'admin_hold': True, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'admin_hold': True, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'admin_hold': True, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
 """
 
     stubout   = \
@@ -1979,8 +2016,12 @@ admin_hold:True
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1997,11 +2038,7 @@ def test_cqadm_hold_option_4():
 
     args      = """-f --hold  1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --hold 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2039,8 +2076,12 @@ admin_hold:True
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2059,10 +2100,7 @@ def test_cqadm_release_option_1():
     args      = """--release"""
 
     cmdout    = \
-"""
-cqadm.py --release
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2075,8 +2113,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2093,11 +2135,7 @@ def test_cqadm_release_option_2():
 
     args      = """--release 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --release 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2135,8 +2173,12 @@ admin_hold:False
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2147,7 +2189,7 @@ def test_cqadm_release_option_3():
     """
     cqadm test run: release_option_3
         Old Command Output:
-           {'user': 'james', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': False, 'jobid': 1, 'queue': 'kebra', 'tag': 'job', 'mode': 'smp', 'nodes': 512, 'has_completed': False, 'procs': 512, 'walltime': 5, 'notify': 'myemag@gmail.com'}     {'user': 'land', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': False, 'jobid': 2, 'queue': 'jello', 'tag': 'job', 'mode': 'smp', 'nodes': 1024, 'has_completed': False, 'procs': 1024, 'walltime': 10, 'notify': 'myemag@gmail.com'}   {'user': 'house', 'outputpath': '/tmp', 'errorpath': '/tmp', 'project': 'my_project', 'user_hold': False, 'is_active': False, 'admin_hold': False, 'jobid': 3, 'queue': 'bello', 'tag': 'job', 'mode': 'smp', 'nodes': 1536, 'has_completed': False, 'procs': 1536, 'walltime': 15, 'notify': 'myemag@gmail.com'} 
+           {'errorpath': '/tmp', 'is_active': False, 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemag@gmail.com', 'has_completed': False, 'procs': 512, 'walltime': 5, 'project': 'my_project', 'user_hold': False, 'jobid': 1, 'queue': 'kebra', 'mode': 'smp', 'nodes': 512, 'user': 'james'}     {'errorpath': '/tmp', 'is_active': False, 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemag@gmail.com', 'has_completed': False, 'procs': 1024, 'walltime': 10, 'project': 'my_project', 'user_hold': False, 'jobid': 2, 'queue': 'jello', 'mode': 'smp', 'nodes': 1024, 'user': 'land'}   {'errorpath': '/tmp', 'is_active': False, 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemag@gmail.com', 'has_completed': False, 'procs': 1536, 'walltime': 15, 'project': 'my_project', 'user_hold': False, 'jobid': 3, 'queue': 'bello', 'mode': 'smp', 'nodes': 1536, 'user': 'house'} 
           
 
     """
@@ -2158,7 +2200,7 @@ def test_cqadm_release_option_3():
 """
 cqadm.py -d --release 1 2 3
 
-[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'admin_hold': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'admin_hold': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'admin_hold': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+[{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
 """
 
     stubout   = \
@@ -2197,8 +2239,12 @@ admin_hold:False
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2215,11 +2261,7 @@ def test_cqadm_release_option_4():
 
     args      = """-f --release 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py -f --release 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2257,8 +2299,12 @@ admin_hold:False
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2281,10 +2327,7 @@ def test_cqadm_release_and_hold():
     args      = """--hold --release 1 2 3"""
 
     cmdout    = \
-"""
-cqadm.py --hold --release 1 2 3
-
-Attribute admin_hold already set
+"""Attribute admin_hold already set
 """
 
     stubout   = ''
@@ -2297,8 +2340,12 @@ Attribute admin_hold already set
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2321,10 +2368,7 @@ def test_cqadm_queue_option_1():
     args      = """--queue"""
 
     cmdout    = \
-"""
-cqadm.py --queue
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --queue option requires an argument
 """
@@ -2339,8 +2383,12 @@ cqadm.py: error: --queue option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2363,10 +2411,7 @@ def test_cqadm_queue_option_2():
     args      = """--queue myq"""
 
     cmdout    = \
-"""
-cqadm.py --queue myq
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2379,8 +2424,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2397,11 +2446,7 @@ def test_cqadm_queue_option_3():
 
     args      = """--queue myq 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --queue myq 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2436,8 +2481,12 @@ queue:myq
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2460,10 +2509,7 @@ def test_cqadm_time_option_1():
     args      = """--time"""
 
     cmdout    = \
-"""
-cqadm.py --time
-
-Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
+"""Usage: cqadm.py [options] <jobid> <jobid> OR <queue> <queue>
 
 cqadm.py: error: --time option requires an argument
 """
@@ -2478,8 +2524,12 @@ cqadm.py: error: --time option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2502,10 +2552,7 @@ def test_cqadm_time_option_2():
     args      = """--time 50"""
 
     cmdout    = \
-"""
-cqadm.py --time 50
-
-At least on jobid or queue name must be supplied
+"""At least on jobid or queue name must be supplied
 """
 
     stubout   = ''
@@ -2518,8 +2565,12 @@ At least on jobid or queue name must be supplied
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2536,11 +2587,7 @@ def test_cqadm_time_option_4():
 
     args      = """--time 50 1 2 3"""
 
-    cmdout    = \
-"""
-cqadm.py --time 50 1 2 3
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2575,8 +2622,12 @@ walltime:50
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2593,11 +2644,7 @@ def test_cqadm_update_all_1():
 
     args      = """--hold --queue myq --time 50 4 5 6"""
 
-    cmdout    = \
-"""
-cqadm.py --hold --queue myq --time 50 4 5 6
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2637,8 +2684,12 @@ walltime:50
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2655,11 +2706,7 @@ def test_cqadm_update_all_2():
 
     args      = """--release --queue myq --time 50 4 5 6"""
 
-    cmdout    = \
-"""
-cqadm.py --release --queue myq --time 50 4 5 6
-
-"""
+    cmdout    = ''
 
     stubout   = \
 """
@@ -2699,8 +2746,12 @@ walltime:50
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2723,10 +2774,7 @@ def test_cqadm_combine_getq_and_addq():
     args      = """--getq --addq myq1 myq2 myq3"""
 
     cmdout    = \
-"""
-cqadm.py --getq --addq myq1 myq2 myq3
-
-Option combinations not allowed with: addq, getq option(s)
+"""Option combinations not allowed with: addq, getq option(s)
 """
 
     stubout   = ''
@@ -2739,8 +2787,12 @@ Option combinations not allowed with: addq, getq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2763,10 +2815,7 @@ def test_cqadm_combine_getq_and_setjobid():
     args      = """--getq -j 1 123"""
 
     cmdout    = \
-"""
-cqadm.py --getq -j 1 123
-
-Option combinations not allowed with: setjobid, getq option(s)
+"""Option combinations not allowed with: setjobid, getq option(s)
 """
 
     stubout   = ''
@@ -2779,8 +2828,12 @@ Option combinations not allowed with: setjobid, getq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2803,10 +2856,7 @@ def test_cqadm_combine_time_and_getq():
     args      = """--time 50 --getq"""
 
     cmdout    = \
-"""
-cqadm.py --time 50 --getq
-
-Option combinations not allowed with: getq option(s)
+"""Option combinations not allowed with: getq option(s)
 """
 
     stubout   = ''
@@ -2819,8 +2869,12 @@ Option combinations not allowed with: getq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2843,10 +2897,7 @@ def test_cqadm_combine_release_and_getq():
     args      = """--release --getq 123"""
 
     cmdout    = \
-"""
-cqadm.py --release --getq 123
-
-Option combinations not allowed with: getq option(s)
+"""Option combinations not allowed with: getq option(s)
 """
 
     stubout   = ''
@@ -2859,8 +2910,12 @@ Option combinations not allowed with: getq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2883,10 +2938,7 @@ def test_cqadm_combine_setq_with_queue():
     args      = """--setq 'a=1 b=2' --queue q 1"""
 
     cmdout    = \
-"""
-cqadm.py --setq a=1 b=2 --queue q 1
-
-Option combinations not allowed with: setq option(s)
+"""Option combinations not allowed with: setq option(s)
 """
 
     stubout   = ''
@@ -2899,8 +2951,12 @@ Option combinations not allowed with: setq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2923,10 +2979,7 @@ def test_cqadm_combine_addq_and_delq():
     args      = """--addq --delq q1 q2"""
 
     cmdout    = \
-"""
-cqadm.py --addq --delq q1 q2
-
-Option combinations not allowed with: addq, delq option(s)
+"""Option combinations not allowed with: addq, delq option(s)
 """
 
     stubout   = ''
@@ -2939,8 +2992,12 @@ Option combinations not allowed with: addq, delq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2963,10 +3020,7 @@ def test_cqadm_combine_addq_and_stopq():
     args      = """--stopq --addq q1 q2"""
 
     cmdout    = \
-"""
-cqadm.py --stopq --addq q1 q2
-
-Option combinations not allowed with: addq, stopq option(s)
+"""Option combinations not allowed with: addq, stopq option(s)
 """
 
     stubout   = ''
@@ -2979,8 +3033,12 @@ Option combinations not allowed with: addq, stopq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3003,10 +3061,7 @@ def test_cqadm_combine_addq_and_startq():
     args      = """--startq --addq q1 q2"""
 
     cmdout    = \
-"""
-cqadm.py --startq --addq q1 q2
-
-Option combinations not allowed with: addq, startq option(s)
+"""Option combinations not allowed with: addq, startq option(s)
 """
 
     stubout   = ''
@@ -3019,8 +3074,12 @@ Option combinations not allowed with: addq, startq option(s)
                        stubout # Expected stub functions output
                        ) 
 
+    testutils.save_testinfo("")
+
     results = testutils.run_cmd('cqadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testinfo()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

@@ -12,13 +12,19 @@ partadm \- partition administration tool
 .TP
 .B partadm --queue=queue1:queue2 part1 part2
 .TP
-.B partadm --diag=diag_name partition
-.TP
 .B partadm --fail part1 part2
 .TP
 .B partadm --unfail part1 part2
 .TP
+.B partadm --savestate=<full path to file>
+.TP
 .B partadm --xml
+.TP
+.B partadm --boot-stop
+.TP
+.B partadm --boot-enable
+.TP
+.B partadm --boot-status
 .TP
 .B partadm --version
 .SH "DESCRIPTION"
@@ -49,17 +55,15 @@ smaller overlapping partitions)
 .B \-\-queue
 Set the queue[s] that point to particular partitions.
 .TP
-.B \-\-diag
-Run the named diagnostic on the selected partition.  Valid diagnostics are 
-programs in /usr/lib/cobalt/diags/ which return 0 to indicate no problem was found
-on the partition being tested, and non-zero to indicate an error.
-.TP
 .B \-\-fail
 Manually fail a partition in the same way as a partition that has failed diagnostics.
 .TP
 .B \-\-unfail
 Manually clear the failed state from a partition that has failed diagnostics (or
 has been marked failed by the --fail command).
+.TP
+.B \-\-savestate
+Force the system component to write the statefile to the specified file (full path must be supplied)
 .TP
 .B \-\-xml
 This option is only available when running bgsystem (i.e. not the simulator).
@@ -69,12 +73,27 @@ managed by the running cobalt.  This file is suitable for use with the simulator
 .B \-\-dump
 Dump partition state
 .TP
-.B \-r
+.B \-r \-\-recursive
 Activate recursive mode. All child partitions of all specified
 partitions will be modified (for activate/deactivate/enable/disable/queue/deps/free)
 .TP
 .B \-\-version
 Displays client revision and Cobalt version
+.TP
+.B \-\-boot-stop
+Diable booting of any job.
+.TP
+.B \-\-boot-start
+Enable booting of any job.
+.TP
+.B \-\-boot-status
+Show whether or not booting is enabled.
+.TP
+.B \-b \-\-blockinfo
+Print the detailed state and information for all requested blocks
+.TP
+.B \-c \-\-clean_block
+Force the block to cleanup and clear all internal reservations on that resource.
 .SH "SEE ALSO"
 .BR partlist(1)
 .SH "BUGS"
