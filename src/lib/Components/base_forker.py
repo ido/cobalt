@@ -548,7 +548,7 @@ class BaseForker (Component):
         try:
             signum = getattr(signal, signame)
         except AttributeError:
-            _logger.error("%s: %s is not a valid signal name; child not signaled", child.label, signame)
+            _logger.error("%s: %s is not a valid signal name; child not signaled", child_id, signame)
             raise
 
         self.children[child_id].signal(signum)
