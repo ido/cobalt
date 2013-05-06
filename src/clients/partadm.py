@@ -26,8 +26,13 @@ OPTIONS DEFINITIONS:
 '-d', action='store_true', dest='delete', help='remove the block from the list of managed blocks'
 '--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
 '-l', action='store_true', dest='list_blocks', help='list all blocks and their status'
-'-r', '--recursive', action='store_true', dest='recursive', help='recursively add all child blocks of the specified blocks in the positional arguments'
-'--queue', action='store', type='string', dest='queue', help='set the queues associated with the target blocks to this list of queues'
+
+'-r', '--recursive', action='store_true', dest='recursive', /
+  help='recursively add all child blocks of the specified blocks in the positional arguments'
+
+'--queue', action='store', type='string', dest='queue', /
+  help='set the queues associated with the target blocks to this list of queues'
+
 '--activate', action='store_true', dest='activate', help='activate the block for scheduling'
 '--deactivate', action='store_true', dest='deactivate', help='deactivate the block for schedulign'
 '--enable', action='store_true', dest='enable', help='enable the running of jobs on the target blocks'
@@ -35,14 +40,23 @@ OPTIONS DEFINITIONS:
 '--fail', action='store_true', dest='fail', help='mark the block as though it failed diagnostics (deprecated)'
 '--unfail', action='store_true', dest='unfail', help='clear failed diagnostics on a block (deprecated)'
 '--dump', action='store_true', dest='dump', help="dump a representation of the system's block state"
-'--xml', action='store_true', dest='xml', help="dump a xml representation of the system's blocks for simulator usage"
-'--savestate', type='string', dest='savestate', help="force the system component to write it's statefile", callback=cb_path
+
+'--xml', action='store_true', dest='xml', /
+  help="dump a xml representation of the system's blocks for simulator usage"
+
+'--savestate', type='string', dest='savestate', /
+  help="force the system component to write it's statefile", callback=cb_path
+
 '--boot-stop', action='store_true', dest='boot_stop', help='disable booting of any jobs'
 '--boot-start', action='store_true', dest='boot_start', help='enable booting of any jobs'
 '--boot-status', action='store_true', dest='boot_status', help='show whether or not booting is enabled'
-'-b', '--blockinfo', action='store_true', dest='blockinfo', help='print the detailed state and information for all requested blocks.'
+
+'-b', '--blockinfo', action='store_true', dest='blockinfo', /
+  help='print the detailed state and information for all requested blocks.'
+
 '--pg_list', action='store_true', dest='pg_list', help='not implemented yet'
-'-c', '--clean_block', action='store_true', dest='clean_block', help='force the block to cleanup and clear all internal reservations on that resource'
+'-c', '--clean_block', action='store_true', dest='clean_block', /
+  help='force the block to cleanup and clear all internal reservations on that resource'
 '-i', '--list_io', action='store_true', dest='list_io', help='list information on IOBlock status'
 '--add_io_block', action='store_true', dest='add_io_block', help='add an IO Block to the list of managed IO blocks'
 '--del_io_block', action='store_true', dest='del_io_block', help='delete an IO Block to the list of managed IO blocks'

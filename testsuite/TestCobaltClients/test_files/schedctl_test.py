@@ -55,12 +55,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -108,12 +108,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -157,12 +157,12 @@ def test_schedctl_combo_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -206,12 +206,12 @@ def test_schedctl_combo_2():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -255,12 +255,12 @@ def test_schedctl_combo_3():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -304,12 +304,12 @@ def test_schedctl_combo_4():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -353,12 +353,12 @@ def test_schedctl_combo_5():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -402,12 +402,12 @@ def test_schedctl_combo_6():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -451,12 +451,12 @@ def test_schedctl_combo_7():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -494,12 +494,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -536,12 +536,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -579,12 +579,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -621,12 +621,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -663,12 +663,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -706,12 +706,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -749,12 +749,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -791,12 +791,12 @@ filename:/tmp/s
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -828,12 +828,12 @@ def test_schedctl_save_2():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('schedctl.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

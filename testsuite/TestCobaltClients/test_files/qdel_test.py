@@ -30,12 +30,12 @@ qdel.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -79,12 +79,12 @@ user:gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -116,12 +116,12 @@ def test_qdel_jobid_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -183,12 +183,12 @@ user:gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -235,12 +235,12 @@ user:gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qdel.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

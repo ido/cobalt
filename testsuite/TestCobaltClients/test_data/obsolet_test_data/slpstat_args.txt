@@ -10,11 +10,11 @@
 #       i.e -d -j | -d --job
 
             # <tc:arg_1>
-            # <tc:arg_2> <ti:NO SERVICES>
+            # <tc:arg_2> <ti:"NO SERVICES">
 arg1        # <tc:arg_3>
 
 -d          # <tc:debug_1>
--d          # <tc:debug_2> <ti:NO SERVICES>
+-d          # <tc:debug_2> <ti:"NO SERVICES">
 
 --help      # <tc:help_1> <NEW_ONLY>
 -h          # <tc:help_2> <NEW_ONLY>

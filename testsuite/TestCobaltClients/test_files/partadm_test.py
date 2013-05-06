@@ -26,12 +26,12 @@ def test_partadm_version_option():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -156,12 +156,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -286,12 +286,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -322,12 +322,12 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -356,12 +356,12 @@ def test_partadm_no_arg_2():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -395,12 +395,12 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -429,12 +429,12 @@ def test_partadm_combo_options_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -463,12 +463,12 @@ def test_partadm_combo_options_2():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -497,12 +497,12 @@ def test_partadm_combo_options_3():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -531,12 +531,12 @@ def test_partadm_combo_options_4():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -565,12 +565,12 @@ def test_partadm_combo_options_5():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -599,12 +599,12 @@ def test_partadm_combo_options_6():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -633,12 +633,12 @@ def test_partadm_combo_options_7():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -667,12 +667,12 @@ def test_partadm_combo_options_8():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -701,12 +701,12 @@ def test_partadm_combo_options_9():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -735,12 +735,12 @@ def test_partadm_combo_options_10():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -769,12 +769,12 @@ def test_partadm_combo_options_11():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -803,12 +803,12 @@ def test_partadm_combo_options_12():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -837,12 +837,12 @@ def test_partadm_combo_options_13():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -871,12 +871,12 @@ def test_partadm_combo_options_14():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -906,6 +906,21 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 ADD_PARTITION
 
+user name: gooduser
+deps:[]
+functional:False
+name:PART
+queue:default
+scheduled:False
+size:*
+tag:partition
+deps:[]
+functional:False
+name:a
+queue:default
+scheduled:False
+size:*
+tag:partition
 deps:[]
 functional:False
 name:PART
@@ -930,12 +945,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -965,6 +980,21 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 ADD_PARTITION
 
+user name: gooduser
+deps:[]
+functional:False
+name:PART
+queue:default
+scheduled:False
+size:*
+tag:partition
+deps:[]
+functional:False
+name:a
+queue:default
+scheduled:False
+size:*
+tag:partition
 deps:[]
 functional:False
 name:PART
@@ -989,12 +1019,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1020,6 +1050,28 @@ def test_partadm_add_option_3():
 """
 ADD_PARTITION
 
+user name: gooduser
+deps:[]
+functional:False
+name:PART1
+queue:default
+scheduled:False
+size:*
+tag:partition
+deps:[]
+functional:False
+name:PART2
+queue:default
+scheduled:False
+size:*
+tag:partition
+deps:[]
+functional:False
+name:PART3
+queue:default
+scheduled:False
+size:*
+tag:partition
 deps:[]
 functional:False
 name:PART1
@@ -1051,12 +1103,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1132,6 +1184,21 @@ scheduled: True
 """
 ADD_PARTITION
 
+user name: gooduser
+deps:[]
+functional:False
+name:PART1
+queue:default
+scheduled:False
+size:*
+tag:partition
+deps:[]
+functional:False
+name:PART2
+queue:default
+scheduled:False
+size:*
+tag:partition
 deps:[]
 functional:False
 name:PART1
@@ -1160,12 +1227,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1193,6 +1260,21 @@ Initiating cleanup on block PART2
 """
 ADD_PARTITION
 
+user name: gooduser
+deps:[]
+functional:False
+name:PART1
+queue:default
+scheduled:False
+size:*
+tag:partition
+deps:[]
+functional:False
+name:PART2
+queue:default
+scheduled:False
+size:*
+tag:partition
 deps:[]
 functional:False
 name:PART1
@@ -1235,12 +1317,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1270,6 +1352,11 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 DEL_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
 name:PART
 tag:partition
 name:a
@@ -1284,12 +1371,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1319,6 +1406,11 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 DEL_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
 name:PART
 tag:partition
 name:a
@@ -1333,12 +1425,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1364,6 +1456,13 @@ def test_partadm_delete_option_3():
 """
 DEL_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+name:PART3
+tag:partition
 name:PART1
 tag:partition
 name:PART2
@@ -1380,12 +1479,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1461,6 +1560,11 @@ scheduled: True
 """
 DEL_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
 name:PART1
 tag:partition
 name:PART2
@@ -1479,12 +1583,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1512,6 +1616,11 @@ Initiating cleanup on block PART2
 """
 DEL_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
 name:PART1
 tag:partition
 name:PART2
@@ -1544,12 +1653,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1579,6 +1688,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+scheduled:True
 name:PART
 tag:partition
 name:a
@@ -1593,12 +1708,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1628,6 +1743,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+scheduled:True
 name:PART
 tag:partition
 name:a
@@ -1642,12 +1763,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1673,6 +1794,14 @@ def test_partadm_enable_option_3():
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+name:PART3
+tag:partition
+scheduled:True
 name:PART1
 tag:partition
 name:PART2
@@ -1689,12 +1818,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1770,6 +1899,12 @@ scheduled: True
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+scheduled:True
 name:PART1
 tag:partition
 name:PART2
@@ -1788,12 +1923,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1821,6 +1956,12 @@ Initiating cleanup on block PART2
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+scheduled:True
 name:PART1
 tag:partition
 name:PART2
@@ -1853,12 +1994,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1888,6 +2029,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+scheduled:False
 name:PART
 tag:partition
 name:a
@@ -1902,12 +2049,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1937,6 +2084,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+scheduled:False
 name:PART
 tag:partition
 name:a
@@ -1951,12 +2104,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1982,6 +2135,14 @@ def test_partadm_disable_option_3():
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+name:PART3
+tag:partition
+scheduled:False
 name:PART1
 tag:partition
 name:PART2
@@ -1998,12 +2159,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2079,6 +2240,12 @@ scheduled: True
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+scheduled:False
 name:PART1
 tag:partition
 name:PART2
@@ -2097,12 +2264,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2130,6 +2297,12 @@ Initiating cleanup on block PART2
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+scheduled:False
 name:PART1
 tag:partition
 name:PART2
@@ -2162,12 +2335,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2197,6 +2370,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+functional:True
 name:PART
 tag:partition
 name:a
@@ -2211,12 +2390,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2246,6 +2425,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+functional:True
 name:PART
 tag:partition
 name:a
@@ -2260,12 +2445,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2291,6 +2476,14 @@ def test_partadm_activate_option_3():
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+name:PART3
+tag:partition
+functional:True
 name:PART1
 tag:partition
 name:PART2
@@ -2307,12 +2500,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2388,6 +2581,12 @@ scheduled: True
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+functional:True
 name:PART1
 tag:partition
 name:PART2
@@ -2406,12 +2605,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2439,6 +2638,12 @@ Initiating cleanup on block PART2
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+functional:True
 name:PART1
 tag:partition
 name:PART2
@@ -2471,12 +2676,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2506,6 +2711,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+functional:False
 name:PART
 tag:partition
 name:a
@@ -2520,12 +2731,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2555,6 +2766,12 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 SET_PARTITION
 
+user name: gooduser
+name:PART
+tag:partition
+name:a
+tag:partition
+functional:False
 name:PART
 tag:partition
 name:a
@@ -2569,12 +2786,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2600,6 +2817,14 @@ def test_partadm_deactivate_option_3():
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+name:PART3
+tag:partition
+functional:False
 name:PART1
 tag:partition
 name:PART2
@@ -2616,12 +2841,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2697,6 +2922,12 @@ scheduled: True
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+functional:False
 name:PART1
 tag:partition
 name:PART2
@@ -2715,12 +2946,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2748,6 +2979,12 @@ Initiating cleanup on block PART2
 """
 SET_PARTITION
 
+user name: gooduser
+name:PART1
+tag:partition
+name:PART2
+tag:partition
+functional:False
 name:PART1
 tag:partition
 name:PART2
@@ -2780,12 +3017,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2815,6 +3052,8 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 FAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
 name:PART
 tag:partition
 name:a
@@ -2829,12 +3068,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2864,6 +3103,8 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 FAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
 name:PART
 tag:partition
 name:a
@@ -2878,12 +3119,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2909,6 +3150,8 @@ def test_partadm_fail_option_3():
 """
 FAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}, {'tag': 'partition', 'name': 'PART3'}]
 name:PART1
 tag:partition
 name:PART2
@@ -2925,12 +3168,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3006,6 +3249,8 @@ scheduled: True
 """
 FAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
 name:PART1
 tag:partition
 name:PART2
@@ -3024,12 +3269,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3057,6 +3302,8 @@ Initiating cleanup on block PART2
 """
 FAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
 name:PART1
 tag:partition
 name:PART2
@@ -3089,12 +3336,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3124,6 +3371,8 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 UNFAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
 name:PART
 tag:partition
 name:a
@@ -3138,12 +3387,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3173,6 +3422,8 @@ plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
 
 UNFAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
 name:PART
 tag:partition
 name:a
@@ -3187,12 +3438,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3218,6 +3469,8 @@ def test_partadm_unfail_option_3():
 """
 UNFAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}, {'tag': 'partition', 'name': 'PART3'}]
 name:PART1
 tag:partition
 name:PART2
@@ -3234,12 +3487,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3315,6 +3568,8 @@ scheduled: True
 """
 UNFAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
 name:PART1
 tag:partition
 name:PART2
@@ -3333,12 +3588,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3366,6 +3621,8 @@ Initiating cleanup on block PART2
 """
 UNFAIL_PARTITION
 
+user name: gooduser
+part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
 name:PART1
 tag:partition
 name:PART2
@@ -3398,12 +3655,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3435,12 +3692,12 @@ def test_partadm_savestate_option_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3478,12 +3735,12 @@ plist: [{'name': '*'}]
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3549,12 +3806,12 @@ partadm.py: error: --savestate option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3676,12 +3933,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3981,12 +4238,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4023,12 +4280,12 @@ name:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4065,12 +4322,12 @@ name:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4111,12 +4368,12 @@ name:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4415,12 +4672,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4541,12 +4798,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4849,12 +5106,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4979,12 +5236,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5050,12 +5307,12 @@ partadm.py: error: --queue option requires an argument
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5095,12 +5352,12 @@ tag:queue
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5131,6 +5388,10 @@ tag:queue
 
 SET_PARTITION
 
+user name: gooduser
+name:p1
+tag:partition
+queue:kebra:bbb:myq
 name:p1
 tag:partition
 """
@@ -5143,12 +5404,12 @@ tag:partition
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5179,6 +5440,10 @@ tag:queue
 
 SET_PARTITION
 
+user name: gooduser
+name:p1
+tag:partition
+queue:kebra:bbb:myq
 name:p1
 tag:partition
 
@@ -5203,12 +5468,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5263,6 +5528,10 @@ tag:queue
 
 SET_PARTITION
 
+user name: gooduser
+name:p1
+tag:partition
+queue:kebra:bbb:myq
 name:p1
 tag:partition
 
@@ -5279,12 +5548,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5369,6 +5638,12 @@ tag:queue
 
 SET_PARTITION
 
+user name: gooduser
+name:p1
+tag:partition
+name:a
+tag:partition
+queue:kebra:bbb
 name:p1
 tag:partition
 name:a
@@ -5387,12 +5662,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5429,6 +5704,12 @@ tag:queue
 
 SET_PARTITION
 
+user name: gooduser
+name:p1
+tag:partition
+name:a
+tag:partition
+queue:kebra:bbb
 name:p1
 tag:partition
 name:a
@@ -5461,12 +5742,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5503,12 +5784,12 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5545,12 +5826,12 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5591,12 +5872,12 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5895,12 +6176,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6021,12 +6302,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6329,12 +6610,12 @@ plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_li
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6459,12 +6740,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6501,12 +6782,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6543,12 +6824,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6589,12 +6870,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6631,12 +6912,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6673,12 +6954,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6719,12 +7000,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6765,12 +7046,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6807,12 +7088,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6849,12 +7130,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6895,12 +7176,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6937,12 +7218,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6979,12 +7260,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7025,12 +7306,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7071,12 +7352,12 @@ whoami: gooduser
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7112,12 +7393,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7153,12 +7434,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7198,12 +7479,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7239,12 +7520,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7280,12 +7561,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7325,21 +7606,21 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
 
 
 # ---------------------------------------------------------------------------------
-def test_partadm_():
+def test_partadm_boot_status_option_7():
     """
-    partadm test run: 
+    partadm test run: boot_status_option_7
         Old Command Output:
           Block Booting: ENABLED
           
@@ -7370,12 +7651,12 @@ BOOTING_STATUS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('partadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

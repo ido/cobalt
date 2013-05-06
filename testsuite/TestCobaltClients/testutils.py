@@ -4,16 +4,19 @@ Generate Tests
 
 Usage: %prog [options] [argsfile1 ... argsfileN]
 
+All python args files shall follow the following naming convention: <command>_args.py.
+Test files generated will follow the following naming convention: <command>_test.py.
+If new command in not environment variable PATH or in the same directory then -n option is needed.
+If old command is not in the same directory then -o option is needed.
+
 OPTIONS DEFINITIONS:
 
-Option with no values:
+'-o','--opath',dest='opath',type='string',help='path of old commands',callback=cb_path
+'-n','--npath',dest='npath',type='string',help='path of new commands',callback=cb_path
+'-t','--tpath',dest='tpath',type='string',help='path of test argument files',callback=cb_path
 
-'-o','--opath',dest='opath',type='string',help='path of old commands'
-'-n','--npath',dest='npath',type='string',help='path of new commands'
-'-t','--tpath',dest='tpath',type='string',default='test_data',help='path of test data (default: test_data/)'
-'-s','--stubo',dest='stubo',type='string',default='stub.out',help='stub functions output file (default: stub.out)'
-
-Option with values: None
+'-s','--stubo',dest='stubo',type='string',default='stub.out', /
+  help='stub functions output file (default: stub.out)'
 
 """
 import os
@@ -25,8 +28,8 @@ from arg_parser import ArgParse
 
 NEW_ONLY_TAG    = '<NEW_ONLY>'
 CMD_OUTPUT      = 'cmd.out'
-ARGS_FILES      = '*_args.txt'
-TESTINFO_FILE   = 'testinfo.txt'
+ARGS_FILES      = '*_args.py'
+TESTHOOK_FILE   = '.testhook'
 
 # Template constants
 DS  = '<DOCSTR>'
@@ -35,8 +38,8 @@ CO  = '<CMDOUT>'
 SO  = '<STUBOUT>'
 RS  = '<RS>'
 TQ  = '<TQ>'
-TC  = '<TC_COMMENT>'
-TI  = '<TEST_INFO>'
+TC  = '<TC_NAME>'
+TH  = '<TEST_HOOK>'
 CM  = '<CMD>'
 NM  = '<NAME>'
 SF  = '<STUBFILE>'
@@ -47,7 +50,7 @@ RTQ = '"""'
 TEST_TEMPLATE = \
 """
 # ---------------------------------------------------------------------------------
-def test_<NAME>_<TC_COMMENT>():
+def test_<NAME>_<TC_NAME>():
     <TQ>
 <DOCSTR>
     <TQ>
@@ -68,12 +71,12 @@ def test_<NAME>_<TC_COMMENT>():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("<TEST_INFO>")
+    testutils.save_testhook("<TEST_HOOK>")
 
     results = testutils.run_cmd('<CMD>.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\\n%s" % result
@@ -84,52 +87,40 @@ def test_<NAME>_<TC_COMMENT>():
 cn_p = re.compile(r'(.*)'+ARGS_FILES[1:])
 getname = lambda fn: '' if cn_p.match(fn) == None else cn_p.sub(r'\1',fn)
 
-# new_only comment lambda function defintion
-ic_p = re.compile(r'(.*)#.*')
-stripcomment = lambda data: ic_p.sub(r'\1',data)
-
-# get comment lambda function definition
-cm_p = re.compile(r'.*#.*<tc:(\w*)>.*')
-getcomment = lambda data: '' if cm_p.match(data) == None else cm_p.sub(r'\1',data)
-
-# get test info
-ti_p = re.compile(r'.*#.*<ti:(.+)>.*')
-gettestinfo = lambda data: '' if ti_p.match(data) == None else ti_p.sub(r'\1',data)
-
 # indent buffer
 indent = lambda x,buf:'\n'.join([(x*' ')+line for line in buf.split('\n')])
 
-def save_testinfo(testinfo):
+def save_testhook(testhook):
     """
     save the test information string that can be use to control testing permutations
     """
-    if testinfo != '':
-        fd = open(TESTINFO_FILE,'w')
-        fd.write(testinfo)
+    if testhook != '' and testhook != None:
+        fd = open(TESTHOOK_FILE,'w')
+        fd.write(testhook)
         fd.close()
 
-def get_testinfo():
+def get_testhook():
     """
     get the saved test information 
     """
-    info = get_output(TESTINFO_FILE,False)
+    info = get_output(TESTHOOK_FILE,False)
     return info
 
-def remove_testinfo():
+def remove_testhook():
     """
     remove the test info file
     """
-    if os.path.isfile(TESTINFO_FILE):
-        os.remove(TESTINFO_FILE)
+    if os.path.isfile(TESTHOOK_FILE):
+        os.remove(TESTHOOK_FILE)
 
-def gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file,tinfo):
+def gettest(cmd,tc_name,docstr,args,retstat,cmdout,stubout,stubout_file,thook):
     """
     Get Test from template with all tags replace
     """
-    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_comment).replace(TQ,RTQ).               \
+    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).               \
         replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).            \
         replace(RS,str(retstat)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
-        replace(TI,tinfo).replace(NM,cmd.replace('-','_'))
+        replace(TH,thook).replace(NM,cmd.replace('-','_'))
 
 def get_output(filename,remove_file = True):
     """
@@ -170,7 +161,7 @@ def validate_results(results,expected_results,stubout_compare_func = None):
 
     elif exp_stubout:
         cfunc = lambda e,a: e != a
-        compare_function = cfunc if stubout_compare_func == None else stubout_compare_function
+        compare_function = cfunc if stubout_compare_func == None else stubout_compare_func
         if compare_function(exp_stubout,stubout):
             diffs   = getdiff(exp_stubout,stubout)
             result  = "*** STUB OUTPUT DOES NOT MATCH ***\n"
@@ -212,17 +203,17 @@ def get_argsfile_list(args_list,args_path):
     This function will get the files that contain the arguments to test
     """
     if args_list != None:
-        retlist = [ args_path + args + '_args.txt' for args in args_list]
+        retlist = [ args_path + args + ARGS_FILES[1:] for args in args_list]
     else:
         retlist = glob.glob(args_path+ARGS_FILES)
     return retlist
 
-def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file, tinfo):
+def gentest(fd, cmd, tc_name, args, old_results, new_results, stubout_file, thook):
     """
     This function will do validation of the generated data and compare the expected outpus
     and then generate the test for the specified arguments
     """
-    docstr  = '    %s test run: %s\n' % (cmd,tc_comment)
+    docstr  = '    %s test run: %s\n' % (cmd,tc_name)
     result  = 1
     if old_results:
         docstr += indent(8,'Old Command Output:') + '\n' + indent(10,old_results[1]) + '\n'
@@ -239,7 +230,7 @@ def gentest(fd, cmd, tc_comment, args, old_results, new_results, stubout_file, t
     retstat = new_results[0] # need the new return status for generated test
     cmdout  = new_results[1] # need the new command output for generated test
 
-    test = gettest(cmd,tc_comment,docstr,args,retstat,cmdout,stubout,stubout_file,tinfo)
+    test = gettest(cmd,tc_name,docstr,args,retstat,cmdout,stubout,stubout_file,thook)
 
     fd.write(test)
 
@@ -247,15 +238,15 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
     """
     write run the arguments are write the test data
     """
-    global global_testinfo
     argsfile_list = get_argsfile_list(args_list,args_path)
 
     # go through every client command file 
     for argsfile in argsfile_list:
-    
-        argslist = getlines(argsfile) # get the list of command line arguments 
-        path_info = os.path.split(argsfile)
-        name      = getname(path_info[1])
+        path_info   = os.path.split(argsfile)
+        name        = getname(path_info[1])
+        temp_module = path_info[1][:-3]
+        os.system('cp %s %s.py' % (argsfile,temp_module))
+        argsmod   = __import__(temp_module)
 
         old_cmd = "%s%s.py" % (opath,name)
         new_cmd = "%s%s.py" % (npath,name)
@@ -265,37 +256,43 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
         # testutils module needs to be imported by the test file
         fd.write("import testutils\n")
 
-        for args in argslist:
-            if args    == '' : continue # skip null line
-            if args[0] == '#': continue # skip comment line
-            tc_comment = getcomment(args)  # get the comment if there is one
-            tinfo      = gettestinfo(args) # get test info
-            save_testinfo(tinfo)
-            new_only   = args.find(NEW_ONLY_TAG) != -1 or old_cmd == new_cmd # only new command applies not old
-            args       = stripcomment(args).split('|') # strip out comments
-            #
-            # if there are two args then old command is different arg for same functionality
-            if len(args) == 2:
-                old_args = args[0].strip()
-                new_args = args[1].strip()
-            else:
-                old_args = args[0].strip()
-                new_args = args[0].strip()
-            # flag new command only
-            if new_only:
-                oresults = None
-            else:
-                oresults = run_cmd(old_cmd,old_args,stubout_file)
+        for args_info in argsmod.test_argslist:
+            tc_name  = args_info['tc_name']  # get the comment if there is one
+            thook    = args_info['testhook'] if 'testhook' in args_info else '' # get test hook
+            new_only = (args_info['new_only'] if 'new_only' in args_info else False) or (old_cmd == new_cmd)
+            new_args = args_info['args']
+            old_args = args_info['old_args'] if 'old_args' in args_info else new_args
+
+            save_testhook(thook)
+            oresults = None if new_only else run_cmd(old_cmd,old_args,stubout_file)
             nresults = run_cmd(new_cmd,new_args,stubout_file)
-            remove_testinfo()
-            gentest(fd, name, tc_comment, new_args, oresults, nresults, stubout_file, tinfo)
+            remove_testhook()
+
+            gentest(fd, name, tc_name, new_args, oresults, nresults, stubout_file, thook)
+
         fd.close()
+        os.system('rm %s.*' % temp_module)
+
+def cb_path(option,opt_str,value,parser,*args):
+    """
+    This callback will validate the path and store it.
+    """
+    # validate the path
+    if not os.path.isdir(value):
+        print(os.getcwd())
+        print("directory %s does not exist" % value)
+        sys.exit(1)
+    setattr(parser.values,option.dest,value) # set the option
 
 def main():
     """
     test_clients main function.
     """
-    parser = ArgParse(__doc__,None)
+
+    # list of callback with its arguments
+    callbacks = [(cb_path, ())]
+
+    parser = ArgParse(__doc__,callbacks)
     parser.parse_it() # parse the command line
 
     args_list  = parser.args if not parser.no_args() else None
@@ -303,7 +300,7 @@ def main():
     # go and generate the test
     opath = parser.options.opath + '/' if parser.options.opath else ''
     npath = parser.options.npath + '/' if parser.options.npath else ''
-    tpath = parser.options.tpath + '/'
+    tpath = parser.options.tpath + '/' if parser.options.tpath else ''
     gentests(opath,npath,tpath,args_list,parser.options.stubo)
 
 if __name__ == '__main__':

@@ -30,12 +30,12 @@ qhold.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -77,6 +77,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 is_active:*
 jobid:1
 tag:job
@@ -96,12 +97,12 @@ user_hold:True
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -133,12 +134,12 @@ def test_qhold_jobid_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -194,6 +195,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 is_active:*
 jobid:1
 tag:job
@@ -228,12 +230,12 @@ user_hold:True
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -271,6 +273,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 is_active:*
 jobid:1
 tag:job
@@ -290,12 +293,12 @@ user_hold:True
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -331,12 +334,12 @@ qhold.py: error: no such option: --dependencies
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qhold.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

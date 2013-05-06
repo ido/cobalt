@@ -27,12 +27,12 @@ def test_qstat_version_option():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -78,12 +78,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -170,12 +170,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -422,12 +422,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -671,12 +671,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -920,12 +920,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1545,12 +1545,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2170,12 +2170,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2795,12 +2795,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3420,12 +3420,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4045,12 +4045,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4670,12 +4670,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4759,12 +4759,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4928,12 +4928,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5025,12 +5025,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5330,12 +5330,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5635,12 +5635,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -5940,12 +5940,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6245,12 +6245,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6550,12 +6550,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -6733,12 +6733,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7028,12 +7028,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7323,12 +7323,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7402,12 +7402,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7481,12 +7481,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7560,12 +7560,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7639,12 +7639,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7718,12 +7718,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -7993,12 +7993,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -8268,12 +8268,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -8543,12 +8543,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -8818,12 +8818,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -8897,12 +8897,12 @@ users:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -8986,12 +8986,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qstat.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

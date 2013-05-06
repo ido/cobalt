@@ -4,10 +4,17 @@ The purpose of this module is to define  ArgParse for the purpose of
 parsing command line options and positional arguments. 
 """
 import optparse
+import re
+import sys
 
 # function will return true if specified tag is found in the given line it 
 # will ignore case and strip beginning and ending blanks
 tag_found = lambda tag,line:line.lower().strip()[0:len(tag)] == tag.lower()
+
+# funcrtion to find line separator /
+linesep = lambda line: True if line.rstrip()[-1:] == '/' else False
+
+NO_CB = (None,None)
 
 class ArgParse(object):
     """
@@ -50,11 +57,16 @@ class ArgParse(object):
         the option_def buffer
         """
         lines = option_def.split('\n')
-        no_cbs = (None,None) 
 
-        get_usage = False
+        get_usage          = False
+        continue_next_line = False
             
         for line in lines:
+            # line initialization
+            if not continue_next_line:
+                callback = NO_CB
+                option_line    = ''
+
             # get usage string
             if not get_usage and tag_found('usage:',line):
                 get_usage = True
@@ -73,25 +85,28 @@ class ArgParse(object):
                     self.usage += '\n' + line # keep getting usage until tag encountered
             
             # Any line with '- should be an option line
-            elif line.find("'-") != -1:
+            elif line.find("'-") != -1 or continue_next_line:
                 # check if there is callback
                 if line.find('callback') != -1:
-                    callback_found = False
                     # callback should not be None, but check anyway
                     if callbacks != None:
                         for cb in callbacks:
                             cb_func = cb[0] # callback function
                             if line.find(cb_func.func_name) != -1:
-                                self.opt_config.append( (line,cb) )
-                                callback_found = True
+                                callback = cb
                                 break
-                    if not callback_found:
-                        # probably a problem, but keep going. Store option without callback.
-                        self.opt_config.append( (line, no_cbs) )
+                    if callback == NO_CB:
+                        print('Callback specified but no function provided')
+                        sys.exit(1)
 
-                # no callback
+                continue_next_line  = linesep(line)
+                # if we are done collecting option info then append the option 
+                if not continue_next_line:
+                    option_line += line
+                    self.opt_config.append( (option_line, callback) )
                 else:
-                    self.opt_config.append( (line, no_cbs) )
+                    # remove the line separator
+                    option_line += line.rstrip()[:-1]
 
     def __init__(self, option_def = None, callbacks = None):
         """

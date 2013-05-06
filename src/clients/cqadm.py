@@ -31,8 +31,12 @@ Options with no values but with queue arguments:
 Option with values and queue arguments:
 
 '--policy',dest='qdata',type='string',help='set policy for queues in args',callback=cb_setqueues
-'--setq',dest='qdata',type='string',help='props for queues in args ("prop1=val1 prop2=val2 ... propN=valN")',callback=cb_setqueues
-'--unsetq',dest='qdata',type='string',help='unset props for queues in args ("prop1 prop2 ... prop3")',callback=cb_setqueues
+
+'--setq',dest='qdata',type='string',help='props for queues in args ("prop1=val1 prop2=val2 ... propN=valN")', /
+  callback=cb_setqueues
+
+'--unsetq',dest='qdata',type='string',help='unset props for queues in args ("prop1 prop2 ... prop3")', /
+  callback=cb_setqueues
 
 Options with no values but with jobid arguments:
 
@@ -45,7 +49,9 @@ Option with values and jobid arguments:
 
 '--queue',dest='queue',type='string',help='modify queue name for jobids in args'
 '--run',dest='run',type='string',help='modify run location for jobids in args'
-'--time',dest='walltime',type='string',help='modify walltime for jobids in args (minutes or HH:MM:SS)',callback=cb_time
+
+'--time',dest='walltime',type='string',help='modify walltime for jobids in args (minutes or HH:MM:SS)', /
+  callback=cb_time
 
 """
 import logging
@@ -59,14 +65,46 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
-def validate_args(parser,spec,opt_count):
+def check_option_conflicts(opt_count, parser):
+    """
+    check mutually exclusive options
+    """
+    errmsg = '' # init error msessage to empty string
+    # Check mutually exclusive options
+    if opt_count > 1:
+        if parser.options.setjobid  != None: 
+            errmsg += ' setjobid'
+        if parser.options.savestate != None: 
+            errmsg += ' savestate'
+        if parser.options.run       != None: 
+            errmsg += ' run'
+        if parser.options.addq      != None: 
+            errmsg += ' addq'
+        if parser.options.getq      != None: 
+            errmsg += ' getq'
+        if parser.options.delq      != None: 
+            errmsg += ' delq'
+        if parser.options.qdata     != None: 
+            errmsg += ' ' + parser.options.setq_opt # set queue options
+        if parser.options.preempt   != None: 
+            errmsg += ' preempt'
+        if parser.options.kill      != None: 
+            errmsg += ' kill'
+
+    if errmsg != '':
+        errmsg = 'Option combinations not allowed with: %s option(s)' % errmsg[1:].replace(' ', ', ')
+        client_utils.logger.error(errmsg)
+        sys.exit(1)
+
+
+def validate_args(parser, spec, opt_count):
     """
     Validate qalter arguments
     """
-    opts_wo_args = ['debug','getq','savestate','setjobid'] # no argument options
+    opts_wo_args = ['debug', 'getq', 'savestate', 'setjobid'] # no argument options
 
     # handle release or hold options
-    if hasattr(parser.options,'admin_hold'):
+    if hasattr(parser.options, 'admin_hold'):
         opt_count += 1
         spec['admin_hold'] = parser.options.admin_hold
     
@@ -80,23 +118,7 @@ def validate_args(parser,spec,opt_count):
         client_utils.logger.error("At least one option must be specified")
         sys.exit(1)
 
-    errmsg = '' # init error msessage to empty string
-    # Check mutually exclusive options
-    if opt_count > 1:
-        if parser.options.setjobid  != None: errmsg += ' setjobid'
-        if parser.options.savestate != None: errmsg += ' savestate'
-        if parser.options.run       != None: errmsg += ' run'
-        if parser.options.addq      != None: errmsg += ' addq'
-        if parser.options.getq      != None: errmsg += ' getq'
-        if parser.options.delq      != None: errmsg += ' delq'
-        if parser.options.qdata     != None: errmsg += ' ' + parser.options.setq_opt # set queue options
-        if parser.options.preempt   != None: errmsg += ' preempt'
-        if parser.options.kill      != None: errmsg += ' kill'
-
-    if errmsg != '':
-        errmsg = 'Option combinations not allowed with: %s option(s)' % errmsg[1:].replace(' ',', ')
-        client_utils.logger.error(errmsg)
-        sys.exit(1)
+    check_option_conflicts(opt_count, parser)
 
     if parser.options.addq   != None or \
        parser.options.delq   != None or \
@@ -116,25 +138,81 @@ def getq(info):
     get queue
     """
     response = client_utils.get_queues(info)
-    for q in response:
-        if q['maxtime'] is not None:
-            q['maxtime'] = "%02d:%02d:00" % (divmod(int(q.get('maxtime')), 60))
-        if q['mintime'] is not None:
-            q['mintime'] = "%02d:%02d:00" % (divmod(int(q.get('mintime')), 60))
+    for que in response:
+        if que['maxtime'] is not None:
+            que['maxtime'] = "%02d:%02d:00" % (divmod(int(que.get('maxtime')), 60))
+        if que['mintime'] is not None:
+            que['mintime'] = "%02d:%02d:00" % (divmod(int(que.get('mintime')), 60))
     header = [('Queue', 'Users', 'MinTime', 'MaxTime', 'MaxRunning',
                'MaxQueued', 'MaxUserNodes', 'MaxNodeHours', 'TotalNodes',
                'AdminEmail', 'State', 'Cron', 'Policy', 'Priority')]
-    datatoprint = [(q['name'], q['users'],
-                    q['mintime'], q['maxtime'],
-                    q['maxrunning'], q['maxqueued'],
-                    q['maxusernodes'], q['maxnodehours'], 
-                    q['totalnodes'],
-                    q['adminemail'], q['state'],
-                    q['cron'], q['policy'], q['priority'])
-                   for q in response]
+    datatoprint = [(que['name'], que['users'],
+                    que['mintime'], que['maxtime'],
+                    que['maxrunning'], que['maxqueued'],
+                    que['maxusernodes'], que['maxnodehours'], 
+                    que['totalnodes'],
+                    que['adminemail'], que['state'],
+                    que['cron'], que['policy'], que['priority'])
+                   for que in response]
     datatoprint.sort()
     client_utils.print_tabular(header + datatoprint)
     return response
+
+def setjobs(jobs, parser, spec, user):
+    """
+    set jobs 
+    """
+    if hasattr(parser.options,'admin_hold'):
+        for job in jobs:
+            job.update({'admin_hold':not parser.options.admin_hold})
+    return client_utils.set_jobs(jobs, spec, user)
+
+def process_cqadm_options(jobs, parser, spec, user):
+    """
+    This function will process any command argument and options passed to cqadm
+    """
+
+    force = parser.options.force # force flag. 
+
+    info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*', 'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
+             'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*', 'maxnodehours':'*', 'adminemail':'*', 
+             'totalnodes':'*', 'cron':'*', 'policy':'*', 'priority':'*'}]
+
+    response = []
+    if parser.options.setjobid != None:
+        response = client_utils.set_jobid(parser.options.setjobid, user)
+
+    elif parser.options.savestate != None:
+        response = client_utils.save(parser.options.savestate)
+
+    elif parser.options.kill != None:
+        response = client_utils.del_jobs(jobs, force, user)
+
+    elif parser.options.run != None:
+        response = client_utils.run_jobs(jobs, parser.options.run, user)
+
+    elif parser.options.addq != None:
+        response = client_utils.add_queues(jobs, parser, user, info)
+
+    elif parser.options.getq != None:
+        response = getq(info)
+
+    elif parser.options.delq != None:
+        response = client_utils.del_queues(jobs, force, user)
+
+    elif parser.options.qdata != None:
+        response = client_utils.set_queues(jobs, parser.options.qdata, user)
+
+    elif parser.options.preempt != None:
+        response = client_utils.preempt_jobs(jobs, user, force)
+
+    else:
+        response = setjobs(jobs, parser, spec, user)
+
+    if not response:
+        client_utils.logger.error("Failed to match any jobs or queues")
+    else:
+        client_utils.logger.debug(response)
 
 def main():
     """
@@ -165,63 +243,21 @@ def main():
         ( cb_hold         , () ) ]
 
     # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
 
-    parser = ArgParse(opt_def,callbacks)
+    parser = ArgParse(opt_def, callbacks)
 
     user = client_utils.getuid()
 
     # Set required default values: None
 
     parser.parse_it() # parse the command line
-    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
-    jobs = validate_args(parser,spec,opt_count)
+    jobs = validate_args(parser, spec, opt_count)
 
-    force = parser.options.force # force flag. 
-
-    info = [{'tag':'queue', 'name':'*', 'state':'*', 'users':'*', 'maxtime':'*', 'mintime':'*', 'maxuserjobs':'*',
-             'maxusernodes':'*', 'maxqueued':'*', 'maxrunning':'*', 'maxnodehours':'*', 'adminemail':'*', 'totalnodes':'*',
-             'cron':'*', 'policy':'*', 'priority':'*'}]
-
-    response = []
-    if parser.options.setjobid != None:
-        response = client_utils.set_jobid(parser.options.setjobid,user)
-
-    elif parser.options.savestate != None:
-        response = client_utils.save(parser.options.savestate)
-
-    elif parser.options.kill != None:
-        response = client_utils.del_jobs(jobs, force, user)
-
-    elif parser.options.run != None:
-        response = client_utils.run_jobs(jobs,parser.options.run,user)
-
-    elif parser.options.addq != None:
-        response = client_utils.add_queues(jobs,parser,user,info)
-
-    elif parser.options.getq != None:
-        response = getq(info)
-
-    elif parser.options.delq != None:
-        response = client_utils.del_queues(jobs,force,user)
-
-    elif parser.options.qdata != None:
-        response = client_utils.set_queues(jobs, parser.options.qdata, user)
-
-    elif parser.options.preempt != None:
-        response = client_utils.preempt_jobs(jobs,user,force)
-
-    else:
-        if hasattr(parser.options,'admin_hold'):
-            [job.update({'admin_hold':not parser.options.admin_hold}) for job in jobs]
-        response = client_utils.set_jobs(jobs,spec,user)
-
-    if not response:
-        client_utils.logger.error("Failed to match any jobs or queues")
-    else:
-        client_utils.logger.debug(response)
+    process_cqadm_options(jobs, parser, spec, user)
 
 if __name__ == '__main__':
     try:
@@ -229,5 +265,5 @@ if __name__ == '__main__':
     except SystemExit:
         raise
     except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
         raise

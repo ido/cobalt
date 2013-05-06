@@ -103,7 +103,8 @@ def main():
     if sys_type == 'bgq':
         header = [['Name', 'Queue', 'State', 'Backfill', 'node_geometry']]
         #build output list, adding
-        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
+        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts 
+                  if part['functional'] and part['scheduled']]
         #Hack to make the display cleaner.
         header[0][4] = 'Geometry'
         for o in output:
@@ -112,7 +113,8 @@ def main():
     else:
         header = [['Name', 'Queue', 'State', 'Backfill']]
         #build output list, adding
-        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts if part['functional'] and part['scheduled']]
+        output = [[part.get(x) for x in [y.lower() for y in header[0]]] for part in parts 
+                  if part['functional'] and part['scheduled']]
     client_utils.printTabular(header + output)
 
 if __name__ == '__main__':

@@ -29,12 +29,12 @@ No Jobid(s) given
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -84,6 +84,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -141,12 +142,12 @@ walltime:5
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -191,6 +192,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -248,12 +250,12 @@ walltime:5
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -285,12 +287,12 @@ def test_qalter_time_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -358,6 +360,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -411,6 +414,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -464,6 +468,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -521,12 +526,12 @@ walltime:20.0
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -646,6 +651,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -699,6 +705,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -752,6 +759,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -805,6 +813,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -858,6 +867,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -911,6 +921,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -964,6 +975,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1021,12 +1033,12 @@ walltime:55.0
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1200,6 +1212,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1253,6 +1266,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1306,6 +1320,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1359,6 +1374,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1412,6 +1428,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1465,6 +1482,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1518,6 +1536,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1571,6 +1590,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1624,6 +1644,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1681,12 +1702,12 @@ walltime:30
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -1765,6 +1786,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1818,6 +1840,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1871,6 +1894,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -1928,12 +1952,12 @@ walltime:0
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2001,6 +2025,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2054,6 +2079,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2107,6 +2133,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2164,12 +2191,12 @@ walltime:15.0
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2248,6 +2275,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2301,6 +2329,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2354,6 +2383,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2411,12 +2441,12 @@ walltime:0
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2484,6 +2514,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2537,6 +2568,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2590,6 +2622,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2647,12 +2680,12 @@ walltime:15.0
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2695,12 +2728,12 @@ qalter.py: error: no such option: -m
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2755,6 +2788,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2808,6 +2842,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -2865,12 +2900,12 @@ walltime:10
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2908,12 +2943,12 @@ script
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2951,12 +2986,12 @@ script
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -2994,12 +3029,12 @@ script
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3037,12 +3072,12 @@ script
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3077,12 +3112,12 @@ script
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3173,6 +3208,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3226,6 +3262,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3279,6 +3316,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3332,6 +3370,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3385,6 +3424,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3442,12 +3482,12 @@ walltime:25
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3479,12 +3519,12 @@ def test_qalter_user_2():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3557,6 +3597,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3611,6 +3652,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3665,6 +3707,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -3723,12 +3766,12 @@ walltime:15
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3768,12 +3811,12 @@ def test_qalter_geometry_1():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3813,12 +3856,12 @@ def test_qalter_geometry_2():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3892,12 +3935,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -3986,12 +4029,12 @@ walltime:*
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4064,6 +4107,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4117,6 +4161,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4170,6 +4215,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4223,6 +4269,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4280,12 +4327,12 @@ walltime:20
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4364,6 +4411,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4419,6 +4467,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4474,6 +4523,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4533,12 +4583,12 @@ walltime:15
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -4617,6 +4667,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4672,6 +4723,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4727,6 +4779,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -4786,12 +4839,12 @@ walltime:15
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qalter.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
