@@ -218,10 +218,6 @@ class BGSystem (BGBaseSystem):
             self.io_autoreboot_enabled = state['io_autoreboot_enabled']
         else:
             self.io_autoreboot_enabled = False
-        if state.has_key('managed_io_blocks'):
-            self._managed_io_blocks = state['managed_io_blocks']
-        else:
-            self._managed_io_blocks = set([])
         self.process_groups = BGProcessGroupDict()
         self.process_groups.item_cls = BGProcessGroup
         if state.has_key("next_pg_id"):
@@ -258,6 +254,11 @@ class BGSystem (BGBaseSystem):
                     self.logger.info("Block %s is no longer defined" % bname)
 
         self.update_relatives()
+
+        if state.has_key('managed_io_blocks'):
+            self._managed_io_blocks = state['managed_io_blocks']
+        else:
+            self._managed_io_blocks = set([])
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
         self.lock = threading.Lock()
@@ -1706,8 +1707,6 @@ class BGSystem (BGBaseSystem):
                     if io_block.getName() not in missing_io_blocks:
                         new_io_blocks.append(io_block)
                     missing_io_blocks.discard(io_block.getName())
-                    if io_block.getName() in self._managed_io_blocks:
-                        self._managed_io_blocks.discard(io_block.getName())
 
                 for io_block in new_io_blocks[:8]:
                     #see below for why this is throtled.
@@ -1721,6 +1720,8 @@ class BGSystem (BGBaseSystem):
                 for io_block_name in missing_io_blocks:
                     self.logger.info("missing block removed: %s", io_block_name)
                     del self._io_blocks[io_block_name]
+                    if io_block_name in self._managed_io_blocks:
+                        self._managed_io_blocks.discard(io_block_name)
 
 
                 # throttle the adding of new partitions so updating of

@@ -100,7 +100,6 @@ def validate_args(parser):
         for mutex_option_list in mutually_exclusive_option_lists:
             optc  = 0
             for mutex_option in mutex_option_list:
-                print type(mutex_option)
                 if getattr(parser.options, mutex_option) != None:
                     errmsg.append(mutex_option)
                     optc += 1
@@ -255,6 +254,9 @@ def main():
     elif opts.add_io_block:
         args = ([{'name':partname} for partname in parts])
         parts = system.add_io_blocks(args, whoami)
+    elif opts.del_io_block:
+        args = ([{'name':partname} for partname in parts])
+        parts = system.del_io_blocks(args, whoami)
     elif opts.delete:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
         parts = client_utils.component_call(system.del_partitions, args)

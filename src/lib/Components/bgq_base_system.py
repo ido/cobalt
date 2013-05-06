@@ -816,29 +816,45 @@ class BGBaseSystem (Component):
         return [ p.name for p in parts ]
     verify_locations = exposed(verify_locations)
 
-    def del_blocks (self, specs, user_name=None):
-        """Remove blocks from the list of managed blocks
 
-        """
-        self.logger.info("%s called del_blocks(%r)", user_name, specs)
-
+    def del_from_managed_blocks(self, specs, block_dict, managed_list):
+        '''Remove blocks from a managed list of blocks. Works for IO and CN blocks'''
         self._blocks_lock.acquire()
         try:
             blocks = [
-                block for block in self._blocks.q_get(specs)
-                if block.name in self._managed_blocks
+                block for block in block_dict.q_get(specs)
+                if block.name in managed_list
             ]
         except:
             blocks = []
             self.logger.error("error in del_blocks", exc_info=True)
 
-        self._managed_blocks -= set( [block.name for block in blocks] )
+        managed_list -= set( [block.name for block in blocks] )
         self._blocks_lock.release()
 
         self.update_relatives()
         return blocks
-    del_blocks = exposed(query(del_blocks))
+
+    @query
+    @exposed
+    def del_blocks (self, specs, user_name=None):
+        """Remove blocks from the list of managed blocks
+
+        """
+        self.logger.info("%s called del_blocks(%r)", user_name, specs)
+        return self.del_from_managed_blocks(specs, self._blocks, self._managed_blocks)
+
     del_partitions = exposed(query(del_blocks))
+
+    @query
+    @exposed
+    def del_io_blocks (self, specs, user_name=None):
+        """Remove blocks from the list of managed IO blocks
+
+        """
+        self.logger.info("%s called del_io_blocks(%r)", user_name, specs)
+        return self.del_from_managed_blocks(specs, self._io_blocks, self._managed_io_blocks)
+
 
     def set_blocks (self, specs, updates, user_name=None):
         """Update random attributes on matching blocks
