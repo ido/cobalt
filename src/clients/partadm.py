@@ -52,11 +52,11 @@ OPTIONS DEFINITIONS:
 '--unset_io_autoboot', action='store_true', dest='unset_io_autoboot', help='stop automatically rebooting an IO block'
 '--io_autoboot_start', action='store_true', dest='autoboot_start', help='enable IO Block autobooting'
 '--io_autoboot_stop', action='store_true', dest='autoboot_stop', help='disable IO Block autobooting'
+'--io_autoreboot_status', action='store_true', dest='autoboot_status', help='get status of IO Block autobooting'
 
 """
 import logging
 import sys
-import xmlrpclib
 
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug, cb_path
@@ -73,8 +73,8 @@ def validate_args(parser):
     spec     = {} 
     opts     = {} 
     opt2spec = {}
-    
-    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+
+    opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     if opt_count == 0:
         errmsg = 'Must supply one of -a or -d or -l or -start or -stop or --queue or -b.\n'
@@ -82,7 +82,8 @@ def validate_args(parser):
         client_utils.logger.error(errmsg)
         sys.exit(1)
 
-    opts_wo_args = ['list_blocks','xml','dump','savestate','boot_stop','boot_start','boot_status','list_io']
+    opts_wo_args = ['list_blocks', 'xml', 'dump', 'savestate', 'boot_stop', 'boot_start', 'boot_status', 'list_io',
+            'autoboot_start', 'autoboot_stop', 'autoboot_status']
 
     # Make sure jobid or queue is supplied for the appropriate commands
     if parser.no_args() and not [opt for opt in spec if opt in opts_wo_args]:
@@ -90,84 +91,23 @@ def validate_args(parser):
         sys.exit(1)
 
     optc = 0 # init option count
-    errmsg = '' # init error msessage to empty string
+    errmsg = [] # init error msessage to empty string
     # Check mutually exclusive options
+    mutually_exclusive_option_lists = [['add', 'delete', 'enable', 'disable', 'activate', 'deactivate', 'fail', 'unfail', 'xml',
+        'savestate', 'list_blocks', 'queue', 'dump', 'boot_stop', 'boot_start', 'boot_status'],
+        ['pg_list', 'blockinfo','clean_block', 'list_blocks']]
     if opt_count > 1:
-        if parser.options.add         != None: 
-            errmsg += ' add'
-            optc += 1
-        if parser.options.delete      != None: 
-            errmsg += ' delete'
-            optc += 1
-        if parser.options.enable      != None: 
-            errmsg += ' enable'
-            optc += 1
-        if parser.options.disable     != None: 
-            errmsg += ' disable'
-            optc += 1
-        if parser.options.activate    != None: 
-            errmsg += ' activate'
-            optc += 1
-        if parser.options.deactivate  != None: 
-            errmsg += ' deactivate'
-            optc += 1
-        if parser.options.fail        != None: 
-            errmsg += ' fail'
-            optc += 1
-        if parser.options.unfail      != None: 
-            errmsg += ' unfail'
-            optc += 1
-        if parser.options.xml         != None: 
-            errmsg += ' xml'
-            optc += 1
-        if parser.options.savestate   != None: 
-            errmsg += ' savestate'
-            optc += 1
-        if parser.options.list_blocks != None: 
-            errmsg += ' list_blocks'
-            optc += 1
-        if parser.options.queue       != None: 
-            errmsg += ' queue'
-            optc += 1
-        if parser.options.dump        != None: 
-            errmsg += ' dump'
-            optc += 1
-        if parser.options.boot_stop   != None: 
-            errmsg += ' boot_stop'
-            optc += 1
-        if parser.options.boot_start  != None: 
-            errmsg += ' boot_start'
-            optc += 1
-        if parser.options.boot_status != None: 
-            errmsg += ' boot_status'
-            optc += 1
-
-    if optc > 1:
-        errmsg = 'Option combinations not allowed with: %s option(s)' % errmsg[1:].replace(' ',', ')
-        client_utils.logger.error(errmsg)
-        sys.exit(1)
-
-    optc = 0 # init option count
-    errmsg = '' # init error msessage to empty string
-    # Check more mutually exclusive options
-    if opt_count > 1:
-        if parser.options.pg_list     != None: 
-            errmsg += ' pg_list'
-            optc += 1
-        if parser.options.blockinfo   != None: 
-            errmsg += ' blockinfo'
-            optc += 1
-        if parser.options.clean_block != None: 
-            errmsg += ' clean_block'
-            optc += 1
-        if parser.options.list_blocks != None: 
-            errmsg += ' list_blocks'
-            optc += 1
-
-    if optc > 1:
-        errmsg = 'Option combinations not allowed with: %s option(s)' % errmsg[1:].replace(' ',', ')
-        client_utils.logger.error(errmsg)
-        sys.exit(1)
+        for mutex_option_list in mutually_exclusive_option_lists:
+            optc  = 0
+            for mutex_option in mutex_option_list:
+                print type(mutex_option)
+                if getattr(parser.options, mutex_option) != None:
+                    errmsg.append(mutex_option)
+                    optc += 1
+            if optc > 1:
+                errmsg = 'Option combinations not allowed with: %s option(s)' % ", ".join(errmsg[1:])
+                client_utils.logger.error(errmsg)
+                sys.exit(1)
 
 def print_block_bgq(block_dicts):
     """Formatted printing of a list of blocks.  This expects a list of 
@@ -182,7 +122,7 @@ def print_block_bgq(block_dicts):
         header_list.append('Name')
         value_list.append(block['name'])
 
-        for key,value in block.iteritems():
+        for key, value in block.iteritems():
 
             if key in ['passthrough_node_card_list', 'node_card_list','node_list']:
                 if block['size'] >= 512 and key == 'node_card_list':
@@ -195,7 +135,7 @@ def print_block_bgq(block_dicts):
                 header_list.append(key)
                 value.sort()
                 value_list.append(' '.join([v['id'] for v in value]))
-            elif key in ['midplane_list','parents', 'children', 
+            elif key in ['midplane_list', 'parents', 'children', 
                     'passthrough_blocks', 'wiring_conflict_list', 'io_drawer_list', 'io_node_list']:
                 header_list.append(key)
                 value.sort()
@@ -206,12 +146,14 @@ def print_block_bgq(block_dicts):
                 header_list.append(key)
                 value_list.append(value)
 
-        client_utils.print_vertical([header_list,value_list])
+        client_utils.print_vertical([header_list, value_list])
     return
 
 def print_pg_info(pg_list):
+    '''Print out process group information.
+
+    '''
     raise NotImplementedError("Coming Soon!")
-    return
 
 
 def print_io_block(io_block_dicts):
@@ -219,7 +161,7 @@ def print_io_block(io_block_dicts):
     for block in io_block_dicts:
         header_list = block.keys()
         value_list = block.values()
-        Cobalt.Util.print_vertical([header_list, value_list])
+        client_utils.print_vertical([header_list, value_list])
 
 
 def print_block_bgp(block_dicts):
@@ -245,7 +187,7 @@ def print_block_bgp(block_dicts):
                 header_list.append(key)
                 value_list.append(value)
 
-        client_utils.print_vertical([header_list,value_list])
+        client_utils.print_vertical([header_list, value_list])
     return
 
 def main():
@@ -276,10 +218,10 @@ def main():
         [ cb_path         , (options, use_cwd) ] ]
 
     # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
 
-    parser = ArgParse(opt_def,callbacks)
+    parser = ArgParse(opt_def, callbacks)
 
     # Set required default values: None
 
@@ -290,6 +232,8 @@ def main():
     whoami = client_utils.getuid()
 
     validate_args(parser)
+    user = client_utils.getuid()
+    parts = []
 
     if parser.options.recursive:
         partdata = client_utils.get_partitions([{'tag':'partition', 'name':name, 'children_list':'*'} for name in args])
@@ -350,12 +294,12 @@ def main():
     elif opts.queue:
         existing_queues = [q.get('name') for q in client_utils.get_queues([{'tag':'queue', 'name':'*'}])]
         error_messages = []
-        for q in opts.queue.split(':'):
-            if not q in existing_queues:
-                error_messages.append('\'' + q + '\' is not an existing queue')
+        for queue in opts.queue.split(':'):
+            if not queue in existing_queues:
+                error_messages.append('\'' + queue + '\' is not an existing queue')
         if error_messages:
-            for e in error_messages:
-                client_utils.logger.error(e)
+            for err in error_messages:
+                client_utils.logger.error(err)
             sys.exit(1)
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'queue':opts.queue}, whoami)
@@ -389,28 +333,39 @@ def main():
             client_utils.logger.info("Block Booting: SUSPENDED.")
         sys.exit(0)
     elif opts.boot_io_block:
-        user = client_utils.getuid()
         tag = 'partadm'
         system.initiate_io_boot(parts, user, tag)
         client_utils.logger.info('IO Boot initiated on %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.free_io_block:
-        user = client_utils.getuid()
         system.initiate_io_free(parts, False, user)
         client_utils.logger.info('IO Free initiated on %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.set_io_autoboot:
-        user = client_utils.getuid()
-        activated = system.set_autoreboot(parts, user)
+        system.set_autoreboot(parts, user)
         client_utils.logger.info('Autoreboot flag set for IO Blocks: %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.set_io_autoboot:
-        user = client_utils.getuid()
-        activated = system.unset_autoreboot(parts, user)
+        system.unset_autoreboot(parts, user)
         client_utils.logger.info('Autoreboot flag unset for IO Blocks: %s', " ".join(parts))
+        sys.exit(0)
+
+    elif opts.autoboot_start:
+        system.enable_io_autoreboot()
+        client_utils.logger.warning('IO Block autoreboot enabled.')
+        sys.exit(0)
+
+    elif opts.autoboot_stop:
+        system.disable_io_autoreboot()
+        client_utils.logger.warning('IO Block autoreboot disabled.')
+        sys.exit(0)
+
+    elif opts.autoboot_status:
+        autoreboot_status = "ENABLED" if system.get_io_autoreboot_status() else "DISABLED"
+        client_utils.logger.warning('IO Block autoreboot: %s', autoreboot_status)
         sys.exit(0)
 
     if opts.pg_list:
@@ -445,8 +400,8 @@ def main():
         if sys_type == 'bgp':
             client_utils.logger.info("Force clenaing not available for BG/P systems")
             sys.exit(0)
-        sched_enabled = client_utils.sched_status()
-        boot_disabled = system.booting_status()
+        client_utils.sched_status()
+        system.booting_status()
         for part in parts:
             system.set_cleaning(part, None, whoami)
             client_utils.logger.info("Initiating cleanup on block %s" % part)
@@ -455,43 +410,46 @@ def main():
     if opts.list_blocks:
         # need to cascade up busy and non-functional flags
         if sys_type == 'bgq':
-            query = [{'queue':"*",'partitions':"*", 'active':True, 'block_passthrough':'*'}]
-            reservations = client_utils.get_reservations(query,False)
+            query = [{'queue':"*", 'partitions':"*", 'active':True, 'block_passthrough':'*'}]
+            reservations = client_utils.get_reservations(query, False)
         elif sys_type == 'bgp':
-            query = [{'queue':"*",'partitions':"*", 'active':True}]
-            reservations = client_utils.get_reservations(query,False)
+            query = [{'queue':"*", 'partitions':"*", 'active':True}]
+            reservations = client_utils.get_reservations(query, False)
         if not reservations:
             client_utils.logger.error("No reservations data available")
 
         expanded_parts = {}
         for res in reservations:
             for res_part in res['partitions'].split(":"):
-                for p in parts:
-                    if p['name'] == res_part:
+                for part in parts:
+                    if part['name'] == res_part:
                         if expanded_parts.has_key(res['queue']):
                             if sys_type == 'bgq':
-                                expanded_parts[res['queue']].update(p['relatives'])
+                                expanded_parts[res['queue']].update(part['relatives'])
                                 if res['block_passthrough']:
-                                    expanded_parts[res['queue']].update(p['passthrough_blocks'])
+                                    expanded_parts[res['queue']].update(part['passthrough_blocks'])
                             elif sys_type == 'bgp':
-                                expanded_parts[res['queue']].update(p['parents'])
-                                expanded_parts[res['queue']].update(p['children'])
+                                expanded_parts[res['queue']].update(part['parents'])
+                                expanded_parts[res['queue']].update(part['children'])
                         else:
                             if sys_type == 'bgq':
-                                expanded_parts[res['queue']] = set( p['relatives'] )
+                                expanded_parts[res['queue']] = set( part['relatives'] )
                                 if res['block_passthrough']:
-                                    expanded_parts[res['queue']].update(p['passthrough_blocks'])
+                                    expanded_parts[res['queue']].update(part['passthrough_blocks'])
                             elif sys_type == 'bgp':
-                                expanded_parts[res['queue']] = set( p['parents'] )
-                                expanded_parts[res['queue']].update(p['children'])
-                        expanded_parts[res['queue']].add(p['name'])
+                                expanded_parts[res['queue']] = set( part['parents'] )
+                                expanded_parts[res['queue']].update(part['children'])
+                        expanded_parts[res['queue']].add(part['name'])
 
         for res in reservations:
-            for p in parts:
-                if p['name'] in expanded_parts[res['queue']]:
-                    p['queue'] += ":%s" % res['queue']
+            for part in parts:
+                if part['name'] in expanded_parts[res['queue']]:
+                    part['queue'] += ":%s" % res['queue']
 
         def my_cmp(left, right):
+            '''Comparator for partition sorting.  Size has priority followed by names in lexical order.
+
+            '''
             val = -cmp(int(left['size']), int(right['size']))
             if val == 0:
                 return cmp(left['name'], right['name'])
@@ -505,9 +463,9 @@ def main():
             forced = [part for part in parts \
                   if [down for down in offline \
                       if down in part['relatives']]]
-            [part.__setitem__('functional', '-') for part in forced]
+            for part in forced:
+                part.__setitem__('functional', '-')
             data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
-            # FIXME find something useful to output in the 'deps' column, since the deps have vanished
             for part in parts:
                 if not part['node_geometry']:
                     part['node_geometry'] = []
@@ -520,13 +478,13 @@ def main():
             forced = [part for part in parts \
                   if [down for down in offline \
                       if (down in part['parents'] or down in part['children']) ]]
-            [part.__setitem__('functional', '-') for part in forced]
+            for part in forced:
+                part.__setitem__('functional', '-')
             data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
-            # FIXME find something useful to output in the 'deps' column, since the deps have vanished
             data += [[part['name'], part['queue'], part['size'],
                       part['functional'], part['scheduled'],
                       part['state'], ','.join([])] for part in parts]
-            client_utils.printTabular(data, centered=[3,4])
+            client_utils.printTabular(data, centered=[3, 4])
 
     elif opts.boot_start or opts.boot_stop or opts.list_io:
         pass
@@ -553,5 +511,5 @@ if __name__ == '__main__':
     except SystemExit:
         raise
     except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
         raise

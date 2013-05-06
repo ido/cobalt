@@ -46,7 +46,7 @@ class BootContext(object):
 
         self.max_reboot_attempts = get_config_option("bgsystem","max_reboots", "unlimited")
         #config options always come back as strings.  This will be converted to an int, however.
-        if self.max_reboot_attempts.lower() == 'unlimited':
+        if str(self.max_reboot_attempts).lower() == 'unlimited':
             self.max_reboot_attempts = None
         else:
             self.max_reboot_attempts = int(self.max_reboot_attempts)
@@ -191,12 +191,11 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         self.register_handler('initiate_boot', self.handle_initiate_boot)
         self.register_handler('initiate_io_boot', self.handle_initiate_io_boot)
         self.register_handler('reap_boot', self.handle_reap_boot)
-        _logger.debug("%s", pybgsched.__file__)
         _logger.info("Booter Initialized")
 
     def __getstate__(self):
         #provided as a convenience for later reconstruction
-        return {'version': 1, 'next_boot_id': __boot_id_gen.idnum,
+        return {'version': 1, 'next_boot_id': _boot_id_gen.idnum,
                 'pending_boots': [boot.get_details() for boot in list(self.pending_boots)],
                 'booting_suspended':self.booting_suspended}
 
@@ -363,7 +362,6 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
 
         '''
         retval = False
-        _logger.debug("testing has_pending_boot.")
         queued_boots = self.fetch_queued_messages()
         for boot_msg in queued_boots:
             if job_id == boot_msg.job_id:

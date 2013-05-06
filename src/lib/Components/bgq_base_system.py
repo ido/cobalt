@@ -1574,3 +1574,13 @@ class BGBaseSystem (Component):
     @exposed
     def unset_autoreboot(self, io_locations, user):
         raise NotImplementedError, "ION Autoreboot not supported for this configuration."
+
+    @exposed
+    def enable_io_autoreboot(self):
+        '''Enable ION autorebooting on the BG/Q'''
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."
+
+    @exposed
+    def disable_io_autoreboot(self):
+        '''Disable ION autorebooting on the BG/Q'''
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."

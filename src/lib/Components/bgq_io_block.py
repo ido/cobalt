@@ -42,8 +42,6 @@ class IOBlock(Cobalt.Data.Data):
         self.ions_in_soft_failure = False
         self.autoreboot = False
 
-        _logger.debug('initiaizing %s', self.name)
-
     io_drawer_list = property(lambda self: list(self.io_drawers))
     io_node_list = property(lambda self: list(self.io_nodes))
 
@@ -89,8 +87,8 @@ class IOBlock(Cobalt.Data.Data):
                     bad_ion_found = True
                 elif not any_live_hardware:
                     any_live_hardware = True
-                if (not hardware_in_use and ion.isInUse() and ion.getIOBlockName() != self.name and
-                        ion.getLocation() in self.io_nodes):
+                if (not hardware_in_use and ion.isInUse() and (ion.getIOBlockName() != self.name) and
+                        (ion.getLocation() in self.io_nodes)):
                     hardware_in_use = True
                     error_string = 'blocked (%s)' % ion.getIOBlockName()
 

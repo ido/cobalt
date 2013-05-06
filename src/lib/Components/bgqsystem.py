@@ -44,11 +44,11 @@ from Cobalt.Components.bgq_base_system import get_extents_from_size
 from Cobalt.Components.bgq_base_system import Wire
 from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem, JobValidationError
 
-try:
-    #compatibiilty for older pythons, Check to see if this even matters for >= 2.6
-    from elementtree import ElementTree
-except ImportError:
-    from xml.etree import ElementTree
+#try:
+    ##compatibiilty for older pythons, Check to see if this even matters for >= 2.6
+    #from elementtree import ElementTree
+#except ImportError:
+from xml.etree import ElementTree
 
 __all__ = [
     "BGProcessGroup",
@@ -182,6 +182,8 @@ class BGSystem (BGBaseSystem):
         self.booter = BGQBooter(self._blocks, self._blocks_lock)
         self.booter.start()
 
+        self.io_autoreboot_enabled = False
+
     def __getstate__(self):
 
         state = {}
@@ -199,7 +201,8 @@ class BGSystem (BGBaseSystem):
                 queue = part.queue
             flags[part.name] =  (sched, func, queue)
         state.update({'managed_blocks':self._managed_blocks, 'managed_io_blocks':self._managed_io_blocks, 'version':1,
-                'block_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1, 'suspend_booting':self.suspend_booting})
+                'block_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1, 'suspend_booting':self.suspend_booting,
+                'io_autoreboot_enabled':self.io_autoreboot_enabled})
         return state
 
 
@@ -211,6 +214,10 @@ class BGSystem (BGBaseSystem):
         self._managed_blocks = state['managed_blocks']
         self._blocks = BlockDict()
         self._io_blocks = IOBlockDict()
+        if state.has_key('io_autoreboot_enabled'):
+            self.io_autoreboot_enabled = state['io_autoreboot_enabled']
+        else:
+            self.io_autoreboot_enabled = False
         if state.has_key('managed_io_blocks'):
             self._managed_io_blocks = state['managed_io_blocks']
         else:
@@ -997,6 +1004,8 @@ class BGSystem (BGBaseSystem):
         else:
             io_node_list = []
             io_drawer_list = [str(drawer) for drawer in SWIG_vector_to_list(io_block_def.getIOLocations())]
+            for drawer in io_drawer_list:
+                io_node_list.extend([ion.getLocation() for ion in SWIG_vector_to_list(self.io_hardware_vec.getIODrawer(drawer).getIONodes())])
 
         connected_compute_list = [str(compute_block)
                 for compute_block in SWIG_vector_to_list(pybgsched.IOBlock.getConnectedComputeBlocks(io_block_def.getName()))]
@@ -1024,10 +1033,11 @@ class BGSystem (BGBaseSystem):
             raise RuntimeError("config file for bridgeless operation not specified.")
 
         def _get_node(name):
-            if not self.node_cache.has_key(name):
-                self.node_cache[name] = NodeCard(name)
+            pass
+            #self.node_cache[name] = NodeCard(name)
+            #if not self.node_cache.has_key(name):
 
-            return self.node_cache[name]
+            #return self.node_cache[name]
 
         self.logger.info("configure()")
         try:
@@ -1101,31 +1111,32 @@ class BGSystem (BGBaseSystem):
             try:
                 cobalt_io_block = self._io_blocks[cached_io_block.getName()]
             except KeyError:
-                #FIXME: block not found, ignore for now
-                pass
+                self.logger.warning("Cannot find block data for IO block: %s", cached_io_block.getName())
+                continue
             cobalt_io_block.update_bridge_status(self.io_hardware_vec, cached_io_block)
             new_state = cobalt_io_block.get_state_for_update(self.io_hardware_vec, cached_io_block)
             if new_state != cobalt_io_block.state:
                 io_block_updates.append((cobalt_io_block.name, new_state))
 
-            #now that we've updated check for reboot
-            if cached_io_block.getName() in self._managed_io_blocks:
-                cobalt_io_block = self._io_blocks[cached_io_block.getName()]
-                if cobalt_io_block.ions_in_soft_failure and cobalt_io_block.clear_to_reboot:
-                    self.logger.warning("IO Block %s: SoftwareFailure detected on autoreboot block.  System initiating free.",
+            if self.io_autoreboot_enabled:
+                #now that we've updated check for reboot
+                if cached_io_block.getName() in self._managed_io_blocks:
+                    cobalt_io_block = self._io_blocks[cached_io_block.getName()]
+                    if cobalt_io_block.autoreboot and cobalt_io_block.ions_in_soft_failure and cobalt_io_block.clear_to_reboot:
+                        self.logger.warning("IO Block %s: SoftwareFailure detected on autoreboot block.  System initiating free.",
+                                cobalt_io_block.name)
+                        self.free_io_block(cached_io_block.getName())
+
+                if cobalt_io_block.block_computes_for_reboot:
+                    reboot_blocked_ions.update(cobalt_io_block.io_nodes)
+
+                #if we are rebooting then the block is free, and nodes will be unavailable until the boot has completed, assuming
+                # they are runnable to begin with
+                if (cobalt_io_block.autoreboot and cobalt_io_block.state.split()[0] != 'blocked' and
+                        cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
+                    self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
                             cobalt_io_block.name)
-                    self.free_io_block(cached_io_block.getName())
-
-            if cobalt_io_block.block_computes_for_reboot:
-                reboot_blocked_ions.update(cobalt_io_block.io_nodes)
-
-            #if we are rebooting then the block is free, and nodes will be unavailable until the boot has completed, assuming
-            # they are runnable to begin with
-            if (cobalt_io_block.autoreboot and cobalt_io_block.state.split()[0] != 'blocked' and
-                    cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
-                self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
-                        cobalt_io_block.name)
-                self.booter.initiate_io_boot(cobalt_io_block.name, None, 'auto')
+                    self.booter.initiate_io_boot(cobalt_io_block.name, None, 'auto')
 
         for io_block_name, new_state in io_block_updates:
             self._io_blocks[io_block_name].state = new_state
@@ -1621,7 +1632,7 @@ class BGSystem (BGBaseSystem):
                                 # if for one reason or another we can't get links, this mp is a non-starter.
                                 if str(e) == "Data record(s) not found.":
                                     #if we have no links, then this midplane is definitely dead:
-                                    self.logger.warning("No IO links found for midplane: %s". mp)
+                                    self.logger.warning("No IO links found for midplane: %s", mp)
                                 else:
                                     self.logger.warning("Unknown RunntimeError encountered!")
                                 self.failed_io_midplane_cache.add(mp)
@@ -1649,6 +1660,7 @@ class BGSystem (BGBaseSystem):
 
             block_modification_time.start()
             try:
+
                 for block in bg_cached_blocks:
                     #find and update idle based on whether control system reads block as
                     #free or not.
@@ -1687,6 +1699,30 @@ class BGSystem (BGBaseSystem):
 
                 bp_cache = {}
 
+                #check to see if we have any new IO Blocks
+                new_io_blocks = []
+                missing_io_blocks = set(self._io_blocks.keys())
+                for io_block in bg_cached_io_blocks:
+                    if io_block.getName() not in missing_io_blocks:
+                        new_io_blocks.append(io_block)
+                    missing_io_blocks.discard(io_block.getName())
+                    if io_block.getName() in self._managed_io_blocks:
+                        self._managed_io_blocks.discard(io_block.getName())
+
+                for io_block in new_io_blocks[:8]:
+                    #see below for why this is throtled.
+                    self.logger.info("new io block found: %s", io_block.getName())
+                    detailed_io_block_filter = pybgsched.IOBlockFilter()
+                    detailed_io_block_filter.setName(io_block.getName())
+                    detailed_io_block_filter.setExtendedInfo(True)
+                    new_io_block_info = pybgsched.getIOBlocks(detailed_io_block_filter)
+                    self._io_blocks.q_add([self._new_io_block_dict(new_io_block_info[0])])
+
+                for io_block_name in missing_io_blocks:
+                    self.logger.info("missing block removed: %s", io_block_name)
+                    del self._io_blocks[io_block_name]
+
+
                 # throttle the adding of new partitions so updating of
                 # machine state doesn't get bogged down
                 for block in new_blocks[:8]:
@@ -1696,7 +1732,6 @@ class BGSystem (BGBaseSystem):
                     detailed_block_filter.setName(block.getName())
                     detailed_block_filter.setExtendedInfo(True)
                     new_block_info = pybgsched.getBlocks(detailed_block_filter)
-                    #bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._blocks.q_add([self._new_block_dict(new_block_info[0])])
                     b = self._blocks[block.getName()]
                     self._detect_wiring_deps(b)
@@ -1852,10 +1887,11 @@ class BGSystem (BGBaseSystem):
         '''Keeping around for when we actually get kernel support added in for this system.
 
         '''
-        if self.config.get('kernel') != 'true':
-            return True
-        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
-        return os.path.exists(kernel_dir)
+        raise NotImplementedError, "kernels not supported for Q yet"
+        #if self.config.get('kernel') != 'true':
+            #return True
+        #kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        #return os.path.exists(kernel_dir)
 
     def _set_kernel(self, partition, kernel):
         '''Set the kernel to be used by jobs run on the specified partition
@@ -1869,12 +1905,12 @@ class BGSystem (BGBaseSystem):
 
         No real change needed here
         '''
-
-        if self.config.get('kernel') == 'true':
-            try:
-                self._set_kernel(partition, "default")
-            except:
-                logger.error("partition %s: failed to reset boot location" % (partition,))
+        raise NotImplementedError, "kernels not supported for Q yet"
+        #if self.config.get('kernel') == 'true':
+            #try:
+                #self._set_kernel(partition, "default")
+            #except:
+                #logger.error("partition %s: failed to reset boot location" % (partition,))
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
@@ -2486,3 +2522,15 @@ class BGSystem (BGBaseSystem):
                 pass
         self.logger.warning('User %s setting autoreboot to False for IO Blocks: %s', user, ", ".join(ret_locs))
         return ret_locs
+
+    @exposed
+    def enable_io_autoreboot(self):
+        self.io_autoreboot_enabled = True
+
+    @exposed
+    def disable_io_autoreboot(self):
+        self.io_autoreboot_enabled = False
+
+    @exposed
+    def get_io_autoreboot_status(self):
+        return self.io_autoreboot_enabled
