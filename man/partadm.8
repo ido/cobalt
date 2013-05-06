@@ -1,6 +1,6 @@
 .TH "partadm" 8
 .SH "NAME"
-partadm \- partition administration tool
+partadm 
 .SH "SYNOPSIS"
 .B partadm [-a|-d] part1 part2
 .TP
@@ -28,6 +28,19 @@ partadm \- partition administration tool
 .TP
 .B partadm --version
 .SH "DESCRIPTION"
+partition administration tool
+
+.SH "OPTIONS"
+.TP
+.B \-\-debug
+Turn on communication debugging
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+
 .TP
 .B \-a
 Add new partitions into the scheduler
@@ -76,9 +89,6 @@ Dump partition state
 .B \-r \-\-recursive
 Activate recursive mode. All child partitions of all specified
 partitions will be modified (for activate/deactivate/enable/disable/queue/deps/free)
-.TP
-.B \-\-version
-Displays client revision and Cobalt version
 .TP
 .B \-\-boot-stop
 Diable booting of any job.

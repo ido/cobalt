@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 import pwd
 import os.path
+import socket
 import xmlrpclib
 import ConfigParser
 import re
@@ -20,7 +21,8 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Util import parse_geometry_string
 from Cobalt.arg_parser import ArgParse
-from Cobalt.Exceptions import QueueError, ComponentLookupError, JobValidationError, JobPreemptionError, JobRunError, JobDeleteError
+from Cobalt.Exceptions import QueueError, ComponentLookupError, JobValidationError
+from Cobalt.Exceptions import JobPreemptionError, JobRunError, JobDeleteError, NotSupportedError
 
 
 logger   = None # Logging instance. setup_logging needs to be called first thing.
@@ -164,14 +166,14 @@ def set_jobid(jobid,user):
         sys.exit(1)
     return response
 
-def save(filename,cmp='cqm'):
+def save(filename,comp='cqm'):
     """
     Will save the state to the specified location
     """
     try:
-        if cmp == 'cqm':
+        if comp == 'cqm':
             component = client_data.queue_manager()
-        elif cmp == 'scheduler':
+        elif comp == 'scheduler':
             component = client_data.scheduler_manager()
             
         directory = os.path.dirname(filename)

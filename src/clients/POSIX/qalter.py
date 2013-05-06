@@ -22,7 +22,10 @@ Option with values:
 '--proccount',dest='procs',type='int',help='modify job proc count for jobs in args',callback=cb_gtzero
 '-A','--project',dest='project',type='string',help='modify project name for jobs in args'
 '-M','--notify',dest='notify',type='string',help='modify notification email address for jobs in args'
-'-t','--time',dest='walltime',type='string',help='modify walltime for jobs in args ([+/-]minutes or [+/-]HH:MM:SS',callback=cb_time
+
+'-t','--time',dest='walltime',type='string',help='modify walltime for jobs in args ([+/-]minutes or [+/-]HH:MM:SS', /
+  callback=cb_time
+
 '-e','--error',dest='errorpath',type='string',help='modify error file path for jobs in args'
 '-o','--output',dest='outputpath',type='string',help='modify output file path for jobs in args'
 '--dependencies',dest='all_dependencies',type='string',help='for jobs in args (jobid1:jobid2:..)',callback=cb_upd_dep

@@ -19,6 +19,15 @@ allocated to them through Cobalt.  Once the Cobalt resource allocation ends, all
 command on the allocated block will be freed.
 .SH OPTIONS
 .TP
+.B \-d \--debug
+Turn on communication debugging
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
 .B \-\-block block-name
 Boot the specified block. If the block is already booted, this will not cause
 the block to free.  If this is not specified, the COBALT_PARTNAME
@@ -45,6 +54,7 @@ complete if all running jobs on the target block have been terminated.  This may
 with the
 .BR \-\-free
 option.
+
 
 Return only blocks of the specified nodecount
 .SH "SEE ALSO"

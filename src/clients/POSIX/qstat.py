@@ -92,7 +92,8 @@ def get_output_for_jobs(parser,hinfo,queues):
     """
     names              = parser.args if not parser.no_args() else ['*']
     user_name          = parser.options.user if parser.options.user != None else '*'
-    query_dependencies = {'QueuedTime':['SubmitTime','StartTime'],'RunTime':['StartTime'],'TimeRemaining':['WallTime','StartTime']}
+    query_dependencies = {'QueuedTime':
+                              ['SubmitTime','StartTime'],'RunTime':['StartTime'],'TimeRemaining':['WallTime','StartTime']}
 
     try:
         query = []

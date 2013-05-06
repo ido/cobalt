@@ -10,17 +10,20 @@ qselect \- shows the jobids of all of the pending jobs matching the selection cr
 shows the jobids of all of the pending jobs matching the selection criteria
 .SH "OPTIONS"
 .TP
+.B \-d \--debug
+Turn on communication debugging
+.TP
+.B \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
 .B \-A \-\-project "project"
 Specifies the project with which the job is associated.
 .TP
-.B \-d \-\-debug
-Turn on communication debugging.
-.TP
 .B \-h \-\-held "state"
 Specifies the held state of the job.
-.TP
-.B \-\-help
-Display help.
 .TP
 .B \-\-mode "mode"
 Specifies the job mode.
@@ -32,12 +35,12 @@ Specifies the node count for a job.
 Specifies the queue in which the job resides.
 .TP
 .B \-t \-\-time "wall clock time" 
+.TP
+.B \-v \-\-verbose
+not used
 Specifies the runtime for a job. The time specified is the full amount in minutes
 allotted to the job for execution. If the job runs over this limit, it
 will be killed. If colon-delimited time is specified, the format is HH:MM:SS.
-.TP
-.B \-\-version
-Print out version string.
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR qstat(1)

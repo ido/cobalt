@@ -16,7 +16,9 @@ OPTIONS DEFINITIONS:
 '--reread-policy',action='store_true',dest='reread',help='reread the utility function definition file'
 '--savestate',dest='savestate',type='string',help='write the current state to the specified file',callback=cb_path
 '--score',dest='adjust',type='float',help='<jobid> <jobid> adjust the scores of the arguments'
-'--inherit',dest='dep_frac',type='float',help='<jobid> <jobid> control the fraction of the score inherited by jobs which depend on the arguments'
+
+'--inherit',dest='dep_frac',type='float', /
+  help='<jobid> <jobid> control the fraction of the score inherited by jobs which depend on the arguments'
 
 """
 import logging

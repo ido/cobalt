@@ -15,7 +15,6 @@ OPTIONS DEFINITIONS:
 
 """
 import logging
-import time
 import sys
 import os
 from Cobalt import client_utils
@@ -57,7 +56,6 @@ def main():
 
     parser.parse_it() # parse the command line
     opts   = parser.options
-    args   = parser.args
 
     if not parser.no_args():
         client_utils.logger.info('No arguments needed')

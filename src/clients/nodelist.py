@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Cobalt qmove command
+Nodelist 
 
 Usage: %prog
 version: "%prog " + __revision__ + , Cobalt  + __version__

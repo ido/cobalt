@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Setup reservations in the scheduler
+nodeadm - Nodeadm is the administrative interface for cluster systems
 
 Usage: %prog [-l] [--down part1 part2] [--up part1 part2]"
 version: "%prog " + __revision__ + , Cobalt  + __version__

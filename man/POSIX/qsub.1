@@ -10,6 +10,15 @@ qsub \- submit jobs to the queue manager for execution
 submits a job to the queue manager for execution. 
 .SH "OPTIONS"
 .TP
+.B \-d \-\-debug
+Turn on communication debugging
+.TP
+.B \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
 .B \-A \-\-project [project]
 Associate the job with the allocation for project project. This is
 used to properly account for machine usage. 
@@ -22,9 +31,6 @@ specific block.
 .B \-\-cwd [directory]
 Tell the job to use the specified directory as the default current working directory
 while running the job.
-.TP 
-.B \-d \-\-debug
-Turn on communication debugging.
 .TP
 .B \-\-debuglog [path to file]
 Send debugging information from cobalt to file specified.
@@ -51,9 +57,6 @@ This may not be a fraction of a block.
 .TP
 .B \-h \-\-held
 Submit job and immediately place it in the user hold state
-.TP
-.B \-\-help
-Provides quick help information about this command.
 .TP
 .B \-i \-\-inputfile [path to file]
 Send file to job's stdin.
@@ -90,13 +93,13 @@ submitting user is always able to run commands on a submitted job.
 Appends the list of users in a project to the list of users authorized to run
 commands on the submitted job. 
 .TP
+.B \-u \-\-umask'
+set umask: octal number default(022)
+.TP
 .B \-t \-\-time [wallclock time] 
 Specify the runtime for a job. If the job runs over this limit, it will be 
 killed. The time may be specified as eitehr an integer number of minutes or a 
 colon-delimited value of the format: HH:MM:SS.
-.TP
-.B \-\-version
-Print out version string
 .TP
 
 
