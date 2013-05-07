@@ -66,7 +66,7 @@ OPTIONS DEFINITIONS:
 '--unset_io_autoboot', action='store_true', dest='unset_io_autoboot', help='stop automatically rebooting an IO block'
 '--io_autoboot_start', action='store_true', dest='autoboot_start', help='enable IO Block autobooting'
 '--io_autoboot_stop', action='store_true', dest='autoboot_stop', help='disable IO Block autobooting'
-'--io_autoreboot_status', action='store_true', dest='autoboot_status', help='get status of IO Block autobooting'
+'--io_autoboot_status', action='store_true', dest='autoboot_status', help='get status of IO Block autobooting'
 
 """
 import logging
