@@ -364,7 +364,7 @@ def main():
         client_utils.logger.info('Autoreboot flag set for IO Blocks: %s', " ".join(parts))
         sys.exit(0)
 
-    elif opts.set_io_autoboot:
+    elif opts.unset_io_autoboot:
         system.unset_autoreboot(parts, user)
         client_utils.logger.info('Autoreboot flag unset for IO Blocks: %s', " ".join(parts))
         sys.exit(0)

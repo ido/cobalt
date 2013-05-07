@@ -202,7 +202,8 @@ class BGSystem (BGBaseSystem):
             flags[part.name] =  (sched, func, queue)
         state.update({'managed_blocks':self._managed_blocks, 'managed_io_blocks':self._managed_io_blocks, 'version':1,
                 'block_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1, 'suspend_booting':self.suspend_booting,
-                'io_autoreboot_enabled':self.io_autoreboot_enabled})
+                'io_autoreboot_enabled':self.io_autoreboot_enabled,
+                'io_autoreboot_blocks':[b.name for b in self._io_blocks.values() if b.autoreboot]},)
         return state
 
 
@@ -272,6 +273,10 @@ class BGSystem (BGBaseSystem):
         self.fail_io_block_names = set()
         self.booter = BGQBooter(self._blocks, self._blocks_lock)
         self.booter.start()
+        #This must happen after configure 
+        if state.has_key('io_autoreboot_blocks'):
+            for name in state['io_autoreboot_blocks']:
+                self._io_blocks[name].autoreboot = True
 
     def save_me(self):
         Component.save(self)
@@ -2517,7 +2522,7 @@ class BGSystem (BGBaseSystem):
         ret_locs = []
         for location in io_locations:
             try:
-                self._io_blocks[location].autoreboot = True
+                self._io_blocks[location].autoreboot = False
                 ret_locs.append(location)
             except KeyError:
                 pass
