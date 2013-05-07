@@ -5,15 +5,11 @@ ProcessGroup -- a group of processes started with mpirun
 BGSystem -- Blue Gene system component
 """
 
-import atexit
 import pwd
-import grp
 import logging
 import sys
 import os
-import re
 import signal
-import tempfile
 import time
 import thread
 import threading
@@ -37,6 +33,9 @@ from pybgsched import SWIG_vector_to_list
 
 
 from Cobalt.Components.BGQBooter import BGQBooter
+from Cobalt.Components.bgq_io_hardware import IONode, IODrawer
+from Cobalt.Components.bgq_io_block import IOBlock, IOBlockDict
+
 
 from Cobalt.Components.bgq_base_system import node_position_exp, nodecard_exp, midplane_exp, rack_exp, wire_exp
 from Cobalt.Components.bgq_base_system import NODECARD_A_DIM_MASK, NODECARD_B_DIM_MASK, NODECARD_C_DIM_MASK, NODECARD_D_DIM_MASK, NODECARD_E_DIM_MASK
@@ -45,14 +44,14 @@ from Cobalt.Components.bgq_base_system import get_extents_from_size
 from Cobalt.Components.bgq_base_system import Wire
 from Cobalt.Components.bgq_base_system import NodeCard, BlockDict, BGProcessGroupDict, BGBaseSystem, JobValidationError
 
-try:
-    from elementtree import ElementTree
-except ImportError:
-    from xml.etree import ElementTree
+#try:
+    ##compatibiilty for older pythons, Check to see if this even matters for >= 2.6
+    #from elementtree import ElementTree
+#except ImportError:
+from xml.etree import ElementTree
 
 __all__ = [
     "BGProcessGroup",
-    "Simulator",
 ]
 
 logger = logging.getLogger(__name__)
@@ -78,7 +77,7 @@ def cobalt_log_terminate():
     '''
     cobalt_log_writer.send(None)
 
-automatic_method_default_interval = get_config_option('system','automatic_method_default_interval',10.0)
+automatic_method_default_interval = get_config_option('system','automatic_method_default_interval', 10.0)
 
 sw_char_to_dim_dict = {'A': pybgsched.Dimension(pybgsched.Dimension.A),
                        'B': pybgsched.Dimension(pybgsched.Dimension.B),
@@ -106,14 +105,13 @@ class BGProcessGroup(ProcessGroup):
         return "<BGProcessGroup id=%s, jobid=%s, location=%s>" % (self.id, self.jobid, self.location)
 
     def __str__(self):
-            return self.__repr__()
+        return self.__repr__()
 
 # convenience function used several times below
 def _get_state(bridge_partition):
     '''Convenience function to get at the block state.
 
     '''
-    pass
     if bridge_partition.getStatus() == pybgsched.Block.Free:
         return "idle"
     else:
@@ -162,6 +160,8 @@ class BGSystem (BGBaseSystem):
         self.process_groups.item_cls = BGProcessGroup
         self.node_card_cache = dict()
         self.compute_hardware_vec = None
+        self.io_hardware_vec = None
+        self.failed_io_midplane_cache = set()
         try:
             sim_xml_file = get_config_option("gravina","simulator_xml")
         except ConfigParser.NoOptionError:
@@ -169,18 +169,20 @@ class BGSystem (BGBaseSystem):
         except ConfigParser.NoSectionError:
             sim_xml_file = None
 
-        run_config = kwargs.pop('run_config',True)
+        run_config = kwargs.pop('run_config', True)
         if run_config:
             logger.debug('init config()')
             self.configure(config_file=sim_xml_file)
 
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
-        self.killing_jobs = {} 
+        self.killing_jobs = {}
         self.suspend_booting = False
         self.failed_io_block_names = set()
         self.booter = BGQBooter(self._blocks, self._blocks_lock)
         self.booter.start()
+
+        self.io_autoreboot_enabled = False
 
     def __getstate__(self):
 
@@ -198,9 +200,10 @@ class BGSystem (BGBaseSystem):
             if hasattr(part, 'queue'):
                 queue = part.queue
             flags[part.name] =  (sched, func, queue)
-        state.update({'managed_blocks':self._managed_blocks, 'version':1,
-                'block_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1,
-                'suspend_booting':self.suspend_booting})
+        state.update({'managed_blocks':self._managed_blocks, 'managed_io_blocks':self._managed_io_blocks, 'version':1,
+                'block_flags': flags, 'next_pg_id':self.process_groups.id_gen.idnum+1, 'suspend_booting':self.suspend_booting,
+                'io_autoreboot_enabled':self.io_autoreboot_enabled,
+                'io_autoreboot_blocks':[b.name for b in self._io_blocks.values() if b.autoreboot]},)
         return state
 
 
@@ -211,17 +214,23 @@ class BGSystem (BGBaseSystem):
         Cobalt.Util.fix_set(state)
         self._managed_blocks = state['managed_blocks']
         self._blocks = BlockDict()
+        self._io_blocks = IOBlockDict()
+        if state.has_key('io_autoreboot_enabled'):
+            self.io_autoreboot_enabled = state['io_autoreboot_enabled']
+        else:
+            self.io_autoreboot_enabled = False
         self.process_groups = BGProcessGroupDict()
         self.process_groups.item_cls = BGProcessGroup
         if state.has_key("next_pg_id"):
             self.process_groups.id_gen.set(state['next_pg_id'])
         self.node_card_cache = dict()
         self._blocks_lock = thread.allocate_lock()
-        self.pending_script_waits = set()
         self.bridge_in_error = False
         self.cached_blocks = None
         self.offline_blocks = []
         self.compute_hardware_vec = None
+        self.io_hardware_vec = None
+        self.failed_io_midplane_cache = set()
         self.suspend_booting = False
         if state.has_key('suspend_booting'):
             self.suspend_booting = state['suspend_booting']
@@ -246,6 +255,11 @@ class BGSystem (BGBaseSystem):
                     self.logger.info("Block %s is no longer defined" % bname)
 
         self.update_relatives()
+
+        if state.has_key('managed_io_blocks'):
+            self._managed_io_blocks = state['managed_io_blocks']
+        else:
+            self._managed_io_blocks = set([])
         # initiate the process before starting any threads
         thread.start_new_thread(self.update_block_state, tuple())
         self.lock = threading.Lock()
@@ -259,6 +273,10 @@ class BGSystem (BGBaseSystem):
         self.fail_io_block_names = set()
         self.booter = BGQBooter(self._blocks, self._blocks_lock)
         self.booter.start()
+        #This must happen after configure 
+        if state.has_key('io_autoreboot_blocks'):
+            for name in state['io_autoreboot_blocks']:
+                self._io_blocks[name].autoreboot = True
 
     def save_me(self):
         Component.save(self)
@@ -437,11 +455,12 @@ class BGSystem (BGBaseSystem):
         #error out.
 
         def __init_fail_exit():
+            '''On initialization failure complain loudly and exit.'''
             self.logger.critical("System Component Exiting!")
             sys.exit(1)
 
         try:
-            pybgsched.init(get_config_option("bgsystem","bg_properties","/bgsys/local/etc/bg.properties"))
+            pybgsched.init(get_config_option("bgsystem", "bg_properties", "/bgsys/local/etc/bg.properties"))
         except IOError:
             self.logger.critical("IOError initializing bridge.  Check bg.properties file and database connection.")
             __init_fail_exit()
@@ -458,6 +477,15 @@ class BGSystem (BGBaseSystem):
             self.logger.critical ("Error communicating with the bridge while acquiring hardware information.")
             __init_fail_exit()
         try:
+            #grab the io_hardware state:
+            io_hw_start = time.time()
+            self.io_hardware_vec = pybgsched.getIOHardware()
+            io_hw_end = time.time()
+            self.logger.debug("Acquiring io_hardware state: took %s sec", io_hw_end - io_hw_start)
+        except RuntimeError:
+            self.logger.critical ("Error communicating with the bridge while acquiring io_hardware information.")
+            __init_fail_exit()
+        try:
             #get all blocks on the system
             blk_start = time.time()
             ext_info_block_filter = pybgsched.BlockFilter()
@@ -468,6 +496,17 @@ class BGSystem (BGBaseSystem):
         except RuntimeError:
             self.logger.critical ("Error communicating with the bridge during Block Initialization.")
             __init_fail_exit()
+        try:
+            #get all io_blocks on the system
+            blk_start = time.time()
+            ext_info_block_filter = pybgsched.IOBlockFilter()
+            ext_info_block_filter.setExtendedInfo(True) #get the midplane data 
+            system_io_block_def = pybgsched.getIOBlocks(ext_info_block_filter)
+            blk_end = time.time()
+            self.logger.debug("Acquiring io_block states: took %s sec", blk_end - blk_start)
+        except RuntimeError:
+            self.logger.critical ("Error communicating with the bridge during IOBlock Initialization.")
+            __init_fail_exit()
 
         #Extract and cache the midplane wiring data.  I am assuming that adding
         #more bluegene requires a restart
@@ -475,15 +514,15 @@ class BGSystem (BGBaseSystem):
         self._midplane_wiring_cache = {}
         midplane_locs = []
         machine_size = {}
-        for dim in range(0,pybgsched.Dimension.D+1):
+        for dim in range(0, pybgsched.Dimension.D+1):
             machine_size[dim] = self.compute_hardware_vec.getMachineSize(
                     pybgsched.Dimension(dim))
         for A in range(0, machine_size[pybgsched.Dimension.A]):
             for B in range(0, machine_size[pybgsched.Dimension.B]):
                 for C in range(0, machine_size[pybgsched.Dimension.C]):
                     for D in range(0, machine_size[pybgsched.Dimension.D]):
-                        midplane_locs.append(self.compute_hardware_vec.getMidplane(
-                            pybgsched.Coordinates(A,B,C,D)).getLocation())
+                        midplane_locs.append(self.compute_hardware_vec.getMidplane(pybgsched.Coordinates(A,B,C,D)).getLocation())
+
         for mp in midplane_locs:
             self._midplane_wiring_cache[mp] = []
             for dim in range(0, pybgsched.Dimension.D+1):
@@ -507,8 +546,6 @@ class BGSystem (BGBaseSystem):
         self.logger.debug("Building midplane wiring cache: took %s sec", 
                 midplane_wiring_cache_end - midplane_wiring_cache_start)
         # initialize a new partition dict with all partitions
-
-
         blocks = BlockDict()
 
         tmp_list = []
@@ -561,12 +598,24 @@ class BGSystem (BGBaseSystem):
         end = time.time()
         self.logger.info("subblock configuration took %f sec" % (end - start))
 
+        io_blocks = IOBlockDict()
+        tmp_list = []
+        for io_block_def in system_io_block_def:
+            tmp_list.append(self._new_io_block_dict(io_block_def))
+        io_blocks.q_add(tmp_list)
+        self._io_blocks.clear()
+        self._io_blocks.update(io_blocks)
+
+        for io_block_def in system_io_block_def:
+            #initialize initial state properly
+            self._io_blocks[io_block_def.getName()].state = self._io_blocks[io_block_def.getName()].get_state_for_update(self.io_hardware_vec, io_block_def)
+
         return
 
     ## BGSystem.parse_subblock_config
     #  Inputs: string of subblock configuration information
     #  Output: dictionary: key: block names, values: minimum size to slice to
-    #  
+    #
     #  Read from the config file a list of blocks and the smallest size to divide them to.
     #  The expected string in the config file looks like Loc:XX,Loc2:YY,Loc3:ZZ
     def parse_subblock_config(self, subblock_config_string):
@@ -826,7 +875,7 @@ class BGSystem (BGBaseSystem):
         midplane_list = []
         nodecard_list = []
         pt_nodecard_list = []
-        io_link_list = []
+        io_node_list = []
         wire_set = set()
         midplane_ids = block_def.getMidplanes()
         passthrough_ids = block_def.getPassthroughMidplanes()
@@ -851,12 +900,6 @@ class BGSystem (BGBaseSystem):
                 switch_list.append(midplane.getSwitch(pybgsched.Dimension(i)).getLocation())
                 midplane_nodecards.extend([nb.getLocation() 
                     for nb in SWIG_vector_to_list(pybgsched.getNodeBoards(midplane.getLocation()))])
-            #for small partitions may have a subset of nodecards, fortunately the block knows this.i
-            #try: #This calls out, not using cached ComputeHardware data.  Not sure if this is desirable.
-            #    possible_nodecards = pybgsched.getNodeBoards(midplane_id)
-            #except RuntimeError:
-            #    self.logger.critical ("Error communicating with the bridge during NodeBoard acquisition")
-            #    init_fail_exit()
 
             block_nodecards = SWIG_vector_to_list(block_def.getNodeBoards())
             if block_nodecards == []:
@@ -868,6 +911,7 @@ class BGSystem (BGBaseSystem):
                     if pybgsched.hardware_in_error_state(nc):
                         state = "error"
                     nodecard_list.append(self._get_node_card(nc.getLocation(), state))
+            io_node_list.extend([link.getDestinationLocation() for link in SWIG_vector_to_list(pybgsched.getIOLinks(midplane_id))])
 
         # Add in passthrough switches
         for midplane_id in passthrough_ids:
@@ -937,7 +981,6 @@ class BGSystem (BGBaseSystem):
                         state = "error"
                     pt_nodecard_list.append(self._get_node_card(nc.getLocation(), state))
 
-
         d = dict(
             name = block_def.getName(),
             queue = "default",
@@ -948,12 +991,43 @@ class BGSystem (BGBaseSystem):
             node_cards = nodecard_list,
             passthrough_node_cards = pt_nodecard_list,
             switches = switch_list,
+            io_nodes = io_node_list,
             state = block_def.getStatus(),
             block_type = 'normal',
             wires = wire_set
         )
         return d
 
+
+    def _new_io_block_dict(self, io_block_def):
+        '''generate a new spec for IOBlock creation.'''
+
+        io_block_size = io_block_def.getIONodeCount()
+        if io_block_size < pybgsched.IODrawer.IONodeCount:
+            #below 8 blocks getLocations returns nodes rather than drawers.
+            io_node_list = [str(ion) for ion in SWIG_vector_to_list(io_block_def.getIOLocations())]
+            io_drawer_list = ['-'.join(io_node_list[0].split('-')[0:2])]
+        else:
+            io_node_list = []
+            io_drawer_list = [str(drawer) for drawer in SWIG_vector_to_list(io_block_def.getIOLocations())]
+            for drawer in io_drawer_list:
+                io_node_list.extend([ion.getLocation() for ion in SWIG_vector_to_list(self.io_hardware_vec.getIODrawer(drawer).getIONodes())])
+
+        connected_compute_list = [str(compute_block)
+                for compute_block in SWIG_vector_to_list(pybgsched.IOBlock.getConnectedComputeBlocks(io_block_def.getName()))]
+
+        spec = dict(
+                name = io_block_def.getName(),
+                size = io_block_def.getIONodeCount(),
+                status = io_block_def.getStatusString(),
+                state = 'idle',
+                block_type = 'io',
+                io_drawers = io_drawer_list,
+                io_nodes = io_node_list,
+                connected_computes = connected_compute_list,
+                )
+
+        return spec
 
     def _configure_from_file (self, bridgeless=True, config_file=None):
 
@@ -965,10 +1039,11 @@ class BGSystem (BGBaseSystem):
             raise RuntimeError("config file for bridgeless operation not specified.")
 
         def _get_node(name):
-            if not self.node_cache.has_key(name):
-                self.node_cache[name] = NodeCard(name)
+            pass
+            #self.node_cache[name] = NodeCard(name)
+            #if not self.node_cache.has_key(name):
 
-            return self.node_cache[name]
+            #return self.node_cache[name]
 
         self.logger.info("configure()")
         try:
@@ -1004,7 +1079,7 @@ class BGSystem (BGBaseSystem):
             #ion_blocks = []
             switch_list = []
 
-            for nc in block_def.getiterator("NodeCard"):
+            for nc in block_def.getiteator("NodeCard"):
                 node_card_list.append(self._get_node_card(nc.get("id")))
             nc_count = len(node_card_list)
             if nc_count <= 0:
@@ -1026,13 +1101,53 @@ class BGSystem (BGBaseSystem):
         self._blocks.update(blocks)
         return
 
-    def _recompute_block_state(self):
+    def _recompute_block_state(self, bg_cached_io_blocks=[]):
         '''Recompute the hardware and cleaning/allocated blockage for all
         managed blocks.
 
-        '''
+        Also handles IO Blocks
 
+        '''
+        io_block_updates = []
+        reboot_blocked_ions = set()
         self.offline_blocks = []
+
+        #IO Block state update 
+        for cached_io_block in bg_cached_io_blocks:
+            try:
+                cobalt_io_block = self._io_blocks[cached_io_block.getName()]
+            except KeyError:
+                self.logger.warning("Cannot find block data for IO block: %s", cached_io_block.getName())
+                continue
+            cobalt_io_block.update_bridge_status(self.io_hardware_vec, cached_io_block)
+            new_state = cobalt_io_block.get_state_for_update(self.io_hardware_vec, cached_io_block)
+            if new_state != cobalt_io_block.state:
+                io_block_updates.append((cobalt_io_block.name, new_state))
+
+            if self.io_autoreboot_enabled:
+                #now that we've updated check for reboot
+                if cached_io_block.getName() in self._managed_io_blocks:
+                    cobalt_io_block = self._io_blocks[cached_io_block.getName()]
+                    if cobalt_io_block.autoreboot and cobalt_io_block.ions_in_soft_failure and cobalt_io_block.clear_to_reboot:
+                        self.logger.warning("IO Block %s: SoftwareFailure detected on autoreboot block.  System initiating free.",
+                                cobalt_io_block.name)
+                        self.free_io_block(cached_io_block.getName())
+
+                if cobalt_io_block.block_computes_for_reboot:
+                    reboot_blocked_ions.update(cobalt_io_block.io_nodes)
+
+                #if we are rebooting then the block is free, and nodes will be unavailable until the boot has completed, assuming
+                # they are runnable to begin with
+                if (cobalt_io_block.autoreboot and cobalt_io_block.state.split()[0] != 'blocked' and
+                        cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
+                    self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
+                            cobalt_io_block.name)
+                    self.booter.initiate_io_boot(cobalt_io_block.name, None, 'auto')
+
+        for io_block_name, new_state in io_block_updates:
+            self._io_blocks[io_block_name].state = new_state
+
+        #Compute Block state update
         for b in self._blocks.values():
 
             if b.name not in self._managed_blocks:
@@ -1052,6 +1167,11 @@ class BGSystem (BGBaseSystem):
 
             self.check_block_hardware(b)
             if b.state != 'idle':
+                continue
+
+            #check to see if our conencted IO block is about to become unusable
+            if not b.io_nodes.isdisjoint(reboot_blocked_ions):
+                b.state = 'blocked (Pending ION Reboot)'
                 continue
 
             if b.used_by:
@@ -1118,6 +1238,7 @@ class BGSystem (BGBaseSystem):
                 b.state = 'blocked (%s)' % (cleaning.name,)
             elif allocated:
                 b.state = "blocked (%s)" % (allocated.name,)
+
 
     def check_block_hardware(self, block, subblock_parent=False):
         '''Check the cached hardware state and see if the block would
@@ -1233,6 +1354,24 @@ class BGSystem (BGBaseSystem):
                 return
         return
 
+
+    def check_io_block_hardware(self, io_block):
+        '''Check the state of an IO Block's hardware.  Return None if no offlne hardware, else return an error message.'''
+
+        retval = None
+        for io_drawer_name in io_block.io_drawers:
+            cached_drawer = self.io_hardware_vec.getIODrawer(io_drawer_name)
+            if cached_drawer.getState() != pybgsched.Hardware.Available:
+                retval = 'hardware offline (%s): IODrawer %s' % (cached_drawer.getStateString(), io_drawer_name)
+                break
+            ions = SWIG_vector_to_list(cached_drawer.getIONodes())
+            for ion in ions:
+                if ion.getState != pybgsched.Hardware.Available:
+                    retval = 'hardware offline(%s): IONode %s' % (ion.getStateString(), ion.getLocation())
+                break
+            if retval != None:
+                break
+        return retval
 
     def _get_jobs_on_block(self, block_name):
         try:
@@ -1395,12 +1534,12 @@ class BGSystem (BGBaseSystem):
             system_script_forker.cleanup_children(removed_jobs)
             return
 
-
         while True:
 
             #acquire states: this is going to be the biggest pull from the control system.
             bf_start = time.time()
             hardware_fetch_time = Cobalt.Util.Timer()
+            io_hardware_fetch_time = Cobalt.Util.Timer()
             io_cache_time = Cobalt.Util.Timer()
             block_cache_time = Cobalt.Util.Timer()
             block_modification_time = Cobalt.Util.Timer()
@@ -1408,29 +1547,51 @@ class BGSystem (BGBaseSystem):
             self.bridge_in_error = False
             try:
                 #grab hardware state
-                #self.logger.debug("acquiring hardware state")
-                # Should this be locked?
                 hardware_fetch_time.start()
                 self.compute_hardware_vec = pybgsched.getComputeHardware()
-                hardware_fetch_time.stop()
-                self.logger.log(1, "hardware_fetch time: %f", hardware_fetch_time.elapsed_time)
             except:
-                self.logger.critical("Error communicating with the bridge to update hardware state information.")
+                self.logger.critical("Error communicating with the bridge to update hardware state information.", exc_info=True)
                 self.bridge_in_error = True
                 Cobalt.Util.sleep(5) # wait a little bit...
+            finally:
+                hardware_fetch_time.stop()
+                self.logger.log(1, "hardware_fetch time: %f", hardware_fetch_time.elapsed_time)
             try:
-                #self.logger.debug("acquiring block states")
+                io_hardware_fetch_time.start()
+                self.io_hardware_vec = pybgsched.getIOHardware()
+            except Exception:
+                self.logger.critical("Error communicating with the bridge to update IO hardware state information.", exc_info=True)
+                self.bridge_in_error = True
+                Cobalt.Util.sleep(5) # wait a little bit...
+            finally:
+                io_hardware_fetch_time.stop()
+                self.logger.log(1, "io_hardware_fetch time: %f", hardware_fetch_time.elapsed_time)
+            try:
                 #grab block states
                 block_cache_time.start()
                 bf = pybgsched.BlockFilter()
                 bg_cached_blocks = SWIG_vector_to_list(pybgsched.getBlocks(bf))
-                block_cache_time.stop()
-                self.logger.log(1, "block_cache time: %f", block_cache_time.elapsed_time)
             except Exception as e:
-                self.logger.critical("Error communicating with the bridge to update block information.")
+                self.logger.critical("Error communicating with the bridge to update block information.", exc_info=True)
                 self.logger.critical("%s", traceback.format_exc())
                 self.bridge_in_error = True
                 Cobalt.Util.sleep(5) # wait a little bit...
+            finally:
+                block_cache_time.stop()
+                self.logger.log(1, "block_cache time: %f", block_cache_time.elapsed_time)
+            try:
+                #grab io_block states
+                io_cache_time.start()
+                iobf = pybgsched.IOBlockFilter()
+                bg_cached_io_blocks = SWIG_vector_to_list(pybgsched.getIOBlocks(iobf))
+            except Exception as e:
+                self.logger.critical("Error communicating with the bridge to update io_block information.", exc_info=True)
+                self.logger.critical("%s", traceback.format_exc())
+                self.bridge_in_error = True
+                Cobalt.Util.sleep(5) # wait a little bit...
+            finally:
+                io_cache_time.stop()
+                self.logger.log(1, "io_cache time: %f", io_cache_time.elapsed_time)
             if self.bridge_in_error:
                 self.logger.critical("Cannot contact bridge, update suspended.")
                 #try again until we can acquire a link to the control system
@@ -1441,11 +1602,9 @@ class BGSystem (BGBaseSystem):
             io_cache_time.start()
             self.failed_io_midplane_cache = set()
             new_failed_io_block_names = set()
-            #self.io_link_to_mp_dict = {}
             new_io_link_to_mp_dict = {}
             failed_mp = pybgsched.StringVector()
             unconnected_io = pybgsched.StringVector()
-            io_comm_bridge_in_error = False
 
             for block_name in self._managed_blocks:
                 if self._blocks[block_name].block_type == 'pseudoblock':
@@ -1479,7 +1638,7 @@ class BGSystem (BGBaseSystem):
                                 # if for one reason or another we can't get links, this mp is a non-starter.
                                 if str(e) == "Data record(s) not found.":
                                     #if we have no links, then this midplane is definitely dead:
-                                    self.logger.warning("No IO links found for midplane: %s". mp)
+                                    self.logger.warning("No IO links found for midplane: %s", mp)
                                 else:
                                     self.logger.warning("Unknown RunntimeError encountered!")
                                 self.failed_io_midplane_cache.add(mp)
@@ -1507,6 +1666,7 @@ class BGSystem (BGBaseSystem):
 
             block_modification_time.start()
             try:
+
                 for block in bg_cached_blocks:
                     #find and update idle based on whether control system reads block as
                     #free or not.
@@ -1545,6 +1705,30 @@ class BGSystem (BGBaseSystem):
 
                 bp_cache = {}
 
+                #check to see if we have any new IO Blocks
+                new_io_blocks = []
+                missing_io_blocks = set(self._io_blocks.keys())
+                for io_block in bg_cached_io_blocks:
+                    if io_block.getName() not in missing_io_blocks:
+                        new_io_blocks.append(io_block)
+                    missing_io_blocks.discard(io_block.getName())
+
+                for io_block in new_io_blocks[:8]:
+                    #see below for why this is throtled.
+                    self.logger.info("new io block found: %s", io_block.getName())
+                    detailed_io_block_filter = pybgsched.IOBlockFilter()
+                    detailed_io_block_filter.setName(io_block.getName())
+                    detailed_io_block_filter.setExtendedInfo(True)
+                    new_io_block_info = pybgsched.getIOBlocks(detailed_io_block_filter)
+                    self._io_blocks.q_add([self._new_io_block_dict(new_io_block_info[0])])
+
+                for io_block_name in missing_io_blocks:
+                    self.logger.info("missing block removed: %s", io_block_name)
+                    del self._io_blocks[io_block_name]
+                    if io_block_name in self._managed_io_blocks:
+                        self._managed_io_blocks.discard(io_block_name)
+
+
                 # throttle the adding of new partitions so updating of
                 # machine state doesn't get bogged down
                 for block in new_blocks[:8]:
@@ -1554,7 +1738,6 @@ class BGSystem (BGBaseSystem):
                     detailed_block_filter.setName(block.getName())
                     detailed_block_filter.setExtendedInfo(True)
                     new_block_info = pybgsched.getBlocks(detailed_block_filter)
-                    #bridge_p = Cobalt.bridge.Partition.by_id(partition.id)
                     self._blocks.q_add([self._new_block_dict(new_block_info[0])])
                     b = self._blocks[block.getName()]
                     self._detect_wiring_deps(b)
@@ -1625,7 +1808,7 @@ class BGSystem (BGBaseSystem):
                 self.logger.log(1, 'cleanup_time: %f', cleanup_time.elapsed_time)
 
                 recompute_block_state_time.start()
-                self._recompute_block_state()
+                self._recompute_block_state(bg_cached_io_blocks)
                 recompute_block_state_time.stop()
                 self.logger.log(1,'recompute_block_state: %f', recompute_block_state_time.elapsed_time)
 
@@ -1710,10 +1893,11 @@ class BGSystem (BGBaseSystem):
         '''Keeping around for when we actually get kernel support added in for this system.
 
         '''
-        if self.config.get('kernel') != 'true':
-            return True
-        kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
-        return os.path.exists(kernel_dir)
+        raise NotImplementedError, "kernels not supported for Q yet"
+        #if self.config.get('kernel') != 'true':
+            #return True
+        #kernel_dir = "%s/%s" % (os.path.expandvars(self.config.get('bootprofiles')), kernel)
+        #return os.path.exists(kernel_dir)
 
     def _set_kernel(self, partition, kernel):
         '''Set the kernel to be used by jobs run on the specified partition
@@ -1727,12 +1911,12 @@ class BGSystem (BGBaseSystem):
 
         No real change needed here
         '''
-
-        if self.config.get('kernel') == 'true':
-            try:
-                self._set_kernel(partition, "default")
-            except:
-                logger.error("partition %s: failed to reset boot location" % (partition,))
+        raise NotImplementedError, "kernels not supported for Q yet"
+        #if self.config.get('kernel') == 'true':
+            #try:
+                #self._set_kernel(partition, "default")
+            #except:
+                #logger.error("partition %s: failed to reset boot location" % (partition,))
 
     def generate_xml(self):
         """This method produces an XML file describing the managed partitions, suitable for use with the simulator."""
@@ -1800,13 +1984,16 @@ class BGSystem (BGBaseSystem):
                         self.logger.info("%s: no preboot requested.  Starting job immediately. Block %s allocated for this job.",
                                 pgroup.label, pgroup.location[0])
                         #extend the resource resrevation to cover the job's runtime.
-                        reserve_status = self.reserve_resources_until(pgroup.location, float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
+                        reserve_status = self.reserve_resources_until(pgroup.location,
+                                float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid)
                         self._start_process_group(pgroup)
                     else:
-                        self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
+                        self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
+                                self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
                 else:
                     pgroup.forker = 'bg_runjob_forker'
-                    self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user, self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
+                    self.booter.initiate_boot(pgroup.location[0], pgroup.jobid, pgroup.user,
+                            self._blocks[pgroup.location[0]].subblock_parent, tag='internal')
         end_apg_timer = time.time()
         self.logger.debug("add_process_groups startup time: %s sec", (end_apg_timer - start_apg_timer))
         return process_groups
@@ -1834,12 +2021,16 @@ class BGSystem (BGBaseSystem):
         success_string -- an optional string. If not set, default boot failure logging message is used.
         '''
         if success_string == None:
-            success_string = "%s: Block %s for location %s successfully booted.  Starting task for job %s." % (pgroup.label, location, pgroup.location[0], pgroup.jobid)
+            success_string = "%s: Block %s for location %s successfully booted.  Starting task for job %s." % (pgroup.label,
+                    location, pgroup.location[0], pgroup.jobid)
         self.logger.info(success_string)
         cobalt_log_write(pgroup.cobalt_log_file, success_string, pgroup.user)
 
 
     def subblock_parent_cleaning(self, block_name):
+        '''determine if a subblock parent is in cleanup.
+
+        '''
         self._blocks_lock.acquire()
         retval = (self._blocks[self._blocks[block_name].subblock_parent].state in ['cleanup', 'cleanup-initiate'])
         self._blocks_lock.release()
@@ -1847,7 +2038,8 @@ class BGSystem (BGBaseSystem):
 
 
     def check_boot_status(self):
-        '''Query ongoing boots.  Once a boot has completed (or failed) take appropriate action for the job, depending on request origin.
+        '''Query ongoing boots.  Once a boot has completed (or failed) take appropriate action for the job, depending
+        on request origin.
 
         '''
         #if the boot is one of ours and it has completed ping start process groups
@@ -1871,7 +2063,8 @@ class BGSystem (BGBaseSystem):
                 #should only have one pgroup for jobid
                 if boot.state == 'complete': 
                     if pgroup == None:
-                        self.logger.error("Boot %s for location %s has no active pgroup.  Run Aborted.", boot.boot_id, boot.context.block_id)
+                        self.logger.error("Boot %s for location %s has no active pgroup.  Run Aborted.",
+                                boot.boot_id, boot.context.block_id)
                     else:
                         self._start_process_group(pgroup)
                 self.booter.reap(boot.context.block_id)
@@ -1883,22 +2076,19 @@ class BGSystem (BGBaseSystem):
            A block_loc of None means to not do any boot check or boot tracking cleanup.
 
         '''
-        booted_blocks = []
         #check the reservation, if we still have the block, then proceed to start, otherwise die here.
 
         if not self.reserve_resources_until(pgroup.location, 
                 float(pgroup.starttime) + 60*float(pgroup.walltime), pgroup.jobid):
-            self._fail_boot(pgroup, pgroup.location[0], 
-                    "%s: the internal reservation on %s expired; job has been terminated" % (pgroup.label,
-                        pgroup.location))
+            self.logger.warning("%s: the internal reservation on %s expired; job has been terminated",
+                    pgroup.label, pgroup.location)
             return
+
         cobalt_block = self._blocks[pgroup.location[0]]
         cobalt_block.current_reboots = 0
         try:
             self.logger.info("%s: Forking task on %s.",pgroup.label, pgroup.location[0])
             pgroup.start()
-            if block_loc != None:
-                booted_blocks.append(block_loc)
             if pgroup.head_pid == None:
                 self.logger.error("%s: process group failed to start using the %s component; releasing resources",
                         pgroup.label, pgroup.forker)
@@ -1909,29 +2099,20 @@ class BGSystem (BGBaseSystem):
             self.logger.error("%s: failed to contact the %s component", pgroup.label, pgroup.forker)
             # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
             # until the job has exhausted its maximum alloted time
-            #del self.process_groups[pgroup.id]
-            return #do we need to start the whole thing again (retry state from cqm?)
         except (xmlrpclib.Fault), e:
             self.logger.error("%s: a fault occurred while attempting to start the process group using the %s "
                     "component", pgroup.label, pgroup.forker)
             # do not release the resources; instead re-raise the exception and allow cqm to the opportunity to retry
             # until the job has exhausted its maximum alloted time
-            #del self.process_groups[process_group.id]
-            #raise
             pgroup.exit_status = 255
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
             self._mark_block_for_cleaning(block_loc, pgroup.jobid)
-            booted_blocks.append(block_loc)
-            return
         except:
             self.logger.error("%s: an unexpected exception occurred while attempting to start the process group "
                     "using the %s component; releasing resources", pgroup.label, pgroup.forker, exc_info=True)
             self.reserve_resources_until(pgroup.location, None, pgroup.jobid)
             self._mark_block_for_cleaning(block_loc, pgroup.jobid)
             pgroup.exit_status = 255
-        finally:
-            for block_id in booted_blocks:
-                del self.booting_blocks[block_id]
 
         return
 
@@ -2121,8 +2302,8 @@ class BGSystem (BGBaseSystem):
         '''Check to see if we have successfully initialized a block, if so, reap and report back that it is initialized
 
         '''
-        b = get_compute_block(location)
-        return b.getStatus() == pybgsched.Block.Initialized 
+        block = get_compute_block(location)
+        return block.getStatus() == pybgsched.Block.Initialized 
 
     @exposed
     def get_block_bgsched_status(self, location):
@@ -2137,32 +2318,34 @@ class BGSystem (BGBaseSystem):
 
     @exposed
     def initiate_proxy_free(self, location, user=None, jobid=None, resid=None):
-        '''Free a block on the user's behalf.  Require jobid or resid and user.  User must be submitting user, or user on reservation
-
-        The user is responsibile for makeing sure all jobs are dead on this block.  Once this has been invoked, no jobs will run on this block.
+        '''Free a block on the user's behalf.  Require jobid or resid and user.  User must be submitting user, or user on
+        reservation. The user is responsibile for makeing sure all jobs are dead on this block.  Once this has been invoked, no
+        jobs will run on this block.
 
         '''
-        #confirm, then poke control system to kill all jobs on block and free.
+        # confirm, then poke control system to kill all jobs on block and free.
         retval = False
         is_authorized = self._auth_user_for_block(location, user, jobid, resid)
         if is_authorized:
-            #mark the block as 'busy' so that we don't collide when rapidly booting blocks.
+            # mark the block as 'busy' so that we don't collide when rapidly booting blocks.
             self._blocks[location].state = 'cleanup'
             pybgsched.Block.initiateFree(location)
             pybgsched.Block.removeUser(location, user)
             self.logger.info('%s/%s: User requested free on block %s.', user, jobid, location)
-            #get the jobs on the location and all child blocks, and signal the jobs.  After 60 sec, the block should then go into Terminating and free itself.
+            # get the jobs on the location and all child blocks, and signal the jobs.  After 60 sec, the block should then go into
+            # Terminating and free itself.
 
             block_jobs = self._get_jobs_on_block(location)
             if len(block_jobs) != 0:
                 for job in block_jobs:
                     try:
-                        retval = pybgsched.runjob.kill(job.getID(), signal.SIGTERM)
+                        retval = pybgsched.kill(job.getID(), signal.SIGTERM)
                         if retval != 0:
                             raise RuntimeError, "bgsched::runjob::kill failed to kill job!"
                         self.logger.info("killing backend job: %s for block %s", job.getId(), location)
-                    except:
-                        self.logger.critical("Unknown Error while killing backend job: %s for block %s, will retry.", job.getID(), location, exc_info=True)
+                    except Exception:
+                        self.logger.critical("Unknown Error while killing backend job: %s for block %s, will retry.", job.getID(),
+                                location, exc_info=True)
 
             retval = True
         return retval
@@ -2204,6 +2387,9 @@ class BGSystem (BGBaseSystem):
 
         '''
         def cmp_blocks(blk1, blk2):
+            '''block comparison function: order coarsely by size, and then by name.
+
+            '''
             retval = 0
             if blk1.size > blk2.size:
                 retval =  1
@@ -2252,3 +2438,105 @@ class BGSystem (BGBaseSystem):
                 return False
         return True
 
+    @exposed
+    def initiate_io_boot(self, io_locations, user=None, tag=None):
+        '''Initiate a boot of an ION block.  Returns once boot request has been placed, and is asynchrynous.
+        Raises: ValueError if invalid io_locations
+
+        '''
+        if not set(io_locations).issubset(set(self._io_blocks.keys())):
+            raise ValueError, "Invalid IO Block name in specified locaitons"
+        for io_location in io_locations:
+            self._blocks_lock.acquire()
+            try:
+                self.booter.initiate_io_boot(io_location, user, tag)
+            except Exception:
+                self.logger.critical("Unexpected error from initiate_io_boot.")
+                raise
+            finally:
+                self._blocks_lock.release()
+        return
+
+
+    @exposed
+    def initiate_io_free(self, io_locations, force=False, user=None):
+        '''Remote-initiate the freeing of an IO block.  Once this starts, make sure to mark all computes as offline.
+
+        if force is True, also mark all connected computes for cleaning.
+
+        if false returned error occurred, check logs for details
+        '''
+        for io_location in io_locations:
+            self._blocks_lock.acquire()
+            try:
+                self.free_io_block(io_location, force, user)
+                self.logger.info("IO Block free initiated on %s by user %s", io_location ,user)
+            except ValueError:
+                self.logger.warning("unable to free IO Block for locaiton %s", io_location)
+                return False
+            finally:
+                self._blocks_lock.release()
+        return True
+
+    def free_io_block(self, io_location, force=False, user=None):
+
+        '''Free an IO block.  Also mark that rebooting is occuring.
+
+        '''
+        if io_location not in self._io_blocks.keys():
+            self.logger.warning("IO Block location: %s not found in list of managed IO Blocks.", io_location)
+            raise ValueError("IO Block location: %s not found in list of managed IO Blocks." % io_location)
+        io_block = self._io_blocks[io_location]
+        try:
+            connected_blocks = pybgsched.IOBlock.getConnectedComputeBlocks(io_location)
+            if connected_blocks.size() !=0 and force == False:
+                self.logger.warning("IO Block location: %s free failed due to connected compute blocks.", io_location)
+                raise ValueError("Attempting to free an IO block with conencted computes and no force flag.  Free at %s failed."\
+                        % io_location)
+            for connected_block in connected_blocks:
+                #Clean if we have force set.
+                self._mark_block_for_cleaning(connected_block, None, user)
+            io_block.block_computes_for_reboot = True
+            #will complete once underlying blocks have freed
+            pybgsched.IOBlock.initiateFree(io_location)
+            self.logger.info("IOBlock free initiated on %s", io_location)
+        except RuntimeError:
+            self.logger.critical("Scheduler interface failed to free IO Block %s.", io_location)
+            self.logger.debug("Traceback follows:", exc_info=True)
+        return True
+
+    @exposed
+    def set_autoreboot(self, io_locations, user):
+        ret_locs = []
+        for location in io_locations:
+            try:
+                self._io_blocks[location].autoreboot = True
+                ret_locs.append(location)
+            except KeyError:
+                pass
+        self.logger.warning('User %s setting autoreboot to True for IO Blocks: %s', user, ", ".join(ret_locs))
+        return ret_locs
+
+    @exposed
+    def unset_autoreboot(self, io_locations, user):
+        ret_locs = []
+        for location in io_locations:
+            try:
+                self._io_blocks[location].autoreboot = False
+                ret_locs.append(location)
+            except KeyError:
+                pass
+        self.logger.warning('User %s setting autoreboot to False for IO Blocks: %s', user, ", ".join(ret_locs))
+        return ret_locs
+
+    @exposed
+    def enable_io_autoreboot(self):
+        self.io_autoreboot_enabled = True
+
+    @exposed
+    def disable_io_autoreboot(self):
+        self.io_autoreboot_enabled = False
+
+    @exposed
+    def get_io_autoreboot_status(self):
+        return self.io_autoreboot_enabled

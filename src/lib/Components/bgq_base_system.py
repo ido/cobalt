@@ -11,7 +11,6 @@ BGBaseSystem -- base system component
 
 import sys
 import time
-import xmlrpclib
 import copy
 import Cobalt
 import re
@@ -24,6 +23,8 @@ from Cobalt.Components.base import Component, exposed, automatic, query, locking
 import thread, ConfigParser
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.DataTypes.ProcessGroup import ProcessGroupDict
+from Cobalt.Components.bgq_io_block import IOBlock, IOBlockDict
+from Cobalt.Components.bgq_io_hardware import IODrawer, IONode
 
 
 __all__ = [
@@ -393,10 +394,10 @@ class Block (Data):
     fields = Data.fields + [
         "tag", "scheduled", "name", "functional",
         "queue", "size", "parents", "children", "state", 
-        "backfill_time", "node_cards", "nodes", "switches", "io_links",
+        "backfill_time", "node_cards", "nodes", "switches", "io_nodes",
         "reserved_until", "reserved_by", "used_by", "cleanup_pending",
         "freeing", "backfill_time", "draining", "subblock_parent",
-        "block_type", "corner_node", "extents", 'wire_list',
+        "block_type", "corner_node", "extents", 'wire_list', 'io_node_list',
     ]
 
     def __init__ (self, spec):
@@ -417,7 +418,7 @@ class Block (Data):
         self.passthrough_node_cards = set(spec.get("passthrough_node_cards", []))
         self.nodes = set(spec.get("nodes", []))
         self.switches = spec.get("switches", [])
-        self.io_links = spec.get("io_links", [])
+        self.io_nodes = set(spec.get("io_nodes", []))
         self.reserved_until = False
         self.reserved_by = None
         self.used_by = None
@@ -521,6 +522,7 @@ class Block (Data):
     children = property(_get_childeren)
 
     node_list = property(lambda self: list(self.nodes))
+    io_node_list = property(lambda self: list(self.io_nodes))
     node_card_list = property(lambda self: list(self.node_cards))
     midplane_list = property(lambda self: list(self.midplanes))
     wire_list = property(lambda self: list(self.wires))
@@ -701,6 +703,11 @@ class BGBaseSystem (Component):
     update_relatives -- should be called when blocks are added and removed from the managed list
 
     *_partitions are also exposed so that external components don't have to be rewritten.
+    add_io_blocks -- tell the system to manage io_blocks
+    get_io_blocks -- retrieve io_blocks and their information
+    initiate_proxy_boot -- prompt the system component to start booting a compute block
+    set_autoreboot -- set autoreboot flags for IO blocks
+
 
     Note: This class uses Python's threading module.
 
@@ -710,6 +717,8 @@ class BGBaseSystem (Component):
         Component.__init__(self, *args, **kwargs)
         self._blocks = BlockDict()
         self._managed_blocks = set()
+        self._io_blocks = IOBlockDict()
+        self._managed_io_blocks = set()
         self.process_groups = BGProcessGroupDict()
         self._blocks_lock = thread.allocate_lock()
 
@@ -720,54 +729,84 @@ class BGBaseSystem (Component):
         self.offline_blocks = []
 
     def _get_blocks (self):
+        '''return a BlockDcit of Blocks if the blocks are in the managed blocks list
+
+        '''
         return BlockDict([
-            (block.name, block) for block in self._blocks.itervalues()
-            if block.name in self._managed_blocks
-        ])
+            (block.name, block) for block in self._blocks.itervalues() if block.name in self._managed_blocks])
 
     blocks = property(_get_blocks)
 
-    def add_blocks (self, specs, user_name=None):
+    def _get_io_blocks(self):
+        '''Return a IOBlockDict of IOBlock objects that are in the list of managed IO Blocks..
+
+        '''
+        return IOBlockDict([
+            (io_block.name, io_block) for io_block in self._io_blocks.itervalues() if io_block.name in self._managed_io_blocks])
+    io_blocks = property(_get_io_blocks)
+
+    def add_to_managed_blocks (self, specs, user_name, block_dict, managed_set):
         """Add a block to the managed block list.
 
         """
-        self.logger.info("%s called add_blocks(%r)", user_name, specs)
-        self.logger.info("managed_blocks: %s", self._managed_blocks)
+        self.logger.info("%s called add_to_managed_blocks(%r)", user_name, specs)
+        self.logger.log(1, "managed_blocks: %s", managed_set)
         specs = [{'name':spec.get("name")} for spec in specs]
+        self.logger.debug("%s", specs)
+        self.logger.debug("%s", block_dict.q_get([{'name':'Q0G-I0-384'},]))
         self._blocks_lock.acquire()
         try:
-            blocks = [
-                block for block in self._blocks.q_get(specs)
-                if block.name not in self._managed_blocks
-            ]
-        except:
+            blocks = [block for block in block_dict.q_get(specs) if block.name not in managed_set]
+        except Exception:
             blocks = []
-            self.logger.error("error in add_blocks", exc_info=True)
-        self._blocks_lock.release()
-
-        self._managed_blocks.update([
+            self.logger.error("error in add_to_managed_blocks", exc_info=True)
+        managed_set.update([
             block.name for block in blocks
         ])
+        self._blocks_lock.release()
+        self.logger.debug("%s", [block.name for block in blocks])
+        self.logger.debug("%s", [b.name for b in block_dict.values()])
+        self.logger.debug("%s", managed_set)
         self.update_relatives()
-        return blocks
-    add_block = exposed(query(add_blocks))
-    add_partitions = exposed(query(add_blocks))
+        return [block.name for block in blocks]
 
-    def get_blocks (self, specs):
-        """Query blocks on simulator.
+    @exposed
+    def add_blocks (self, specs, user_name=None):
+        '''add a block to the managed_blocks list.'''
+        return self.add_to_managed_blocks(specs, user_name, self._blocks, self._managed_blocks)
+    add_partitions = exposed(add_blocks) #for backwards API compatiblity --PMR
+
+    @exposed
+    def add_io_blocks(self, specs, user_name=None):
+        '''add a block to the managed_io_blocks list.'''
+        return self.add_to_managed_blocks(specs, user_name, self._io_blocks, self._managed_io_blocks)
+
+    def _get_block_info (self, specs, block_dict):
+        """Get general information on a block
 
         """
         self._blocks_lock.acquire()
         try:
-            blocks = self.blocks.q_get(specs)
-        except:
+            blocks = block_dict.q_get(specs)
+        except Exception:
             blocks = []
-            self.logger.error("error in get_blocks", exc_info=True)
+            self.logger.error("error in _get_blocks_info", exc_info=True)
         self._blocks_lock.release()
 
         return blocks
-    get_blocks = exposed(query(get_blocks))
+
+    @query
+    @exposed
+    def get_blocks (self, specs):
+        '''Fetch block data on managed compute blocks'''
+        return self._get_block_info(specs, self.blocks)
     get_partitions = exposed(query(get_blocks))
+
+    @query
+    @exposed
+    def get_io_blocks(self, specs):
+        '''Fetch block data on managed IO blocks'''
+        return self._get_block_info(specs, self.io_blocks)
 
     def verify_locations(self, location_list):
         """Providing a system agnostic interface for making sure a 'location string' is valid
@@ -777,30 +816,45 @@ class BGBaseSystem (Component):
         return [ p.name for p in parts ]
     verify_locations = exposed(verify_locations)
 
+
+    def del_from_managed_blocks(self, specs, block_dict, managed_list):
+        '''Remove blocks from a managed list of blocks. Works for IO and CN blocks'''
+        self._blocks_lock.acquire()
+        try:
+            blocks = [
+                block for block in block_dict.q_get(specs)
+                if block.name in managed_list
+            ]
+        except:
+            blocks = []
+            self.logger.error("error in del_blocks", exc_info=True)
+
+        managed_list -= set( [block.name for block in blocks] )
+        self._blocks_lock.release()
+
+        self.update_relatives()
+        return blocks
+
+    @query
+    @exposed
     def del_blocks (self, specs, user_name=None):
         """Remove blocks from the list of managed blocks
 
         """
         self.logger.info("%s called del_blocks(%r)", user_name, specs)
+        return self.del_from_managed_blocks(specs, self._blocks, self._managed_blocks)
 
-        self._blocks_lock.acquire()
-        try:
-            blocks = [
-                block for block in self._blocks.q_get(specs)
-                if block.name in self._managed_blocks
-            ]
-        except:
-            blocks = []
-            self.logger.error("error in del_blocks", exc_info=True)
-        self._blocks_lock.release()
-
-        self._managed_blocks -= set( [block.name for block in blocks] )
-        import copy
-
-        self.update_relatives()
-        return blocks
-    del_blocks = exposed(query(del_blocks))
     del_partitions = exposed(query(del_blocks))
+
+    @query
+    @exposed
+    def del_io_blocks (self, specs, user_name=None):
+        """Remove blocks from the list of managed IO blocks
+
+        """
+        self.logger.info("%s called del_io_blocks(%r)", user_name, specs)
+        return self.del_from_managed_blocks(specs, self._io_blocks, self._managed_io_blocks)
+
 
     def set_blocks (self, specs, updates, user_name=None):
         """Update random attributes on matching blocks
@@ -975,8 +1029,8 @@ class BGBaseSystem (Component):
 
         '''
         self.logger.info("%s unfailing block %s", user_name, specs)
-        block = self.get_blocks(specs)
-        if not parts:
+        blocks = self.get_blocks(specs)
+        if not blocks:
             ret = "no matching blocks found\n"
         else:
             ret = ""
@@ -985,7 +1039,7 @@ class BGBaseSystem (Component):
                 ret += "unfailing %s\n" % b.name
                 b.admin_failed = False
             else:
-                ret += "%s is not currently failing\n" % p.name
+                ret += "%s is not currently failing\n" % b.name
 
         return ret
     unfail_blocks = exposed(unfail_blocks)
@@ -1519,11 +1573,30 @@ class BGBaseSystem (Component):
                 retval = False
         return retval
 
+    @query
     @exposed
-    def initiate_proxy_boot(self, location, user=None, jobid=None):
+    def initiate_proxy_boot(self, location, user=None, jobid=None, resid=None):
         raise NotImplementedError, "Proxy booting is not supported for this configuration."
 
+    @query
     @exposed
-    def initiate_proxy_free(self, location, user=None, jobid=None):
+    def initiate_proxy_free(self, location, user=None, jobid=None, resid=None):
         raise NotImplementedError, "Proxy freeing is not supported for this configuration."
 
+    @exposed
+    def set_autoreboot(self, io_locations, user):
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."
+
+    @exposed
+    def unset_autoreboot(self, io_locations, user):
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."
+
+    @exposed
+    def enable_io_autoreboot(self):
+        '''Enable ION autorebooting on the BG/Q'''
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."
+
+    @exposed
+    def disable_io_autoreboot(self):
+        '''Disable ION autorebooting on the BG/Q'''
+        raise NotImplementedError, "ION Autoreboot not supported for this configuration."
