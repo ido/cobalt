@@ -445,9 +445,12 @@ class CqmStub(object):
         logmsg("\nSET_JOBS\n")
         return change_jobs(ojoblist,newjob,user)
 
-    def adjust_job_scores(self,ojoblist, newjob,user):
+    def adjust_job_scores(self,ojoblist, newscore,user):
         logmsg("\nADJUST_JOB_SCORES\n")
-        return change_jobs(ojoblist,newjob,user)
+        logdiclist(ojoblist)
+        logmsg('new score: %s' % str(newscore))
+        jobids = [j['jobid'] for j in ojoblist]
+        return jobids
 
     def get_jobs(self,job_specs):
         if len(job_specs) == 0: return

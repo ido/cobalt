@@ -324,6 +324,20 @@ def adjust_job_scores(spec, new_score, whoami):
         sys.exit(1)
     return response
 
+def set_scores(score, jobids, user):
+    """
+    reset the score of a job to zero to defer it.
+    """
+    specs = [{'jobid':jobid} for jobid in jobids]
+
+    response = adjust_job_scores(specs, str(score), user)
+
+    if not response:
+        logger.info("no jobs matched")
+    else:
+        dumb = [str(_id) for _id in response]
+        logger.info("updating scores for jobs: %s" % ", ".join(dumb))
+
 def define_user_utility_functions(whoami):
     """
     define user utility function
@@ -989,6 +1003,17 @@ def cb_gtzero(option,opt_str,value,parser,*args):
         logger.error(opt_str + " is " + str(value) + " which is greater <= to zero")
         sys.exit(1)
 
+    setattr(parser.values,option.dest,value) # set the option
+
+def cb_score(option,opt_str,value,parser,*args):
+    """
+    Validate the value entered is greater than zero
+    """
+    try:
+        _value = float(value)
+    except:
+        logger.error('%s is %s which is not number value' % (opt_str,value))
+        sys.exit(1)
     setattr(parser.values,option.dest,value) # set the option
 
 def cb_time(option,opt_str,value,parser,*args):

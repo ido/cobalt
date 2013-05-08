@@ -337,10 +337,10 @@ def test_schedctl_combo_5():
 
     """
 
-    args      = """--score 1.1 --stop"""
+    args      = """--score 1.1 --stop 1 2 3 4"""
 
     cmdout    = \
-"""At least one jobid must be supplied
+"""Option combinations not allowed with: stop, adjust/dep_frac option(s)
 """
 
     stubout   = ''
@@ -386,10 +386,10 @@ def test_schedctl_combo_6():
 
     """
 
-    args      = """--inherit 1.1 --start"""
+    args      = """--inherit 1.1 --start 1 2 3 4"""
 
     cmdout    = \
-"""At least one jobid must be supplied
+"""Option combinations not allowed with: start, adjust/dep_frac option(s)
 """
 
     stubout   = ''
@@ -447,6 +447,69 @@ def test_schedctl_combo_7():
 
     expected_results = ( 
                        256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_combo_8():
+    """
+    schedctl test run: combo_8
+        Old Command Output:
+          updating scores for jobs: 1, 2, 3, 4
+          updating inheritance fraction for jobs: 1, 2, 3, 4
+          
+
+    """
+
+    args      = """--inherit 1.1 --score 1.1 1 2 3 4"""
+
+    cmdout    = \
+"""updating scores for jobs: 1, 2, 3, 4
+updating inheritance fraction for jobs: 1, 2, 3, 4
+"""
+
+    stubout   = \
+"""
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+jobid:4
+new score: 1.1
+
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid:2
+jobid:3
+jobid:4
+
+New Job Info:
+
+dep_frac:1.1
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -824,6 +887,491 @@ def test_schedctl_save_2():
 
     expected_results = ( 
                        256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_score_1():
+    """
+    schedctl test run: score_1
+        Old Command Output:
+          updating scores for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--score 0 1 2 3"""
+
+    cmdout    = \
+"""updating scores for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+new score: 0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_score_2():
+    """
+    schedctl test run: score_2
+        Old Command Output:
+          updating scores for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--score 1 1 2 3"""
+
+    cmdout    = \
+"""updating scores for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+new score: 1
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_score_3():
+    """
+    schedctl test run: score_3
+        Old Command Output:
+          updating scores for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--score 1.0 1 2 3"""
+
+    cmdout    = \
+"""updating scores for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+new score: 1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_score_4():
+    """
+    schedctl test run: score_4
+        Old Command Output:
+          updating scores for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--score -1.0 1 2 3"""
+
+    cmdout    = \
+"""updating scores for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+new score: -1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_score_5():
+    """
+    schedctl test run: score_5
+        Old Command Output:
+          updating scores for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--score +1.0 1 2 3"""
+
+    cmdout    = \
+"""updating scores for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+new score: +1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_inherit_1():
+    """
+    schedctl test run: inherit_1
+        Old Command Output:
+          updating inheritance fraction for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--inherit 0 1 2 3"""
+
+    cmdout    = \
+"""updating inheritance fraction for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid:2
+jobid:3
+
+New Job Info:
+
+dep_frac:0.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_inherit_2():
+    """
+    schedctl test run: inherit_2
+        Old Command Output:
+          updating inheritance fraction for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--inherit 1 1 2 3"""
+
+    cmdout    = \
+"""updating inheritance fraction for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid:2
+jobid:3
+
+New Job Info:
+
+dep_frac:1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_inherit_3():
+    """
+    schedctl test run: inherit_3
+        Old Command Output:
+          updating inheritance fraction for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--inherit 1.0 1 2 3"""
+
+    cmdout    = \
+"""updating inheritance fraction for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid:2
+jobid:3
+
+New Job Info:
+
+dep_frac:1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_inherit_4():
+    """
+    schedctl test run: inherit_4
+        Old Command Output:
+          updating inheritance fraction for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--inherit -1.0 1 2 3"""
+
+    cmdout    = \
+"""updating inheritance fraction for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid:2
+jobid:3
+
+New Job Info:
+
+dep_frac:-1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('schedctl.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_schedctl_inherit_5():
+    """
+    schedctl test run: inherit_5
+        Old Command Output:
+          updating inheritance fraction for jobs: 1, 2, 3
+          
+
+    """
+
+    args      = """--inherit +1.0 1 2 3"""
+
+    cmdout    = \
+"""updating inheritance fraction for jobs: 1, 2, 3
+"""
+
+    stubout   = \
+"""
+SET_JOBS
+
+
+Original Jobs:
+
+user: gooduser
+jobid:1
+jobid:2
+jobid:3
+
+New Job Info:
+
+dep_frac:1.0
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
