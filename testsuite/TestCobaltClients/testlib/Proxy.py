@@ -176,6 +176,10 @@ class SystemStub(object):
         logmsg("\nGET_BLOCKS\n")
         return get_parts(plist)
 
+    def get_io_blocks(self, plist):
+        logmsg("\nGET_IO_BLOCKS\n")
+        return get_parts(plist)
+
     def verify_locations(self,location_list):
         logmsg("\nVERIFY_LOCATIONS\n")
         logmsg('location list: '+str(location_list))
