@@ -2713,7 +2713,7 @@ def test_qalter_invalid_option():
     args      = """-v -m j@gmail.com"""
 
     cmdout    = \
-"""Usage: qalter.py [options] <jobids1> ... <jobidsN>
+"""Usage: qalter.py [options] <jobid1> ... <jobidN>
 
 qalter.py: error: no such option: -m
 """
@@ -4829,6 +4829,138 @@ user:dog
 user_hold:False
 user_list:['gooduser']
 walltime:15
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       0, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qalter.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qalter_defer_1():
+    """
+    qalter test run: defer_1
+
+    """
+
+    args      = """--defer"""
+
+    cmdout    = \
+"""No Jobid(s) given
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('qalter.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_qalter_defer_2():
+    """
+    qalter test run: defer_2
+
+    """
+
+    args      = """--defer 1 2 3 4 5"""
+
+    cmdout    = \
+"""get_config_option: Option filters not found in section [cqm]
+updating scores for jobs: 1, 2, 3, 4, 5
+"""
+
+    stubout   = \
+"""
+GET_JOBS
+
+is_active:*
+jobid:1
+nodes:*
+notify:*
+procs:*
+project:*
+queue:*
+tag:job
+user:gooduser
+walltime:*
+is_active:*
+jobid:2
+nodes:*
+notify:*
+procs:*
+project:*
+queue:*
+tag:job
+user:gooduser
+walltime:*
+is_active:*
+jobid:3
+nodes:*
+notify:*
+procs:*
+project:*
+queue:*
+tag:job
+user:gooduser
+walltime:*
+is_active:*
+jobid:4
+nodes:*
+notify:*
+procs:*
+project:*
+queue:*
+tag:job
+user:gooduser
+walltime:*
+is_active:*
+jobid:5
+nodes:*
+notify:*
+procs:*
+project:*
+queue:*
+tag:job
+user:gooduser
+walltime:*
+
+ADJUST_JOB_SCORES
+
+jobid:1
+jobid:2
+jobid:3
+jobid:4
+jobid:5
+new score: 0
 """
 
     stubout_file = "stub.out"

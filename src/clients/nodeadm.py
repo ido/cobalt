@@ -53,27 +53,11 @@ def validate_args(parser):
         client_utils.logger.error("nodeadm is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
 
-    optc = 0
-    errmsg = '' # init error msessage to empty string
     # Check mutually exclusive options
-    if opt_count > 1:
-        if parser.options.down != None: 
-            errmsg += ' down'
-            optc += 1
-        if parser.options.up != None: 
-            errmsg += ' up'
-            optc += 1
-        if parser.options.list != None: 
-            errmsg += ' queue'
-            optc += 1
-        if parser.options.list != None: 
-            errmsg += ' list'
-            optc += 1
+    mutually_exclusive_option_lists = [['down', 'up', 'list', 'queue']]
 
-    if optc > 1:
-        errmsg = 'Option combinations not allowed with: %s option(s)' % errmsg[1:].replace(' ',', ')
-        client_utils.logger.error(errmsg)
-        sys.exit(1)
+    if opt_count > 1:
+        client_utils.validate_conflicting_options(parser, mutually_exclusive_option_lists)
 
 def main():
     """

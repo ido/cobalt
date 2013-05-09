@@ -2,7 +2,7 @@
 """
 Cobalt qalter command
 
-Usage: %prog [options] <jobids1> ... <jobidsN>
+Usage: %prog [options] <jobid1> ... <jobidN>
 version: "%prog " + __revision__ + , Cobalt  + __version__
 
 OPTIONS DEFINITIONS:
@@ -15,6 +15,7 @@ Option with no values:
 '--run_project',dest='run_project',help='set run project flag for jogids in args',action='store_true'
 '--enable_preboot',dest='script_preboot',help='enable script preboot',action='store_true'
 '--disable_preboot',dest='script_preboot',help='enable script preboot',action='store_false'
+'--defer',dest='defer', help='defer jobs in args for current user',action='store_true'
 
 Option with values:
 
@@ -50,7 +51,7 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $' # TBC may go away.
 __version__ = '$Version$'
 
-def validate_args(parser,opt_count,user):
+def validate_args(parser, opt_count):
     """
     Validate qalter arguments
     """
@@ -61,13 +62,57 @@ def validate_args(parser,opt_count,user):
 
     # get jobids from the argument list
     jobids = client_utils.validate_jobid_args(parser)
-    return [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*',
-             'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
 
-def get_jobdata(jobs,parser):
+    return jobids
+
+def options_disallowed(parser):
+    """
+    This function will check the options against running jobs
+    """
+    if parser.options.nodes != None:
+        client_utils.logger.error( "cannot change node count of a running job")
+        _quit = True
+    if parser.options.procs != None:
+        client_utils.logger.error( "cannot change processor count of a running job")
+        _quit = True
+    if parser.options.project != None:
+        _quit = True
+    if parser.options.notify != None:
+        _quit = True
+    if parser.options.mode != None:
+        client_utils.logger.error( "cannot change mode of a running job")
+        _quit = True
+    if parser.options.walltime != None:
+        client_utils.logger.error( "cannot change wall time of a running job")
+        _quit = True
+    if parser.options.errorpath != None:
+        client_utils.logger.error( "cannot change the error path of a running job")
+        _quit = True
+    if parser.options.outputpath != None:
+        client_utils.logger.error( "cannot change the output path of a running job")
+        _quit = True
+    if parser.options.all_dependencies != None:
+        _quit = True
+    if parser.options.attrs != None:
+        client_utils.logger.error( "cannot change the attributes of a running job")
+        _quit = True
+    if parser.options.geometry != None:
+        client_utils.logger.error( "cannot change the node geometry of a running job")
+        _quit = True
+    if parser.option.defer != None:
+        client_utils.logger.error( "cannot change the score of a running job")
+        _quit = True
+    return _quit
+
+
+def get_jobdata(jobids, parser, user):
     """
     Will get the jobdata for the specified jobs
     """
+
+    jobs = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*',
+             'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
+
     jobdata = client_utils.get_jobs(jobs)
     job_running = False
 
@@ -78,42 +123,13 @@ def get_jobdata(jobs,parser):
 
     _quit = False
     if job_running:
-        if parser.options.nodes != None:
-            client_utils.logger.error( "cannot change node count of a running job")
-            _quit = True
-        if parser.options.procs != None:
-            client_utils.logger.error( "cannot change processor count of a running job")
-            _quit = True
-        if parser.options.project != None:
-            _quit = True
-        if parser.options.notify != None:
-            _quit = True
-        if parser.options.mode != None:
-            client_utils.logger.error( "cannot change mode of a running job")
-            _quit = True
-        if parser.options.walltime != None:
-            client_utils.logger.error( "cannot change wall time of a running job")
-            _quit = True
-        if parser.options.errorpath != None:
-            client_utils.logger.error( "cannot change the error path of a running job")
-            _quit = True
-        if parser.options.outputpath != None:
-            client_utils.logger.error( "cannot change the output path of a running job")
-            _quit = True
-        if parser.options.all_dependencies != None:
-            _quit = True
-        if parser.options.attrs != None:
-            client_utils.logger.error( "cannot change the attributes of a running job")
-            _quit = True
-        if parser.options.geometry != None:
-            client_utils.logger.error( "cannot change the node geometry of a running job")
-            _quit = True
 
-        if _quit:
+        if options_disallowed(parser):
             sys.exit(1)
+
     return jobdata
 
-def update_time(orig_job,new_spec,parser):
+def update_time(orig_job, new_spec, parser):
     """
     Update the new time. This will do delta time if specified.
     """
@@ -140,7 +156,7 @@ def update_time(orig_job,new_spec,parser):
     else:         # change to an absolute time
         new_spec['walltime'] = minutes
 
-def update_procs(spec,parser):
+def update_procs(spec, parser):
     """
     Will update 'proc' according to what system we are running on given the number of nodes
     """
@@ -159,6 +175,21 @@ def update_procs(spec,parser):
         else:
             spec['procs'] = spec['nodes']
     
+def do_some_logging(job, orig_job, parser):
+    """
+    do some logging
+    """
+    # do some logging
+    for key in job:
+        if not orig_job.has_key(key):
+            if key == "all_dependencies":
+                if parser.options.all_dependencies != None:
+                    client_utils.logger.info("dependencies set to %s" % ":".join(job[key]))
+            else:
+                client_utils.logger.info("%s set to %s" % (key, job[key]))
+        elif job[key] != orig_job[key]:
+            client_utils.logger.info("%s changed from %s to %s" % (key, orig_job[key], job[key]))
+
 def main():
     """
     qalter main
@@ -173,44 +204,45 @@ def main():
     opts     = {} # old map
     opt2spec = {}
 
-    dt_allowed = True  # delta time allowed
-    add_user   = True  # add current user to the list
-    seconds    = False # do not convert to seconds
-
     # list of callback with its arguments
     callbacks = [
         # <cb function>           <cb args>
         [ cb_debug               , () ],
         [ cb_gtzero              , () ],
         [ cb_nodes               , () ],
-        [ cb_time                , (dt_allowed,seconds) ],
+        [ cb_time                , (True, False) ], # delta time allowed and do not convert to seconds
         [ cb_upd_dep             , () ],
         [ cb_attrs               , () ],
-        [ cb_user_list           , (opts,add_user) ],
+        [ cb_user_list           , (opts, True) ], # add user
         [ cb_geometry            , (opts,) ],
         [ cb_mode                , () ]]
 
     # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
 
-    parser = ArgParse(opt_def,callbacks)
+    parser = ArgParse(opt_def, callbacks)
 
     user = client_utils.getuid()
 
     # Set required default values: None
 
     parser.parse_it() # parse the command line
-    opt_count = client_utils.get_options(spec,opts,opt2spec,parser)
+    opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
 
     # if run_project set then set run users to current user
     if parser.options.run_project != None:
         spec['user_list'] = [user]
 
-    jobs = validate_args(parser,opt_count,user)
+    jobids  = validate_args(parser, opt_count)
     filters = client_utils.get_filters()
 
-    jobdata = get_jobdata(jobs,parser)
+    jobdata = get_jobdata(jobids, parser, user)
+
+    if parser.options.defer != None:
+        client_utils.set_scores(0, jobids, user)
+        if opt_count == 1:
+            return
 
     response = []
     # for every job go update the spec info
@@ -220,29 +252,19 @@ def main():
         new_spec['jobid'] = job['jobid']
 
         if parser.options.walltime != None:
-            update_time(job,new_spec,parser)
+            update_time(job, new_spec, parser)
         if parser.options.nodes != None:
-            update_procs(new_spec,parser)
+            update_procs(new_spec, parser)
         if parser.options.geometry != None:
-            client_utils.validate_geometry(opts['geometry'],job['nodes'])
+            client_utils.validate_geometry(opts['geometry'], job['nodes'])
 
         del job['is_active']
         orig_job = job.copy()
         job.update(new_spec)
 
-        client_utils.process_filters(filters,job)
-        response = client_utils.set_jobs([orig_job],job,user)
-
-        # do some logging
-        for key in job:
-            if not orig_job.has_key(key):
-                if key == "all_dependencies":
-                    if parser.options.all_dependencies != None:
-                        client_utils.logger.info("dependencies set to %s" % ":".join(job[key]))
-                else:
-                    client_utils.logger.info("%s set to %s" % (key, job[key]))
-            elif job[key] != orig_job[key]:
-                client_utils.logger.info("%s changed from %s to %s" % (key, orig_job[key], job[key]))
+        client_utils.process_filters(filters, job)
+        response = client_utils.set_jobs([orig_job], job, user)
+        do_some_logging(job, orig_job, parser)
 
     if not response:
         client_utils.logger.error("Failed to match any jobs or queues")
@@ -256,5 +278,5 @@ if __name__ == '__main__':
     except SystemExit:
         raise
     except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
         raise

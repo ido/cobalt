@@ -118,12 +118,14 @@ def get_parts(plist):
             for p2 in PARTS:
                 parts.append({'name':p2,'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
                               'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
-                              'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                              'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK', 
+                              'block_computes_for_reboot': True, 'autoreboot' : True} )
                 i += 1
             break
         parts.append({'name':p1['name'],'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
                       'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
-                      'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                      'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK',
+                      'block_computes_for_reboot': True, 'autoreboot' : True} )
         i += 1
     return parts
 
@@ -176,6 +178,10 @@ class SystemStub(object):
         logmsg("\nGET_BLOCKS\n")
         return get_parts(plist)
 
+    def get_io_blocks(self, plist):
+        logmsg("\nGET_IO_BLOCKS\n")
+        return get_parts(plist)
+
     def verify_locations(self,location_list):
         logmsg("\nVERIFY_LOCATIONS\n")
         logmsg('location list: '+str(location_list))
@@ -187,8 +193,20 @@ class SystemStub(object):
         logdiclist(parts)
         return genplist(parts)
 
+    def add_io_blocks(self, parts, user_name=None):
+        logmsg("\nADD_IO_BLOCKS\n")
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
+
     def del_partitions (self, parts, user_name=None):
         logmsg("\nDEL_PARTITION\n")
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
+
+    def del_io_blocks(self, parts, user_name=None):
+        logmsg("\nDEL_IO_BLOCKS\n")
         logmsg('user name: %s' % str(user_name))
         logdiclist(parts)
         return genplist(parts)
@@ -287,6 +305,44 @@ class SystemStub(object):
         logmsg("queues: %s" % str(queues))
         ret = queues
         return ret
+
+    def initiate_io_boot(self, parts, whoami, tag):
+        logmsg('\nINITIATE_IO_BOOT\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("tag: %s" % tag)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def initiate_io_free(self, parts, force, whoami):
+        logmsg('\nINITIATE_IO_BOOT\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("force: %s" % str(force))
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def set_autoreboot(self, parts, user):
+        logmsg('\nSET_AUTOREBOOT\n')
+        logmsg("whoami: %s" % user)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def unset_autoreboot(self, parts, user):
+        logmsg('\nUNSET_AUTOREBOOT\n')
+        logmsg("whoami: %s" % user)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def enable_io_autoreboot(self):
+        logmsg("\nENABLE_IO_AUTOREBOOT\n")
+        return True
+
+    def disable_io_autoreboot(self):
+        logmsg("\nDISABLE_IO_AUTOREBOOT\n")
+        return True
+
+    def get_io_autoreboot_status(self):
+        logmsg("\nGET_IO_AUTOREBOOT_STATUS\n")
+        return True
 
 def change_jobs(ojoblist, newjob,user):
     logmsg("\nOriginal Jobs:\n")
@@ -445,9 +501,12 @@ class CqmStub(object):
         logmsg("\nSET_JOBS\n")
         return change_jobs(ojoblist,newjob,user)
 
-    def adjust_job_scores(self,ojoblist, newjob,user):
+    def adjust_job_scores(self,ojoblist, newscore,user):
         logmsg("\nADJUST_JOB_SCORES\n")
-        return change_jobs(ojoblist,newjob,user)
+        logdiclist(ojoblist)
+        logmsg('new score: %s' % str(newscore))
+        jobids = [j['jobid'] for j in ojoblist]
+        return jobids
 
     def get_jobs(self,job_specs):
         if len(job_specs) == 0: return
