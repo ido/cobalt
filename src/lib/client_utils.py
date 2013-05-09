@@ -964,6 +964,22 @@ def process_filters(filters,spec):
     for filt in filters:
         Cobalt.Util.processfilter(filt, spec)
 
+def validate_conflicting_options(parser, option_lists):
+    """
+    This function will validate that the list of passed options are mutually exclusive
+    """
+    errmsg = [] # init error msessage to empty string
+    for mutex_option_list in option_lists:
+        optc  = 0
+        for mutex_option in mutex_option_list:
+            if getattr(parser.options, mutex_option) != None:
+                errmsg.append(mutex_option)
+                optc += 1
+        if optc > 1:
+            errmsg = 'Option combinations not allowed with: %s option(s)' % ", ".join(errmsg[1:])
+            logger.error(errmsg)
+            sys.exit(1)
+
 #  
 # Callback fucntions for argument parsing defined below
 #

@@ -97,30 +97,19 @@ def validate_args(parser):
         sys.exit(1)
 
     opts_wo_args = ['list_blocks', 'xml', 'dump', 'savestate', 'boot_stop', 'boot_start', 'boot_status', 'list_io',
-            'autoboot_start', 'autoboot_stop', 'autoboot_status']
+                    'autoboot_start', 'autoboot_stop', 'autoboot_status']
 
     # Make sure jobid or queue is supplied for the appropriate commands
     if parser.no_args() and not [opt for opt in spec if opt in opts_wo_args]:
         client_utils.logger.error("At least one partition must be supplied")
         sys.exit(1)
 
-    optc = 0 # init option count
-    errmsg = [] # init error msessage to empty string
     # Check mutually exclusive options
     mutually_exclusive_option_lists = [['add', 'delete', 'enable', 'disable', 'activate', 'deactivate', 'fail', 'unfail', 'xml',
-        'savestate', 'list_blocks', 'queue', 'dump', 'boot_stop', 'boot_start', 'boot_status'],
-        ['pg_list', 'blockinfo','clean_block', 'list_blocks']]
+                                        'savestate', 'list_blocks', 'queue', 'dump', 'boot_stop', 'boot_start', 'boot_status'],
+                                       ['pg_list', 'blockinfo','clean_block', 'list_blocks']]
     if opt_count > 1:
-        for mutex_option_list in mutually_exclusive_option_lists:
-            optc  = 0
-            for mutex_option in mutex_option_list:
-                if getattr(parser.options, mutex_option) != None:
-                    errmsg.append(mutex_option)
-                    optc += 1
-            if optc > 1:
-                errmsg = 'Option combinations not allowed with: %s option(s)' % ", ".join(errmsg[1:])
-                client_utils.logger.error(errmsg)
-                sys.exit(1)
+        client_utils.validate_conflicting_options(parser, mutually_exclusive_option_lists)
 
 def print_block_bgq(block_dicts):
     """Formatted printing of a list of blocks.  This expects a list of 
@@ -261,11 +250,12 @@ def main():
 
     system = client_utils.client_data.system_manager(False)
 
-    if opts.add:
+    if opts.add != None:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
                   'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts])
+        print args
         parts = system.add_partitions(args, whoami)
-    elif opts.add_io_block:
+    elif opts.add_io_block != None:
         args = ([{'name':partname} for partname in parts])
         parts = system.add_io_blocks(args, whoami)
     elif opts.del_io_block:

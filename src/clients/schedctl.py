@@ -66,33 +66,12 @@ def validate_args(parser, args):
                     client_utils.logger.error("jobid must be an integer, found '%s'" % args[i])
                     sys.exit(1)
 
-    optc = 0 # init option count
-    errmsg = '' # init error msessage to empty string
     # Check mutually exclusive options
-    if opt_count > 1:
-        if parser.options.stop != None: 
-            errmsg += ' stop'
-            optc += 1
-        if parser.options.start != None: 
-            errmsg += ' start'
-            optc += 1
-        if parser.options.stat != None: 
-            errmsg += ' stat'
-            optc += 1
-        if parser.options.reread != None: 
-            errmsg += ' reread'
-            optc += 1
-        if parser.options.savestate != None: 
-            errmsg += ' savestate'
-            optc += 1
-        if parser.options.adjust != None or parser.options.dep_frac != None:
-            errmsg += ' adjust/dep_frac'
-            optc += 1
+    mutually_exclusive_option_lists = [['stop', 'start', 'stat', 'reread', 'savestate', 'adjust'],
+                                       ['stop', 'start', 'stat', 'reread', 'savestate', 'dep_frac']]
 
-    if optc > 1:
-        errmsg = 'Option combinations not allowed with: %s option(s)' % errmsg[1:].replace(' ',', ')
-        client_utils.logger.error(errmsg)
-        sys.exit(1)
+    if opt_count > 1:
+        client_utils.validate_conflicting_options(parser, mutually_exclusive_option_lists)
 
 def main():
     """

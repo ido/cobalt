@@ -144,7 +144,7 @@ def test_schedctl_combo_1():
     args      = """--start --stop"""
 
     cmdout    = \
-"""Option combinations not allowed with: stop, start option(s)
+"""Option combinations not allowed with: start option(s)
 """
 
     stubout   = ''
@@ -193,7 +193,7 @@ def test_schedctl_combo_2():
     args      = """--stop --status"""
 
     cmdout    = \
-"""Option combinations not allowed with: stop, stat option(s)
+"""Option combinations not allowed with: stat option(s)
 """
 
     stubout   = ''
@@ -242,7 +242,7 @@ def test_schedctl_combo_3():
     args      = """--start --status"""
 
     cmdout    = \
-"""Option combinations not allowed with: start, stat option(s)
+"""Option combinations not allowed with: stat option(s)
 """
 
     stubout   = ''
@@ -291,7 +291,7 @@ def test_schedctl_combo_4():
     args      = """--reread-policy --status"""
 
     cmdout    = \
-"""Option combinations not allowed with: stat, reread option(s)
+"""Option combinations not allowed with: reread option(s)
 """
 
     stubout   = ''
@@ -340,7 +340,7 @@ def test_schedctl_combo_5():
     args      = """--score 1.1 --stop 1 2 3 4"""
 
     cmdout    = \
-"""Option combinations not allowed with: stop, adjust/dep_frac option(s)
+"""Option combinations not allowed with: adjust option(s)
 """
 
     stubout   = ''
@@ -389,7 +389,7 @@ def test_schedctl_combo_6():
     args      = """--inherit 1.1 --start 1 2 3 4"""
 
     cmdout    = \
-"""Option combinations not allowed with: start, adjust/dep_frac option(s)
+"""Option combinations not allowed with: start, dep_frac option(s)
 """
 
     stubout   = ''
@@ -438,7 +438,7 @@ def test_schedctl_combo_7():
     args      = """--start --savestate /tmp/s"""
 
     cmdout    = \
-"""Option combinations not allowed with: start, savestate option(s)
+"""Option combinations not allowed with: savestate option(s)
 """
 
     stubout   = ''

@@ -118,12 +118,14 @@ def get_parts(plist):
             for p2 in PARTS:
                 parts.append({'name':p2,'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
                               'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
-                              'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                              'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK', 
+                              'block_computes_for_reboot': True, 'autoreboot' : True} )
                 i += 1
             break
         parts.append({'name':p1['name'],'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
                       'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
-                      'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                      'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK',
+                      'block_computes_for_reboot': True, 'autoreboot' : True} )
         i += 1
     return parts
 
@@ -191,8 +193,20 @@ class SystemStub(object):
         logdiclist(parts)
         return genplist(parts)
 
+    def add_io_blocks(self, parts, user_name=None):
+        logmsg("\nADD_IO_BLOCKS\n")
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
+
     def del_partitions (self, parts, user_name=None):
         logmsg("\nDEL_PARTITION\n")
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
+
+    def del_io_blocks(self, parts, user_name=None):
+        logmsg("\nDEL_IO_BLOCKS\n")
         logmsg('user name: %s' % str(user_name))
         logdiclist(parts)
         return genplist(parts)
@@ -291,6 +305,44 @@ class SystemStub(object):
         logmsg("queues: %s" % str(queues))
         ret = queues
         return ret
+
+    def initiate_io_boot(self, parts, whoami, tag):
+        logmsg('\nINITIATE_IO_BOOT\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("tag: %s" % tag)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def initiate_io_free(self, parts, force, whoami):
+        logmsg('\nINITIATE_IO_BOOT\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("force: %s" % str(force))
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def set_autoreboot(self, parts, user):
+        logmsg('\nSET_AUTOREBOOT\n')
+        logmsg("whoami: %s" % user)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def unset_autoreboot(self, parts, user):
+        logmsg('\nUNSET_AUTOREBOOT\n')
+        logmsg("whoami: %s" % user)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def enable_io_autoreboot(self):
+        logmsg("\nENABLE_IO_AUTOREBOOT\n")
+        return True
+
+    def disable_io_autoreboot(self):
+        logmsg("\nDISABLE_IO_AUTOREBOOT\n")
+        return True
+
+    def get_io_autoreboot_status(self):
+        logmsg("\nGET_IO_AUTOREBOOT_STATUS\n")
+        return True
 
 def change_jobs(ojoblist, newjob,user):
     logmsg("\nOriginal Jobs:\n")

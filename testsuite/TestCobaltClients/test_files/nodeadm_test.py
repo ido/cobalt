@@ -121,7 +121,7 @@ def test_nodeadm_combo_1():
     args      = """--up --down p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: down, up option(s)
+"""Option combinations not allowed with: up option(s)
 """
 
     stubout   = \
@@ -159,7 +159,7 @@ def test_nodeadm_combo_2():
     args      = """--up -l p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: up, queue, list option(s)
+"""Option combinations not allowed with: list option(s)
 """
 
     stubout   = \
@@ -197,7 +197,7 @@ def test_nodeadm_combo_3():
     args      = """--list --queue q1 p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: queue, list option(s)
+"""Option combinations not allowed with: queue option(s)
 """
 
     stubout   = \
@@ -235,32 +235,19 @@ def test_nodeadm_combo_4():
     args      = """--up --queue q1 p1"""
 
     cmdout    = \
-"""nodes marked up:
-   U1
-   U2
-   U3
-   U4
-   U5
-
-nodes that weren't in the down list:
-   p1
+"""Option combinations not allowed with: queue option(s)
 """
 
     stubout   = \
 """
 GET_IMPLEMENTATION
 
-
-NODES_UP
-
-whoami: gooduser
-args: ['p1']
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -286,7 +273,7 @@ def test_nodeadm_combo_5():
     args      = """--down --list p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: down, queue, list option(s)
+"""Option combinations not allowed with: list option(s)
 """
 
     stubout   = \
