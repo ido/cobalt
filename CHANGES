@@ -1,5 +1,14 @@
 Changes from previous Cobalt Versions
 
+Changes for 0.99.23
+* Client code has undergone a refactor.  Numerous bugs have been addressed
+  with these that were found while improving test coverage of this code
+* IO Block booting and automatic control has been added.  Please consult the
+  partadm manpage for details
+* This release requires pybgsched-0.1.3
+* A user may voluntarily set their job's score to 0 and let it re-accrue using
+  qalter --defer (Ticket #590)
+
 Changes to 0.99.22
 * Fix for a deadlock that could occur due to a race condition in the 
   boot-reaping code.
