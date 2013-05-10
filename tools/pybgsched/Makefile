@@ -39,7 +39,10 @@ all: $(PYTHON_WRAPPER) $(LIBNAME)
 .PHONY: swig
 swig: $(PYTHON_WRAPPER)
 
-$(PYTHON_WRAPPER): $(wildcard *.i)
+$(MODULE)_wrap.o: $(MODULE)_wrap.cxx
+	$(CC) $(CFLAGS) $(MODULE)_wrap.cxx
+
+$(PYTHON_WRAPPER): $(wildcard *.i) $(wildcard *.h)
 	$(SWIG) $(SWIGFLAGS) $(INTERFACE_FILE)
 
 $(LIBNAME): $(OBJS) 

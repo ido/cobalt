@@ -1,342 +1,282 @@
 #!/usr/bin/env python
+"""
+Cobalt qalter command
 
-'''Cobalt qalter command'''
-__revision__ = '$Revision: 559 $'
+Usage: %prog [options] <jobid1> ... <jobidN>
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS:
+
+Option with no values:
+
+'-d','--debug',dest='debug',help='turn non communication debugging',callback=cb_debug
+'-v','--verbose',dest='verbose',help='not used',action='store_true'
+'-h','--held',dest='user_hold',help='hold jobs in args',action='store_true'
+'--run_project',dest='run_project',help='set run project flag for jogids in args',action='store_true'
+'--enable_preboot',dest='script_preboot',help='enable script preboot',action='store_true'
+'--disable_preboot',dest='script_preboot',help='enable script preboot',action='store_false'
+'--defer',dest='defer', help='defer jobs in args for current user',action='store_true'
+
+Option with values:
+
+'-n','--nodecount',dest='nodes',type='int',help='modify job node count for jobs in args',callback=cb_nodes
+'--proccount',dest='procs',type='int',help='modify job proc count for jobs in args',callback=cb_gtzero
+'-A','--project',dest='project',type='string',help='modify project name for jobs in args'
+'-M','--notify',dest='notify',type='string',help='modify notification email address for jobs in args'
+
+'-t','--time',dest='walltime',type='string',help='modify walltime for jobs in args ([+/-]minutes or [+/-]HH:MM:SS', /
+  callback=cb_time
+
+'-e','--error',dest='errorpath',type='string',help='modify error file path for jobs in args'
+'-o','--output',dest='outputpath',type='string',help='modify output file path for jobs in args'
+'--dependencies',dest='all_dependencies',type='string',help='for jobs in args (jobid1:jobid2:..)',callback=cb_upd_dep
+'--attrs',dest='attrs',type='string',help='modify attributes for jobs in args(attr1=val1:attr2=val2:...)',callback=cb_attrs
+'--run_users',dest='user_list',type='string',help='modify user list for jobs in args (user1:user2:...)',callback=cb_user_list
+
+The following optins are only valid on IBM BlueGene architecture platforms:
+
+'--mode',dest='mode',type='string',help='modify system mode for jobs in args',callback=cb_mode
+'--geometry',dest='geometry',type='string',help='modify geometry for jobs in args (AxBxCxDxE)',callback=cb_geometry
+
+"""
+import logging
+import sys
+from Cobalt import client_utils
+from Cobalt.client_utils import \
+    cb_debug, cb_nodes, cb_time, cb_mode, \
+    cb_upd_dep, cb_attrs, cb_user_list, cb_geometry, cb_gtzero
+
+from Cobalt.arg_parser import ArgParse
+
+__revision__ = '$Revision: 559 $' # TBC may go away.
 __version__ = '$Version$'
 
-import os
-import sys
-import pwd
-import os.path
-import xmlrpclib
-import ConfigParser
-import logging
-import time
-import math
-
-import Cobalt
-import Cobalt.Logging, Cobalt.Util
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError, JobValidationError
-from Cobalt.Util import parse_geometry_string
-
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-Cobalt.Util.init_cobalt_config()
-
-helpmsg = """
-Usage: qalter [-d] [-v] -A <project name> -t <time in minutes>
-              -e <error file path> -o <output file path>
-              --dependencies <jobid1>:<jobid2> --geometry AxBxCxDxE
-              -n <number of nodes> -h --proccount <processor count>
-              -M <email address> --mode <mode co/vn>
-              --run_users <user1>:<user2> --run_project <jobid1> <jobid2>
-              --attrs <attr1=val1>:<attr2=val2>
-"""
-
-if __name__ == '__main__':
-    options = {'v':'verbose', 'd':'debug', 'version':'version', 'h':'held',
-               'run_project':'run_project', 'disable_preboot':'disable_preboot',
-               'enable_preboot':'enable_preboot'}
-    doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
-                'proccount':'proccount', 'dependencies':'dependencies',
-                'M':'notify', 'e':'error', 'o':'output', 'geometry':'geometry',
-                'run_users':'user_list', 'attrs':'attrs'}
-
-    (opts, args) = Cobalt.Util.dgetopt_long(sys.argv[1:],
-                                               options, doptions, helpmsg)
-    # need to filter here for all args
-    if opts['version']:
-        print "qalter %s" % __revision__
-        print "cobalt %s" % __version__
+def validate_args(parser, opt_count):
+    """
+    Validate qalter arguments
+    """
+    # Check if any altering options entered
+    if opt_count == 0:
+        client_utils.logger.error("No job altering options entered")
         sys.exit(1)
 
-    if len(sys.argv) < 2:
-        print helpmsg
-        sys.exit(1)
+    # get jobids from the argument list
+    jobids = client_utils.validate_jobid_args(parser)
 
-    # setup logging
-    level = 30
-    if '-d' in sys.argv:
-        level = 10
-    Cobalt.Logging.setup_logging('qalter', to_syslog=False, level=level)
-    logger = logging.getLogger('qalter')
+    return jobids
 
-    CP = ConfigParser.ConfigParser()
-    CP.read(Cobalt.CONFIG_FILES)
-
-    user = pwd.getpwuid(os.getuid())[0]
-    for i in range(len(args)):
-        if args[i] == '*':
-            continue
-        try:
-            args[i] = int(args[i])
-        except:
-            logger.error("jobid must be an integer")
-            sys.exit(1)
-    spec = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*', 'procs':'*',
-        'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in args]
-    updates = {}
-    nc = 0
-    if opts['nodecount']:
-        try:
-            nc = int(opts['nodecount'])
-        except:
-            logger.error("non-integer node count specified")
-            sys.exit(1)
-
-        try:
-            sys_size = int(CP.get('system', 'size'))
-        except:
-            sys_size = 1024
-        if not 0 < nc <= sys_size:
-            logger.error("node count out of realistic range")
-            sys.exit(1)
-        updates['nodes'] = nc
-
-    # ensure time is actually in minutes
-    if opts['time']:
-        if opts['time'][0] in [ '+', '-']:
-            try:
-                minutes = Cobalt.Util.get_time(opts['time'][1:])
-            except Cobalt.Exceptions.TimeFormatError, e:
-                print "invalid time specification: %s" % e.args[0]
-                sys.exit(1)
-
-            jobdata = None
-            try:
-                cqm = ComponentProxy("queue-manager", defer=False)
-                jobdata = cqm.get_jobs(spec)
-            except ComponentLookupError:
-                print >> sys.stderr, "Failed to connect to queue manager"
-                sys.exit(1)
-            if not jobdata:
-                print "Failed to match any jobs"
-                sys.exit(1)
-
-            if opts['time'][0] == '-':
-                new_time = float(jobdata[0]['walltime']) - minutes
-                if new_time <= 0:
-                    print >> sys.stderr, "invalid wall time: ", new_time
-                else:
-                    updates['walltime'] = str(float(jobdata[0]['walltime']) - minutes)
-            elif opts['time'][0] == '+':
-                updates['walltime'] = str(float(jobdata[0]['walltime']) + minutes)
-        else:
-            try:
-                minutes = Cobalt.Util.get_time(opts['time'])
-            except Cobalt.Exceptions.TimeFormatError, e:
-                print "invalid time specification: %s" % e.args[0]
-                sys.exit(1)
-
-            updates['walltime'] = str(minutes)
+def options_disallowed(parser):
+    """
+    This function will check the options against running jobs
+    """
+    if parser.options.nodes != None:
+        client_utils.logger.error( "cannot change node count of a running job")
+        _quit = True
+    if parser.options.procs != None:
+        client_utils.logger.error( "cannot change processor count of a running job")
+        _quit = True
+    if parser.options.project != None:
+        _quit = True
+    if parser.options.notify != None:
+        _quit = True
+    if parser.options.mode != None:
+        client_utils.logger.error( "cannot change mode of a running job")
+        _quit = True
+    if parser.options.walltime != None:
+        client_utils.logger.error( "cannot change wall time of a running job")
+        _quit = True
+    if parser.options.errorpath != None:
+        client_utils.logger.error( "cannot change the error path of a running job")
+        _quit = True
+    if parser.options.outputpath != None:
+        client_utils.logger.error( "cannot change the output path of a running job")
+        _quit = True
+    if parser.options.all_dependencies != None:
+        _quit = True
+    if parser.options.attrs != None:
+        client_utils.logger.error( "cannot change the attributes of a running job")
+        _quit = True
+    if parser.options.geometry != None:
+        client_utils.logger.error( "cannot change the node geometry of a running job")
+        _quit = True
+    if parser.option.defer != None:
+        client_utils.logger.error( "cannot change the score of a running job")
+        _quit = True
+    return _quit
 
 
-    try:
-        sys_type = CP.get('bgsystem', 'bgtype')
-    except:
-        sys_type = 'bgl'
-    if sys_type == 'bgp':
-        job_types = ['smp', 'co', 'dual', 'vn', 'script']
-    else:
-        job_types = ['co', 'vn', 'script']
+def get_jobdata(jobids, parser, user):
+    """
+    Will get the jobdata for the specified jobs
+    """
 
-    if opts['mode']:
-        if opts['mode'] not in job_types:
-            logger.error("Specifed mode '%s' not valid, valid modes are\n%s" % \
-                  (opts['mode'], "\n".join(job_types)))
-            sys.exit(1)
-        if opts['mode'] == 'co' and sys_type == 'bgp':
-            opts['mode'] = 'SMP'
-        updates['mode'] = opts['mode']
+    jobs = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*',
+             'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
 
-    #TODO: This is bugged and must be handled on a per-job basis. --PMR
-    if opts['nodecount'] and not opts['proccount']:
-        if opts.get('mode', 'co') == 'vn':
-            # set procs to 2 x nodes
-            if sys_type == 'bgl':
-                opts['proccount'] = str(2 * int(opts['nodecount']))
-            elif sys_type == 'bgp':
-                opts['proccount'] = str(4 * int(opts['nodecount']))
-            else:
-                logger.error("Unknown bgtype %s" % (sys_type))
-                sys.exit(1)
-        else:
-            opts['proccount'] = int(opts['nodecount'])
-        updates['procs'] = int(opts['proccount'])
-    if opts['proccount']:
-        try:
-            int(opts['proccount'])
-        except:
-            logger.error("non-integer node count specified")
-            sys.exit(1)
-        updates['procs'] = int(opts['proccount'])
-
-    if opts['project']:
-        updates['project'] = opts['project']
-
-    if opts['notify']:
-        updates['notify'] = opts['notify']
-
-    if opts['user_list']:
-        if opts['user_list'].lower() == 'none':
-            updates['user_list'] = [user]
-        else:
-            #we really should be adding users that actually exist.
-            updates['user_list'] = [auth_user for auth_user in opts['user_list'].split(':')]
-            for auth_user in updates['user_list']:
-                try:
-                    pwd.getpwnam(auth_user)
-                except KeyError:
-                    logger.error("user %s does not exist." % auth_user)
-                    sys.exit(1)
-                except Exception:
-                    raise
-            if user not in updates['user_list']:
-                updates['user_list'].insert(0, user)
-
-    if opts['disable_preboot']:
-        updates['script_preboot'] = False
-    if opts['enable_preboot']:
-        updates['script_preboot'] = True
-
-    if opts['run_project'] == True:
-        if not opts['user_list']:
-            updates['user_list'] = [user]
-        updates['run_project'] = True
-
-    if opts['geometry']:
-        if opts['geometry'] == 'None':
-            updates.update({'geometry':None})
-        else:
-            jobdata = None
-            try:
-                cqm = ComponentProxy("queue-manager", defer=False)
-                jobdata = cqm.get_jobs(spec)
-            except ComponentLookupError:
-                print >> sys.stderr, "Failed to connect to queue manager"
-                sys.exit(1)
-            for job in jobdata:
-                try:
-                    Cobalt.Util.validate_geometry(opts['geometry'], int(job['nodes']))
-                except JobValidationError as err:
-                    print >> sys.stderr, err.message
-                    print >> sys.stderr, "Jobs not altered."
-                    sys.exit(1)
-            updates.update({'geometry': parse_geometry_string(opts['geometry'])})
-
-    if str(opts['attrs']).lower() == 'none':
-        updates.update({'attrs':{}})
-
-    elif opts['attrs'] is not False:
-        attrs = {}
-        newoptsattrs = {}
-        for attr in opts["attrs"].split(":"):
-            if len(attr.split("=")) == 2:
-                key, value = attr.split("=")
-                attrs.update({key:value})
-                newoptsattrs.update({key:value})
-            elif len(attr.split("=")) == 1:
-                if attr[:3] == "no_":
-                    attrs.update({attr[3:]:"false"})
-                    newoptsattrs.update({attr[3:]:"false"})
-                else:
-                    attrs.update({attr:"true"})
-                    newoptsattrs.update({attr:"true"})
-            else:
-                print "Improperly formatted argument to attrs : %s" % attr
-                sys.exit(1)
-        updates.update({'attrs':attrs})
-        opts['attrs'] = newoptsattrs
-
-
-
-    if opts['error']:
-        updates.update({'errorpath': opts['error']})
-    if opts['output']:
-        updates.update({'outputpath': opts['output']})
-    if opts['held']:
-        updates.update({'user_hold':True})
-    if opts['dependencies']:
-        Cobalt.Util.check_dependencies(opts['dependencies'])
-        deps = opts['dependencies']
-        if deps and deps.lower() != "none":
-            deps = deps.split(":")
-        else:
-            deps = []
-
-        updates.update({'all_dependencies': deps})
-
-    try:
-        filters = CP.get('cqm', 'filters').split(':')
-    except ConfigParser.NoOptionError:
-        filters = []
-
-    try:
-        cqm = ComponentProxy("queue-manager", defer=False)
-        jobdata = cqm.get_jobs(spec)
-    except ComponentLookupError:
-        print >> sys.stderr, "Failed to connect to queue manager"
-        sys.exit(1)
-    except xmlrpclib.Fault, flt:
-        print >> sys.stderr, flt.faultString
-        sys.exit(1)
-
-    if not jobdata:
-        print "Failed to match any jobs"
-        sys.exit(1)
-
+    jobdata = client_utils.get_jobs(jobs)
     job_running = False
+
+    # verify no job is running
     for job in jobdata:
         if job['is_active']:
             job_running = True
 
-    if job_running and (updates.keys() != ['user_list']):
-        if updates.has_key('procs'):
-            print >> sys.stderr, "cannot change processor count of a running job"
-        if updates.has_key('nodes'):
-            print >> sys.stderr, "cannot change node count of a running job"
-        if updates.has_key('walltime'):
-            print >> sys.stderr, "cannot change wall time of a running job"
-        if updates.has_key('mode'):
-            print >> sys.stderr, "cannot change mode of a running job"
-        if updates.has_key('errorpath'):
-            print >> sys.stderr, "cannot change the error path of a running job"
-        if updates.has_key('outputpath'):
-            print >> sys.stderr, "cannot change the output path of a running job"
-        if updates.has_key('geometry'):
-            print >> sys.stderr, "cannot change the node geometry of a running job"
-        if updates.has_key('attrs'):
-            print >> sys.stderr, "cannot change the attributes of a running job"
-        sys.exit(1)
+    _quit = False
+    if job_running:
 
-    response = False
-    for jobinfo in jobdata:
-        del jobinfo['is_active']
-        original_spec = jobinfo.copy()
-        jobinfo.update(updates)
-        for filt in filters:
-            Cobalt.Util.processfilter(filt, jobinfo)
-        try:
-            cqm.set_jobs([original_spec], jobinfo, user)
-            response = True
-            for key in jobinfo:
-                if not original_spec.has_key(key):
-                    if key == "all_dependencies":
-                        if not (opts['dependencies'].lower() == 'none'):
-                            print "dependencies set to %s" % ":".join(jobinfo[key])
-                    else:
-                        print "%s set to %s" % (key, jobinfo[key])
-                elif jobinfo[key] != original_spec[key]:
-                    print "%s changed from %s to %s" % (key, original_spec[key], jobinfo[key])
-        except xmlrpclib.Fault, flt:
-            print >> sys.stderr, flt.faultString
-            response = True
+        if options_disallowed(parser):
+            sys.exit(1)
+
+    return jobdata
+
+def update_time(orig_job, new_spec, parser):
+    """
+    Update the new time. This will do delta time if specified.
+    """
+    minutes = new_spec['walltime']
+    add_dt = False
+    sub_dt = False
+
+    if hasattr(parser.parser,'__timeop__'):
+        if parser.parser.__timeop__ == '+': 
+            add_dt = True
+        elif parser.parser.__timeop__ == '-':
+            sub_dt = True
+
+    if add_dt:    # Add time to original job then
+        new_spec['walltime'] = str(float(orig_job['walltime']) + minutes)
+
+    elif sub_dt:  # Subtract time to original job and verify it is not less than 0
+        new_time = float(orig_job['walltime']) - minutes
+        if new_time <= 0:
+            client_utils.logger.error( "invalid wall time: " + str(new_time))
+        else:
+            new_spec['walltime'] = str(new_time)
+
+    else:         # change to an absolute time
+        new_spec['walltime'] = minutes
+
+def update_procs(spec, parser):
+    """
+    Will update 'proc' according to what system we are running on given the number of nodes
+    """
+    sysinfo = client_utils.system_info()
+
+    if parser.options.nodes != None and parser.options.procs == None:
+        if parser.options.mode == 'vn':
+            # set procs to 2 x nodes
+            if sysinfo[0] == 'bgl':
+                spec['procs'] = 2 * spec['nodes']
+            elif sysinfo[0] == 'bgp':
+                spec['procs'] = 4 * spec['nodes']
+            else:
+                client_utils.logger.error("Unknown bgtype %s" % (sysinfo[0]))
+                sys.exit(1)
+        else:
+            spec['procs'] = spec['nodes']
+    
+def do_some_logging(job, orig_job, parser):
+    """
+    do some logging
+    """
+    # do some logging
+    for key in job:
+        if not orig_job.has_key(key):
+            if key == "all_dependencies":
+                if parser.options.all_dependencies != None:
+                    client_utils.logger.info("dependencies set to %s" % ":".join(job[key]))
+            else:
+                client_utils.logger.info("%s set to %s" % (key, job[key]))
+        elif job[key] != orig_job[key]:
+            client_utils.logger.info("%s changed from %s to %s" % (key, orig_job[key], job[key]))
+
+def main():
+    """
+    qalter main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
+
+    # read the cobalt config files
+    client_utils.read_config()
+                               
+    spec     = {} # map of destination option strings and parsed values
+    opts     = {} # old map
+    opt2spec = {}
+
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>           <cb args>
+        [ cb_debug               , () ],
+        [ cb_gtzero              , () ],
+        [ cb_nodes               , () ],
+        [ cb_time                , (True, False) ], # delta time allowed and do not convert to seconds
+        [ cb_upd_dep             , () ],
+        [ cb_attrs               , () ],
+        [ cb_user_list           , (opts, True) ], # add user
+        [ cb_geometry            , (opts,) ],
+        [ cb_mode                , () ]]
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
+
+    parser = ArgParse(opt_def, callbacks)
+
+    user = client_utils.getuid()
+
+    # Set required default values: None
+
+    parser.parse_it() # parse the command line
+    opt_count = client_utils.get_options(spec, opts, opt2spec, parser)
+
+    # if run_project set then set run users to current user
+    if parser.options.run_project != None:
+        spec['user_list'] = [user]
+
+    jobids  = validate_args(parser, opt_count)
+    filters = client_utils.get_filters()
+
+    jobdata = get_jobdata(jobids, parser, user)
+
+    if parser.options.defer != None:
+        client_utils.set_scores(0, jobids, user)
+        if opt_count == 1:
+            return
+
+    response = []
+    # for every job go update the spec info
+    for job in jobdata:
+        # append the parsed spec to the updates list
+        new_spec          = spec.copy()
+        new_spec['jobid'] = job['jobid']
+
+        if parser.options.walltime != None:
+            update_time(job, new_spec, parser)
+        if parser.options.nodes != None:
+            update_procs(new_spec, parser)
+        if parser.options.geometry != None:
+            client_utils.validate_geometry(opts['geometry'], job['nodes'])
+
+        del job['is_active']
+        orig_job = job.copy()
+        job.update(new_spec)
+
+        client_utils.process_filters(filters, job)
+        response = client_utils.set_jobs([orig_job], job, user)
+        do_some_logging(job, orig_job, parser)
 
     if not response:
-        Cobalt.Logging.logging.error("Failed to match any jobs or queues")
+        client_utils.logger.error("Failed to match any jobs or queues")
     else:
-        Cobalt.Logging.logging.debug(response)
+        client_utils.logger.debug(response)
 
 
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
+        raise

@@ -3,14 +3,23 @@
 qsub \- submit jobs to the queue manager for execution
 .SH "SYNOPSIS"
 .B qsub 
-.I [<options] <executable> [<executable options>]
+.I [<options>] <executable> [<executable options>]
 .SH "DESCRIPTION"
 .PP
 .B qsub
 submits a job to the queue manager for execution. 
 .SH "OPTIONS"
 .TP
-.B \-A [project]
+.B \-d \-\-debug
+Turn on communication debugging
+.TP
+.B \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
+.B \-A \-\-project [project]
 Associate the job with the allocation for project project. This is
 used to properly account for machine usage. 
 .TP
@@ -19,12 +28,9 @@ Set a list of attributes for a job that must be fulfilled for a job to run.
 For instance, --attrs location=[blocklocation] will force a job to run on a 
 specific block.
 .TP
-.B \--cwd [directory]
+.B \-\-cwd [directory]
 Tell the job to use the specified directory as the default current working directory
 while running the job.
-.TP 
-.B \-d
-Turn on communication debugging.
 .TP
 .B \-\-debuglog [path to file]
 Send debugging information from cobalt to file specified.
@@ -33,7 +39,11 @@ Send debugging information from cobalt to file specified.
 Set the dependencies for the job being submitted.  This job won't run until 
 all jobs in the dependency list have finished and exited with a status of 0.
 .TP
-.B \-e [path to file]
+.B \-\-disable_preboot
+If --mode script is specified, this will cause Cobalt to run the job script without
+booting the block first.  By default the script is executed after the requested block is booted.
+.TP
+.B \-e \-\-error [path to file]
 Send job stderr to file specified.
 .TP
 .B \-\-env [<var1=value1>:<var=value2>]
@@ -45,37 +55,36 @@ Sets the geometry of the block that the jobs should run on.  This is in
 the form of AxBxCxDxE.  This must be the geometry of the compute block.
 This may not be a fraction of a block.
 .TP
-.B \-h
+.B \-h \-\-held
 Submit job and immediately place it in the user hold state
 .TP
-.B \-i [path to file]
+.B \-i \-\-inputfile [path to file]
 Send file to job's stdin.
 .TP
-.B \-I
+.B \-I (NOT IMPLEMENTED)
 Run an interactive command. During job execution, the current tty will
 be connected with the running job. (Not available on Blue Gene systems.)
 .TP 
-.B \-M [email address]
+.B \-M \-\-notify [email address]
 Send an email notification at the start and stop of the job to the
 specified email address.
 .TP
-.B \-n [nodecount]
+.B \-n \-\-nodecount [nodecount]
 Specifies the node count for a job
 .TP
-.B \-o [path to file]
+.B \-o \-\-output [path to file]
 Send job stdout to file specified.
 .TP
-.B \-O [output prefix]
-Use the specified prefix for both .output and .error files. This implies the 
-\-o and \-e flags.
+.B \-O \-\-outputprefix [output prefix]
+Use the specified prefix for both .output, .error and debuglog files. This will only take effect if \-o or \-e or \-\-debuglog not supplied. 
 .TP
 .B \-\-proccount [process count]
 Specify the number of processes to start.
 .TP
-.B \-q [queue] 
+.B \-q \-\-queue [queue] 
 Submit the job to the specified queue.
 .TP
-.B \-\-run_users [<user1>:<user2>:...]
+.B \-\-run_users \-\-user_list [<user1>:<user2>:...]
 Sets a colon-separated list of users for the job being submitted.  All users
 in this list will be able to execute cobalt commands to control the job. The 
 submitting user is always able to run commands on a submitted job.
@@ -84,19 +93,27 @@ submitting user is always able to run commands on a submitted job.
 Appends the list of users in a project to the list of users authorized to run
 commands on the submitted job. 
 .TP
-.B \-t [wallclock time] 
+.B \-u \-\-umask'
+set umask: octal number default(022)
+.TP
+.B \-t \-\-time [wallclock time] 
 Specify the runtime for a job. If the job runs over this limit, it will be 
 killed. The time may be specified as eitehr an integer number of minutes or a 
 colon-delimited value of the format: HH:MM:SS.
-.TP
-.B \-\-version
-Print out version string
 .TP
 
 
 .SH "BLUEGENE OPTIONS"
 .TP 
 The following commands are only valid on IBM BlueGene architecture platforms.
+.TP
+.B \-\-kernel [kernel profile]
+Run the job with the specified kernel profile.
+.TP
+.B \-K \-\-kerneloptions [kernel options]
+Run the job with the specified kernel options (equivalent to 
+.Impirun -kernel_options 
+on Blue Gene/L).
 .TP
 .B \-\-mode [mode]
 This is a platform-dependent setting that controls the execution mode of the 
@@ -118,18 +135,7 @@ BG/Q: Valid values are "c1","c2","c4","c8","c16","c32","c64", and "script".
 On all platforms, the "script" mode causes the job to be routed through the 
 script-forker, and will allow the execution of script jobs
 allows the user to  
-.TP
-.B \-\-kernel [kernel profile]
-Run the job with the specified kernel profile.
-.TP
-.B \-K [kernel options]
-Run the job with the specified kernel options (equivalent to 
-.Impirun -kernel_options 
-on Blue Gene/L).
-.TP
-.B \-\-disable_preboot
-If --mode script is specified, this will cause Cobalt to run the job script without
-booting the block first.  By default the script is executed after the requested block is booted.
+
 .SH "NOTE"
 The only thing printed to STDOUT is the jobid, any other error or informational messages are printed to STDERR.
 .SH "SEE ALSO"

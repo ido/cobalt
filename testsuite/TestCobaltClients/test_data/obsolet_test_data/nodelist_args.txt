@@ -1,0 +1,18 @@
+# Command Line Options and Arguments to test nodelist
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+            # <tc:arg_1>
+arg1        # <tc:arg_2>
+-d          # <tc:debug>     <NEW_ONLY>
+-l          # <tc:options_1> <NEW_ONLY>
+--help      # <tc:options_2> <NEW_ONLY>
+-h          # <tc:options_3> <NEW_ONLY>
+--version   # <tc:options_4> <NEW_ONLY>

@@ -5,9 +5,13 @@
 */
 %module pybgsched
 
+/* Swig doesn't handle nested structs automatically by default, and will throw warnings
+despite a workaround being put in place.*/
 %warnfilter(325) bgsched::Block::Connectivity;
 %warnfilter(325) bgsched::Block::Action;
-
+/* 314:This supresses a warning about renaming none.  Since we can't rename
+the variable in the libary, this is a known deviation.*/
+%warnfilter(314);
 
 %exception bgsched::Block{
 
@@ -158,4 +162,4 @@ Block.getStatus = Block.getStatusValue
 Block.getAction = Block.getActionValue
 }
 
-
+%warnfilter(+314);

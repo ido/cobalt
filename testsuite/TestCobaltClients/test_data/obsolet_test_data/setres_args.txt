@@ -1,0 +1,55 @@
+# Command Line Options and Arguments to test setres
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+
+# ID changes
+
+--res_id 8                     # <tc:id_change_1> only res id
+--debub --res_id 8             # <tc:id_change_1> only res id <NEW_ONLY> no debug command in old command
+--cycle_id 8                   # <tc:id_change_2> only cycle id
+--res_id 8 --cycle_id 8        # <tc:id_change_3> res and cycle id
+|--res_id 8 p1 p2 p3           # <tc:id_change_4> res id with arg. old setres let it go. new set res does not
+|--cycle_id 8 p1 p2 p3         # <tc:id_change_5> cycle id with arg. old setres let it go. new set res does not
+|--res_id 8 -m -n resname      # <tc:id_change_6> New setres does not allow mixing id changing options with other options I
+|--cycle_id 8 -p p1            # <tc:id_change_7> mixing id changing options with other options II
+
+--cycle_id 8 --res_id 8 --force_id   # <tc:force_1> use the force id flag with id changes
+--force_id                           # <tc:force_2> use only force id flag
+--force_id -p p1 -s 2013_03_09-10:30 # <tc:force_3> force id flag with other options
+--force_id -m -n resname             # <tc:force_4> force id flag with modify res options
+
+# Modify Reservation 
+
+-m                                                                         # <tc:modify_1> modify no reservation name
+-m -n resname                                                              # <tc:modify_2> modify with reservation name
+|-m -n resname -D -c 10:10:10                                              # <tc:modify_3> modify with -c 
+-m -n resname -D -s 2013_03_9-10:10:10                                     # <tc:modify_4> modify with bad start time specified
+|-m -n resname -D -s 2013_03_9-10:10                                       # <tc:modify_5> modify with start time specified. 
+-m -n resname -D -d 10:10:10                                               # <tc:modify_6> modify with duration
+-m -n resname -s 2013_03_9-10:10 -c 10:30:30 -d 00:01:00                   # <tc:modify_7> with -c and -d
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1                      # <tc:modify_8> with -c and -u
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -u user1:user2                # <tc:modify_9> add users
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj -u user1            # <tc:modify_10> add user
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --block_passthrough # <tc:modify_11> add block passthrough
+-m -n resname -s 2013_03_9-10:10 -c 10 -d 50 -A myproj --allow_passthrough # <tc:modify_12> add allow passthrough
+|-m -n resname --allow_passthrough --block_passthrough                     # <tc:modify_13> add allow and block passthrough
+-m -n resname -A myproj --block_passthrough p1 p2 p3                       # <tc:modify_14> add projet
+
+# Add Reservation
+
+-n resname -D                                            # <tc:add_res_1> try to add reservation without partitions
+|-n resname -D p1 p2 p3                                  # <tc:add_res_2> No start time. 
+|-n resname -s 2013_03_9-10:10 p1 p2                     # <tc:add_res_3> add res with start time
+-n resname -s 2013_03_9-10:10 -d 50 p1 p2                # <tc:add_res_4> add res with start time and duration
+-n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2    # <tc:add_res_5> add res with start time and duration and cycle time
+-s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2               # <tc:add_res_6> no res name
+-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough # <tc:add_res_7> add res with block passthrough
+-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj # <tc:add_res_8> add queue and project

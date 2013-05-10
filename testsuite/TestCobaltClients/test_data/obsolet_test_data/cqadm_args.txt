@@ -1,0 +1,108 @@
+# Command Line Options and Arguments to test cqadm
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+#
+# get queues option
+#
+--getq                              # <tc:getq_option_1> 
+-d --getq                           # <tc:getq_option_2> 
+-f --getq                           # <tc:getq_option_3> 
+
+#
+# preempt jobs option
+#
+-d --preempt 1 2 3                  # <tc:preempt_job_1> 
+-f --preempt 1 2 3                  # <tc:preempt_job_2> 
+
+#
+#  delete jobs options
+#
+--delete 1 2 3 | -d -f --kill 1 2 3 # <tc:kill_job_1> 
+--kill 1 2 3                        # <tc:kill_job_2> 
+-d --delete 1 2 3 | -f --kill 1 2 3 # <tc:kill_job_3> 
+-d --kill 1 2 3                     # <tc:kill_job_4> 
+
+#
+# set queues options
+#
+|--addq                             # <tc:addq_option_1> 
+--addq myq1 myq2 myq3               # <tc:addq_option_2> 
+|--delq                             # <tc:delq_option_1> 
+--delq myq1 myq2 myq3               # <tc:delq_option_2> 
+|--stopq                            # <tc:stopq_option_1> 
+--stopq myq1 myq2 myq3              # <tc:stopq_option_2> 
+|--startq                           # <tc:startq_option_1> 
+--startq myq1 myq2 myq3             # <tc:startq_option_2> 
+|--drainq                           # <tc:drainq_option_1> 
+--drainq myq1 myq2 myq3             # <tc:drainq_option_2> 
+|--killq                            # <tc:killq_option_1> 
+--killq myq1 myq2 myq3              # <tc:killq_option_2> 
+--policy                            # <tc:policy_option_1> 
+|--policy 'mypolicy'                # <tc:policy_option_2> 
+--policy 'mypolicy' myq1 myq2       # <tc:policy_option_3> 
+--setq                              # <tc:setq_option_1> 
+|--setq 'a=b b=c a=c'               # <tc:setq_option_2> 
+--setq 'a=b b=c a=c' myq1 myq2      # <tc:setq_option_3> 
+--unsetq                            # <tc:unsetq_option_1> 
+|--unsetq 'a b a'                   # <tc:unsetq_option_2> 
+--unsetq 'a b a' myq1 myq2          # <tc:unsetq_option_3> 
+
+#
+# setjobid options
+#
+-j                                  # <tc:setjobid_option_1> 
+--setjobid                          # <tc:setjobid_option_2> 
+-j 1                                # <tc:setjobid_option_3> 
+--setjobid 1                        # <tc:setjobid_option_4> 
+-j 1 --setjobid 2                   # <tc:setjobid_option_5> 
+
+#
+# run job option
+#
+--run                               # <tc:run_option_1> 
+|--run mayaguez                     # <tc:run_option_2> 
+--run mayaguez 1 2 3                # <tc:run_option_3> 
+#
+# set jobs options
+#
+--hold                              # <tc:hold_option_1> 
+--hold 1 2 3                        # <tc:hold_option_2> 
+-d --hold  1 2 3                    # <tc:hold_option_3> 
+-f --hold  1 2 3                    # <tc:hold_option_4> 
+--release                           # <tc:release_option_1> 
+--release 1 2 3                     # <tc:release_option_2> 
+-d --release 1 2 3                  # <tc:release_option_3> 
+-f --release 1 2 3                  # <tc:release_option_4> 
+--hold --release 1 2 3              # <tc:release_and_hold> 
+
+--queue                             # <tc:queue_option_1> 
+|--queue myq                        # <tc:queue_option_2> 
+--queue myq 1 2 3                   # <tc:queue_option_3> 
+
+--time                              # <tc:time_option_1> 
+|--time 50                          # <tc:time_option_2> 
+--time 50 1 2 3                     # <tc:time_option_4> 
+
+--hold --queue myq --time 50 4 5 6    # <tc:update_all_1> 
+--release --queue myq --time 50 4 5 6 # <tc:update_all_2> 
+
+#
+# Do combo options that should not be allowed with new cqadm command.
+#
+
+|--getq --addq myq1 myq2 myq3  # <tc:combine_getq_and_addq>     
+|--getq -j 1 123               # <tc:combine_getq_and_setjobid> 
+|--time 50 --getq              # <tc:combine_time_and_getq>     
+|--release --getq 123          # <tc:combine_release_and_getq>  
+|--setq 'a=1 b=2' --queue q 1  # <tc:combine_setq_with_queue>   
+|--addq --delq q1 q2           # <tc:combine_addq_and_delq>     
+|--stopq --addq q1 q2          # <tc:combine_addq_and_stopq>    
+|--startq --addq q1 q2         # <tc:combine_addq_and_startq>   

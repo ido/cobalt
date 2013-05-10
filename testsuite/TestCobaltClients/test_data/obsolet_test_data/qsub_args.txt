@@ -1,0 +1,67 @@
+# Command Line Options and Arguments to test qsub
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+#  Try to set all options
+-v -A myproj --attrs=a=1:b=2 --cwd /tmp -d --debuglog=/tmp/d --dependencies=1:2:3 -e /tmp/e --env v1=1:v2=2 --geometry 198x198x198x198 -h -i /bin/ls -M myemal@gmail.com -n10 -o /tmp/o -O /tmp --proccount 10 -qqueue --run_users user1:user2:user3 --run_project -t 10 --mode smp --kernel kernel -K kopts /bin/ls # <tc:all_options_1> 
+
+# Misc 1
+--mode c1 -n 512 --env BG_COREDUMPDISABLED=1 --proccount 512 -t 30 -q testing /bin/ls # <tc:misc_1> 
+
+
+/bin/ls                # <tc:no_options_passed>      
+-z -t10 -n10 /bin/ls   # <tc:non_existant_option>
+-d                     # <tc:debug_flag_only_1>
+-debug                 # <tc:debug_flag_only_2> <NEW_ONLY>
+-v                     # <tc:verbose_flag_only>      
+
+|--mode smp -t50 -nfive --geometry 40x40x50x50   /bin/ls  # <tc:non_integer_nodecount>   
+|--mode smp -t50 -n2048 --geometry 40x40x50x50x1 /bin/ls  # <tc:non_realistic_nodecount> 
+
+--mode smp -t50 -n10 --geometry x /bin/ls               # <tc:invalid_geometry_1>
+--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls         # <tc:invalid_geometry_2>
+--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls         # <tc:invalid_geometry_3>
+--mode smp -t50 -n10 --geometry 48x48x48x48x2  /bin/ls  # <tc:invalid_geometry_4>
+--mode smp -t50 -n10 --geometry 48x48x48x48x3  /bin/ls  # <tc:invalid_geometry_5>
+--mode smp -t50 -n10 --geometry 128x64x32x4    /bin/ls  # <tc:invalid_geometry_6>
+
+
+
+-A -t50 -n10 /bin/ls     # <tc:no_roject_specified> 
+-A who -t50 -n10 /bin/ls # <tc:project_specified>   
+
+--attrs xxxx -t50 -n10 /bin/ls                # <tc:Check_attrs_1> 
+--attrs 1111 -t50 -n10 /bin/ls                # <tc:Check_attrs_2> 
+--attrs xx=:yy -t50 -n10 /bin/ls              # <tc:Check_attrs_3> 
+--attrs xx=one:yy=1:zz=1one -t50 -n10 /bin/ls # <tc:Check_attrs_4> 
+
+--cwd /tmp/ -t10 -n 10 -e p /bin/ls       # <tc:cwd_option_1> 
+--cwd /tmp -t10 -n 10 -e p /bin/ls        # <tc:cwd_option_2> 
+--cwd /x -t10 -n 10 -e p /bin/ls          # <tc:cwd_option_3> 
+--cwd /tmp/ -t10 -n 10 -e p -o x /bin/ls  # <tc:cwd_option_4> 
+--cwd /tmp -t10 -n 10 -e p -o x /bin/ls   # <tc:cwd_option_5> 
+
+-t10 -n 10 -e p -o x --debuglog y /bin/ls # <tc:debuglog_option>    
+
+-i none -t10 -n 10 /bin/ls                # <tc:inputfile_option_1> 
+-i y -t10 -n 10 /bin/ls                   # <tc:inputfile_option_2> 
+
+-M g -t10 -n10 /bin/ls            # <tc:email_option> 
+
+-O /tmp -t10 -n10 /bin/ls         # <tc:outputprefix> 
+
+-run_users naughtyuser -t10 -n10 /bin/ls # <tc:invalid_user> 
+
+-t10 -n512 --proccount 1023 --mode dual /bin/ls                # <tc:mode_option_1> 
+-t10 -n512 --proccount 1023 --mode vn /bin/ls                  # <tc:mode_option_2> 
+--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls             # <tc:mode_option_3> 
+|-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls # <tc:mode_option_4>
+
+--disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls # <tc:preboot_option> 

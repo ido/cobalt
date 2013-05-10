@@ -15,12 +15,22 @@ component has marked as bootable at the moment.  This list is sorted first by bl
 and then in ascending lexical order.
 .SH OPTIONS
 .TP
+.B \-d \-\-debug
+Turn on communication debugging
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
 .B \-\-size nodecount
 Return only blocks of the specified nodecount
 .TP
 .B \-\-geometry geometry
 Return only blocks with the specified geometry.  The geometry is in the form of
 AxBxCxDxE where A, B, C, D, and E are the extents of the block geometry in nodes.
+
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR boot-block(1)

@@ -13,23 +13,29 @@ qstat \- query the queue manager for jobs
 query the queue manager for all queued and active jobs. 
 .SH OPTIONS
 .TP
-.B \-d
+.B \-d \--debug
 Turn on communication debugging
 .TP
-.B \-f
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
+.B \-f \-\-full
 Show more verbose information. 
 .TP
-.B \-l
-Show job info in vertical format. Use with '-f' to get all job info.
-.TP
 .B \-\-header <header fields>
-Specify custom header for qstat display with a colon-separated list. (See qstat -lf for the possible fields.) The custom header may also be specified setting QSTAT_HEADER in the environment or a cqstat_header entry under [cqm] in /etc/cobalt.conf. The header is taken from /etc/cobalt.conf first, then $QSTAT_HEADER, and finally qstat --header.
+Specify custom header  with a colon-separated list for qstat display. (See qstat -lf for the possible fields.) The custom header may also be specified setting QSTAT_HEADER in the environment or a cqstat_header entry under [cqm] in /etc/cobalt.conf. The header is taken from /etc/cobalt.conf first, then $QSTAT_HEADER, and finally qstat --header.
 .IP
 .B Example:
 .RS
 .TP
 qstat --header JobId:State:RunTime
 .RE
+.TP
+.B \-l \-\-long
+Show job info in vertical format. Use with '-f' to get all job info.
 .TP
 .B \-Q
 Show queues and properties.
@@ -65,8 +71,14 @@ The maximum number of nodes any jobs in the queue are allowed to have allocated 
 The priority of the queue.  Higher numbers have higher priority.
 .RE
 .TP
-.B \-\-version
-Displays client revision and Cobalt version
+.B \-\-reverse
+Reverse ouput
+.TP
+.B \-\-sort <sort fields>
+Specify sort fields  with a colon-separated list for qstat display.
+.TP
+.B \-u \-\-user <user name>
+Specify user name.
 .PP
 .SH "ENIRONMENT VARIABLES"
 The following environment variables affect qstat:

@@ -1,0 +1,137 @@
+# Command Line Options and Arguments to test partadm
+# Special Instructions:
+#    1. At the end of the arguments line need to supply test case comment as "# ... <tc:comment here with regex format '\w'>".
+#    2. Test case comment needs to be unique to this file.
+#    3. Before putting the test case comment you need to put the comment character '#'
+#    4. You can add comments by putting the '#' character before any comment.
+#    5. If you only want a new command to be executed then put the tag <NEW_ONLY> after the comment character '#'
+#    6. If the old command and new command have different args for the same effect then
+#       put the old args first then use the separate character '|' and put the new args.
+#       i.e -d -j | -d --job
+
+--version      # <tc:version_option>
+-h             # <tc:help_option_1>
+--help         # <tc:help_option_2>
+
+               # <tc:no_arg_1> <NEW_ONLY>
+-a             # <tc:no_arg_2> <NEW_ONLY>
+
+--debug        # <tc:debug> <NEW_ONLY>
+
+-a -d PART                    # <tc:combo_options_1>  <NEW_ONLY>
+-a --enable PART              # <tc:combo_options_2>  <NEW_ONLY>
+-d --enable PART              # <tc:combo_options_3>  <NEW_ONLY>
+--enable --disable PART       # <tc:combo_options_4>  <NEW_ONLY>
+--deactivate --activate PART  # <tc:combo_options_5>  <NEW_ONLY>
+-a --deactivate PART          # <tc:combo_options_6>  <NEW_ONLY>
+--fail --unfail PART          # <tc:combo_options_7>  <NEW_ONLY>
+--savestate /tmp/savestate -a # <tc:combo_options_8>  <NEW_ONLY>
+-l --xml                      # <tc:combo_options_9>  <NEW_ONLY>
+-l --xml                      # <tc:combo_options_10> <NEW_ONLY>
+-a --queue q1 PART            # <tc:combo_options_11> <NEW_ONLY>
+--dump --queue q1 PART        # <tc:combo_options_12> <NEW_ONLY>
+--savestate /tmp/s --xml      # <tc:combo_options_13> <NEW_ONLY>
+-a -c -b PART                 # <tc:combo_options_14> <NEW_ONLY>
+
+-a -r PART            # <tc:add_option_1>
+-a --recursive PART   # <tc:add_option_2>
+-a PART1 PART2 PART3  # <tc:add_option_3>
+-a -b PART1 PART2     # <tc:add_option_4>
+-a -c PART1 PART2     # <tc:add_option_5>
+
+-d -r PART            # <tc:delete_option_1>
+-d --recursive PART   # <tc:delete_option_2>
+-d PART1 PART2 PART3  # <tc:delete_option_3>
+-d -b PART1 PART2     # <tc:delete_option_4>
+-d -c PART1 PART2     # <tc:delete_option_5>
+
+--enable -r PART            # <tc:enable_option_1>
+--enable --recursive PART   # <tc:enable_option_2>
+--enable PART1 PART2 PART3  # <tc:enable_option_3>
+--enable -b PART1 PART2     # <tc:enable_option_4>
+--enable -c PART1 PART2     # <tc:enable_option_5>
+
+--disable -r PART            # <tc:disable_option_1>
+--disable --recursive PART   # <tc:disable_option_2>
+--disable PART1 PART2 PART3  # <tc:disable_option_3>
+--disable -b PART1 PART2     # <tc:disable_option_4>
+--disable -c PART1 PART2     # <tc:disable_option_5>
+
+--activate -r PART            # <tc:activate_option_1>
+--activate --recursive PART   # <tc:activate_option_2>
+--activate PART1 PART2 PART3  # <tc:activate_option_3>
+--activate -b PART1 PART2     # <tc:activate_option_4>
+--activate -c PART1 PART2     # <tc:activate_option_5>
+
+--deactivate -r PART            # <tc:deactivate_option_1>
+--deactivate --recursive PART   # <tc:deactivate_option_2>
+--deactivate PART1 PART2 PART3  # <tc:deactivate_option_3>
+--deactivate -b PART1 PART2     # <tc:deactivate_option_4>
+--deactivate -c PART1 PART2     # <tc:deactivate_option_5>
+
+--fail -r PART            # <tc:fail_option_1>
+--fail --recursive PART   # <tc:fail_option_2>
+--fail PART1 PART2 PART3  # <tc:fail_option_3>
+--fail -b PART1 PART2     # <tc:fail_option_4>
+--fail -c PART1 PART2     # <tc:fail_option_5>
+
+--unfail -r PART            # <tc:unfail_option_1>
+--unfail --recursive PART   # <tc:unfail_option_2>
+--unfail PART1 PART2 PART3  # <tc:unfail_option_3>
+--unfail -b PART1 PART2     # <tc:unfail_option_4>
+--unfail -c PART1 PART2     # <tc:unfail_option_5>
+
+--savestate /bad/save       # <tc:savestate_option_1>
+--savestate /tmp/save p1    # <tc:savestate_option_2>
+--savestate                 # <tc:savestate_option_3>
+--savestate /tmp/save -c p1 # <tc:savestate_option_4>
+--savestate /tmp/save -b p1 # <tc:savestate_option_5>
+
+--xml                           # <tc:xml_option_1>
+--xml p1                        # <tc:xml_option_2>
+--xml --recursive p1            # <tc:xml_option_3>
+--xml --blockinfo               # <tc:xml_option_4>
+--xml --clean_block             # <tc:xml_option_5>
+--xml --recursive --blockinfo   # <tc:xml_option_6>
+--xml --recursive --clean_block # <tc:xml_option_7>
+
+--queue                     # <tc:queue_option_1>
+--queue q1:q2 p1 p2 p3      # <tc:queue_option_2>
+--queue kebra:bbb:myq p1    # <tc:queue_option_3>
+--queue kebra:bbb:myq -c p1 # <tc:queue_option_4>
+--queue kebra:bbb:myq -b p1 # <tc:queue_option_5>
+--queue kebra:bbb -r -b p1  # <tc:queue_option_6>
+--queue kebra:bbb -r -c p1  # <tc:queue_option_7>
+
+--dump                           # <tc:dump_option_1>
+--dump p1                        # <tc:dump_option_2>
+--dump --recursive p1            # <tc:dump_option_3>
+--dump --blockinfo               # <tc:dump_option_4>
+--dump --clean_block             # <tc:dump_option_5>
+--dump --recursive --blockinfo   # <tc:dump_option_6>
+--dump --recursive --clean_block # <tc:dump_option_7>
+
+--boot-stop                           # <tc:boot_stop_option_1>
+--boot-stop p1                        # <tc:boot_stop_option_2>
+--boot-stop --recursive p1            # <tc:boot_stop_option_3>
+--boot-stop --blockinfo               # <tc:boot_stop_option_4>
+--boot-stop --clean_block             # <tc:boot_stop_option_5>
+--boot-stop --recursive --blockinfo   # <tc:boot_stop_option_6>
+--boot-stop --recursive --clean_block # <tc:boot_stop_option_7>
+
+--boot-start                           # <tc:boot_start_option_1>
+--boot-start p1                        # <tc:boot_start_option_2>
+--boot-start --recursive p1            # <tc:boot_start_option_3>
+--boot-start --blockinfo               # <tc:boot_start_option_4>
+--boot-start --clean_block             # <tc:boot_start_option_5>
+--boot-start --recursive --blockinfo   # <tc:boot_start_option_6>
+--boot-start --recursive --clean_block # <tc:boot_start_option_7>
+
+--boot-status                           # <tc:boot_status_option_1>
+--boot-status p1                        # <tc:boot_status_option_2>
+--boot-status --recursive p1            # <tc:boot_status_option_3>
+--boot-status --blockinfo               # <tc:boot_status_option_4>
+--boot-status --clean_block             # <tc:boot_status_option_5>
+--boot-status --recursive --blockinfo   # <tc:boot_status_option_6>
+--boot-status --recursive --clean_block # <tc:boot_status_option_7>
+

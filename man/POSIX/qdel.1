@@ -3,18 +3,21 @@
 qdel \- Delete job from the queue manager
 .SH SYNOPSIS
 .B qdel
-.I [--version] [-d] [jobid1] [jobid2]
+.I [options]  jobid1 [jobid2 ... jobidN]
 .SH DESCRIPTION
 .PP
 .B qdel
 Delete a job from the queue. 
 .SH OPTIONS
 .TP
-.B \-\-version
-Print out version string
+.B \-d \--debug
+Turn on communication debugging
 .TP
-.B \-d
-Run in debugging mode.
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .SH "SEE ALSO"
 .BR qstat(1),
 .BR qsub(1),
