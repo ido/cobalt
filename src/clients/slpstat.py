@@ -1,58 +1,74 @@
 #!/usr/bin/env python
+"""
+query the slp daemon for component location information
 
-'''query the slp daemon for component location information'''
+Usage: %prog [options] <queue name> <jobid1> [... <jobidN>]
+version: "%prog " + __revision__ + , Cobalt  + __version__
+
+OPTIONS DEFINITIONS:
+
+'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
+
+"""
+import logging
+import time
+import sys
+from Cobalt import client_utils
+from Cobalt.client_utils import cb_debug
+
+from Cobalt.arg_parser import ArgParse
+
 __revision__ = '$Revision: 1221 $'
 __version__ = '$Version$'
 
-from Cobalt.Util import print_tabular
 
-import sys
-import time
-import xmlrpclib
-import socket
+def main():
+    """
+    slpstat main
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
 
-import Cobalt.Logging
-from Cobalt.Proxy import ComponentProxy
-from Cobalt.Exceptions import ComponentLookupError
+    # read the cobalt config files
+    client_utils.read_config()
 
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args>
+        [ cb_debug        , () ] ]
 
-if __name__ == '__main__':
-    
-    if '--version' in sys.argv:
-        print "slpstat %s" % __revision__
-        print "cobalt %s" % __version__
-        sys.exit()
-    
-    if '-d' in sys.argv:
-        level = 10
-    else:
-        level = 20
-    Cobalt.Logging.setup_logging('cmd', to_syslog=False, level=level)
-    
-    try:
-        slp = Cobalt.Proxy.ComponentProxy("service-location", defer=False)
-    except ComponentLookupError:
-        print >> sys.stderr, "unable to find service-location"
-        sys.exit(1)
-    try:
-        services = slp.get_services([{'tag':'service', 'name':'*', 'stamp':'*', 'location':'*'}])
-    except socket.error, e:
-        print >> sys.stderr, "unable to connect to service-locator (%s)" % (e)
-        sys.exit(1)
-    except xmlrpclib.Fault, e:
-        print >> sys.stderr, "RPC fault (%s)" % (e)
-        sys.exit(1)
-    
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__',__revision__)
+    opt_def =  opt_def.replace('__version__',__version__)
+
+    parser = ArgParse(opt_def,callbacks)
+
+    # Set required default values: None
+
+    parser.parse_it() # parse the command line
+
+    if not parser.no_args():
+        client_utils.logger.error('No arguments needed')
+
+    services = client_utils.get_services([{'tag':'service', 'name':'*', 'stamp':'*', 'location':'*'}])
+
     if services:
         header = [('Name', 'Location', 'Update Time')]
-        output = [
-            (
-                service['name'],
-                service['location'],
-                time.strftime("%c", time.localtime(service['stamp']))
-            )
-            for service in services
-        ]
-        print_tabular(header + [tuple(item) for item in output])
+        output = [ (service['name'],
+                    service['location'],
+                    time.strftime("%c", time.localtime(service['stamp'])))
+                   for service in services ]
+        client_utils.print_tabular(header + [tuple(item) for item in output])
     else:
-        print "no services registered"
+        client_utils.logger.info("no services registered")
+
+if __name__ == '__main__':
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
+        raise
+
+
