@@ -1,5 +1,9 @@
 Changes from previous Cobalt Versions
 
+Changes for 0.99.24
+* Reverting client changes.  Found some issues when deploying to test systems
+* --defer flag has been reverted with these as a casualty.
+
 Changes for 0.99.23
 * Client code has undergone a refactor.  Numerous bugs have been addressed
   with these that were found while improving test coverage of this code
