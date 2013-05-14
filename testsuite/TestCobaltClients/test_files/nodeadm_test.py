@@ -43,12 +43,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -97,12 +97,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -121,7 +121,7 @@ def test_nodeadm_combo_1():
     args      = """--up --down p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: down, up option(s)
+"""Option combinations not allowed with: up option(s)
 """
 
     stubout   = \
@@ -138,12 +138,12 @@ GET_IMPLEMENTATION
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -159,7 +159,7 @@ def test_nodeadm_combo_2():
     args      = """--up -l p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: up, queue, list option(s)
+"""Option combinations not allowed with: list option(s)
 """
 
     stubout   = \
@@ -176,12 +176,12 @@ GET_IMPLEMENTATION
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -197,7 +197,7 @@ def test_nodeadm_combo_3():
     args      = """--list --queue q1 p1"""
 
     cmdout    = \
-"""Option combinations not allowed with: queue, list option(s)
+"""Option combinations not allowed with: queue option(s)
 """
 
     stubout   = \
@@ -214,12 +214,12 @@ GET_IMPLEMENTATION
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -235,58 +235,7 @@ def test_nodeadm_combo_4():
     args      = """--up --queue q1 p1"""
 
     cmdout    = \
-"""nodes marked up:
-   U1
-   U2
-   U3
-   U4
-   U5
-
-nodes that weren't in the down list:
-   p1
-"""
-
-    stubout   = \
-"""
-GET_IMPLEMENTATION
-
-
-NODES_UP
-
-whoami: gooduser
-args: ['p1']
-"""
-
-    stubout_file = "stub.out"
-
-    expected_results = ( 
-                       0, # Expected return status 
-                       cmdout, # Expected command output
-                       stubout # Expected stub functions output
-                       ) 
-
-    testutils.save_testinfo("")
-
-    results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
-    result  = testutils.validate_results(results,expected_results)
-
-    testutils.remove_testinfo()
-
-    correct = 1
-    assert result == correct, "Result:\n%s" % result
-
-
-# ---------------------------------------------------------------------------------
-def test_nodeadm_combo_5():
-    """
-    nodeadm test run: combo_5
-
-    """
-
-    args      = """--down --list p1"""
-
-    cmdout    = \
-"""Option combinations not allowed with: down, queue, list option(s)
+"""Option combinations not allowed with: queue option(s)
 """
 
     stubout   = \
@@ -303,12 +252,50 @@ GET_IMPLEMENTATION
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_nodeadm_combo_5():
+    """
+    nodeadm test run: combo_5
+
+    """
+
+    args      = """--down --list p1"""
+
+    cmdout    = \
+"""Option combinations not allowed with: list option(s)
+"""
+
+    stubout   = \
+"""
+GET_IMPLEMENTATION
+
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -369,12 +356,12 @@ args: ['p1', 'p2', 'p3']
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -431,12 +418,12 @@ args: ['U1', 'U2', 'U5', 'p1']
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -499,12 +486,12 @@ p3
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -557,12 +544,12 @@ p3
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -622,12 +609,12 @@ p1
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -683,12 +670,12 @@ GET_QUEUE_ASSIGNMENTS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -744,12 +731,12 @@ GET_QUEUE_ASSIGNMENTS
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -798,12 +785,12 @@ Options:
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -845,12 +832,12 @@ queues: QU1 QD1
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('nodeadm.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

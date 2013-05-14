@@ -13,8 +13,14 @@ qstat \- query the queue manager for jobs
 query the queue manager for all queued and active jobs. 
 .SH OPTIONS
 .TP
-.B \-d \-\-debub
+.B \-d \--debug
 Turn on communication debugging
+.TP
+.B \-h \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
 .TP
 .B \-f \-\-full
 Show more verbose information. 
@@ -27,9 +33,6 @@ Specify custom header  with a colon-separated list for qstat display. (See qstat
 .TP
 qstat --header JobId:State:RunTime
 .RE
-.TP
-.B \-\-help
-Provides quick help information about this command.
 .TP
 .B \-l \-\-long
 Show job info in vertical format. Use with '-f' to get all job info.
@@ -76,9 +79,6 @@ Specify sort fields  with a colon-separated list for qstat display.
 .TP
 .B \-u \-\-user <user name>
 Specify user name.
-.TP
-.B \-\-version
-Displays client revision and Cobalt version
 .PP
 .SH "ENIRONMENT VARIABLES"
 The following environment variables affect qstat:

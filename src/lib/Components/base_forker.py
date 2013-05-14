@@ -193,7 +193,7 @@ class BaseChild (object):
 
     def print_clf_info(self, fmt, *args):
         self.print_clf("Info: " + fmt, *args)
-    
+
     def print_clf_warning(self, fmt, *args):
         self.print_clf("WARNING: " + fmt, *args, error=True)
     

@@ -10,6 +10,15 @@ qalter \- change properties of jobs already submitted to the queue manager
 changes properties of jobs already submitted to the queue manager
 .SH "OPTIONS"
 .TP
+.B \-d \-\-debug
+Turn on communication debugging
+.TP
+.B \-\-help
+Displays the usage and a brief descriptions of the options
+.TP
+.B \-\-version
+Displays client revision and Cobalt version
+.TP
 .B \-A \-\-project "project"
 Associate the job with the allocation for project project. This is
 used to properly account for machine usage. 
@@ -17,8 +26,8 @@ used to properly account for machine usage.
 .B \-\-attrs <attributes>
 Modify attributes for jobs in args. Format (attr1=val1:attr2=val2:...:attrN=valN)'
 .TP
-.B \-d \-\-debug
-Turn on communication debugging.
+.B \-\-dependencies'
+for jobs in args (jobid1:jobid2:..)
 .TP
 .B \-\-disable_preboot
 If --mode script is specified, this will cause Cobalt to run the job script without
@@ -26,6 +35,9 @@ booting the block first.  By default the script is executed after the requested 
 .TP
 .B \-\-enable_preboot
 If prebooting a block has been disabled, re-enable it.
+.TP
+.B \-\-defer
+Defer jobs in the argument list for the current user.
 .TP
 .B \-e \-\-error "stderr file path"
 Send job stderr to file specified.
@@ -36,8 +48,8 @@ the form of AxBxCxDxE.  This must be the geometry of the compute block.
 This may not be a fraction of a block. Geometry may be unset if "None"
 is passed as the geometry specification.
 .TP
-.B \-\-help
-Provides quick help information about this command.
+.B \-h \-\-held'
+hold jobs in args',action='store_true
 .TP
 .B \-M \-\-notify "email address"
 Send an email notification at the start and stop of the job to the
@@ -73,9 +85,6 @@ Also note that relative time is allowed.  A time argument with a '+' at the
 beginning will add the argument amount to the current walltime, while an argument
 with a '-' at the beginning will subtract the argument amount from the current
 walltime.
-.TP
-.B \-\-version
-Print out version string
 .SH "SEE ALSO"
 .BR qsub(1),
 .BR qstat(1)

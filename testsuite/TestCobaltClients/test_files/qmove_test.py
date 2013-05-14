@@ -29,12 +29,12 @@ qmove.py: error: no such option: -k
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qmove.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -98,6 +98,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -153,6 +154,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -208,6 +210,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -267,12 +270,12 @@ walltime:15
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qmove.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -334,6 +337,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -389,6 +393,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -444,6 +449,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -503,12 +509,12 @@ walltime:15
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qmove.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -572,6 +578,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -627,6 +634,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -682,6 +690,7 @@ SET_JOBS
 
 Original Jobs:
 
+user: gooduser
 args:
 envs:{}
 errorpath:/tmp
@@ -741,12 +750,12 @@ walltime:15
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qmove.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result
@@ -778,12 +787,12 @@ def test_qmove_queu_4():
                        stubout # Expected stub functions output
                        ) 
 
-    testutils.save_testinfo("")
+    testutils.save_testhook("")
 
     results = testutils.run_cmd('qmove.py',args,stubout_file) 
     result  = testutils.validate_results(results,expected_results)
 
-    testutils.remove_testinfo()
+    testutils.remove_testhook()
 
     correct = 1
     assert result == correct, "Result:\n%s" % result

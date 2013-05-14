@@ -133,5 +133,5 @@
 --boot-status --blockinfo               # <tc:boot_status_option_4>
 --boot-status --clean_block             # <tc:boot_status_option_5>
 --boot-status --recursive --blockinfo   # <tc:boot_status_option_6>
---boot-status --recursive --clean_block # <Tc:boot_status_option_7>
+--boot-status --recursive --clean_block # <tc:boot_status_option_7>
 

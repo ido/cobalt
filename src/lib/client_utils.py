@@ -11,6 +11,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 import pwd
 import os.path
+import socket
 import xmlrpclib
 import ConfigParser
 import re
@@ -20,7 +21,8 @@ import Cobalt.Util
 from Cobalt.Proxy import ComponentProxy
 from Cobalt.Util import parse_geometry_string
 from Cobalt.arg_parser import ArgParse
-from Cobalt.Exceptions import QueueError, ComponentLookupError, JobValidationError, JobPreemptionError, JobRunError, JobDeleteError
+from Cobalt.Exceptions import QueueError, ComponentLookupError, JobValidationError
+from Cobalt.Exceptions import JobPreemptionError, JobRunError, JobDeleteError, NotSupportedError
 
 
 logger   = None # Logging instance. setup_logging needs to be called first thing.
@@ -164,14 +166,14 @@ def set_jobid(jobid,user):
         sys.exit(1)
     return response
 
-def save(filename,cmp='cqm'):
+def save(filename,comp='cqm'):
     """
     Will save the state to the specified location
     """
     try:
-        if cmp == 'cqm':
+        if comp == 'cqm':
             component = client_data.queue_manager()
-        elif cmp == 'scheduler':
+        elif comp == 'scheduler':
             component = client_data.scheduler_manager()
             
         directory = os.path.dirname(filename)
@@ -321,6 +323,20 @@ def adjust_job_scores(spec, new_score, whoami):
         logger.error("Failed to connect to queue manager")
         sys.exit(1)
     return response
+
+def set_scores(score, jobids, user):
+    """
+    reset the score of a job to zero to defer it.
+    """
+    specs = [{'jobid':jobid} for jobid in jobids]
+
+    response = adjust_job_scores(specs, str(score), user)
+
+    if not response:
+        logger.info("no jobs matched")
+    else:
+        dumb = [str(_id) for _id in response]
+        logger.info("updating scores for jobs: %s" % ", ".join(dumb))
 
 def define_user_utility_functions(whoami):
     """
@@ -948,6 +964,22 @@ def process_filters(filters,spec):
     for filt in filters:
         Cobalt.Util.processfilter(filt, spec)
 
+def validate_conflicting_options(parser, option_lists):
+    """
+    This function will validate that the list of passed options are mutually exclusive
+    """
+    errmsg = [] # init error msessage to empty string
+    for mutex_option_list in option_lists:
+        optc  = 0
+        for mutex_option in mutex_option_list:
+            if getattr(parser.options, mutex_option) != None:
+                errmsg.append(mutex_option)
+                optc += 1
+        if optc > 1:
+            errmsg = 'Option combinations not allowed with: %s option(s)' % ", ".join(errmsg[1:])
+            logger.error(errmsg)
+            sys.exit(1)
+
 #  
 # Callback fucntions for argument parsing defined below
 #
@@ -987,6 +1019,17 @@ def cb_gtzero(option,opt_str,value,parser,*args):
         logger.error(opt_str + " is " + str(value) + " which is greater <= to zero")
         sys.exit(1)
 
+    setattr(parser.values,option.dest,value) # set the option
+
+def cb_score(option,opt_str,value,parser,*args):
+    """
+    Validate the value entered is greater than zero
+    """
+    try:
+        _value = float(value)
+    except:
+        logger.error('%s is %s which is not number value' % (opt_str,value))
+        sys.exit(1)
     setattr(parser.values,option.dest,value) # set the option
 
 def cb_time(option,opt_str,value,parser,*args):

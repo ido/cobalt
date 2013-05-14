@@ -86,8 +86,7 @@ def gen_partitions(specs,updates,whoami):
     if updates:
         logdic(updates)
     parts = []
-    i = 0
-    for spec in specs:
+    for i in range(len(specs)):
         parts.append({'name':PARTS[i],'queue':QUEUES[i],'children':'a', 'size':i, 
                       'node_geometry':['48','48','48','48','48'],'relatives':'b','passthrough_blocks':'A',
                       'draining':False,'state':'idle','functional':True, 'scheduled':True})
@@ -97,13 +96,12 @@ def gen_partitions(specs,updates,whoami):
         if updates:
             for k in updates:
                 parts[i][k] = updates[k]
-        i += 1
     return parts
 
-def genplist(specs):
-    logdiclist(specs)
+def genplist(parts):
+    logdiclist(parts)
     plist = []
-    for s in specs:
+    for s in parts:
         if s['name'] == '*':
             for p in PARTS:
                 plist.append(p)
@@ -120,32 +118,34 @@ def get_parts(plist):
             for p2 in PARTS:
                 parts.append({'name':p2,'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
                               'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
-                              'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                              'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK', 
+                              'block_computes_for_reboot': True, 'autoreboot' : True} )
                 i += 1
             break
         parts.append({'name':p1['name'],'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
                       'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
-                      'draining':False,'state':'idle','functional':True, 'scheduled':True})
+                      'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK',
+                      'block_computes_for_reboot': True, 'autoreboot' : True} )
         i += 1
     return parts
 
 class SystemStub(object):
 
-    def initiate_proxy_boot(s,block, user, jobid):
+    def initiate_proxy_boot(self,block, user, jobid):
         logmsg("\nINITIATE_PROXY_BOOT\n")
         logmsg("block: %s" % block)
         logmsg("user: %s" % user)
         logmsg("jobid: %s" % str(jobid))
         return True
 
-    def initiate_proxy_free(s,block, user, jobid):
+    def initiate_proxy_free(self,block, user, jobid):
         logmsg("\nINITIATE_PROXY_FREE\n")
         logmsg("block: %s" % block)
         logmsg("user: %s" % user)
         logmsg("jobid: %s" % str(jobid))
         return True
 
-    def get_boot_statuses_and_strings(s,block):
+    def get_boot_statuses_and_strings(self,block):
         logmsg("\nGET_BOOT_STATUSES_AND_STRINGS\n")
         logmsg("block: %s" % block)
         boot_id        = 1
@@ -153,109 +153,131 @@ class SystemStub(object):
         status_strings = ['status 1','status 2','status 3']
         return (boot_id, status, status_strings)
 
-    def reap_boot(s,block):
+    def reap_boot(self,block):
         logmsg("\nREAP_BOOT\n")
         logmsg("block: %s" % block)
         return True
         
-    def get_block_bgsched_status(s,block):
+    def get_block_bgsched_status(self,block):
         logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
         logmsg("block: %s" % block)
         return 'Free'
         
-    def get_block_bgsched_status(s,block):
-        logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
-        logmsg("block: %s" % block)
-        return 'Free'
-        
-    def validate_job(s,opts):
+    def validate_job(self,opts):
         disable_logwrite()
         logmsg("\nVALIDATE_JOB\n")
         logdic(opts)
         enable_logwrite()
         return opts
 
-    def get_partitions(s,plist):
+    def get_partitions(self,plist):
         logmsg("\nGET_PARTITIONS\n")
         return get_parts(plist)
 
-    def get_blocks(s,plist):
+    def get_blocks(self,plist):
         logmsg("\nGET_BLOCKS\n")
         return get_parts(plist)
 
-    def verify_locations(s,location_list):
+    def get_io_blocks(self, plist):
+        logmsg("\nGET_IO_BLOCKS\n")
+        return get_parts(plist)
+
+    def verify_locations(self,location_list):
         logmsg("\nVERIFY_LOCATIONS\n")
         logmsg('location list: '+str(location_list))
         return location_list
 
-    def add_partitions (s, specs, user_name=None):
+    def add_partitions (self, parts, user_name=None):
         logmsg("\nADD_PARTITION\n")
-        return genplist(specs)
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
 
-    def del_partitions (s, specs, user_name=None):
+    def add_io_blocks(self, parts, user_name=None):
+        logmsg("\nADD_IO_BLOCKS\n")
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
+
+    def del_partitions (self, parts, user_name=None):
         logmsg("\nDEL_PARTITION\n")
-        return genplist(specs)
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
 
-    def set_partitions (s, specs, updates, user_name=None):
+    def del_io_blocks(self, parts, user_name=None):
+        logmsg("\nDEL_IO_BLOCKS\n")
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        return genplist(parts)
+
+    def set_partitions (self, parts, updates, user_name=None):
         logmsg("\nSET_PARTITION\n")
-        return genplist(specs)
+        logmsg('user name: %s' % str(user_name))
+        logdiclist(parts)
+        logdic(updates)
+        return genplist(parts)
 
-    def generate_xml(s):
+    def generate_xml(self):
         logmsg("\nGENERATE_XML\n")
         return genplist([{'name':'*'}])
 
-    def fail_partitions(s, specs, user_name=None):
+    def fail_partitions(self, parts, user_name=None):
         logmsg("\nFAIL_PARTITION\n")
-        return genplist(specs)
+        logmsg('user name: %s' % str(user_name))
+        logmsg('part list: %s' % str(parts))
+        return genplist(parts)
 
-    def unfail_partitions(s, specs, user_name=None):
+    def unfail_partitions(self, parts, user_name=None):
         logmsg("\nUNFAIL_PARTITION\n")
-        return genplist(specs)
+        logmsg('user name: %s' % str(user_name))
+        logmsg('part list: %s' % str(parts))
+        return genplist(parts)
 
-    def save(s,filename):
+    def save(self,filename):
         logmsg("\nSAVE\n")
         logmsg('filename:'+str(filename))
         return get_parts([{'name':'*'}])
 
-    def halt_booting(s,user_name=None):
+    def halt_booting(self,user_name=None):
         logmsg("\nHALT_BOOTING\n")
         logmsg('whoami: %s' % str(user_name))
         return True
 
-    def resume_booting(s,user_name=None):
+    def resume_booting(self,user_name=None):
         logmsg("\nRESUME_BOOTING\n")
         logmsg('whoami: %s' % str(user_name))
         return True
 
-    def booting_status(s):
+    def booting_status(self):
         logmsg("\nBOOTING_STATUS\n")
         return False
 
-    def set_cleaning(s,part,var2,user_name):
+    def set_cleaning(self,part,var2,user_name):
         logmsg("\nSET_CLEANING\n")
         logmsg("part: %s" % part)
         logmsg("var2 : %s" % var2)
         logmsg('whoami: %s' % str(user_name))
         return True
 
-    def get_implementation(s):
+    def get_implementation(self):
         logmsg("\nGET_IMPLEMENTATION\n")
         return 'cluster_system'
 
-    def nodes_down(s,args,whoami):
+    def nodes_down(self,args,whoami):
         logmsg("\nNODES_DOWN\n")
         logmsg("whoami: %s" % whoami)
         for a in args:
             logmsg(a)
         return ["D1","D2","D3","D4","D5"]
 
-    def nodes_up(s,args,whoami):
+    def nodes_up(self,args,whoami):
         logmsg("\nNODES_UP\n")
         logmsg("whoami: %s" % whoami)
         logmsg("args: %s" % str(args))
         return ["U1","U2","U3","U4","U5"]
 
-    def get_idle_blocks(s,block_loc, query_size,geo_list):
+    def get_idle_blocks(self,block_loc, query_size,geo_list):
         logmsg("\nGET_IDLE_BLOCKS\n")
         logmsg("block location: %s" % str(block_loc))
         logmsg("query size: %s" % str(query_size))
@@ -267,16 +289,16 @@ class SystemStub(object):
         logmsg("geoometry: %s" % geo)
         return ["I1","I2","I3","I4","I5"]
 
-    def get_node_status(s):
+    def get_node_status(self):
         logmsg("\nGET_NODES_STATUS\n")
         return [ ['D1','good'],['D2','bad'],['D3','ugly'],['U1','one'],['U2','two'],['U3','three']]
 
-    def get_queue_assignments(s):
+    def get_queue_assignments(self):
         logmsg('\nGET_QUEUE_ASSIGNMENTS\n')
         ret = {'QU1':'U1','QD1':'D1','QU2':'U2','QD2':'D2','QU3':'U3','QD3':'D3'}
         return ret
 
-    def set_queue_assignments(s,queues,args,whoami):
+    def set_queue_assignments(self,queues,args,whoami):
         logmsg('\nGET_QUEUE_ASSIGNMENTS\n')
         logmsg("whoami: %s" % whoami)
         logmsg("args: %s" % str(args))
@@ -284,8 +306,47 @@ class SystemStub(object):
         ret = queues
         return ret
 
+    def initiate_io_boot(self, parts, whoami, tag):
+        logmsg('\nINITIATE_IO_BOOT\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("tag: %s" % tag)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def initiate_io_free(self, parts, force, whoami):
+        logmsg('\nINITIATE_IO_BOOT\n')
+        logmsg("whoami: %s" % whoami)
+        logmsg("force: %s" % str(force))
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def set_autoreboot(self, parts, user):
+        logmsg('\nSET_AUTOREBOOT\n')
+        logmsg("whoami: %s" % user)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def unset_autoreboot(self, parts, user):
+        logmsg('\nUNSET_AUTOREBOOT\n')
+        logmsg("whoami: %s" % user)
+        logmsg('parts: %s' % str(parts))
+        return True
+
+    def enable_io_autoreboot(self):
+        logmsg("\nENABLE_IO_AUTOREBOOT\n")
+        return True
+
+    def disable_io_autoreboot(self):
+        logmsg("\nDISABLE_IO_AUTOREBOOT\n")
+        return True
+
+    def get_io_autoreboot_status(self):
+        logmsg("\nGET_IO_AUTOREBOOT_STATUS\n")
+        return True
+
 def change_jobs(ojoblist, newjob,user):
     logmsg("\nOriginal Jobs:\n")
+    logmsg("user: %s" % user)
     logdiclist(ojoblist)
     logmsg("\nNew Job Info:\n")
     if type(newjob) == type([]) or type(newjob) == type({}):
@@ -325,25 +386,25 @@ def change_jobs(ojoblist, newjob,user):
 
 class CqmStub(object):
     
-    def set_jobid(s,jobid, whoami):
+    def set_jobid(self,jobid, whoami):
         logmsg("\nSET_JOBID\n")
         logmsg('jobid:'+str(jobid))
         logmsg('whoami:'+str(whoami))
         return True
 
-    def save(s,filename):
+    def save(self,filename):
         logmsg("\nSAVE\n")
         logmsg('filename:'+str(filename))
         return True
         
-    def set_queues(s,jobslist, qdata, whoami):
+    def set_queues(self,jobslist, qdata, whoami):
         logmsg("\nSET_QUEUES\n")
         logmsg('queue data:'+str(qdata))
         logmsg('whoami:'+str(whoami))
         logdiclist(jobslist)
         return True
 
-    def del_queues(s,jobslist,force,whoami):
+    def del_queues(self,jobslist,force,whoami):
         logmsg("\nDEL_QUEUES\n")
         logmsg('force:'+str(force))
         logmsg('whoami:'+str(whoami))
@@ -364,7 +425,7 @@ class CqmStub(object):
                    'priority'     : 'urgent'} for job in jobslist]
         return queues
 
-    def add_queues(s,jobslist,whoami):
+    def add_queues(self,jobslist,whoami):
         logmsg("\nADD_QUEUES\n")
         logmsg('whoami:'+str(whoami))
         logdiclist(jobslist)
@@ -384,7 +445,7 @@ class CqmStub(object):
                    'priority'     : 'urgent'} for job in jobslist]
         return queues
 
-    def get_queues(s,jobslist):
+    def get_queues(self,jobslist):
         logmsg("\nGET_QUEUES\n")
         logdiclist(jobslist)
         queues = []
@@ -406,28 +467,28 @@ class CqmStub(object):
             queues.append(queue)
         return queues
 
-    def preempt_jobs(s,jobslist,whoami,force):
+    def preempt_jobs(self,jobslist,whoami,force):
         logmsg("\nPREEMPT_JOBS\n")
         logmsg('force:'+str(force))
         logmsg('whoami:'+str(whoami))
         logdiclist(jobslist)
         return True
 
-    def del_jobs(s,jobslist,force,whoami):
+    def del_jobs(self,jobslist,force,whoami):
         logmsg("\nDEL_JOBS\n")
         logmsg('force:'+str(force))
         logmsg('whoami:'+str(whoami))
         logdiclist(jobslist)
         return jobslist
 
-    def run_jobs(s,jobslist,location,whoami):
+    def run_jobs(self,jobslist,location,whoami):
         logmsg("\nRUN_JOBS\n")
         logmsg('location:'+str(location))
         logmsg('whoami:'+str(whoami))
         logdiclist(jobslist)
         return True
 
-    def add_jobs(s,jobslist):
+    def add_jobs(self,jobslist):
         global logbuf
         logmsg("\nADD_JOBS\n")
         logdiclist(jobslist)
@@ -436,15 +497,18 @@ class CqmStub(object):
             logbuf = ''
         return [{'jobid':1}]
         
-    def set_jobs(s,ojoblist, newjob,user):
+    def set_jobs(self,ojoblist, newjob,user):
         logmsg("\nSET_JOBS\n")
         return change_jobs(ojoblist,newjob,user)
 
-    def adjust_job_scores(s,ojoblist, newjob,user):
+    def adjust_job_scores(self,ojoblist, newscore,user):
         logmsg("\nADJUST_JOB_SCORES\n")
-        return change_jobs(ojoblist,newjob,user)
+        logdiclist(ojoblist)
+        logmsg('new score: %s' % str(newscore))
+        jobids = [j['jobid'] for j in ojoblist]
+        return jobids
 
-    def get_jobs(s,job_specs):
+    def get_jobs(self,job_specs):
         if len(job_specs) == 0: return
         logmsg("\nGET_JOBS\n")
         logdiclist(job_specs)
@@ -496,38 +560,38 @@ class CqmStub(object):
         enable_logwrite()
         return _job_specs
 
-    def define_user_utility_functions(s,whoami):
+    def define_user_utility_functions(self,whoami):
         logmsg("\nDEFINE_USER_UTILITY_FUNCTION\n")
         logmsg('whoami: %s' % str(whoami))
 
 class SchedStub(object):
 
-    def save(s,filename):
+    def save(self,filename):
         logmsg("\nSAVE\n")
         logmsg('filename:'+str(filename))
         return True
 
-    def force_res_id(s,id):
+    def force_res_id(self,res_id):
         logmsg("\nFORCE_RES_ID\n")
-        logmsg('id: ' + str(id))
+        logmsg('id: ' + str(res_id))
         return id
 
-    def set_res_id(s,id):
+    def set_res_id(self,res_id):
         logmsg("\nSET_RES_ID\n")
-        logmsg('id: ' + str(id))
+        logmsg('id: ' + str(res_id))
         return id
 
-    def force_cycle_id(s,id):
+    def force_cycle_id(self,cycle_id):
         logmsg("\nFORCE_CYCLE_ID\n")
-        logmsg('id: ' + str(id))
+        logmsg('id: ' + str(cycle_id))
         return id
 
-    def set_cycle_id(s,id):
+    def set_cycle_id(self,cycle_id):
         logmsg("\nSET_CYCLE_ID\n")
-        logmsg('id: ' + str(id))
+        logmsg('id: ' + str(cycle_id))
         return id
 
-    def get_reservations(s,query):
+    def get_reservations(self,query):
         logmsg("\nGET_RESERVATIONS\n")
         logdiclist(query)
         res_list = []
@@ -535,7 +599,6 @@ class SchedStub(object):
         d    = 500
         st   = 1000000
         res  = query[0]
-        sz   = 100
         if 'name' in res:
             _res = {'queue':QUEUES[0],'name':res['name'],'cycle':ct,'duration':d,'start':st,'active':True,
                     'partitions':':'.join(PARTS),'block_passthrough':True,'cycle_id':10,'users':USERS[0],
@@ -546,48 +609,47 @@ class SchedStub(object):
                 ct += 300
                 d  += 500
                 st += 1000000
-                sz -= 1
                 res_list.append({'queue':q,'name':q,'cycle':ct,'duration':d,'start':st,'active':True,
                                  'partitions':':'.join(PARTS),'block_passthrough':True,'project':'proj','res_id':'id'})
             
         return res_list
 
-    def set_reservations(s,res_list,spec,user):
+    def set_reservations(self,res_list,spec,user):
         logmsg("\nSET_RESERVATIONS\n")
         logdiclist(res_list)
         logdic(spec)
         logmsg('user: '     + str(user))
         return True
 
-    def add_reservations(s,specs,user):
+    def add_reservations(self,specs,user):
         logmsg("\nADD_RESERVATIONS\n")
         logdiclist(specs)
         logmsg('user: '     + str(user))
         return True
 
-    def check_reservations(s):
+    def check_reservations(self):
         logmsg("\nCHECK_RESERVATIONS\n")
         return True
 
-    def sched_status(s):
+    def sched_status(self):
         logmsg("\nSCHED_STATUS\n")
         return True
 
-    def disable(s,whoami):
+    def disable(self,whoami):
         logmsg("\nDISABLE\n")
         logmsg('whoami: %s' % str(whoami))
 
-    def enable(s,whoami):
+    def enable(self,whoami):
         logmsg("\nENABLE\n")
         logmsg('whoami: %s' % str(whoami))
 
 class SlpStub(object):
 
-    def get_services(s,query):
+    def get_services(self,query):
         logmsg("\nGET_SERVICES\n")
         logdiclist(query)
-        tinfo = testutils.get_testinfo()
-        if tinfo.find("NO SERVICES") != -1:
+        thook = testutils.get_testhook()
+        if thook.find("NO SERVICES") != -1:
             return []
         services = []
         for i in range(5):
