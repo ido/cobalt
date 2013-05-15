@@ -62,7 +62,8 @@ class client_data(object):
         try:
             # if queue manager connection has not yet been establish or the defer flag 
             # is different than previously specified then extabblish queue manager connection
-            if client_data.cqm_conn == None or client_data.cqm_defer != defer:
+            # Note: cqm_conn does not have '==' method 
+            if client_data.cqm_conn is None or client_data.cqm_defer != defer:
                 client_data.cqm_defer = defer
                 client_data.cqm_conn  = ComponentProxy("queue-manager", defer=client_data.cqm_defer)
         except ComponentLookupError:
@@ -78,7 +79,8 @@ class client_data(object):
         try:
             # if system manager connection has not yet been establish or the defer flag 
             # is different than previously specified then extabblish system  manager connection
-            if client_data.sys_conn == None or  client_data.sys_defer != defer:
+            # Note: sys_conn does not have '==' method 
+            if client_data.sys_conn is None or  client_data.sys_defer != defer:
                 client_data.sys_defer = defer
                 client_data.sys_conn = ComponentProxy("system", defer=defer)
         except:
@@ -94,7 +96,8 @@ class client_data(object):
         try:
             # if scheduler manager connection has not yet been establish or the defer flag 
             # is different than previously specified then extabblish schedulre  manager connection
-            if client_data.sch_conn == None or client_data.sch_defer != defer:
+            # Note: sch_conn does not have '==' method 
+            if client_data.sch_conn is None or client_data.sch_defer != defer:
                 client_data.sch_defer = defer
                 client_data.sch_conn = ComponentProxy("scheduler", defer=defer)
         except:
@@ -112,7 +115,8 @@ class client_data(object):
         try:
             # if service location manager connection has not yet been establish or the defer flag 
             # is different than previously specified then extabblish service location manager connection
-            if client_data.slp_conn == None or client_data.slp_defer != defer:
+            # Note: slp_conn does not have '==' method so convert to string first then compare to str(None)
+            if client_data.slp_conn is None or client_data.slp_defer != defer:
                 client_data.slp_defer = defer
                 client_data.slp_conn = ComponentProxy("service-location", defer=defer)
         except:
