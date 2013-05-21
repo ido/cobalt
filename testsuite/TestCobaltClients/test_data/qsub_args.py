@@ -43,7 +43,7 @@ test_argslist = [
     { "tc_name" : "invalid_user", "args" : """-run_users naughtyuser -t10 -n10 /bin/ls""", },
     { "tc_name" : "mode_option_1", "args" : """-t10 -n512 --proccount 1023 --mode dual /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "mode_option_2", "args" : """-t10 -n512 --proccount 1023 --mode vn /bin/ls""", },
-    { "tc_name" : "mode_option_3", "args" : """--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls""", },
+    { "tc_name" : "mode_option_3", "args" : """--mode co -t50 -n10 --geometry 40x40x50x50 /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "mode_option_4", "args" : """-A Acceptance -q testing -n 49152 -t 60 --mode script /bin/ls""", "old_args" : "", },
     { "tc_name" : "preboot_option", "args" : """--disable_preboot -t10 -n512 --proccount 1023 --mode dual /bin/ls""", 'skip_list' : ['not_bsim'], },
     ]
