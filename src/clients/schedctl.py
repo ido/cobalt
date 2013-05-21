@@ -32,6 +32,9 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = 'TBD'
 __version__  = 'TBD'
 
+SCHMGR = client_utils.SCHMGR
+QUEMGR = client_utils.QUEMGR
+
 def validate_args(parser, args):
     """
     Validate arguments
@@ -62,7 +65,7 @@ def validate_args(parser, args):
                     continue
                 try:
                     args[i] = int(args[i])
-                except:
+                except ValueError:
                     client_utils.logger.error("jobid must be an integer, found '%s'" % args[i])
                     sys.exit(1)
 
@@ -109,28 +112,28 @@ def main():
 
     validate_args(parser, args)
 
-    sched = client_utils.client_data.scheduler_manager(False)
+    #sched = client_utils.client_data.scheduler_manager(False)
 
     if opt.stop != None:
-        sched.disable(whoami)
+        client_utils.component_call(SCHMGR, False, 'disable', (whoami,))
         client_utils.logger.info("Job Scheduling: DISABLED")
         sys.exit(0)
     elif opt.start != None:
-        sched.enable(whoami)
+        client_utils.component_call(SCHMGR, False, 'enable', (whoami,))
         client_utils.logger.info("Job Scheduling: ENABLED")
         sys.exit(0)
     elif opt.stat != None:
-        if sched.sched_status():
+        if client_utils.component_call(SCHMGR, False, 'sched_status', ()):
             client_utils.logger.info("Job Scheduling: ENABLED")
         else:
             client_utils.logger.info("Job Scheduling: DISABLED")
         sys.exit(0)
     elif opt.reread != None:
         client_utils.logger.info("Attempting to reread utility functions.")
-        client_utils.define_user_utility_functions(whoami)
+        client_utils.component_call(QUEMGR, False, 'define_user_utility_functions', (whoami,))
         sys.exit(0)
     elif opt.savestate != None:
-        response = client_utils.save(opt.savestate,'scheduler')
+        response = client_utils.component_call(SCHMGR, False, 'save', (opt.savestate,))
         client_utils.logger.info(response)
         sys.exit(0)
 
@@ -139,7 +142,7 @@ def main():
 
     if opt.dep_frac != None:
         specs = [{'jobid':jobid} for jobid in args]
-        response = client_utils.set_jobs(specs, {"dep_frac": opt.dep_frac}, whoami)
+        response = client_utils.component_call(QUEMGR, False, 'set_jobs', (specs, {"dep_frac": opt.dep_frac}, whoami))
 
         if not response:
             client_utils.logger.info("no jobs matched")
@@ -152,6 +155,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

@@ -21,6 +21,9 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 1981 $'
 __version__ = '$Version$'
 
+SYSMGR = client_utils.SYSMGR
+SCHMGR = client_utils.SCHMGR
+
 def main():
     """
     partlist main
@@ -61,8 +64,9 @@ def main():
                  'size':'*', 'functional':'*', 'scheduled':'*', 'children':'*',
                  'backfill_time':"*", 'draining':"*"}]
 
-    parts = client_utils.get_partitions(spec)
-    reservations = client_utils.get_reservations([{'queue':'*','partitions':'*','active':True}])
+    parts        = client_utils.component_call(SYSMGR, True, 'get_partitions', (spec,))
+    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', 
+                                               ([{'queue':'*','partitions':'*','active':True}],))
 
     expanded_parts = {}
     for res in reservations:
@@ -122,7 +126,7 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)
 

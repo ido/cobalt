@@ -21,6 +21,8 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 345 $'
 __version__ = '$Version$'
 
+QUEMGR = client_utils.QUEMGR
+
 def main():
     """
     qdel main
@@ -51,7 +53,7 @@ def main():
     jobids = client_utils.validate_jobid_args(parser)
     jobs   = [{'tag':'job', 'user':user, 'jobid':jobid} for jobid in jobids]
 
-    deleted_jobs = client_utils.del_jobs(jobs, False, user)
+    deleted_jobs = client_utils.component_call(QUEMGR, True, 'del_jobs', (jobs, False, user))
     time.sleep(1)
     if deleted_jobs:
         data = [('JobID','User')] + [(job.get('jobid'), job.get('user')) for job in deleted_jobs]
@@ -63,7 +65,7 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)
 

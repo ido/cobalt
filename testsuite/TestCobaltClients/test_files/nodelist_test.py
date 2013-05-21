@@ -136,6 +136,21 @@ def test_nodelist_debug():
 """
 nodelist.py -d
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
+component: "system.get_node_status", defer: False
+  get_node_status(
+     )
+
+
+component: "system.get_queue_assignments", defer: False
+  get_queue_assignments(
+     )
+
+
 Host  Queue  State
 ====================
 D1    QD1    good 

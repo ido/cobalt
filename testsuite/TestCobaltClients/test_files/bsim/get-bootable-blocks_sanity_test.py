@@ -1,0 +1,421 @@
+import testutils
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_arg_1():
+    """
+    get-bootable-blocks test run: arg_1
+
+        Command Output:
+          Must specify a block location for search
+          
+
+    """
+
+    args      = ''
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_size_1():
+    """
+    get-bootable-blocks test run: size_1
+
+        Command Output:
+          Must specify a block location for search
+          
+
+    """
+
+    args      = """--size 1024"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_1():
+    """
+    get-bootable-blocks test run: geometry_1
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry 1              arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_2():
+    """
+    get-bootable-blocks test run: geometry_2
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry geo            arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_3():
+    """
+    get-bootable-blocks test run: geometry_3
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry 90x90x90x90x90 arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_4():
+    """
+    get-bootable-blocks test run: geometry_4
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry 90x90x90x90    arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_5():
+    """
+    get-bootable-blocks test run: geometry_5
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry -9x90x90x90x2  arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_9():
+    """
+    get-bootable-blocks test run: geometry_9
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry 90x90x90x90x3  arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_geometry_10():
+    """
+    get-bootable-blocks test run: geometry_10
+
+        Command Output:
+          Invalid Geometry. Geometry must be in the form of AxBxCxDxE
+          
+
+    """
+
+    args      = """--geometry 90x90x90x90x11 arg"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_help_1():
+    """
+    get-bootable-blocks test run: help_1
+
+        Command Output:
+          Usage: get-bootable-blocks.py [options] <block location>
+          
+          Options:
+            --version            show program's version number and exit
+            -h, --help           show this help message and exit
+            -d, --debug          turn on communication debugging
+            --size=QUERY_SIZE    Constrain blocks to a particular nodecount
+            --geometry=GEO_LIST  Constrain blocks to a particular geometry
+          
+
+    """
+
+    args      = """--help"""
+    exp_rs    = 0
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_help_2():
+    """
+    get-bootable-blocks test run: help_2
+
+        Command Output:
+          Usage: get-bootable-blocks.py [options] <block location>
+          
+          Options:
+            --version            show program's version number and exit
+            -h, --help           show this help message and exit
+            -d, --debug          turn on communication debugging
+            --size=QUERY_SIZE    Constrain blocks to a particular nodecount
+            --geometry=GEO_LIST  Constrain blocks to a particular geometry
+          
+
+    """
+
+    args      = """-h"""
+    exp_rs    = 0
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_version():
+    """
+    get-bootable-blocks test run: version
+
+        Command Output:
+          version: "get-bootable-blocks.py " + TBD + , Cobalt  + TBD
+          
+
+    """
+
+    args      = """--version"""
+    exp_rs    = 0
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_get_bootable_blocks_debug():
+    """
+    get-bootable-blocks test run: debug
+
+        Command Output:
+          
+          get-bootable-blocks.py --debug
+          
+          Must specify a block location for search
+          
+
+    """
+
+    args      = """--debug"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('get-bootable-blocks.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg

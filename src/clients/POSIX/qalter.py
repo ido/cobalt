@@ -51,6 +51,8 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $' # TBC may go away.
 __version__ = '$Version$'
 
+QUEMGR = client_utils.QUEMGR
+
 def validate_args(parser, opt_count):
     """
     Validate qalter arguments
@@ -113,7 +115,7 @@ def get_jobdata(jobids, parser, user):
     jobs = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*',
              'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
 
-    jobdata = client_utils.get_jobs(jobs)
+    jobdata = client_utils.component_call(QUEMGR, False, 'get_jobs', (jobs,))
     job_running = False
 
     # verify no job is running
@@ -263,7 +265,7 @@ def main():
         job.update(new_spec)
 
         client_utils.process_filters(filters, job)
-        response = client_utils.set_jobs([orig_job], job, user)
+        response = client_utils.component_call(QUEMGR, False, 'set_jobs', ([orig_job], job, user))
         do_some_logging(job, orig_job, parser)
 
     if not response:
@@ -277,6 +279,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

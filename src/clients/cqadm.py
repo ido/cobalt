@@ -65,6 +65,9 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
+SYSMGR = client_utils.SYSMGR
+QUEMGR = client_utils.QUEMGR
+
 def check_option_conflicts(opt_count, parser):
     """
     check mutually exclusive options
@@ -137,7 +140,7 @@ def getq(info):
     """
     get queue
     """
-    response = client_utils.get_queues(info)
+    response = client_utils.component_call(QUEMGR, True, 'get_queues', (info,))
     for que in response:
         if que['maxtime'] is not None:
             que['maxtime'] = "%02d:%02d:00" % (divmod(int(que.get('maxtime')), 60))
@@ -165,7 +168,7 @@ def setjobs(jobs, parser, spec, user):
     if hasattr(parser.options,'admin_hold'):
         for job in jobs:
             job.update({'admin_hold':not parser.options.admin_hold})
-    return client_utils.set_jobs(jobs, spec, user)
+    return client_utils.component_call(QUEMGR, False, 'set_jobs', (jobs, spec, user))
 
 def process_cqadm_options(jobs, parser, spec, user):
     """
@@ -180,13 +183,13 @@ def process_cqadm_options(jobs, parser, spec, user):
 
     response = []
     if parser.options.setjobid != None:
-        response = client_utils.set_jobid(parser.options.setjobid, user)
+        response = client_utils.component_call(QUEMGR, True, 'set_jobid', (parser.options.setjobid, user))
 
     elif parser.options.savestate != None:
-        response = client_utils.save(parser.options.savestate)
+        response = client_utils.component_call(QUEMGR, True, 'save', (parser.options.savestate,))
 
     elif parser.options.kill != None:
-        response = client_utils.del_jobs(jobs, force, user)
+        response = client_utils.component_call(QUEMGR, False, 'del_jobs', (jobs, force, user))
 
     elif parser.options.run != None:
         response = client_utils.run_jobs(jobs, parser.options.run, user)
@@ -201,10 +204,10 @@ def process_cqadm_options(jobs, parser, spec, user):
         response = client_utils.del_queues(jobs, force, user)
 
     elif parser.options.qdata != None:
-        response = client_utils.set_queues(jobs, parser.options.qdata, user)
+        response = client_utils.component_call(QUEMGR, True, 'set_queues', (jobs, parser.options.qdata, user))
 
     elif parser.options.preempt != None:
-        response = client_utils.preempt_jobs(jobs, user, force)
+        response = client_utils.component_call(QUEMGR, True, 'preempt_jobs', (jobs, user, force))
 
     else:
         response = setjobs(jobs, parser, spec, user)
@@ -264,6 +267,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

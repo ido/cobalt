@@ -91,7 +91,7 @@ def test_setres_id_change_2():
     args      = """--cycle_id 8"""
 
     cmdout    = \
-"""Setting cycle_id to 8
+"""Setting cycle id to 8
 """
 
     stubout   = \
@@ -135,7 +135,7 @@ def test_setres_id_change_3():
 
     cmdout    = \
 """Setting res id to 8
-Setting cycle_id to 8
+Setting cycle id to 8
 """
 
     stubout   = \
@@ -666,7 +666,7 @@ def test_setres_modify_4():
     args      = """-m -n resname -D -s 2013_03_9-10:10:10"""
 
     cmdout    = \
-"""Error: start time '2013_03_9-10:10:10' is invalid
+"""start time '2013_03_9-10:10:10' is invalid
 start time is expected to be in the format: YYYY_MM_DD-HH:MM
 """
 

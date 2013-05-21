@@ -30,6 +30,8 @@ BAD_OPTION_FAIL = 3
 GENERAL_FAIL    = 1
 SUCCESS         = 0
 
+SYSMGR = client_utils.SYSMGR
+
 def main():
     """
     get-bootable-blocks main
@@ -86,13 +88,10 @@ def main():
             client_utils.logger.error("ERROR: Cobalt jobid not specified as option or in environment.")
             sys.exit(BAD_OPTION_FAIL)
 
-    # Get the system component
-    system = client_utils.client_data.system_manager(False)
-
     if opts.reboot or opts.free:
         #Start the free on the block
         #poke cobalt to kill all jobs on the resource as well.
-        success = system.initiate_proxy_free(block, user, jobid)
+        success = client_utils.component_call(SYSMGR, False, 'initiate_proxy_free', (block, user, jobid))
         client_utils.logger.info("Block free on %s initiated." % (block,))
         if not success:
             client_utils.logger.error("Free request for block %s failed authorization." % (block, ))
@@ -100,12 +99,12 @@ def main():
         while (True):
             #wait for free.  If the user still has jobs running, this won't complete.
             #the proxy free should take care of this, though.
-            if system.get_block_bgsched_status(block) == 'Free':
+            if client_utils.component_call(SYSMGR, False, 'get_block_bgsched_status', (block,)) == 'Free':
                 client_utils.logger.info("Block %s successfully freed." % (block,))
                 break
 
     if not opts.free:
-        success = system.initiate_proxy_boot(block, user, jobid)
+        success = client_utils.component_call(SYSMGR, False, 'initiate_proxy_boot', (block, user, jobid))
         if not success:
             client_utils.logger.error("Boot request for block %s failed authorization." % (block, ))
             sys.exit(AUTH_FAIL)
@@ -115,7 +114,7 @@ def main():
         failed = False
         found = False
         while True:
-            boot_id, status, status_strings = system.get_boot_statuses_and_strings(block)
+            boot_id, status, status_strings = client_utils.component_call(SYSMGR, False, 'get_boot_statuses_and_strings', (block,))
             if not found:
                 if boot_id != None:
                     found = True
@@ -123,7 +122,7 @@ def main():
                 if status_strings != [] and status_strings != None:
                     print "\n".join(status_strings)
                 if status in ['complete', 'failed']:
-                    system.reap_boot(block)
+                    client_utils.component_call(SYSMGR, False, 'reap_boot', (block,))
                     if status == 'failed':
                         failed = True
                     break
@@ -138,6 +137,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

@@ -58,6 +58,9 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $'
 __version__  = '$Version$'
 
+SYSMGR = client_utils.SYSMGR
+QUEMGR = client_utils.QUEMGR
+
 def validate_args(parser, spec, opt_count):
     """
     Validate qsub arguments
@@ -252,11 +255,11 @@ def main():
     update_outputprefix(parser,spec)
     update_paths(spec)
     check_inputfile(parser,spec)
-    client_utils.validate_job(opts)
+    opts = client_utils.component_call(SYSMGR, False, 'validate_job',(opts,))
     filters = client_utils.get_filters()
     client_utils.process_filters(filters,spec)
     update_spec(opts,spec,opt2spec)
-    jobs = client_utils.add_jobs([spec])
+    jobs = client_utils.component_call(QUEMGR, False, 'add_jobs',([spec],))
     logjob(jobs[0],spec)
     
 
@@ -265,6 +268,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

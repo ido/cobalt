@@ -54,6 +54,14 @@ def test_qdel_debug_option():
 """
 qdel.py -d 1
 
+component: "queue-manager.del_jobs", defer: True
+  del_jobs(
+     [{'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+     False,
+     gooduser,
+     )
+
+
       Deleted Jobs
 JobID  User      
 =================

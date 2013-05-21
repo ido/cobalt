@@ -36,6 +36,8 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $' # TBC may go away.
 __version__ = '$Version$'
 
+QUEMGR = client_utils.QUEMGR
+
 def main():
     """
     qselect main
@@ -75,7 +77,7 @@ def main():
         sys.exit(1)
 
     client_utils.get_options(query,opts,opt2spec,parser)
-    response  = client_utils.get_jobs([query])
+    response  = client_utils.component_call(QUEMGR, False, 'get_jobs', ([query],))
     if not response:
         client_utils.logger.error("Failed to match any jobs")
     else:
@@ -89,6 +91,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

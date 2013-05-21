@@ -59,6 +59,20 @@ def test_qrls_debug_flag():
 """
 qrls.py -d 1
 
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+     )
+
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 1}],
+     {'user_hold': False},
+     gooduser,
+     )
+
+
 Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
    Failed to remove user hold on jobs: 
       job 1 does not have a 'user hold'
@@ -322,6 +336,20 @@ def test_qrls_dependancy_option():
     cmdout    = \
 """
 qrls.py -d --dependencies 1 2
+
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 2}],
+     )
+
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 2}],
+     {'all_dependencies': []},
+     gooduser,
+     )
+
 
    Removed dependencies from jobs: 
       1

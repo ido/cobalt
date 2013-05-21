@@ -182,6 +182,12 @@ def test_slpstat_debug_1():
 """
 slpstat.py -d
 
+component: "service-location.get_services", defer: False
+  get_services(
+     [{'stamp': '*', 'tag': 'service', 'name': '*', 'location': '*'}],
+     )
+
+
 Name  Location  Update Time               
 ==========================================
 S0    P0        Mon Apr 22 17:06:10 2013  
@@ -235,6 +241,12 @@ def test_slpstat_debug_2():
     cmdout    = \
 """
 slpstat.py -d
+
+component: "service-location.get_services", defer: False
+  get_services(
+     [{'stamp': '*', 'tag': 'service', 'name': '*', 'location': '*'}],
+     )
+
 
 no services registered
 """

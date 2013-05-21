@@ -510,6 +510,18 @@ def test_nodeadm_down_2():
 """
 nodeadm.py -d --down p1 p2 p3
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
+component: "system.nodes_down", defer: False
+  nodes_down(
+     ['p1', 'p2', 'p3'],
+     gooduser,
+     )
+
+
 nodes marked down:
    D1
    D2

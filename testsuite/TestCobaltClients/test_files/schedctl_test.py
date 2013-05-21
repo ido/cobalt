@@ -708,6 +708,12 @@ def test_schedctl_stop_3():
 """
 schedctl.py -d --stop
 
+component: "scheduler.disable", defer: False
+  disable(
+     gooduser,
+     )
+
+
 Job Scheduling: DISABLED
 """
 

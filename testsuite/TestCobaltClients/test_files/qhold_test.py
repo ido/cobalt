@@ -58,6 +58,20 @@ def test_qhold_debg_option():
 """
 qhold.py -d 1
 
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+     )
+
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 1}],
+     {'user_hold': True},
+     gooduser,
+     )
+
+
 Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
    Failed to place user hold on jobs: 
       job 1 encountered an unexpected problem while attempting to place the 'user hold'

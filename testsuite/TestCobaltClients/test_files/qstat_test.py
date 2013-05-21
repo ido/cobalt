@@ -108,6 +108,18 @@ def test_qstat_debug_only():
 qstat.py -d
 
 get_config_option: Option cqstat_header not found in section [cqm]
+component: "queue-manager.get_queues", defer: True
+  get_queues(
+     [{'state': '*', 'name': '*'}],
+     )
+
+
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': '*', 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     )
+
+
 JobID  User  WallTime  Nodes  State  Location  
 ===============================================
 100    land  00:05:00  512    *      /tmp      
@@ -204,6 +216,18 @@ def test_qstat_full_option_1():
 qstat.py -d -f 1 2 3 4 5
 
 get_config_option: Option cqstat_header not found in section [cqm]
+component: "queue-manager.get_queues", defer: True
+  get_queues(
+     [{'state': '*', 'name': '*'}],
+     )
+
+
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 1, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 2, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 3, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 4, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}, {'timeremaining': '*', 'kernel': '*', 'errorpath': '*', 'kerneloptions': '*', 'args': '*', 'geometry': '*', 'maxtasktime': '*', 'admin_hold': '*', 'outputpath': '*', 'tag': 'job', 'notify': '*', 'user': '*', 'path': '*', 'outputdir': '*', 'procs': '*', 'walltime': '*', 'short_state': '*', 'index': '*', 'preemptable': '*', 'score': '*', 'envs': '*', 'project': '*', 'user_hold': '*', 'user_list': '*', 'queuedtime': '*', 'jobid': 5, 'queue': '*', 'submittime': '*', 'state': '*', 'dependencies': '*', 'command': '*', 'location': '*', 'starttime': '*', 'nodes': '*', 'runtime': '*', 'attrs': '*', 'dep_frac': '*', 'mode': '*'}],
+     )
+
+
 JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        

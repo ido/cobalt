@@ -25,6 +25,9 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 2154 $'
 __version__ = '$Version$'
 
+SYSMGR = client_utils.SYSMGR
+SCHMGR = client_utils.SCHMGR
+
 def mergelist(location_string, cluster):
     if not cluster:
         return location_string
@@ -64,12 +67,13 @@ def main():
         sys.exit(1)
 
     cluster = False
-    if 'cluster' in client_utils.get_implementation():
+    if 'cluster' in client_utils.component_call(SYSMGR, False, 'get_implementation', ()):
         cluster = True
 
-    reservations = client_utils.get_reservations([{'name':'*', 'users':'*','start':'*', 'duration':'*', 'partitions':'*', 
-                                                   'cycle': '*', 'queue': '*', 'res_id': '*', 'cycle_id': '*','project':'*', 
-                                                   'block_passthrough':'*'}])
+    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', 
+                                               ([{'name':'*', 'users':'*','start':'*', 'duration':'*', 'partitions':'*', 
+                                                  'cycle': '*', 'queue': '*', 'res_id': '*', 'cycle_id': '*','project':'*', 
+                                                  'block_passthrough':'*'}], ))
 
     output = []
 
@@ -159,6 +163,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

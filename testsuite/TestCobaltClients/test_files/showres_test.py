@@ -579,6 +579,17 @@ def test_showres_debug():
 """
 showres.py --debug
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
+component: "scheduler.get_reservations", defer: False
+  get_reservations(
+     [{'users': '*', 'block_passthrough': '*', 'duration': '*', 'cycle': '*', 'project': '*', 'cycle_id': '*', 'name': '*', 'queue': '*', 'start': '*', 'partitions': '*', 'res_id': '*'}],
+     )
+
+
 Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
 ====================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     

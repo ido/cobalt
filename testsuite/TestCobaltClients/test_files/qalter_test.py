@@ -59,6 +59,20 @@ def test_qalter_simple_2():
 qalter.py -d -n30 1
 
 get_config_option: Option filters not found in section [cqm]
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'is_active': '*', 'procs': '*', 'jobid': 1}],
+     )
+
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'errorpath': '/tmp', 'args': '', 'geometry': None, 'mode': 'smp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'procs': 512, 'walltime': 5, 'queue': 'jello', 'envs': {}, 'user_hold': False, 'jobid': 1, 'project': 'my_project', 'submittime': 60, 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': 512, 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'], 'user': 'land'}],
+     {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': 'user_hold', 'score': 50, 'location': '/tmp', 'nodes': 30, 'args': '', 'user': 'land', 'procs': 30, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 1, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']},
+     gooduser,
+     )
+
+
 nodes changed from 512 to 30
 procs changed from 512 to 30
 [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]

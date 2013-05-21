@@ -80,6 +80,10 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 1981 $'
 __version__  = '$Version$'
 
+SYSMGR = client_utils.SYSMGR
+SCHMGR = client_utils.SCHMGR
+QUEMGR = client_utils.QUEMGR
+
 def validate_args(parser):
     """
     Validate arguments
@@ -192,6 +196,21 @@ def print_block_bgp(block_dicts):
         client_utils.print_vertical([header_list, value_list])
     return
 
+def recursive(args):
+    """
+    Handle Recursive option
+    """
+    parts = []
+    comp_args = ([{'tag':'partition', 'name':name, 'children_list':'*'} for name in args], )
+    partdata = client_utils.component_call('system', False, 'get_partitions', comp_args)
+    parts    =  args
+
+    for part in partdata:
+        for child in part['children']:
+            if child not in parts:
+                parts.append(child)
+    return parts
+
 def main():
     """
     partadm main function.
@@ -238,56 +257,45 @@ def main():
     parts = []
 
     if parser.options.recursive:
-        partdata = client_utils.get_partitions([{'tag':'partition', 'name':name, 'children_list':'*'} for name in args])
-        parts    =  args
-
-        for part in partdata:
-            for child in part['children']:
-                if child not in parts:
-                    parts.append(child)
+        parts = recursive(args)
     else:
         parts = args
 
-    system = client_utils.client_data.system_manager(False)
-
     if opts.add != None:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
-                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts])
-        print args
-        parts = system.add_partitions(args, whoami)
+                  'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], whoami)
+        parts = client_utils.component_call(SYSMGR, False, 'add_partitions', args)
     elif opts.add_io_block != None:
-        args = ([{'name':partname} for partname in parts])
-        parts = system.add_io_blocks(args, whoami)
+        args = ([{'name':partname} for partname in parts], whoami)
+        parts = client_utils.component_call(SYSMGR, False, 'add_io_blocks', args)
     elif opts.del_io_block:
-        args = ([{'name':partname} for partname in parts])
-        parts = system.del_io_blocks(args, whoami)
+        args = ([{'name':partname} for partname in parts], whoami)
+        parts = client_utils.component_call(SYSMGR, False, 'del_io_blocks', args)
     elif opts.delete:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
-        parts = client_utils.component_call(system.del_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'del_partitions', args)
     elif opts.enable:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], {'scheduled':True}, whoami)
-        parts = client_utils.component_call(system.set_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
     elif opts.disable:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], {'scheduled':False}, whoami)
-        parts = client_utils.component_call(system.set_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
     elif opts.activate:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], {'functional':True}, whoami)
-        parts = client_utils.component_call(system.set_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
     elif opts.deactivate:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], {'functional':False}, whoami)
-        parts = client_utils.component_call(system.set_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
     elif opts.fail:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
-        parts = client_utils.component_call(system.fail_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'fail_partitions', args)
     elif opts.unfail:
         args = ([{'tag':'partition', 'name':partname} for partname in parts], whoami)
-        parts = client_utils.component_call(system.unfail_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'unfail_partitions', args)
     elif opts.xml:
-        args = tuple()
-        parts = client_utils.component_call(system.generate_xml, args)
+        parts = client_utils.component_call(SYSMGR, False, 'generate_xml', ())
     elif opts.savestate:
-        args = (opts.savestate,)
-        parts = client_utils.component_call(system.save, args)
+        parts = client_utils.component_call(SYSMGR, False, 'save', (opts.savestate,))
 
     elif opts.list_blocks:
         if sys_type == 'bgq':
@@ -296,9 +304,11 @@ def main():
         if sys_type == 'bgp':
             args = ([{'name':'*', 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
                       'queue':'*', 'parents':'*', 'children':'*'}], )
-        parts = client_utils.component_call(system.get_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
     elif opts.queue:
-        existing_queues = [q.get('name') for q in client_utils.get_queues([{'tag':'queue', 'name':'*'}])]
+        args = ([{'tag':'queue', 'name':'*'}], )
+        queues = client_utils.component_call(QUEMGR, True, 'get_queues', args)
+        existing_queues = [q.get('name') for q in queues]
         error_messages = []
         for queue in opts.queue.split(':'):
             if not queue in existing_queues:
@@ -309,30 +319,30 @@ def main():
             sys.exit(1)
         args = ([{'tag':'partition', 'name':partname} for partname in parts],
                 {'queue':opts.queue}, whoami)
-        parts = client_utils.component_call(system.set_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
     elif opts.dump:
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
-        parts = client_utils.component_call(system.get_partitions, args)
+        parts = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
     elif opts.boot_stop:
         if sys_type == 'bgp':
             client_utils.logger.info("Boot control not available for BG/P systems")
             sys.exit(0)
-        system.halt_booting(whoami)
+        client_utils.component_call(SYSMGR, False, 'halt_booting', (whoami,))
         client_utils.logger.info("Halting booting: halting scheduling is advised")
         sys.exit(0)
     elif opts.boot_start:
         if sys_type == 'bgp':
             client_utils.logger.info("Boot control not available for BG/P systems")
             sys.exit(0)
-        system.resume_booting(whoami)
+        client_utils.component_call(SYSMGR, False, 'resume_booting', (whoami,))
         client_utils.logger.info("Enabling booting")
         sys.exit(0)
     elif opts.boot_status:
         if sys_type == 'bgp':
             client_utils.logger.info("Boot control not available for BG/P systems")
             sys.exit(0)
-        boot_status = system.booting_status()
+        boot_status = client_utils.component_call(SYSMGR, False, 'booting_status', ())
         if not boot_status:
             client_utils.logger.info("Block Booting: ENABLED")
         else:
@@ -340,76 +350,94 @@ def main():
         sys.exit(0)
     elif opts.boot_io_block:
         tag = 'partadm'
-        system.initiate_io_boot(parts, user, tag)
+        client_utils.component_call(SYSMGR, False, 'initiate_io_boot', (parts, user, tag))
         client_utils.logger.info('IO Boot initiated on %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.free_io_block:
-        system.initiate_io_free(parts, False, user)
+        client_utils.component_call(SYSMGR, False, 'initiate_io_free', (parts, False, user))
         client_utils.logger.info('IO Free initiated on %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.set_io_autoboot:
-        system.set_autoreboot(parts, user)
+        client_utils.component_call(SYSMGR, False, 'set_autoreboot', (parts, user))
         client_utils.logger.info('Autoreboot flag set for IO Blocks: %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.unset_io_autoboot:
-        system.unset_autoreboot(parts, user)
+        client_utils.component_call(SYSMGR, False, 'unset_autoreboot', (parts, user))
         client_utils.logger.info('Autoreboot flag unset for IO Blocks: %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.autoboot_start:
-        system.enable_io_autoreboot()
+        client_utils.component_call(SYSMGR, False, 'enable_io_autoreboot', ())
         client_utils.logger.warning('IO Block autoreboot enabled.')
         sys.exit(0)
 
     elif opts.autoboot_stop:
-        system.disable_io_autoreboot()
+        client_utils.component_call(SYSMGR, False, 'disable_io_autoreboot', ())
         client_utils.logger.warning('IO Block autoreboot disabled.')
         sys.exit(0)
 
     elif opts.autoboot_status:
-        autoreboot_status = "ENABLED" if system.get_io_autoreboot_status() else "DISABLED"
+        stat = client_utils.component_call(SYSMGR, False, 'get_io_autoreboot_status', ()) 
+        autoreboot_status = "ENABLED" if stat else "DISABLED"
         client_utils.logger.warning('IO Block autoreboot: %s', autoreboot_status)
         sys.exit(0)
+
+    # make sure parts is an a list even if it is an empty list
+    if parts is None:
+        parts = []
 
     if opts.pg_list:
         print_pg_info(None)
         sys.exit(0)
 
     if opts.blockinfo:
+
         if sys_type == 'bgq':
-            print_block(system.get_blocks(
-                    [{'name':part,'node_card_list':'*','subblock_parent':'*',
-                      'midplane_list':'*','node_list':'*', 'scheduled':'*', 'funcitonal':'*',
-                      'queue':'*','parents':'*','children':'*','reserved_until':'*',
-                      'reserved_by':'*','used_by':'*','freeing':'*','block_type':'*',
-                      'corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 'state':'*',
-                      'size':'*','draining':'*','backfill_time':'*','wire_list':'*',
+            args = ([{'name':part,'node_card_list':'*','subblock_parent':'*',
+                      'midplane_list':'*','node_list':'*', 'scheduled':'*', 
+                      'funcitonal':'*','queue':'*','parents':'*','children':'*',
+                      'reserved_until':'*','reserved_by':'*','used_by':'*','freeing':'*',
+                      'block_type':'*','corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 
+                      'state':'*','size':'*','draining':'*','backfill_time':'*','wire_list':'*',
                       'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*',
                       'passthrough_blocks':'*', 'passthrough_midplane_list':'*', 'io_node_list':'*'}
-                     for part in parts]))
-            print_block(system.get_io_blocks([{'name':part, 'status':'*', 'state':'*', 'size':'*', 'io_drawer_list':'*',
-                'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'} for part in parts]))
+                     for part in parts], )
+
+            info = client_utils.component_call(SYSMGR, False, 'get_blocks', args)
+            print_block(info)
+
+            args = ([{'name':part, 'status':'*', 'state':'*', 'size':'*', 'io_drawer_list':'*',
+                      'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'} for part in parts], )
+
+            info =  client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
+            print_block(info)
+
         elif sys_type == 'bgp':
-            print_block(system.get_partitions(
-                    [{'name':part,'node_card_list':'*','wire_list':'*','switch_list':'*',
+            args = ([{'name':part,'node_card_list':'*','wire_list':'*','switch_list':'*',
                       'scheduled':'*', 'funcitonal':'*','queue':'*','parents':'*',
                       'children':'*','reserved_until':'*','reserved_by':'*','used_by':'*',
                       'freeing':'*','block_type':'*','cleanup_pending':'*', 'state':'*',
                       'wiring_conflicts':'*','size':'*','draining':'*','backfill_time':'*'}
-                     for part in parts]))
+                     for part in parts], )
+
+            info = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
+            print_block(info)
+
         sys.exit(0)
 
     if opts.clean_block:
+
         if sys_type == 'bgp':
             client_utils.logger.info("Force clenaing not available for BG/P systems")
             sys.exit(0)
-        client_utils.sched_status()
-        system.booting_status()
+
+        client_utils.component_call(SCHMGR, False, 'sched_status', ())
+        client_utils.component_call(SYSMGR, False, 'booting_status', ())
         for part in parts:
-            system.set_cleaning(part, None, whoami)
+            client_utils.component_call(SYSMGR, False, 'set_cleaning', (part, None, whoami))
             client_utils.logger.info("Initiating cleanup on block %s" % part)
         sys.exit(0)
 
@@ -417,10 +445,9 @@ def main():
         # need to cascade up busy and non-functional flags
         if sys_type == 'bgq':
             query = [{'queue':"*", 'partitions':"*", 'active':True, 'block_passthrough':'*'}]
-            reservations = client_utils.get_reservations(query, False)
         elif sys_type == 'bgp':
             query = [{'queue':"*", 'partitions':"*", 'active':True}]
-            reservations = client_utils.get_reservations(query, False)
+        reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', (query,), False)
         if not reservations:
             client_utils.logger.error("No reservations data available")
 
@@ -504,7 +531,7 @@ def main():
         #fetch and print bulk IO Block data
         if sys_type == 'bgq':
             args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'}],)
-            io_block_info = client_utils.component_call(system.get_io_blocks, args)
+            io_block_info = client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
             data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes', 'Autoreboot']]
             for io_block in io_block_info:
                 data.append([io_block['name'], io_block['size'], io_block['state'], io_block['status'],
@@ -516,6 +543,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)
