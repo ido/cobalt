@@ -22,7 +22,7 @@ test_argslist = [
     {"tc_name" : "activate_partition_ANL_R00_M1_512"   , "command" : "partadm", "args" : "--activate ANL-R00-M1-512"},
     {"tc_name" : "add_partition_ANL_R01_M0_512"        , "command" : "partadm", "args" : "-a ANL-R01-M0-512"},
     {"tc_name" : "enable_partition_ANL_R01_M0_512"     , "command" : "partadm", "args" : "--enable ANL-R01-M0-512"},
-    {"tc_name" : "activate_partition_ANL_R0=1_M0_512"   , "command" : "partadm", "args" : "--activate ANL-R01-M0-512"},
+    {"tc_name" : "activate_partition_ANL_R01_M0_512"   , "command" : "partadm", "args" : "--activate ANL-R01-M0-512"},
     {"tc_name" : "list"                                , "command" : "partadm", "args" : "-l"},
     {"tc_name" : "delete_default_que"                  , "command" : "cqadm"  , "args" : "--delq default"},
     {"tc_name" : "add_default_que"                     , "command" : "cqadm"  , "args" : "--addq default"},

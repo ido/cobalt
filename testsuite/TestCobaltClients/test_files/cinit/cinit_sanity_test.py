@@ -559,9 +559,9 @@ def test_partadm_enable_partition_ANL_R01_M0_512():
     assert result, errmsg
 
 # ---------------------------------------------------------------------------------
-def test_partadm_activate_partition_ANL_R0=1_M0_512():
+def test_partadm_activate_partition_ANL_R01_M0_512():
     """
-    partadm test run: activate_partition_ANL_R0=1_M0_512
+    partadm test run: activate_partition_ANL_R01_M0_512
 
         Command Output:
           [{'tag': 'partition', 'name': 'ANL-R01-M0-512'}]
