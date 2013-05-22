@@ -126,11 +126,21 @@ def test_<NAME>_<TC_NAME>():
 cn_p = re.compile(r'(.*)'+ARGS_FILES[1:])
 getname = lambda fn: '' if cn_p.match(fn) == None else cn_p.sub(r'\1',fn)
 
-# create full path command name
-getcmd = lambda path, args_info, name: "%s%s.py" % (path, args_info['command']) if 'command' in args_info else "%s%s.py" % (path, name)
-
 # indent buffer
 indent = lambda x,buf:'\n'.join([(x*' ')+line for line in buf.split('\n')])
+
+def getcmd(path, args_info, name):
+    """
+    This function will get the command name
+    """
+    if 'command' in args_info:
+        _cmd  = "%s%s.py" % (path, args_info['command'])
+        _name = args_info['command']
+    else:
+        _cmd  = "%s%s.py" % (path, name)
+        _name = name
+    return (_name, _cmd)
+
 
 def save_testhook(testhook):
     """
@@ -330,8 +340,8 @@ def gen_tests(opath, npath, args_path, args_list, stubout_file, skip_list):
             if skip_test(args_info, skip_list):
                 continue
 
-            old_cmd   = getcmd(opath, args_info, name)
-            new_cmd   = getcmd(npath, args_info, name)
+            (_name, old_cmd)   = getcmd(opath, args_info, name)
+            (_name, new_cmd)   = getcmd(npath, args_info, name)
             tc_name   = args_info['tc_name']  # get the comment if there is one
             new_args  = args_info['args']
             thook     = args_info['testhook'] if 'testhook' in args_info else '' # get test hook
@@ -342,7 +352,7 @@ def gen_tests(opath, npath, args_path, args_list, stubout_file, skip_list):
             nresults  = run_cmd(new_cmd,new_args,stubout_file)
 
             remove_testhook()
-            gen_test(fd, name, tc_name, new_args, oresults, nresults, stubout_file, thook)
+            gen_test(fd, _name, tc_name, new_args, oresults, nresults, stubout_file, thook)
 
         fd.close()
         os.system('rm %s.*' % temp_module)
@@ -374,9 +384,11 @@ def gen_sanity_tests(npath, args_path, args_list, skip_list):
 
             tc_name  = args_info['tc_name']  
             args     = args_info['args']
-            cmd      = getcmd(npath, args_info, name)
+
+            (_name, cmd) = getcmd(npath, args_info, name)
+
             results  = run_cmd(cmd,args)
-            gen_sanity_test(fd, name, tc_name, args, results)
+            gen_sanity_test(fd, _name, tc_name, args, results)
 
         fd.close()
         os.system('rm %s.*' % temp_module)
