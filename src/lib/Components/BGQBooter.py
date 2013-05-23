@@ -66,8 +66,9 @@ class IOBlockBootContext(object):
     '''Context for IO Block boots. 
 
     '''
-    def __init__(self, io_block_name, user):
+    def __init__(self, io_block_name, job_id=None, user=None):
         self.io_block_name = io_block_name
+        self.job_id = job_id
         self.user = user
         self.status_string = []
 
@@ -136,8 +137,8 @@ class BGQIOBlockBoot(Cobalt.ContextStateMachine.ContextStateMachine):
     _state_list = [IOBootPending, IOBootInitiating, IOBootComplete, IOBootFailed]
     _state_instances = []
 
-    def __init__(self, io_block_name, user, tag):
-        super(BGQIOBlockBoot, self).__init__(context=IOBlockBootContext(io_block_name, user), initialstate='pending',
+    def __init__(self, io_block_name, job_id, user, tag):
+        super(BGQIOBlockBoot, self).__init__(context=IOBlockBootContext(io_block_name, job_id, user), initialstate='pending',
                 exceptionstate='failed')
         self.io_boot_id = _io_boot_id_gen.next()
         self.tag = tag
@@ -297,8 +298,8 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         _logger.debug("Sent message to initiate boot: %s %s %s %s", block_id, job_id, user, subblock_parent)
         return
 
-    def initiate_io_boot(self, io_block_id, user=None, tag=None):
-        self.send(InitiateIOBootMsg(io_block_id, user, tag))
+    def initiate_io_boot(self, io_block_id, job_id=None, user=None, tag=None):
+        self.send(InitiateIOBootMsg(io_block_id, job_id, user, tag))
         _logger.debug("Sent message to initiate IO boot: %s %s %s", io_block_id, user, tag)
         return
 
@@ -348,7 +349,7 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
         try:
             self.boot_data_lock.acquire()
             if msg.msg_type == 'initiate_io_boot':
-                new_io_boot = BGQIOBlockBoot(msg.io_block_name, msg.user, msg.tag)
+                new_io_boot = BGQIOBlockBoot(msg.io_block_name, msg.job_id, msg.user, msg.tag)
                 self.pending_boots.add(new_io_boot)
                 retval = True
         except AttributeError:
@@ -398,11 +399,12 @@ class ReapBootMsg(object):
 
 #classes for IO booting let the boot thread do both
 class InitiateIOBootMsg(object):
-    def __init__(self, io_block_name, user=None, tag='io_boot'):
+    def __init__(self, io_block_name, job_id=None, user=None, tag='io_boot'):
         self.msg_type = 'initiate_io_boot'
         self.io_block_name = io_block_name
         self.user = user
         self.tag = tag
+        self.job_id = job_id
 
 class InitiateIOFreeMsg(object):
     def __init__(self, io_block_name, user=None):

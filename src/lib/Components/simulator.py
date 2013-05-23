@@ -216,7 +216,7 @@ class Simulator (BGBaseSystem):
             self.logger.error("exiting...")
             sys.exit(1)
         except:
-            self.logger.error("problem loading data from file: %r" % config_file)
+            self.logger.error("problem loading data from file: %r" % config_file, exc_info=True)
             self.logger.error("exiting...")
             sys.exit(1)
 

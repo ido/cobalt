@@ -3,7 +3,7 @@ Name: cobalt
 Version: $Version$
 
 Release: 1
-License: GPL
+License: CPL
 Group: System Software
 URL: http://www.mcs.anl.gov/cobalt
 Prefix: /usr
@@ -93,6 +93,11 @@ fi
 if test ! -d /var/spool/cobalt/overflow ; then
     mkdir -p /var/spool/cobalt/overflow
     chmod 700 /var/spool/cobalt/overflow
+fi
+if [ ! -d /var/log/cobalt ]; then
+    mkdir -p /var/log/cobalt
+    chmod 755 /var/log/cobalt
+    chgrp cobalt /var/log/cobalt
 fi
 
 %files -n cobalt
