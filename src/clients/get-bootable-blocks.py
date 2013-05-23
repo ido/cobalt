@@ -1,70 +1,58 @@
 #!/usr/bin/env python
-"""
-Return a space delimited list of names that a user can boot within their job.
+
+'''Return a space delimited list of names that a user can boot within their job.
 Block names are sent to standard output in a space delimited list.
 
-Usage: %prog [options] <block location>
-version: "%prog " + __revision__ + , Cobalt  + __version__
+    Options:
+    --size - Constrain to blocks of a particular size within the specified block
+    --geometry - A geometry in the form of AxBxCxDxE.  All blocks returned will have this node geometry.
 
-OPTIONS DEFINITIONS:
+'''
 
-'-d','--debug',dest='debug',help='turn on communication debugging',callback=cb_debug
-'--size',dest='query_size', type='int', help='Constrain blocks to a particular nodecount',callback=cb_gtzero
-'--geometry',dest='geo_list', type='string', help='Constrain blocks to a particular geometry',callback=cb_bgq_geo
-
-"""
-import logging
-import time
+import optparse
 import sys
-from Cobalt import client_utils
-from Cobalt.client_utils import cb_debug, cb_gtzero, cb_bgq_geo
+import re
 
-from Cobalt.arg_parser import ArgParse
+from Cobalt.Proxy import ComponentProxy
 
-__revision__ = 'TBD'
-__version__ = 'TBD'
-
+geo_re = re.compile(r'^([0-9]+)x([0-9]+)x([0-9]+)x([0-9]+)x([1-2])$')
 
 def main():
-    """
-    get-bootable-blocks main
-    """
-    # setup logging for client. The clients should call this before doing anything else.
-    client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
+    parser = optparse.OptionParser()
+    parser.add_option('--size', action='store', dest='block_size', type='int', help='Constrain blocks to a particular nodecount')
+    parser.add_option('--geometry', action='store', dest='geometry', type='string', help='Constrain blocks to a particular geometry')
 
-    # list of callback with its arguments
-    callbacks = [
-        # <cb function>     <cb args>
-        [ cb_debug        , () ],
-        [ cb_gtzero       , () ],
-        [ cb_bgq_geo      , () ] ]
+    opts, args = parser.parse_args()
 
-    # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
+    query_size = None
+    if opts.block_size == None:
+        pass
+    elif opts.block_size < 0:
+        print >> sys.stderr, "Invalid size: Blocks cannot have a negative nodecount"
+        return 1
+    elif opts.block_size > 0:
+        query_size = int(opts.block_size)
 
-    parser = ArgParse(opt_def,callbacks)
-    parser.parse_it() # parse the command line
-    opts   = parser.options
-    args   = parser.args
+    geo_list = None
+    if opts.geometry != None:
+        match = geo_re.match(opts.geometry)
+        if match == None:
+            print >> sys.stderr, "Invalid Geometry. Geometry must be in the form of AxBxCxDxE"
+            return 1
+        geo_list = [int(nodect) for nodect in match.groups()]
 
-    if parser.no_args():
-        client_utils.logger.error('Must specify a block location for search')
-        sys.exit(1)
+    if len(args) < 1:
+        print >> sys.stderr, "Must specify a block location for search"
+        return 1
 
-    block_loc   = args[0]
-    system      = client_utils.client_data.system_manager(False)
-    idle_blocks = system.get_idle_blocks(block_loc, opts.query_size, opts.geo_list)
-    client_utils.logger.info("\n".join(idle_blocks))
+    block_loc = args[0]
+
+    idle_blocks = ComponentProxy('system', defer=False).get_idle_blocks(block_loc, query_size, geo_list)
+    print "\n".join(idle_blocks)
+
+    return 0
 
 if __name__ == '__main__':
-    try:
-        main()
-    except SystemExit:
-        raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    retval = main()
+    sys.exit(retval)

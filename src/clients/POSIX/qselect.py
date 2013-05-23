@@ -1,94 +1,122 @@
 #!/usr/bin/env python
-"""
-Cobalt qselect command
 
-Usage: %prog [options]
-version: "%prog " + __revision__ + , Cobalt  + __version__
-
-OPTIONS DEFINITIONS:
-
-Option with no values:
-
-'-d','--debug',dest='debug',help='turn non communication debugging',callback=cb_debug
-'-v','--verbose',dest='verbose',help='not used',action='store_true'
-
-Option with values:
-
-'-h','--held',dest='state',type='string',help='Specify the state of the job'
-'-n','--nodecount',dest='nodes',type='int',help='modify job node count for jobs in args',callback=cb_nodes
-'-A','--project',dest='project',type='string',help='modify project name for jobs in args'
-'-t','--time',dest='walltime',type='string',help='specify the runtime for the job - minutes or HH:MM:SS',callback=cb_time
-'-q','--queue',dest='queue',type='string',help='select queue that the job resides'
-
-The following optins are only valid on IBM BlueGene architecture platforms:
-
-'--mode',dest='mode',type='string',help='specify the job mode (co/vn)'
-
-"""
-import logging
-import sys
-from Cobalt import client_utils
-from Cobalt.client_utils import \
-    cb_debug, cb_nodes, cb_time
-
-from Cobalt.arg_parser import ArgParse
-
-__revision__ = '$Revision: 559 $' # TBC may go away.
+'''Cobalt qselect command'''
+__revision__ = '$Revision: 559 $'
 __version__ = '$Version$'
 
-def main():
-    """
-    qselect main
-    """
-    # setup logging for client. The clients should call this before doing anything else.
-    client_utils.setup_logging(logging.INFO)
+import os
+import sys
+import pwd
+import os.path
+import xmlrpclib
+import ConfigParser
+import re
+import logging
 
-    # read the cobalt config files
-    client_utils.read_config()
-                               
-    opts     = {} # old map
-    opt2spec = {}
+import Cobalt
+import Cobalt.Logging
+import Cobalt.Util
+from Cobalt.Proxy import ComponentProxy
+from Cobalt.Exceptions import ComponentLookupError
 
-    dt_allowed = False # No delta time allowed
-    seconds    = False # do not convert to seconds
+helpmsg = """
+Usage: qselect [-d] [-v] -A <project name> -q <queue> -n <number of nodes> 
+               -t <time in minutes> -h <hold types> --mode <mode co/vn>
+"""
 
-    # list of callback with its arguments
-    callbacks = [
-        # <cb function>           <cb args>
-        [ cb_debug               , () ],
-        [ cb_nodes               , () ],
-        [ cb_time                , (dt_allowed,seconds) ] ]
+if __name__ == '__main__':
+    options = {'v':'verbose', 'd':'debug', 'version':'version'}
+    doptions = {'n':'nodecount', 't':'time', 'A':'project', 'mode':'mode',
+                'q':'queue', 'h':'held'}
+    (opts, command) = Cobalt.Util.dgetopt_long(sys.argv[1:],
+                                               options, doptions, helpmsg)
 
-    # Get the version information
-    opt_def =  __doc__.replace('__revision__',__revision__)
-    opt_def =  opt_def.replace('__version__',__version__)
-
-    parser = ArgParse(opt_def,callbacks)
-
-    # Set required default for the query:
-    query = {'tag':'job','jobid':'*','nodes':'*','walltime':'*','mode':'*','project':'*','state':'*','queue':'*'}
-
-    parser.parse_it() # parse the command line
-
-    if not parser.no_args(): 
-        client_utils.logger.error("qselect takes no arguments")
+    # need to filter here for all args
+    if opts['version']:
+        print "qselect %s" % __revision__
+        print "cobalt %s" % __version__
         sys.exit(1)
 
-    client_utils.get_options(query,opts,opt2spec,parser)
-    response  = client_utils.get_jobs([query])
-    if not response:
-        client_utils.logger.error("Failed to match any jobs")
+    if len(sys.argv) < 2:
+        print helpmsg
+        sys.exit(1)
+
+    # setup logging
+    level = 30
+    if '-d' in sys.argv:
+        level = 10
+    Cobalt.Logging.setup_logging('qselect', to_syslog=False, level=level)
+    logger = logging.getLogger('qselect')
+
+    CP = ConfigParser.ConfigParser()
+    CP.read(Cobalt.CONFIG_FILES)
+    
+    failed = False
+
+    jobspec = {'tag':'job'}
+    query = {}
+    if opts['nodecount']:
+        try:
+            nc = int(opts['nodecount'])
+        except:
+            logger.error("non-integer node count specified")
+            sys.exit(1)
+        query['nodes'] = opts['nodecount']
     else:
-        client_utils.logger.debug(response)
-        client_utils.logger.info("   The following jobs matched your query:")
-        for job in response:
-            client_utils.logger.info("      %d" % job.get('jobid'))
-        
-if __name__ == '__main__':
+        query['nodes'] = '*'
+
+    # ensure time is actually in minutes
+    if opts['time']:
+        try:
+            minutes = Cobalt.Util.get_time(opts['time'])
+        except Cobalt.Exceptions.TimeFormatError, e:
+            print "invalid time specification: %s" % e.args[0]
+            sys.exit(1)
+        query['walltime'] = str(minutes)
+    else:
+        query['walltime'] = '*'
+
+    user = pwd.getpwuid(os.getuid())[0]
+
+    if opts['mode']:
+        query['mode'] = opts['mode']
+    else:
+        query['mode'] = '*'
+
+    if opts['project'] is not False:
+        query['project'] = opts['project']
+    else:
+        query['project'] = '*'
+
+    if opts['held']:
+        query['state'] = opts['held']
+    else:
+        query['state'] = '*'
+    
+    if opts['queue']:
+        query['queue'] = opts['queue']
+    else:
+        query['queue'] = '*'
+
     try:
-        main()
-    except SystemExit:
-        raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+        cqm = ComponentProxy("queue-manager", defer=False)
+
+        query['tag'] = 'job'
+        query['jobid'] = '*'
+        response = cqm.get_jobs([query])
+
+    except ComponentLookupError:
+        logger.error("Can't connect to the queue manager")
+        sys.exit(1)
+    #except:
+        #$logger.error("Error querying jobs")
+        #sys.exit(1)
+    # log jobid to stdout
+
+    if not response:
+        Cobalt.Logging.logging.error("Failed to match any jobs")
+    else:
+        Cobalt.Logging.logging.debug(response)
+        print "   The following jobs matched your query:"
+        for job in response:
+            print "      %d" % job.get('jobid')
