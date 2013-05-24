@@ -19,7 +19,7 @@ test_argslist = [
     { "tc_name" : "non_integer_nodecount", "args" : """--mode smp -t50 -nfive --geometry 40x40x50x50   /bin/ls""", "old_args" : "", },
     { "tc_name" : "non_realistic_nodecount", "args" : """--mode smp -t50 -n2048 --geometry 40x40x50x50x1 /bin/ls""", "old_args" : "", },
     { "tc_name" : "invalid_geometry_1", "args" : """--mode smp -t50 -n10 --geometry x /bin/ls""", },
-    { "tc_name" : "invalid_geometry_2", "args" : """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls""", 'skip_list' : ['not_bsim'], 'skip_list' : ['not_bsim'], },
+    { "tc_name" : "invalid_geometry_2", "args" : """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "invalid_geometry_3", "args" : """--mode smp -t50 -n10 --geometry 1x2x3x4 /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "invalid_geometry_4", "args" : """--mode smp -t50 -n10 --geometry 48x48x48x48x2  /bin/ls""", 'skip_list' : ['not_bsim'], },
     { "tc_name" : "invalid_geometry_5", "args" : """--mode smp -t50 -n10 --geometry 48x48x48x48x3  /bin/ls""", 'skip_list' : ['not_bsim'], },

@@ -169,8 +169,8 @@ def get_test(cmd,tc_name,docstr,args,rs,cmdout,stubout,stubout_file,thook):
     """
     Get Test from template with all tags replace
     """
-    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).                  \
-        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).            \
+    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).             \
+        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).       \
         replace(RS,str(rs)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
         replace(TH,thook).replace(NM,cmd.replace('-','_'))
 
@@ -178,8 +178,8 @@ def get_sanity_test(cmd, tc_name, docstr, args, rs):
     """
     Get Return Status Test from template with all tags replace
     """
-    return SANITY_TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).    \
-        replace(DS,docstr).replace(AR,args).replace(RS,str(rs)).replace(ES1,"''"). \
+    return SANITY_TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ). \
+        replace(DS,docstr).replace(AR,args).replace(RS,str(rs)).replace(ES1,"''").   \
         replace(ES2,"''").replace(NM,cmd.replace('-','_'))
 
 def get_output(filename,remove_file = True):
