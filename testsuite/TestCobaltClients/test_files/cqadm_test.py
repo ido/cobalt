@@ -43,21 +43,37 @@ zq     boy    None     None     20          20         20            20         
 GET_QUEUES
 
 adminemail:*
+adminemail type: <type 'str'>
 cron:*
+cron type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxuserjobs:*
+maxuserjobs type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 policy:*
+policy type: <type 'str'>
 priority:*
+priority type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -133,21 +149,37 @@ zq     boy    None     None     20          20         20            20         
 GET_QUEUES
 
 adminemail:*
+adminemail type: <type 'str'>
 cron:*
+cron type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxuserjobs:*
+maxuserjobs type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 policy:*
+policy type: <type 'str'>
 priority:*
+priority type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -212,21 +244,37 @@ zq     boy    None     None     20          20         20            20         
 GET_QUEUES
 
 adminemail:*
+adminemail type: <type 'str'>
 cron:*
+cron type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxuserjobs:*
+maxuserjobs type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 policy:*
+policy type: <type 'str'>
 priority:*
+priority type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -282,17 +330,29 @@ PREEMPT_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -334,17 +394,29 @@ PREEMPT_JOBS
 force:True
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -399,17 +471,29 @@ DEL_JOBS
 force:True
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -451,17 +535,29 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -504,17 +600,29 @@ DEL_JOBS
 force:True
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -570,17 +678,29 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -672,31 +792,53 @@ myq3
 GET_QUEUES
 
 adminemail:*
+adminemail type: <type 'str'>
 cron:*
+cron type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxuserjobs:*
+maxuserjobs type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 policy:*
+policy type: <type 'str'>
 priority:*
+priority type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 
 ADD_QUEUES
 
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq3
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -790,11 +932,17 @@ DEL_QUEUES
 force:False
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq3
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -877,11 +1025,17 @@ SET_QUEUES
 queue data:{'state': 'stopped'}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq3
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -964,11 +1118,17 @@ SET_QUEUES
 queue data:{'state': 'running'}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq3
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1051,11 +1211,17 @@ SET_QUEUES
 queue data:{'state': 'draining'}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq3
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1138,11 +1304,17 @@ SET_QUEUES
 queue data:{'state': 'dead'}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq3
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1268,9 +1440,13 @@ SET_QUEUES
 queue data:{'policy': 'mypolicy'}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1396,9 +1572,13 @@ SET_QUEUES
 queue data:{'a': 'c', 'b': 'c'}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1524,9 +1704,13 @@ SET_QUEUES
 queue data:{'a': None, 'b': None}
 whoami:gooduser
 name:myq1
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 name:myq2
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1862,17 +2046,29 @@ RUN_JOBS
 location:['mayaguez']
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1953,24 +2149,40 @@ Original Jobs:
 
 user: gooduser
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:True
+admin_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -2028,24 +2240,40 @@ Original Jobs:
 
 user: gooduser
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:True
+admin_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -2089,24 +2317,40 @@ Original Jobs:
 
 user: gooduser
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:True
+admin_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -2187,24 +2431,40 @@ Original Jobs:
 
 user: gooduser
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:False
+admin_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -2262,24 +2522,40 @@ Original Jobs:
 
 user: gooduser
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:False
+admin_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -2323,24 +2599,40 @@ Original Jobs:
 
 user: gooduser
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:False
+admin_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -2509,21 +2801,34 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 queue:myq
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2651,21 +2956,34 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 walltime:50
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2709,26 +3027,44 @@ Original Jobs:
 
 user: gooduser
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:4
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:5
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:False
+admin_hold type: <type 'bool'>
 jobid:6
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:True
+admin_hold type: <type 'bool'>
 queue:myq
+queue type: <type 'str'>
 walltime:50
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2772,26 +3108,44 @@ Original Jobs:
 
 user: gooduser
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:4
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:5
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:True
+admin_hold type: <type 'bool'>
 jobid:6
+jobid type: <type 'int'>
 location:*
+location type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 
 New Job Info:
 
 admin_hold:False
+admin_hold type: <type 'bool'>
 queue:myq
+queue type: <type 'str'>
 walltime:50
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"

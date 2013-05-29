@@ -83,7 +83,6 @@ def test_qstat_debug_only():
           
           qstat.py -d
           
-          get_config_option: Option cqstat_header not found in section [cqm]
           component: "queue-manager.get_queues", defer: True
             get_queues(
                [{'state': '*', 'name': '*'}],
@@ -98,7 +97,6 @@ def test_qstat_debug_only():
           
           JobID  User  WallTime  Nodes  State  Location  
           ===============================================
-          100    land  00:05:00  512    *      /tmp      
           
 
     """
@@ -129,10 +127,8 @@ def test_qstat_full_option_10():
     qstat test run: full_option_10
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          JobID  JobName  User  Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
-          =======================================================================================================================
-          100    tmp      land   50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
+          JobID  JobName  User  Score  WallTime  QueuedTime  RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+          ===================================================================================================================
           
 
     """
@@ -163,14 +159,6 @@ def test_qstat_long_option_1():
     qstat test run: long_option_1
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          JobID: 100
-              User     : land
-              WallTime : 00:05:00
-              Nodes    : 512
-              State    : *
-              Location : /tmp
-          
           
 
     """
@@ -201,19 +189,13 @@ def test_qstat_queue_option_3():
     qstat test run: queue_option_3
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-          ========================================================================================================
-          zq     boy    None     None     20          20         20            20            100         running  
-          bbb    cat    None     None     20          20         20            20            100         running  
-          aaa    dog    None     None     20          20         20            20            100         running  
-          yours  girl   None     None     20          20         20            20            100         running  
-          hhh    henry  None     None     20          20         20            20            100         running  
-          bello  house  None     None     20          20         20            20            100         running  
-          kebra  james  None     None     20          20         20            20            100         running  
-          dito   king   None     None     20          20         20            20            100         running  
-          jello  land   None     None     20          20         20            20            100         running  
-          myq    queen  None     None     20          20         20            20            100         running  
+          Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ==========================================================================================================
+          default  None   None     None     None        None       None          None          None        running  
+          q_4      None   None     None     None        None       None          None          None        running  
+          q_3      None   None     None     None        None       None          None          None        running  
+          q_2      None   None     None     None        None       None          None          None        running  
+          q_1      None   None     None     None        None       None          None          None        running  
           
 
     """
@@ -244,19 +226,13 @@ def test_qstat_queue_option_4():
     qstat test run: queue_option_4
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-          ========================================================================================================
-          aaa    dog    None     None     20          20         20            20            100         running  
-          bbb    cat    None     None     20          20         20            20            100         running  
-          bello  house  None     None     20          20         20            20            100         running  
-          dito   king   None     None     20          20         20            20            100         running  
-          hhh    henry  None     None     20          20         20            20            100         running  
-          jello  land   None     None     20          20         20            20            100         running  
-          kebra  james  None     None     20          20         20            20            100         running  
-          myq    queen  None     None     20          20         20            20            100         running  
-          yours  girl   None     None     20          20         20            20            100         running  
-          zq     boy    None     None     20          20         20            20            100         running  
+          Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ==========================================================================================================
+          default  None   None     None     None        None       None          None          None        running  
+          q_1      None   None     None     None        None       None          None          None        running  
+          q_2      None   None     None     None        None       None          None          None        running  
+          q_3      None   None     None     None        None       None          None          None        running  
+          q_4      None   None     None     None        None       None          None          None        running  
           
 
     """
@@ -287,19 +263,13 @@ def test_qstat_queue_option_5():
     qstat test run: queue_option_5
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-          ========================================================================================================
-          zq     boy    None     None     20          20         20            20            100         running  
-          yours  girl   None     None     20          20         20            20            100         running  
-          myq    queen  None     None     20          20         20            20            100         running  
-          kebra  james  None     None     20          20         20            20            100         running  
-          jello  land   None     None     20          20         20            20            100         running  
-          hhh    henry  None     None     20          20         20            20            100         running  
-          dito   king   None     None     20          20         20            20            100         running  
-          bello  house  None     None     20          20         20            20            100         running  
-          bbb    cat    None     None     20          20         20            20            100         running  
-          aaa    dog    None     None     20          20         20            20            100         running  
+          Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ==========================================================================================================
+          q_4      None   None     None     None        None       None          None          None        running  
+          q_3      None   None     None     None        None       None          None          None        running  
+          q_2      None   None     None     None        None       None          None          None        running  
+          q_1      None   None     None     None        None       None          None          None        running  
+          default  None   None     None     None        None       None          None          None        running  
           
 
     """
@@ -330,19 +300,13 @@ def test_qstat_queue_option_6():
     qstat test run: queue_option_6
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-          ========================================================================================================
-          zq     boy    None     None     20          20         20            20            100         running  
-          bbb    cat    None     None     20          20         20            20            100         running  
-          aaa    dog    None     None     20          20         20            20            100         running  
-          yours  girl   None     None     20          20         20            20            100         running  
-          hhh    henry  None     None     20          20         20            20            100         running  
-          bello  house  None     None     20          20         20            20            100         running  
-          kebra  james  None     None     20          20         20            20            100         running  
-          dito   king   None     None     20          20         20            20            100         running  
-          jello  land   None     None     20          20         20            20            100         running  
-          myq    queen  None     None     20          20         20            20            100         running  
+          Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ==========================================================================================================
+          default  None   None     None     None        None       None          None          None        running  
+          q_4      None   None     None     None        None       None          None          None        running  
+          q_3      None   None     None     None        None       None          None          None        running  
+          q_2      None   None     None     None        None       None          None          None        running  
+          q_1      None   None     None     None        None       None          None          None        running  
           
 
     """
@@ -373,19 +337,13 @@ def test_qstat_queue_option_7():
     qstat test run: queue_option_7
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-          ========================================================================================================
-          myq    queen  None     None     20          20         20            20            100         running  
-          jello  land   None     None     20          20         20            20            100         running  
-          dito   king   None     None     20          20         20            20            100         running  
-          kebra  james  None     None     20          20         20            20            100         running  
-          bello  house  None     None     20          20         20            20            100         running  
-          hhh    henry  None     None     20          20         20            20            100         running  
-          yours  girl   None     None     20          20         20            20            100         running  
-          aaa    dog    None     None     20          20         20            20            100         running  
-          bbb    cat    None     None     20          20         20            20            100         running  
-          zq     boy    None     None     20          20         20            20            100         running  
+          Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ==========================================================================================================
+          q_1      None   None     None     None        None       None          None          None        running  
+          q_2      None   None     None     None        None       None          None          None        running  
+          q_3      None   None     None     None        None       None          None          None        running  
+          q_4      None   None     None     None        None       None          None          None        running  
+          default  None   None     None     None        None       None          None          None        running  
           
 
     """
@@ -416,115 +374,59 @@ def test_qstat_queue_option_8():
     qstat test run: queue_option_8
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name: aaa
-              Users        : dog
+          Name: default
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: bbb
-              Users        : cat
+          Name: q_1
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: bello
-              Users        : house
+          Name: q_2
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: dito
-              Users        : king
+          Name: q_3
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: hhh
-              Users        : henry
+          Name: q_4
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: jello
-              Users        : land
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: kebra
-              Users        : james
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: myq
-              Users        : queen
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: yours
-              Users        : girl
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: zq
-              Users        : boy
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
           
@@ -557,115 +459,59 @@ def test_qstat_queue_option_9():
     qstat test run: queue_option_9
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name: zq
-              Users        : boy
+          Name: q_4
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: yours
-              Users        : girl
+          Name: q_3
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: myq
-              Users        : queen
+          Name: q_2
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: kebra
-              Users        : james
+          Name: q_1
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: jello
-              Users        : land
+          Name: default
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: hhh
-              Users        : henry
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: dito
-              Users        : king
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: bello
-              Users        : house
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: bbb
-              Users        : cat
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: aaa
-              Users        : dog
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
           
@@ -698,115 +544,59 @@ def test_qstat_queue_option_10():
     qstat test run: queue_option_10
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name: zq
-              Users        : boy
+          Name: default
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: bbb
-              Users        : cat
+          Name: q_4
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: aaa
-              Users        : dog
+          Name: q_3
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: yours
-              Users        : girl
+          Name: q_2
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: hhh
-              Users        : henry
+          Name: q_1
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: bello
-              Users        : house
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: kebra
-              Users        : james
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: dito
-              Users        : king
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: jello
-              Users        : land
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: myq
-              Users        : queen
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
           
@@ -839,115 +629,59 @@ def test_qstat_queue_option_11():
     qstat test run: queue_option_11
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name: myq
-              Users        : queen
+          Name: q_1
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: jello
-              Users        : land
+          Name: q_2
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: dito
-              Users        : king
+          Name: q_3
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: kebra
-              Users        : james
+          Name: q_4
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
-          Name: bello
-              Users        : house
+          Name: default
+              Users        : None
               MinTime      : None
               MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: hhh
-              Users        : henry
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: yours
-              Users        : girl
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: aaa
-              Users        : dog
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: bbb
-              Users        : cat
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
-              State        : running
-          
-          Name: zq
-              Users        : boy
-              MinTime      : None
-              MaxTime      : None
-              MaxRunning   : 20
-              MaxQueued    : 20
-              MaxUserNodes : 20
-              MaxNodeHours : 20
-              TotalNodes   : 100
+              MaxRunning   : None
+              MaxQueued    : None
+              MaxUserNodes : None
+              MaxNodeHours : None
+              TotalNodes   : None
               State        : running
           
           
@@ -980,19 +714,13 @@ def test_qstat_queue_option_12():
     qstat test run: queue_option_12
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
-          Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
-          ========================================================================================================
-          aaa    dog    None     None     20          20         20            20            100         running  
-          bbb    cat    None     None     20          20         20            20            100         running  
-          bello  house  None     None     20          20         20            20            100         running  
-          dito   king   None     None     20          20         20            20            100         running  
-          hhh    henry  None     None     20          20         20            20            100         running  
-          jello  land   None     None     20          20         20            20            100         running  
-          kebra  james  None     None     20          20         20            20            100         running  
-          myq    queen  None     None     20          20         20            20            100         running  
-          yours  girl   None     None     20          20         20            20            100         running  
-          zq     boy    None     None     20          20         20            20            100         running  
+          Name     Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+          ==========================================================================================================
+          default  None   None     None     None        None       None          None          None        running  
+          q_1      None   None     None     None        None       None          None          None        running  
+          q_2      None   None     None     None        None       None          None          None        running  
+          q_3      None   None     None     None        None       None          None          None        running  
+          q_4      None   None     None     None        None       None          None          None        running  
           
 
     """
@@ -1023,10 +751,8 @@ def test_qstat_no_arguments_or_options():
     qstat test run: no_arguments_or_options
 
         Command Output:
-          get_config_option: Option cqstat_header not found in section [cqm]
           JobID  User  WallTime  Nodes  State  Location  
           ===============================================
-          100    land  00:05:00  512    *      /tmp      
           
 
     """

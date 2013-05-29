@@ -76,6 +76,7 @@ def logdic(dic):
     keylist.sort()
     for key in keylist:
         logmsg(str(key) + ':' + str(dic[key]))
+        logmsg(str(key) + ' type: ' + str(type(dic[key])))
 
 def logdiclist(diclist):
     for dic in diclist: logdic(dic)
@@ -133,21 +134,21 @@ class SystemStub(object):
 
     def initiate_proxy_boot(self,block, user, jobid):
         logmsg("\nINITIATE_PROXY_BOOT\n")
-        logmsg("block: %s" % block)
+        logmsg("block: %s, type = %s" % (block, str(type(block))))
         logmsg("user: %s" % user)
-        logmsg("jobid: %s" % str(jobid))
+        logmsg("jobid: %s, type = %s" % (str(jobid), str(type(jobid))))
         return True
 
     def initiate_proxy_free(self,block, user, jobid):
         logmsg("\nINITIATE_PROXY_FREE\n")
-        logmsg("block: %s" % block)
+        logmsg("block: %s, type = %s" % (block, str(type(block))))
         logmsg("user: %s" % user)
-        logmsg("jobid: %s" % str(jobid))
+        logmsg("jobid: %s, type = %s" % (str(jobid), str(type(jobid))))
         return True
 
     def get_boot_statuses_and_strings(self,block):
         logmsg("\nGET_BOOT_STATUSES_AND_STRINGS\n")
-        logmsg("block: %s" % block)
+        logmsg("block: %s, type = %s" % (block, str(type(block))))
         boot_id        = 1
         status         = 'complete'
         status_strings = ['status 1','status 2','status 3']
@@ -155,18 +156,24 @@ class SystemStub(object):
 
     def reap_boot(self,block):
         logmsg("\nREAP_BOOT\n")
-        logmsg("block: %s" % block)
+        logmsg("block: %s, type = %s" % (block, str(type(block))))
         return True
         
     def get_block_bgsched_status(self,block):
         logmsg("\nGET_BLOCK_BGSCHED_STATUS\n")
-        logmsg("block: %s" % block)
+        logmsg("block: %s, type = %s" % (block, str(type(block))))
         return 'Free'
         
     def validate_job(self,opts):
         disable_logwrite()
         logmsg("\nVALIDATE_JOB\n")
         logdic(opts)
+        if not opts['mode']:
+            opts['mode'] = 'c1'
+        if not opts['proccount']:
+            opts['proccount'] = str(512)
+        opts['nodecount'] = int(opts['nodecount'])
+        opts['ranks_per_node'] = 10
         enable_logwrite()
         return opts
 
@@ -256,7 +263,7 @@ class SystemStub(object):
     def set_cleaning(self,part,var2,user_name):
         logmsg("\nSET_CLEANING\n")
         logmsg("part: %s" % part)
-        logmsg("var2 : %s" % var2)
+        logmsg("var2 : %s, type = %s" % (var2, str(type(var2))))
         logmsg('whoami: %s' % str(user_name))
         return True
 
@@ -279,8 +286,8 @@ class SystemStub(object):
 
     def get_idle_blocks(self,block_loc, query_size,geo_list):
         logmsg("\nGET_IDLE_BLOCKS\n")
-        logmsg("block location: %s" % str(block_loc))
-        logmsg("query size: %s" % str(query_size))
+        logmsg("block location: %s, type = %s" % (str(block_loc), str(type(block_loc))))
+        logmsg("query size: %s, type = %s" % (str(query_size), str(type(queue_size))))
         geo = ''
         if geo_list != None: 
             for g in geo_list:
@@ -309,14 +316,14 @@ class SystemStub(object):
     def initiate_io_boot(self, parts, whoami, tag):
         logmsg('\nINITIATE_IO_BOOT\n')
         logmsg("whoami: %s" % whoami)
-        logmsg("tag: %s" % tag)
+        logmsg("tag: %s, type = %s" % (tag, str(type(tag))))
         logmsg('parts: %s' % str(parts))
         return True
 
     def initiate_io_free(self, parts, force, whoami):
         logmsg('\nINITIATE_IO_BOOT\n')
         logmsg("whoami: %s" % whoami)
-        logmsg("force: %s" % str(force))
+        logmsg("force: %s, type = %s" % (str(force),str(type(force)) ))
         logmsg('parts: %s' % str(parts))
         return True
 
@@ -352,7 +359,7 @@ def change_jobs(ojoblist, newjob,user):
     if type(newjob) == type([]) or type(newjob) == type({}):
         logdic(newjob)
     else:
-        logmsg(str(newjob))
+        logmsg(str(newjob) + ', type = ' + str(type(newjob)))
     _job_specs = []
     wtime = 5
     nodes = 512
@@ -504,7 +511,7 @@ class CqmStub(object):
     def adjust_job_scores(self,ojoblist, newscore,user):
         logmsg("\nADJUST_JOB_SCORES\n")
         logdiclist(ojoblist)
-        logmsg('new score: %s' % str(newscore))
+        logmsg('new score: %s, type = %s' % (str(newscore), str(type(newscore))))
         jobids = [j['jobid'] for j in ojoblist]
         return jobids
 
@@ -535,9 +542,9 @@ class CqmStub(object):
             _job['jobid']         = j
             _job['project']       = 'my_project'
             _job['notify']        = 'myemail@gmail.com'
-            _job['walltime']      = wtime
-            _job['procs']         = nodes
-            _job['nodes']         = nodes
+            _job['walltime']      = str(wtime)
+            _job['procs']         = str(nodes)
+            _job['nodes']         = str(nodes)
             _job['is_active']     = False
             _job['queue']         = QUEUES[ndx]
             _job['mode']          = 'smp'
@@ -547,7 +554,7 @@ class CqmStub(object):
             _job['user_hold']     = False
             _job['has_completed'] = False
             _job['location']      = '/tmp'
-            _job['submittime']    = 60
+            _job['submittime']    = str(60)
             _job['envs']          = {}
             _job['args']          = ''
             _job['user_list']     = [u for u in USERS]
@@ -573,22 +580,22 @@ class SchedStub(object):
 
     def force_res_id(self,res_id):
         logmsg("\nFORCE_RES_ID\n")
-        logmsg('id: ' + str(res_id))
+        logmsg('id: ' + str(res_id) + ', type: ' + str(type(res_id)))
         return id
 
     def set_res_id(self,res_id):
         logmsg("\nSET_RES_ID\n")
-        logmsg('id: ' + str(res_id))
+        logmsg('id: ' + str(res_id) + ', type: ' + str(type(res_id)))
         return id
 
     def force_cycle_id(self,cycle_id):
         logmsg("\nFORCE_CYCLE_ID\n")
-        logmsg('id: ' + str(cycle_id))
+        logmsg('id: ' + str(cycle_id) + ', type: ' + str(type(cycle_id)))
         return id
 
     def set_cycle_id(self,cycle_id):
         logmsg("\nSET_CYCLE_ID\n")
-        logmsg('id: ' + str(cycle_id))
+        logmsg('id: ' + str(cycle_id) + ', type: ' + str(type(cycle_id)))
         return id
 
     def get_reservations(self,query):

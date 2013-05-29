@@ -85,18 +85,11 @@ def test_partlist_debug():
                )
           
           
-          Name  Queue                                                  State  Backfill  Geometry      
-          ==============================================================================================
-          P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-          P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-          P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          Name            Queue            State  Backfill  Geometry
+          ============================================================
+          ANL-R00-M0-512  q_2:q_3:q_4:q_1  idle   -         None    
+          ANL-R00-M1-512  q_4:q_3:q_1      idle   -         None    
+          ANL-R01-M0-512  q_4:q_3          idle   -         None    
           
 
     """
@@ -263,18 +256,11 @@ def test_partlist_argument_2():
     partlist test run: argument_2
 
         Command Output:
-          Name  Queue                                                  State  Backfill  Geometry      
-          ==============================================================================================
-          P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-          P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-          P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          Name            Queue            State  Backfill  Geometry
+          ============================================================
+          ANL-R00-M0-512  q_2:q_3:q_4:q_1  idle   -         None    
+          ANL-R00-M1-512  q_4:q_3:q_1      idle   -         None    
+          ANL-R01-M0-512  q_4:q_3          idle   -         None    
           
 
     """

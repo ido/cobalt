@@ -64,7 +64,11 @@ def test_partadm_help_option_1():
             -r, --recursive       recursively add all child blocks of the specified
                                   blocks in the positional arguments
             --queue=QUEUE         set the queues associated with the target blocks to
-                                  this list of queues
+                                  this list of queues.
+            --rmq                 Only valid with --queue option. If provided queue(s)
+                                  will be removed from the target block association.
+            --appq                Only valid with --queue option. If provided queue(s)
+                                  will be appended to the target block association.
             --activate            activate the block for scheduling
             --deactivate          deactivate the block for schedulign
             --enable              enable the running of jobs on the target blocks
@@ -154,7 +158,11 @@ def test_partadm_help_option_2():
             -r, --recursive       recursively add all child blocks of the specified
                                   blocks in the positional arguments
             --queue=QUEUE         set the queues associated with the target blocks to
-                                  this list of queues
+                                  this list of queues.
+            --rmq                 Only valid with --queue option. If provided queue(s)
+                                  will be removed from the target block association.
+            --appq                Only valid with --queue option. If provided queue(s)
+                                  will be appended to the target block association.
             --activate            activate the block for scheduling
             --deactivate          deactivate the block for schedulign
             --enable              enable the running of jobs on the target blocks
@@ -322,7 +330,7 @@ def test_partadm_combo_options_1():
 
     """
 
-    args      = """-a -d PART"""
+    args      = """-a -d ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -353,7 +361,7 @@ def test_partadm_combo_options_2():
 
     """
 
-    args      = """-a --enable PART"""
+    args      = """-a --enable ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -384,7 +392,7 @@ def test_partadm_combo_options_3():
 
     """
 
-    args      = """-d --enable PART"""
+    args      = """-d --enable ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -415,7 +423,7 @@ def test_partadm_combo_options_4():
 
     """
 
-    args      = """--enable --disable PART"""
+    args      = """--enable --disable ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -446,7 +454,7 @@ def test_partadm_combo_options_5():
 
     """
 
-    args      = """--deactivate --activate PART"""
+    args      = """--deactivate --activate ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -477,7 +485,7 @@ def test_partadm_combo_options_6():
 
     """
 
-    args      = """-a --deactivate PART"""
+    args      = """-a --deactivate ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -508,7 +516,7 @@ def test_partadm_combo_options_7():
 
     """
 
-    args      = """--fail --unfail PART"""
+    args      = """--fail --unfail ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -632,7 +640,7 @@ def test_partadm_combo_options_11():
 
     """
 
-    args      = """-a --queue q1 PART"""
+    args      = """-a --queue q1 ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -658,12 +666,12 @@ def test_partadm_combo_options_12():
     partadm test run: combo_options_12
 
         Command Output:
-          Option combinations not allowed with: dump option(s)
+          Option combinations not allowed with: queue option(s)
           
 
     """
 
-    args      = """--dump --queue q1 PART"""
+    args      = """--dump --queue q1 ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -720,12 +728,105 @@ def test_partadm_combo_options_14():
     partadm test run: combo_options_14
 
         Command Output:
-          Option combinations not allowed with: blockinfo, clean_block option(s)
+          Option combinations not allowed with: add, blockinfo, clean_block option(s)
           
 
     """
 
-    args      = """-a -c -b PART"""
+    args      = """-a -c -b ANL-R00-R01-2048"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('partadm.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_17():
+    """
+    partadm test run: combo_options_17
+
+        Command Output:
+          Option combinations not allowed with: rmq, list_io, rmq option(s)
+          
+
+    """
+
+    args      = """--list_io --rmq ANL-R00-M0-512"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('partadm.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_18():
+    """
+    partadm test run: combo_options_18
+
+        Command Output:
+          Option combinations not allowed with: appq, list_io, appq option(s)
+          
+
+    """
+
+    args      = """--list_io --appq ANL-R00-M0-512"""
+    exp_rs    = 256
+
+    results = testutils.run_cmd('partadm.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_19():
+    """
+    partadm test run: combo_options_19
+
+        Command Output:
+          Option combinations not allowed with: rmq, appq option(s)
+          
+
+    """
+
+    args      = """--queue q1:q2 --rmq --appq ANL-R00-M0-512"""
     exp_rs    = 256
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -751,12 +852,12 @@ def test_partadm_add_option_1():
     partadm test run: add_option_1
 
         Command Output:
-          ['PART', 'a']
+          []
           
 
     """
 
-    args      = """-a -r PART"""
+    args      = """-a -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -782,12 +883,12 @@ def test_partadm_add_option_2():
     partadm test run: add_option_2
 
         Command Output:
-          ['PART', 'a']
+          []
           
 
     """
 
-    args      = """-a --recursive PART"""
+    args      = """-a --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -813,12 +914,12 @@ def test_partadm_add_option_3():
     partadm test run: add_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          []
           
 
     """
 
-    args      = """-a PART1 PART2 PART3"""
+    args      = """-a ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -844,12 +945,12 @@ def test_partadm_delete_option_1():
     partadm test run: delete_option_1
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """-d -r PART"""
+    args      = """-d -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -875,12 +976,12 @@ def test_partadm_delete_option_2():
     partadm test run: delete_option_2
 
         Command Output:
-          ['PART', 'a']
+          []
           
 
     """
 
-    args      = """-d --recursive PART"""
+    args      = """-d --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -906,12 +1007,12 @@ def test_partadm_delete_option_3():
     partadm test run: delete_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          [{'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
           
 
     """
 
-    args      = """-d PART1 PART2 PART3"""
+    args      = """-d ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -937,12 +1038,12 @@ def test_partadm_enable_option_1():
     partadm test run: enable_option_1
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--enable -r PART"""
+    args      = """--enable -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -968,12 +1069,12 @@ def test_partadm_enable_option_2():
     partadm test run: enable_option_2
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--enable --recursive PART"""
+    args      = """--enable --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -999,12 +1100,12 @@ def test_partadm_enable_option_3():
     partadm test run: enable_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          [{'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
           
 
     """
 
-    args      = """--enable PART1 PART2 PART3"""
+    args      = """--enable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1030,12 +1131,12 @@ def test_partadm_disable_option_1():
     partadm test run: disable_option_1
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--disable -r PART"""
+    args      = """--disable -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1061,12 +1162,12 @@ def test_partadm_disable_option_2():
     partadm test run: disable_option_2
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--disable --recursive PART"""
+    args      = """--disable --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1092,12 +1193,12 @@ def test_partadm_disable_option_3():
     partadm test run: disable_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          [{'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
           
 
     """
 
-    args      = """--disable PART1 PART2 PART3"""
+    args      = """--disable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1123,12 +1224,12 @@ def test_partadm_activate_option_1():
     partadm test run: activate_option_1
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--activate -r PART"""
+    args      = """--activate -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1154,12 +1255,12 @@ def test_partadm_activate_option_2():
     partadm test run: activate_option_2
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--activate --recursive PART"""
+    args      = """--activate --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1185,12 +1286,12 @@ def test_partadm_activate_option_3():
     partadm test run: activate_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          [{'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
           
 
     """
 
-    args      = """--activate PART1 PART2 PART3"""
+    args      = """--activate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1216,12 +1317,12 @@ def test_partadm_deactivate_option_1():
     partadm test run: deactivate_option_1
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--deactivate -r PART"""
+    args      = """--deactivate -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1247,12 +1348,12 @@ def test_partadm_deactivate_option_2():
     partadm test run: deactivate_option_2
 
         Command Output:
-          ['PART', 'a']
+          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
           
 
     """
 
-    args      = """--deactivate --recursive PART"""
+    args      = """--deactivate --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1278,12 +1379,12 @@ def test_partadm_deactivate_option_3():
     partadm test run: deactivate_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          [{'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
           
 
     """
 
-    args      = """--deactivate PART1 PART2 PART3"""
+    args      = """--deactivate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1309,12 +1410,13 @@ def test_partadm_fail_option_1():
     partadm test run: fail_option_1
 
         Command Output:
-          ['PART', 'a']
+          no matching partitions found
+          
           
 
     """
 
-    args      = """--fail -r PART"""
+    args      = """--fail -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1340,12 +1442,13 @@ def test_partadm_fail_option_2():
     partadm test run: fail_option_2
 
         Command Output:
-          ['PART', 'a']
+          no matching partitions found
+          
           
 
     """
 
-    args      = """--fail --recursive PART"""
+    args      = """--fail --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1371,12 +1474,13 @@ def test_partadm_fail_option_3():
     partadm test run: fail_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          no matching partitions found
+          
           
 
     """
 
-    args      = """--fail PART1 PART2 PART3"""
+    args      = """--fail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1402,12 +1506,13 @@ def test_partadm_unfail_option_1():
     partadm test run: unfail_option_1
 
         Command Output:
-          ['PART', 'a']
+          no matching partitions found
+          
           
 
     """
 
-    args      = """--unfail -r PART"""
+    args      = """--unfail -r ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1433,12 +1538,13 @@ def test_partadm_unfail_option_2():
     partadm test run: unfail_option_2
 
         Command Output:
-          ['PART', 'a']
+          no matching partitions found
+          
           
 
     """
 
-    args      = """--unfail --recursive PART"""
+    args      = """--unfail --recursive ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1464,12 +1570,13 @@ def test_partadm_unfail_option_3():
     partadm test run: unfail_option_3
 
         Command Output:
-          ['PART1', 'PART2', 'PART3']
+          no matching partitions found
+          
           
 
     """
 
-    args      = """--unfail PART1 PART2 PART3"""
+    args      = """--unfail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1526,12 +1633,12 @@ def test_partadm_savestate_option_2():
     partadm test run: savestate_option_2
 
         Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          state saved to file: /tmp/save
           
 
     """
 
-    args      = """--savestate /tmp/save p1"""
+    args      = """--savestate /tmp/save ANL-R00-M0-512"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1653,14 +1760,106 @@ def test_partadm_queue_option_2():
     partadm test run: queue_option_2
 
         Command Output:
-          'q1' is not an existing queue
-          'q2' is not an existing queue
+          [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}, {'tag': 'partition', 'name': 'ANL-R00-M0-512'}, {'tag': 'partition', 'name': 'ANL-R01-M0-512'}]
           
 
     """
 
-    args      = """--queue q1:q2 p1 p2 p3"""
-    exp_rs    = 256
+    args      = """--queue q_4:q_3 ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
+    exp_rs    = 0
+
+    results = testutils.run_cmd('partadm.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_3():
+    """
+    partadm test run: queue_option_3
+
+        Command Output:
+          [{'tag': 'partition', 'name': 'ANL-R00-M0-512'}]
+          
+
+    """
+
+    args      = """--queue q_1:q_2:q_3:q_4 ANL-R00-M0-512"""
+    exp_rs    = 0
+
+    results = testutils.run_cmd('partadm.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_10():
+    """
+    partadm test run: queue_option_10
+
+        Command Output:
+          [[{'tag': 'partition', 'name': 'ANL-R00-M0-512'}], [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}]]
+          
+
+    """
+
+    args      = """--queue q_1 --rmq ANL-R00-M0-512 ANL-R00-M1-512"""
+    exp_rs    = 0
+
+    results = testutils.run_cmd('partadm.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\n\nFailed Data:\n\n" \
+        "Return Status %s, Expected Return Status %s\n\n" \
+        "Command Output:\n%s\n\n" \
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_11():
+    """
+    partadm test run: queue_option_11
+
+        Command Output:
+          [[{'tag': 'partition', 'name': 'ANL-R00-M0-512'}], [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}]]
+          
+
+    """
+
+    args      = """--queue q_1 --appq ANL-R00-M0-512 ANL-R00-M1-512"""
+    exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
     rs      = results[0]
@@ -1685,7 +1884,7 @@ def test_partadm_dump_option_1():
     partadm test run: dump_option_1
 
         Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          [{'scheduled': True, 'name': 'ANL-R00-M1-512', 'functional': True, 'queue': 'q_4:q_3:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R00-M0-512', 'functional': True, 'queue': 'q_2:q_3:q_4:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R01-M0-512', 'functional': True, 'queue': 'q_4:q_3', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}]
           
 
     """
@@ -1716,12 +1915,12 @@ def test_partadm_dump_option_2():
     partadm test run: dump_option_2
 
         Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          [{'scheduled': True, 'name': 'ANL-R00-M1-512', 'functional': True, 'queue': 'q_4:q_3:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R00-M0-512', 'functional': True, 'queue': 'q_2:q_3:q_4:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R01-M0-512', 'functional': True, 'queue': 'q_4:q_3', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}]
           
 
     """
 
-    args      = """--dump p1"""
+    args      = """--dump ANL-R00-M0-512"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 
@@ -1747,12 +1946,12 @@ def test_partadm_dump_option_3():
     partadm test run: dump_option_3
 
         Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          [{'scheduled': True, 'name': 'ANL-R00-M1-512', 'functional': True, 'queue': 'q_4:q_3:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R00-M0-512', 'functional': True, 'queue': 'q_2:q_3:q_4:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R01-M0-512', 'functional': True, 'queue': 'q_4:q_3', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}]
           
 
     """
 
-    args      = """--dump --recursive p1"""
+    args      = """--dump --recursive ANL-R00-M0-512"""
     exp_rs    = 0
 
     results = testutils.run_cmd('partadm.py',args,None) 

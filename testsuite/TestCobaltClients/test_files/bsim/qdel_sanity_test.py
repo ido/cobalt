@@ -44,16 +44,12 @@ def test_qdel_debug_option():
           
           component: "queue-manager.del_jobs", defer: True
             del_jobs(
-               [{'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+               [{'tag': 'job', 'user': 'georgerojas', 'jobid': 1}],
                False,
-               gooduser,
+               georgerojas,
                )
           
           
-                Deleted Jobs
-          JobID  User      
-          =================
-          1      gooduser  
           
 
     """
@@ -115,13 +111,6 @@ def test_qdel_jobid_2():
     qdel test run: jobid_2
 
         Command Output:
-                Deleted Jobs
-          JobID  User      
-          =================
-          1      gooduser  
-          2      gooduser  
-          3      gooduser  
-          4      gooduser  
           
 
     """
@@ -152,10 +141,6 @@ def test_qdel_jobid_3():
     qdel test run: jobid_3
 
         Command Output:
-                Deleted Jobs
-          JobID  User      
-          =================
-          1      gooduser  
           
 
     """

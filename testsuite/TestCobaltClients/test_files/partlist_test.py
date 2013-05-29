@@ -126,8 +126,11 @@ plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition
 GET_RESERVATIONS
 
 active:True
+active type: <type 'bool'>
 partitions:*
+partitions type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -344,8 +347,11 @@ plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition
 GET_RESERVATIONS
 
 active:True
+active type: <type 'bool'>
 partitions:*
+partitions type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"

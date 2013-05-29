@@ -88,17 +88,7 @@ def test_nodeadm_up_1():
     nodeadm test run: up_1
 
         Command Output:
-          nodes marked up:
-             U1
-             U2
-             U3
-             U4
-             U5
-          
-          nodes that weren't in the down list:
-             p1
-             p2
-             p3
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -129,15 +119,7 @@ def test_nodeadm_up_2():
     nodeadm test run: up_2
 
         Command Output:
-          nodes marked up:
-             U1
-             U2
-             U3
-             U4
-             U5
-          
-          nodes that weren't in the down list:
-             p1
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -168,17 +150,7 @@ def test_nodeadm_down_1():
     nodeadm test run: down_1
 
         Command Output:
-          nodes marked down:
-             D1
-             D2
-             D3
-             D4
-             D5
-          
-          unknown nodes:
-             p1
-             p2
-             p3
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -217,24 +189,7 @@ def test_nodeadm_down_2():
                )
           
           
-          component: "system.nodes_down", defer: False
-            nodes_down(
-               ['p1', 'p2', 'p3'],
-               gooduser,
-               )
-          
-          
-          nodes marked down:
-             D1
-             D2
-             D3
-             D4
-             D5
-          
-          unknown nodes:
-             p1
-             p2
-             p3
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -265,15 +220,7 @@ def test_nodeadm_down_3():
     nodeadm test run: down_3
 
         Command Output:
-          nodes marked down:
-             D1
-             D2
-             D3
-             D4
-             D5
-          
-          unknown nodes:
-             p1
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -304,14 +251,7 @@ def test_nodeadm_list_1():
     nodeadm test run: list_1
 
         Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -342,14 +282,7 @@ def test_nodeadm_list_2():
     nodeadm test run: list_2
 
         Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -421,7 +354,7 @@ def test_nodeadm_queue_2():
     nodeadm test run: queue_2
 
         Command Output:
-          QU1 QD1
+          nodeadm is only supported on cluster systems.  Try partlist instead.
           
 
     """

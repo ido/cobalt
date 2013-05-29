@@ -107,7 +107,6 @@ def test_qstat_debug_only():
 """
 qstat.py -d
 
-get_config_option: Option cqstat_header not found in section [cqm]
 component: "queue-manager.get_queues", defer: True
   get_queues(
      [{'state': '*', 'name': '*'}],
@@ -130,48 +129,88 @@ JobID  User  WallTime  Nodes  State  Location
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:*
+jobid type: <type 'str'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -215,7 +254,6 @@ def test_qstat_full_option_1():
 """
 qstat.py -d -f 1 2 3 4 5
 
-get_config_option: Option cqstat_header not found in section [cqm]
 component: "queue-manager.get_queues", defer: True
   get_queues(
      [{'state': '*', 'name': '*'}],
@@ -242,200 +280,392 @@ JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  L
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -476,8 +706,7 @@ def test_qstat_full_option_2():
     args      = """-f 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+"""JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 5      tmp      henry   30.0    00:25:00  378981:57:19  N/A      2560   *      /tmp      smp   2560   hhh    N/A        
 3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
@@ -491,200 +720,392 @@ JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  L
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -725,8 +1146,7 @@ def test_qstat_full_option_3():
     args      = """-f --reverse 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+"""JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 4      tmp      cat     60.0    00:20:00  378981:57:19  N/A      2048   *      /tmp      smp   2048   bbb    N/A        
 2      tmp      house   55.0    00:10:00  378981:57:19  N/A      1024   *      /tmp      smp   1024   bello  N/A        
@@ -740,200 +1160,392 @@ JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  L
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1162,8 +1774,7 @@ def test_qstat_full_option_4():
     args      = """-f -l 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 5
+"""JobID: 5
     JobName       : tmp
     User          : henry
     WallTime      : 00:25:00
@@ -1365,200 +1976,392 @@ JobID: 4
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1787,8 +2590,7 @@ def test_qstat_full_option_5():
     args      = """-f -l --reverse 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 4
+"""JobID: 4
     JobName       : tmp
     User          : cat
     WallTime      : 00:20:00
@@ -1990,200 +2792,392 @@ JobID: 5
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2412,8 +3406,7 @@ def test_qstat_full_option_6():
     args      = """-f -l --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 4
+"""JobID: 4
     JobName       : tmp
     User          : cat
     WallTime      : 00:20:00
@@ -2615,200 +3608,392 @@ JobID: 1
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3037,8 +4222,7 @@ def test_qstat_full_option_7():
     args      = """-f -l --reverse --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 1
+"""JobID: 1
     JobName       : tmp
     User          : land
     WallTime      : 00:05:00
@@ -3240,200 +4424,392 @@ JobID: 4
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3662,8 +5038,7 @@ def test_qstat_full_option_8():
     args      = """-f -l --sort queue 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 3
+"""JobID: 3
     JobName       : tmp
     User          : dog
     WallTime      : 00:15:00
@@ -3865,200 +5240,392 @@ JobID: 1
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4287,8 +5854,7 @@ def test_qstat_full_option_9():
     args      = """-f -l --reverse --sort queue 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 1
+"""JobID: 1
     JobName       : tmp
     User          : land
     WallTime      : 00:05:00
@@ -4490,200 +6056,392 @@ JobID: 3
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4720,8 +6478,7 @@ def test_qstat_full_option_10():
     args      = """-f"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID  JobName  User  Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+"""JobID  JobName  User  Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 =======================================================================================================================
 100    tmp      land   50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
 """
@@ -4731,48 +6488,88 @@ JobID  JobName  User  Score    WallTime  QueuedTime    RunTime  Nodes  State  Lo
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:*
+jobid type: <type 'str'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4811,8 +6608,7 @@ def test_qstat_full_option_11():
     args      = """-f --header Jobid:State:RunTime  1 2 3"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
+"""JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  Location  Mode  Procs  Queue  StartTime  
 ========================================================================================================================
 3      tmp      dog     40.0    00:15:00  378981:57:19  N/A      1536   *      /tmp      smp   1536   aaa    N/A        
 1      tmp      land    50.0    00:05:00  378981:57:19  N/A      512    *      /tmp      smp   512    jello  N/A        
@@ -4824,124 +6620,240 @@ JobID  JobName  User   Score    WallTime  QueuedTime    RunTime  Nodes  State  L
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4982,8 +6894,7 @@ def test_qstat_long_option_1():
     args      = """-l"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 100
+"""JobID: 100
     User     : land
     WallTime : 00:05:00
     Nodes    : 512
@@ -4997,48 +6908,88 @@ JobID: 100
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:*
+jobid type: <type 'str'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5107,8 +7058,7 @@ def test_qstat_long_option_2():
     args      = """-l 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 1
+"""JobID: 1
     User     : land
     WallTime : 00:05:00
     Nodes    : 512
@@ -5150,200 +7100,392 @@ JobID: 5
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5412,8 +7554,7 @@ def test_qstat_long_option_3():
     args      = """-l --reverse 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 5
+"""JobID: 5
     User     : henry
     WallTime : 00:25:00
     Nodes    : 2560
@@ -5455,200 +7596,392 @@ JobID: 1
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5717,8 +8050,7 @@ def test_qstat_long_option_4():
     args      = """-l --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 4
+"""JobID: 4
     User     : cat
     WallTime : 00:20:00
     Nodes    : 2048
@@ -5760,200 +8092,392 @@ JobID: 1
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -6022,8 +8546,7 @@ def test_qstat_long_option_5():
     args      = """-l --reverse --sort user 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 1
+"""JobID: 1
     User     : land
     WallTime : 00:05:00
     Nodes    : 512
@@ -6065,200 +8588,392 @@ JobID: 4
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -6327,8 +9042,7 @@ def test_qstat_long_option_6():
     args      = """-l --sort queue 1 2 3 4 5"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID: 1
+"""JobID: 1
     User     : land
     WallTime : 00:05:00
     Nodes    : 512
@@ -6370,200 +9084,392 @@ JobID: 5
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:5
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -6609,8 +9515,7 @@ def test_qstat_long_option_11():
     args      = """-l --header Jobid:State:RunTime  1 2 3"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Jobid: 1
+"""Jobid: 1
     State   : *
     RunTime : N/A
 
@@ -6629,124 +9534,240 @@ Jobid: 3
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -6890,8 +9911,7 @@ def test_qstat_queue_option_1():
     args      = """-f -Q -l 1 2 3"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name: aaa
+"""Name: aaa
     Users        : dog
     MinTime      : None
     MaxTime      : None
@@ -7008,40 +10028,72 @@ Name: zq
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:1
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:2
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:3
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7185,8 +10237,7 @@ def test_qstat_queue_option_2():
     args      = """-f --reverse -Q -l 1 2 3"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name: zq
+"""Name: zq
     Users        : boy
     MinTime      : None
     MaxTime      : None
@@ -7303,40 +10354,72 @@ Name: aaa
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:1
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:2
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:3
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7382,8 +10465,7 @@ def test_qstat_queue_option_3():
     args      = """-f --sort users -Q"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 zq     boy    None     None     20          20         20            20            100         running  
 bbb    cat    None     None     20          20         20            20            100         running  
@@ -7402,20 +10484,32 @@ myq    queen  None     None     20          20         20            20         
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7461,8 +10555,7 @@ def test_qstat_queue_option_4():
     args      = """-Q"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 aaa    dog    None     None     20          20         20            20            100         running  
 bbb    cat    None     None     20          20         20            20            100         running  
@@ -7481,20 +10574,32 @@ zq     boy    None     None     20          20         20            20         
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7540,8 +10645,7 @@ def test_qstat_queue_option_5():
     args      = """-Q --reverse"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 zq     boy    None     None     20          20         20            20            100         running  
 yours  girl   None     None     20          20         20            20            100         running  
@@ -7560,20 +10664,32 @@ aaa    dog    None     None     20          20         20            20         
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7619,8 +10735,7 @@ def test_qstat_queue_option_6():
     args      = """-Q --sort users"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 zq     boy    None     None     20          20         20            20            100         running  
 bbb    cat    None     None     20          20         20            20            100         running  
@@ -7639,20 +10754,32 @@ myq    queen  None     None     20          20         20            20         
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7698,8 +10825,7 @@ def test_qstat_queue_option_7():
     args      = """-Q --sort users --reverse"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 myq    queen  None     None     20          20         20            20            100         running  
 jello  land   None     None     20          20         20            20            100         running  
@@ -7718,20 +10844,32 @@ zq     boy    None     None     20          20         20            20         
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7875,8 +11013,7 @@ def test_qstat_queue_option_8():
     args      = """-Q -l"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name: aaa
+"""Name: aaa
     Users        : dog
     MinTime      : None
     MaxTime      : None
@@ -7993,20 +11130,32 @@ Name: zq
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -8150,8 +11299,7 @@ def test_qstat_queue_option_9():
     args      = """-Q --reverse -l"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name: zq
+"""Name: zq
     Users        : boy
     MinTime      : None
     MaxTime      : None
@@ -8268,20 +11416,32 @@ Name: aaa
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -8425,8 +11585,7 @@ def test_qstat_queue_option_10():
     args      = """-Q --sort users -l"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name: zq
+"""Name: zq
     Users        : boy
     MinTime      : None
     MaxTime      : None
@@ -8543,20 +11702,32 @@ Name: myq
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -8700,8 +11871,7 @@ def test_qstat_queue_option_11():
     args      = """-Q --sort users --reverse -l"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name: myq
+"""Name: myq
     Users        : queen
     MinTime      : None
     MaxTime      : None
@@ -8818,20 +11988,32 @@ Name: zq
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -8877,8 +12059,7 @@ def test_qstat_queue_option_12():
     args      = """-Q --header Jobid:State:RunTime"""
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
+"""Name   Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  State    
 ========================================================================================================
 aaa    dog    None     None     20          20         20            20            100         running  
 bbb    cat    None     None     20          20         20            20            100         running  
@@ -8897,20 +12078,32 @@ zq     boy    None     None     20          20         20            20         
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_QUEUES
 
 maxnodehours:*
+maxnodehours type: <type 'str'>
 maxqueued:*
+maxqueued type: <type 'str'>
 maxrunning:*
+maxrunning type: <type 'str'>
 maxtime:*
+maxtime type: <type 'str'>
 maxusernodes:*
+maxusernodes type: <type 'str'>
 mintime:*
+mintime type: <type 'str'>
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 totalnodes:*
+totalnodes type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -8947,8 +12140,7 @@ def test_qstat_no_arguments_or_options():
     args      = ''
 
     cmdout    = \
-"""get_config_option: Option cqstat_header not found in section [cqm]
-JobID  User  WallTime  Nodes  State  Location  
+"""JobID  User  WallTime  Nodes  State  Location  
 ===============================================
 100    land  00:05:00  512    *      /tmp      
 """
@@ -8958,48 +12150,88 @@ JobID  User  WallTime  Nodes  State  Location
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 state:*
+state type: <type 'str'>
 
 GET_JOBS
 
 admin_hold:*
+admin_hold type: <type 'str'>
 args:*
+args type: <type 'str'>
 attrs:*
+attrs type: <type 'str'>
 command:*
+command type: <type 'str'>
 dep_frac:*
+dep_frac type: <type 'str'>
 dependencies:*
+dependencies type: <type 'str'>
 envs:*
+envs type: <type 'str'>
 errorpath:*
+errorpath type: <type 'str'>
 geometry:*
+geometry type: <type 'str'>
 index:*
+index type: <type 'str'>
 jobid:*
+jobid type: <type 'str'>
 kernel:*
+kernel type: <type 'str'>
 kerneloptions:*
+kerneloptions type: <type 'str'>
 location:*
+location type: <type 'str'>
 maxtasktime:*
+maxtasktime type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 notify:*
+notify type: <type 'str'>
 outputdir:*
+outputdir type: <type 'str'>
 outputpath:*
+outputpath type: <type 'str'>
 path:*
+path type: <type 'str'>
 preemptable:*
+preemptable type: <type 'str'>
 procs:*
+procs type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 queuedtime:*
+queuedtime type: <type 'str'>
 runtime:*
+runtime type: <type 'str'>
 score:*
+score type: <type 'str'>
 short_state:*
+short_state type: <type 'str'>
 starttime:*
+starttime type: <type 'str'>
 state:*
+state type: <type 'str'>
 submittime:*
+submittime type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 timeremaining:*
+timeremaining type: <type 'str'>
 user:*
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 user_list:*
+user_list type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"

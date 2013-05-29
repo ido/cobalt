@@ -6,9 +6,9 @@ def test_showres_arg_1():
     showres test run: arg_1
 
         Command Output:
-          Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
-          ====================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
+          Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
+          =========================================================================================================
+          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
           
 
     """
@@ -39,9 +39,9 @@ def test_showres_arg_2():
     showres test run: arg_2
 
         Command Output:
-          Reservation  Queue  User   Start                     Duration  Passthrough  Partitions  
-          ========================================================================================
-          *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Blocked      [P1-10]     
+          Reservation  Queue  User  Start                     Duration  Passthrough  Partitions        
+          =============================================================================================
+          george       q_1    None  Mon May 29 17:00:00 2023  05:00     Allowed      ANL-R00-R01-2048  
           
 
     """
@@ -73,9 +73,9 @@ def test_showres_arg_3():
 
         Command Output:
           No arguments needed
-          Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
-          ====================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
+          Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
+          =========================================================================================================
+          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
           
 
     """
@@ -106,9 +106,9 @@ def test_showres_l_option_1():
     showres test run: l_option_1
 
         Command Output:
-          Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  
-          ======================================================================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     
+          Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        
+          ===========================================================================================================================================================
+          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Tue May 30 03:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  
           
 
     """
@@ -139,9 +139,9 @@ def test_showres_l_option_2():
     showres test run: l_option_2
 
         Command Output:
-          Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  
-          ==============================================================================================================================
-          *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     
+          Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        
+          ===================================================================================================================================
+          george       q_1    None  Mon May 29 17:00:00 2023  05:00     Mon May 29 22:00:00 2023  None        Allowed      ANL-R00-R01-2048  
           
 
     """
@@ -172,9 +172,9 @@ def test_showres_x_option_1():
     showres test run: x_option_1
 
         Command Output:
-          Reservation  Queue  User   Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-          ===============================================================================================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Tue Mar 26 22:05:00 2013 +0000 (UTC)  00:05       Blocked      [P1-10]     proj     id     10       
+          Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
+          ====================================================================================================================================================================================
+          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Tue May 30 03:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
           
 
     """
@@ -205,9 +205,9 @@ def test_showres_x_option_1():
     showres test run: x_option_1
 
         Command Output:
-          Reservation  Queue  User   Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions  Project  ResID  CycleID  
-          =======================================================================================================================================================
-          *            kebra  james  Tue Mar 26 16:56:40 2013  00:08     Tue Mar 26 17:05:00 2013  00:05       Blocked      [P1-10]     proj     id     10       
+          Reservation  Queue  User  Start                     Duration  End Time                  Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
+          ============================================================================================================================================================
+          george       q_1    None  Mon May 29 17:00:00 2023  05:00     Mon May 29 22:00:00 2023  None        Allowed      ANL-R00-R01-2048  None     1      -        
           
 
     """
@@ -392,9 +392,9 @@ def test_showres_debug():
                )
           
           
-          Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
-          ====================================================================================================
-          *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
+          Reservation  Queue  User  Start                                 Duration  Passthrough  Partitions        
+          =========================================================================================================
+          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Allowed      ANL-R00-R01-2048  
           
 
     """

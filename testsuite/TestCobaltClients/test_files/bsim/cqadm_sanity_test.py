@@ -6,18 +6,13 @@ def test_cqadm_getq_option_1():
     cqadm test run: getq_option_1
 
         Command Output:
-          Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
-          =========================================================================================================================================================
-          aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          bello  house  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          dito   king   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          hhh    henry  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          jello  land   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          kebra  james  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          myq    queen  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          yours  girl   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          zq     boy    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+          Queue    Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail  State    Cron  Policy   Priority  
+          ===============================================================================================================================================
+          default  None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_1      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_2      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_3      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_4      None   None     None     None        None       None          None          None        None        running  None  default  0         
           
 
     """
@@ -57,19 +52,14 @@ def test_cqadm_getq_option_2():
                )
           
           
-          [{'users': 'james', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'kebra', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'land', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'jello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'house', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'bello', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'dog', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'aaa', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'cat', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'bbb', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'henry', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'hhh', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'king', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'dito', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'queen', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'myq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'girl', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'yours', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}, {'users': 'boy', 'mintime': None, 'totalnodes': 100, 'cron': 'whocares', 'maxqueued': 20, 'maxusernodes': 20, 'maxnodehours': 20, 'maxtime': None, 'adminemail': 'myemail@gmail.com', 'name': 'zq', 'priority': 'urgent', 'state': 'running', 'maxrunning': 20, 'policy': 'mypolicy'}]
-          Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
-          =========================================================================================================================================================
-          aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          bello  house  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          dito   king   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          hhh    henry  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          jello  land   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          kebra  james  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          myq    queen  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          yours  girl   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          zq     boy    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+          [{'maxuserjobs': None, 'priority': 0, 'name': 'default', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_4', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_3', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_2', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}, {'maxuserjobs': None, 'priority': 0, 'name': 'q_1', 'mintime': None, 'totalnodes': None, 'cron': None, 'state': 'running', 'tag': 'queue', 'maxqueued': None, 'maxrunning': None, 'maxusernodes': None, 'maxnodehours': None, 'policy': 'default', 'maxtime': None, 'adminemail': None, 'users': None}]
+          Queue    Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail  State    Cron  Policy   Priority  
+          ===============================================================================================================================================
+          default  None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_1      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_2      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_3      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_4      None   None     None     None        None       None          None          None        None        running  None  default  0         
           
 
     """
@@ -100,18 +90,13 @@ def test_cqadm_getq_option_3():
     cqadm test run: getq_option_3
 
         Command Output:
-          Queue  Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail         State    Cron      Policy    Priority  
-          =========================================================================================================================================================
-          aaa    dog    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          bbb    cat    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          bello  house  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          dito   king   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          hhh    henry  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          jello  land   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          kebra  james  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          myq    queen  None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          yours  girl   None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
-          zq     boy    None     None     20          20         20            20            100         myemail@gmail.com  running  whocares  mypolicy  urgent    
+          Queue    Users  MinTime  MaxTime  MaxRunning  MaxQueued  MaxUserNodes  MaxNodeHours  TotalNodes  AdminEmail  State    Cron  Policy   Priority  
+          ===============================================================================================================================================
+          default  None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_1      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_2      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_3      None   None     None     None        None       None          None          None        None        running  None  default  0         
+          q_4      None   None     None     None        None       None          None          None        None        running  None  default  0         
           
 
     """
@@ -148,12 +133,12 @@ def test_cqadm_preempt_job_1():
           component: "queue-manager.preempt_jobs", defer: True
             preempt_jobs(
                [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
-               gooduser,
+               georgerojas,
                False,
                )
           
           
-          True
+          Failed to match any jobs or queues
           
 
     """
@@ -184,6 +169,7 @@ def test_cqadm_preempt_job_2():
     cqadm test run: preempt_job_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -221,11 +207,11 @@ def test_cqadm_kill_job_1():
             del_jobs(
                [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
                True,
-               gooduser,
+               georgerojas,
                )
           
           
-          [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}]
+          Failed to match any jobs or queues
           
 
     """
@@ -256,6 +242,7 @@ def test_cqadm_kill_job_2():
     cqadm test run: kill_job_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -286,6 +273,7 @@ def test_cqadm_kill_job_3():
     cqadm test run: kill_job_3
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -323,11 +311,11 @@ def test_cqadm_kill_job_4():
             del_jobs(
                [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
                False,
-               gooduser,
+               georgerojas,
                )
           
           
-          [{'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}]
+          Failed to match any jobs or queues
           
 
     """
@@ -392,8 +380,8 @@ def test_cqadm_addq_option_2():
           Added Queues  
           ==============
           myq1          
-          myq2          
           myq3          
+          myq2          
           
 
     """
@@ -457,9 +445,9 @@ def test_cqadm_delq_option_2():
         Command Output:
           Deleted Queues  
           ================
-          myq1            
-          myq2            
           myq3            
+          myq2            
+          myq1            
           
 
     """
@@ -521,6 +509,7 @@ def test_cqadm_stopq_option_2():
     cqadm test run: stopq_option_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -582,6 +571,7 @@ def test_cqadm_startq_option_2():
     cqadm test run: startq_option_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -643,6 +633,7 @@ def test_cqadm_drainq_option_2():
     cqadm test run: drainq_option_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -704,6 +695,7 @@ def test_cqadm_killq_option_2():
     cqadm test run: killq_option_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -798,6 +790,7 @@ def test_cqadm_policy_option_3():
     cqadm test run: policy_option_3
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -892,6 +885,7 @@ def test_cqadm_setq_option_3():
     cqadm test run: setq_option_3
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -986,6 +980,7 @@ def test_cqadm_unsetq_option_3():
     cqadm test run: unsetq_option_3
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -1267,6 +1262,7 @@ def test_cqadm_hold_option_2():
     cqadm test run: hold_option_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -1304,11 +1300,11 @@ def test_cqadm_hold_option_3():
             set_jobs(
                [{'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'admin_hold': False, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
                {'admin_hold': True},
-               gooduser,
+               georgerojas,
                )
           
           
-          [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+          Failed to match any jobs or queues
           
 
     """
@@ -1339,6 +1335,7 @@ def test_cqadm_hold_option_4():
     cqadm test run: hold_option_4
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -1400,6 +1397,7 @@ def test_cqadm_release_option_2():
     cqadm test run: release_option_2
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -1437,11 +1435,11 @@ def test_cqadm_release_option_3():
             set_jobs(
                [{'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 1}, {'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 2}, {'admin_hold': True, 'tag': 'job', 'location': '*', 'walltime': '*', 'jobid': 3}],
                {'admin_hold': False},
-               gooduser,
+               georgerojas,
                )
           
           
-          [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}, {'queue': 'jello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 2, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1024, 'walltime': 10, 'user_hold': False, 'procs': 1024, 'user': 'land'}, {'queue': 'bello', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 3, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 1536, 'walltime': 15, 'user_hold': False, 'procs': 1536, 'user': 'house'}]
+          Failed to match any jobs or queues
           
 
     """
@@ -1472,6 +1470,7 @@ def test_cqadm_release_option_4():
     cqadm test run: release_option_4
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """
@@ -1661,6 +1660,7 @@ def test_cqadm_time_option_4():
     cqadm test run: time_option_4
 
         Command Output:
+          Failed to match any jobs or queues
           
 
     """

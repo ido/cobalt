@@ -31,7 +31,12 @@ OPTIONS DEFINITIONS:
   help='recursively add all child blocks of the specified blocks in the positional arguments'
 
 '--queue', action='store', type='string', dest='queue', /
-  help='set the queues associated with the target blocks to this list of queues'
+  help='set the queues associated with the target blocks to this list of queues.'
+
+'--rmq', action='store_true', dest='rmq', /
+  help='Only valid with --queue option. If provided queue(s) will be removed from the target block association.'
+'--appq', action='store_true', dest='appq', /
+  help='Only valid with --queue option. If provided queue(s) will be appended to the target block association.'
 
 '--activate', action='store_true', dest='activate', help='activate the block for scheduling'
 '--deactivate', action='store_true', dest='deactivate', help='deactivate the block for schedulign'
@@ -109,11 +114,17 @@ def validate_args(parser):
         sys.exit(1)
 
     # Check mutually exclusive options
-    mutually_exclusive_option_lists = [['add', 'delete', 'enable', 'disable', 'activate', 'deactivate', 'fail', 'unfail', 'xml',
-                                        'savestate', 'list_blocks', 'queue', 'dump', 'boot_stop', 'boot_start', 'boot_status'],
-                                       ['pg_list', 'blockinfo','clean_block', 'list_blocks']]
+    base_list  = ['add', 'delete', 'enable', 'disable', 'activate', 'deactivate', 'fail', 'unfail', 'xml',
+                  'savestate', 'list_blocks', 'dump', 'boot_stop', 'boot_start', 'boot_status']
+    list_1  = base_list + ['queue'] 
+    list_2  = base_list + ['rmq','appq']
+    list_3  = ['pg_list', 'blockinfo','clean_block', 'list_blocks', 'rmq','appq']
+    list_4  = ['list_io', 'rmq', 'appq']
+    
+    mux_option_lists = [list_1, list_2, list_3, list_4]
+
     if opt_count > 1:
-        client_utils.validate_conflicting_options(parser, mutually_exclusive_option_lists)
+        client_utils.validate_conflicting_options(parser, mux_option_lists)
 
 def print_block_bgq(block_dicts):
     """Formatted printing of a list of blocks.  This expects a list of 
@@ -206,61 +217,84 @@ def recursive(args):
     parts    =  args
 
     for part in partdata:
+        if 'children' not in part:
+            continue
         for child in part['children']:
             if child not in parts:
                 parts.append(child)
     return parts
 
-def main():
+def get_queues(opts, parts, sys_type):
     """
-    partadm main function.
+    This will get the list for each partition
     """
-    # setup logging for client. The clients should call this before doing anything else.
-    client_utils.setup_logging(logging.INFO)
-
-    # read the cobalt config files
-    client_utils.read_config()
-
-    # get the system info
-    sysinfo  = client_utils.system_info()
-    sys_type =  sysinfo[0]
-
-    print_block = print_block_bgp
     if sys_type == 'bgq':
-        print_block = print_block_bgq
+        args = ([{'name':partname, 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
+                  'queue':'*', 'relatives':'*', 'passthrough_blocks':'*', 'node_geometry':'*'} for partname in parts], )
+    if sys_type == 'bgp':
+        args = ([{'name':partname, 'size':'*', 'state':'*', 'scheduled':'*', 'functional':'*',
+                  'queue':'*', 'parents':'*', 'children':'*'} for partname in parts], )
+    _parts = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
 
-    use_cwd = False
-    options = {}
+    queues_dict = {}
+    for p in _parts:
+        qs_1 = p['queue'].split(':')
+        qs_2 = opts.queue.split(':')
+        new_queues = qs_1[:]
+        for q in qs_2:
+            if q in new_queues and opts.rmq != None:
+                new_queues.remove(q)
+            if q not in new_queues and opts.appq != None:
+                new_queues.append(q)
+        queues_dict[p['name']] = ':'.join(new_queues)
 
-    # list of callback with its arguments
-    callbacks = [
-        # <cb function>     <cb args (tuple) >
-        [ cb_debug        , () ],
-        [ cb_path         , (options, use_cwd) ] ]
+    return queues_dict
 
-    # Get the version information
-    opt_def =  __doc__.replace('__revision__', __revision__)
-    opt_def =  opt_def.replace('__version__', __version__)
-
-    parser = ArgParse(opt_def, callbacks)
-
-    # Set required default values: None
-
-    parser.parse_it() # parse the command line
-    args  = parser.args
-    opts  = parser.options
-
-    whoami = client_utils.getuid()
-
-    validate_args(parser)
-    user = client_utils.getuid()
-    parts = []
-
-    if parser.options.recursive:
-        parts = recursive(args)
+def process_queues(opts, parts, whoami, sys_type):
+    """
+    This function will get the new list of queues that are associated wth given partition
+    """
+    if opts.rmq != None or opts.appq != None:
+        queues = get_queues(opts, parts, sys_type)
+        _parts = []
+        for p in parts:
+            args = ([{'tag':'partition', 'name':p}],  {'queue':queues[p]}, whoami)
+            _parts.append(client_utils.component_call(SYSMGR, False, 'set_partitions', args))
     else:
-        parts = args
+        _parts = None
+        args = ([{'tag':'partition', 'name':partname} for partname in parts],  {'queue':opts.queue}, whoami)
+        _parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
 
+    return _parts
+
+def validate_queues(opts):
+    """
+    This function will valdate to see if the given queues exists
+    """
+    args = ([{'tag':'queue', 'name':'*'}], )
+    queues = client_utils.component_call(QUEMGR, True, 'get_queues', args)
+    existing_queues = [q.get('name') for q in queues]
+    error_messages = []
+    for queue in opts.queue.split(':'):
+        if not queue in existing_queues:
+            error_messages.append('\'' + queue + '\' is not an existing queue')
+    if error_messages:
+        for err in error_messages:
+            client_utils.logger.error(err)
+        sys.exit(1)
+
+def handle_queue_option(opts, parts, whoami, sys_type):
+    """
+    handles queue option
+    """
+    validate_queues(opts)
+    parts = process_queues(opts, parts, whoami, sys_type)
+    return parts
+
+def handle_mux_options(opts, parts, whoami, sys_type):
+    """
+    this is a messy function with lots of if elifs to handle all the mutually exclusive options
+    """
     if opts.add != None:
         args = ([{'tag':'partition', 'name':partname, 'size':"*", 'functional':False,
                   'scheduled':False, 'queue':'default', 'deps':[]} for partname in parts], whoami)
@@ -306,20 +340,8 @@ def main():
                       'queue':'*', 'parents':'*', 'children':'*'}], )
         parts = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
     elif opts.queue:
-        args = ([{'tag':'queue', 'name':'*'}], )
-        queues = client_utils.component_call(QUEMGR, True, 'get_queues', args)
-        existing_queues = [q.get('name') for q in queues]
-        error_messages = []
-        for queue in opts.queue.split(':'):
-            if not queue in existing_queues:
-                error_messages.append('\'' + queue + '\' is not an existing queue')
-        if error_messages:
-            for err in error_messages:
-                client_utils.logger.error(err)
-            sys.exit(1)
-        args = ([{'tag':'partition', 'name':partname} for partname in parts],
-                {'queue':opts.queue}, whoami)
-        parts = client_utils.component_call(SYSMGR, False, 'set_partitions', args)
+        parts = handle_queue_option(opts, parts, whoami, sys_type)
+
     elif opts.dump:
         args = ([{'tag':'partition', 'name':'*', 'size':'*', 'state':'*', 'functional':'*',
                   'scheduled':'*', 'queue':'*', 'deps':'*'}], )
@@ -350,22 +372,22 @@ def main():
         sys.exit(0)
     elif opts.boot_io_block:
         tag = 'partadm'
-        client_utils.component_call(SYSMGR, False, 'initiate_io_boot', (parts, user, tag))
+        client_utils.component_call(SYSMGR, False, 'initiate_io_boot', (parts, whoami, tag))
         client_utils.logger.info('IO Boot initiated on %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.free_io_block:
-        client_utils.component_call(SYSMGR, False, 'initiate_io_free', (parts, False, user))
+        client_utils.component_call(SYSMGR, False, 'initiate_io_free', (parts, False, whoami))
         client_utils.logger.info('IO Free initiated on %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.set_io_autoboot:
-        client_utils.component_call(SYSMGR, False, 'set_autoreboot', (parts, user))
+        client_utils.component_call(SYSMGR, False, 'set_autoreboot', (parts, whoami))
         client_utils.logger.info('Autoreboot flag set for IO Blocks: %s', " ".join(parts))
         sys.exit(0)
 
     elif opts.unset_io_autoboot:
-        client_utils.component_call(SYSMGR, False, 'unset_autoreboot', (parts, user))
+        client_utils.component_call(SYSMGR, False, 'unset_autoreboot', (parts, whoami))
         client_utils.logger.info('Autoreboot flag unset for IO Blocks: %s', " ".join(parts))
         sys.exit(0)
 
@@ -385,6 +407,209 @@ def main():
         client_utils.logger.warning('IO Block autoreboot: %s', autoreboot_status)
         sys.exit(0)
 
+    return parts
+
+def handle_blockinfo_option(parts, sys_type, print_block):
+    """
+    function to handle the block info option
+    """
+
+    if sys_type == 'bgq':
+        args = ([{'name':part,'node_card_list':'*','subblock_parent':'*',
+                  'midplane_list':'*','node_list':'*', 'scheduled':'*', 
+                  'funcitonal':'*','queue':'*','parents':'*','children':'*',
+                  'reserved_until':'*','reserved_by':'*','used_by':'*','freeing':'*',
+                  'block_type':'*','corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 
+                  'state':'*','size':'*','draining':'*','backfill_time':'*','wire_list':'*',
+                  'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*',
+                  'passthrough_blocks':'*', 'passthrough_midplane_list':'*', 'io_node_list':'*'}
+                 for part in parts], )
+
+        info = client_utils.component_call(SYSMGR, False, 'get_blocks', args)
+        print_block(info)
+
+        args = ([{'name':part, 'status':'*', 'state':'*', 'size':'*', 'io_drawer_list':'*',
+                  'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'} for part in parts], )
+
+        info =  client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
+        print_block(info)
+        sys.exit(0)
+
+    elif sys_type == 'bgp':
+        args = ([{'name':part,'node_card_list':'*','wire_list':'*','switch_list':'*',
+                  'scheduled':'*', 'funcitonal':'*','queue':'*','parents':'*',
+                  'children':'*','reserved_until':'*','reserved_by':'*','used_by':'*',
+                  'freeing':'*','block_type':'*','cleanup_pending':'*', 'state':'*',
+                  'wiring_conflicts':'*','size':'*','draining':'*','backfill_time':'*'}
+                 for part in parts], )
+
+        info = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
+        print_block(info)
+        sys.exit(0)
+
+def handle_clean_block_option(parts, whoami, sys_type):
+    """
+    function to process the clean block option
+    """
+    if sys_type == 'bgp':
+        client_utils.logger.info("Force clenaing not available for BG/P systems")
+        sys.exit(0)
+
+    client_utils.component_call(SCHMGR, False, 'sched_status', ())
+    client_utils.component_call(SYSMGR, False, 'booting_status', ())
+    for part in parts:
+        client_utils.component_call(SYSMGR, False, 'set_cleaning', (part, None, whoami))
+        client_utils.logger.info("Initiating cleanup on block %s" % part)
+    sys.exit(0)
+
+
+def handle_list_blocks_option(parts, sys_type):
+    """
+    function to handle the list io option
+    """
+    # need to cascade up busy and non-functional flags
+    if sys_type == 'bgq':
+        query = [{'queue':"*", 'partitions':"*", 'active':True, 'block_passthrough':'*'}]
+    elif sys_type == 'bgp':
+        query = [{'queue':"*", 'partitions':"*", 'active':True}]
+    reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', (query,), False)
+    if not reservations:
+        client_utils.logger.error("No reservations data available")
+
+    expanded_parts = {}
+    for res in reservations:
+        for res_part in res['partitions'].split(":"):
+            for part in parts:
+                if part['name'] == res_part:
+                    if expanded_parts.has_key(res['queue']):
+                        if sys_type == 'bgq':
+                            expanded_parts[res['queue']].update(part['relatives'])
+                            if res['block_passthrough']:
+                                expanded_parts[res['queue']].update(part['passthrough_blocks'])
+                        elif sys_type == 'bgp':
+                            expanded_parts[res['queue']].update(part['parents'])
+                            expanded_parts[res['queue']].update(part['children'])
+                    else:
+                        if sys_type == 'bgq':
+                            expanded_parts[res['queue']] = set( part['relatives'] )
+                            if res['block_passthrough']:
+                                expanded_parts[res['queue']].update(part['passthrough_blocks'])
+                        elif sys_type == 'bgp':
+                            expanded_parts[res['queue']] = set( part['parents'] )
+                            expanded_parts[res['queue']].update(part['children'])
+                    expanded_parts[res['queue']].add(part['name'])
+
+    for res in reservations:
+        for part in parts:
+            if part['name'] in expanded_parts[res['queue']]:
+                part['queue'] += ":%s" % res['queue']
+
+    def my_cmp(left, right):
+        '''Comparator for partition sorting.  Size has priority followed by names in lexical order.
+
+        '''
+        val = -cmp(int(left['size']), int(right['size']))
+        if val == 0:
+            return cmp(left['name'], right['name'])
+        else:
+            return val
+
+    parts.sort(my_cmp)
+
+    offline = [part['name'] for part in parts if not part['functional']]
+    if sys_type == 'bgq':
+        forced = [part for part in parts \
+              if [down for down in offline \
+                  if down in part['relatives']]]
+        for part in forced:
+            part.__setitem__('functional', '-')
+        data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+        for part in parts:
+            if not part['node_geometry']:
+                part['node_geometry'] = []
+        data += [[part['name'], part['queue'], part['size'],
+                  "x".join([str(i) for i in part['node_geometry']]),
+                  part['functional'], part['scheduled'],
+                  part['state'], ','.join([])] for part in parts]
+        client_utils.printTabular(data, centered=[4, 5])
+    elif sys_type == 'bgp':
+        forced = [part for part in parts \
+              if [down for down in offline \
+                  if (down in part['parents'] or down in part['children']) ]]
+        for part in forced:
+            part.__setitem__('functional', '-')
+        data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
+        data += [[part['name'], part['queue'], part['size'],
+                  part['functional'], part['scheduled'],
+                  part['state'], ','.join([])] for part in parts]
+        client_utils.printTabular(data, centered=[3, 4])
+
+def handle_list_io_option(sys_type):
+    """
+    handles list io option
+    """
+    if sys_type != 'bgq':
+        client_utils.logger.error("WARNING: IO Block information only exists on BG/Q-type systems.")
+
+
+    #fetch and print bulk IO Block data
+    if sys_type == 'bgq':
+        args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'}],)
+        io_block_info = client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
+        data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes', 'Autoreboot']]
+        for io_block in io_block_info:
+            data.append([io_block['name'], io_block['size'], io_block['state'], io_block['status'],
+                'x' if io_block['block_computes_for_reboot'] else '-', 'x' if io_block['autoreboot'] else '-'])
+        client_utils.printTabular(data, centered=[4])
+
+def main():
+    """
+    partadm main function.
+    """
+    # setup logging for client. The clients should call this before doing anything else.
+    client_utils.setup_logging(logging.INFO)
+
+    # get the system info
+    sysinfo  = client_utils.system_info()
+    sys_type =  sysinfo[0]
+
+    print_block = print_block_bgp
+    if sys_type == 'bgq':
+        print_block = print_block_bgq
+
+    use_cwd = False
+    options = {}
+
+    # list of callback with its arguments
+    callbacks = [
+        # <cb function>     <cb args (tuple) >
+        [ cb_debug        , () ],
+        [ cb_path         , (options, use_cwd) ] ]
+
+    # Get the version information
+    opt_def =  __doc__.replace('__revision__', __revision__)
+    opt_def =  opt_def.replace('__version__', __version__)
+
+    parser = ArgParse(opt_def, callbacks)
+
+    # Set required default values: None
+
+    parser.parse_it() # parse the command line
+    args  = parser.args
+    opts  = parser.options
+
+    whoami = client_utils.getuid()
+
+    validate_args(parser)
+    parts = []
+
+    if parser.options.recursive:
+        parts = recursive(args)
+    else:
+        parts = args
+
+    parts = handle_mux_options(opts, parts, whoami, sys_type)
+
     # make sure parts is an a list even if it is an empty list
     if parts is None:
         parts = []
@@ -394,149 +619,22 @@ def main():
         sys.exit(0)
 
     if opts.blockinfo:
-
-        if sys_type == 'bgq':
-            args = ([{'name':part,'node_card_list':'*','subblock_parent':'*',
-                      'midplane_list':'*','node_list':'*', 'scheduled':'*', 
-                      'funcitonal':'*','queue':'*','parents':'*','children':'*',
-                      'reserved_until':'*','reserved_by':'*','used_by':'*','freeing':'*',
-                      'block_type':'*','corner_node':'*', 'extents':'*', 'cleanup_pending':'*', 
-                      'state':'*','size':'*','draining':'*','backfill_time':'*','wire_list':'*',
-                      'wiring_conflict_list':'*', 'midplane_geometry':'*', 'node_geometry':'*',
-                      'passthrough_blocks':'*', 'passthrough_midplane_list':'*', 'io_node_list':'*'}
-                     for part in parts], )
-
-            info = client_utils.component_call(SYSMGR, False, 'get_blocks', args)
-            print_block(info)
-
-            args = ([{'name':part, 'status':'*', 'state':'*', 'size':'*', 'io_drawer_list':'*',
-                      'io_node_list':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'} for part in parts], )
-
-            info =  client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
-            print_block(info)
-
-        elif sys_type == 'bgp':
-            args = ([{'name':part,'node_card_list':'*','wire_list':'*','switch_list':'*',
-                      'scheduled':'*', 'funcitonal':'*','queue':'*','parents':'*',
-                      'children':'*','reserved_until':'*','reserved_by':'*','used_by':'*',
-                      'freeing':'*','block_type':'*','cleanup_pending':'*', 'state':'*',
-                      'wiring_conflicts':'*','size':'*','draining':'*','backfill_time':'*'}
-                     for part in parts], )
-
-            info = client_utils.component_call(SYSMGR, False, 'get_partitions', args)
-            print_block(info)
-
-        sys.exit(0)
+        handle_blockinfo_option(parts, sys_type, print_block)
 
     if opts.clean_block:
-
-        if sys_type == 'bgp':
-            client_utils.logger.info("Force clenaing not available for BG/P systems")
-            sys.exit(0)
-
-        client_utils.component_call(SCHMGR, False, 'sched_status', ())
-        client_utils.component_call(SYSMGR, False, 'booting_status', ())
-        for part in parts:
-            client_utils.component_call(SYSMGR, False, 'set_cleaning', (part, None, whoami))
-            client_utils.logger.info("Initiating cleanup on block %s" % part)
-        sys.exit(0)
+        handle_clean_block_option(parts, whoami, sys_type)
 
     if opts.list_blocks:
-        # need to cascade up busy and non-functional flags
-        if sys_type == 'bgq':
-            query = [{'queue':"*", 'partitions':"*", 'active':True, 'block_passthrough':'*'}]
-        elif sys_type == 'bgp':
-            query = [{'queue':"*", 'partitions':"*", 'active':True}]
-        reservations = client_utils.component_call(SCHMGR, False, 'get_reservations', (query,), False)
-        if not reservations:
-            client_utils.logger.error("No reservations data available")
-
-        expanded_parts = {}
-        for res in reservations:
-            for res_part in res['partitions'].split(":"):
-                for part in parts:
-                    if part['name'] == res_part:
-                        if expanded_parts.has_key(res['queue']):
-                            if sys_type == 'bgq':
-                                expanded_parts[res['queue']].update(part['relatives'])
-                                if res['block_passthrough']:
-                                    expanded_parts[res['queue']].update(part['passthrough_blocks'])
-                            elif sys_type == 'bgp':
-                                expanded_parts[res['queue']].update(part['parents'])
-                                expanded_parts[res['queue']].update(part['children'])
-                        else:
-                            if sys_type == 'bgq':
-                                expanded_parts[res['queue']] = set( part['relatives'] )
-                                if res['block_passthrough']:
-                                    expanded_parts[res['queue']].update(part['passthrough_blocks'])
-                            elif sys_type == 'bgp':
-                                expanded_parts[res['queue']] = set( part['parents'] )
-                                expanded_parts[res['queue']].update(part['children'])
-                        expanded_parts[res['queue']].add(part['name'])
-
-        for res in reservations:
-            for part in parts:
-                if part['name'] in expanded_parts[res['queue']]:
-                    part['queue'] += ":%s" % res['queue']
-
-        def my_cmp(left, right):
-            '''Comparator for partition sorting.  Size has priority followed by names in lexical order.
-
-            '''
-            val = -cmp(int(left['size']), int(right['size']))
-            if val == 0:
-                return cmp(left['name'], right['name'])
-            else:
-                return val
-
-        parts.sort(my_cmp)
-
-        offline = [part['name'] for part in parts if not part['functional']]
-        if sys_type == 'bgq':
-            forced = [part for part in parts \
-                  if [down for down in offline \
-                      if down in part['relatives']]]
-            for part in forced:
-                part.__setitem__('functional', '-')
-            data = [['Name', 'Queue', 'Size', 'Geometry', 'Functional', 'Scheduled', 'State', 'Dependencies']]
-            for part in parts:
-                if not part['node_geometry']:
-                    part['node_geometry'] = []
-            data += [[part['name'], part['queue'], part['size'],
-                      "x".join([str(i) for i in part['node_geometry']]),
-                      part['functional'], part['scheduled'],
-                      part['state'], ','.join([])] for part in parts]
-            client_utils.printTabular(data, centered=[4, 5])
-        elif sys_type == 'bgp':
-            forced = [part for part in parts \
-                  if [down for down in offline \
-                      if (down in part['parents'] or down in part['children']) ]]
-            for part in forced:
-                part.__setitem__('functional', '-')
-            data = [['Name', 'Queue', 'Size', 'Functional', 'Scheduled', 'State', 'Dependencies']]
-            data += [[part['name'], part['queue'], part['size'],
-                      part['functional'], part['scheduled'],
-                      part['state'], ','.join([])] for part in parts]
-            client_utils.printTabular(data, centered=[3, 4])
+        handle_list_blocks_option(parts, sys_type)
 
     elif opts.boot_start or opts.boot_stop or opts.list_io:
         pass
+
     else:
         client_utils.logger.info(parts)
 
     if opts.list_io:
-        if sys_type != 'bgq':
-            print >> sys.stderr, "WARNING: IO Block information only exists on BG/Q-type systems."
-
-        #fetch and print bulk IO Block data
-        if sys_type == 'bgq':
-            args = ([{'name':'*', 'size':'*', 'status':'*', 'state':'*', 'block_computes_for_reboot':'*', 'autoreboot':'*'}],)
-            io_block_info = client_utils.component_call(SYSMGR, False, 'get_io_blocks', args)
-            data = [['Name', 'Size', 'State', 'CS Status', 'BlockComputes', 'Autoreboot']]
-            for io_block in io_block_info:
-                data.append([io_block['name'], io_block['size'], io_block['state'], io_block['status'],
-                    'x' if io_block['block_computes_for_reboot'] else '-', 'x' if io_block['autoreboot'] else '-'])
-            client_utils.printTabular(data, centered=[4])
+        handle_list_io_option(sys_type)
 
 if __name__ == '__main__':
     try:

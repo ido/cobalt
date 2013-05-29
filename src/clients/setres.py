@@ -59,12 +59,13 @@ def set_cycle_id(parser):
     """
     set res id
     """
+    cycle_id = parser.options.cycle_id
     if parser.options.force_id:
-        client_utils.component_call(SCHMGR, False, 'force_cycle_id', (parser.options.cycle_id,))
-        client_utils.logger.info("WARNING: Forcing cycle id to %s" % parser.options.cycle_id)
+        client_utils.component_call(SCHMGR, False, 'force_cycle_id', (cycle_id,))
+        client_utils.logger.info("WARNING: Forcing cycle id to %s" % str(cycle_id))
     else:
-        client_utils.component_call(SCHMGR, False, 'set_cycle_id', (parser.options.cycle_id,))
-        client_utils.logger.info("Setting cycle id to %s" % parser.options.cycle_id)
+        client_utils.component_call(SCHMGR, False, 'set_cycle_id', (cycle_id,))
+        client_utils.logger.info("Setting cycle id to %s" % str(cycle_id))
 
 def verify_locations(partitions):
     """
@@ -224,18 +225,14 @@ def main():
     opts     = {} # old map
     opt2spec = {}
 
-    dt_allowed = False # Delta time not allowed
-    seconds    = True  # convert to seconds
-    add_user   = False # do not add current user to the list
-
     # list of callback with its arguments
     callbacks = [
         # <cb function>           <cb args>
-        [ cb_time                , (dt_allowed,seconds) ],
+        [ cb_time                , (False, True, True) ], # no delta time, Seconds, return int
         [ cb_date                , () ],
         [ cb_passthrough         , () ],
         [ cb_debug               , () ],
-        [ cb_user_list           , (opts,add_user) ]]
+        [ cb_user_list           , (opts, False) ]] # do not add current user
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)

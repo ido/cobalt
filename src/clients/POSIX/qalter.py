@@ -146,17 +146,17 @@ def update_time(orig_job, new_spec, parser):
             sub_dt = True
 
     if add_dt:    # Add time to original job then
-        new_spec['walltime'] = str(float(orig_job['walltime']) + minutes)
+        new_spec['walltime'] = str(float(orig_job['walltime']) + float(minutes))
 
     elif sub_dt:  # Subtract time to original job and verify it is not less than 0
-        new_time = float(orig_job['walltime']) - minutes
+        new_time = float(orig_job['walltime']) - float(minutes)
         if new_time <= 0:
             client_utils.logger.error( "invalid wall time: " + str(new_time))
         else:
             new_spec['walltime'] = str(new_time)
 
     else:         # change to an absolute time
-        new_spec['walltime'] = minutes
+        new_spec['walltime'] = str(minutes)
 
 def update_procs(spec, parser):
     """
@@ -199,9 +199,6 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-                               
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
@@ -210,9 +207,9 @@ def main():
     callbacks = [
         # <cb function>           <cb args>
         [ cb_debug               , () ],
-        [ cb_gtzero              , () ],
-        [ cb_nodes               , () ],
-        [ cb_time                , (True, False) ], # delta time allowed and do not convert to seconds
+        [ cb_gtzero              , (True,) ], # return int
+        [ cb_nodes               , (True,) ], # return int
+        [ cb_time                , (True, False, False) ], # delta time allowed, return minutes, return string
         [ cb_upd_dep             , () ],
         [ cb_attrs               , () ],
         [ cb_user_list           , (opts, True) ], # add user

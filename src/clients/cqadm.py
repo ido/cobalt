@@ -224,24 +224,17 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
-
-    dt_allowed = False  # delta time NOT allowed
-    use_cwd    = False  # Do NOT use cwd when relative path given
-    seconds    = False  # Do not convert time to seconds
 
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args (tuple) >
         ( cb_debug        , () ),
-        ( cb_gtzero       , () ),
-        ( cb_time         , (dt_allowed,seconds) ),
-        ( cb_path         , (opts, use_cwd) ),
+        ( cb_gtzero       , (True,) ), # return int
+        ( cb_time         , (False, False, False) ), # no delta time, minutes, return string
+        ( cb_path         , (opts, False) ), # do not use CWD
         ( cb_setqueues    , () ),
         ( cb_hold         , () ) ]
 

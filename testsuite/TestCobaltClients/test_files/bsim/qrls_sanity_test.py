@@ -44,21 +44,22 @@ def test_qrls_debug_flag():
           
           component: "queue-manager.get_jobs", defer: False
             get_jobs(
-               [{'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+               [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}],
                )
           
           
           component: "queue-manager.set_jobs", defer: False
             set_jobs(
-               [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 1}],
+               [],
                {'user_hold': False},
-               gooduser,
+               georgerojas,
                )
           
           
-          Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
+             No jobs found.
+          Failed to match any jobs
              Failed to remove user hold on jobs: 
-                job 1 does not have a 'user hold'
+                job 1 not found
           
 
     """
@@ -120,11 +121,13 @@ def test_qrls_jobid_2():
     qrls test run: jobid_2
 
         Command Output:
+             No jobs found.
+          Failed to match any jobs
              Failed to remove user hold on jobs: 
-                job 1 does not have a 'user hold'
-                job 2 does not have a 'user hold'
-                job 3 does not have a 'user hold'
-                job 4 does not have a 'user hold'
+                job 1 not found
+                job 2 not found
+                job 3 not found
+                job 4 not found
           
 
     """
@@ -155,8 +158,10 @@ def test_qrls_jobid_3():
     qrls test run: jobid_3
 
         Command Output:
+             No jobs found.
+          Failed to match any jobs
              Failed to remove user hold on jobs: 
-                job 1 does not have a 'user hold'
+                job 1 not found
           
 
     """
@@ -192,20 +197,24 @@ def test_qrls_dependancy_option():
           
           component: "queue-manager.get_jobs", defer: False
             get_jobs(
-               [{'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 2}],
+               [{'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'user': 'georgerojas', 'jobid': 2}],
                )
           
           
           component: "queue-manager.set_jobs", defer: False
             set_jobs(
-               [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 1}, {'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 2}],
+               [],
                {'all_dependencies': []},
-               gooduser,
+               georgerojas,
                )
           
           
              Removed dependencies from jobs: 
-                1
+             No jobs found.
+          Failed to match any jobs
+             Failed to remove user hold on jobs: 
+                job 1 not found
+                job 2 not found
           
 
     """

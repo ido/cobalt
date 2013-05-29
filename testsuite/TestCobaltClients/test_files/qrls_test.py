@@ -83,9 +83,13 @@ Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -94,14 +98,20 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 user_hold:False
+user_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -189,21 +199,37 @@ def test_qrls_jobid_2():
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -212,29 +238,50 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 user_hold:False
+user_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -279,9 +326,13 @@ def test_qrls_jobid_3():
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -290,14 +341,20 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 user_hold:False
+user_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -360,13 +417,21 @@ component: "queue-manager.set_jobs", defer: False
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -375,19 +440,30 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 all_dependencies:[]
+all_dependencies type: <type 'list'>
 """
 
     stubout_file = "stub.out"

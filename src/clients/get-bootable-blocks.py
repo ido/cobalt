@@ -32,14 +32,11 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args>
         [ cb_debug        , () ],
-        [ cb_gtzero       , () ],
+        [ cb_gtzero       , (True,) ], # return int
         [ cb_bgq_geo      , () ] ]
 
     # Get the version information

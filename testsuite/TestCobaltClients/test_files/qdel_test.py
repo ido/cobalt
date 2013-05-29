@@ -75,8 +75,11 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -170,17 +173,29 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -231,8 +246,11 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 """
 
     stubout_file = "stub.out"

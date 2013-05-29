@@ -28,16 +28,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -87,16 +98,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -147,16 +169,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -206,16 +239,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -265,16 +309,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -324,16 +379,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -383,16 +449,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -603,16 +680,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"

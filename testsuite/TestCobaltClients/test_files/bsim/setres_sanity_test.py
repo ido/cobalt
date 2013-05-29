@@ -138,7 +138,7 @@ def test_setres_id_change_4():
 
     """
 
-    args      = """--res_id 8 p1 p2 p3"""
+    args      = """--res_id 8 ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 256
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -169,7 +169,7 @@ def test_setres_id_change_5():
 
     """
 
-    args      = """--cycle_id 8 p1 p2 p3"""
+    args      = """--cycle_id 8 ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 256
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -231,7 +231,7 @@ def test_setres_id_change_7():
 
     """
 
-    args      = """--cycle_id 8 -p p1"""
+    args      = """--cycle_id 8 -p ANL-R00-R01-2048"""
     exp_rs    = 256
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -326,7 +326,7 @@ def test_setres_force_3():
 
     """
 
-    args      = """--force_id -p p1 -s 2013_03_09-10:30"""
+    args      = """--force_id -p ANL-R00-R01-2048 -s 2013_03_09-10:30"""
     exp_rs    = 256
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -576,7 +576,7 @@ def test_setres_add_res_2():
 
     """
 
-    args      = """-n resname -D p1 p2 p3"""
+    args      = """-n resname -D ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
     exp_rs    = 256
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -608,7 +608,7 @@ def test_setres_add_res_3():
 
     """
 
-    args      = """-n resname -s 2013_03_9-10:10 p1 p2"""
+    args      = """-n resname -s 2013_03_9-10:10 ANL-R00-R01-2048 ANL-R00-1024"""
     exp_rs    = 256
 
     results = testutils.run_cmd('setres.py',args,None) 

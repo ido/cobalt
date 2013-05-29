@@ -133,13 +133,13 @@ Block b successfully freed.
 """
 INITIATE_PROXY_FREE
 
-block: b
+block: b, type = <type 'str'>
 user: gooduser
-jobid: 1
+jobid: 1, type = <type 'int'>
 
 GET_BLOCK_BGSCHED_STATUS
 
-block: b
+block: b, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -265,31 +265,31 @@ status 3
 """
 INITIATE_PROXY_FREE
 
-block: b
+block: b, type = <type 'str'>
 user: gooduser
-jobid: 1
+jobid: 1, type = <type 'int'>
 
 GET_BLOCK_BGSCHED_STATUS
 
-block: b
+block: b, type = <type 'str'>
 
 INITIATE_PROXY_BOOT
 
-block: b
+block: b, type = <type 'str'>
 user: gooduser
-jobid: 1
+jobid: 1, type = <type 'int'>
 
 GET_BOOT_STATUSES_AND_STRINGS
 
-block: b
+block: b, type = <type 'str'>
 
 GET_BOOT_STATUSES_AND_STRINGS
 
-block: b
+block: b, type = <type 'str'>
 
 REAP_BOOT
 
-block: b
+block: b, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -411,21 +411,21 @@ status 3
 """
 INITIATE_PROXY_BOOT
 
-block: b
+block: b, type = <type 'str'>
 user: gooduser
-jobid: 1
+jobid: 1, type = <type 'int'>
 
 GET_BOOT_STATUSES_AND_STRINGS
 
-block: b
+block: b, type = <type 'str'>
 
 GET_BOOT_STATUSES_AND_STRINGS
 
-block: b
+block: b, type = <type 'str'>
 
 REAP_BOOT
 
-block: b
+block: b, type = <type 'str'>
 """
 
     stubout_file = "stub.out"

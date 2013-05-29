@@ -298,8 +298,7 @@ def test_qsub_project_specified():
     qsub test run: project_specified
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          2
           
 
     """
@@ -330,8 +329,7 @@ def test_qsub_Check_attrs_1():
     qsub test run: Check_attrs_1
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          3
           
 
     """
@@ -362,8 +360,7 @@ def test_qsub_Check_attrs_2():
     qsub test run: Check_attrs_2
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          4
           
 
     """
@@ -394,8 +391,7 @@ def test_qsub_Check_attrs_3():
     qsub test run: Check_attrs_3
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          5
           
 
     """
@@ -426,8 +422,7 @@ def test_qsub_Check_attrs_4():
     qsub test run: Check_attrs_4
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          6
           
 
     """
@@ -458,8 +453,7 @@ def test_qsub_cwd_option_1():
     qsub test run: cwd_option_1
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          7
           
 
     """
@@ -490,8 +484,7 @@ def test_qsub_cwd_option_2():
     qsub test run: cwd_option_2
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          8
           
 
     """
@@ -553,8 +546,7 @@ def test_qsub_cwd_option_4():
     qsub test run: cwd_option_4
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          9
           
 
     """
@@ -585,8 +577,7 @@ def test_qsub_cwd_option_5():
     qsub test run: cwd_option_5
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          10
           
 
     """
@@ -617,8 +608,7 @@ def test_qsub_debuglog_option():
     qsub test run: debuglog_option
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          11
           
 
     """
@@ -649,7 +639,7 @@ def test_qsub_inputfile_option_1():
     qsub test run: inputfile_option_1
 
         Command Output:
-          file /tmp/none not found, or is not a file
+          file /Users/georgerojas/p/Cobalt/cobalt/testsuite/TestCobaltClients/none not found, or is not a file
           
 
     """
@@ -680,8 +670,7 @@ def test_qsub_inputfile_option_2():
     qsub test run: inputfile_option_2
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          12
           
 
     """
@@ -712,8 +701,7 @@ def test_qsub_email_option():
     qsub test run: email_option
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          13
           
 
     """
@@ -744,8 +732,7 @@ def test_qsub_outputprefix():
     qsub test run: outputprefix
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          14
           WARNING: failed to create cobalt log file at: /tmp.cobaltlog
                    Permission denied
           
@@ -811,8 +798,7 @@ def test_qsub_mode_option_2():
     qsub test run: mode_option_2
 
         Command Output:
-          get_config_option: Option filters not found in section [cqm]
-          1
+          15
           
 
     """

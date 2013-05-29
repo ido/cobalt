@@ -158,9 +158,7 @@ def update_spec(opts,spec,opt2spec):
     This function will update the appropriate spec values with the opts values
     """
     # Get the key validated values into spec dictionary
-    # INFO: This needs to be updated if we add or delete validated values --GDR
-    # TODO: If we move job validation to cqm.add_jobs then we can get rid of this. --GDR
-    for opt in ['mode','proccount']:
+    for opt in ['mode','proccount', 'nodecount']:
         spec[opt2spec[opt]] = opts[opt]
 
 def logjob(job,spec):
@@ -195,31 +193,23 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
     
-    # read the cobalt config files
-    client_utils.read_config()
-
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
-
-    dt_allowed = False  # delta time NOT allowed
-    use_cwd    = True   # use cwd when relative path given
-    add_user   = True   # add current user to the list
-    seconds    = False  # do not convert time to seconds
 
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args (tuple) >
         ( cb_debug        , () ),
         ( cb_env          , (opts,) ),
-        ( cb_nodes        , () ),
-        ( cb_gtzero       , () ),
-        ( cb_time         , (dt_allowed,seconds) ),
+        ( cb_nodes        , (False,) ), # return string
+        ( cb_gtzero       , (False,) ), # return string
+        ( cb_time         , (False, False, False) ), # no delta time, minutes, return string
         ( cb_umask        , () ),
-        ( cb_path         , (opts, use_cwd) ),
+        ( cb_path         , (opts, True) ), # use CWD
         ( cb_dep          , () ),
         ( cb_attrs        , () ),
-        ( cb_user_list    , (opts,add_user) ),
+        ( cb_user_list    , (opts,True) ), # add current user
         ( cb_geometry     , (opts,) )]
 
     # Get the version information

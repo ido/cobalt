@@ -57,7 +57,7 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     debug_msg += '     )\n\n'
     logger.debug(debug_msg)
 
-    err_title = 'component exception: ' + debug_msg + '-->'
+    err_title = 'component error: '
 
     if client_data.components[comp_name]['conn'] is None or \
        client_data.components[comp_name]['defer'] != defer:
@@ -265,9 +265,6 @@ def hold_release_command(doc_str,rev_str,ver_str):
     if client_data.curr_cmd != 'qrls' and client_data.curr_cmd != 'qhold':
         logger.error('This function only works for "qhold" and "qrls" commands')
         sys.exit(1)
-
-    # read the cobalt config files
-    read_config()
 
     # list of callback with its arguments
     callbacks = [ [ cb_debug, () ] ]
@@ -506,6 +503,14 @@ def setup_logging(level):
     logger.setLevel(level)
     logger.already_setup = True
 
+def read_config():
+    """
+    This function will read the Cobalt Config files
+    """
+    CP = ConfigParser.ConfigParser()
+    CP.read(Cobalt.CONFIG_FILES)
+    return CP
+
 def validate_geometry(geometry,nodes):
     """
     This will validate the geometry for the specified job
@@ -525,7 +530,8 @@ def system_info():
     This function will return the system and and job types information
     """
     try:
-        sys_type = Cobalt.Util.get_config_option('bgsystem', 'bgtype')
+        CP = read_config()
+        sys_type = CP.get('bgsystem', 'bgtype')
     except:
         sys_type = 'bgl'
     
@@ -534,12 +540,6 @@ def system_info():
     else:
         job_types = ['co', 'vn', 'script']
     return (sys_type,job_types)
-
-def read_config():
-    """
-    This function will read the Cobalt Config files
-    """
-    Cobalt.Util.init_cobalt_config()
 
 def get_jobids(args):
     """
@@ -563,7 +563,8 @@ def get_cqm_option(cqm_option):
     get a cqm option from the config parser 
     """
     try:
-        opt = Cobalt.Util.get_config_option('cqm',cqm_option).split(':')
+        CP = read_config()
+        opt = CP.get('cqm',cqm_option).split(':')
     except ConfigParser.NoOptionError:
         opt = None
     except ConfigParser.NoSectionError:
@@ -627,25 +628,36 @@ def cb_nodes(option,opt_str,value,parser,*args):
     """
     This callback will validate value is greater than zero and store it.
     """
+    type_int = args[0]
     try:
-        sys_size = int(Cobalt.Util.get_config_option('system', 'size'))
+        CP = read_config()
+        sys_size = int(CP.get('system', 'size'))
     except:
         sys_size = 1024
     if not 0 < value <= sys_size:
         logger.error("node count out of realistic range")
         sys.exit(1)
 
-    setattr(parser.values,option.dest,value) # set the option
+    if type_int:
+        _value = value
+    else:
+        _value = str(value)
+    setattr(parser.values,option.dest,_value) # set the option
 
 def cb_gtzero(option,opt_str,value,parser,*args):
     """
     Validate the value entered is greater than zero
     """
+    type_int = args[0]
     if value <= 0:
         logger.error(opt_str + " is " + str(value) + " which is greater <= to zero")
         sys.exit(1)
 
-    setattr(parser.values,option.dest,value) # set the option
+    if type_int:
+        _value = value
+    else:
+        _value = str(value)
+    setattr(parser.values,option.dest,_value) # set the option
 
 def cb_score(option,opt_str,value,parser,*args):
     """
@@ -656,7 +668,7 @@ def cb_score(option,opt_str,value,parser,*args):
     except:
         logger.error('%s is %s which is not number value' % (opt_str,value))
         sys.exit(1)
-    setattr(parser.values,option.dest,value) # set the option
+    setattr(parser.values,option.dest,str(value)) # set the option
 
 def cb_time(option,opt_str,value,parser,*args):
     """
@@ -664,6 +676,7 @@ def cb_time(option,opt_str,value,parser,*args):
     """
     dt_allowed = args[0] # delta time flag
     seconds    = args[1] # convert to seconds if true
+    type_int   = args[2] # return int
     _time      = value
 
     # default the flags to false
@@ -683,7 +696,10 @@ def cb_time(option,opt_str,value,parser,*args):
     else:
         _time = minutes
 
-    setattr(parser.values,option.dest,_time) # set the option
+    if not type_int:
+        _time = str(_time)
+
+    setattr(parser.values, option.dest, _time) # set the option
 
 def cb_umask(option,opt_str,value,parser,*args):
     """

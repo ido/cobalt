@@ -88,7 +88,7 @@ def test_qselect_no_args_opts():
     """
     qselect test run: no_args_opts
         Old Command Output:
-           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
+           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': '60', 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
              The following jobs matched your query:
                 100
           
@@ -107,13 +107,21 @@ def test_qselect_no_args_opts():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -140,7 +148,7 @@ def test_qselect_debug_flag():
     """
     qselect test run: debug_flag
         Old Command Output:
-           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
+           {'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'queue': 'jello', 'envs': {}, 'submittime': '60', 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 100, 'project': 'my_project', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']} 
              The following jobs matched your query:
                 100
           
@@ -159,7 +167,7 @@ component: "queue-manager.get_jobs", defer: False
      )
 
 
-[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
+[{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': '60', 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': '512', 'args': '', 'is_active': False, 'user': 'land', 'procs': '512', 'walltime': '5', 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
    The following jobs matched your query:
       100
 """
@@ -169,13 +177,21 @@ component: "queue-manager.get_jobs", defer: False
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -220,13 +236,21 @@ def test_qselect_held_option():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:user_hold
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -271,13 +295,21 @@ def test_qselect_nodecount_option():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:312
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -322,13 +354,21 @@ def test_qselect_state_and_nodecount():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:312
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:user_hold
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -373,13 +413,21 @@ def test_qselect_walltime():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:610
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -424,13 +472,21 @@ def test_qselect_mode():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:vn
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -475,13 +531,21 @@ def test_qselect_verbose():
 GET_JOBS
 
 jobid:*
+jobid type: <type 'str'>
 mode:*
+mode type: <type 'str'>
 nodes:*
+nodes type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 state:*
+state type: <type 'str'>
 tag:job
+tag type: <type 'str'>
 walltime:*
+walltime type: <type 'str'>
 """
 
     stubout_file = "stub.out"

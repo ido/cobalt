@@ -485,10 +485,14 @@ updating inheritance fraction for jobs: 1, 2, 3, 4
 ADJUST_JOB_SCORES
 
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 jobid:4
-new score: 1.1
+jobid type: <type 'int'>
+new score: 1.1, type = <type 'str'>
 
 SET_JOBS
 
@@ -497,13 +501,18 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 jobid:4
+jobid type: <type 'int'>
 
 New Job Info:
 
 dep_frac:1.1
+dep_frac type: <type 'float'>
 """
 
     stubout_file = "stub.out"
@@ -929,9 +938,12 @@ def test_schedctl_score_1():
 ADJUST_JOB_SCORES
 
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
-new score: 0
+jobid type: <type 'int'>
+new score: 0, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -974,9 +986,12 @@ def test_schedctl_score_2():
 ADJUST_JOB_SCORES
 
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
-new score: 1
+jobid type: <type 'int'>
+new score: 1, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1019,9 +1034,12 @@ def test_schedctl_score_3():
 ADJUST_JOB_SCORES
 
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
-new score: 1.0
+jobid type: <type 'int'>
+new score: 1.0, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1064,9 +1082,12 @@ def test_schedctl_score_4():
 ADJUST_JOB_SCORES
 
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
-new score: -1.0
+jobid type: <type 'int'>
+new score: -1.0, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1109,9 +1130,12 @@ def test_schedctl_score_5():
 ADJUST_JOB_SCORES
 
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
-new score: +1.0
+jobid type: <type 'int'>
+new score: +1.0, type = <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1158,12 +1182,16 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 
 New Job Info:
 
 dep_frac:0.0
+dep_frac type: <type 'float'>
 """
 
     stubout_file = "stub.out"
@@ -1210,12 +1238,16 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 
 New Job Info:
 
 dep_frac:1.0
+dep_frac type: <type 'float'>
 """
 
     stubout_file = "stub.out"
@@ -1262,12 +1294,16 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 
 New Job Info:
 
 dep_frac:1.0
+dep_frac type: <type 'float'>
 """
 
     stubout_file = "stub.out"
@@ -1314,12 +1350,16 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 
 New Job Info:
 
 dep_frac:-1.0
+dep_frac type: <type 'float'>
 """
 
     stubout_file = "stub.out"
@@ -1366,12 +1406,16 @@ Original Jobs:
 
 user: gooduser
 jobid:1
+jobid type: <type 'int'>
 jobid:2
+jobid type: <type 'int'>
 jobid:3
+jobid type: <type 'int'>
 
 New Job Info:
 
 dep_frac:1.0
+dep_frac type: <type 'float'>
 """
 
     stubout_file = "stub.out"

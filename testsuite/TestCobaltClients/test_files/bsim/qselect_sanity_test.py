@@ -70,8 +70,7 @@ def test_qselect_no_args_opts():
     qselect test run: no_args_opts
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -111,9 +110,7 @@ def test_qselect_debug_flag():
                )
           
           
-          [{'errorpath': '/tmp', 'outputpath': '/tmp', 'tag': 'job', 'notify': 'myemail@gmail.com', 'has_completed': False, 'project': 'my_project', 'envs': {}, 'submittime': 60, 'state': '*', 'score': 50, 'location': '/tmp', 'nodes': 512, 'args': '', 'is_active': False, 'user': 'land', 'procs': 512, 'walltime': 5, 'geometry': None, 'user_hold': False, 'jobid': 100, 'queue': 'jello', 'mode': 'smp', 'user_list': ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy']}]
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -144,8 +141,7 @@ def test_qselect_held_option():
     qselect test run: held_option
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -176,8 +172,7 @@ def test_qselect_nodecount_option():
     qselect test run: nodecount_option
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -208,8 +203,7 @@ def test_qselect_state_and_nodecount():
     qselect test run: state_and_nodecount
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -240,8 +234,7 @@ def test_qselect_walltime():
     qselect test run: walltime
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -272,8 +265,7 @@ def test_qselect_mode():
     qselect test run: mode
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """
@@ -304,8 +296,7 @@ def test_qselect_verbose():
     qselect test run: verbose
 
         Command Output:
-             The following jobs matched your query:
-                100
+          Failed to match any jobs
           
 
     """

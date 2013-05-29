@@ -33,9 +33,13 @@ S4    P4        Mon Apr 22 17:06:50 2013
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -78,9 +82,13 @@ def test_slpstat_arg_2():
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -136,9 +144,13 @@ S4    P4        Mon Apr 22 17:06:50 2013
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -202,9 +214,13 @@ S4    P4        Mon Apr 22 17:06:50 2013
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -256,9 +272,13 @@ no services registered
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"

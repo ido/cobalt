@@ -123,7 +123,11 @@ Options:
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
   --queue=QUEUE         set the queues associated with the target blocks to
-                        this list of queues
+                        this list of queues.
+  --rmq                 Only valid with --queue option. If provided queue(s)
+                        will be removed from the target block association.
+  --appq                Only valid with --queue option. If provided queue(s)
+                        will be appended to the target block association.
   --activate            activate the block for scheduling
   --deactivate          deactivate the block for schedulign
   --enable              enable the running of jobs on the target blocks
@@ -265,7 +269,11 @@ Options:
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
   --queue=QUEUE         set the queues associated with the target blocks to
-                        this list of queues
+                        this list of queues.
+  --rmq                 Only valid with --queue option. If provided queue(s)
+                        will be removed from the target block association.
+  --appq                Only valid with --queue option. If provided queue(s)
+                        will be appended to the target block association.
   --activate            activate the block for scheduling
   --deactivate          deactivate the block for schedulign
   --enable              enable the running of jobs on the target blocks
@@ -437,7 +445,7 @@ def test_partadm_combo_options_1():
 
     """
 
-    args      = """-a -d PART"""
+    args      = """-a -d ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: delete option(s)
@@ -471,7 +479,7 @@ def test_partadm_combo_options_2():
 
     """
 
-    args      = """-a --enable PART"""
+    args      = """-a --enable ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: enable option(s)
@@ -505,7 +513,7 @@ def test_partadm_combo_options_3():
 
     """
 
-    args      = """-d --enable PART"""
+    args      = """-d --enable ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: enable option(s)
@@ -539,7 +547,7 @@ def test_partadm_combo_options_4():
 
     """
 
-    args      = """--enable --disable PART"""
+    args      = """--enable --disable ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: disable option(s)
@@ -573,7 +581,7 @@ def test_partadm_combo_options_5():
 
     """
 
-    args      = """--deactivate --activate PART"""
+    args      = """--deactivate --activate ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: deactivate option(s)
@@ -607,7 +615,7 @@ def test_partadm_combo_options_6():
 
     """
 
-    args      = """-a --deactivate PART"""
+    args      = """-a --deactivate ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: deactivate option(s)
@@ -641,7 +649,7 @@ def test_partadm_combo_options_7():
 
     """
 
-    args      = """--fail --unfail PART"""
+    args      = """--fail --unfail ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: unfail option(s)
@@ -777,7 +785,7 @@ def test_partadm_combo_options_11():
 
     """
 
-    args      = """-a --queue q1 PART"""
+    args      = """-a --queue q1 ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: queue option(s)
@@ -811,10 +819,10 @@ def test_partadm_combo_options_12():
 
     """
 
-    args      = """--dump --queue q1 PART"""
+    args      = """--dump --queue q1 ANL-R00-R01-2048"""
 
     cmdout    = \
-"""Option combinations not allowed with: dump option(s)
+"""Option combinations not allowed with: queue option(s)
 """
 
     stubout   = ''
@@ -879,10 +887,10 @@ def test_partadm_combo_options_14():
 
     """
 
-    args      = """-a -c -b PART"""
+    args      = """-a -c -b ANL-R00-R01-2048"""
 
     cmdout    = \
-"""Option combinations not allowed with: blockinfo, clean_block option(s)
+"""Option combinations not allowed with: add, blockinfo, clean_block option(s)
 """
 
     stubout   = ''
@@ -910,36 +918,7 @@ def test_partadm_combo_options_14():
 def test_partadm_combo_options_15():
     """
     partadm test run: combo_options_15
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --list_io
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-A> <-D> <-D> <-_> <-P> <-A> <-R> <-T> <-I> <-T> <-I> <-O> <-N> <-
-    > <-
-    > <-u> <-s> <-e> <-r> <- > <-n> <-a> <-m> <-e> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-p> <-l> <-i> <-s> <-t> <-:> <- > <-[> <-{> <-'> <-s> <-t> <-a> <-t> <-u> <-s> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-n> <-a> <-m> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-t> <-a> <-t> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-a> <-u> <-t> <-o> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-b> <-l> <-o> <-c> <-k> <-_> <-c> <-o> <-m> <-p> <-u> <-t> <-e> <-s> <-_> <-f> <-o> <-r> <-_> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-i> <-z> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-}> <-]> <-
-    > 
+
     """
 
     args      = """--list_io -a"""
@@ -959,7 +938,16 @@ P9    8     idle   OK               x        x
 P10   9     idle   OK               x        x         
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+ADD_PARTITION
+
+user name: gooduser
+
+GET_IO_BLOCKS
+
+plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
+"""
 
     stubout_file = "stub.out"
 
@@ -984,81 +972,10 @@ P10   9     idle   OK               x        x
 def test_partadm_combo_options_16():
     """
     partadm test run: combo_options_16
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --list_io
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-A> <-D> <-D> <-_> <-P> <-A> <-R> <-T> <-I> <-T> <-I> <-O> <-N> <-
-    > <-
-    > <-u> <-s> <-e> <-r> <- > <-n> <-a> <-m> <-e> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-d> <-e> <-p> <-s> <-:> <-[> <-]> <-
-    > <-f> <-u> <-n> <-c> <-t> <-i> <-o> <-n> <-a> <-l> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-1> <-
-    > <-q> <-u> <-e> <-u> <-e> <-:> <-d> <-e> <-f> <-a> <-u> <-l> <-t> <-
-    > <-s> <-c> <-h> <-e> <-d> <-u> <-l> <-e> <-d> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-s> <-i> <-z> <-e> <-:> <-*> <-
-    > <-t> <-a> <-g> <-:> <-p> <-a> <-r> <-t> <-i> <-t> <-i> <-o> <-n> <-
-    > <-d> <-e> <-p> <-s> <-:> <-[> <-]> <-
-    > <-f> <-u> <-n> <-c> <-t> <-i> <-o> <-n> <-a> <-l> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-2> <-
-    > <-q> <-u> <-e> <-u> <-e> <-:> <-d> <-e> <-f> <-a> <-u> <-l> <-t> <-
-    > <-s> <-c> <-h> <-e> <-d> <-u> <-l> <-e> <-d> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-s> <-i> <-z> <-e> <-:> <-*> <-
-    > <-t> <-a> <-g> <-:> <-p> <-a> <-r> <-t> <-i> <-t> <-i> <-o> <-n> <-
-    > <-d> <-e> <-p> <-s> <-:> <-[> <-]> <-
-    > <-f> <-u> <-n> <-c> <-t> <-i> <-o> <-n> <-a> <-l> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-3> <-
-    > <-q> <-u> <-e> <-u> <-e> <-:> <-d> <-e> <-f> <-a> <-u> <-l> <-t> <-
-    > <-s> <-c> <-h> <-e> <-d> <-u> <-l> <-e> <-d> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-s> <-i> <-z> <-e> <-:> <-*> <-
-    > <-t> <-a> <-g> <-:> <-p> <-a> <-r> <-t> <-i> <-t> <-i> <-o> <-n> <-
-    > <-d> <-e> <-p> <-s> <-:> <-[> <-]> <-
-    > <-f> <-u> <-n> <-c> <-t> <-i> <-o> <-n> <-a> <-l> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-1> <-
-    > <-q> <-u> <-e> <-u> <-e> <-:> <-d> <-e> <-f> <-a> <-u> <-l> <-t> <-
-    > <-s> <-c> <-h> <-e> <-d> <-u> <-l> <-e> <-d> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-s> <-i> <-z> <-e> <-:> <-*> <-
-    > <-t> <-a> <-g> <-:> <-p> <-a> <-r> <-t> <-i> <-t> <-i> <-o> <-n> <-
-    > <-d> <-e> <-p> <-s> <-:> <-[> <-]> <-
-    > <-f> <-u> <-n> <-c> <-t> <-i> <-o> <-n> <-a> <-l> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-2> <-
-    > <-q> <-u> <-e> <-u> <-e> <-:> <-d> <-e> <-f> <-a> <-u> <-l> <-t> <-
-    > <-s> <-c> <-h> <-e> <-d> <-u> <-l> <-e> <-d> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-s> <-i> <-z> <-e> <-:> <-*> <-
-    > <-t> <-a> <-g> <-:> <-p> <-a> <-r> <-t> <-i> <-t> <-i> <-o> <-n> <-
-    > <-d> <-e> <-p> <-s> <-:> <-[> <-]> <-
-    > <-f> <-u> <-n> <-c> <-t> <-i> <-o> <-n> <-a> <-l> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-3> <-
-    > <-q> <-u> <-e> <-u> <-e> <-:> <-d> <-e> <-f> <-a> <-u> <-l> <-t> <-
-    > <-s> <-c> <-h> <-e> <-d> <-u> <-l> <-e> <-d> <-:> <-F> <-a> <-l> <-s> <-e> <-
-    > <-s> <-i> <-z> <-e> <-:> <-*> <-
-    > <-t> <-a> <-g> <-:> <-p> <-a> <-r> <-t> <-i> <-t> <-i> <-o> <-n> <-
-    > <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-p> <-l> <-i> <-s> <-t> <-:> <- > <-[> <-{> <-'> <-s> <-t> <-a> <-t> <-u> <-s> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-n> <-a> <-m> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-t> <-a> <-t> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-a> <-u> <-t> <-o> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-b> <-l> <-o> <-c> <-k> <-_> <-c> <-o> <-m> <-p> <-u> <-t> <-e> <-s> <-_> <-f> <-o> <-r> <-_> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-i> <-z> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-}> <-]> <-
-    > 
+
     """
 
-    args      = """--list_io -a p1 p2 p3"""
+    args      = """--list_io -a ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """Name  Size  State  CS Status  BlockComputes  Autoreboot
@@ -1075,7 +992,100 @@ P9    8     idle   OK               x        x
 P10   9     idle   OK               x        x         
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+ADD_PARTITION
+
+user name: gooduser
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+
+GET_IO_BLOCKS
+
+plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
+"""
 
     stubout_file = "stub.out"
 
@@ -1097,58 +1107,188 @@ P10   9     idle   OK               x        x
 
 
 # ---------------------------------------------------------------------------------
+def test_partadm_combo_options_17():
+    """
+    partadm test run: combo_options_17
+
+    """
+
+    args      = """--list_io --rmq ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: rmq, list_io, rmq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_18():
+    """
+    partadm test run: combo_options_18
+
+    """
+
+    args      = """--list_io --appq ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: appq, list_io, appq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_19():
+    """
+    partadm test run: combo_options_19
+
+    """
+
+    args      = """--queue q1:q2 --rmq --appq ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: rmq, appq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_partadm_add_option_1():
     """
     partadm test run: add_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """-a -r PART"""
+    args      = """-a -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1175,54 +1315,82 @@ def test_partadm_add_option_2():
     """
     partadm test run: add_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """-a --recursive PART"""
+    args      = """-a --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1249,15 +1417,15 @@ def test_partadm_add_option_3():
     """
     partadm test run: add_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """-a PART1 PART2 PART3"""
+    args      = """-a ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -1266,47 +1434,89 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART3
+functional type: <type 'bool'>
+name:ANL-R01-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART3
+functional type: <type 'bool'>
+name:ANL-R01-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1335,10 +1545,10 @@ def test_partadm_add_option_4():
 
     """
 
-    args      = """-a -b PART1 PART2"""
+    args      = """-a -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1354,7 +1564,7 @@ def test_partadm_add_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1370,7 +1580,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1386,7 +1596,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1410,41 +1620,69 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -1471,17 +1709,17 @@ def test_partadm_add_option_5():
     """
     partadm test run: add_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """-a -c PART1 PART2"""
+    args      = """-a -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -1490,33 +1728,61 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -1526,14 +1792,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -1561,34 +1827,42 @@ def test_partadm_delete_option_1():
     """
     partadm test run: delete_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """-d -r PART"""
+    args      = """-d -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 DEL_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
-name:PART
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1615,34 +1889,42 @@ def test_partadm_delete_option_2():
     """
     partadm test run: delete_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """-d --recursive PART"""
+    args      = """-d --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 DEL_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
-name:PART
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1669,15 +1951,15 @@ def test_partadm_delete_option_3():
     """
     partadm test run: delete_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """-d PART1 PART2 PART3"""
+    args      = """-d ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -1685,18 +1967,30 @@ def test_partadm_delete_option_3():
 DEL_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
-name:PART1
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1725,10 +2019,10 @@ def test_partadm_delete_option_4():
 
     """
 
-    args      = """-d -b PART1 PART2"""
+    args      = """-d -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1744,7 +2038,7 @@ def test_partadm_delete_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1760,7 +2054,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1776,7 +2070,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -1799,22 +2093,30 @@ Name: PART2
 DEL_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART1
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -1841,17 +2143,17 @@ def test_partadm_delete_option_5():
     """
     partadm test run: delete_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """-d -c PART1 PART2"""
+    args      = """-d -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -1859,14 +2161,22 @@ Initiating cleanup on block PART2
 DEL_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART1
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -1876,14 +2186,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -1911,35 +2221,44 @@ def test_partadm_enable_option_1():
     """
     partadm test run: enable_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--enable -r PART"""
+    args      = """--enable -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1966,35 +2285,44 @@ def test_partadm_enable_option_2():
     """
     partadm test run: enable_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--enable --recursive PART"""
+    args      = """--enable --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2021,15 +2349,15 @@ def test_partadm_enable_option_3():
     """
     partadm test run: enable_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--enable PART1 PART2 PART3"""
+    args      = """--enable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -2037,19 +2365,32 @@ def test_partadm_enable_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2078,10 +2419,10 @@ def test_partadm_enable_option_4():
 
     """
 
-    args      = """--enable -b PART1 PART2"""
+    args      = """--enable -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2097,7 +2438,7 @@ def test_partadm_enable_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2113,7 +2454,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2129,7 +2470,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2152,23 +2493,32 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -2195,17 +2545,17 @@ def test_partadm_enable_option_5():
     """
     partadm test run: enable_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """--enable -c PART1 PART2"""
+    args      = """--enable -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -2213,15 +2563,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -2231,14 +2590,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -2266,35 +2625,44 @@ def test_partadm_disable_option_1():
     """
     partadm test run: disable_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--disable -r PART"""
+    args      = """--disable -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2321,35 +2689,44 @@ def test_partadm_disable_option_2():
     """
     partadm test run: disable_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--disable --recursive PART"""
+    args      = """--disable --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2376,15 +2753,15 @@ def test_partadm_disable_option_3():
     """
     partadm test run: disable_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--disable PART1 PART2 PART3"""
+    args      = """--disable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -2392,19 +2769,32 @@ def test_partadm_disable_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2433,10 +2823,10 @@ def test_partadm_disable_option_4():
 
     """
 
-    args      = """--disable -b PART1 PART2"""
+    args      = """--disable -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2452,7 +2842,7 @@ def test_partadm_disable_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2468,7 +2858,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2484,7 +2874,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2507,23 +2897,32 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -2550,17 +2949,17 @@ def test_partadm_disable_option_5():
     """
     partadm test run: disable_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """--disable -c PART1 PART2"""
+    args      = """--disable -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -2568,15 +2967,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -2586,14 +2994,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -2621,35 +3029,44 @@ def test_partadm_activate_option_1():
     """
     partadm test run: activate_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--activate -r PART"""
+    args      = """--activate -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2676,35 +3093,44 @@ def test_partadm_activate_option_2():
     """
     partadm test run: activate_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--activate --recursive PART"""
+    args      = """--activate --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2731,15 +3157,15 @@ def test_partadm_activate_option_3():
     """
     partadm test run: activate_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--activate PART1 PART2 PART3"""
+    args      = """--activate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -2747,19 +3173,32 @@ def test_partadm_activate_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2788,10 +3227,10 @@ def test_partadm_activate_option_4():
 
     """
 
-    args      = """--activate -b PART1 PART2"""
+    args      = """--activate -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2807,7 +3246,7 @@ def test_partadm_activate_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2823,7 +3262,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2839,7 +3278,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -2862,23 +3301,32 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -2905,17 +3353,17 @@ def test_partadm_activate_option_5():
     """
     partadm test run: activate_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """--activate -c PART1 PART2"""
+    args      = """--activate -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -2923,15 +3371,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -2941,14 +3398,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -2976,35 +3433,44 @@ def test_partadm_deactivate_option_1():
     """
     partadm test run: deactivate_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--deactivate -r PART"""
+    args      = """--deactivate -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3031,35 +3497,44 @@ def test_partadm_deactivate_option_2():
     """
     partadm test run: deactivate_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--deactivate --recursive PART"""
+    args      = """--deactivate --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3086,15 +3561,15 @@ def test_partadm_deactivate_option_3():
     """
     partadm test run: deactivate_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--deactivate PART1 PART2 PART3"""
+    args      = """--deactivate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -3102,19 +3577,32 @@ def test_partadm_deactivate_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3143,10 +3631,10 @@ def test_partadm_deactivate_option_4():
 
     """
 
-    args      = """--deactivate -b PART1 PART2"""
+    args      = """--deactivate -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3162,7 +3650,7 @@ def test_partadm_deactivate_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3178,7 +3666,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3194,7 +3682,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3217,23 +3705,32 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -3260,17 +3757,17 @@ def test_partadm_deactivate_option_5():
     """
     partadm test run: deactivate_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """--deactivate -c PART1 PART2"""
+    args      = """--deactivate -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -3278,15 +3775,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -3296,14 +3802,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -3331,31 +3837,35 @@ def test_partadm_fail_option_1():
     """
     partadm test run: fail_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--fail -r PART"""
+    args      = """--fail -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3382,31 +3892,35 @@ def test_partadm_fail_option_2():
     """
     partadm test run: fail_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--fail --recursive PART"""
+    args      = """--fail --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3433,15 +3947,15 @@ def test_partadm_fail_option_3():
     """
     partadm test run: fail_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--fail PART1 PART2 PART3"""
+    args      = """--fail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -3449,13 +3963,19 @@ def test_partadm_fail_option_3():
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}, {'tag': 'partition', 'name': 'PART3'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3484,10 +4004,10 @@ def test_partadm_fail_option_4():
 
     """
 
-    args      = """--fail -b PART1 PART2"""
+    args      = """--fail -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3503,7 +4023,7 @@ def test_partadm_fail_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3519,7 +4039,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3535,7 +4055,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3558,19 +4078,23 @@ Name: PART2
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -3597,17 +4121,17 @@ def test_partadm_fail_option_5():
     """
     partadm test run: fail_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """--fail -c PART1 PART2"""
+    args      = """--fail -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -3615,11 +4139,15 @@ Initiating cleanup on block PART2
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -3629,14 +4157,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -3664,31 +4192,35 @@ def test_partadm_unfail_option_1():
     """
     partadm test run: unfail_option_1
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--unfail -r PART"""
+    args      = """--unfail -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3715,31 +4247,35 @@ def test_partadm_unfail_option_2():
     """
     partadm test run: unfail_option_2
         Old Command Output:
-          ['PART', 'a']
+          ['ANL-R00-R01-2048', 'a']
           
 
     """
 
-    args      = """--unfail --recursive PART"""
+    args      = """--unfail --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children_list': '*'}]
 
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3766,15 +4302,15 @@ def test_partadm_unfail_option_3():
     """
     partadm test run: unfail_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--unfail PART1 PART2 PART3"""
+    args      = """--unfail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -3782,13 +4318,19 @@ def test_partadm_unfail_option_3():
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}, {'tag': 'partition', 'name': 'PART3'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3817,10 +4359,10 @@ def test_partadm_unfail_option_4():
 
     """
 
-    args      = """--unfail -b PART1 PART2"""
+    args      = """--unfail -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
+"""Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3836,7 +4378,7 @@ def test_partadm_unfail_option_4():
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3852,7 +4394,7 @@ Name: PART2
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART1
+Name: ANL-R00-R01-2048
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3868,7 +4410,7 @@ Name: PART1
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
+Name: ANL-R00-1024
     scheduled                 : True
     status                    : OK
     functional                : True
@@ -3891,19 +4433,23 @@ Name: PART2
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 GET_BLOCKS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
+plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-R01-2048', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'ANL-R00-1024', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
 
 GET_IO_BLOCKS
 
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-R01-2048', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'ANL-R00-1024', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -3930,17 +4476,17 @@ def test_partadm_unfail_option_5():
     """
     partadm test run: unfail_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Initiating cleanup on block ANL-R00-R01-2048
+          Initiating cleanup on block ANL-R00-1024
           
 
     """
 
-    args      = """--unfail -c PART1 PART2"""
+    args      = """--unfail -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Initiating cleanup on block ANL-R00-R01-2048
+Initiating cleanup on block ANL-R00-1024
 """
 
     stubout   = \
@@ -3948,11 +4494,15 @@ Initiating cleanup on block PART2
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
 SCHED_STATUS
 
@@ -3962,14 +4512,14 @@ BOOTING_STATUS
 
 SET_CLEANING
 
-part: PART1
-var2 : None
+part: ANL-R00-R01-2048
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
-part: PART2
-var2 : None
+part: ANL-R00-1024
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -4039,7 +4589,7 @@ def test_partadm_savestate_option_2():
 
     """
 
-    args      = """--savestate /tmp/save p1"""
+    args      = """--savestate /tmp/save ANL-R00-M0-512"""
 
     cmdout    = \
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
@@ -4162,7 +4712,7 @@ def test_partadm_savestate_option_4():
 
     """
 
-    args      = """--savestate /tmp/save -c p1"""
+    args      = """--savestate /tmp/save -c ANL-R00-M0-512"""
 
     cmdout    = \
 """Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
@@ -4193,61 +4743,61 @@ BOOTING_STATUS
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -4277,7 +4827,7 @@ def test_partadm_savestate_option_5():
 
     """
 
-    args      = """--savestate /tmp/save -b p1"""
+    args      = """--savestate /tmp/save -b ANL-R00-M0-512"""
 
     cmdout    = \
 """Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
@@ -4658,6 +5208,7 @@ def test_partadm_xml_option_1():
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4689,7 +5240,7 @@ def test_partadm_xml_option_2():
 
     """
 
-    args      = """--xml p1"""
+    args      = """--xml ANL-R00-M0-512"""
 
     cmdout    = \
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
@@ -4700,6 +5251,7 @@ def test_partadm_xml_option_2():
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4731,7 +5283,7 @@ def test_partadm_xml_option_3():
 
     """
 
-    args      = """--xml --recursive p1"""
+    args      = """--xml --recursive ANL-R00-M0-512"""
 
     cmdout    = \
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
@@ -4741,11 +5293,12 @@ def test_partadm_xml_option_3():
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5104,6 +5657,7 @@ Name: P10
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 
 GET_BLOCKS
 
@@ -5172,6 +5726,7 @@ Initiating cleanup on block P10
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 
 SCHED_STATUS
 
@@ -5182,61 +5737,61 @@ BOOTING_STATUS
 SET_CLEANING
 
 part: P1
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P2
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P3
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P4
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P5
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P6
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P7
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P8
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P9
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P10
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -5600,6 +6155,7 @@ plist: []
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 
 GET_BLOCKS
 
@@ -5672,6 +6228,7 @@ plist: []
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 
 SCHED_STATUS
 
@@ -5682,61 +6239,61 @@ BOOTING_STATUS
 SET_CLEANING
 
 part: P1
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P2
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P3
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P4
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P5
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P6
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P7
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P8
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P9
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: P10
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -5835,17 +6392,17 @@ def test_partadm_queue_option_2():
     """
     partadm test run: queue_option_2
         Old Command Output:
-          'q1' is not an existing queue
-          'q2' is not an existing queue
+          'q_4' is not an existing queue
+          'q_3' is not an existing queue
           
 
     """
 
-    args      = """--queue q1:q2 p1 p2 p3"""
+    args      = """--queue q_4:q_3 ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""'q1' is not an existing queue
-'q2' is not an existing queue
+"""'q_4' is not an existing queue
+'q_3' is not an existing queue
 """
 
     stubout   = \
@@ -5853,7 +6410,9 @@ def test_partadm_queue_option_2():
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5880,15 +6439,21 @@ def test_partadm_queue_option_3():
     """
     partadm test run: queue_option_3
         Old Command Output:
-          ['p1']
+          'q_1' is not an existing queue
+          'q_2' is not an existing queue
+          'q_3' is not an existing queue
+          'q_4' is not an existing queue
           
 
     """
 
-    args      = """--queue kebra:bbb:myq p1"""
+    args      = """--queue q_1:q_2:q_3:q_4 ANL-R00-M0-512"""
 
     cmdout    = \
-"""['p1']
+"""'q_1' is not an existing queue
+'q_2' is not an existing queue
+'q_3' is not an existing queue
+'q_4' is not an existing queue
 """
 
     stubout   = \
@@ -5896,22 +6461,15 @@ def test_partadm_queue_option_3():
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-queue:kebra:bbb:myq
-name:p1
-tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -5932,15 +6490,15 @@ def test_partadm_queue_option_4():
     """
     partadm test run: queue_option_4
         Old Command Output:
-          Initiating cleanup on block p1
+          'q_1' is not an existing queue
           
 
     """
 
-    args      = """--queue kebra:bbb:myq -c p1"""
+    args      = """--queue q_1 -c ANL-R00-M0-512"""
 
     cmdout    = \
-"""Initiating cleanup on block p1
+"""'q_1' is not an existing queue
 """
 
     stubout   = \
@@ -5948,34 +6506,15 @@ def test_partadm_queue_option_4():
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-queue:kebra:bbb:myq
-name:p1
-tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: p1
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -5998,41 +6537,10 @@ def test_partadm_queue_option_5():
 
     """
 
-    args      = """--queue kebra:bbb:myq -b p1"""
+    args      = """--queue q_2 -b ANL-R00-M0-512"""
 
     cmdout    = \
-"""Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
+"""'q_2' is not an existing queue
 """
 
     stubout   = \
@@ -6040,30 +6548,15 @@ Name: p1
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-queue:kebra:bbb:myq
-name:p1
-tag:partition
-
-GET_BLOCKS
-
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'p1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'p1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -6086,112 +6579,30 @@ def test_partadm_queue_option_6():
 
     """
 
-    args      = """--queue kebra:bbb -r -b p1"""
+    args      = """--queue q_1 -r -b ANL-R00-M0-512"""
 
     cmdout    = \
-"""Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: a
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: a
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
+"""'q_1' is not an existing queue
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-name:a
-tag:partition
-queue:kebra:bbb
-name:p1
-tag:partition
-name:a
-tag:partition
-
-GET_BLOCKS
-
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'p1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'a', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'p1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'a', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -6212,66 +6623,187 @@ def test_partadm_queue_option_7():
     """
     partadm test run: queue_option_7
         Old Command Output:
-          Initiating cleanup on block p1
-          Initiating cleanup on block a
+          'q_2' is not an existing queue
           
 
     """
 
-    args      = """--queue kebra:bbb -r -c p1"""
+    args      = """--queue q_2 -r -c ANL-R00-M0-512"""
 
     cmdout    = \
-"""Initiating cleanup on block p1
-Initiating cleanup on block a
+"""'q_2' is not an existing queue
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-name:a
-tag:partition
-queue:kebra:bbb
-name:p1
-tag:partition
-name:a
-tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: p1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: a
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_8():
+    """
+    partadm test run: queue_option_8
+
+    """
+
+    args      = """--queue q_1 --appq -r -c ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: appq, clean_block, appq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_9():
+    """
+    partadm test run: queue_option_9
+
+    """
+
+    args      = """--queue q_2 --rmq -r -c ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: rmq, clean_block, rmq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_10():
+    """
+    partadm test run: queue_option_10
+
+    """
+
+    args      = """--queue q_1 --rmq ANL-R00-M0-512 ANL-R00-M1-512"""
+
+    cmdout    = \
+"""'q_1' is not an existing queue
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+name type: <type 'str'>
+tag:queue
+tag type: <type 'str'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_11():
+    """
+    partadm test run: queue_option_11
+
+    """
+
+    args      = """--queue q_1 --appq ANL-R00-M0-512 ANL-R00-M1-512"""
+
+    cmdout    = \
+"""'q_1' is not an existing queue
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+name type: <type 'str'>
+tag:queue
+tag type: <type 'str'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -6339,7 +6871,7 @@ def test_partadm_dump_option_2():
 
     """
 
-    args      = """--dump p1"""
+    args      = """--dump ANL-R00-M0-512"""
 
     cmdout    = \
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
@@ -6381,7 +6913,7 @@ def test_partadm_dump_option_3():
 
     """
 
-    args      = """--dump --recursive p1"""
+    args      = """--dump --recursive ANL-R00-M0-512"""
 
     cmdout    = \
 """[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
@@ -6391,7 +6923,7 @@ def test_partadm_dump_option_3():
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 GET_PARTITIONS
 
@@ -6832,61 +7364,61 @@ BOOTING_STATUS
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -7332,61 +7864,61 @@ BOOTING_STATUS
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 
 SET_CLEANING
 
 part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
+var2 : None, type = <type 'NoneType'>
 whoami: gooduser
 """
 
@@ -7461,7 +7993,7 @@ def test_partadm_boot_stop_option_2():
 
     """
 
-    args      = """--boot-stop p1"""
+    args      = """--boot-stop ANL-R00-M0-512"""
 
     cmdout    = \
 """Halting booting: halting scheduling is advised
@@ -7503,7 +8035,7 @@ def test_partadm_boot_stop_option_3():
 
     """
 
-    args      = """--boot-stop --recursive p1"""
+    args      = """--boot-stop --recursive ANL-R00-M0-512"""
 
     cmdout    = \
 """Halting booting: halting scheduling is advised
@@ -7513,7 +8045,7 @@ def test_partadm_boot_stop_option_3():
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 HALT_BOOTING
 
@@ -7767,7 +8299,7 @@ def test_partadm_boot_start_option_2():
 
     """
 
-    args      = """--boot-start p1"""
+    args      = """--boot-start ANL-R00-M0-512"""
 
     cmdout    = \
 """Enabling booting
@@ -7809,7 +8341,7 @@ def test_partadm_boot_start_option_3():
 
     """
 
-    args      = """--boot-start --recursive p1"""
+    args      = """--boot-start --recursive ANL-R00-M0-512"""
 
     cmdout    = \
 """Enabling booting
@@ -7819,7 +8351,7 @@ def test_partadm_boot_start_option_3():
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 RESUME_BOOTING
 
@@ -8072,7 +8604,7 @@ def test_partadm_boot_status_option_2():
 
     """
 
-    args      = """--boot-status p1"""
+    args      = """--boot-status ANL-R00-M0-512"""
 
     cmdout    = \
 """Block Booting: ENABLED
@@ -8113,7 +8645,7 @@ def test_partadm_boot_status_option_3():
 
     """
 
-    args      = """--boot-status --recursive p1"""
+    args      = """--boot-status --recursive ANL-R00-M0-512"""
 
     cmdout    = \
 """Block Booting: ENABLED
@@ -8123,7 +8655,7 @@ def test_partadm_boot_status_option_3():
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children_list': '*'}]
 
 BOOTING_STATUS
 
@@ -8324,32 +8856,7 @@ BOOTING_STATUS
 def test_partadm_list_io_1():
     """
     partadm test run: list_io_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --list_io
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-p> <-l> <-i> <-s> <-t> <-:> <- > <-[> <-{> <-'> <-s> <-t> <-a> <-t> <-u> <-s> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-n> <-a> <-m> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-t> <-a> <-t> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-a> <-u> <-t> <-o> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-b> <-l> <-o> <-c> <-k> <-_> <-c> <-o> <-m> <-p> <-u> <-t> <-e> <-s> <-_> <-f> <-o> <-r> <-_> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-i> <-z> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-}> <-]> <-
-    > 
+
     """
 
     args      = """--list_io"""
@@ -8369,7 +8876,12 @@ P9    8     idle   OK               x        x
 P10   9     idle   OK               x        x         
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IO_BLOCKS
+
+plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
+"""
 
     stubout_file = "stub.out"
 
@@ -8394,35 +8906,10 @@ P10   9     idle   OK               x        x
 def test_partadm_list_io_2():
     """
     partadm test run: list_io_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --list_io
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-p> <-l> <-i> <-s> <-t> <-:> <- > <-[> <-{> <-'> <-s> <-t> <-a> <-t> <-u> <-s> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-n> <-a> <-m> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-t> <-a> <-t> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-a> <-u> <-t> <-o> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-b> <-l> <-o> <-c> <-k> <-_> <-c> <-o> <-m> <-p> <-u> <-t> <-e> <-s> <-_> <-f> <-o> <-r> <-_> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-i> <-z> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-}> <-]> <-
-    > 
+
     """
 
-    args      = """--list_io p1 p2"""
+    args      = """--list_io ANL-R00-M0-512 ANL-R00-M1-512"""
 
     cmdout    = \
 """Name  Size  State  CS Status  BlockComputes  Autoreboot
@@ -8439,7 +8926,12 @@ P9    8     idle   OK               x        x
 P10   9     idle   OK               x        x         
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IO_BLOCKS
+
+plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
+"""
 
     stubout_file = "stub.out"
 
@@ -8464,32 +8956,7 @@ P10   9     idle   OK               x        x
 def test_partadm_list_io_3():
     """
     partadm test run: list_io_3
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: -i
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-p> <-l> <-i> <-s> <-t> <-:> <- > <-[> <-{> <-'> <-s> <-t> <-a> <-t> <-u> <-s> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-n> <-a> <-m> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-t> <-a> <-t> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-a> <-u> <-t> <-o> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-b> <-l> <-o> <-c> <-k> <-_> <-c> <-o> <-m> <-p> <-u> <-t> <-e> <-s> <-_> <-f> <-o> <-r> <-_> <-r> <-e> <-b> <-o> <-o> <-t> <-'> <-:> <- > <-'> <-*> <-'> <-,> <- > <-'> <-s> <-i> <-z> <-e> <-'> <-:> <- > <-'> <-*> <-'> <-}> <-]> <-
-    > 
+
     """
 
     args      = """-i"""
@@ -8509,7 +8976,12 @@ P9    8     idle   OK               x        x
 P10   9     idle   OK               x        x         
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IO_BLOCKS
+
+plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
+"""
 
     stubout_file = "stub.out"
 
@@ -8534,26 +9006,6 @@ P10   9     idle   OK               x        x
 def test_partadm_add_io_block_1():
     """
     partadm test run: add_io_block_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --add_io_block
-          
 
     """
 
@@ -8588,47 +9040,33 @@ def test_partadm_add_io_block_1():
 def test_partadm_add_io_block_2():
     """
     partadm test run: add_io_block_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --add_io_block
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-A> <-D> <-D> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-u> <-s> <-e> <-r> <- > <-n> <-a> <-m> <-e> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-1> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-2> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-3> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-1> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-2> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-3> <-
-    > 
+
     """
 
-    args      = """--add_io_block p1 p2 p3"""
+    args      = """--add_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""['p1', 'p2', 'p3']
+"""['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+ADD_IO_BLOCKS
+
+user name: gooduser
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+"""
 
     stubout_file = "stub.out"
 
@@ -8653,26 +9091,6 @@ def test_partadm_add_io_block_2():
 def test_partadm_del_io_block_1():
     """
     partadm test run: del_io_block_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --del_io_block
-          
 
     """
 
@@ -8707,47 +9125,33 @@ def test_partadm_del_io_block_1():
 def test_partadm_del_io_block_2():
     """
     partadm test run: del_io_block_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --del_io_block
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-D> <-E> <-L> <-_> <-I> <-O> <-_> <-B> <-L> <-O> <-C> <-K> <-S> <-
-    > <-
-    > <-u> <-s> <-e> <-r> <- > <-n> <-a> <-m> <-e> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-1> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-2> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-3> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-1> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-2> <-
-    > <-n> <-a> <-m> <-e> <-:> <-p> <-3> <-
-    > 
+
     """
 
-    args      = """--del_io_block p1 p2 p3"""
+    args      = """--del_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""['p1', 'p2', 'p3']
+"""['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+DEL_IO_BLOCKS
+
+user name: gooduser
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+"""
 
     stubout_file = "stub.out"
 
@@ -8772,26 +9176,6 @@ def test_partadm_del_io_block_2():
 def test_partadm_boot_io_block_1():
     """
     partadm test run: boot_io_block_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --boot_io_block
-          
 
     """
 
@@ -8826,43 +9210,23 @@ def test_partadm_boot_io_block_1():
 def test_partadm_boot_io_block_2():
     """
     partadm test run: boot_io_block_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --boot_io_block
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-I> <-N> <-I> <-T> <-I> <-A> <-T> <-E> <-_> <-I> <-O> <-_> <-B> <-O> <-O> <-T> <-
-    > <-
-    > <-w> <-h> <-o> <-a> <-m> <-i> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-t> <-a> <-g> <-:> <- > <-p> <-a> <-r> <-t> <-a> <-d> <-m> <-
-    > <-p> <-a> <-r> <-t> <-s> <-:> <- > <-[> <-'> <-p> <-1> <-'> <-,> <- > <-'> <-p> <-2> <-'> <-,> <- > <-'> <-p> <-3> <-'> <-]> <-
-    > 
+
     """
 
-    args      = """--boot_io_block p1 p2 p3"""
+    args      = """--boot_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""IO Boot initiated on p1 p2 p3
+"""IO Boot initiated on ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+INITIATE_IO_BOOT
+
+whoami: gooduser
+tag: partadm, type = <type 'str'>
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
+"""
 
     stubout_file = "stub.out"
 
@@ -8887,26 +9251,6 @@ def test_partadm_boot_io_block_2():
 def test_partadm_free_io_block_1():
     """
     partadm test run: free_io_block_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --free_io_block
-          
 
     """
 
@@ -8941,43 +9285,23 @@ def test_partadm_free_io_block_1():
 def test_partadm_free_io_block_2():
     """
     partadm test run: free_io_block_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --free_io_block
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-I> <-N> <-I> <-T> <-I> <-A> <-T> <-E> <-_> <-I> <-O> <-_> <-B> <-O> <-O> <-T> <-
-    > <-
-    > <-w> <-h> <-o> <-a> <-m> <-i> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-f> <-o> <-r> <-c> <-e> <-:> <- > <-F> <-a> <-l> <-s> <-e> <-
-    > <-p> <-a> <-r> <-t> <-s> <-:> <- > <-[> <-'> <-p> <-1> <-'> <-,> <- > <-'> <-p> <-2> <-'> <-,> <- > <-'> <-p> <-3> <-'> <-]> <-
-    > 
+
     """
 
-    args      = """--free_io_block p1 p2 p3"""
+    args      = """--free_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""IO Free initiated on p1 p2 p3
+"""IO Free initiated on ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+INITIATE_IO_BOOT
+
+whoami: gooduser
+force: False, type = <type 'bool'>
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
+"""
 
     stubout_file = "stub.out"
 
@@ -9002,26 +9326,6 @@ def test_partadm_free_io_block_2():
 def test_partadm_set_io_autoboot_1():
     """
     partadm test run: set_io_autoboot_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --set_io_autoboot
-          
 
     """
 
@@ -9056,42 +9360,22 @@ def test_partadm_set_io_autoboot_1():
 def test_partadm_set_io_autoboot_2():
     """
     partadm test run: set_io_autoboot_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --set_io_autoboot
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-S> <-E> <-T> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-
-    > <-
-    > <-w> <-h> <-o> <-a> <-m> <-i> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-p> <-a> <-r> <-t> <-s> <-:> <- > <-[> <-'> <-p> <-1> <-'> <-,> <- > <-'> <-p> <-2> <-'> <-,> <- > <-'> <-p> <-3> <-'> <-]> <-
-    > 
+
     """
 
-    args      = """--set_io_autoboot p1 p2 p3"""
+    args      = """--set_io_autoboot ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""Autoreboot flag set for IO Blocks: p1 p2 p3
+"""Autoreboot flag set for IO Blocks: ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+SET_AUTOREBOOT
+
+whoami: gooduser
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
+"""
 
     stubout_file = "stub.out"
 
@@ -9116,26 +9400,6 @@ def test_partadm_set_io_autoboot_2():
 def test_partadm_unset_io_autoboot_1():
     """
     partadm test run: unset_io_autoboot_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --unset_io_autoboot
-          
 
     """
 
@@ -9170,42 +9434,22 @@ def test_partadm_unset_io_autoboot_1():
 def test_partadm_unset_io_autoboot_2():
     """
     partadm test run: unset_io_autoboot_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --unset_io_autoboot
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-U> <-N> <-S> <-E> <-T> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-
-    > <-
-    > <-w> <-h> <-o> <-a> <-m> <-i> <-:> <- > <-g> <-o> <-o> <-d> <-u> <-s> <-e> <-r> <-
-    > <-p> <-a> <-r> <-t> <-s> <-:> <- > <-[> <-'> <-p> <-1> <-'> <-,> <- > <-'> <-p> <-2> <-'> <-,> <- > <-'> <-p> <-3> <-'> <-]> <-
-    > 
+
     """
 
-    args      = """--unset_io_autoboot p1 p2 p3"""
+    args      = """--unset_io_autoboot ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""Autoreboot flag unset for IO Blocks: p1 p2 p3
+"""Autoreboot flag unset for IO Blocks: ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+UNSET_AUTOREBOOT
+
+whoami: gooduser
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
+"""
 
     stubout_file = "stub.out"
 
@@ -9230,31 +9474,7 @@ def test_partadm_unset_io_autoboot_2():
 def test_partadm_io_autoboot_start_1():
     """
     partadm test run: io_autoboot_start_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --io_autoboot_start
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-E> <-N> <-A> <-B> <-L> <-E> <-_> <-I> <-O> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-
-    > <-
-    > 
+
     """
 
     args      = """--io_autoboot_start"""
@@ -9263,7 +9483,11 @@ def test_partadm_io_autoboot_start_1():
 """IO Block autoreboot enabled.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+ENABLE_IO_AUTOREBOOT
+
+"""
 
     stubout_file = "stub.out"
 
@@ -9288,40 +9512,20 @@ def test_partadm_io_autoboot_start_1():
 def test_partadm_io_autoboot_start_2():
     """
     partadm test run: io_autoboot_start_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --io_autoboot_start
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-E> <-N> <-A> <-B> <-L> <-E> <-_> <-I> <-O> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-
-    > <-
-    > 
+
     """
 
-    args      = """--io_autoboot_start p1 p2 p3"""
+    args      = """--io_autoboot_start ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """IO Block autoreboot enabled.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+ENABLE_IO_AUTOREBOOT
+
+"""
 
     stubout_file = "stub.out"
 
@@ -9346,31 +9550,7 @@ def test_partadm_io_autoboot_start_2():
 def test_partadm_io_autoboot_stop_1():
     """
     partadm test run: io_autoboot_stop_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --io_autoboot_stop
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-D> <-I> <-S> <-A> <-B> <-L> <-E> <-_> <-I> <-O> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-
-    > <-
-    > 
+
     """
 
     args      = """--io_autoboot_stop"""
@@ -9379,7 +9559,11 @@ def test_partadm_io_autoboot_stop_1():
 """IO Block autoreboot disabled.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+DISABLE_IO_AUTOREBOOT
+
+"""
 
     stubout_file = "stub.out"
 
@@ -9404,40 +9588,20 @@ def test_partadm_io_autoboot_stop_1():
 def test_partadm_io_autoboot_stop_2():
     """
     partadm test run: io_autoboot_stop_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --io_autoboot_stop
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-D> <-I> <-S> <-A> <-B> <-L> <-E> <-_> <-I> <-O> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-
-    > <-
-    > 
+
     """
 
-    args      = """--io_autoboot_stop p1 p2 p3"""
+    args      = """--io_autoboot_stop ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """IO Block autoreboot disabled.
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+DISABLE_IO_AUTOREBOOT
+
+"""
 
     stubout_file = "stub.out"
 
@@ -9462,31 +9626,7 @@ def test_partadm_io_autoboot_stop_2():
 def test_partadm_io_autoboot_status_1():
     """
     partadm test run: io_autoboot_status_1
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --io_autoboot_status
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-_> <-S> <-T> <-A> <-T> <-U> <-S> <-
-    > <-
-    > 
+
     """
 
     args      = """--io_autoboot_status"""
@@ -9495,7 +9635,11 @@ def test_partadm_io_autoboot_status_1():
 """IO Block autoreboot: ENABLED
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IO_AUTOREBOOT_STATUS
+
+"""
 
     stubout_file = "stub.out"
 
@@ -9520,40 +9664,20 @@ def test_partadm_io_autoboot_status_1():
 def test_partadm_io_autoboot_status_2():
     """
     partadm test run: io_autoboot_status_2
-        Old Command Output:
-          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
-          Usage: partadm.py -l
-          Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
-          Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
-          Usage: partadm.py --queue=queue1:queue2 part1 part2
-          Usage: partadm.py --fail part1 part2
-          Usage: partadm.py --unfail part1 part2
-          Usage: partadm.py --dump
-          Usage: partadm.py --xml
-          Usage: partadm.py --version
-          Usage: partadm.py --savestate filename
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
-          
-          partadm.py: error: no such option: --io_autoboot_status
-          
-    *** STUB OUTPUT DOES NOT MATCH ***
-    <-
-    > <-G> <-E> <-T> <-_> <-I> <-O> <-_> <-A> <-U> <-T> <-O> <-R> <-E> <-B> <-O> <-O> <-T> <-_> <-S> <-T> <-A> <-T> <-U> <-S> <-
-    > <-
-    > 
+
     """
 
-    args      = """--io_autoboot_status p1 p2 p3"""
+    args      = """--io_autoboot_status ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """IO Block autoreboot: ENABLED
 """
 
-    stubout   = ''
+    stubout   = \
+"""
+GET_IO_AUTOREBOOT_STATUS
+
+"""
 
     stubout_file = "stub.out"
 

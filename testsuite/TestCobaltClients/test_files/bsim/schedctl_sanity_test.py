@@ -319,8 +319,8 @@ def test_schedctl_combo_8():
     schedctl test run: combo_8
 
         Command Output:
-          updating scores for jobs: 1, 2, 3, 4
-          updating inheritance fraction for jobs: 1, 2, 3, 4
+          updating scores for jobs: 2, 3, 4
+          updating inheritance fraction for jobs: 2, 3, 4
           
 
     """
@@ -482,7 +482,7 @@ def test_schedctl_stop_3():
           
           component: "scheduler.disable", defer: False
             disable(
-               gooduser,
+               georgerojas,
                )
           
           
@@ -580,7 +580,7 @@ def test_schedctl_save_1():
     schedctl test run: save_1
 
         Command Output:
-          True
+          state saved to file: /tmp/s
           
 
     """
@@ -642,7 +642,7 @@ def test_schedctl_score_1():
     schedctl test run: score_1
 
         Command Output:
-          updating scores for jobs: 1, 2, 3
+          updating scores for jobs: 2, 3
           
 
     """
@@ -673,7 +673,7 @@ def test_schedctl_score_2():
     schedctl test run: score_2
 
         Command Output:
-          updating scores for jobs: 1, 2, 3
+          updating scores for jobs: 2, 3
           
 
     """
@@ -704,7 +704,7 @@ def test_schedctl_score_3():
     schedctl test run: score_3
 
         Command Output:
-          updating scores for jobs: 1, 2, 3
+          updating scores for jobs: 2, 3
           
 
     """
@@ -735,7 +735,7 @@ def test_schedctl_score_4():
     schedctl test run: score_4
 
         Command Output:
-          updating scores for jobs: 1, 2, 3
+          updating scores for jobs: 2, 3
           
 
     """
@@ -766,7 +766,7 @@ def test_schedctl_score_5():
     schedctl test run: score_5
 
         Command Output:
-          updating scores for jobs: 1, 2, 3
+          updating scores for jobs: 2, 3
           
 
     """
@@ -797,7 +797,7 @@ def test_schedctl_inherit_1():
     schedctl test run: inherit_1
 
         Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
+          updating inheritance fraction for jobs: 2, 3
           
 
     """
@@ -828,7 +828,7 @@ def test_schedctl_inherit_2():
     schedctl test run: inherit_2
 
         Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
+          updating inheritance fraction for jobs: 2, 3
           
 
     """
@@ -859,7 +859,7 @@ def test_schedctl_inherit_3():
     schedctl test run: inherit_3
 
         Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
+          updating inheritance fraction for jobs: 2, 3
           
 
     """
@@ -890,7 +890,7 @@ def test_schedctl_inherit_4():
     schedctl test run: inherit_4
 
         Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
+          updating inheritance fraction for jobs: 2, 3
           
 
     """
@@ -921,7 +921,7 @@ def test_schedctl_inherit_5():
     schedctl test run: inherit_5
 
         Command Output:
-          updating inheritance fraction for jobs: 1, 2, 3
+          updating inheritance fraction for jobs: 2, 3
           
 
     """

@@ -6,14 +6,7 @@ def test_nodelist_arg_1():
     nodelist test run: arg_1
 
         Command Output:
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          nodelist is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -45,14 +38,7 @@ def test_nodelist_arg_2():
 
         Command Output:
           No arguments needed
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          nodelist is only supported on cluster systems.  Try partlist instead.
           
 
     """
@@ -91,24 +77,7 @@ def test_nodelist_debug():
                )
           
           
-          component: "system.get_node_status", defer: False
-            get_node_status(
-               )
-          
-          
-          component: "system.get_queue_assignments", defer: False
-            get_queue_assignments(
-               )
-          
-          
-          Host  Queue  State
-          ====================
-          D1    QD1    good 
-          D2    QD2    bad  
-          D3    QD3    ugly 
-          U1    QU1    one  
-          U2    QU2    two  
-          U3    QU3    three
+          nodelist is only supported on cluster systems.  Try partlist instead.
           
 
     """

@@ -83,9 +83,6 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-
     use_cwd = False
     options = {}
 
