@@ -108,7 +108,7 @@ class ArgParse(object):
                     # remove the line separator
                     option_line += line.rstrip()[:-1]
 
-    def __init__(self, option_def = None, callbacks = None):
+    def __init__(self, option_def = None, callbacks = None, disable_interspersed_args = True):
         """
         Constructor will create the parser object and install options if provided.
 
@@ -127,6 +127,8 @@ class ArgParse(object):
                        Note: use optparse option syntax for the options above.
 
         callbacks  - list of callbacks to use. 
+        disable_interspersed_args - stops parsing at the first positional argument found, True by default.
+
         """
         
         # Create usage, version and opt_config attributes.
@@ -136,6 +138,7 @@ class ArgParse(object):
         self.parser = optparse.OptionParser(usage            = self.usage,
                                             version          = self.version,
                                             conflict_handler = 'resolve')
+        self.parser.disable_interspersed_args()
 
         # if option config list provided then add them and parse command line
         if self.opt_config != []:
