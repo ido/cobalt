@@ -313,10 +313,9 @@ class SystemStub(object):
         ret = queues
         return ret
 
-    def initiate_io_boot(self, parts, whoami, tag):
+    def initiate_io_boot(self, parts, whoami):
         logmsg('\nINITIATE_IO_BOOT\n')
         logmsg("whoami: %s" % whoami)
-        logmsg("tag: %s, type = %s" % (tag, str(type(tag))))
         logmsg('parts: %s' % str(parts))
         return True
 

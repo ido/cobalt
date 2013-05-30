@@ -394,7 +394,7 @@ def test_qalter_time_1():
     args      = """-v n10 -t5 1 2 3"""
 
     cmdout    = \
-"""jobid must be an integer: n10
+"""No job altering options entered
 """
 
     stubout   = ''

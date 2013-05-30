@@ -9224,7 +9224,6 @@ def test_partadm_boot_io_block_2():
 INITIATE_IO_BOOT
 
 whoami: gooduser
-tag: partadm, type = <type 'str'>
 parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
