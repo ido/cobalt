@@ -339,8 +339,7 @@ def main():
             client_utils.logger.info("Block Booting: SUSPENDED.")
         sys.exit(0)
     elif opts.boot_io_block:
-        tag = 'partadm'
-        system.initiate_io_boot(parts, user, tag)
+        system.initiate_io_boot(parts, user)
         client_utils.logger.info('IO Boot initiated on %s', " ".join(parts))
         sys.exit(0)
 

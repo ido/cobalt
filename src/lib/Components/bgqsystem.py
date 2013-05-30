@@ -1142,7 +1142,7 @@ class BGSystem (BGBaseSystem):
                         cached_io_block.getStatus() == pybgsched.IOBlock.Free and cached_io_block.getAction() == pybgsched.Action._None):
                     self.logger.warning("IO Block %s: Autoreboot block reporting Free.  System initiating boot.",
                             cobalt_io_block.name)
-                    self.booter.initiate_io_boot(cobalt_io_block.name, None, 'auto')
+                    self.booter.initiate_io_boot(cobalt_io_block.name, None)
 
         for io_block_name, new_state in io_block_updates:
             self._io_blocks[io_block_name].state = new_state
@@ -2047,9 +2047,16 @@ class BGSystem (BGBaseSystem):
         #if failed then reap (if boot not found for query assume boot failed and reaped)
         boots = self.booter.stat()
         for boot in boots:
-            if boot.tag != 'internal':
+            self.logger.info("boot tag %s", boot.tag)
+            if boot.tag == 'io_boot':
+                #Gives us a chance to clear IO Boots
+                if boot.state in ['complete', 'failed']:
+                    self.booter.reap(boot.block_id)
+                continue
+            elif boot.tag != 'internal':
                 #don't worry about user-invoked boots.
                 continue
+
             pgroups = self.process_groups.q_get([{'jobid':boot.context.job_id}])
             pgroup = None
             if pgroups != []:
@@ -2439,7 +2446,7 @@ class BGSystem (BGBaseSystem):
         return True
 
     @exposed
-    def initiate_io_boot(self, io_locations, user=None, tag=None):
+    def initiate_io_boot(self, io_locations, user=None, tag='io_boot'):
         '''Initiate a boot of an ION block.  Returns once boot request has been placed, and is asynchrynous.
         Raises: ValueError if invalid io_locations
 
