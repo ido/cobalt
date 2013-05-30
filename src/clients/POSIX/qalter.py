@@ -40,6 +40,7 @@ The following optins are only valid on IBM BlueGene architecture platforms:
 
 """
 import logging
+import re
 import sys
 from Cobalt import client_utils
 from Cobalt.client_utils import \
@@ -113,7 +114,7 @@ def get_jobdata(jobids, parser, user):
     """
 
     jobs = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*',
-             'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
+        'mode':'*', 'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
 
     jobdata = client_utils.component_call(QUEMGR, False, 'get_jobs', (jobs,))
     job_running = False
@@ -163,19 +164,27 @@ def update_procs(spec, parser):
     Will update 'proc' according to what system we are running on given the number of nodes
     """
     sysinfo = client_utils.system_info()
-
-    if parser.options.nodes != None and parser.options.procs == None:
-        if parser.options.mode == 'vn':
-            # set procs to 2 x nodes
-            if sysinfo[0] == 'bgl':
-                spec['procs'] = 2 * spec['nodes']
-            elif sysinfo[0] == 'bgp':
-                spec['procs'] = 4 * spec['nodes']
+    if ((parser.options.nodes is not None or parser.options.mode is not None) and 
+            parser.options.procs is None):
+        if sysinfo[0] == 'bgq':
+            if spec['mode'] == 'script':
+                spec['procs'] = spec['nodes']
             else:
-                client_utils.logger.error("Unknown bgtype %s" % (sysinfo[0]))
-                sys.exit(1)
+                rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
+                mode_size = int(rpn_re.match(spec['mode']).group(1))
+                spec['procs'] = spec['nodes'] * mode_size
         else:
-            spec['procs'] = spec['nodes']
+            if parser.options.mode == 'vn':
+                # set procs to 2 x nodes
+                if sysinfo[0] == 'bgl':
+                    spec['procs'] = 2 * spec['nodes']
+                elif sysinfo[0] == 'bgp':
+                    spec['procs'] = 4 * spec['nodes']
+                else:
+                    client_utils.logger.error("Unknown bgtype %s" % (sysinfo[0]))
+                    sys.exit(1)
+            else:
+                spec['procs'] = spec['nodes']
     
 def do_some_logging(job, orig_job, parser):
     """
@@ -249,12 +258,15 @@ def main():
         # append the parsed spec to the updates list
         new_spec          = spec.copy()
         new_spec['jobid'] = job['jobid']
-
-        if parser.options.walltime != None:
+        if parser.options.walltime is not None:
             update_time(job, new_spec, parser)
-        if parser.options.nodes != None:
+        if parser.options.nodes is not None or parser.options.mode is not None:
+            if parser.options.nodes is None:
+                new_spec['nodes'] = job['nodes']
+            if parser.options.mode is None:
+                new_spec['mode'] = job['mode']
             update_procs(new_spec, parser)
-        if parser.options.geometry != None:
+        if parser.options.geometry is not None:
             client_utils.validate_geometry(opts['geometry'], job['nodes'])
 
         del job['is_active']
@@ -276,6 +288,7 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except Exception, e:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
-        sys.exit(1)
+    #except Exception, e:
+        #sys.exc_info()
+        #client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        #sys.exit(1)

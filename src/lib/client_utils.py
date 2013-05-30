@@ -537,6 +537,8 @@ def system_info():
     
     if sys_type == 'bgp':
         job_types = ['smp', 'co', 'dual', 'vn', 'script']
+    if sys_type == 'bgq':
+        job_types = ['c1', 'c2', 'c4', 'c8', 'c16', 'c32', 'c64', 'script']
     else:
         job_types = ['co', 'vn', 'script']
     return (sys_type,job_types)
@@ -855,7 +857,7 @@ def cb_mode(option,opt_str,value,parser,*args):
         sys.exit(1)
     if mode == 'co' and sys_type == 'bgp':
         mode = 'SMP'
-    setattr(parser.values,option.dest,mode) # set the option
+    setattr(parser.values, option.dest, mode) # set the option
 
 def cb_cwd(option,opt_str,value,parser,*args):
     """
