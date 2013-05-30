@@ -91,6 +91,18 @@ def test_partlist_debug():
 """
 partlist.py -d
 
+component: "system.get_partitions", defer: True
+  get_partitions(
+     [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition', 'backfill_time': '*', 'children': '*', 'size': '*', 'name': '*', 'node_geometry': '*', 'queue': '*', 'state': '*'}],
+     )
+
+
+component: "scheduler.get_reservations", defer: False
+  get_reservations(
+     [{'queue': '*', 'active': True, 'partitions': '*'}],
+     )
+
+
 Name  Queue                                                  State  Backfill  Geometry      
 ==============================================================================================
 P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
@@ -114,8 +126,11 @@ plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition
 GET_RESERVATIONS
 
 active:True
+active type: <type 'bool'>
 partitions:*
+partitions type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -332,8 +347,11 @@ plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition
 GET_RESERVATIONS
 
 active:True
+active type: <type 'bool'>
 partitions:*
+partitions type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 """
 
     stubout_file = "stub.out"

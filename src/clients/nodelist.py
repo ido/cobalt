@@ -20,15 +20,14 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = 'TBD'
 __version__ = 'TBD'
 
+SYSMGR = client_utils.SYSMGR
+
 def main():
     """
     qmove main
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
-
-    # read the cobalt config files
-    client_utils.read_config()
 
     # list of callback with its arguments
     callbacks = [
@@ -48,17 +47,15 @@ def main():
     if not parser.no_args():
         client_utils.logger.info("No arguments needed")
     
-    impl = client_utils.get_implementation()
+    impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
     if "cluster_system" != impl:
         client_utils.logger.error("nodelist is only supported on cluster systems.  Try partlist instead.")
         sys.exit(0)
 
-    system = client_utils.client_data.system_manager()
-
-    status = system.get_node_status()
-    queue_data = system.get_queue_assignments()
+    status     = client_utils.component_call(SYSMGR, False, 'get_node_status', ())
+    queue_data = client_utils.component_call(SYSMGR, False, 'get_queue_assignments', ())
 
     header = [['Host', 'Queue', 'State']]
     #build output list
@@ -79,6 +76,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

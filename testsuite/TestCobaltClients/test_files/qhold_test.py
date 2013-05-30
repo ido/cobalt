@@ -58,6 +58,20 @@ def test_qhold_debg_option():
 """
 qhold.py -d 1
 
+component: "queue-manager.get_jobs", defer: False
+  get_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+     )
+
+
+component: "queue-manager.set_jobs", defer: False
+  set_jobs(
+     [{'user_hold': '*', 'tag': 'job', 'is_active': '*', 'user': 'gooduser', 'jobid': 1}],
+     {'user_hold': True},
+     gooduser,
+     )
+
+
 Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode': 'smp', 'outputpath': '/tmp', 'is_active': False, 'jobid': 1, 'project': 'my_project', 'tag': 'job', 'notify': 'myemag@gmail.com', 'nodes': 512, 'walltime': 5, 'user_hold': False, 'procs': 512, 'user': 'james'}]
    Failed to place user hold on jobs: 
       job 1 encountered an unexpected problem while attempting to place the 'user hold'
@@ -68,9 +82,13 @@ Response: [{'queue': 'kebra', 'has_completed': False, 'errorpath': '/tmp', 'mode
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -79,14 +97,20 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 user_hold:True
+user_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -174,21 +198,37 @@ def test_qhold_jobid_2():
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -197,29 +237,50 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 is_active:*
+is_active type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 user_hold:True
+user_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"
@@ -264,9 +325,13 @@ def test_qhold_jobid_3():
 GET_JOBS
 
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 SET_JOBS
 
@@ -275,14 +340,20 @@ Original Jobs:
 
 user: gooduser
 is_active:*
+is_active type: <type 'str'>
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 user_hold:*
+user_hold type: <type 'str'>
 
 New Job Info:
 
 user_hold:True
+user_hold type: <type 'bool'>
 """
 
     stubout_file = "stub.out"

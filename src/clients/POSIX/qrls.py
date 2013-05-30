@@ -28,6 +28,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

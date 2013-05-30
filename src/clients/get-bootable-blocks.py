@@ -14,7 +14,6 @@ OPTIONS DEFINITIONS:
 
 """
 import logging
-import time
 import sys
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug, cb_gtzero, cb_bgq_geo
@@ -24,6 +23,7 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = 'TBD'
 __version__ = 'TBD'
 
+SYSMGR = client_utils.SYSMGR
 
 def main():
     """
@@ -32,14 +32,11 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-
     # list of callback with its arguments
     callbacks = [
         # <cb function>     <cb args>
         [ cb_debug        , () ],
-        [ cb_gtzero       , () ],
+        [ cb_gtzero       , (True,) ], # return int
         [ cb_bgq_geo      , () ] ]
 
     # Get the version information
@@ -56,8 +53,7 @@ def main():
         sys.exit(1)
 
     block_loc   = args[0]
-    system      = client_utils.client_data.system_manager(False)
-    idle_blocks = system.get_idle_blocks(block_loc, opts.query_size, opts.geo_list)
+    idle_blocks = client_utils.component_call(SYSMGR, False, 'get_idle_blocks', (block_loc, opts.query_size, opts.geo_list))
     client_utils.logger.info("\n".join(idle_blocks))
 
 if __name__ == '__main__':
@@ -65,6 +61,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

@@ -20,7 +20,7 @@ def test_setres_id_change_1():
 """
 SET_RES_ID
 
-id: 8
+id: 8, type: <type 'int'>
 """
 
     stubout_file = "stub.out"
@@ -91,14 +91,14 @@ def test_setres_id_change_2():
     args      = """--cycle_id 8"""
 
     cmdout    = \
-"""Setting cycle_id to 8
+"""Setting cycle id to 8
 """
 
     stubout   = \
 """
 SET_CYCLE_ID
 
-id: 8
+id: 8, type: <type 'int'>
 """
 
     stubout_file = "stub.out"
@@ -135,18 +135,18 @@ def test_setres_id_change_3():
 
     cmdout    = \
 """Setting res id to 8
-Setting cycle_id to 8
+Setting cycle id to 8
 """
 
     stubout   = \
 """
 SET_RES_ID
 
-id: 8
+id: 8, type: <type 'int'>
 
 SET_CYCLE_ID
 
-id: 8
+id: 8, type: <type 'int'>
 """
 
     stubout_file = "stub.out"
@@ -188,7 +188,7 @@ def test_setres_id_change_4():
 
     """
 
-    args      = """--res_id 8 p1 p2 p3"""
+    args      = """--res_id 8 ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
 """No partition arguments or other options allowed with id change options
@@ -235,7 +235,7 @@ def test_setres_id_change_5():
 
     """
 
-    args      = """--cycle_id 8 p1 p2 p3"""
+    args      = """--cycle_id 8 ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
 """No partition arguments or other options allowed with id change options
@@ -329,7 +329,7 @@ def test_setres_id_change_7():
 
     """
 
-    args      = """--cycle_id 8 -p p1"""
+    args      = """--cycle_id 8 -p ANL-R00-R01-2048"""
 
     cmdout    = \
 """No partition arguments or other options allowed with id change options
@@ -378,11 +378,11 @@ WARNING: Forcing cycle id to 8
 """
 FORCE_RES_ID
 
-id: 8
+id: 8, type: <type 'int'>
 
 FORCE_CYCLE_ID
 
-id: 8
+id: 8, type: <type 'int'>
 """
 
     stubout_file = "stub.out"
@@ -450,7 +450,7 @@ def test_setres_force_3():
 
     """
 
-    args      = """--force_id -p p1 -s 2013_03_09-10:30"""
+    args      = """--force_id -p ANL-R00-R01-2048 -s 2013_03_09-10:30"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:30:00 2013 +0000 (UTC)
@@ -573,13 +573,18 @@ def test_setres_modify_2():
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -666,7 +671,7 @@ def test_setres_modify_4():
     args      = """-m -n resname -D -s 2013_03_9-10:10:10"""
 
     cmdout    = \
-"""Error: start time '2013_03_9-10:10:10' is invalid
+"""start time '2013_03_9-10:10:10' is invalid
 start time is expected to be in the format: YYYY_MM_DD-HH:MM
 """
 
@@ -762,15 +767,22 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 defer:True
+defer type: <type 'bool'>
 start:1364335300.0
+start type: <type 'float'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -819,16 +831,24 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 cycle:37800
+cycle type: <type 'int'>
 duration:60
+duration type: <type 'int'>
 start:1362845400.0
+start type: <type 'float'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -877,17 +897,26 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 cycle:600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 start:1362845400.0
+start type: <type 'float'>
 users:user1
+users type: <type 'str'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -936,17 +965,26 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 cycle:600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 start:1362845400.0
+start type: <type 'float'>
 users:user1:user2
+users type: <type 'str'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -995,18 +1033,28 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 cycle:600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 project:myproj
+project type: <type 'str'>
 start:1362845400.0
+start type: <type 'float'>
 users:user1
+users type: <type 'str'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1055,18 +1103,28 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 block_passthrough:True
+block_passthrough type: <type 'bool'>
 cycle:600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 project:myproj
+project type: <type 'str'>
 start:1362845400.0
+start type: <type 'float'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1115,18 +1173,28 @@ True
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 block_passthrough:False
+block_passthrough type: <type 'bool'>
 cycle:600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 project:myproj
+project type: <type 'str'>
 start:1362845400.0
+start type: <type 'float'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1209,7 +1277,7 @@ def test_setres_modify_14():
 
     """
 
-    args      = """-m -n resname -A myproj --block_passthrough p1 p2 p3"""
+    args      = """-m -n resname -A myproj --block_passthrough ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
 """True
@@ -1219,29 +1287,37 @@ def test_setres_modify_14():
 """
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2', 'p3']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2', 'p3']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2', 'p3']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 
 GET_RESERVATIONS
 
 cycle:*
+cycle type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:resname
+name type: <type 'str'>
 start:*
+start type: <type 'str'>
 
 SET_RESERVATIONS
 
 name:resname
+name type: <type 'str'>
 block_passthrough:True
-partitions:p1:p2:p3
+block_passthrough type: <type 'bool'>
+partitions:ANL-R00-R01-2048:ANL-R00-1024:ANL-R01-1024
+partitions type: <type 'str'>
 project:myproj
+project type: <type 'str'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1335,7 +1411,7 @@ def test_setres_add_res_2():
 
     """
 
-    args      = """-n resname -D p1 p2 p3"""
+    args      = """-n resname -D ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
 """Must supply a start time for the reservation with -s
@@ -1382,7 +1458,7 @@ def test_setres_add_res_3():
 
     """
 
-    args      = """-n resname -s 2013_03_9-10:10 p1 p2"""
+    args      = """-n resname -s 2013_03_9-10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1422,7 +1498,7 @@ def test_setres_add_res_4():
 
     """
 
-    args      = """-n resname -s 2013_03_9-10:10 -d 50 p1 p2"""
+    args      = """-n resname -s 2013_03_9-10:10 -d 50 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1434,22 +1510,30 @@ True
 """
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
 
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
 
 ADD_RESERVATIONS
 
 block_passthrough:False
+block_passthrough type: <type 'bool'>
 cycle:None
+cycle type: <type 'NoneType'>
 duration:3000
+duration type: <type 'int'>
 name:resname
-partitions:p1:p2
+name type: <type 'str'>
+partitions:ANL-R00-R01-2048:ANL-R00-1024
+partitions type: <type 'str'>
 project:None
+project type: <type 'NoneType'>
 start:1362845400.0
+start type: <type 'float'>
 users:None
+users type: <type 'NoneType'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1487,7 +1571,7 @@ def test_setres_add_res_5():
 
     """
 
-    args      = """-n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2"""
+    args      = """-n resname -s 2013_03_9-10:10 -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1499,22 +1583,30 @@ True
 """
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
 
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
 
 ADD_RESERVATIONS
 
 block_passthrough:False
+block_passthrough type: <type 'bool'>
 cycle:36600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 name:resname
-partitions:p1:p2
+name type: <type 'str'>
+partitions:ANL-R00-R01-2048:ANL-R00-1024
+partitions type: <type 'str'>
 project:None
+project type: <type 'NoneType'>
 start:1362845400.0
+start type: <type 'float'>
 users:None
+users type: <type 'NoneType'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1552,7 +1644,7 @@ def test_setres_add_res_6():
 
     """
 
-    args      = """-s 2013_03_9-10:10 -d 50 -c 10:10:10 p1 p2"""
+    args      = """-s 2013_03_9-10:10 -d 50 -c 10:10:10 ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1564,22 +1656,30 @@ True
 """
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
 
 VERIFY_LOCATIONS
 
-location list: ['p1', 'p2']
+location list: ['ANL-R00-R01-2048', 'ANL-R00-1024']
 
 ADD_RESERVATIONS
 
 block_passthrough:False
+block_passthrough type: <type 'bool'>
 cycle:36600
+cycle type: <type 'int'>
 duration:3000
+duration type: <type 'int'>
 name:system
-partitions:p1:p2
+name type: <type 'str'>
+partitions:ANL-R00-R01-2048:ANL-R00-1024
+partitions type: <type 'str'>
 project:None
+project type: <type 'NoneType'>
 start:1362845400.0
+start type: <type 'float'>
 users:None
+users type: <type 'NoneType'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1617,7 +1717,7 @@ def test_setres_add_res_7():
 
     """
 
-    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough"""
+    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1629,18 +1729,26 @@ True
 """
 VERIFY_LOCATIONS
 
-location list: ['p1']
+location list: ['ANL-R00-R01-2048']
 
 ADD_RESERVATIONS
 
 block_passthrough:True
+block_passthrough type: <type 'bool'>
 cycle:None
+cycle type: <type 'NoneType'>
 duration:36600
+duration type: <type 'int'>
 name:system
-partitions:p1
+name type: <type 'str'>
+partitions:ANL-R00-R01-2048
+partitions type: <type 'str'>
 project:None
+project type: <type 'NoneType'>
 start:1362845400.0
+start type: <type 'float'>
 users:None
+users type: <type 'NoneType'>
 user: gooduser
 
 CHECK_RESERVATIONS
@@ -1678,7 +1786,7 @@ def test_setres_add_res_8():
 
     """
 
-    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p p1 --block_passthrough -q myq -A myproj"""
+    args      = """-s 2013_03_9-10:10 -d 10:10:10 -p ANL-R00-R01-2048 --block_passthrough -q myq -A myproj"""
 
     cmdout    = \
 """Got starttime Sat Mar  9 16:10:00 2013 +0000 (UTC)
@@ -1690,19 +1798,28 @@ True
 """
 VERIFY_LOCATIONS
 
-location list: ['p1']
+location list: ['ANL-R00-R01-2048']
 
 ADD_RESERVATIONS
 
 block_passthrough:True
+block_passthrough type: <type 'bool'>
 cycle:None
+cycle type: <type 'NoneType'>
 duration:36600
+duration type: <type 'int'>
 name:system
-partitions:p1
+name type: <type 'str'>
+partitions:ANL-R00-R01-2048
+partitions type: <type 'str'>
 project:myproj
+project type: <type 'str'>
 queue:myq
+queue type: <type 'str'>
 start:1362845400.0
+start type: <type 'float'>
 users:None
+users type: <type 'NoneType'>
 user: gooduser
 
 CHECK_RESERVATIONS
