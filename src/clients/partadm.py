@@ -212,7 +212,7 @@ def recursive(args):
     Handle Recursive option
     """
     parts = []
-    comp_args = ([{'tag':'partition', 'name':name, 'children_list':'*'} for name in args], )
+    comp_args = ([{'tag':'partition', 'name':name, 'children':'*'} for name in args], )
     partdata = client_utils.component_call('system', False, 'get_partitions', comp_args)
     parts    =  args
 
