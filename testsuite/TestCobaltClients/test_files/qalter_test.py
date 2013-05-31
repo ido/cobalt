@@ -44,11 +44,6 @@ No Jobid(s) given
 def test_qalter_simple_2():
     """
     qalter test run: simple_2
-        Old Command Output:
-          True
-          nodes changed from 512 to 30
-          procs changed from 512 to 30
-          
 
     """
 
@@ -60,7 +55,7 @@ qalter.py -d -n30 1
 
 component: "queue-manager.get_jobs", defer: False
   get_jobs(
-     [{'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'gooduser', 'nodes': '*', 'walltime': '*', 'is_active': '*', 'procs': '*', 'jobid': 1}],
+     [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'gooduser'}],
      )
 
 
@@ -85,6 +80,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -224,10 +221,6 @@ walltime type: <type 'str'>
 def test_qalter_simple_3():
     """
     qalter test run: simple_3
-        Old Command Output:
-          nodes changed from 512 to 30
-          procs changed from 512 to 30
-          
 
     """
 
@@ -246,6 +239,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -447,6 +442,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -467,6 +464,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -487,6 +486,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -859,6 +860,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -879,6 +882,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -899,6 +904,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -919,6 +926,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -939,6 +948,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -959,6 +970,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:6
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -979,6 +992,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:7
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1706,34 +1721,6 @@ walltime type: <type 'str'>
 def test_qalter_time_4():
     """
     qalter test run: time_4
-        Old Command Output:
-          nodes changed from 512 to 10
-          procs changed from 512 to 10
-          walltime changed from 5 to 30
-          nodes changed from 1024 to 10
-          procs changed from 1024 to 10
-          walltime changed from 10 to 30
-          nodes changed from 1536 to 10
-          procs changed from 1536 to 10
-          walltime changed from 15 to 30
-          nodes changed from 2048 to 10
-          procs changed from 2048 to 10
-          walltime changed from 20 to 30
-          nodes changed from 2560 to 10
-          procs changed from 2560 to 10
-          walltime changed from 25 to 30
-          nodes changed from 3072 to 10
-          procs changed from 3072 to 10
-          nodes changed from 3584 to 10
-          procs changed from 3584 to 10
-          walltime changed from 35 to 30
-          nodes changed from 4096 to 10
-          procs changed from 4096 to 10
-          walltime changed from 40 to 30
-          nodes changed from 4608 to 10
-          procs changed from 4608 to 10
-          walltime changed from 45 to 30
-          
 
     """
 
@@ -1776,6 +1763,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1796,6 +1785,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1816,6 +1807,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1836,6 +1829,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1856,6 +1851,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1876,6 +1873,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:6
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1896,6 +1895,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:7
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1916,6 +1917,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:10
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -1936,6 +1939,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:15
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -2859,17 +2864,6 @@ walltime type: <type 'str'>
 def test_qalter_time_5():
     """
     qalter test run: time_5
-        Old Command Output:
-          nodes changed from 512 to 10
-          procs changed from 512 to 10
-          walltime changed from 5 to 0
-          nodes changed from 1024 to 10
-          procs changed from 1024 to 10
-          walltime changed from 10 to 0
-          nodes changed from 1536 to 10
-          procs changed from 1536 to 10
-          walltime changed from 15 to 0
-          
 
     """
 
@@ -2895,6 +2889,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -2915,6 +2911,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -2935,6 +2933,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -3295,6 +3295,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -3315,6 +3317,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -3335,6 +3339,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -3670,17 +3676,6 @@ walltime type: <type 'str'>
 def test_qalter_time_7():
     """
     qalter test run: time_7
-        Old Command Output:
-          nodes changed from 512 to 10
-          procs changed from 512 to 10
-          walltime changed from 5 to 0
-          nodes changed from 1024 to 10
-          procs changed from 1024 to 10
-          walltime changed from 10 to 0
-          nodes changed from 1536 to 10
-          procs changed from 1536 to 10
-          walltime changed from 15 to 0
-          
 
     """
 
@@ -3706,6 +3701,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -3726,6 +3723,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -3746,6 +3745,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -4106,6 +4107,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -4126,6 +4129,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -4146,6 +4151,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -4529,10 +4536,6 @@ qalter.py: error: no such option: -m
 def test_qalter_email_option():
     """
     qalter test run: email_option
-        Old Command Output:
-          notify changed from myemail@gmail.com to j@gmail.com
-          notify changed from myemail@gmail.com to j@gmail.com
-          
 
     """
 
@@ -4551,6 +4554,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -4571,6 +4576,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -4810,7 +4817,9 @@ def test_qalter_mode_1():
     qalter test run: mode_1
         Old Command Output:
           Specifed mode 'jjj' not valid, valid modes are
+          smp
           co
+          dual
           vn
           script
           
@@ -4851,12 +4860,6 @@ script
 def test_qalter_mode_2():
     """
     qalter test run: mode_2
-        Old Command Output:
-          Specifed mode 'dual' not valid, valid modes are
-          co
-          vn
-          script
-          
 
     """
 
@@ -4895,10 +4898,7 @@ def test_qalter_proccount_1():
     """
     qalter test run: proccount_1
         Old Command Output:
-          Specifed mode 'dual' not valid, valid modes are
-          co
-          vn
-          script
+          non-integer node count specified
           
 
     """
@@ -4937,12 +4937,6 @@ script
 def test_qalter_proccount_2():
     """
     qalter test run: proccount_2
-        Old Command Output:
-          Specifed mode 'dual' not valid, valid modes are
-          co
-          vn
-          script
-          
 
     """
 
@@ -5020,13 +5014,6 @@ script
 def test_qalter_user_1():
     """
     qalter test run: user_1
-        Old Command Output:
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser', 'user1', 'user2', 'user3']
-          
 
     """
 
@@ -5048,6 +5035,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5068,6 +5057,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5088,6 +5079,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5108,6 +5101,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5128,6 +5123,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5696,14 +5693,6 @@ def test_qalter_user_2():
 def test_qalter_project():
     """
     qalter test run: project
-        Old Command Output:
-          run_project set to True
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          run_project set to True
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          run_project set to True
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          
 
     """
 
@@ -5726,6 +5715,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:10
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5746,6 +5737,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:20
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -5766,6 +5759,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:30
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6214,6 +6209,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6234,6 +6231,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6254,6 +6253,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6274,6 +6275,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6315,10 +6318,6 @@ walltime type: <type 'str'>
 def test_qalter_geometry_4():
     """
     qalter test run: geometry_4
-        Old Command Output:
-          Geometry specification 10x10x10x10x1 is invalid.
-          Jobs not altered.
-          
 
     """
 
@@ -6336,6 +6335,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6356,6 +6357,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6376,6 +6379,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6396,6 +6401,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6416,6 +6423,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6474,6 +6483,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6494,6 +6505,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6514,6 +6527,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6534,6 +6549,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6575,17 +6592,6 @@ walltime type: <type 'str'>
 def test_qalter_preboot_1():
     """
     qalter test run: preboot_1
-        Old Command Output:
-          run_project set to True
-          script_preboot set to True
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          run_project set to True
-          script_preboot set to True
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          run_project set to True
-          script_preboot set to True
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          
 
     """
 
@@ -6611,6 +6617,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:10
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6631,6 +6639,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:20
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6651,6 +6661,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:30
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -6998,17 +7010,6 @@ walltime type: <type 'str'>
 def test_qalter_preboot_2():
     """
     qalter test run: preboot_2
-        Old Command Output:
-          run_project set to True
-          script_preboot set to False
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          run_project set to True
-          script_preboot set to False
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          run_project set to True
-          script_preboot set to False
-          user_list changed from ['james', 'land', 'house', 'dog', 'cat', 'henry', 'king', 'queen', 'girl', 'boy'] to ['gooduser']
-          
 
     """
 
@@ -7034,6 +7035,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:10
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7054,6 +7057,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:20
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7074,6 +7079,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:30
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7472,6 +7479,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:1
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7492,6 +7501,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:2
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7512,6 +7523,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:3
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7532,6 +7545,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:4
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*
@@ -7552,6 +7567,8 @@ is_active:*
 is_active type: <type 'str'>
 jobid:5
 jobid type: <type 'int'>
+mode:*
+mode type: <type 'str'>
 nodes:*
 nodes type: <type 'str'>
 notify:*

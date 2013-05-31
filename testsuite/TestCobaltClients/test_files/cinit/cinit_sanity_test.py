@@ -596,14 +596,14 @@ def test_partadm_list_1():
 
         Command Output:
           No reservations data available
-          Name              Queue    Size  Geometry  Functional  Scheduled  State  Dependencies
-          =======================================================================================
-          ANL-R00-R01-2048  default  2048                X           X      idle               
-          ANL-R00-1024      default  1024                X           X      idle               
-          ANL-R01-1024      default  1024                X           X      idle               
-          ANL-R00-M0-512    default  512                 X           X      idle               
-          ANL-R00-M1-512    default  512                 X           X      idle               
-          ANL-R01-M0-512    default  512                 X           X      idle               
+          Name              Queue    Size  Functional  Scheduled  State  Dependencies
+          =============================================================================
+          ANL-R00-R01-2048  default  2048      X           X      idle               
+          ANL-R00-1024      default  1024      X           X      idle               
+          ANL-R01-1024      default  1024      X           X      idle               
+          ANL-R00-M0-512    default  512       X           X      idle               
+          ANL-R00-M1-512    default  512       X           X      idle               
+          ANL-R01-M0-512    default  512       X           X      idle               
           
 
     """
@@ -840,14 +840,14 @@ def test_partadm_list_3():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_2:q_3:q_4  2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R01-1024      default          1024                X           X      idle               
-          ANL-R00-M0-512    default          512                 X           X      idle               
-          ANL-R00-M1-512    default          512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_2:q_3:q_4  2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R01-1024      default          1024      X           X      idle               
+          ANL-R00-M0-512    default          512       X           X      idle               
+          ANL-R00-M1-512    default          512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -910,14 +910,14 @@ def test_partadm_list_4():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_2:q_3:q_4  2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R01-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R00-M0-512    default          512                 X           X      idle               
-          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_2:q_3:q_4  2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R01-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R00-M0-512    default          512       X           X      idle               
+          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -980,14 +980,14 @@ def test_partadm_list_5():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_2:q_3:q_4  2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R01-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R00-M0-512    default:q_1      512                 X           X      idle               
-          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_2:q_3:q_4  2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R01-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R00-M0-512    default:q_1      512       X           X      idle               
+          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -1050,14 +1050,14 @@ def test_partadm_list_6():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_2:q_4      2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_4      1024                X           X      idle               
-          ANL-R01-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R00-M0-512    default:q_1      512                 X           X      idle               
-          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_2:q_4      2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_4      1024      X           X      idle               
+          ANL-R01-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R00-M0-512    default:q_1      512       X           X      idle               
+          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -1120,14 +1120,14 @@ def test_partadm_list_7():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_4          2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_4      1024                X           X      idle               
-          ANL-R01-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R00-M0-512    default:q_1      512                 X           X      idle               
-          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_4          2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_4      1024      X           X      idle               
+          ANL-R01-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R00-M0-512    default:q_1      512       X           X      idle               
+          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -1190,14 +1190,14 @@ def test_partadm_list_8():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_4:q_3      2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_4:q_3  1024                X           X      idle               
-          ANL-R01-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R00-M0-512    default:q_1      512                 X           X      idle               
-          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_4:q_3      2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_4:q_3  1024      X           X      idle               
+          ANL-R01-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R00-M0-512    default:q_1      512       X           X      idle               
+          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -1260,14 +1260,14 @@ def test_partadm_list_9():
 
         Command Output:
           No reservations data available
-          Name              Queue            Size  Geometry  Functional  Scheduled  State  Dependencies
-          ===============================================================================================
-          ANL-R00-R01-2048  q_1:q_4:q_3:q_2  2048                X           X      idle               
-          ANL-R00-1024      q_1:q_2:q_4:q_3  1024                X           X      idle               
-          ANL-R01-1024      q_1:q_2:q_3:q_4  1024                X           X      idle               
-          ANL-R00-M0-512    default:q_1      512                 X           X      idle               
-          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512                 X           X      idle               
-          ANL-R01-M0-512    default          512                 X           X      idle               
+          Name              Queue            Size  Functional  Scheduled  State  Dependencies
+          =====================================================================================
+          ANL-R00-R01-2048  q_1:q_4:q_3:q_2  2048      X           X      idle               
+          ANL-R00-1024      q_1:q_2:q_4:q_3  1024      X           X      idle               
+          ANL-R01-1024      q_1:q_2:q_3:q_4  1024      X           X      idle               
+          ANL-R00-M0-512    default:q_1      512       X           X      idle               
+          ANL-R00-M1-512    q_1:q_2:q_3:q_4  512       X           X      idle               
+          ANL-R01-M0-512    default          512       X           X      idle               
           
 
     """
@@ -1335,14 +1335,14 @@ def test_setres_setres_1():
     setres test run: setres_1
 
         Command Output:
-          Got starttime Mon May 29 22:00:00 2023 +0000 (UTC)
-          [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'george', 'queue': 'q_1', 'start': 1685397600.0, 'duration': 3000, 'cycle': None, 'res_id': 1, 'partitions': 'ANL-R00-R01-2048'}]
+          Got starttime Wed May 31 20:00:00 2023 +0000 (UTC)
+          [{'project': None, 'users': None, 'block_passthrough': False, 'name': 'george', 'queue': 'q_1', 'start': 1685563200.0, 'duration': 3000, 'cycle': None, 'res_id': 1, 'partitions': 'ANL-R00-R01-2048'}]
           
           
 
     """
 
-    args      = """-n george -s 2023_5_29-17:0 -d 50 ANL-R00-R01-2048 -q q_1"""
+    args      = """-n george -s 2023_5_31-15:0 -d 50  -q q_1 ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -1370,7 +1370,7 @@ def test_showres_showres_1():
         Command Output:
           Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
           ====================================================================================================================================================================================
-          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  00:50     Mon May 29 22:50:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  00:50     Wed May 31 20:50:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
           
 
     """
@@ -1434,7 +1434,7 @@ def test_showres_showres_2():
         Command Output:
           Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
           ====================================================================================================================================================================================
-          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Tue May 30 03:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Thu Jun  1 01:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
           
 
     """
@@ -1472,7 +1472,7 @@ def test_setres_setres_3():
 
     """
 
-    args      = """-n res_passed -s 2010_12_1-10:30 -d 50 ANL-R00-R01-2048 -q q_1"""
+    args      = """-n res_passed -s 2010_12_1-10:30 -d 50  -q q_1 ANL-R00-R01-2048"""
     exp_rs    = 0
 
     results = testutils.run_cmd('setres.py',args,None) 
@@ -1501,7 +1501,7 @@ def test_showres_showres_3():
           Reservation  Queue  User  Start                                 Duration  End Time                              Cycle Time  Passthrough  Partitions        Project  ResID  CycleID  
           ====================================================================================================================================================================================
           res_passed   q_1    None  Wed Dec  1 16:30:00 2010 +0000 (UTC)  00:50     Wed Dec  1 17:20:00 2010 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     2      -        
-          george       q_1    None  Mon May 29 22:00:00 2023 +0000 (UTC)  05:00     Tue May 30 03:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
+          george       q_1    None  Wed May 31 20:00:00 2023 +0000 (UTC)  05:00     Thu Jun  1 01:00:00 2023 +0000 (UTC)  None        Allowed      ANL-R00-R01-2048  None     1      -        
           
 
     """

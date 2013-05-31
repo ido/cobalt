@@ -117,13 +117,13 @@ def get_parts(plist):
     for p1 in plist:
         if p1['name'] == '*':
             for p2 in PARTS:
-                parts.append({'name':p2,'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
+                parts.append({'name':p2,'queue':QUEUES[i],'children':['a','b','c','d'], 'size':i,'parents':['a','b','c'],
                               'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
                               'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK', 
                               'block_computes_for_reboot': True, 'autoreboot' : True} )
                 i += 1
             break
-        parts.append({'name':p1['name'],'queue':QUEUES[i],'children':['a'], 'size':i,'parents':['a','b','c'],
+        parts.append({'name':p1['name'],'queue':QUEUES[i],'children':['a','b','c','d'], 'size':i,'parents':['a','b','c'],
                       'node_geometry':['48','48','48','48','48'],'relatives':['b'],'passthrough_blocks':['A'],
                       'draining':False,'state':'idle','functional':True, 'scheduled':True, 'status': 'OK',
                       'block_computes_for_reboot': True, 'autoreboot' : True} )

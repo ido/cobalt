@@ -50,10 +50,10 @@ test_argslist = [
     {"tc_name" : "appq_2"                              , "command" : "partadm", "args" : """--queue q_2 --appq ANL-R00-R01-2048"""},
     {"tc_name" : "list_9"                              , "command" : "partadm", "args" : "-l"},
     {"tc_name" : "qstat_2"                             , "command" : "qstat"  , "args" : "-Q"},
-    {"tc_name" : "setres_1"                            , "command" : "setres" , "args" : "-n george -s %s_%s_%s-%s:%s -d 50 ANL-R00-R01-2048 -q q_1" % (year, mon, day, hr, minutes) },
+    {"tc_name" : "setres_1"                            , "command" : "setres" , "args" : "-n george -s %s_%s_%s-%s:%s -d 50  -q q_1 ANL-R00-R01-2048" % (year, mon, day, hr, minutes) },
     {"tc_name" : "showres_1"                           , "command" : "showres", "args" : "-x"},
     {"tc_name" : "setres_2"                            , "command" : "setres" , "args" : "-n george -m -d 300"},
     {"tc_name" : "showres_2"                           , "command" : "showres", "args" : "-x"},
-    {"tc_name" : "setres_3"                            , "command" : "setres" , "args" : "-n res_passed -s 2010_12_1-10:30 -d 50 ANL-R00-R01-2048 -q q_1"},
+    {"tc_name" : "setres_3"                            , "command" : "setres" , "args" : "-n res_passed -s 2010_12_1-10:30 -d 50  -q q_1 ANL-R00-R01-2048"},
     {"tc_name" : "showres_3"                           , "command" : "showres", "args" : "-x"},
     ]

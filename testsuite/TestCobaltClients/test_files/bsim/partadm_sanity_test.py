@@ -945,7 +945,7 @@ def test_partadm_delete_option_1():
     partadm test run: delete_option_1
 
         Command Output:
-          [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}]
+          [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}, {'tag': 'partition', 'name': 'ANL-R01-M0-512'}, {'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R00-M0-512'}]
           
 
     """
@@ -1007,7 +1007,7 @@ def test_partadm_delete_option_3():
     partadm test run: delete_option_3
 
         Command Output:
-          [{'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
+          []
           
 
     """
@@ -1822,7 +1822,7 @@ def test_partadm_queue_option_10():
     partadm test run: queue_option_10
 
         Command Output:
-          [[{'tag': 'partition', 'name': 'ANL-R00-M0-512'}], [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}]]
+          []
           
 
     """
@@ -1853,7 +1853,7 @@ def test_partadm_queue_option_11():
     partadm test run: queue_option_11
 
         Command Output:
-          [[{'tag': 'partition', 'name': 'ANL-R00-M0-512'}], [{'tag': 'partition', 'name': 'ANL-R00-M1-512'}]]
+          []
           
 
     """
@@ -1884,7 +1884,7 @@ def test_partadm_dump_option_1():
     partadm test run: dump_option_1
 
         Command Output:
-          [{'scheduled': True, 'name': 'ANL-R00-M1-512', 'functional': True, 'queue': 'q_4:q_3:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R00-M0-512', 'functional': True, 'queue': 'q_2:q_3:q_4:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R01-M0-512', 'functional': True, 'queue': 'q_4:q_3', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}]
+          []
           
 
     """
@@ -1915,7 +1915,7 @@ def test_partadm_dump_option_2():
     partadm test run: dump_option_2
 
         Command Output:
-          [{'scheduled': True, 'name': 'ANL-R00-M1-512', 'functional': True, 'queue': 'q_4:q_3:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R00-M0-512', 'functional': True, 'queue': 'q_2:q_3:q_4:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R01-M0-512', 'functional': True, 'queue': 'q_4:q_3', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}]
+          []
           
 
     """
@@ -1946,7 +1946,7 @@ def test_partadm_dump_option_3():
     partadm test run: dump_option_3
 
         Command Output:
-          [{'scheduled': True, 'name': 'ANL-R00-M1-512', 'functional': True, 'queue': 'q_4:q_3:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R00-M0-512', 'functional': True, 'queue': 'q_2:q_3:q_4:q_1', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}, {'scheduled': True, 'name': 'ANL-R01-M0-512', 'functional': True, 'queue': 'q_4:q_3', 'state': 'idle', 'tag': 'partition', 'deps': None, 'size': 512}]
+          []
           
 
     """

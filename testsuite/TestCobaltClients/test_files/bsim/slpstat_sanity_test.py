@@ -8,12 +8,12 @@ def test_slpstat_arg_1():
         Command Output:
           Name                  Location                           Update Time               
           ===================================================================================
-          system                https://acheron.mcs.anl.gov:55256  Wed May 29 17:12:49 2013  
-          scheduler             https://acheron.mcs.anl.gov:55238  Wed May 29 17:12:47 2013  
-          bg_mpirun_forker      https://acheron.mcs.anl.gov:55236  Wed May 29 17:12:51 2013  
-          user_script_forker    https://acheron.mcs.anl.gov:55232  Wed May 29 17:12:51 2013  
-          queue-manager         https://acheron.mcs.anl.gov:55240  Wed May 29 17:12:47 2013  
-          system_script_forker  https://acheron.mcs.anl.gov:55234  Wed May 29 17:10:58 2013  
+          system                https://acheron.mcs.anl.gov:57024  Fri May 31 15:01:49 2013  
+          queue-manager         https://acheron.mcs.anl.gov:57010  Fri May 31 15:01:48 2013  
+          system_script_forker  https://acheron.mcs.anl.gov:57002  Fri May 31 15:01:58 2013  
+          scheduler             https://acheron.mcs.anl.gov:57008  Fri May 31 15:01:48 2013  
+          user_script_forker    https://acheron.mcs.anl.gov:57004  Fri May 31 15:01:51 2013  
+          bg_mpirun_forker      https://acheron.mcs.anl.gov:57006  Fri May 31 15:01:51 2013  
           
 
     """
@@ -46,12 +46,12 @@ def test_slpstat_arg_2():
         Command Output:
           Name                  Location                           Update Time               
           ===================================================================================
-          system                https://acheron.mcs.anl.gov:55256  Wed May 29 17:12:49 2013  
-          scheduler             https://acheron.mcs.anl.gov:55238  Wed May 29 17:12:47 2013  
-          bg_mpirun_forker      https://acheron.mcs.anl.gov:55236  Wed May 29 17:12:51 2013  
-          user_script_forker    https://acheron.mcs.anl.gov:55232  Wed May 29 17:12:51 2013  
-          queue-manager         https://acheron.mcs.anl.gov:55240  Wed May 29 17:12:47 2013  
-          system_script_forker  https://acheron.mcs.anl.gov:55234  Wed May 29 17:10:58 2013  
+          system                https://acheron.mcs.anl.gov:57024  Fri May 31 15:01:49 2013  
+          queue-manager         https://acheron.mcs.anl.gov:57010  Fri May 31 15:01:48 2013  
+          system_script_forker  https://acheron.mcs.anl.gov:57002  Fri May 31 15:01:58 2013  
+          scheduler             https://acheron.mcs.anl.gov:57008  Fri May 31 15:01:48 2013  
+          user_script_forker    https://acheron.mcs.anl.gov:57004  Fri May 31 15:01:51 2013  
+          bg_mpirun_forker      https://acheron.mcs.anl.gov:57006  Fri May 31 15:01:51 2013  
           
 
     """
@@ -85,12 +85,12 @@ def test_slpstat_arg_3():
           No arguments needed
           Name                  Location                           Update Time               
           ===================================================================================
-          system                https://acheron.mcs.anl.gov:55256  Wed May 29 17:12:49 2013  
-          scheduler             https://acheron.mcs.anl.gov:55238  Wed May 29 17:12:47 2013  
-          bg_mpirun_forker      https://acheron.mcs.anl.gov:55236  Wed May 29 17:12:51 2013  
-          user_script_forker    https://acheron.mcs.anl.gov:55232  Wed May 29 17:12:51 2013  
-          queue-manager         https://acheron.mcs.anl.gov:55240  Wed May 29 17:12:47 2013  
-          system_script_forker  https://acheron.mcs.anl.gov:55234  Wed May 29 17:10:58 2013  
+          system                https://acheron.mcs.anl.gov:57024  Fri May 31 15:01:49 2013  
+          queue-manager         https://acheron.mcs.anl.gov:57010  Fri May 31 15:01:48 2013  
+          system_script_forker  https://acheron.mcs.anl.gov:57002  Fri May 31 15:01:58 2013  
+          scheduler             https://acheron.mcs.anl.gov:57008  Fri May 31 15:01:48 2013  
+          user_script_forker    https://acheron.mcs.anl.gov:57004  Fri May 31 15:01:51 2013  
+          bg_mpirun_forker      https://acheron.mcs.anl.gov:57006  Fri May 31 15:01:51 2013  
           
 
     """
@@ -132,12 +132,12 @@ def test_slpstat_debug_1():
           
           Name                  Location                           Update Time               
           ===================================================================================
-          system                https://acheron.mcs.anl.gov:55256  Wed May 29 17:12:49 2013  
-          scheduler             https://acheron.mcs.anl.gov:55238  Wed May 29 17:12:47 2013  
-          bg_mpirun_forker      https://acheron.mcs.anl.gov:55236  Wed May 29 17:12:51 2013  
-          user_script_forker    https://acheron.mcs.anl.gov:55232  Wed May 29 17:12:51 2013  
-          queue-manager         https://acheron.mcs.anl.gov:55240  Wed May 29 17:12:47 2013  
-          system_script_forker  https://acheron.mcs.anl.gov:55234  Wed May 29 17:10:58 2013  
+          system                https://acheron.mcs.anl.gov:57024  Fri May 31 15:01:49 2013  
+          queue-manager         https://acheron.mcs.anl.gov:57010  Fri May 31 15:01:48 2013  
+          system_script_forker  https://acheron.mcs.anl.gov:57002  Fri May 31 15:01:58 2013  
+          scheduler             https://acheron.mcs.anl.gov:57008  Fri May 31 15:01:48 2013  
+          user_script_forker    https://acheron.mcs.anl.gov:57004  Fri May 31 15:01:51 2013  
+          bg_mpirun_forker      https://acheron.mcs.anl.gov:57006  Fri May 31 15:01:51 2013  
           
 
     """
@@ -179,12 +179,12 @@ def test_slpstat_debug_2():
           
           Name                  Location                           Update Time               
           ===================================================================================
-          system                https://acheron.mcs.anl.gov:55256  Wed May 29 17:12:49 2013  
-          scheduler             https://acheron.mcs.anl.gov:55238  Wed May 29 17:12:47 2013  
-          bg_mpirun_forker      https://acheron.mcs.anl.gov:55236  Wed May 29 17:12:51 2013  
-          user_script_forker    https://acheron.mcs.anl.gov:55232  Wed May 29 17:12:51 2013  
-          queue-manager         https://acheron.mcs.anl.gov:55240  Wed May 29 17:12:47 2013  
-          system_script_forker  https://acheron.mcs.anl.gov:55234  Wed May 29 17:10:58 2013  
+          system                https://acheron.mcs.anl.gov:57024  Fri May 31 15:01:49 2013  
+          queue-manager         https://acheron.mcs.anl.gov:57010  Fri May 31 15:01:48 2013  
+          system_script_forker  https://acheron.mcs.anl.gov:57002  Fri May 31 15:01:58 2013  
+          scheduler             https://acheron.mcs.anl.gov:57008  Fri May 31 15:01:48 2013  
+          user_script_forker    https://acheron.mcs.anl.gov:57004  Fri May 31 15:01:51 2013  
+          bg_mpirun_forker      https://acheron.mcs.anl.gov:57006  Fri May 31 15:01:51 2013  
           
 
     """

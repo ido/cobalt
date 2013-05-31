@@ -224,7 +224,7 @@ def recursive(args):
                 parts.append(child)
     return parts
 
-def get_queues(opts, parts, sys_type):
+def partition_queues(opts, parts, sys_type):
     """
     This will get the list for each partition
     """
@@ -255,10 +255,10 @@ def process_queues(opts, parts, whoami, sys_type):
     This function will get the new list of queues that are associated wth given partition
     """
     if opts.rmq != None or opts.appq != None:
-        queues = get_queues(opts, parts, sys_type)
+        part_queues = partition_queues(opts, parts, sys_type)
         _parts = []
-        for p in parts:
-            args = ([{'tag':'partition', 'name':p}],  {'queue':queues[p]}, whoami)
+        for p in part_queues:
+            args = ([{'tag':'partition', 'name':p}],  {'queue':part_queues[p]}, whoami)
             _parts.append(client_utils.component_call(SYSMGR, False, 'set_partitions', args))
     else:
         _parts = None

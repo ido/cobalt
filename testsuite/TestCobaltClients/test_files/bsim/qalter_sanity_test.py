@@ -45,7 +45,7 @@ def test_qalter_simple_2():
           
           component: "queue-manager.get_jobs", defer: False
             get_jobs(
-               [{'project': '*', 'queue': '*', 'tag': 'job', 'notify': '*', 'user': 'georgerojas', 'nodes': '*', 'walltime': '*', 'is_active': '*', 'procs': '*', 'jobid': 1}],
+               [{'is_active': '*', 'tag': 'job', 'notify': '*', 'procs': '*', 'walltime': '*', 'queue': '*', 'jobid': 1, 'project': '*', 'mode': '*', 'nodes': '*', 'user': 'georgerojas'}],
                )
           
           
@@ -111,7 +111,7 @@ def test_qalter_time_1():
     qalter test run: time_1
 
         Command Output:
-          jobid must be an integer: n10
+          No job altering options entered
           
 
     """

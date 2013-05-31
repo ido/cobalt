@@ -93,7 +93,7 @@ partlist.py -d
 
 component: "system.get_partitions", defer: True
   get_partitions(
-     [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition', 'backfill_time': '*', 'children': '*', 'size': '*', 'name': '*', 'node_geometry': '*', 'queue': '*', 'state': '*'}],
+     [{'queue': '*', 'scheduled': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'backfill_time': '*', 'children': '*', 'functional': '*', 'draining': '*', 'size': '*'}],
      )
 
 
@@ -103,25 +103,25 @@ component: "scheduler.get_reservations", defer: False
      )
 
 
-Name  Queue                                                  State  Backfill  Geometry      
-==============================================================================================
-P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+Name  Queue                                                  State  Backfill
+==============================================================================
+P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -       
+P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -       
+P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition', 'backfill_time': '*', 'children': '*', 'size': '*', 'name': '*', 'node_geometry': '*', 'queue': '*', 'state': '*'}]
+plist: [{'queue': '*', 'scheduled': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'backfill_time': '*', 'children': '*', 'functional': '*', 'draining': '*', 'size': '*'}]
 
 GET_RESERVATIONS
 
@@ -305,18 +305,18 @@ def test_partlist_argument_2():
     """
     partlist test run: argument_2
         Old Command Output:
-          Name  Queue                                                  State  Backfill  Geometry      
-          ==============================================================================================
-          P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-          P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-          P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-          P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-          P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+          Name  Queue                                                  State  Backfill
+          ==============================================================================
+          P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -       
+          P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+          P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+          P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -       
+          P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+          P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+          P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+          P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+          P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+          P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
           
 
     """
@@ -324,25 +324,25 @@ def test_partlist_argument_2():
     args      = ''
 
     cmdout    = \
-"""Name  Queue                                                  State  Backfill  Geometry      
-==============================================================================================
-P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -         48x48x48x48x48
-P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -         48x48x48x48x48
-P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -         48x48x48x48x48
-P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
-P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -         48x48x48x48x48
+"""Name  Queue                                                  State  Backfill
+==============================================================================
+P10   zq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq     idle   -       
+P9    yours:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+P8    myq:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P7    dito:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq   idle   -       
+P6    hhh:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P5    bbb:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P4    aaa:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq    idle   -       
+P3    bello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+P2    jello:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
+P1    kebra:kebra:jello:bello:aaa:bbb:hhh:dito:myq:yours:zq  idle   -       
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition', 'backfill_time': '*', 'children': '*', 'size': '*', 'name': '*', 'node_geometry': '*', 'queue': '*', 'state': '*'}]
+plist: [{'queue': '*', 'scheduled': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'backfill_time': '*', 'children': '*', 'functional': '*', 'draining': '*', 'size': '*'}]
 
 GET_RESERVATIONS
 

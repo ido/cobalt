@@ -75,7 +75,7 @@ def test_partlist_debug():
           
           component: "system.get_partitions", defer: True
             get_partitions(
-               [{'scheduled': '*', 'functional': '*', 'draining': '*', 'tag': 'partition', 'backfill_time': '*', 'children': '*', 'size': '*', 'name': '*', 'node_geometry': '*', 'queue': '*', 'state': '*'}],
+               [{'queue': '*', 'scheduled': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'backfill_time': '*', 'children': '*', 'functional': '*', 'draining': '*', 'size': '*'}],
                )
           
           
@@ -85,11 +85,8 @@ def test_partlist_debug():
                )
           
           
-          Name            Queue            State  Backfill  Geometry
-          ============================================================
-          ANL-R00-M0-512  q_2:q_3:q_4:q_1  idle   -         None    
-          ANL-R00-M1-512  q_4:q_3:q_1      idle   -         None    
-          ANL-R01-M0-512  q_4:q_3          idle   -         None    
+          Name  Queue  State  Backfill
+          ==============================
           
 
     """
@@ -256,11 +253,8 @@ def test_partlist_argument_2():
     partlist test run: argument_2
 
         Command Output:
-          Name            Queue            State  Backfill  Geometry
-          ============================================================
-          ANL-R00-M0-512  q_2:q_3:q_4:q_1  idle   -         None    
-          ANL-R00-M1-512  q_4:q_3:q_1      idle   -         None    
-          ANL-R01-M0-512  q_4:q_3          idle   -         None    
+          Name  Queue  State  Backfill
+          ==============================
           
 
     """
