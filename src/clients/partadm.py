@@ -247,7 +247,7 @@ def partition_queues(opts, parts, sys_type):
             if q not in new_queues and opts.appq != None:
                 new_queues.append(q)
         if len(new_queues) == 1:
-            queues_dic[p['name']] = new_queues[0]
+            queues_dict[p['name']] = new_queues[0]
         else:
             queues_dict[p['name']] = ':'.join(new_queues)
 
