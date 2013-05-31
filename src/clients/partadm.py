@@ -240,7 +240,7 @@ def partition_queues(opts, parts, sys_type):
     for p in _parts:
         qs_1 = p['queue'].split(':')
         qs_2 = opts.queue.split(':')
-        new_queues = qs_1[:]
+        new_queues = [q for q in qs_1[:] if q is not '']
         for q in qs_2:
             if q in new_queues and opts.rmq != None:
                 new_queues.remove(q)
