@@ -36,6 +36,8 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 559 $' # TBC may go away.
 __version__ = '$Version$'
 
+QUEMGR = client_utils.QUEMGR
+
 def main():
     """
     qselect main
@@ -43,21 +45,15 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-                               
     opts     = {} # old map
     opt2spec = {}
-
-    dt_allowed = False # No delta time allowed
-    seconds    = False # do not convert to seconds
 
     # list of callback with its arguments
     callbacks = [
         # <cb function>           <cb args>
         [ cb_debug               , () ],
-        [ cb_nodes               , () ],
-        [ cb_time                , (dt_allowed,seconds) ] ]
+        [ cb_nodes               , (False,) ], # return string
+        [ cb_time                , (False, False, False) ] ] # no delta time, return minutes, return string
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)
@@ -75,7 +71,7 @@ def main():
         sys.exit(1)
 
     client_utils.get_options(query,opts,opt2spec,parser)
-    response  = client_utils.get_jobs([query])
+    response  = client_utils.component_call(QUEMGR, False, 'get_jobs', ([query],))
     if not response:
         client_utils.logger.error("Failed to match any jobs")
     else:
@@ -89,6 +85,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

@@ -23,8 +23,6 @@ _logger = logging.getLogger()
 Cobalt.Util.init_cobalt_config()
 
 _boot_id_gen = IncrID()
-_io_boot_id_gen = IncrID()
-
 
 class BootContext(object):
 
@@ -133,20 +131,24 @@ class BGQIOBlockBoot(Cobalt.ContextStateMachine.ContextStateMachine):
 
     '''
 
-    global _io_boot_id_gen
+    global _boot_id_gen
     _state_list = [IOBootPending, IOBootInitiating, IOBootComplete, IOBootFailed]
     _state_instances = []
 
     def __init__(self, io_block_name, job_id, user, tag):
         super(BGQIOBlockBoot, self).__init__(context=IOBlockBootContext(io_block_name, job_id, user), initialstate='pending',
                 exceptionstate='failed')
-        self.io_boot_id = _io_boot_id_gen.next()
-        self.tag = tag
+        self.io_boot_id = _boot_id_gen.next()
+        self.tag = 'io_boot'
         _logger.info("IO Block Boot on %s initialized.", self.io_boot_id)
 
     @property
     def block_id(self):
         return self.context.io_block_name
+
+    @property
+    def boot_id(self):
+        return self.io_boot_id
 
     def get_details(self):
         return {'io_boot_id': self.io_boot_id, 'tag':self.tag, 'user':self.context.user,
@@ -279,7 +281,8 @@ class BGQBooter(Cobalt.QueueThread.QueueThread):
             if msg.msg_type == 'reap_boot':
                 found = None
                 for boot in self.pending_boots:
-                    if msg.boot_id == boot.boot_id:
+                    if hasattr(boot, 'boot_id') and msg.boot_id == boot.boot_id:
+                        _logger.debug("found boot at loc %s to reap.", boot.block_id)
                         found = boot
                         break
                 if found != None:

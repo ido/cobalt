@@ -33,9 +33,13 @@ S4    P4        Mon Apr 22 17:06:50 2013
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -78,9 +82,13 @@ def test_slpstat_arg_2():
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -136,9 +144,13 @@ S4    P4        Mon Apr 22 17:06:50 2013
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -182,6 +194,12 @@ def test_slpstat_debug_1():
 """
 slpstat.py -d
 
+component: "service-location.get_services", defer: False
+  get_services(
+     [{'stamp': '*', 'tag': 'service', 'name': '*', 'location': '*'}],
+     )
+
+
 Name  Location  Update Time               
 ==========================================
 S0    P0        Mon Apr 22 17:06:10 2013  
@@ -196,9 +214,13 @@ S4    P4        Mon Apr 22 17:06:50 2013
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -236,6 +258,12 @@ def test_slpstat_debug_2():
 """
 slpstat.py -d
 
+component: "service-location.get_services", defer: False
+  get_services(
+     [{'stamp': '*', 'tag': 'service', 'name': '*', 'location': '*'}],
+     )
+
+
 no services registered
 """
 
@@ -244,9 +272,13 @@ no services registered
 GET_SERVICES
 
 location:*
+location type: <type 'str'>
 name:*
+name type: <type 'str'>
 stamp:*
+stamp type: <type 'str'>
 tag:service
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"

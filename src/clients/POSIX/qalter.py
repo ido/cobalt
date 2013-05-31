@@ -40,6 +40,7 @@ The following optins are only valid on IBM BlueGene architecture platforms:
 
 """
 import logging
+import re
 import sys
 from Cobalt import client_utils
 from Cobalt.client_utils import \
@@ -50,6 +51,8 @@ from Cobalt.arg_parser import ArgParse
 
 __revision__ = '$Revision: 559 $' # TBC may go away.
 __version__ = '$Version$'
+
+QUEMGR = client_utils.QUEMGR
 
 def validate_args(parser, opt_count):
     """
@@ -111,9 +114,9 @@ def get_jobdata(jobids, parser, user):
     """
 
     jobs = [{'tag':'job', 'user':user, 'jobid':jobid, 'project':'*', 'notify':'*', 'walltime':'*',
-             'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
+        'mode':'*', 'procs':'*', 'nodes':'*', 'is_active':"*", 'queue':'*'} for jobid in jobids]
 
-    jobdata = client_utils.get_jobs(jobs)
+    jobdata = client_utils.component_call(QUEMGR, False, 'get_jobs', (jobs,))
     job_running = False
 
     # verify no job is running
@@ -144,36 +147,44 @@ def update_time(orig_job, new_spec, parser):
             sub_dt = True
 
     if add_dt:    # Add time to original job then
-        new_spec['walltime'] = str(float(orig_job['walltime']) + minutes)
+        new_spec['walltime'] = str(float(orig_job['walltime']) + float(minutes))
 
     elif sub_dt:  # Subtract time to original job and verify it is not less than 0
-        new_time = float(orig_job['walltime']) - minutes
+        new_time = float(orig_job['walltime']) - float(minutes)
         if new_time <= 0:
             client_utils.logger.error( "invalid wall time: " + str(new_time))
         else:
             new_spec['walltime'] = str(new_time)
 
     else:         # change to an absolute time
-        new_spec['walltime'] = minutes
+        new_spec['walltime'] = str(minutes)
 
 def update_procs(spec, parser):
     """
     Will update 'proc' according to what system we are running on given the number of nodes
     """
     sysinfo = client_utils.system_info()
-
-    if parser.options.nodes != None and parser.options.procs == None:
-        if parser.options.mode == 'vn':
-            # set procs to 2 x nodes
-            if sysinfo[0] == 'bgl':
-                spec['procs'] = 2 * spec['nodes']
-            elif sysinfo[0] == 'bgp':
-                spec['procs'] = 4 * spec['nodes']
+    if ((parser.options.nodes is not None or parser.options.mode is not None) and 
+            parser.options.procs is None):
+        if sysinfo[0] == 'bgq':
+            if spec['mode'] == 'script':
+                spec['procs'] = spec['nodes']
             else:
-                client_utils.logger.error("Unknown bgtype %s" % (sysinfo[0]))
-                sys.exit(1)
+                rpn_re  = re.compile(r'c(?P<pos>[0-9]*)')
+                mode_size = int(rpn_re.match(spec['mode']).group(1))
+                spec['procs'] = spec['nodes'] * mode_size
         else:
-            spec['procs'] = spec['nodes']
+            if parser.options.mode == 'vn':
+                # set procs to 2 x nodes
+                if sysinfo[0] == 'bgl':
+                    spec['procs'] = 2 * spec['nodes']
+                elif sysinfo[0] == 'bgp':
+                    spec['procs'] = 4 * spec['nodes']
+                else:
+                    client_utils.logger.error("Unknown bgtype %s" % (sysinfo[0]))
+                    sys.exit(1)
+            else:
+                spec['procs'] = spec['nodes']
     
 def do_some_logging(job, orig_job, parser):
     """
@@ -197,9 +208,6 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-                               
     spec     = {} # map of destination option strings and parsed values
     opts     = {} # old map
     opt2spec = {}
@@ -208,9 +216,9 @@ def main():
     callbacks = [
         # <cb function>           <cb args>
         [ cb_debug               , () ],
-        [ cb_gtzero              , () ],
-        [ cb_nodes               , () ],
-        [ cb_time                , (True, False) ], # delta time allowed and do not convert to seconds
+        [ cb_gtzero              , (True,) ], # return int
+        [ cb_nodes               , (True,) ], # return int
+        [ cb_time                , (True, False, False) ], # delta time allowed, return minutes, return string
         [ cb_upd_dep             , () ],
         [ cb_attrs               , () ],
         [ cb_user_list           , (opts, True) ], # add user
@@ -250,12 +258,15 @@ def main():
         # append the parsed spec to the updates list
         new_spec          = spec.copy()
         new_spec['jobid'] = job['jobid']
-
-        if parser.options.walltime != None:
+        if parser.options.walltime is not None:
             update_time(job, new_spec, parser)
-        if parser.options.nodes != None:
+        if parser.options.nodes is not None or parser.options.mode is not None:
+            if parser.options.nodes is None:
+                new_spec['nodes'] = job['nodes']
+            if parser.options.mode is None:
+                new_spec['mode'] = job['mode']
             update_procs(new_spec, parser)
-        if parser.options.geometry != None:
+        if parser.options.geometry is not None:
             client_utils.validate_geometry(opts['geometry'], job['nodes'])
 
         del job['is_active']
@@ -263,7 +274,7 @@ def main():
         job.update(new_spec)
 
         client_utils.process_filters(filters, job)
-        response = client_utils.set_jobs([orig_job], job, user)
+        response = client_utils.component_call(QUEMGR, False, 'set_jobs', ([orig_job], job, user))
         do_some_logging(job, orig_job, parser)
 
     if not response:
@@ -277,6 +288,7 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", str(sys.exc_info()))
-        raise
+    #except Exception, e:
+        #sys.exc_info()
+        #client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        #sys.exit(1)

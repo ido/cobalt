@@ -28,16 +28,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -87,16 +98,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -147,16 +169,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -206,16 +239,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -265,16 +309,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -324,16 +379,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -383,16 +449,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -579,6 +656,17 @@ def test_showres_debug():
 """
 showres.py --debug
 
+component: "system.get_implementation", defer: False
+  get_implementation(
+     )
+
+
+component: "scheduler.get_reservations", defer: False
+  get_reservations(
+     [{'users': '*', 'block_passthrough': '*', 'duration': '*', 'cycle': '*', 'project': '*', 'cycle_id': '*', 'name': '*', 'queue': '*', 'start': '*', 'partitions': '*', 'res_id': '*'}],
+     )
+
+
 Reservation  Queue  User   Start                                 Duration  Passthrough  Partitions  
 ====================================================================================================
 *            kebra  james  Tue Mar 26 21:56:40 2013 +0000 (UTC)  00:08     Blocked      [P1-10]     
@@ -592,16 +680,27 @@ GET_IMPLEMENTATION
 GET_RESERVATIONS
 
 block_passthrough:*
+block_passthrough type: <type 'str'>
 cycle:*
+cycle type: <type 'str'>
 cycle_id:*
+cycle_id type: <type 'str'>
 duration:*
+duration type: <type 'str'>
 name:*
+name type: <type 'str'>
 partitions:*
+partitions type: <type 'str'>
 project:*
+project type: <type 'str'>
 queue:*
+queue type: <type 'str'>
 res_id:*
+res_id type: <type 'str'>
 start:*
+start type: <type 'str'>
 users:*
+users type: <type 'str'>
 """
 
     stubout_file = "stub.out"

@@ -5,7 +5,7 @@ def test_partadm_version_option():
     """
     partadm test run: version_option
         Old Command Output:
-          version: "partadm.py " + $Revision: 1981 $ + , Cobalt  + $Version$
+          Cobalt Version: $Version$
           
 
     """
@@ -42,7 +42,7 @@ def test_partadm_help_option_1():
     """
     partadm test run: help_option_1
         Old Command Output:
-          Usage: partadm.py [-a|-d] part1 part2 (add or del)
+          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
           Usage: partadm.py -l
           Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
           Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -53,10 +53,10 @@ def test_partadm_help_option_1():
           Usage: partadm.py --xml
           Usage: partadm.py --version
           Usage: partadm.py --savestate filename
-          Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
           
           Must supply one of -a or -d or -l or -start or -stop or --queue or -b
           Adding "-r" or "--recursive" will add the children of the blocks passed in.
+          
           
           
           Options:
@@ -64,7 +64,6 @@ def test_partadm_help_option_1():
             -h, --help            show this help message and exit
             -a                    add the block to the list of managed blocks
             -d                    remove the block from the list of managed blocks
-            --debug               turn on communication debugging
             -l                    list all blocks and their status
             -r, --recursive       recursively add all child blocks of the specified
                                   blocks in the positional arguments
@@ -90,18 +89,6 @@ def test_partadm_help_option_1():
             --pg_list             not implemented yet
             -c, --clean_block     force the block to cleanup and clear all internal
                                   reservations on that resource
-            -i, --list_io         list information on IOBlock status
-            --add_io_block        add an IO Block to the list of managed IO blocks
-            --del_io_block        delete an IO Block to the list of managed IO blocks
-            --boot_io_block       initiate a boot of the IO Blocks as positional
-                                  arguments
-            --free_io_block       initiate a free of the IO Blocks as positional
-                                  arguments
-            --set_io_autoboot     set an IO block to be automatically booted
-            --unset_io_autoboot   stop automatically rebooting an IO block
-            --io_autoboot_start   enable IO Block autobooting
-            --io_autoboot_stop    disable IO Block autobooting
-            --io_autoboot_status  get status of IO Block autobooting
           
 
     """
@@ -136,7 +123,11 @@ Options:
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
   --queue=QUEUE         set the queues associated with the target blocks to
-                        this list of queues
+                        this list of queues.
+  --rmq                 Only valid with --queue option. If provided queue(s)
+                        will be removed from the target block association.
+  --appq                Only valid with --queue option. If provided queue(s)
+                        will be appended to the target block association.
   --activate            activate the block for scheduling
   --deactivate          deactivate the block for schedulign
   --enable              enable the running of jobs on the target blocks
@@ -197,7 +188,7 @@ def test_partadm_help_option_2():
     """
     partadm test run: help_option_2
         Old Command Output:
-          Usage: partadm.py [-a|-d] part1 part2 (add or del)
+          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
           Usage: partadm.py -l
           Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
           Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -208,10 +199,10 @@ def test_partadm_help_option_2():
           Usage: partadm.py --xml
           Usage: partadm.py --version
           Usage: partadm.py --savestate filename
-          Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
           
           Must supply one of -a or -d or -l or -start or -stop or --queue or -b
           Adding "-r" or "--recursive" will add the children of the blocks passed in.
+          
           
           
           Options:
@@ -219,7 +210,6 @@ def test_partadm_help_option_2():
             -h, --help            show this help message and exit
             -a                    add the block to the list of managed blocks
             -d                    remove the block from the list of managed blocks
-            --debug               turn on communication debugging
             -l                    list all blocks and their status
             -r, --recursive       recursively add all child blocks of the specified
                                   blocks in the positional arguments
@@ -245,18 +235,6 @@ def test_partadm_help_option_2():
             --pg_list             not implemented yet
             -c, --clean_block     force the block to cleanup and clear all internal
                                   reservations on that resource
-            -i, --list_io         list information on IOBlock status
-            --add_io_block        add an IO Block to the list of managed IO blocks
-            --del_io_block        delete an IO Block to the list of managed IO blocks
-            --boot_io_block       initiate a boot of the IO Blocks as positional
-                                  arguments
-            --free_io_block       initiate a free of the IO Blocks as positional
-                                  arguments
-            --set_io_autoboot     set an IO block to be automatically booted
-            --unset_io_autoboot   stop automatically rebooting an IO block
-            --io_autoboot_start   enable IO Block autobooting
-            --io_autoboot_stop    disable IO Block autobooting
-            --io_autoboot_status  get status of IO Block autobooting
           
 
     """
@@ -291,7 +269,11 @@ Options:
   -r, --recursive       recursively add all child blocks of the specified
                         blocks in the positional arguments
   --queue=QUEUE         set the queues associated with the target blocks to
-                        this list of queues
+                        this list of queues.
+  --rmq                 Only valid with --queue option. If provided queue(s)
+                        will be removed from the target block association.
+  --appq                Only valid with --queue option. If provided queue(s)
+                        will be appended to the target block association.
   --activate            activate the block for scheduling
   --deactivate          deactivate the block for schedulign
   --enable              enable the running of jobs on the target blocks
@@ -351,11 +333,6 @@ Options:
 def test_partadm_no_arg_1():
     """
     partadm test run: no_arg_1
-        Old Command Output:
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
 
     """
 
@@ -392,9 +369,6 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
 def test_partadm_no_arg_2():
     """
     partadm test run: no_arg_2
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -429,14 +403,6 @@ def test_partadm_no_arg_2():
 def test_partadm_debug():
     """
     partadm test run: debug
-        Old Command Output:
-          
-          partadm.py --debug
-          
-          Must supply one of -a or -d or -l or -start or -stop or --queue or -b.
-          Adding "-r" or "--recursive" will add the children of the blocks passed in.
-          
-          
 
     """
 
@@ -476,13 +442,10 @@ Adding "-r" or "--recursive" will add the children of the blocks passed in.
 def test_partadm_combo_options_1():
     """
     partadm test run: combo_options_1
-        Old Command Output:
-          Option combinations not allowed with: delete option(s)
-          
 
     """
 
-    args      = """-a -d PART"""
+    args      = """-a -d ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: delete option(s)
@@ -513,13 +476,10 @@ def test_partadm_combo_options_1():
 def test_partadm_combo_options_2():
     """
     partadm test run: combo_options_2
-        Old Command Output:
-          Option combinations not allowed with: enable option(s)
-          
 
     """
 
-    args      = """-a --enable PART"""
+    args      = """-a --enable ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: enable option(s)
@@ -550,13 +510,10 @@ def test_partadm_combo_options_2():
 def test_partadm_combo_options_3():
     """
     partadm test run: combo_options_3
-        Old Command Output:
-          Option combinations not allowed with: enable option(s)
-          
 
     """
 
-    args      = """-d --enable PART"""
+    args      = """-d --enable ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: enable option(s)
@@ -587,13 +544,10 @@ def test_partadm_combo_options_3():
 def test_partadm_combo_options_4():
     """
     partadm test run: combo_options_4
-        Old Command Output:
-          Option combinations not allowed with: disable option(s)
-          
 
     """
 
-    args      = """--enable --disable PART"""
+    args      = """--enable --disable ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: disable option(s)
@@ -624,13 +578,10 @@ def test_partadm_combo_options_4():
 def test_partadm_combo_options_5():
     """
     partadm test run: combo_options_5
-        Old Command Output:
-          Option combinations not allowed with: deactivate option(s)
-          
 
     """
 
-    args      = """--deactivate --activate PART"""
+    args      = """--deactivate --activate ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: deactivate option(s)
@@ -661,13 +612,10 @@ def test_partadm_combo_options_5():
 def test_partadm_combo_options_6():
     """
     partadm test run: combo_options_6
-        Old Command Output:
-          Option combinations not allowed with: deactivate option(s)
-          
 
     """
 
-    args      = """-a --deactivate PART"""
+    args      = """-a --deactivate ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: deactivate option(s)
@@ -698,13 +646,10 @@ def test_partadm_combo_options_6():
 def test_partadm_combo_options_7():
     """
     partadm test run: combo_options_7
-        Old Command Output:
-          Option combinations not allowed with: unfail option(s)
-          
 
     """
 
-    args      = """--fail --unfail PART"""
+    args      = """--fail --unfail ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: unfail option(s)
@@ -735,9 +680,6 @@ def test_partadm_combo_options_7():
 def test_partadm_combo_options_8():
     """
     partadm test run: combo_options_8
-        Old Command Output:
-          Option combinations not allowed with: savestate option(s)
-          
 
     """
 
@@ -772,9 +714,6 @@ def test_partadm_combo_options_8():
 def test_partadm_combo_options_9():
     """
     partadm test run: combo_options_9
-        Old Command Output:
-          Option combinations not allowed with: list_blocks option(s)
-          
 
     """
 
@@ -809,9 +748,6 @@ def test_partadm_combo_options_9():
 def test_partadm_combo_options_10():
     """
     partadm test run: combo_options_10
-        Old Command Output:
-          Option combinations not allowed with: list_blocks option(s)
-          
 
     """
 
@@ -846,13 +782,10 @@ def test_partadm_combo_options_10():
 def test_partadm_combo_options_11():
     """
     partadm test run: combo_options_11
-        Old Command Output:
-          Option combinations not allowed with: queue option(s)
-          
 
     """
 
-    args      = """-a --queue q1 PART"""
+    args      = """-a --queue q1 ANL-R00-R01-2048"""
 
     cmdout    = \
 """Option combinations not allowed with: queue option(s)
@@ -883,16 +816,13 @@ def test_partadm_combo_options_11():
 def test_partadm_combo_options_12():
     """
     partadm test run: combo_options_12
-        Old Command Output:
-          Option combinations not allowed with: dump option(s)
-          
 
     """
 
-    args      = """--dump --queue q1 PART"""
+    args      = """--dump --queue q1 ANL-R00-R01-2048"""
 
     cmdout    = \
-"""Option combinations not allowed with: dump option(s)
+"""Option combinations not allowed with: queue option(s)
 """
 
     stubout   = ''
@@ -920,9 +850,6 @@ def test_partadm_combo_options_12():
 def test_partadm_combo_options_13():
     """
     partadm test run: combo_options_13
-        Old Command Output:
-          Option combinations not allowed with: savestate option(s)
-          
 
     """
 
@@ -957,16 +884,13 @@ def test_partadm_combo_options_13():
 def test_partadm_combo_options_14():
     """
     partadm test run: combo_options_14
-        Old Command Output:
-          Option combinations not allowed with: blockinfo, clean_block option(s)
-          
 
     """
 
-    args      = """-a -c -b PART"""
+    args      = """-a -c -b ANL-R00-R01-2048"""
 
     cmdout    = \
-"""Option combinations not allowed with: blockinfo, clean_block option(s)
+"""Option combinations not allowed with: add, blockinfo, clean_block option(s)
 """
 
     stubout   = ''
@@ -994,39 +918,13 @@ def test_partadm_combo_options_14():
 def test_partadm_combo_options_15():
     """
     partadm test run: combo_options_15
-        Old Command Output:
-          Name  Size  State  CS Status  BlockComputes  Autoreboot
-          =========================================================
-          P1    0     idle   OK               x        x         
-          P2    1     idle   OK               x        x         
-          P3    2     idle   OK               x        x         
-          P4    3     idle   OK               x        x         
-          P5    4     idle   OK               x        x         
-          P6    5     idle   OK               x        x         
-          P7    6     idle   OK               x        x         
-          P8    7     idle   OK               x        x         
-          P9    8     idle   OK               x        x         
-          P10   9     idle   OK               x        x         
-          
 
     """
 
     args      = """--list_io -a"""
 
     cmdout    = \
-"""[]
-Name  Size  State  CS Status  BlockComputes  Autoreboot
-=========================================================
-P1    0     idle   OK               x        x         
-P2    1     idle   OK               x        x         
-P3    2     idle   OK               x        x         
-P4    3     idle   OK               x        x         
-P5    4     idle   OK               x        x         
-P6    5     idle   OK               x        x         
-P7    6     idle   OK               x        x         
-P8    7     idle   OK               x        x         
-P9    8     idle   OK               x        x         
-P10   9     idle   OK               x        x         
+"""WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
     stubout   = \
@@ -1034,10 +932,6 @@ P10   9     idle   OK               x        x
 ADD_PARTITION
 
 user name: gooduser
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -1063,39 +957,13 @@ plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_com
 def test_partadm_combo_options_16():
     """
     partadm test run: combo_options_16
-        Old Command Output:
-          Name  Size  State  CS Status  BlockComputes  Autoreboot
-          =========================================================
-          P1    0     idle   OK               x        x         
-          P2    1     idle   OK               x        x         
-          P3    2     idle   OK               x        x         
-          P4    3     idle   OK               x        x         
-          P5    4     idle   OK               x        x         
-          P6    5     idle   OK               x        x         
-          P7    6     idle   OK               x        x         
-          P8    7     idle   OK               x        x         
-          P9    8     idle   OK               x        x         
-          P10   9     idle   OK               x        x         
-          
 
     """
 
-    args      = """--list_io -a p1 p2 p3"""
+    args      = """--list_io -a ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""[{'scheduled': False, 'name': 'p1', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'p2', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'p3', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}]
-Name  Size  State  CS Status  BlockComputes  Autoreboot
-=========================================================
-P1    0     idle   OK               x        x         
-P2    1     idle   OK               x        x         
-P3    2     idle   OK               x        x         
-P4    3     idle   OK               x        x         
-P5    4     idle   OK               x        x         
-P6    5     idle   OK               x        x         
-P7    6     idle   OK               x        x         
-P8    7     idle   OK               x        x         
-P9    8     idle   OK               x        x         
-P10   9     idle   OK               x        x         
+"""WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
     stubout   = \
@@ -1104,51 +972,89 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:p1
+functional type: <type 'bool'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:p2
+functional type: <type 'bool'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:p3
+functional type: <type 'bool'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:p1
+functional type: <type 'bool'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:p2
+functional type: <type 'bool'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:p3
+functional type: <type 'bool'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1171,59 +1077,269 @@ plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_com
 
 
 # ---------------------------------------------------------------------------------
+def test_partadm_combo_options_17():
+    """
+    partadm test run: combo_options_17
+
+    """
+
+    args      = """--list_io --rmq ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: rmq, list_io, rmq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_18():
+    """
+    partadm test run: combo_options_18
+
+    """
+
+    args      = """--list_io --appq ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: appq, list_io, appq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_combo_options_19():
+    """
+    partadm test run: combo_options_19
+
+    """
+
+    args      = """--queue q1:q2 --rmq --appq ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: rmq, appq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
 def test_partadm_add_option_1():
     """
     partadm test run: add_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """-a -r PART"""
+    args      = """-a -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
-[{'scheduled': False, 'name': 'PART', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'a', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}]
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:b
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
+name:c
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:d
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:b
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:c
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:d
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1249,56 +1365,164 @@ tag:partition
 def test_partadm_add_option_2():
     """
     partadm test run: add_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """-a --recursive PART"""
+    args      = """-a --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
-[{'scheduled': False, 'name': 'PART', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'a', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}]
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:b
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
+functional type: <type 'bool'>
+name:c
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:d
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
 name:a
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:b
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:c
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+deps:[]
+deps type: <type 'list'>
+functional:False
+functional type: <type 'bool'>
+name:d
+name type: <type 'str'>
+queue:default
+queue type: <type 'str'>
+scheduled:False
+scheduled type: <type 'bool'>
+size:*
+size type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1325,16 +1549,15 @@ def test_partadm_add_option_3():
     """
     partadm test run: add_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """-a PART1 PART2 PART3"""
+    args      = """-a ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
-[{'scheduled': False, 'name': 'PART1', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'PART2', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'PART3', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}]
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -1343,47 +1566,89 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART3
+functional type: <type 'bool'>
+name:ANL-R01-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART3
+functional type: <type 'bool'>
+name:ANL-R01-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1409,140 +1674,41 @@ tag:partition
 def test_partadm_add_option_4():
     """
     partadm test run: add_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """-a -b PART1 PART2"""
+    args      = """-a -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""[{'scheduled': False, 'name': 'PART1', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'PART2', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}]
-Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -1554,41 +1720,65 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -1615,18 +1805,15 @@ def test_partadm_add_option_5():
     """
     partadm test run: add_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """-a -c PART1 PART2"""
+    args      = """-a -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
-[{'scheduled': False, 'name': 'PART1', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}, {'scheduled': False, 'name': 'PART2', 'functional': False, 'queue': 'default', 'tag': 'partition', 'deps': [], 'size': '*'}]
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -1635,51 +1822,61 @@ ADD_PARTITION
 
 user name: gooduser
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 deps:[]
+deps type: <type 'list'>
 functional:False
-name:PART2
+functional type: <type 'bool'>
+name:ANL-R00-1024
+name type: <type 'str'>
 queue:default
+queue type: <type 'str'>
 scheduled:False
+scheduled type: <type 'bool'>
 size:*
+size type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1705,35 +1902,64 @@ whoami: gooduser
 def test_partadm_delete_option_1():
     """
     partadm test run: delete_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """-d -r PART"""
+    args      = """-d -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 DEL_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
-name:PART
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1759,35 +1985,64 @@ tag:partition
 def test_partadm_delete_option_2():
     """
     partadm test run: delete_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """-d --recursive PART"""
+    args      = """-d --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 DEL_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
-name:PART
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1814,15 +2069,15 @@ def test_partadm_delete_option_3():
     """
     partadm test run: delete_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """-d PART1 PART2 PART3"""
+    args      = """-d ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -1830,18 +2085,30 @@ def test_partadm_delete_option_3():
 DEL_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
-name:PART1
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -1867,139 +2134,41 @@ tag:partition
 def test_partadm_delete_option_4():
     """
     partadm test run: delete_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """-d -b PART1 PART2"""
+    args      = """-d -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -2010,22 +2179,26 @@ Name: PART2
 DEL_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART1
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -2052,17 +2225,15 @@ def test_partadm_delete_option_5():
     """
     partadm test run: delete_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """-d -c PART1 PART2"""
+    args      = """-d -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -2070,32 +2241,22 @@ Initiating cleanup on block PART2
 DEL_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART1
+tag type: <type 'str'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2121,36 +2282,66 @@ whoami: gooduser
 def test_partadm_enable_option_1():
     """
     partadm test run: enable_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--enable -r PART"""
+    args      = """--enable -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2176,36 +2367,66 @@ tag:partition
 def test_partadm_enable_option_2():
     """
     partadm test run: enable_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--enable --recursive PART"""
+    args      = """--enable --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2232,15 +2453,15 @@ def test_partadm_enable_option_3():
     """
     partadm test run: enable_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--enable PART1 PART2 PART3"""
+    args      = """--enable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -2248,19 +2469,32 @@ def test_partadm_enable_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2286,139 +2520,41 @@ tag:partition
 def test_partadm_enable_option_4():
     """
     partadm test run: enable_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--enable -b PART1 PART2"""
+    args      = """--enable -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -2429,23 +2565,28 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -2472,17 +2613,15 @@ def test_partadm_enable_option_5():
     """
     partadm test run: enable_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--enable -c PART1 PART2"""
+    args      = """--enable -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -2490,33 +2629,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:True
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2542,36 +2672,66 @@ whoami: gooduser
 def test_partadm_disable_option_1():
     """
     partadm test run: disable_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--disable -r PART"""
+    args      = """--disable -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2597,36 +2757,66 @@ tag:partition
 def test_partadm_disable_option_2():
     """
     partadm test run: disable_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--disable --recursive PART"""
+    args      = """--disable --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2653,15 +2843,15 @@ def test_partadm_disable_option_3():
     """
     partadm test run: disable_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--disable PART1 PART2 PART3"""
+    args      = """--disable ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -2669,19 +2859,32 @@ def test_partadm_disable_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2707,139 +2910,41 @@ tag:partition
 def test_partadm_disable_option_4():
     """
     partadm test run: disable_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--disable -b PART1 PART2"""
+    args      = """--disable -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -2850,23 +2955,28 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -2893,17 +3003,15 @@ def test_partadm_disable_option_5():
     """
     partadm test run: disable_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--disable -c PART1 PART2"""
+    args      = """--disable -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -2911,33 +3019,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 scheduled:False
-name:PART1
+scheduled type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -2963,36 +3062,66 @@ whoami: gooduser
 def test_partadm_activate_option_1():
     """
     partadm test run: activate_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--activate -r PART"""
+    args      = """--activate -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3018,36 +3147,66 @@ tag:partition
 def test_partadm_activate_option_2():
     """
     partadm test run: activate_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--activate --recursive PART"""
+    args      = """--activate --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3074,15 +3233,15 @@ def test_partadm_activate_option_3():
     """
     partadm test run: activate_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--activate PART1 PART2 PART3"""
+    args      = """--activate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -3090,19 +3249,32 @@ def test_partadm_activate_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3128,139 +3300,41 @@ tag:partition
 def test_partadm_activate_option_4():
     """
     partadm test run: activate_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--activate -b PART1 PART2"""
+    args      = """--activate -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -3271,23 +3345,28 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -3314,17 +3393,15 @@ def test_partadm_activate_option_5():
     """
     partadm test run: activate_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--activate -c PART1 PART2"""
+    args      = """--activate -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -3332,33 +3409,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:True
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3384,36 +3452,66 @@ whoami: gooduser
 def test_partadm_deactivate_option_1():
     """
     partadm test run: deactivate_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--deactivate -r PART"""
+    args      = """--deactivate -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3439,36 +3537,66 @@ tag:partition
 def test_partadm_deactivate_option_2():
     """
     partadm test run: deactivate_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--deactivate --recursive PART"""
+    args      = """--deactivate --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 SET_PARTITION
 
 user name: gooduser
-name:PART
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3495,15 +3623,15 @@ def test_partadm_deactivate_option_3():
     """
     partadm test run: deactivate_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--deactivate PART1 PART2 PART3"""
+    args      = """--deactivate ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -3511,19 +3639,32 @@ def test_partadm_deactivate_option_3():
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3549,139 +3690,41 @@ tag:partition
 def test_partadm_deactivate_option_4():
     """
     partadm test run: deactivate_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--deactivate -b PART1 PART2"""
+    args      = """--deactivate -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -3692,23 +3735,28 @@ Name: PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -3735,17 +3783,15 @@ def test_partadm_deactivate_option_5():
     """
     partadm test run: deactivate_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--deactivate -c PART1 PART2"""
+    args      = """--deactivate -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -3753,33 +3799,24 @@ Initiating cleanup on block PART2
 SET_PARTITION
 
 user name: gooduser
-name:PART1
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 functional:False
-name:PART1
+functional type: <type 'bool'>
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3805,32 +3842,45 @@ whoami: gooduser
 def test_partadm_fail_option_1():
     """
     partadm test run: fail_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--fail -r PART"""
+    args      = """--fail -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}, {'tag': 'partition', 'name': 'b'}, {'tag': 'partition', 'name': 'c'}, {'tag': 'partition', 'name': 'd'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3856,32 +3906,45 @@ tag:partition
 def test_partadm_fail_option_2():
     """
     partadm test run: fail_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--fail --recursive PART"""
+    args      = """--fail --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}, {'tag': 'partition', 'name': 'b'}, {'tag': 'partition', 'name': 'c'}, {'tag': 'partition', 'name': 'd'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3908,15 +3971,15 @@ def test_partadm_fail_option_3():
     """
     partadm test run: fail_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--fail PART1 PART2 PART3"""
+    args      = """--fail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -3924,13 +3987,19 @@ def test_partadm_fail_option_3():
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}, {'tag': 'partition', 'name': 'PART3'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -3956,139 +4025,41 @@ tag:partition
 def test_partadm_fail_option_4():
     """
     partadm test run: fail_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--fail -b PART1 PART2"""
+    args      = """--fail -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -4099,19 +4070,19 @@ Name: PART2
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -4138,17 +4109,15 @@ def test_partadm_fail_option_5():
     """
     partadm test run: fail_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--fail -c PART1 PART2"""
+    args      = """--fail -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -4156,29 +4125,15 @@ Initiating cleanup on block PART2
 FAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4204,32 +4159,45 @@ whoami: gooduser
 def test_partadm_unfail_option_1():
     """
     partadm test run: unfail_option_1
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--unfail -r PART"""
+    args      = """--unfail -r ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}, {'tag': 'partition', 'name': 'b'}, {'tag': 'partition', 'name': 'c'}, {'tag': 'partition', 'name': 'd'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4255,32 +4223,45 @@ tag:partition
 def test_partadm_unfail_option_2():
     """
     partadm test run: unfail_option_2
-        Old Command Output:
-          ['PART', 'a']
-          
 
     """
 
-    args      = """--unfail --recursive PART"""
+    args      = """--unfail --recursive ANL-R00-R01-2048"""
 
     cmdout    = \
-"""['PART', 'a']
+"""['ANL-R00-R01-2048', 'a', 'b', 'c', 'd']
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'PART', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048', 'children': '*'}]
 
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART'}, {'tag': 'partition', 'name': 'a'}]
-name:PART
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'a'}, {'tag': 'partition', 'name': 'b'}, {'tag': 'partition', 'name': 'c'}, {'tag': 'partition', 'name': 'd'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 name:a
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
+name:b
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:c
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
+name:d
+name type: <type 'str'>
+tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4307,15 +4288,15 @@ def test_partadm_unfail_option_3():
     """
     partadm test run: unfail_option_3
         Old Command Output:
-          ['PART1', 'PART2', 'PART3']
+          ['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
           
 
     """
 
-    args      = """--unfail PART1 PART2 PART3"""
+    args      = """--unfail ANL-R00-R01-2048 ANL-R00-1024 ANL-R01-1024"""
 
     cmdout    = \
-"""['PART1', 'PART2', 'PART3']
+"""['ANL-R00-R01-2048', 'ANL-R00-1024', 'ANL-R01-1024']
 """
 
     stubout   = \
@@ -4323,13 +4304,19 @@ def test_partadm_unfail_option_3():
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}, {'tag': 'partition', 'name': 'PART3'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}, {'tag': 'partition', 'name': 'ANL-R01-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-name:PART3
+tag type: <type 'str'>
+name:ANL-R01-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4355,139 +4342,41 @@ tag:partition
 def test_partadm_unfail_option_4():
     """
     partadm test run: unfail_option_4
-        Old Command Output:
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: PART2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--unfail -b PART1 PART2"""
+    args      = """--unfail -b ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Name: PART1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : ANL-R00-R01-2048
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: PART2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : ANL-R00-1024
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: PART2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -4498,19 +4387,19 @@ Name: PART2
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
+tag type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'PART2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'PART2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-R01-2048', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'ANL-R00-1024', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -4537,17 +4426,15 @@ def test_partadm_unfail_option_5():
     """
     partadm test run: unfail_option_5
         Old Command Output:
-          Initiating cleanup on block PART1
-          Initiating cleanup on block PART2
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--unfail -c PART1 PART2"""
+    args      = """--unfail -c ANL-R00-R01-2048 ANL-R00-1024"""
 
     cmdout    = \
-"""Initiating cleanup on block PART1
-Initiating cleanup on block PART2
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -4555,29 +4442,15 @@ Initiating cleanup on block PART2
 UNFAIL_PARTITION
 
 user name: gooduser
-part list: [{'tag': 'partition', 'name': 'PART1'}, {'tag': 'partition', 'name': 'PART2'}]
-name:PART1
+part list: [{'tag': 'partition', 'name': 'ANL-R00-R01-2048'}, {'tag': 'partition', 'name': 'ANL-R00-1024'}]
+name:ANL-R00-R01-2048
+name type: <type 'str'>
 tag:partition
-name:PART2
+tag type: <type 'str'>
+name:ANL-R00-1024
+name type: <type 'str'>
 tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: PART1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: PART2
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -4604,7 +4477,7 @@ def test_partadm_savestate_option_1():
     """
     partadm test run: savestate_option_1
         Old Command Output:
-          directory /bad/save does not exist
+          directory /bad does not exist
           
 
     """
@@ -4641,15 +4514,15 @@ def test_partadm_savestate_option_2():
     """
     partadm test run: savestate_option_2
         Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
           
 
     """
 
-    args      = """--savestate /tmp/save p1"""
+    args      = """--savestate /tmp/save ANL-R00-M0-512"""
 
     cmdout    = \
-"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
 
     stubout   = \
@@ -4684,7 +4557,7 @@ def test_partadm_savestate_option_3():
     """
     partadm test run: savestate_option_3
         Old Command Output:
-          Usage: partadm.py [-a|-d] part1 part2 (add or del)
+          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
           Usage: partadm.py -l
           Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
           Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -4695,10 +4568,10 @@ def test_partadm_savestate_option_3():
           Usage: partadm.py --xml
           Usage: partadm.py --version
           Usage: partadm.py --savestate filename
-          Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
           
           Must supply one of -a or -d or -l or -start or -stop or --queue or -b
           Adding "-r" or "--recursive" will add the children of the blocks passed in.
+          
           
           
           partadm.py: error: --savestate option requires an argument
@@ -4755,33 +4628,15 @@ def test_partadm_savestate_option_4():
     """
     partadm test run: savestate_option_4
         Old Command Output:
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
+          Force clenaing not available for BG/P systems
           
 
     """
 
-    args      = """--savestate /tmp/save -c p1"""
+    args      = """--savestate /tmp/save -c ANL-R00-M0-512"""
 
     cmdout    = \
-"""Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -4790,72 +4645,6 @@ SAVE
 
 filename:/tmp/save
 plist: [{'name': '*'}]
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -4881,651 +4670,169 @@ whoami: gooduser
 def test_partadm_savestate_option_5():
     """
     partadm test run: savestate_option_5
-        Old Command Output:
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--savestate /tmp/save -b p1"""
+    args      = """--savestate /tmp/save -b ANL-R00-M0-512"""
 
     cmdout    = \
-"""Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 2
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 3
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : aaa
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 4
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bbb
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 5
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : hhh
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 6
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : dito
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 7
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : myq
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 8
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : yours
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 9
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : zq
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 2
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 3
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : aaa
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 4
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bbb
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 5
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : hhh
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 6
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : dito
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 7
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : myq
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 8
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : yours
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 9
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : zq
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -5538,13 +4845,9 @@ SAVE
 filename:/tmp/save
 plist: [{'name': '*'}]
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -5587,6 +4890,7 @@ def test_partadm_xml_option_1():
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5618,7 +4922,7 @@ def test_partadm_xml_option_2():
 
     """
 
-    args      = """--xml p1"""
+    args      = """--xml ANL-R00-M0-512"""
 
     cmdout    = \
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
@@ -5629,6 +4933,7 @@ def test_partadm_xml_option_2():
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5654,13 +4959,10 @@ name:*
 def test_partadm_xml_option_3():
     """
     partadm test run: xml_option_3
-        Old Command Output:
-          ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
-          
 
     """
 
-    args      = """--xml --recursive p1"""
+    args      = """--xml --recursive ANL-R00-M0-512"""
 
     cmdout    = \
 """['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10']
@@ -5670,11 +4972,12 @@ def test_partadm_xml_option_3():
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -5700,651 +5003,169 @@ name:*
 def test_partadm_xml_option_4():
     """
     partadm test run: xml_option_4
-        Old Command Output:
-          Name: P1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P3
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P4
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P5
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P6
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P7
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P8
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P9
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P10
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P3
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P4
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P5
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P6
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P7
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P8
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P9
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P10
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
     args      = """--xml --blockinfo"""
 
     cmdout    = \
-"""Name: P1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : P1
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : P2
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P3
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 2
+    name                      : P3
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P4
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 3
+    name                      : P4
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : aaa
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P5
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 4
+    name                      : P5
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bbb
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P6
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 5
+    name                      : P6
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : hhh
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P7
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 6
+    name                      : P7
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : dito
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P8
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 7
+    name                      : P8
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : myq
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P9
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 8
+    name                      : P9
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : yours
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P10
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 9
+    name                      : P10
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : zq
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P3
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 2
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P4
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 3
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : aaa
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P5
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 4
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bbb
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P6
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 5
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : hhh
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P7
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 6
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : dito
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P8
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 7
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : myq
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P9
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 8
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : yours
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P10
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 9
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : zq
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -6355,14 +5176,11 @@ Name: P10
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P3', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P4', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P5', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P6', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P7', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P8', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P9', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P10', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P3', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P4', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P5', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P6', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P7', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P8', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P9', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P10', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P1', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P2', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P3', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P4', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P5', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P6', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P7', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P8', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P9', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P10', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -6389,16 +5207,7 @@ def test_partadm_xml_option_5():
     """
     partadm test run: xml_option_5
         Old Command Output:
-          Initiating cleanup on block P1
-          Initiating cleanup on block P2
-          Initiating cleanup on block P3
-          Initiating cleanup on block P4
-          Initiating cleanup on block P5
-          Initiating cleanup on block P6
-          Initiating cleanup on block P7
-          Initiating cleanup on block P8
-          Initiating cleanup on block P9
-          Initiating cleanup on block P10
+          Force clenaing not available for BG/P systems
           
 
     """
@@ -6406,16 +5215,7 @@ def test_partadm_xml_option_5():
     args      = """--xml --clean_block"""
 
     cmdout    = \
-"""Initiating cleanup on block P1
-Initiating cleanup on block P2
-Initiating cleanup on block P3
-Initiating cleanup on block P4
-Initiating cleanup on block P5
-Initiating cleanup on block P6
-Initiating cleanup on block P7
-Initiating cleanup on block P8
-Initiating cleanup on block P9
-Initiating cleanup on block P10
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -6423,72 +5223,7 @@ Initiating cleanup on block P10
 GENERATE_XML
 
 name:*
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: P1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P2
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P3
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P4
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P5
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P6
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P7
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P8
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P9
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P10
-var2 : None
-whoami: gooduser
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -6514,651 +5249,169 @@ whoami: gooduser
 def test_partadm_xml_option_6():
     """
     partadm test run: xml_option_6
-        Old Command Output:
-          Name: P1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P3
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P4
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P5
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P6
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P7
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P8
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P9
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P10
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P2
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P3
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P4
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P5
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P6
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P7
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P8
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P9
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: P10
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
     args      = """--xml --recursive --blockinfo"""
 
     cmdout    = \
-"""Name: P1
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : P1
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P2
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : P2
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P3
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 2
+    name                      : P3
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P4
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 3
+    name                      : P4
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : aaa
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P5
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 4
+    name                      : P5
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bbb
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P6
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 5
+    name                      : P6
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : hhh
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P7
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 6
+    name                      : P7
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : dito
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P8
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 7
+    name                      : P8
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : myq
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P9
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 8
+    name                      : P9
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : yours
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: P10
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 9
+    name                      : P10
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : zq
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P2
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P3
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 2
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P4
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 3
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : aaa
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P5
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 4
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bbb
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P6
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 5
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : hhh
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P7
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 6
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : dito
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P8
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 7
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : myq
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P9
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 8
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : yours
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: P10
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 9
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : zq
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -7173,14 +5426,11 @@ plist: []
 GENERATE_XML
 
 name:*
+name type: <type 'str'>
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P2', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P3', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P4', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P5', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P6', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P7', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P8', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P9', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'P10', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P2', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P3', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P4', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P5', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P6', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P7', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P8', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P9', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'P10', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P1', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P2', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P3', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P4', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P5', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P6', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P7', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P8', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P9', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': 'P10', 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -7207,16 +5457,7 @@ def test_partadm_xml_option_7():
     """
     partadm test run: xml_option_7
         Old Command Output:
-          Initiating cleanup on block P1
-          Initiating cleanup on block P2
-          Initiating cleanup on block P3
-          Initiating cleanup on block P4
-          Initiating cleanup on block P5
-          Initiating cleanup on block P6
-          Initiating cleanup on block P7
-          Initiating cleanup on block P8
-          Initiating cleanup on block P9
-          Initiating cleanup on block P10
+          Force clenaing not available for BG/P systems
           
 
     """
@@ -7224,16 +5465,7 @@ def test_partadm_xml_option_7():
     args      = """--xml --recursive --clean_block"""
 
     cmdout    = \
-"""Initiating cleanup on block P1
-Initiating cleanup on block P2
-Initiating cleanup on block P3
-Initiating cleanup on block P4
-Initiating cleanup on block P5
-Initiating cleanup on block P6
-Initiating cleanup on block P7
-Initiating cleanup on block P8
-Initiating cleanup on block P9
-Initiating cleanup on block P10
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -7245,72 +5477,7 @@ plist: []
 GENERATE_XML
 
 name:*
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: P1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P2
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P3
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P4
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P5
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P6
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P7
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P8
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P9
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: P10
-var2 : None
-whoami: gooduser
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7337,7 +5504,7 @@ def test_partadm_queue_option_1():
     """
     partadm test run: queue_option_1
         Old Command Output:
-          Usage: partadm.py [-a|-d] part1 part2 (add or del)
+          Usage: partadm.py [-a] [-d] part1 part2 (add or del)
           Usage: partadm.py -l
           Usage: partadm.py [--activate|--deactivate] part1 part2 (functional or not)
           Usage: partadm.py [--enable|--disable] part1 part2 (scheduleable or not)
@@ -7348,10 +5515,10 @@ def test_partadm_queue_option_1():
           Usage: partadm.py --xml
           Usage: partadm.py --version
           Usage: partadm.py --savestate filename
-          Usage: partadm.py [--boot-stop|--boot-start|--boot-status]
           
           Must supply one of -a or -d or -l or -start or -stop or --queue or -b
           Adding "-r" or "--recursive" will add the children of the blocks passed in.
+          
           
           
           partadm.py: error: --queue option requires an argument
@@ -7408,17 +5575,17 @@ def test_partadm_queue_option_2():
     """
     partadm test run: queue_option_2
         Old Command Output:
-          'q1' is not an existing queue
-          'q2' is not an existing queue
+          'q_4' is not an existing queue
+          'q_3' is not an existing queue
           
 
     """
 
-    args      = """--queue q1:q2 p1 p2 p3"""
+    args      = """--queue q_4:q_3 ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""'q1' is not an existing queue
-'q2' is not an existing queue
+"""'q_4' is not an existing queue
+'q_3' is not an existing queue
 """
 
     stubout   = \
@@ -7426,7 +5593,9 @@ def test_partadm_queue_option_2():
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -7453,15 +5622,21 @@ def test_partadm_queue_option_3():
     """
     partadm test run: queue_option_3
         Old Command Output:
-          ['p1']
+          'q_1' is not an existing queue
+          'q_2' is not an existing queue
+          'q_3' is not an existing queue
+          'q_4' is not an existing queue
           
 
     """
 
-    args      = """--queue kebra:bbb:myq p1"""
+    args      = """--queue q_1:q_2:q_3:q_4 ANL-R00-M0-512"""
 
     cmdout    = \
-"""['p1']
+"""'q_1' is not an existing queue
+'q_2' is not an existing queue
+'q_3' is not an existing queue
+'q_4' is not an existing queue
 """
 
     stubout   = \
@@ -7469,22 +5644,15 @@ def test_partadm_queue_option_3():
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-queue:kebra:bbb:myq
-name:p1
-tag:partition
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -7505,15 +5673,15 @@ def test_partadm_queue_option_4():
     """
     partadm test run: queue_option_4
         Old Command Output:
-          Initiating cleanup on block p1
+          'q_1' is not an existing queue
           
 
     """
 
-    args      = """--queue kebra:bbb:myq -c p1"""
+    args      = """--queue q_1 -c ANL-R00-M0-512"""
 
     cmdout    = \
-"""Initiating cleanup on block p1
+"""'q_1' is not an existing queue
 """
 
     stubout   = \
@@ -7521,34 +5689,15 @@ def test_partadm_queue_option_4():
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-queue:kebra:bbb:myq
-name:p1
-tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: p1
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -7568,78 +5717,13 @@ whoami: gooduser
 def test_partadm_queue_option_5():
     """
     partadm test run: queue_option_5
-        Old Command Output:
-          Name: p1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: p1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--queue kebra:bbb:myq -b p1"""
+    args      = """--queue q_2 -b ANL-R00-M0-512"""
 
     cmdout    = \
-"""Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
+"""'q_2' is not an existing queue
 """
 
     stubout   = \
@@ -7647,30 +5731,15 @@ Name: p1
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-queue:kebra:bbb:myq
-name:p1
-tag:partition
-
-GET_BLOCKS
-
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'p1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'p1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -7690,181 +5759,33 @@ plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'p1', 'io_drawe
 def test_partadm_queue_option_6():
     """
     partadm test run: queue_option_6
-        Old Command Output:
-          Name: p1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: a
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: p1
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: a
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
-    args      = """--queue kebra:bbb -r -b p1"""
+    args      = """--queue q_1 -r -b ANL-R00-M0-512"""
 
     cmdout    = \
-"""Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: a
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: p1
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: a
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
+"""'q_1' is not an existing queue
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-name:a
-tag:partition
-queue:kebra:bbb
-name:p1
-tag:partition
-name:a
-tag:partition
-
-GET_BLOCKS
-
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'p1', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': 'a', 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'p1', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'a', 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -7884,67 +5805,185 @@ plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': 'p1', 'io_drawe
 def test_partadm_queue_option_7():
     """
     partadm test run: queue_option_7
-        Old Command Output:
-          Initiating cleanup on block p1
-          Initiating cleanup on block a
-          
 
     """
 
-    args      = """--queue kebra:bbb -r -c p1"""
+    args      = """--queue q_2 -r -c ANL-R00-M0-512"""
 
     cmdout    = \
-"""Initiating cleanup on block p1
-Initiating cleanup on block a
+"""'q_2' is not an existing queue
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 
 GET_QUEUES
 
 name:*
+name type: <type 'str'>
 tag:queue
-
-SET_PARTITION
-
-user name: gooduser
-name:p1
-tag:partition
-name:a
-tag:partition
-queue:kebra:bbb
-name:p1
-tag:partition
-name:a
-tag:partition
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: p1
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: a
-var2 : None
-whoami: gooduser
+tag type: <type 'str'>
 """
 
     stubout_file = "stub.out"
 
     expected_results = ( 
-                       0, # Expected return status 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_8():
+    """
+    partadm test run: queue_option_8
+
+    """
+
+    args      = """--queue q_1 --appq -r -c ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: appq, clean_block, appq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_9():
+    """
+    partadm test run: queue_option_9
+
+    """
+
+    args      = """--queue q_2 --rmq -r -c ANL-R00-M0-512"""
+
+    cmdout    = \
+"""Option combinations not allowed with: rmq, clean_block, rmq option(s)
+"""
+
+    stubout   = ''
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_10():
+    """
+    partadm test run: queue_option_10
+
+    """
+
+    args      = """--queue q_1 --rmq ANL-R00-M0-512 ANL-R00-M1-512"""
+
+    cmdout    = \
+"""'q_1' is not an existing queue
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+name type: <type 'str'>
+tag:queue
+tag type: <type 'str'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
+                       cmdout, # Expected command output
+                       stubout # Expected stub functions output
+                       ) 
+
+    testutils.save_testhook("")
+
+    results = testutils.run_cmd('partadm.py',args,stubout_file) 
+    result  = testutils.validate_results(results,expected_results)
+
+    testutils.remove_testhook()
+
+    correct = 1
+    assert result == correct, "Result:\n%s" % result
+
+
+# ---------------------------------------------------------------------------------
+def test_partadm_queue_option_11():
+    """
+    partadm test run: queue_option_11
+
+    """
+
+    args      = """--queue q_1 --appq ANL-R00-M0-512 ANL-R00-M1-512"""
+
+    cmdout    = \
+"""'q_1' is not an existing queue
+"""
+
+    stubout   = \
+"""
+GET_QUEUES
+
+name:*
+name type: <type 'str'>
+tag:queue
+tag type: <type 'str'>
+"""
+
+    stubout_file = "stub.out"
+
+    expected_results = ( 
+                       256, # Expected return status 
                        cmdout, # Expected command output
                        stubout # Expected stub functions output
                        ) 
@@ -7965,7 +6004,7 @@ def test_partadm_dump_option_1():
     """
     partadm test run: dump_option_1
         Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
           
 
     """
@@ -7973,7 +6012,7 @@ def test_partadm_dump_option_1():
     args      = """--dump"""
 
     cmdout    = \
-"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
 
     stubout   = \
@@ -8007,15 +6046,15 @@ def test_partadm_dump_option_2():
     """
     partadm test run: dump_option_2
         Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
           
 
     """
 
-    args      = """--dump p1"""
+    args      = """--dump ANL-R00-M0-512"""
 
     cmdout    = \
-"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
 
     stubout   = \
@@ -8048,23 +6087,20 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
 def test_partadm_dump_option_3():
     """
     partadm test run: dump_option_3
-        Old Command Output:
-          [{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
-          
 
     """
 
-    args      = """--dump --recursive p1"""
+    args      = """--dump --recursive ANL-R00-M0-512"""
 
     cmdout    = \
-"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
+"""[{'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}]
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 
 GET_PARTITIONS
 
@@ -8094,651 +6130,169 @@ plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name
 def test_partadm_dump_option_4():
     """
     partadm test run: dump_option_4
-        Old Command Output:
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
     args      = """--dump --blockinfo"""
 
     cmdout    = \
-"""Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 2
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 3
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : aaa
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 4
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bbb
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 5
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : hhh
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 6
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : dito
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 7
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : myq
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 8
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : yours
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 9
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : zq
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 2
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 3
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : aaa
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 4
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bbb
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 5
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : hhh
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 6
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : dito
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 7
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : myq
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 8
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : yours
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 9
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : zq
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -8750,13 +6304,9 @@ GET_PARTITIONS
 
 plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'deps': '*', 'functional': '*', 'size': '*'}]
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -8783,16 +6333,7 @@ def test_partadm_dump_option_5():
     """
     partadm test run: dump_option_5
         Old Command Output:
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
+          Force clenaing not available for BG/P systems
           
 
     """
@@ -8800,16 +6341,7 @@ def test_partadm_dump_option_5():
     args      = """--dump --clean_block"""
 
     cmdout    = \
-"""Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -8817,72 +6349,6 @@ Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': Tr
 GET_PARTITIONS
 
 plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'deps': '*', 'functional': '*', 'size': '*'}]
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -8908,651 +6374,169 @@ whoami: gooduser
 def test_partadm_dump_option_6():
     """
     partadm test run: dump_option_6
-        Old Command Output:
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 0
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : kebra
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 1
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : jello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 2
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bello
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 3
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : aaa
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 4
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : bbb
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 5
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : hhh
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 6
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : dito
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 7
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : myq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 8
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : yours
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-              scheduled                 : True
-              status                    : OK
-              functional                : True
-              draining                  : False
-              passthrough_blocks        : A
-              children                  : a
-              size                      : 9
-              node_geometry             : ['48', '48', '48', '48', '48']
-              state                     : idle
-              queue                     : zq
-              relatives                 : ['b']
-              parents                   : a, b, c
-              block_computes_for_reboot : True
-              autoreboot                : True
-          
-          
 
     """
 
     args      = """--dump --recursive --blockinfo"""
 
     cmdout    = \
-"""Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+"""scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 0
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : kebra
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 1
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : jello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 2
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bello
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 3
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : aaa
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 4
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : bbb
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 5
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : hhh
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 6
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : dito
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 7
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : myq
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 8
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : yours
     relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
+scheduled: True
     status                    : OK
     functional                : True
     draining                  : False
-    passthrough_blocks        : A
-    children                  : a
+    passthrough_blocks        : ['A']
+    children                  : ['a', 'b', 'c', 'd']
     size                      : 9
+    name                      : {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
     node_geometry             : ['48', '48', '48', '48', '48']
     state                     : idle
     queue                     : zq
     relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 0
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : kebra
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 1
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : jello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 2
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bello
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 3
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : aaa
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 4
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : bbb
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 5
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : hhh
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 6
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : dito
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 7
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : myq
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 8
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : yours
-    relatives                 : ['b']
-    parents                   : a, b, c
-    block_computes_for_reboot : True
-    autoreboot                : True
-
-Name: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-    scheduled                 : True
-    status                    : OK
-    functional                : True
-    draining                  : False
-    passthrough_blocks        : A
-    children                  : a
-    size                      : 9
-    node_geometry             : ['48', '48', '48', '48', '48']
-    state                     : idle
-    queue                     : zq
-    relatives                 : ['b']
-    parents                   : a, b, c
+    parents                   : ['a', 'b', 'c']
     block_computes_for_reboot : True
     autoreboot                : True
 
@@ -9568,13 +6552,9 @@ GET_PARTITIONS
 
 plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'deps': '*', 'functional': '*', 'size': '*'}]
 
-GET_BLOCKS
+GET_PARTITIONS
 
-plist: [{'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}, {'freeing': '*', 'extents': '*', 'corner_node': '*', 'wiring_conflict_list': '*', 'draining': '*', 'passthrough_blocks': '*', 'backfill_time': '*', 'children': '*', 'io_node_list': '*', 'size': '*', 'node_geometry': '*', 'node_list': '*', 'state': '*', 'parents': '*', 'wire_list': '*', 'cleanup_pending': '*', 'scheduled': '*', 'block_type': '*', 'used_by': '*', 'reserved_by': '*', 'node_card_list': '*', 'midplane_list': '*', 'funcitonal': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'midplane_geometry': '*', 'passthrough_midplane_list': '*', 'queue': '*', 'subblock_parent': '*', 'reserved_until': '*'}]
-
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}, {'status': '*', 'state': '*', 'autoreboot': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'io_drawer_list': '*', 'block_computes_for_reboot': '*', 'io_node_list': '*', 'size': '*'}]
+plist: [{'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}, {'scheduled': '*', 'freeing': '*', 'funcitonal': '*', 'block_type': '*', 'name': {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a', 'b', 'c', 'd'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}, 'backfill_time': '*', 'used_by': '*', 'reserved_by': '*', 'state': '*', 'draining': '*', 'queue': '*', 'wiring_conflicts': '*', 'node_card_list': '*', 'parents': '*', 'size': '*', 'wire_list': '*', 'cleanup_pending': '*', 'switch_list': '*', 'children': '*', 'reserved_until': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -9601,16 +6581,7 @@ def test_partadm_dump_option_7():
     """
     partadm test run: dump_option_7
         Old Command Output:
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-          Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
+          Force clenaing not available for BG/P systems
           
 
     """
@@ -9618,16 +6589,7 @@ def test_partadm_dump_option_7():
     args      = """--dump --recursive --clean_block"""
 
     cmdout    = \
-"""Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-Initiating cleanup on block {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
+"""Force clenaing not available for BG/P systems
 """
 
     stubout   = \
@@ -9639,72 +6601,6 @@ plist: []
 GET_PARTITIONS
 
 plist: [{'scheduled': '*', 'queue': '*', 'state': '*', 'tag': 'partition', 'name': '*', 'deps': '*', 'functional': '*', 'size': '*'}]
-
-SCHED_STATUS
-
-
-BOOTING_STATUS
-
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 0, 'name': 'P1', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'kebra', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 1, 'name': 'P2', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'jello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 2, 'name': 'P3', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bello', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 3, 'name': 'P4', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'aaa', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 4, 'name': 'P5', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'bbb', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 5, 'name': 'P6', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'hhh', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 6, 'name': 'P7', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'dito', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 7, 'name': 'P8', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'myq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 8, 'name': 'P9', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'yours', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
-
-SET_CLEANING
-
-part: {'scheduled': True, 'status': 'OK', 'functional': True, 'draining': False, 'passthrough_blocks': ['A'], 'children': ['a'], 'size': 9, 'name': 'P10', 'node_geometry': ['48', '48', '48', '48', '48'], 'state': 'idle', 'queue': 'zq', 'relatives': ['b'], 'parents': ['a', 'b', 'c'], 'block_computes_for_reboot': True, 'autoreboot': True}
-var2 : None
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -9731,7 +6627,7 @@ def test_partadm_boot_stop_option_1():
     """
     partadm test run: boot_stop_option_1
         Old Command Output:
-          Halting booting: halting scheduling is advised
+          Boot control not available for BG/P systems
           
 
     """
@@ -9739,15 +6635,10 @@ def test_partadm_boot_stop_option_1():
     args      = """--boot-stop"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-HALT_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -9773,23 +6664,18 @@ def test_partadm_boot_stop_option_2():
     """
     partadm test run: boot_stop_option_2
         Old Command Output:
-          Halting booting: halting scheduling is advised
+          Boot control not available for BG/P systems
           
 
     """
 
-    args      = """--boot-stop p1"""
+    args      = """--boot-stop ANL-R00-M0-512"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-HALT_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -9814,27 +6700,20 @@ whoami: gooduser
 def test_partadm_boot_stop_option_3():
     """
     partadm test run: boot_stop_option_3
-        Old Command Output:
-          Halting booting: halting scheduling is advised
-          
 
     """
 
-    args      = """--boot-stop --recursive p1"""
+    args      = """--boot-stop --recursive ANL-R00-M0-512"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-
-HALT_BOOTING
-
-whoami: gooduser
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -9861,7 +6740,7 @@ def test_partadm_boot_stop_option_4():
     """
     partadm test run: boot_stop_option_4
         Old Command Output:
-          Halting booting: halting scheduling is advised
+          Boot control not available for BG/P systems
           
 
     """
@@ -9869,15 +6748,10 @@ def test_partadm_boot_stop_option_4():
     args      = """--boot-stop --blockinfo"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-HALT_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -9903,7 +6777,7 @@ def test_partadm_boot_stop_option_5():
     """
     partadm test run: boot_stop_option_5
         Old Command Output:
-          Halting booting: halting scheduling is advised
+          Boot control not available for BG/P systems
           
 
     """
@@ -9911,15 +6785,10 @@ def test_partadm_boot_stop_option_5():
     args      = """--boot-stop --clean_block"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-HALT_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -9945,7 +6814,7 @@ def test_partadm_boot_stop_option_6():
     """
     partadm test run: boot_stop_option_6
         Old Command Output:
-          Halting booting: halting scheduling is advised
+          Boot control not available for BG/P systems
           
 
     """
@@ -9953,7 +6822,7 @@ def test_partadm_boot_stop_option_6():
     args      = """--boot-stop --recursive --blockinfo"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
@@ -9961,10 +6830,6 @@ def test_partadm_boot_stop_option_6():
 GET_PARTITIONS
 
 plist: []
-
-HALT_BOOTING
-
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -9991,7 +6856,7 @@ def test_partadm_boot_stop_option_7():
     """
     partadm test run: boot_stop_option_7
         Old Command Output:
-          Halting booting: halting scheduling is advised
+          Boot control not available for BG/P systems
           
 
     """
@@ -9999,7 +6864,7 @@ def test_partadm_boot_stop_option_7():
     args      = """--boot-stop --recursive --clean_block"""
 
     cmdout    = \
-"""Halting booting: halting scheduling is advised
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
@@ -10007,10 +6872,6 @@ def test_partadm_boot_stop_option_7():
 GET_PARTITIONS
 
 plist: []
-
-HALT_BOOTING
-
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -10037,7 +6898,7 @@ def test_partadm_boot_start_option_1():
     """
     partadm test run: boot_start_option_1
         Old Command Output:
-          Enabling booting
+          Boot control not available for BG/P systems
           
 
     """
@@ -10045,15 +6906,10 @@ def test_partadm_boot_start_option_1():
     args      = """--boot-start"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-RESUME_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10079,23 +6935,18 @@ def test_partadm_boot_start_option_2():
     """
     partadm test run: boot_start_option_2
         Old Command Output:
-          Enabling booting
+          Boot control not available for BG/P systems
           
 
     """
 
-    args      = """--boot-start p1"""
+    args      = """--boot-start ANL-R00-M0-512"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-RESUME_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10120,27 +6971,20 @@ whoami: gooduser
 def test_partadm_boot_start_option_3():
     """
     partadm test run: boot_start_option_3
-        Old Command Output:
-          Enabling booting
-          
 
     """
 
-    args      = """--boot-start --recursive p1"""
+    args      = """--boot-start --recursive ANL-R00-M0-512"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-
-RESUME_BOOTING
-
-whoami: gooduser
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -10167,7 +7011,7 @@ def test_partadm_boot_start_option_4():
     """
     partadm test run: boot_start_option_4
         Old Command Output:
-          Enabling booting
+          Boot control not available for BG/P systems
           
 
     """
@@ -10175,15 +7019,10 @@ def test_partadm_boot_start_option_4():
     args      = """--boot-start --blockinfo"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-RESUME_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10209,7 +7048,7 @@ def test_partadm_boot_start_option_5():
     """
     partadm test run: boot_start_option_5
         Old Command Output:
-          Enabling booting
+          Boot control not available for BG/P systems
           
 
     """
@@ -10217,15 +7056,10 @@ def test_partadm_boot_start_option_5():
     args      = """--boot-start --clean_block"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-RESUME_BOOTING
-
-whoami: gooduser
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10251,7 +7085,7 @@ def test_partadm_boot_start_option_6():
     """
     partadm test run: boot_start_option_6
         Old Command Output:
-          Enabling booting
+          Boot control not available for BG/P systems
           
 
     """
@@ -10259,7 +7093,7 @@ def test_partadm_boot_start_option_6():
     args      = """--boot-start --recursive --blockinfo"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
@@ -10267,10 +7101,6 @@ def test_partadm_boot_start_option_6():
 GET_PARTITIONS
 
 plist: []
-
-RESUME_BOOTING
-
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -10297,7 +7127,7 @@ def test_partadm_boot_start_option_7():
     """
     partadm test run: boot_start_option_7
         Old Command Output:
-          Enabling booting
+          Boot control not available for BG/P systems
           
 
     """
@@ -10305,7 +7135,7 @@ def test_partadm_boot_start_option_7():
     args      = """--boot-start --recursive --clean_block"""
 
     cmdout    = \
-"""Enabling booting
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
@@ -10313,10 +7143,6 @@ def test_partadm_boot_start_option_7():
 GET_PARTITIONS
 
 plist: []
-
-RESUME_BOOTING
-
-whoami: gooduser
 """
 
     stubout_file = "stub.out"
@@ -10343,7 +7169,7 @@ def test_partadm_boot_status_option_1():
     """
     partadm test run: boot_status_option_1
         Old Command Output:
-          Block Booting: ENABLED
+          Boot control not available for BG/P systems
           
 
     """
@@ -10351,14 +7177,10 @@ def test_partadm_boot_status_option_1():
     args      = """--boot-status"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-BOOTING_STATUS
-
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10384,22 +7206,18 @@ def test_partadm_boot_status_option_2():
     """
     partadm test run: boot_status_option_2
         Old Command Output:
-          Block Booting: ENABLED
+          Boot control not available for BG/P systems
           
 
     """
 
-    args      = """--boot-status p1"""
+    args      = """--boot-status ANL-R00-M0-512"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-BOOTING_STATUS
-
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10424,26 +7242,20 @@ BOOTING_STATUS
 def test_partadm_boot_status_option_3():
     """
     partadm test run: boot_status_option_3
-        Old Command Output:
-          Block Booting: ENABLED
-          
 
     """
 
-    args      = """--boot-status --recursive p1"""
+    args      = """--boot-status --recursive ANL-R00-M0-512"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
 """
 GET_PARTITIONS
 
-plist: [{'tag': 'partition', 'name': 'p1', 'children_list': '*'}]
-
-BOOTING_STATUS
-
+plist: [{'tag': 'partition', 'name': 'ANL-R00-M0-512', 'children': '*'}]
 """
 
     stubout_file = "stub.out"
@@ -10470,7 +7282,7 @@ def test_partadm_boot_status_option_4():
     """
     partadm test run: boot_status_option_4
         Old Command Output:
-          Block Booting: ENABLED
+          Boot control not available for BG/P systems
           
 
     """
@@ -10478,14 +7290,10 @@ def test_partadm_boot_status_option_4():
     args      = """--boot-status --blockinfo"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-BOOTING_STATUS
-
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10511,7 +7319,7 @@ def test_partadm_boot_status_option_5():
     """
     partadm test run: boot_status_option_5
         Old Command Output:
-          Block Booting: ENABLED
+          Boot control not available for BG/P systems
           
 
     """
@@ -10519,14 +7327,10 @@ def test_partadm_boot_status_option_5():
     args      = """--boot-status --clean_block"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
-    stubout   = \
-"""
-BOOTING_STATUS
-
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10552,7 +7356,7 @@ def test_partadm_boot_status_option_6():
     """
     partadm test run: boot_status_option_6
         Old Command Output:
-          Block Booting: ENABLED
+          Boot control not available for BG/P systems
           
 
     """
@@ -10560,7 +7364,7 @@ def test_partadm_boot_status_option_6():
     args      = """--boot-status --recursive --blockinfo"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
@@ -10568,9 +7372,6 @@ def test_partadm_boot_status_option_6():
 GET_PARTITIONS
 
 plist: []
-
-BOOTING_STATUS
-
 """
 
     stubout_file = "stub.out"
@@ -10597,7 +7398,7 @@ def test_partadm_boot_status_option_7():
     """
     partadm test run: boot_status_option_7
         Old Command Output:
-          Block Booting: ENABLED
+          Boot control not available for BG/P systems
           
 
     """
@@ -10605,7 +7406,7 @@ def test_partadm_boot_status_option_7():
     args      = """--boot-status --recursive --clean_block"""
 
     cmdout    = \
-"""Block Booting: ENABLED
+"""Boot control not available for BG/P systems
 """
 
     stubout   = \
@@ -10613,9 +7414,6 @@ def test_partadm_boot_status_option_7():
 GET_PARTITIONS
 
 plist: []
-
-BOOTING_STATUS
-
 """
 
     stubout_file = "stub.out"
@@ -10641,46 +7439,16 @@ BOOTING_STATUS
 def test_partadm_list_io_1():
     """
     partadm test run: list_io_1
-        Old Command Output:
-          Name  Size  State  CS Status  BlockComputes  Autoreboot
-          =========================================================
-          P1    0     idle   OK               x        x         
-          P2    1     idle   OK               x        x         
-          P3    2     idle   OK               x        x         
-          P4    3     idle   OK               x        x         
-          P5    4     idle   OK               x        x         
-          P6    5     idle   OK               x        x         
-          P7    6     idle   OK               x        x         
-          P8    7     idle   OK               x        x         
-          P9    8     idle   OK               x        x         
-          P10   9     idle   OK               x        x         
-          
 
     """
 
     args      = """--list_io"""
 
     cmdout    = \
-"""Name  Size  State  CS Status  BlockComputes  Autoreboot
-=========================================================
-P1    0     idle   OK               x        x         
-P2    1     idle   OK               x        x         
-P3    2     idle   OK               x        x         
-P4    3     idle   OK               x        x         
-P5    4     idle   OK               x        x         
-P6    5     idle   OK               x        x         
-P7    6     idle   OK               x        x         
-P8    7     idle   OK               x        x         
-P9    8     idle   OK               x        x         
-P10   9     idle   OK               x        x         
+"""WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
-    stubout   = \
-"""
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10705,46 +7473,16 @@ plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_com
 def test_partadm_list_io_2():
     """
     partadm test run: list_io_2
-        Old Command Output:
-          Name  Size  State  CS Status  BlockComputes  Autoreboot
-          =========================================================
-          P1    0     idle   OK               x        x         
-          P2    1     idle   OK               x        x         
-          P3    2     idle   OK               x        x         
-          P4    3     idle   OK               x        x         
-          P5    4     idle   OK               x        x         
-          P6    5     idle   OK               x        x         
-          P7    6     idle   OK               x        x         
-          P8    7     idle   OK               x        x         
-          P9    8     idle   OK               x        x         
-          P10   9     idle   OK               x        x         
-          
 
     """
 
-    args      = """--list_io p1 p2"""
+    args      = """--list_io ANL-R00-M0-512 ANL-R00-M1-512"""
 
     cmdout    = \
-"""Name  Size  State  CS Status  BlockComputes  Autoreboot
-=========================================================
-P1    0     idle   OK               x        x         
-P2    1     idle   OK               x        x         
-P3    2     idle   OK               x        x         
-P4    3     idle   OK               x        x         
-P5    4     idle   OK               x        x         
-P6    5     idle   OK               x        x         
-P7    6     idle   OK               x        x         
-P8    7     idle   OK               x        x         
-P9    8     idle   OK               x        x         
-P10   9     idle   OK               x        x         
+"""WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
-    stubout   = \
-"""
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10769,46 +7507,16 @@ plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_com
 def test_partadm_list_io_3():
     """
     partadm test run: list_io_3
-        Old Command Output:
-          Name  Size  State  CS Status  BlockComputes  Autoreboot
-          =========================================================
-          P1    0     idle   OK               x        x         
-          P2    1     idle   OK               x        x         
-          P3    2     idle   OK               x        x         
-          P4    3     idle   OK               x        x         
-          P5    4     idle   OK               x        x         
-          P6    5     idle   OK               x        x         
-          P7    6     idle   OK               x        x         
-          P8    7     idle   OK               x        x         
-          P9    8     idle   OK               x        x         
-          P10   9     idle   OK               x        x         
-          
 
     """
 
     args      = """-i"""
 
     cmdout    = \
-"""Name  Size  State  CS Status  BlockComputes  Autoreboot
-=========================================================
-P1    0     idle   OK               x        x         
-P2    1     idle   OK               x        x         
-P3    2     idle   OK               x        x         
-P4    3     idle   OK               x        x         
-P5    4     idle   OK               x        x         
-P6    5     idle   OK               x        x         
-P7    6     idle   OK               x        x         
-P8    7     idle   OK               x        x         
-P9    8     idle   OK               x        x         
-P10   9     idle   OK               x        x         
+"""WARNING: IO Block information only exists on BG/Q-type systems.
 """
 
-    stubout   = \
-"""
-GET_IO_BLOCKS
-
-plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_computes_for_reboot': '*', 'size': '*'}]
-"""
+    stubout   = ''
 
     stubout_file = "stub.out"
 
@@ -10833,9 +7541,6 @@ plist: [{'status': '*', 'name': '*', 'state': '*', 'autoreboot': '*', 'block_com
 def test_partadm_add_io_block_1():
     """
     partadm test run: add_io_block_1
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -10870,16 +7575,13 @@ def test_partadm_add_io_block_1():
 def test_partadm_add_io_block_2():
     """
     partadm test run: add_io_block_2
-        Old Command Output:
-          ['p1', 'p2', 'p3']
-          
 
     """
 
-    args      = """--add_io_block p1 p2 p3"""
+    args      = """--add_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""['p1', 'p2', 'p3']
+"""['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
     stubout   = \
@@ -10887,12 +7589,18 @@ def test_partadm_add_io_block_2():
 ADD_IO_BLOCKS
 
 user name: gooduser
-name:p1
-name:p2
-name:p3
-name:p1
-name:p2
-name:p3
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -10918,9 +7626,6 @@ name:p3
 def test_partadm_del_io_block_1():
     """
     partadm test run: del_io_block_1
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -10955,16 +7660,13 @@ def test_partadm_del_io_block_1():
 def test_partadm_del_io_block_2():
     """
     partadm test run: del_io_block_2
-        Old Command Output:
-          ['p1', 'p2', 'p3']
-          
 
     """
 
-    args      = """--del_io_block p1 p2 p3"""
+    args      = """--del_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""['p1', 'p2', 'p3']
+"""['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
     stubout   = \
@@ -10972,12 +7674,18 @@ def test_partadm_del_io_block_2():
 DEL_IO_BLOCKS
 
 user name: gooduser
-name:p1
-name:p2
-name:p3
-name:p1
-name:p2
-name:p3
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
+name:ANL-R00-M0-512
+name type: <type 'str'>
+name:ANL-R00-M1-512
+name type: <type 'str'>
+name:ANL-R01-M0-512
+name type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -11003,9 +7711,6 @@ name:p3
 def test_partadm_boot_io_block_1():
     """
     partadm test run: boot_io_block_1
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -11040,16 +7745,13 @@ def test_partadm_boot_io_block_1():
 def test_partadm_boot_io_block_2():
     """
     partadm test run: boot_io_block_2
-        Old Command Output:
-          IO Boot initiated on p1 p2 p3
-          
 
     """
 
-    args      = """--boot_io_block p1 p2 p3"""
+    args      = """--boot_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""IO Boot initiated on p1 p2 p3
+"""IO Boot initiated on ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
     stubout   = \
@@ -11057,8 +7759,7 @@ def test_partadm_boot_io_block_2():
 INITIATE_IO_BOOT
 
 whoami: gooduser
-tag: partadm
-parts: ['p1', 'p2', 'p3']
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
     stubout_file = "stub.out"
@@ -11084,9 +7785,6 @@ parts: ['p1', 'p2', 'p3']
 def test_partadm_free_io_block_1():
     """
     partadm test run: free_io_block_1
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -11121,16 +7819,13 @@ def test_partadm_free_io_block_1():
 def test_partadm_free_io_block_2():
     """
     partadm test run: free_io_block_2
-        Old Command Output:
-          IO Free initiated on p1 p2 p3
-          
 
     """
 
-    args      = """--free_io_block p1 p2 p3"""
+    args      = """--free_io_block ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""IO Free initiated on p1 p2 p3
+"""IO Free initiated on ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
     stubout   = \
@@ -11138,8 +7833,8 @@ def test_partadm_free_io_block_2():
 INITIATE_IO_BOOT
 
 whoami: gooduser
-force: False
-parts: ['p1', 'p2', 'p3']
+force: False, type = <type 'bool'>
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
     stubout_file = "stub.out"
@@ -11165,9 +7860,6 @@ parts: ['p1', 'p2', 'p3']
 def test_partadm_set_io_autoboot_1():
     """
     partadm test run: set_io_autoboot_1
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -11202,16 +7894,13 @@ def test_partadm_set_io_autoboot_1():
 def test_partadm_set_io_autoboot_2():
     """
     partadm test run: set_io_autoboot_2
-        Old Command Output:
-          Autoreboot flag set for IO Blocks: p1 p2 p3
-          
 
     """
 
-    args      = """--set_io_autoboot p1 p2 p3"""
+    args      = """--set_io_autoboot ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""Autoreboot flag set for IO Blocks: p1 p2 p3
+"""Autoreboot flag set for IO Blocks: ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
     stubout   = \
@@ -11219,7 +7908,7 @@ def test_partadm_set_io_autoboot_2():
 SET_AUTOREBOOT
 
 whoami: gooduser
-parts: ['p1', 'p2', 'p3']
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
     stubout_file = "stub.out"
@@ -11245,9 +7934,6 @@ parts: ['p1', 'p2', 'p3']
 def test_partadm_unset_io_autoboot_1():
     """
     partadm test run: unset_io_autoboot_1
-        Old Command Output:
-          At least one partition must be supplied
-          
 
     """
 
@@ -11282,16 +7968,13 @@ def test_partadm_unset_io_autoboot_1():
 def test_partadm_unset_io_autoboot_2():
     """
     partadm test run: unset_io_autoboot_2
-        Old Command Output:
-          Autoreboot flag unset for IO Blocks: p1 p2 p3
-          
 
     """
 
-    args      = """--unset_io_autoboot p1 p2 p3"""
+    args      = """--unset_io_autoboot ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
-"""Autoreboot flag unset for IO Blocks: p1 p2 p3
+"""Autoreboot flag unset for IO Blocks: ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512
 """
 
     stubout   = \
@@ -11299,7 +7982,7 @@ def test_partadm_unset_io_autoboot_2():
 UNSET_AUTOREBOOT
 
 whoami: gooduser
-parts: ['p1', 'p2', 'p3']
+parts: ['ANL-R00-M0-512', 'ANL-R00-M1-512', 'ANL-R01-M0-512']
 """
 
     stubout_file = "stub.out"
@@ -11325,9 +8008,6 @@ parts: ['p1', 'p2', 'p3']
 def test_partadm_io_autoboot_start_1():
     """
     partadm test run: io_autoboot_start_1
-        Old Command Output:
-          IO Block autoreboot enabled.
-          
 
     """
 
@@ -11366,13 +8046,10 @@ ENABLE_IO_AUTOREBOOT
 def test_partadm_io_autoboot_start_2():
     """
     partadm test run: io_autoboot_start_2
-        Old Command Output:
-          IO Block autoreboot enabled.
-          
 
     """
 
-    args      = """--io_autoboot_start p1 p2 p3"""
+    args      = """--io_autoboot_start ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """IO Block autoreboot enabled.
@@ -11407,9 +8084,6 @@ ENABLE_IO_AUTOREBOOT
 def test_partadm_io_autoboot_stop_1():
     """
     partadm test run: io_autoboot_stop_1
-        Old Command Output:
-          IO Block autoreboot disabled.
-          
 
     """
 
@@ -11448,13 +8122,10 @@ DISABLE_IO_AUTOREBOOT
 def test_partadm_io_autoboot_stop_2():
     """
     partadm test run: io_autoboot_stop_2
-        Old Command Output:
-          IO Block autoreboot disabled.
-          
 
     """
 
-    args      = """--io_autoboot_stop p1 p2 p3"""
+    args      = """--io_autoboot_stop ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """IO Block autoreboot disabled.
@@ -11489,9 +8160,6 @@ DISABLE_IO_AUTOREBOOT
 def test_partadm_io_autoboot_status_1():
     """
     partadm test run: io_autoboot_status_1
-        Old Command Output:
-          IO Block autoreboot: ENABLED
-          
 
     """
 
@@ -11530,13 +8198,10 @@ GET_IO_AUTOREBOOT_STATUS
 def test_partadm_io_autoboot_status_2():
     """
     partadm test run: io_autoboot_status_2
-        Old Command Output:
-          IO Block autoreboot: ENABLED
-          
 
     """
 
-    args      = """--io_autoboot_status p1 p2 p3"""
+    args      = """--io_autoboot_status ANL-R00-M0-512 ANL-R00-M1-512 ANL-R01-M0-512"""
 
     cmdout    = \
 """IO Block autoreboot: ENABLED

@@ -21,6 +21,8 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 1221 $'
 __version__ = '$Version$'
 
+SLPMGR = client_utils.SLPMGR
+
 
 def main():
     """
@@ -28,9 +30,6 @@ def main():
     """
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
-
-    # read the cobalt config files
-    client_utils.read_config()
 
     # list of callback with its arguments
     callbacks = [
@@ -50,7 +49,8 @@ def main():
     if not parser.no_args():
         client_utils.logger.error('No arguments needed')
 
-    services = client_utils.get_services([{'tag':'service', 'name':'*', 'stamp':'*', 'location':'*'}])
+    services = client_utils.component_call(SLPMGR, False, 'get_services', 
+                                           ([{'tag':'service', 'name':'*', 'stamp':'*', 'location':'*'}],))
 
     if services:
         header = [('Name', 'Location', 'Update Time')]
@@ -67,8 +67,8 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)
 
 

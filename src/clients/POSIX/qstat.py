@@ -37,6 +37,8 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Revision: 406 $'
 __version__ = '$Version$'
 
+QUEMGR = client_utils.QUEMGR
+
 def human_format(x):
     units = ['  ', ' K', ' M', ' G', ' T', ' P']
     dividend = 1000.0
@@ -71,7 +73,7 @@ def get_output_for_queues(parser,hinfo):
 
     query = [{'name':qname,'users':'*','mintime':'*','maxtime':'*','maxrunning':'*','maxqueued':'*','maxusernodes':'*',
               'maxnodehours':'*','totalnodes':'*','state':'*'} for qname in names]
-    response = client_utils.get_queues(query)
+    response = client_utils.component_call(QUEMGR, True, 'get_queues', (query,))
 
     if not parser.no_args() and not response:
         sys.exit(1)
@@ -119,7 +121,7 @@ def get_output_for_jobs(parser,hinfo,queues):
                         q.update({x.lower():'*'})
         q["user"] = user_name
 
-    response = client_utils.get_jobs(query)
+    response = client_utils.component_call(QUEMGR, False, 'get_jobs', (query,))
 
     if not parser.no_args() and not response:
         sys.exit(1)
@@ -164,13 +166,13 @@ def get_output_for_jobs(parser,hinfo,queues):
             j['timeremaining'] = 'N/A'
         else:
             time_remaining = walltime_secs - (currtime - orig_starttime)
-            h = int(walltime_secs)/3600
-            m = int(time_remaining) / 60 - (h*60)
-            s = (int(time_remaining) % 60) + 1
-            if s == 60:
-                s = 0
-                m += 1
-            j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
+            if time_remaining < 0:
+                j['timeremaining'] = '00:00:00'
+            else:
+                s = int(time_remaining) % 60
+                m = (int(time_remaining) % 3600) / 60
+                h = int(time_remaining) / 3600
+                j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
         # jobname
         outputpath = j.get('outputpath')
         if outputpath:
@@ -209,12 +211,12 @@ def process_the_output(output,parser,hinfo):
     fields            = ['score'] if parser.options.sort == None else [f.lower() for f in parser.options.sort]
     lower_case_header = [str(h).lower() for h in hinfo.header]
     idxes             = []
-
+    
     for f in fields:
         try:
             idx = lower_case_header.index(f)
             idxes.append(idx)
-        except ValueError:
+        except:
             pass
     if not idxes:
         idxes.append(0)
@@ -259,9 +261,6 @@ def main():
     # setup logging for client. The clients should call this before doing anything else.
     client_utils.setup_logging(logging.INFO)
 
-    # read the cobalt config files
-    client_utils.read_config()
-
     delim = ':'
 
     # list of callback with its arguments
@@ -281,7 +280,7 @@ def main():
     hinfo = client_utils.header_info(parser)
 
     # Get the queues for job ids
-    queues = client_utils.get_queues([{'name':'*','state':'*'}])
+    queues = client_utils.component_call(QUEMGR, True, 'get_queues', ([{'name':'*','state':'*'}],))
 
     #  if Q option specified then get the info for the specified queues 
     if parser.options.Q != None:
@@ -300,6 +299,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

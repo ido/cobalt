@@ -54,6 +54,14 @@ def test_qdel_debug_option():
 """
 qdel.py -d 1
 
+component: "queue-manager.del_jobs", defer: True
+  del_jobs(
+     [{'tag': 'job', 'user': 'gooduser', 'jobid': 1}],
+     False,
+     gooduser,
+     )
+
+
       Deleted Jobs
 JobID  User      
 =================
@@ -67,8 +75,11 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -162,17 +173,29 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 jobid:2
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 jobid:3
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 jobid:4
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 """
 
     stubout_file = "stub.out"
@@ -223,8 +246,11 @@ DEL_JOBS
 force:False
 whoami:gooduser
 jobid:1
+jobid type: <type 'int'>
 tag:job
+tag type: <type 'str'>
 user:gooduser
+user type: <type 'str'>
 """
 
     stubout_file = "stub.out"

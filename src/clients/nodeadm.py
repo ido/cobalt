@@ -15,9 +15,7 @@ OPTIONS DEFINITIONS:
 
 """
 import logging
-import math
 import sys
-import time
 from Cobalt import client_utils
 from Cobalt.client_utils import cb_debug
 
@@ -25,6 +23,8 @@ from Cobalt.arg_parser import ArgParse
 
 __revision__ = ''
 __version__ = ''
+
+SYSMGR = client_utils.SYSMGR
 
 def validate_args(parser):
     """
@@ -46,7 +46,7 @@ def validate_args(parser):
         parser.parser.print_help()
         sys.exit(1)
 
-    impl = client_utils.get_implementation()
+    impl = client_utils.component_call(SYSMGR, False, 'get_implementation', ())
 
     # make sure we're on a cluster-system
     if "cluster_system" != impl:
@@ -85,10 +85,8 @@ def main():
     opt  = parser.options
     args = parser.args
 
-    system = client_utils.client_data.system_manager(False)
-
     if opt.down:
-        delta = system.nodes_down(args, whoami)
+        delta = client_utils.component_call(SYSMGR, False, 'nodes_down', (args, whoami))
         client_utils.logger.info("nodes marked down:")
         for d in delta:
             client_utils.logger.info("   %s" % d)
@@ -99,7 +97,7 @@ def main():
                 client_utils.logger.info("   %s" % a)
     
     elif opt.up:
-        delta = system.nodes_up(args, whoami)
+        delta = client_utils.component_call(SYSMGR, False, 'nodes_up', (args, whoami))
         client_utils.logger.info("nodes marked up:")
         for d in delta:
             client_utils.logger.info("   %s" % d)
@@ -110,8 +108,8 @@ def main():
                 client_utils.logger.info("   %s" %a)
     
     elif opt.list:
-        status = system.get_node_status()
-        queue_data = system.get_queue_assignments()
+        status = client_utils.component_call(SYSMGR, False, 'get_node_status', ())
+        queue_data = client_utils.component_call(SYSMGR, False, 'get_queue_assignments', ())
 
         header = [['Host', 'Queue', 'State']]
         #build output list
@@ -128,7 +126,7 @@ def main():
         client_utils.printTabular(header + output)
 
     elif opt.queue:
-        data = system.set_queue_assignments(opt.queue, args, whoami)
+        data = client_utils.component_call(SYSMGR, False, 'set_queue_assignments', (opt.queue, args, whoami))
         client_utils.logger.info(data)
 
 if __name__ == '__main__':
@@ -136,6 +134,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)

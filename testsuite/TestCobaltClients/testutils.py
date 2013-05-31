@@ -18,15 +18,25 @@ OPTIONS DEFINITIONS:
 '-s','--stubo',dest='stubo',type='string',default='stub.out', /
   help='stub functions output file (default: stub.out)'
 
+'--sanity-tests',dest='sanity',action='store_true', default=False, /
+  help='Generate tests to check for return status and fata errors'
+
+'--compare-tests', dest='compare',action='store_true', default=False, /
+  help='Generate tests to compare output using old commands, -o options needs be supplied'
+
+'--skip-list',dest='skip_list',type='string', /
+  help='skip tests matching skip list (format: <str1>:...:<strN>)', callback=cb_skip_list
+
 """
 import os
 import sys
 import glob
 import re
 import difflib
-from arg_parser import ArgParse
 
-NEW_ONLY_TAG    = '<NEW_ONLY>'
+if __name__ == '__main__':
+    from arg_parser import ArgParse
+
 CMD_OUTPUT      = 'cmd.out'
 ARGS_FILES      = '*_args.py'
 TESTHOOK_FILE   = '.testhook'
@@ -83,12 +93,54 @@ def test_<NAME>_<TC_NAME>():
 
 """
 
+SANITY_TEST_TEMPLATE = \
+"""
+# ---------------------------------------------------------------------------------
+def test_<NAME>_<TC_NAME>():
+    <TQ>
+<DOCSTR>
+    <TQ>
+
+    args      = <TQ><ARGS><TQ>
+    exp_rs    = <RS>
+
+    results = testutils.run_cmd('<CMD>.py',args,None) 
+    rs      = results[0]
+    cmd_out = results[1]
+
+    # Test Pass Criterias
+    no_rs_err     = (rs == exp_rs)
+    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
+
+    result = no_rs_err and no_fatal_exc
+
+    errmsg  = "\\n\\nFailed Data:\\n\\n" \\
+        "Return Status %s, Expected Return Status %s\\n\\n" \\
+        "Command Output:\\n%s\\n\\n" \\
+        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), args)
+
+    assert result, errmsg
+"""
+
 # get command name
 cn_p = re.compile(r'(.*)'+ARGS_FILES[1:])
 getname = lambda fn: '' if cn_p.match(fn) == None else cn_p.sub(r'\1',fn)
 
 # indent buffer
 indent = lambda x,buf:'\n'.join([(x*' ')+line for line in buf.split('\n')])
+
+def getcmd(path, args_info, name):
+    """
+    This function will get the command name
+    """
+    if 'command' in args_info:
+        _cmd  = "%s%s.py" % (path, args_info['command'])
+        _name = args_info['command']
+    else:
+        _cmd  = "%s%s.py" % (path, name)
+        _name = name
+    return (_name, _cmd)
+
 
 def save_testhook(testhook):
     """
@@ -113,14 +165,22 @@ def remove_testhook():
     if os.path.isfile(TESTHOOK_FILE):
         os.remove(TESTHOOK_FILE)
 
-def gettest(cmd,tc_name,docstr,args,retstat,cmdout,stubout,stubout_file,thook):
+def get_test(cmd,tc_name,docstr,args,rs,cmdout,stubout,stubout_file,thook):
     """
     Get Test from template with all tags replace
     """
-    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).               \
-        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).            \
-        replace(RS,str(retstat)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
+    return TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ).             \
+        replace(DS,docstr).replace(AR,args).replace(CO,cmdout).replace(SO,stubout).       \
+        replace(RS,str(rs)).replace(ES1,"''").replace(SF,stubout_file).replace(ES2,"''"). \
         replace(TH,thook).replace(NM,cmd.replace('-','_'))
+
+def get_sanity_test(cmd, tc_name, docstr, args, rs):
+    """
+    Get Return Status Test from template with all tags replace
+    """
+    return SANITY_TEST_TEMPLATE.replace(CM,cmd).replace(TC,tc_name).replace(TQ,RTQ). \
+        replace(DS,docstr).replace(AR,args).replace(RS,str(rs)).replace(ES1,"''").   \
+        replace(ES2,"''").replace(NM,cmd.replace('-','_'))
 
 def get_output(filename,remove_file = True):
     """
@@ -147,17 +207,17 @@ def validate_results(results,expected_results,stubout_compare_func = None):
     Validate the results against expected results and return 1 if all validate correctly otherwise return 
     """
     result = 1
-    retstat     = results[0]
+    rs          = results[0]
     cmdout      = results[1]
     stubout     = results[2]
-    exp_retstat = expected_results[0]
+    exp_rs      = expected_results[0]
     exp_cmdout  = expected_results[1]
     exp_stubout = expected_results[2]
 
     # Validate expected results
-    if int(retstat) != int(exp_retstat):
+    if int(rs) != int(exp_rs):
         result  = "*** RETURN STATUS DOES NOT MATCH ***\n"
-        result += "Expected Return Status: %s, Actual Return Status: %s\n" % (str(exp_retstat),str(retstat))
+        result += "Expected Return Status: %s, Actual Return Status: %s\n" % (str(exp_rs),str(rs))
 
     elif exp_stubout:
         cfunc = lambda e,a: e != a
@@ -175,17 +235,17 @@ def validate_results(results,expected_results,stubout_compare_func = None):
 
     return result 
 
-def run_cmd(cmd, args, stubout_file):
+def run_cmd(cmd, args, stubout_file = None):
     """
     Run the specified command with arguments and pass the results back.
     If the everything passed then returns 1 else returns data.
     If the getdata flag is set then it will return the command output information and no validation is done.
     """
     # run command and redirect output to a temp log file
-    retstat = os.system(cmd + ' ' + args + '&> %s' % CMD_OUTPUT)
+    rs      = os.system(cmd + ' ' + args + '&> %s' % CMD_OUTPUT)
     cmdout  = get_output(CMD_OUTPUT)
-    stubout = get_output(stubout_file)
-    return (retstat,cmdout,stubout)
+    stubout = get_output(stubout_file) if stubout_file is not None else ''
+    return (rs, cmdout, stubout)
 
 def getlines(filename):
     """
@@ -208,7 +268,7 @@ def get_argsfile_list(args_list,args_path):
         retlist = glob.glob(args_path+ARGS_FILES)
     return retlist
 
-def gentest(fd, cmd, tc_name, args, old_results, new_results, stubout_file, thook):
+def gen_test(fd, cmd, tc_name, args, old_results, new_results, stubout_file, thook):
     """
     This function will do validation of the generated data and compare the expected outpus
     and then generate the test for the specified arguments
@@ -227,14 +287,36 @@ def gentest(fd, cmd, tc_name, args, old_results, new_results, stubout_file, thoo
     if result != 1:
         docstr += indent(4,result)
         
-    retstat = new_results[0] # need the new return status for generated test
-    cmdout  = new_results[1] # need the new command output for generated test
+    rs     = new_results[0] # need the new return status for generated test
+    cmdout = new_results[1] # need the new command output for generated test
 
-    test = gettest(cmd,tc_name,docstr,args,retstat,cmdout,stubout,stubout_file,thook)
+    test = get_test(cmd, tc_name, docstr, args, rs, cmdout, stubout, stubout_file, thook)
 
     fd.write(test)
 
-def gentests(opath,npath,args_path,args_list,stubout_file):
+def gen_sanity_test(fd, cmd, tc_name, args, new_results):
+    """
+    This function will a rs validation of the return status
+    """
+    rs      = new_results[0] # need the new return status for generated test
+    cmdout  = new_results[1] # need the new command output for generated test
+    docstr  = '    %s test run: %s\n\n' % (cmd,tc_name,)
+    docstr += indent(8,'Command Output:') + '\n' + indent(10,cmdout) + '\n'
+    test    = get_sanity_test(cmd, tc_name, docstr, args, rs)
+    fd.write(test)
+
+def skip_test(args_info , skip_list):
+    """
+    This function will return true if any of the skip strings are in the args_info
+    """
+    retstat = False
+    if 'skip_list' in args_info:
+        if set.intersection(set(args_info['skip_list']),set(skip_list)) != set([]):
+            retstat = True
+
+    return retstat
+
+def gen_tests(opath, npath, args_path, args_list, stubout_file, skip_list):
     """
     write run the arguments are write the test data
     """
@@ -248,27 +330,65 @@ def gentests(opath,npath,args_path,args_list,stubout_file):
         os.system('cp %s %s.py' % (argsfile,temp_module))
         argsmod   = __import__(temp_module)
 
-        old_cmd = "%s%s.py" % (opath,name)
-        new_cmd = "%s%s.py" % (npath,name)
-
         fd = open('%s_test.py' % name,'w')
 
         # testutils module needs to be imported by the test file
         fd.write("import testutils\n")
 
         for args_info in argsmod.test_argslist:
-            tc_name  = args_info['tc_name']  # get the comment if there is one
-            thook    = args_info['testhook'] if 'testhook' in args_info else '' # get test hook
-            new_only = (args_info['new_only'] if 'new_only' in args_info else False) or (old_cmd == new_cmd)
-            new_args = args_info['args']
-            old_args = args_info['old_args'] if 'old_args' in args_info else new_args
 
+            if skip_test(args_info, skip_list):
+                continue
+
+            (_name, old_cmd)   = getcmd(opath, args_info, name)
+            (_name, new_cmd)   = getcmd(npath, args_info, name)
+            tc_name   = args_info['tc_name']  # get the comment if there is one
+            new_args  = args_info['args']
+            thook     = args_info['testhook'] if 'testhook' in args_info else '' # get test hook
+            new_only  = (args_info['new_only'] if 'new_only' in args_info else False) or (old_cmd == new_cmd)
+            old_args  = args_info['old_args'] if 'old_args' in args_info else new_args
             save_testhook(thook)
-            oresults = None if new_only else run_cmd(old_cmd,old_args,stubout_file)
-            nresults = run_cmd(new_cmd,new_args,stubout_file)
-            remove_testhook()
+            oresults  = None if new_only else run_cmd(old_cmd,old_args,stubout_file)
+            nresults  = run_cmd(new_cmd,new_args,stubout_file)
 
-            gentest(fd, name, tc_name, new_args, oresults, nresults, stubout_file, thook)
+            remove_testhook()
+            gen_test(fd, _name, tc_name, new_args, oresults, nresults, stubout_file, thook)
+
+        fd.close()
+        os.system('rm %s.*' % temp_module)
+
+def gen_sanity_tests(npath, args_path, args_list, skip_list):
+    """
+    write run the arguments are write the rs test data
+    """
+    argsfile_list = get_argsfile_list(args_list,args_path)
+
+    # go through every client command file 
+    for argsfile in argsfile_list:
+
+        path_info   = os.path.split(argsfile)
+        name        = getname(path_info[1])
+        temp_module = path_info[1][:-3]
+        os.system('cp %s %s.py' % (argsfile,temp_module))
+        argsmod   = __import__(temp_module)
+
+        fd = open('%s_sanity_test.py' % name,'w')
+
+        # testutils module needs to be imported by the test file
+        fd.write("import testutils\n")
+
+        for args_info in argsmod.test_argslist:
+
+            if skip_test(args_info, skip_list): 
+                continue
+
+            tc_name  = args_info['tc_name']  
+            args     = args_info['args']
+
+            (_name, cmd) = getcmd(npath, args_info, name)
+
+            results  = run_cmd(cmd,args)
+            gen_sanity_test(fd, _name, tc_name, args, results)
 
         fd.close()
         os.system('rm %s.*' % temp_module)
@@ -284,13 +404,25 @@ def cb_path(option,opt_str,value,parser,*args):
         sys.exit(1)
     setattr(parser.values,option.dest,value) # set the option
 
+def cb_skip_list(option,opt_str,value,parser,*args):
+    """
+    This callback will validate and get the skip list 
+    """
+    # Validate skip list
+    try:
+        skip_list = value.split(':')
+        setattr(parser.values,option.dest,skip_list) # set the option
+    except:
+        print("Invalid skip list")
+        sys.exit(1)
+
 def main():
     """
     test_clients main function.
     """
 
     # list of callback with its arguments
-    callbacks = [(cb_path, ())]
+    callbacks = [(cb_path, ()), (cb_skip_list, ())]
 
     parser = ArgParse(__doc__,callbacks)
     parser.parse_it() # parse the command line
@@ -298,10 +430,14 @@ def main():
     args_list  = parser.args if not parser.no_args() else None
     
     # go and generate the test
-    opath = parser.options.opath + '/' if parser.options.opath else ''
-    npath = parser.options.npath + '/' if parser.options.npath else ''
-    tpath = parser.options.tpath + '/' if parser.options.tpath else ''
-    gentests(opath,npath,tpath,args_list,parser.options.stubo)
+    opath     = parser.options.opath + '/' if parser.options.opath else ''
+    npath     = parser.options.npath + '/' if parser.options.npath else ''
+    tpath     = parser.options.tpath + '/' if parser.options.tpath else ''
+    skip_list = parser.options.skip_list if parser.options.skip_list is not None else []
+    if parser.options.sanity:
+        gen_sanity_tests(npath, tpath, args_list, skip_list)
+    if parser.options.compare:
+        gen_tests(opath, npath, tpath, args_list, parser. options.stubo, skip_list)
 
 if __name__ == '__main__':
     try:

@@ -41,6 +41,43 @@ from Cobalt.arg_parser import ArgParse
 __revision__ = '$Id: setres.py 2154 2011-05-25 00:22:56Z richp $'
 __version__ = '$Version$'
 
+SCHMGR = client_utils.SCHMGR
+SYSMGR = client_utils.SYSMGR
+
+def set_res_id(parser):
+    """
+    set res id
+    """
+    if parser.options.force_id:
+        client_utils.component_call(SCHMGR, False, 'force_res_id', (parser.options.res_id,))
+        client_utils.logger.info("WARNING: Forcing res id to %s" % parser.options.res_id)
+    else:
+        client_utils.component_call(SCHMGR, False, 'set_res_id', (parser.options.res_id,))
+        client_utils.logger.info("Setting res id to %s" % parser.options.res_id)
+
+def set_cycle_id(parser):
+    """
+    set res id
+    """
+    cycle_id = parser.options.cycle_id
+    if parser.options.force_id:
+        client_utils.component_call(SCHMGR, False, 'force_cycle_id', (cycle_id,))
+        client_utils.logger.info("WARNING: Forcing cycle id to %s" % str(cycle_id))
+    else:
+        client_utils.component_call(SCHMGR, False, 'set_cycle_id', (cycle_id,))
+        client_utils.logger.info("Setting cycle id to %s" % str(cycle_id))
+
+def verify_locations(partitions):
+    """
+    verify that partitions are valid
+    """
+    for p in partitions:
+        test_parts = client_utils.component_call(SYSMGR, False, 'verify_locations', (partitions,))
+        if len(test_parts) != len(partitions):
+            missing = [p for p in partitions if p not in test_parts]
+            client_utils.logger.error("Missing partitions: %s" % (" ".join(missing)))
+            sys.exit(1)
+
 def validate_args(parser,spec,opt_count):
     """
     Validate setres arguments. Will return true if we want to continue processing options.
@@ -65,9 +102,9 @@ def validate_args(parser,spec,opt_count):
         # make the ID change and we are done with setres
         
         if parser.options.res_id != None:
-            client_utils.set_res_id(parser)
+            set_res_id(parser)
         if parser.options.cycle_id != None:
-            client_utils.set_cycle_id(parser)
+            set_cycle_id(parser)
 
         continue_processing_options = False # quit, setres is done
 
@@ -95,7 +132,7 @@ def validate_args(parser,spec,opt_count):
 
         # if we have args then verify the args (partitions)
         if not parser.no_args():
-            client_utils.verify_locations(parser.args)
+            verify_locations(parser.args)
 
         # if we have command line arguments put them in spec
         if not parser.no_args(): spec['partitions'] = ":".join(parser.args)
@@ -110,7 +147,7 @@ def modify_reservation(parser):
     this will handle reservation modifications
     """
     query = [{'name':parser.options.name, 'start':'*', 'cycle':'*', 'duration':'*'}]
-    res_list = client_utils.get_reservations(query)
+    res_list = client_utils.component_call(SCHMGR, False, 'get_reservations', (query,))
     if not res_list:
         client_utils.logger.error("cannot find reservation named '%s'" % parser.options.name)
         sys.exit(1)
@@ -160,7 +197,9 @@ def modify_reservation(parser):
     if parser.options.block_passthrough != None:
         updates['block_passthrough'] = parser.options.block_passthrough
 
-    client_utils.modify_reservation(parser.options.name,updates)
+    comp_args = ([{'name':parser.options.name}], updates, client_utils.getuid())
+    client_utils.component_call(SCHMGR, False, 'set_reservations', comp_args)
+    client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'check_reservations', ()))
 
 def add_reservation(parser,spec,user):
     """
@@ -172,8 +211,8 @@ def add_reservation(parser,spec,user):
     if parser.options.name              == None: spec['name']              = 'system'
     if parser.options.block_passthrough == None: spec['block_passthrough'] = False
 
-    client_utils.add_reservation(spec,user)
-
+    client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'add_reservations', ([spec], user)))
+    client_utils.logger.info(client_utils.component_call(SCHMGR, False, 'check_reservations', ()))
 
 def main():
     """
@@ -186,18 +225,14 @@ def main():
     opts     = {} # old map
     opt2spec = {}
 
-    dt_allowed = False # Delta time not allowed
-    seconds    = True  # convert to seconds
-    add_user   = False # do not add current user to the list
-
     # list of callback with its arguments
     callbacks = [
         # <cb function>           <cb args>
-        [ cb_time                , (dt_allowed,seconds) ],
+        [ cb_time                , (False, True, True) ], # no delta time, Seconds, return int
         [ cb_date                , () ],
         [ cb_passthrough         , () ],
         [ cb_debug               , () ],
-        [ cb_user_list           , (opts,add_user) ]]
+        [ cb_user_list           , (opts, False) ]] # do not add current user
 
     # Get the version information
     opt_def =  __doc__.replace('__revision__',__revision__)
@@ -226,6 +261,6 @@ if __name__ == '__main__':
         main()
     except SystemExit:
         raise
-    except:
-        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***",str(sys.exc_info()))
-        raise
+    except Exception, e:
+        client_utils.logger.fatal("*** FATAL EXCEPTION: %s ***", e)
+        sys.exit(1)
