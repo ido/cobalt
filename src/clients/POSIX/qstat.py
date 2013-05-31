@@ -166,13 +166,13 @@ def get_output_for_jobs(parser,hinfo,queues):
             j['timeremaining'] = 'N/A'
         else:
             time_remaining = walltime_secs - (currtime - orig_starttime)
-            h = int(walltime_secs)/3600
-            m = int(time_remaining) / 60 - (h*60)
-            s = (int(time_remaining) % 60) + 1
-            if s == 60:
-                s = 0
-                m += 1
-            j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
+            if time_remaining < 0:
+                j['timeremaining'] = '00:00:00'
+            else:
+                s = int(time_remaining) % 60
+                m = (int(time_remaining) % 3600) / 60
+                h = int(time_remaining) / 3600
+                j['timeremaining'] = "%02d:%02d:%02d" % (h, m, s)
         # jobname
         outputpath = j.get('outputpath')
         if outputpath:
