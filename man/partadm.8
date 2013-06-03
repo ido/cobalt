@@ -10,7 +10,7 @@ partadm
 .TP
 .B partadm [--enable|--disable] part1 part2
 .TP
-.B partadm --queue=queue1:queue2 part1 part2
+.B partadm --queue=queue1:queue2 [--rmq | --appq] part1 part2
 .TP
 .B partadm --fail part1 part2
 .TP
@@ -67,7 +67,13 @@ Do not run jobs on this partition(s). (Jobs can run on larger or
 smaller overlapping partitions)
 .TP
 .B \-\-queue
-Set the queue[s] that point to particular partitions.
+Set the queue[s] that point to particular partitions. Use option --rmq to remove queue(s) or --appq to append queue(s)
+.TP
+.B \-\-rmq
+Remove queues specified in \-\-queue from specified partitions.
+.TP
+.B \-\-appq
+Append queues specified in \-\-queue to the specified partitions.
 .TP
 .B \-\-fail
 Manually fail a partition in the same way as a partition that has failed diagnostics.
