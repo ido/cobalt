@@ -83,10 +83,9 @@ int main(int argc, char **argv){
   /*prepend the python override*/
   args[0] = python_exe;
   args[1] = "-E";
-  for (i=3;i<argc;i++)
-    args[i] = argv[i];
-  args[i] = NULL;
-
+  for (i=1;i<argc;i++)
+    args[i+2] = argv[i];
+  args[i+2] = NULL;
   if ( ( cmd = basename(argv[0]) ) == NULL ) {
     perror(argv[0]);
     return 1;
@@ -95,6 +94,10 @@ int main(int argc, char **argv){
     perror(argv[0]);
     return 1;
   }
+  /*for (i=0;i<argc+3;++i){
+    printf("%s ", args[i]);
+  }
+  printf("\n");*/
   if (execv(args[0], args)) {
     perror(argv[0]);
     return 1;
