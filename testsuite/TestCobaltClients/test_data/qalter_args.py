@@ -34,7 +34,7 @@ test_argslist = [
     { "tc_name" : "geometry_2", "args" : """-v --geometry 10x10x10x10x10 1 2 3 4 5""", "old_args" : "", },
     { "tc_name" : "geometry_3", "args" : """-v --geometry 04x04x04x04    1 2 3 4""", "new_only" : True, 'skip_list' : ['not_bsim'], },
     { "tc_name" : "geometry_4", "args" : """-v --geometry 10x10x10x10x1  1 2 3 4 5""", 'skip_list' : ['not_bsim'], "new_only" : True, },
-    { "tc_name" : "geometry_5", "args" : """-v --geometry 04x04x04x04x2  1 2 3 4""", "new_only" : True,},
+    { "tc_name" : "geometry_5", "args" : """-v --geometry 04x04x04x04x2  1 2 3 4""", "new_only" : True, 'skip_list' : ['not_bsim'], },
     { "tc_name" : "preboot_1", "args" : """-v --enable_preboot --run_project 10 20 30""", "new_only" : True, },
     { "tc_name" : "preboot_2", "args" : """-v --disable_preboot --run_project 10 20 30""", "new_only" : True,  },
     { "tc_name" : "defer_1", "args" : """--defer""", "new_only": True},

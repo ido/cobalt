@@ -53,7 +53,15 @@ def test_qalter_simple_2():
              )
         
         
-        Failed to match any jobs or queues
+        component: "queue-manager.set_jobs", defer: False
+          set_jobs(
+             [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 65, 'procs': 30, 'notify': None}],
+             {'queue': 'default', 'mode': 'smp', 'jobid': 1, 'project': None, 'tag': 'job', 'notify': None, 'nodes': 30, 'walltime': 65, 'procs': 30, 'user': 'georgerojas'},
+             georgerojas,
+             )
+        
+        
+        [{'project': None, 'user': 'georgerojas', 'jobid': 1, 'queue': 'default', 'tag': 'job', 'mode': 'smp', 'nodes': 30, 'walltime': 65, 'procs': 30, 'notify': None}]
         
         
     """
@@ -87,8 +95,7 @@ def test_qalter_simple_3():
 
         Command Output:
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -154,9 +161,11 @@ def test_qalter_time_2():
     qalter test run: time_2
 
         Command Output:
+        nodes changed from 30 to 10
+        walltime changed from 65 to 70.0
+        procs changed from 30 to 10
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -188,9 +197,9 @@ def test_qalter_time_5():
     qalter test run: time_5
 
         Command Output:
+        walltime changed from 70 to 0
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -222,9 +231,9 @@ def test_qalter_time_6():
     qalter test run: time_6
 
         Command Output:
+        walltime changed from 0 to 0.0
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -256,9 +265,9 @@ def test_qalter_time_7():
     qalter test run: time_7
 
         Command Output:
+        walltime changed from 0 to 0
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -290,9 +299,9 @@ def test_qalter_time_8():
     qalter test run: time_8
 
         Command Output:
+        walltime changed from 0 to 0.0
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -360,9 +369,9 @@ def test_qalter_email_option():
     qalter test run: email_option
 
         Command Output:
+        notify changed from None to j@gmail.com
         
-        Command Error/Debug:Failed to match any jobs or queues
-        
+        Command Error/Debug:
         
     """
 
@@ -688,40 +697,6 @@ def test_qalter_geometry_2():
     """
 
     args      = """-v --geometry 10x10x10x10x10 1 2 3 4 5"""
-    exp_rs    = 256
-
-    results = testutils.run_cmd('qalter.py',args,None) 
-    rs      = results[0]
-    cmd_out = results[1]
-    cmd_err = results[3]
-
-    # Test Pass Criterias
-    no_rs_err     = (rs == exp_rs)
-    no_fatal_exc  = (cmd_out.find("FATAL EXCEPTION") == -1)
-
-    result = no_rs_err and no_fatal_exc
-
-    errmsg  = "\n\nFailed Data:\n\n" \
-        "Return Status %s, Expected Return Status %s\n\n" \
-        "Command Output:\n%s\n\n" \
-        "Command Error:\n%s\n\n" \
-        "Arguments: %s" % (str(rs), str(exp_rs), str(cmd_out), str(cmd_err), args)
-
-    assert result, errmsg
-
-# ---------------------------------------------------------------------------------
-def test_qalter_geometry_5():
-    """
-    qalter test run: geometry_5
-
-        Command Output:
-        
-        Command Error/Debug:Invalid Geometry
-        
-        
-    """
-
-    args      = """-v --geometry 04x04x04x04x2  1 2 3 4"""
     exp_rs    = 256
 
     results = testutils.run_cmd('qalter.py',args,None) 
