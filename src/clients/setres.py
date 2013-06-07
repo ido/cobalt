@@ -65,7 +65,7 @@ def set_cycle_id(parser):
         client_utils.logger.info("WARNING: Forcing cycle id to %s" % str(cycle_id))
     else:
         client_utils.component_call(SCHMGR, False, 'set_cycle_id', (cycle_id,))
-        client_utils.logger.info("Setting cycle id to %s" % str(cycle_id))
+        client_utils.logger.info("Setting cycle_id to %s" % str(cycle_id))
 
 def verify_locations(partitions):
     """

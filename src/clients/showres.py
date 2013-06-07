@@ -57,7 +57,7 @@ def main():
     parser.parse_it() # parse the command line
 
     if not parser.no_args():
-        client_utils.logger.info("No arguments needed")
+        client_utils.logger.error("No arguments needed")
     
     if parser.options.verbose != None and parser.options.really_verbose != None:
         client_utils.logger.error('Only use -l or -x not both')

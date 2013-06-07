@@ -32,6 +32,83 @@ QUEMGR      = 'queue-manager'
 SLPMGR      = 'service-location'
 SCHMGR      = 'scheduler'
 
+class Logger(object):
+    """
+    This class will handle logging to standard error or standard out
+    for info will go to stdout everything else will go to standard error
+    """
+
+    def __init__(self, level):
+        """
+        Cobalt Client log commands
+        """
+        self.h_stdout = logging.StreamHandler(sys.stdout)
+        self.h_stdout.setLevel(logging.INFO)
+        self.stdout_logger = logging.getLogger('cobalt_client_stdout')
+        self.stdout_logger.addHandler(self.h_stdout)
+        self.stdout_logger.setLevel(level)
+
+        self.h_stderr = logging.StreamHandler(sys.stderr)
+        self.h_stderr.setLevel(logging.DEBUG)
+        self.stderr_logger  = logging.getLogger('cobalt_client_stderr')
+        self.stderr_logger.addHandler(self.h_stderr)
+        self.stderr_logger.setLevel(level)
+
+        Cobalt.Util.logger = self.stderr_logger
+
+    def setLevel(self, level):
+        """
+        set logging level
+        """
+        self.stdout_logger.setLevel(level)
+        self.stderr_logger.setLevel(level)
+
+    def debug(self, msg, *args, **kwargs):
+        """
+        print debug message
+        """
+        self.stderr_logger.debug(msg, *args, **kwargs)
+    
+    def info(self, msg, *args, **kwargs):
+        """
+        print info message
+        """
+        self.stdout_logger.info(msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
+        """
+        print warning message
+        """
+        self.stderr_logger.warn(msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        """
+        print warning message
+        """
+        self.stderr_logger.warn(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        """
+        print error message
+        """
+        self.stderr_logger.error(msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        """
+        print critical message
+        """
+        self.stderr_logger.critical(msg, *args, **kwargs)
+
+    def fatal(self, msg, *args, **kwargs):
+        """
+        print fatal message
+        """
+        print str(kwargs)
+        if not kwargs:
+            self.stderr_logger.fatal(msg, *args, exc_info = True)
+        else:
+            self.stderr_logger.fatal(msg, *args, **kwargs)
+
 class client_data(object):
     """
     This class defines global client data used for persistence.
@@ -49,7 +126,22 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     """
     This function is calls a function on another component and handle XML RPC faults
     gracefully, and other faults with something other than a traceback.
+    The default is to EXIT ON ERROR.
+
+    If exit_on_error is False then this function will raise and log only when debug level is set.
     """
+
+    def component_error(msg, *args, **kwargs):
+        """
+        Common component_call error handling
+        """
+        errmsg    = 'component error: ' + msg
+        if exit_on_error:
+            logger.error(errmsg, *args, **kwargs)
+            sys.exit(1)
+        logger.debug(errmsg, *args, **kwargs)
+        raise
+        
     debug_msg = 'component: "%s.%s", defer: %s\n  %s(\n' % (comp_name, func_name, str(defer), func_name)
 
     for arg in args:
@@ -57,43 +149,29 @@ def component_call(comp_name, defer, func_name, args, exit_on_error = True):
     debug_msg += '     )\n\n'
     logger.debug(debug_msg)
 
-    err_title = 'component error: '
-
     if client_data.components[comp_name]['conn'] is None or \
        client_data.components[comp_name]['defer'] != defer:
         try:
             comp = ComponentProxy(comp_name, defer = defer)
         except ComponentLookupError:
-            logger.error("%s Failed to connect to %s\n" % (err_title, comp_name))
-            sys.exit(1)
+            component_error("Failed to connect to %s\n", comp_name)
         except Exception, e:
-            logger.error("%s Following exception occured in %s\n" % (err_title, comp_name))
-            logger.error(e)
-            sys.exit(1)
+            component_error("Following exception occured in %s: %s\n", comp_name, e)
+
         client_data.components[comp_name]['conn']  = comp
         client_data.components[comp_name]['defer'] = defer
     else:
         comp = client_data.components[comp_name]['conn']
 
-    if hasattr(comp, func_name):
-        func = getattr(comp, func_name)
-    else:
-        logger.error("%s Function %s is not part of %s\n" % (err_title, func_name, comp_name))
-        sys.exit(1)
-
-    func = getattr(comp,func_name)
-
     retVal = None
     try:
-        retVal = apply(func, args)
+        func = getattr(comp,func_name)
+        retVal = func(*args)
     except xmlrpclib.Fault, fault:
-        if exit_on_error:
-            logger.error("%s XMLRPC failure %s in %s.%s\n" % (err_title, fault, comp_name, func_name))
-            sys.exit(1)
+        component_error("XMLRPC failure %s in %s.%s\n", fault, comp_name, func_name)
     except Exception, e:
-        logger.error("%s Following exception while trying to excecute %s.%s\n" % (err_title, comp_name, func_name))
-        logger.error(e)
-        sys.exit(1)
+        component_error("Following exception while trying to excecute %s.%s: %s\n", comp_name, func_name, e)
+
     return retVal
 
 def run_jobs(jobs,location,user):
@@ -303,7 +381,7 @@ def hold_release_command(doc_str,rev_str,ver_str):
             logger.info("   Removed dependencies from jobs: ")
             for j in update_response:
                 logger.info("      %s" % j.get("jobid"))
-                return # We are done exit
+            return # We are done exit
 
     jobs_found     = [j.get('jobid') for j in update_response]
     jobs_not_found = list(all_jobs.difference(set(jobs_existed)))
@@ -492,16 +570,9 @@ def setup_logging(level):
         print('already done')
         return
 
-    client_data.curr_cmd = os.path.split(sys.argv[0])[1].replace('.py','')
-    logger = logging.getLogger('cobalt.clients.'+ str(client_data.curr_cmd))
-    Cobalt.Util.logger = logger
-
-    # Set stderr from specified level
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
-    logger.setLevel(level)
+    logger               = Logger(level)
     logger.already_setup = True
+    client_data.curr_cmd = os.path.split(sys.argv[0])[1].replace('.py','')
 
 def read_config():
     """
@@ -714,11 +785,36 @@ def cb_umask(option,opt_str,value,parser,*args):
         sys.exit(1)
     setattr(parser.values,option.dest,um) # set the option
 
+def _check_dependencies(dependency_string):
+
+    if dependency_string.lower() == 'none':
+        #we are removing all job dependencies.
+        logger.info("Removing job dependencies")
+        return
+
+    deps = set(dependency_string.split(":"))
+    
+    query = []
+    for dep in deps:
+        try:
+            query.append({"jobid": int(dep)})
+        except:
+            pass
+    
+    jobs = component_call(QUEMGR, True, 'get_jobs', (query,))
+    
+    job_ids = set( [str(j["jobid"]) for j in jobs] )
+    
+    missing = deps.difference(job_ids)
+    
+    if missing:
+        logger.error("WARNING: dependencies %s do not match jobs currently in the queue" % ":".join(missing))
+
 def cb_upd_dep(option,opt_str,value,parser,*args):
     """
     check and update dependencies
     """
-    Cobalt.Util.check_dependencies(value)
+    _check_dependencies(value)
     deps = value.split(":")
     setattr(parser.values,option.dest,deps) # set the option 
 
@@ -726,7 +822,7 @@ def cb_dep(option,opt_str,value,parser,*args):
     """
     check and set dependencies.
     """
-    Cobalt.Util.check_dependencies(value)
+    _check_dependencies(value)
     setattr(parser.values,option.dest,value) # set the option 
 
 def cb_split(option,opt_str,value,parser,*args):
